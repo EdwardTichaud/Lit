@@ -13,6 +13,14 @@ MonoBehaviour:
   m_Name: Skill_GiantJuggernaut_Jump
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
   skillName: Jump
+  enemyImpact:
+    requireGroundedTarget: 1
+    offset: {x: 0, y: 0, z: 0}
+    radius: 30
+    arcDegrees: 360
+    targetMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   description: 
   icon: {fileID: 0}
   animationClip: {fileID: 7400000, guid: 2233c381e39e45c4aab9813eed09426d, type: 2}

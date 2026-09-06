@@ -13,12 +13,22 @@ MonoBehaviour:
   m_Name: Skill_Juggernaut_Assomoir
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
   enemyImpact:
+    requireGroundedTarget: 0
     offset: {x: 0, y: 1, z: 1.3}
     radius: 1.4
     arcDegrees: 110
     targetMask:
       serializedVersion: 2
       m_Bits: 4294967295
+  enemyAttackFeedback:
+    damageVfx: {fileID: 7736070195497459570, guid: 6c7e0bef77d7f3d4ba2df89ebcd03501, type: 3}
+    damageAudio: {fileID: 0}
+    guardVfx: {fileID: 8860363494751517875, guid: d95bf6b34bfd1964fbb45153a18ad5cf, type: 3}
+    guardAudio: {fileID: 0}
+    counterVfx: {fileID: 4718697377525663345, guid: 02bbf6f614060f14db98c4433ed426b5, type: 3}
+    counterAudio: {fileID: 0}
+    height: 1.2
+    lifetimeSeconds: 1
   skillName: Assomoir
   description: 
   icon: {fileID: 0}
@@ -27,6 +37,7 @@ MonoBehaviour:
   damages: 20
   clarityGainOnHit: 1
   presentation:
+    movementPolicy: 1
     entryBlendSeconds: 0.06
     chainNormalizedTime: 0.7
     chainTransitionNormalizedTime: 0.78
@@ -43,8 +54,6 @@ MonoBehaviour:
       locomotionBlendSeconds: 0.08
       preLandingProbeDistance: 1.2
       preLandingLeadSeconds: 0.14
-    rootMotionMode: 1
-    allowAirborneRootMotion: 0
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
@@ -66,19 +75,7 @@ MonoBehaviour:
       animatorStateName: 
       transitionSeconds: 0.08
       normalizedStartTime: 0
-  vfxCues:
-  - displayName: Light
-    prefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}
-    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
-    delivery: 2
-    holdAtCasterSeconds: 0
-    travelDurationSeconds: 0
-  - displayName: Slash
-    prefab: {fileID: 2078872949848993546, guid: c03c4558d0b550b4d955d14b92df1c4f, type: 3}
-    audioClip: {fileID: 0}
-    delivery: 2
-    holdAtCasterSeconds: 0
-    travelDurationSeconds: 0
+  vfxCues: []
   impactFeedback:
     enabled: 1
     useHitStop: 1
@@ -129,7 +126,7 @@ MonoBehaviour:
     airborneInertiaEndSpeedMultiplier: 0.25
   enemyRange: 0
   enemyDamageMultiplier: 1
-  acceptedEnemyReactions: 0100000002000000
+  acceptedEnemyReactions: 
   requireAllEnemyReactions: 0
   playerAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
   enemyAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
@@ -168,30 +165,28 @@ MonoBehaviour:
     minimumLandingSpeed: 5
     maximumAirborneSeconds: 2.5
     enableHomingRush: 1
-    lockRushDestination: 1
     rushMaximumSpeed: 15
-    rushAcceleration: 46
-    rushDeceleration: 62
+    rushImpulseDuration: 0.35
     rushStoppingDistance: 1.25
     rushCollisionSkin: 0.04
     rushBlockingMask:
       serializedVersion: 2
       m_Bits: 134228617
   reactionTelegraph:
-    enabled: 1
-    alertPrefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}
+    enabled: 0
+    alertPrefab: {fileID: 0}
     threatColor: {r: 0.85, g: 0.08, b: 0.4, a: 1}
     perfectWindowColor: {r: 0.72, g: 0.94, b: 1, a: 1}
     heightOffset: 1.1
     fadeSeconds: 0.16
-    anticipationAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
-    perfectWindowAudio: {fileID: 11400000, guid: 0438d71856ebb2343ad2e5a5508b6b87, type: 2}
-    successfulReactionAudio: {fileID: 11400000, guid: 4851eb51eca50fb4594e1d7418bfaf41, type: 2}
-    usePerfectWindowSlowMotion: 1
+    anticipationAudio: {fileID: 0}
+    perfectWindowAudio: {fileID: 0}
+    successfulReactionAudio: {fileID: 0}
+    usePerfectWindowSlowMotion: 0
     perfectWindowTimeScale: 0.85
     perfectWindowSlowMotionSeconds: 0.15
   combatWarning:
-    enabled: 1
+    enabled: 0
     color: {r: 1, g: 0.08, b: 0.36, a: 1}
     intensity: 0.9
     pulseFrequency: 2.8
@@ -202,7 +197,7 @@ MonoBehaviour:
     focusSharpness: 30
     fieldOfViewOffset: -2
     fadeOutSeconds: 0.16
-    warningAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
-    useSlowMotion: 1
+    warningAudio: {fileID: 0}
+    useSlowMotion: 0
     slowMotionTimeScale: 0.85
     slowMotionSeconds: 0.15

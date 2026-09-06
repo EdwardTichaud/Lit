@@ -54,6 +54,7 @@ public partial class SquadCharacterController
 
         if (appliedAmount > 0)
         {
+            CombatDamageWorldFeedback.Show(transform, appliedAmount, new Color(1f, .48f, .48f), 2.05f);
             PlayActionAudio(newHp <= 0 ? ActionAudioCue.CharacterDeath : ActionAudioCue.CharacterDamage);
         }
     }

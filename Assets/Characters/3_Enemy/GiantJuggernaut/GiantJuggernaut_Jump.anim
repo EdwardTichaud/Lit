@@ -270184,24 +270184,10 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.55
-    functionName: InstantiateEnemySkillVFXAtIndex
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 0.96666664
-    functionName: InstantiateEnemySkillVFXAtIndex
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 1
-    messageOptions: 0
   - time: 1.2166667
-    functionName: HitPlayerIf
-    data: Grounded
-    objectReferenceParameter: {fileID: 0}
+    functionName: EnemyAttack
+    data: 
+    objectReferenceParameter: {fileID: 11400000, guid: 868c6bf11c102084591a5986869d6755, type: 2}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0

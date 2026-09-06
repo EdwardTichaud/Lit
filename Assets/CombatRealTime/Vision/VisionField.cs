@@ -14,6 +14,16 @@ public sealed class VisionField : MonoBehaviour
 
     public bool TryEvaluate(Transform target, out float distance, out float angle, out string reason)
     {
+        return TryEvaluate(target, maximumDistance, fieldOfViewDegrees, out distance, out angle, out reason);
+    }
+
+    public bool CanSenseNearby(Transform target, float radius)
+    {
+        return radius > 0f && TryEvaluate(target, radius, 360f, out _, out _, out _);
+    }
+
+    private bool TryEvaluate(Transform target, float range, float fieldOfView, out float distance, out float angle, out string reason)
+    {
         distance = 0f;
         angle = 0f;
         reason = "cible absente";
@@ -34,13 +44,13 @@ public sealed class VisionField : MonoBehaviour
         }
 
         angle = Vector3.Angle(source.forward, direction);
-        if (distance > maximumDistance)
+        if (distance > range)
         {
             reason = "hors portee";
             return false;
         }
 
-        if (angle > fieldOfViewDegrees * 0.5f)
+        if (angle > fieldOfView * 0.5f)
         {
             reason = "hors angle";
             return false;

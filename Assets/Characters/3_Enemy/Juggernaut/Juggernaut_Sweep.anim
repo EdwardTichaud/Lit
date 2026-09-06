@@ -100347,18 +100347,11 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.31250003
-    functionName: CombatWarningOn
+  - time: 0.62500006
+    functionName: OpenEnemyReactionOpportunity
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 0.62500006
-    functionName: OpenReactionWindow
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0.3
     intParameter: 0
     messageOptions: 0
   - time: 0.87500006
@@ -100369,23 +100362,9 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 1
-    functionName: OpenEnemyAttackHitbox
+    functionName: EnemyAttack
     data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 1.3750001
-    functionName: CloseEnemyAttackHitbox
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 1.3958335
-    functionName: CombatWarningOff
-    data: 
-    objectReferenceParameter: {fileID: 0}
+    objectReferenceParameter: {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0

@@ -66,8 +66,9 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private bool hasLastConfirmedGroundY;
     private bool landingRequested;
     private bool rushActive;
-    private Transform rushTarget;
-    private Vector3 rushDestination;
+    private Vector3 rushDirection;
+    private float rushRemainingDistance;
+    private float rushRemainingSeconds;
     private float rushSpeed;
     private bool navigationSuppressed;
     private bool hasObservedPose;
@@ -175,6 +176,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     private void OnDisable()
     {
+        EndEnemyRush();
         EndEnemyAdvance();
         pendingCompletion = null;
         pendingPlanarRootMotion = Vector3.zero;
@@ -201,7 +203,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         landingRequested = false;
         landingRequestedAt = -1f;
         rushActive = false;
-        rushTarget = null;
+        rushDirection = Vector3.zero;
         rushSpeed = 0f;
         lastConfirmedGroundY = body != null ? body.position.y : transform.position.y;
         hasLastConfirmedGroundY = true;
@@ -235,22 +237,27 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         landingRequested = true;
         landingRequestedAt = LocalTime;
-        verticalVelocity = Mathf.Min(verticalVelocity, -Mathf.Max(0.1f, activeMotionProfile.minimumLandingSpeed));
+        if (!rushActive)
+            verticalVelocity = Mathf.Min(verticalVelocity, -Mathf.Max(0.1f, activeMotionProfile.minimumLandingSpeed));
         SetState(CombatEnemyPhysicsState.Recovering, "atterrissage demande");
     }
 
-    /// <summary>Starts an authored homing rush. It owns only planar motion while the motor keeps vertical physics authoritative.</summary>
+    /// <summary>Applies a short, fixed-direction 3D impulse with automatic completion.</summary>
     public void BeginEnemyRush(Transform target)
     {
-        if (!IsAirborne || activeMotionProfile == null || !activeMotionProfile.HasHomingRush || target == null)
+        if (rushActive || !IsAirborne || activeMotionProfile == null || !activeMotionProfile.HasHomingRush || target == null)
         {
             return;
         }
 
+        Vector3 offset = target.position - (body != null ? body.position : transform.position);
+        rushRemainingDistance = Mathf.Max(0f, offset.magnitude - activeMotionProfile.rushStoppingDistance);
+        if (rushRemainingDistance <= 0.0001f) return;
         rushActive = true;
-        rushTarget = target;
-        rushDestination = target.position;
-        rushSpeed = 0f;
+        rushDirection = offset.normalized;
+        rushRemainingSeconds = Mathf.Max(0.01f, activeMotionProfile.rushImpulseDuration);
+        rushSpeed = Mathf.Max(0.1f, activeMotionProfile.rushMaximumSpeed);
+        verticalVelocity = 0f;
         AuditPose("ruée:debut");
     }
 
@@ -262,13 +269,18 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         rushActive = false;
-        rushTarget = null;
+        rushDirection = Vector3.zero;
+        rushRemainingSeconds = 0f;
+        rushRemainingDistance = 0f;
         rushSpeed = 0f;
+        verticalVelocity = Mathf.Min(0f, verticalVelocity);
+        if (landingRequested) landingRequestedAt = LocalTime;
         AuditPose("ruée:fin");
     }
 
     public void CompleteEnemyAction(Action completion)
     {
+        EndEnemyRush();
         EndEnemyAdvance();
         AuditPose("attaque:fin demandee");
         pendingCompletion = completion;
@@ -284,6 +296,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void InterruptEnemyAction(Action completion)
     {
+        EndEnemyRush();
         EndEnemyAdvance();
         AuditPose("attaque:interrompue");
         pendingCompletion = completion;
@@ -358,7 +371,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return;
         }
 
-        // A homing rush is the only planar action owner during that phase. The
+        // A 3D rush is the sole translation owner during that phase. The
         // clip may still contribute visual rotation, never translation.
         Vector3 planarDelta = rushActive || activeMotionProfile != null && activeMotionProfile.IsAirborne
             ? Vector3.zero : Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
@@ -454,19 +467,25 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return;
         }
 
-        float gravity = activeMotionProfile != null ? activeMotionProfile.gravity : 32f;
-        verticalVelocity = Mathf.Max(
-            verticalVelocity - gravity * LocalFixedDeltaTime,
-            -(activeMotionProfile != null ? activeMotionProfile.maximumFallSpeed : 28f));
-
+        bool airborneTimedOut = activeMotionProfile != null &&
+            LocalTime - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds;
+        if (rushActive && airborneTimedOut) EndEnemyRush();
+        Vector3 motionDelta;
         if (rushActive)
         {
-            planarDelta += ResolveRushPlanarDelta(position);
+            motionDelta = ResolveRushDelta(position);
+            verticalVelocity = LocalFixedDeltaTime > 0f ? motionDelta.y / LocalFixedDeltaTime : 0f;
+            if (!rushActive) verticalVelocity = Mathf.Min(0f, verticalVelocity);
         }
-
-        planarDelta = ClampPlanarMotionToObstacles(position, planarDelta);
-
-        Vector3 nextPosition = position + planarDelta + Vector3.up * (verticalVelocity * LocalFixedDeltaTime);
+        else
+        {
+            float gravity = activeMotionProfile != null ? activeMotionProfile.gravity : 32f;
+            verticalVelocity = Mathf.Max(verticalVelocity - gravity * LocalFixedDeltaTime,
+                -(activeMotionProfile != null ? activeMotionProfile.maximumFallSpeed : 28f));
+            planarDelta = ClampPlanarMotionToObstacles(position, planarDelta);
+            motionDelta = planarDelta + Vector3.up * (verticalVelocity * LocalFixedDeltaTime);
+        }
+        Vector3 nextPosition = position + motionDelta;
         bool forceLanding = landingRequested ||
             (activeMotionProfile != null && LocalTime - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds);
         if (TryGetGroundY(nextPosition, out float nextGroundY) &&
@@ -506,9 +525,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         // Ground layers can be authored incorrectly in a scene. Never let an
         // interrupted aerial action fall forever because one probe missed: use
         // the last physically confirmed floor height, preserving the current X/Z.
-        bool airborneTimedOut = activeMotionProfile != null &&
-                            LocalTime - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds;
-        bool emergencyLandingDue = (landingRequested && LocalTime - landingRequestedAt >= emergencyLandingDelay) ||
+        bool emergencyLandingDue = (!rushActive && landingRequested && LocalTime - landingRequestedAt >= emergencyLandingDelay) ||
                                    airborneTimedOut;
         if (emergencyLandingDue && hasLastConfirmedGroundY)
         {
@@ -603,49 +620,29 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         Physics.SyncTransforms();
     }
 
-    private Vector3 ResolveRushPlanarDelta(Vector3 position)
+    private Vector3 ResolveRushDelta(Vector3 position)
     {
-        if (rushTarget == null || activeMotionProfile == null)
+        if (!rushActive || activeMotionProfile == null)
         {
             EndEnemyRush();
             return Vector3.zero;
         }
 
-        Vector3 targetPosition = activeMotionProfile.lockRushDestination ? rushDestination : rushTarget.position;
-        Vector3 direction = targetPosition - position;
-        direction.y = 0f;
-        float distance = direction.magnitude;
-        float stopDistance = Mathf.Max(0f, activeMotionProfile.rushStoppingDistance);
-        float deltaTime = LocalFixedDeltaTime;
-
-        if (distance <= stopDistance)
-        {
-            rushSpeed = Mathf.MoveTowards(rushSpeed, 0f, activeMotionProfile.rushDeceleration * deltaTime);
-            if (rushSpeed <= 0.01f)
-            {
-                EndEnemyRush();
-            }
-            return Vector3.zero;
-        }
-
-        rushSpeed = Mathf.MoveTowards(rushSpeed, activeMotionProfile.rushMaximumSpeed, activeMotionProfile.rushAcceleration * deltaTime);
-        float requestedDistance = Mathf.Min(rushSpeed * deltaTime, Mathf.Max(0f, distance - stopDistance));
-        if (requestedDistance <= 0.0001f)
-        {
-            return Vector3.zero;
-        }
-
-        Vector3 normalizedDirection = direction / distance;
-        if (TryClampPlanarMotionToObstacle(position, normalizedDirection, requestedDistance, out float allowedDistance))
+        float deltaTime = Mathf.Min(LocalFixedDeltaTime, rushRemainingSeconds);
+        float requestedDistance = Mathf.Min(rushSpeed * deltaTime, rushRemainingDistance);
+        Vector3 normalizedDirection = rushDirection;
+        rushRemainingSeconds = Mathf.Max(0f, rushRemainingSeconds - deltaTime);
+        rushRemainingDistance = Mathf.Max(0f, rushRemainingDistance - requestedDistance);
+        if (TryClampMotionToObstacle(position, normalizedDirection, requestedDistance, out float allowedDistance))
         {
             requestedDistance = allowedDistance;
-            rushSpeed = Mathf.MoveTowards(rushSpeed, 0f, activeMotionProfile.rushDeceleration * deltaTime);
+            EndEnemyRush();
             if (logStateChanges)
             {
                 Debug.Log("[CombatEnemyPhysicsMotor] " + name + " ruée bloquee par decor.", this);
             }
         }
-
+        if (rushRemainingSeconds <= 0f || rushRemainingDistance <= 0.0001f) EndEnemyRush();
         return normalizedDirection * Mathf.Max(0f, requestedDistance);
     }
 
@@ -658,12 +655,12 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         Vector3 direction = planarDelta / requestedDistance;
-        return TryClampPlanarMotionToObstacle(position, direction, requestedDistance, out float allowedDistance)
+        return TryClampMotionToObstacle(position, direction, requestedDistance, out float allowedDistance)
             ? direction * allowedDistance
             : planarDelta;
     }
 
-    private bool TryClampPlanarMotionToObstacle(Vector3 position, Vector3 direction, float requestedDistance, out float allowedDistance)
+    private bool TryClampMotionToObstacle(Vector3 position, Vector3 direction, float requestedDistance, out float allowedDistance)
     {
         allowedDistance = requestedDistance;
         if (bodyCollider == null || activeMotionProfile == null || requestedDistance <= 0f)

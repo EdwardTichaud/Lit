@@ -30,6 +30,7 @@ MonoBehaviour:
   - {fileID: 102900000, guid: 3ee62994e0e4b9545b270a05b43473ee, type: 3}
   - {fileID: 102900000, guid: 6f707f864cc6ecd40a182bedabf7a0ee, type: 3}
   - {fileID: 102900000, guid: af9b246b67e7e3c4f9396e2e547fc250, type: 3}
+  - {fileID: 102900000, guid: 1c11bf5e6f504b84389bce7e16f35603, type: 3}
   postLoadingScenes: []
   primarySceneName: District_1_Core
   loadingMessage: Exploration du quartier de la Lune...
@@ -54,6 +55,7 @@ MonoBehaviour:
   - District_1_Enigme_Levers
   - District_1_Enemies
   - District_1_Sequences
+  - District_1_Enigme_Ghost_Nina
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
   bakedNavMeshData: {fileID: 23800000, guid: 5f9c79bf7d1906646af4e698f2b49a3e, type: 2}

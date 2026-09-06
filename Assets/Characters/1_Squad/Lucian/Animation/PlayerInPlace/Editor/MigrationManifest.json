@@ -1,0 +1,1046 @@
+{
+    "replacements": [
+        {
+            "sourceGuid": "d5864aebdde35c942b96c48f37ba5a3d",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Common/Common_Idle_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Common_Idle_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.Locomotion/Player_Locomotion_ForwardOnly_BlendTree"
+            ],
+            "sourceDistance": 0.000007906160135462414,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "b47cbb24d4baefa488856a86da417fc0",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Common/Twinblades_Common_Walk_Loop_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Common_Walk_Loop_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.Locomotion/Player_Locomotion_ForwardOnly_BlendTree"
+            ],
+            "sourceDistance": 2.0713744163513185,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f164eea279768174e9842e97d92fc518",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Common/Twinblades_Common_Run_Loop_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Common_Run_Loop_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.Locomotion/Player_Locomotion_ForwardOnly_BlendTree",
+                "Base Layer.Run_Start"
+            ],
+            "sourceDistance": 4.240352630615234,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f36ce0c871b8f5a4ea6d822e99e0525a",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Movement/TwinSword_Turn_L90_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Turn_L90_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Turn_L90"
+            ],
+            "sourceDistance": 0.2197163850069046,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "697a5b652b7ecb243be0c02b9668c011",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Movement/TwinSword_Turn_R90_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Turn_R90_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Turn_R90"
+            ],
+            "sourceDistance": 0.1906208097934723,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "df8a0d0287e35f24da74204738d24c42",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Movement/TwinSword_TurnL_180_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_TurnL_180_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Turn_L180"
+            ],
+            "sourceDistance": 0.2094535082578659,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f086628f7a53c1e4b9f45304ce3c95c2",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Movement/TwinSword_TurnR_180_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_TurnR_180_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Turn_R180"
+            ],
+            "sourceDistance": 0.03803253918886185,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "950cb532fb93ce54d9c94f33a0635516",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Common/TwinSword_Common_Walk_Start_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Common_Walk_Start_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Walk_Start/Player_MoveStart_ForwardOnly_BlendTree"
+            ],
+            "sourceDistance": 1.1278959512710572,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "e4c24dca4815c97479d36762533a0ae0",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Common/TwinSword_Common_Walk_Stop_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Common_Walk_Stop_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Walk_Stop/Player_MoveStop_ForwardOnly_BlendTree",
+                "Base Layer.Run_Stop/Player_MoveStop_ForwardOnly_BlendTree"
+            ],
+            "sourceDistance": 0.26409876346588137,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f3431bc85c7aff848baf73c76c1adacc",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/Twinblades_death_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_death_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Death"
+            ],
+            "sourceDistance": 1.1120853424072266,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "c421e761ada49ce41bdbd4f3d05d77cc",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/BasicSkill_1.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/BasicSkill_1_c421e761_Inplace.anim",
+            "sourceEvents": "0,225|ShowSword||0|0||RequireReceiver\n0,483333319|ResolveSkillImpact||0|0||RequireReceiver\n0,483333319|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n1,25|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "targetEvents": "0,225|ShowSword||0|0||RequireReceiver\n0,483333319|ResolveSkillImpact||0|0||RequireReceiver\n0,483333319|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n1,25|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.BasicSkill_1",
+                "Assets/CombatRealTime/Skills/BasicSkill_1.asset"
+            ],
+            "sourceDistance": 1.1008167266845704,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f37f637f20cc5124fbc4e0b68385c979",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/BasicSkill_2.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/BasicSkill_2_f37f637f_Inplace.anim",
+            "sourceEvents": "0,166666672|ShowSword||0|0||RequireReceiver\n0,5833333|ResolveSkillImpact||0|0||RequireReceiver\n0,5833333|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n0,975|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "targetEvents": "0,166666672|ShowSword||0|0||RequireReceiver\n0,5833333|ResolveSkillImpact||0|0||RequireReceiver\n0,5833333|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n0,975|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.BasicSkill_2",
+                "Assets/CombatRealTime/Skills/BasicSkill_2.asset"
+            ],
+            "sourceDistance": 1.870753288269043,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "2a416762e5197734ebfcee7606c66b81",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSwordAnimsetBase_V2/Animation/RootMotion/BasicSkill_3.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/BasicSkill_3_2a416762_Inplace.anim",
+            "sourceEvents": "0,191666663|ShowSword||0|0||RequireReceiver\n0,341666669|ResolveSkillImpact||0|0||RequireReceiver\n0,341666669|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n0,7916667|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "targetEvents": "0,191666663|ShowSword||0|0||RequireReceiver\n0,341666669|ResolveSkillImpact||0|0||RequireReceiver\n0,341666669|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n0,7916667|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.BasicSkill_3",
+                "Assets/CombatRealTime/Skills/BasicSkill_3.asset"
+            ],
+            "sourceDistance": 2.141364097595215,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "df5b33c84ed242a449dc5ffbba9520c0",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Melt.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Melt_df5b33c8_Inplace.anim",
+            "sourceEvents": "0,858333349|InstantiateAtSpine||0|0||RequireReceiver\n1|PlayEffect_CharacterEffect||0|0||RequireReceiver",
+            "targetEvents": "0,858333349|InstantiateAtSpine||0|0||RequireReceiver\n1|PlayEffect_CharacterEffect||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Melt"
+            ],
+            "sourceDistance": 1.898545265197754,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "92641b99ff3967a4cb61d5f8cae63e13",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Rupture.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Rupture_92641b99_Inplace.anim",
+            "sourceEvents": "0,858333349|InstantiateAtSpine||0|0||RequireReceiver\n1|StopEffect_CharacterEffect||0|0||RequireReceiver",
+            "targetEvents": "0,858333349|InstantiateAtSpine||0|0||RequireReceiver\n1|StopEffect_CharacterEffect||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Rupture"
+            ],
+            "sourceDistance": 1.898545265197754,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "7ac9514ac36ae2e4181353c010cd588b",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/Mobility_Starter/Animation/Root_Motion/Idle_Crouch.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Idle_Crouch_7ac9514a_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Idle_Crouch"
+            ],
+            "sourceDistance": 0.00002273557947773952,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "947b92615dbc7c347aa6dd5daab04acd",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Hit/TwinSword_Fall down_F_Getup_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/TwinSword_Fall_down_F_Getup_Root_947b9261_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.GetUp"
+            ],
+            "sourceDistance": 0.3086555302143097,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "0ec704e33e4e6124687f8c0b8e809a39",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/AirBasicSkill_1.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/AirBasicSkill_1_0ec704e3_Inplace.anim",
+            "sourceEvents": "0,275|ShowSword||0|0||RequireReceiver\n0,533333361|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n0,533333361|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n1,00833333|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "targetEvents": "0,275|ShowSword||0|0||RequireReceiver\n0,533333361|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n0,533333361|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n1,00833333|HideSwordWhenComboEnds||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.AirBasicSkill_1",
+                "Assets/CombatRealTime/Skills/AirBasicSkill_1.asset"
+            ],
+            "sourceDistance": 2.568399679603317e-7,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "e9f9a5300ebeec241b3708751144afb1",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSwordAnimsetBase_V2/Animation/RootMotion/TwinSword_attack01_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_attack01_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_attack01_Root"
+            ],
+            "sourceDistance": 2.4123950004577638,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "937d7e763fbf0a84fb07dc6e2175f737",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSwordAnimsetBase_V2/Animation/RootMotion/TwinSword_attack02_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_attack02_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_attack02_Root"
+            ],
+            "sourceDistance": 2.412405490875244,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "e3dfd4c96625a0d41ae0ee6f4271c469",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSwordAnimsetBase_V2/Animation/RootMotion/TwinSword_attack03_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_attack03_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_attack03_Root"
+            ],
+            "sourceDistance": 2.1097514629364015,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "a1a74536f0a74c04a8139728ae5a0150",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSwordAnimsetBase_V2/Animation/RootMotion/TwinSword_attack04_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_attack04_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_attack04_Root"
+            ],
+            "sourceDistance": 2.1097514629364015,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "d0b2c4d963d9f0143884aad49a4c349c",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Battle/TwinSword_Attack13_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Attack13_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Attack13_Root"
+            ],
+            "sourceDistance": 4.318783760070801,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "ac7fa07ad0751f7438eeb727666e06ab",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Battle/TwinSword_Attack14_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Attack14_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Attack14_Root"
+            ],
+            "sourceDistance": 3.9407548904418947,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "2eee9574d11a3e94d94c0b0d10bfc35d",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Battle/TwinSword_Attack15_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Attack15_Inplace_0679cb06.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Attack15_Root"
+            ],
+            "sourceDistance": 5.432003498077393,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "62d052a61a3e68c448e6716934fc2f14",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Battle/TwinSword_Attack16_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Attack16_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Attack16_Root"
+            ],
+            "sourceDistance": 5.730821132659912,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "cff8aa6a6d9cad5479e5e943c4bfeb95",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Dodge/TwinSword_Dodge_F_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Dodge_F_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root"
+            ],
+            "sourceDistance": 5.906771183013916,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "e567a02f20cceb5469c8ba8fd44f229f",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Dodge/TwinSword_Dodge_B_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Dodge_B_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root"
+            ],
+            "sourceDistance": 5.926942348480225,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "2bdb93475e04c134d885be04f49b0f00",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Dodge/TwinSword_Dodge_L_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Dodge_L_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root"
+            ],
+            "sourceDistance": 4.409506320953369,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "17c8abf0b02405f4da926becda39cbff",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Dodge/TwinSword_Dodge_R_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Dodge_R_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root"
+            ],
+            "sourceDistance": 4.480854511260986,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "66d32c0851ce7cd48aac03699a7ea11f",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Hit/TwinSword_Defense_Hit_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Defense_Hit_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root"
+            ],
+            "sourceDistance": 0.7442752122879028,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "4707cb17256958b4fbe6cc965bc0bb4d",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Hit/TwinSword_Large_Hit_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Large_Hit_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Large_Hit_Root"
+            ],
+            "sourceDistance": 6.133741855621338,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "454e633b07861d546a8b881d2910ffc8",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Hit/TwinSword_Die_1_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Die_1_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Die_1_Root"
+            ],
+            "sourceDistance": 1.9522912502288819,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "3a04f52fdd7c0d24cba0d79544de9e54",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSword_Expansion_V2/Animation/Root/Battle/TwinSword_Idle_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Idle_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.TwinSword_Idle_Root"
+            ],
+            "sourceDistance": 0.000006625700734730344,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f80c00c342150c543a14cb842f8a753a",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/Twinblades_attack02_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_attack02_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_attack02_Root"
+            ],
+            "sourceDistance": 1.7542184591293336,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "bb297f84c25d73042938ad4a09986c6f",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/Twinblades_attack03_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_attack03_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_attack03"
+            ],
+            "sourceDistance": 2.1515045166015627,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "7f04570ec97720d42b2bf641c5c56125",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/Twinblades_attack04_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_attack04_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_attack04"
+            ],
+            "sourceDistance": 1.7542190551757813,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "dd97af298ca4e7749846d1c6ad5edd82",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinBladesAnimsetBase_V2/Animation/RootMotion/Twinblades_attack05_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_attack05_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_attack05"
+            ],
+            "sourceDistance": 2.093291997909546,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "36f235524de185e44bcf9c2a3187a349",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Twinblades_Attack13_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Attack13_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Attack13_Root"
+            ],
+            "sourceDistance": 2.0490520000457765,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "7431ecc82ea77124aad34249722a914e",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Twinblades_Attack14_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Attack14_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Attack14_Root"
+            ],
+            "sourceDistance": 1.2902274131774903,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "beba5bf3760b68e4382080c23cca5c26",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Twinblades_Attack15_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Attack15_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Attack15_Root"
+            ],
+            "sourceDistance": 5.117684841156006,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "6cbff1cb03868ab418b3c890a6b9cb87",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Twinblades_Attack16_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Attack16_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Attack16_Root"
+            ],
+            "sourceDistance": 2.235182046890259,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "ab7be681e532ec94bbb6449262e2b168",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Dodge/Twinblades_Dodge_F_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Dodge_F_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_F_Root"
+            ],
+            "sourceDistance": 5.8536601066589359,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "536ac88e462ae0b47b1ed2f7c2fb9517",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Dodge/Twinblades_Dodge_B_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Dodge_B_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_B_Root"
+            ],
+            "sourceDistance": 5.853745460510254,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "6e6ce5d65c303fc47a58c7f861d21ac9",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Dodge/Twinblades_Dodge_L_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Dodge_L_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_L_Root"
+            ],
+            "sourceDistance": 4.614855766296387,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "80faaeb97f1383e40bfc96db2ba11cb1",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Dodge/Twinblades_Dodge_R_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Dodge_R_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_R_Root"
+            ],
+            "sourceDistance": 4.66595458984375,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "1342be109c9aa314db3a3a6687c05b64",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Hit/Twinblades_Defense_Hit_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Twinblades_Defense_Hit_Root_1342be10_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root"
+            ],
+            "sourceDistance": 0.7448314428329468,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "5bde145ebaa98934cbf3fbc21746281a",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Hit/Twinblades_Large_Hit_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Twinblades_Large_Hit_Root_5bde145e_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Large_Hit_Root"
+            ],
+            "sourceDistance": 6.1470537185668949,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "1091fcf4d36e4734f8f089a2923b3e1d",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Hit/Twinblades_Die_1_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Die_1_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Die_1_Root"
+            ],
+            "sourceDistance": 1.944922924041748,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "2538680e13e294d46b1ca1a039113733",
+            "sourcePath": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Battle/Twinblades_Idle_Root.FBX",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Idle_Inplace.FBX",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400002,
+            "consumers": [
+                "Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root"
+            ],
+            "sourceDistance": 0.0,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f1807c0d8bf8ec74290ec9cf9e992181",
+            "sourcePath": "Assets/Characters/4_Animations/Mixamo_Walk_Flame_Root.fbx",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Mixamo_Walk_Flame_f1807c0d_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": -203655887218126122,
+            "consumers": [
+                "Upper Body Flame.Flame_Locomotion/Player_Flame_Locomotion_BlendTree"
+            ],
+            "sourceDistance": 0.0,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "44bd3b2ac9967c440a1e020a9801632a",
+            "sourcePath": "Assets/Characters/4_Animations/Mixamo_Slide_Wall_InPlace.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Mixamo_Slide_Wall_InPlace_44bd3b2a_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Slide_Wall_Right",
+                "Base Layer.Slide_Wall_Left"
+            ],
+            "sourceDistance": 6.192259311676025,
+            "sourceYaw": 88.3631362915039,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f2b24e0f64b422c4c969de7e44ac56df",
+            "sourcePath": "Assets/Characters/4_Animations/Mixamo_VaultOverBox_Inplace.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Mixamo_VaultOverBox_Inplace_f2b24e0f_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Obstacle_Traversal"
+            ],
+            "sourceDistance": 2.9698867797851564,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "f9f647f45f9da6b43a19c72e4fef2976",
+            "sourcePath": "Assets/Characters/3_Enemy/Juggernaut/Mixamo_Taunt.fbx",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Mixamo_Taunt_f9f647f4_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": -203655887218126122,
+            "consumers": [
+                "Base Layer.Taunt"
+            ],
+            "sourceDistance": 3.0230182801460617e-8,
+            "sourceYaw": 32.45994567871094,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "caf4ceb2d13b8e444981a4e255c3b4e8",
+            "sourcePath": "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/Skill_2_Flêche de lumière.anim",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Skill_2_Flêche_de_lumière_caf4ceb2_Inplace.anim",
+            "sourceEvents": "0,266666681|ShowBow||0|0||RequireReceiver\n0,8666667|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n1,16666663|InstantiateSkillVFXAtIndex||0|1||RequireReceiver\n1,3166666|ResolveSkillImpact||0|0||RequireReceiver\n1,66666663|HideBow||0|0||RequireReceiver",
+            "targetEvents": "0,266666681|ShowBow||0|0||RequireReceiver\n0,8666667|InstantiateSkillVFXAtIndex||0|0||RequireReceiver\n1,16666663|InstantiateSkillVFXAtIndex||0|1||RequireReceiver\n1,3166666|ResolveSkillImpact||0|0||RequireReceiver\n1,66666663|HideBow||0|0||RequireReceiver",
+            "sourceId": 7400000,
+            "consumers": [
+                "Base Layer.Skill_2_Flêche de lumière",
+                "Assets/CombatRealTime/Skills/Skill_2_Fleche de lumière.asset"
+            ],
+            "sourceDistance": 3.0869548320770265,
+            "sourceYaw": 351.9930419921875,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "3c63a86312265964889c6dae10213e68",
+            "sourcePath": "Assets/Characters/4_Animations/Mixamo_Flame_Equip.fbx",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Mixamo_Flame_Equip_3c63a863_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": -203655887218126122,
+            "consumers": [
+                "Upper Body Flame.Flame_Off",
+                "Upper Body Flame.Flame_Equip",
+                "Upper Body Flame.Flame_Unequip"
+            ],
+            "sourceDistance": 0.03201555833220482,
+            "sourceYaw": 0.0,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        },
+        {
+            "sourceGuid": "41f0ac36b3e858b42b0b34f1991064d9",
+            "sourcePath": "Assets/Characters/4_Animations/Mixamo_Idle_Flame.fbx",
+            "targetPath": "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Mixamo_Idle_Flame_41f0ac36_Inplace.anim",
+            "sourceEvents": "",
+            "targetEvents": "",
+            "sourceId": -203655887218126122,
+            "consumers": [
+                "Upper Body Flame.Flame_Locomotion/Player_Flame_Locomotion_BlendTree"
+            ],
+            "sourceDistance": 0.0,
+            "sourceYaw": 99.13568115234375,
+            "residualDistance": 0.0,
+            "residualYaw": 0.0
+        }
+    ],
+    "protectedFiles": [
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Idle_Breathing.anim",
+            "hash": "399EDCDBEBFE17134FCA4F3C070C339A101F4FE4F2ADA95B2AD7BC021D7A66ED"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/jump_landing_inplace.fbx",
+            "hash": "DEA46252A51F1FDDFBD04447EF45DF36D119CFF9BAEE4A440F7D183B2F9D3FF7"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/jump_start.fbx",
+            "hash": "ADEE3E3DFA82B93E8C58D9742D77A67E74EA138673CB495F99F8D894A78C74BF"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/jump_falling_loop_inplace.fbx",
+            "hash": "F21F78435C09DB17AE0BB250B641CBA20172F7E04675AABDC613E992EDCBB478"
+        },
+        {
+            "path": "Assets/Characters/4_Animations/Mixamo_Slide_Wall_InPlace.anim",
+            "hash": "19A1D33820DD07D022CE8A57CFA0914FD2A1710DBDE7DB5ADCF82E8E45DFB659"
+        },
+        {
+            "path": "Assets/Characters/4_Animations/Mixamo_VaultOverBox_Inplace.anim",
+            "hash": "CEA239CC10F4E3B6D3AF7594539817451FF6B6912767BB372A0C8ED38B1149A4"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Landing_Hard_Inplace.anim",
+            "hash": "891474033B92D9F5CB93CB31D8FA5D9866BB3C7A285749BFA3418C71A68622C8"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Landing_InPlace.anim",
+            "hash": "5AE466A75A42873BC17DD6FBD0C354A2ACFEE9BE8E8C863B501EA837DBDE098F"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Flying.fbx",
+            "hash": "E44C2145E5502E566A2AE6CD5D3F3B12666B7D48B6C430D19DDCAB80506D32B0"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Flying_Idle.anim",
+            "hash": "B5C008DA5085140686BE20B53D8A434AD61CC557919730065F82679349786A8D"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Sitting_Idle.fbx",
+            "hash": "7BC56EFC6A44C592F426A32F1BC317A0DF8BDB1B708058C56AC9511B12A9E767"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Counter_Sword.anim",
+            "hash": "098B9208F18A7EBE5BF743502977DD06CF02C958DF0C14E596DB7ED9C416527F"
+        },
+        {
+            "path": "Assets/Characters/3_Enemy/Juggernaut/Mixamo_Taunt.fbx",
+            "hash": "590D7891247A143D53EA4AF37009DCF6EB6388B7AD5A9353AC354D0D5627B34A"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Skill_1_Eclair.anim",
+            "hash": "161DAED92626AD3A6EECEA2876A018AE51930687A007FE32FF2FE27F911CBC20"
+        },
+        {
+            "path": "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/Skill_2_Flêche de lumière.anim",
+            "hash": "AA3372D64115FCE97F604B6244E95DE0FE1ED4DC4766C3AE420339F3BA0E1A7C"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Skill_3_Entaille.anim",
+            "hash": "932A488E1B4F1DA4D6243D5C0CD2578C266DB1DD98D257DBA7AA590280ADED10"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Slill_4_JumpKick_Rupture_v2.anim",
+            "hash": "BAC4D466553F4B8F411BC24DAE6BB8EC1C866BA9378CD9251D0676EC3697335E"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Juggernaut_Assomoir.anim",
+            "hash": "75D0C99E34E9BD656AF212A875DD772FE9B00E8F3AAB8CBFDF655C467A976043"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "hash": "C2242AA94BCC2CF9902801C5F47F1A1E8B293737C03699C9A547931249E65B85"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_B_Inplace.FBX",
+            "hash": "72F2B441F4419A944E2F6C08693EE3FD474AE9A017D9CB7C7441569D880D28A3"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_FL_Inplace.FBX",
+            "hash": "C7BCA0BC24875AF67FDB0CA1FC7044DE67F10D52A7A2968153CAD6646B0D672C"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_FR_Inplace.FBX",
+            "hash": "B844BF9ABDC313BF89E2A2BA04CA19CD1386A62E1F816AFE5699310B9D5CADCC"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BL_Inplace.FBX",
+            "hash": "23029ED638B259934386815D03F24C4054F9572A0238F5C1A9FDE34B8FEAEBE7"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "hash": "EBE647D7DDB56C02DFCEFA0991FDFA30DA1FFDF4CAFFFDC7A27E4C1D7553A2FA"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_L_Inplace.FBX",
+            "hash": "C1017493BADB49E2137176E32FF66FE3F66B74121FE50374C72945E6297E525C"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_R_Inplace.FBX",
+            "hash": "B5CB22FF52CCEE5A68DFA809F817940F1B3A30089F3905D8512F9091062A0106"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Idle_Inplace.FBX",
+            "hash": "6090F4938E8201A3CC88AE4C679C4CDD8CEC11AAFD30EAB3F0A8FF4DF729CA16"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "hash": "C485C0F8C7F3CA3BEFC66AC8DFDFEA2489446E7E377813CD879317D665AAB932"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_B_Inplace.FBX",
+            "hash": "16F5870AA5B8F046ABAF7107A231A2625E81E8EF020AC8D94F302C432254B52F"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FL_Inplace.FBX",
+            "hash": "3BDC2B747DBBCD07A7AF1540B77584B2B6C7A89C61A6C4C268F149162B97D236"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FR_Inplace.FBX",
+            "hash": "3838121480779B6DF49A7F5BDF03C256042AB830FE695689A64D3EA81210B691"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_BL_Inplace.FBX",
+            "hash": "758717821F00071E3BE145AD086A0F6F6E69A92A2ED70640881BD1528DC57DFE"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_BR_Inplace.FBX",
+            "hash": "02982157E144C5D3E0FACF2D2462FFD08963FE08EABB74E1EC050B12F64F1A93"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_L_Inplace.FBX",
+            "hash": "DD7A49E9B5BCB249502DC02192C65447318546A05B02E807435CD20598ABA19A"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_R_Inplace.FBX",
+            "hash": "C41116E6B323651DF34A0ADB080A8791639671E0DC880E51D764DFA988DAAF3A"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Slide_B_1_Inplace.FBX",
+            "hash": "CFFC9D77B89A3BC3D93FA6F4B3B0D48FC2E8150EFE66B45829F23C4011B62B6F"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/ThresholdSequence_QTE.anim",
+            "hash": "1F40D4288CBA5E8C61D92AB4E8CF1A2E0840E98C816D11DF4CA64E751E1BE67B"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Threshold_Succes_Placeholder.anim",
+            "hash": "C164DAB7DEC0675156B7AC06327A39B5ACF9C024C1BEB592DD912C483339CF9E"
+        },
+        {
+            "path": "Assets/Characters/1_Squad/Lucian/Animation/Anim_SF_Block_v2.fbx",
+            "hash": "317F0789B4FBF1DDC0C53DE6F5FB897E9FFE4310134D8E6BF7F0299656B99BED"
+        },
+        {
+            "path": "Assets/Characters/4_Animations/Mixamo_Flame_Equip.fbx",
+            "hash": "878A1697D6E282D34905A1698BFD61BFC00505A30E4AAD810FF6E83AF0B13105"
+        },
+        {
+            "path": "Assets/Characters/4_Animations/Mixamo_Idle_Flame.fbx",
+            "hash": "11A338AECA4CF66E96193390C685925F97F976056D54F0B1AEB42BC0FF6BB88F"
+        },
+        {
+            "path": "Assets/Characters/6_UCC_Opsive/OpsiveIntegration/PlayerScriptedJumpController.cs",
+            "hash": "5942C12C35A6964B24AF4C54603245C1F199B2BE2B6D59F74A1699C63125A790"
+        }
+    ],
+    "preexistingWarnings": [
+        "Empty motion: Base Layer.Twinblades_Idle_Inplace_LucianAligned"
+    ],
+    "jumpBefore": "{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":100.0,\"jumpStartTakeoffNormalizedTime\":0.5,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":25.0,\"apexGravityMultiplier\":0.25,\"descentGravityMultiplier\":0.6000000238418579,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}\n{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":5.0,\"jumpStartTakeoffNormalizedTime\":0.12999999523162843,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":2.4000000953674318,\"apexGravityMultiplier\":0.2800000011920929,\"descentGravityMultiplier\":0.7200000286102295,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}\n{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":5.0,\"jumpStartTakeoffNormalizedTime\":0.12999999523162843,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":2.4000000953674318,\"apexGravityMultiplier\":0.2800000011920929,\"descentGravityMultiplier\":0.7200000286102295,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}\n{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":5.0,\"jumpStartTakeoffNormalizedTime\":0.12999999523162843,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":2.4000000953674318,\"apexGravityMultiplier\":0.2800000011920929,\"descentGravityMultiplier\":0.7200000286102295,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}",
+    "jumpAfter": "{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":100.0,\"jumpStartTakeoffNormalizedTime\":0.5,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":25.0,\"apexGravityMultiplier\":0.25,\"descentGravityMultiplier\":0.6000000238418579,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}\n{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":5.0,\"jumpStartTakeoffNormalizedTime\":0.12999999523162843,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":2.4000000953674318,\"apexGravityMultiplier\":0.2800000011920929,\"descentGravityMultiplier\":0.7200000286102295,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}\n{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":5.0,\"jumpStartTakeoffNormalizedTime\":0.12999999523162843,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":2.4000000953674318,\"apexGravityMultiplier\":0.2800000011920929,\"descentGravityMultiplier\":0.7200000286102295,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}\n{\"locomotion\":{\"instanceID\":0},\"locomotionBridge\":{\"instanceID\":0},\"animator\":{\"instanceID\":0},\"jumpHeight\":5.0,\"jumpStartTakeoffNormalizedTime\":0.12999999523162843,\"jumpStartPlanarSlowdown\":0.0,\"apexGravityEntryVelocity\":2.4000000953674318,\"apexGravityMultiplier\":0.2800000011920929,\"descentGravityMultiplier\":0.7200000286102295,\"fallingAnimationEntryVelocity\":-0.10000000149011612,\"hardLandingHeight\":3.0,\"landingHandoff\":{\"minimumContactSeconds\":0.15000000596046449,\"animationExitNormalizedTime\":0.8199999928474426,\"planarSettledSpeed\":0.11999999731779099,\"verticalSettledSpeed\":0.20000000298023225,\"planarDampingPerSecond\":7.0,\"maximumSettleSeconds\":0.550000011920929,\"locomotionBlendSeconds\":0.11999999731779099,\"preLandingProbeDistance\":1.2000000476837159,\"preLandingLeadSeconds\":0.14000000059604646}}",
+    "dodgeBefore": "\n{\"combatInput\":{\"instanceID\":109402},\"actionPresentation\":{\"instanceID\":0},\"mobilityInputBufferSeconds\":0.11999999731779099,\"dodgeForwardState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root\",\"dodgeBackwardState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root\",\"dodgeLeftState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root\",\"dodgeRightState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root\",\"dodge\":{\"cooldownSeconds\":0.25,\"entryBlendSeconds\":0.05000000074505806,\"recoveryNormalizedTime\":0.7200000286102295,\"movementCancelNormalizedTime\":0.699999988079071,\"dashProfiles\":[{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root\",\"distance\":2.5537548065185549,\"durationSeconds\":1.2333333492279053,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root\",\"distance\":5.968857288360596,\"durationSeconds\":1.5833333730697632,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root\",\"distance\":4.455868244171143,\"durationSeconds\":1.0833333730697632,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root\",\"distance\":4.509365558624268,\"durationSeconds\":1.0833333730697632,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_F_Root\",\"distance\":2.525212049484253,\"durationSeconds\":1.1666667461395264,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_B_Root\",\"distance\":5.723923206329346,\"durationSeconds\":1.6666667461395264,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_L_Root\",\"distance\":4.66292667388916,\"durationSeconds\":1.0,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_R_Root\",\"distance\":4.705214500427246,\"durationSeconds\":1.0,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355}]},\"dodgeStartupSeconds\":0.05000000074505806,\"dodgeInvulnerabilitySeconds\":0.18000000715255738}",
+    "dodgeAfter": "\n{\"combatInput\":{\"instanceID\":109402},\"actionPresentation\":{\"instanceID\":0},\"mobilityInputBufferSeconds\":0.11999999731779099,\"dodgeForwardState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root\",\"dodgeBackwardState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root\",\"dodgeLeftState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root\",\"dodgeRightState\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root\",\"dodge\":{\"cooldownSeconds\":0.25,\"entryBlendSeconds\":0.05000000074505806,\"recoveryNormalizedTime\":0.7200000286102295,\"movementCancelNormalizedTime\":0.699999988079071,\"dashProfiles\":[{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root\",\"distance\":2.5537548065185549,\"durationSeconds\":1.2333333492279053,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root\",\"distance\":5.968857288360596,\"durationSeconds\":1.5833333730697632,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root\",\"distance\":4.455868244171143,\"durationSeconds\":1.0833333730697632,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root\",\"distance\":4.509365558624268,\"durationSeconds\":1.0833333730697632,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_F_Root\",\"distance\":2.525212049484253,\"durationSeconds\":1.1666667461395264,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_B_Root\",\"distance\":5.723923206329346,\"durationSeconds\":1.6666667461395264,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_L_Root\",\"distance\":4.66292667388916,\"durationSeconds\":1.0,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355},{\"statePath\":\"Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_R_Root\",\"distance\":4.705214500427246,\"durationSeconds\":1.0,\"impulseSpeed\":16.0,\"distanceOverTime\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"blockedStepRatio\":0.3499999940395355}]},\"dodgeStartupSeconds\":0.05000000074505806,\"dodgeInvulnerabilitySeconds\":0.18000000715255738}"
+}

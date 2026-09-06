@@ -1,6 +1,45 @@
 # Input, UCC et caméra
 
+## Fenetres de reaction ennemies
+
+EnemyAttack ferme l'eligibilite B/Y au contact sans supprimer la protection
+de roulade liee a l'action. Il verifie cette protection et l'invulnerabilite
+avant garde, degats et feedback. La garde conserve sa reduction et ses inputs;
+un feedback de garde propre au SkillSO remplace le feedback global correspondant.
+Aucun effet camera ni changement de map n'est introduit par EnemyAttack.
+
+RealTimeCombatInput route les actions Counter/Y et Dodge/B avant garde/roulade
+normales vers TryHandleEnemyReaction. La map de combat et le mouvement restent
+actifs; seule une sequence de palier utilise CombatQTE et son overlay.
+Les actions canceled rearment individuellement B/Y si maintenus a l'ouverture.
+Une roulade temporelle refusee n'est jamais bufferisee; les autres boutons ne
+consomment pas l'opportunite. Y tardif garde son comportement de garde.
+TryDodgeImmediate reutilise les controles, la direction, les collisions et les
+priorites de CombatMobilityController; aucun second controleur n'est ajoute.
+
 ## Controller du Juggernaut
+
+Contrat simplifie des clips : OpenEnemyReactionOpportunity, orientation engagee, mouvement physique,
+hitbox et EndEnemyAttack. Aucune modification de camera depuis ces clips.
+Les anciens evenements Warning/Telegraph/ReactionWindow n'ont plus de recepteur
+AnimationEvent apres audit des assets; les services partages restent disponibles.
+La validation des quatre clips garantit une paire de degats equilibree et une
+fin unique. Les evenements physiques conservent leur temps auteur; aucun
+changement de locomotion ou de trajectoire n'est introduit par ce nettoyage.
+
+Le contre simple Countered est retire du controller gameplay Juggernaut et de
+son installateur. Le clip peut rester utilise par la Timeline CounterSkill.
+Le QTE d'attaque reutilise CombatQTE et QTEPanelController, sans autre map ni UI.
+La fenetre dure attackQteDuration en temps reel avec un handle global
+attackQteTimeScale; fermeture/annulation libere handle, map et intention tenue.
+Le CounterSkill conserve sa camera baked et le verrou UCC existant.
+
+CombatLocomotion seul utilise CombatLocomotionPlaybackRate. Idle, actions et
+QTE ne recoivent pas ce multiplicateur ; Animator.speed reste hors de ce flux.
+Les cycles directionnels sont harmonises sur le clip avant de chaque allure,
+sans modifier les evenements, orientations ou poses neutres. Le controle
+Toggle Selected Actor Facing Axes affiche root, bassin, torse et cible/reference
+selectionnee : les axes des os ne sont pas une consigne de correction automatique.
 
 Les clips gameplay sont des copies InPlace dediees au Juggernaut. Le mode
 ScriptedOnly interdit translation/yaw extraits hors cinematique ; UCC Lucian
@@ -24,11 +63,37 @@ la façade gameplay Lit à Opsive UCC et à sa caméra.
 ## Recuperation root motion
 
 `AnimationGroundRecovery`, dans `Assets/Scripts/Animation/`, est un garde-fou
-generique attache aux racines de Lucian, Juggernaut et GiantJuggernaut. Apres
+generique conserve pour les acteurs qui en ont encore besoin. Il est retire
+de Lucian et des prefabs joueurs migres : UCC y gere le support physique. Apres
 le root motion, il sonde le support sous le Transform reellement anime et ne
 corrige qu'une penetration vers le haut. Il laisse intacts la trajectoire
 horizontale, les sauts et les animations root valides; ce systeme ne depend pas
 du combat.
+
+## Gameplay joueur InPlace
+
+Pendant Jump_End, Landing et Landing_Hard, le pilote UCC bloque le deplacement
+horizontal et la rotation du joueur au contact du sol, y compris pendant le
+fondu de sortie. Le verrou se libere a la sortie de l'animation, a la
+desactivation et en cinematique ; les inputs maintenus sont alors acceptes.
+La gravite et les collisions restent actives. L'anticipation visuelle du
+landing en l'air ne bloque pas la trajectoire du saut.
+
+`Player_Model` utilise des clips gameplay InPlace, y compris ses sous-machines
+et Blend Trees. Les prefabs Lucian, Link, Luna et Mia partagent le contrat
+InPlace du bridge. Le saut de Lucian conserve son script, ses clips et ses
+reglages, dont la hauteur cible 100 ; la migration historique du saut ne doit
+pas etre relancee. Les reglages des huit esquives sont egalement preserves.
+
+Les nouvelles trajectoires d'action passent par une ability UCC concurrente,
+dans `UpdateDesiredMovement`, puis par les collisions et la gravite existantes.
+Le pilote libere son verrou a la fin, sur interruption ou desactivation et
+avant une cinematique. Il ne compense jamais une distance bloquee par un mur.
+Le temps du mouvement utilise la cadence UCC et la vitesse Animator, sans
+multiplier une seconde fois le temps local du combat. La politique de Root
+n'est plus deduite des tags ou des phases d'animation ; ces phases restent
+utiles a la presentation. Les seuls deltas Root joueur autorises appartiennent
+au relay d'une session cinematique explicite.
 
 ## Classes principales
 

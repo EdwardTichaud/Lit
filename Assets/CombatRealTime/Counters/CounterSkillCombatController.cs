@@ -19,9 +19,9 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     [Header("Counter Skills")]
     [SerializeField] private List<CounterSkillSO> availableSkills = new List<CounterSkillSO>();
-    [SerializeField, Tooltip("Riposte lancee immediatement par SouthButton dans une fenetre Counter valide.")]
+    [SerializeField, Tooltip("Riposte cinematique lancee uniquement apres un QTE d'attaque ennemie reussi.")]
     private CounterSkillSO defaultCounterSkill;
-    [SerializeField, Range(0f, 1f), Tooltip("Part des degats recus lorsque South est maintenu hors parade parfaite.")]
+    [SerializeField, Range(0f, 1f), Tooltip("Part des degats recus lorsque l'input de garde est maintenu.")]
     private float guardedDamageMultiplier = 0.4f;
 
     [Header("Guard Feedback")]
@@ -44,6 +44,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private bool usingPooledRig;
     private bool abortingPooledRig;
     private TimeManager.TimeRequestHandle counterPauseHandle;
+    private readonly List<EnemyCinematicState> suspendedForCounter = new List<EnemyCinematicState>();
 
     public bool IsCinematicPlaying => cinematicPlaying;
     public bool IsGuardHeld => guardHeld;
@@ -106,10 +107,18 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         }
 
         guardHeld = true;
+    }
+
+    public bool TryStartFromSuccessfulQte(RealTimeCombatEnemy attacker, SkillSO attack)
+    {
+        ResolveReferences();
         CounterSkillSO skill = ResolveDefaultCounterSkill();
-        if (cinematicPlaying || combatManager == null || skill == null || !combatManager.TryBeginCounterCinematic())
+        if (cinematicPlaying || combatManager == null || skill == null || skill.Timeline == null ||
+            (skill.CombatCinematicRigPrefab == null && director == null) ||
+            !combatManager.TryBeginCounterCinematic(attacker, attack))
         {
-            return;
+            Debug.LogWarning("[CounterSkill] QTE reussi mais riposte cinematique indisponible. L'attaque continue sans contre simple.", this);
+            return false;
         }
 
         CombatReactionTelegraphController.Instance?.Clear();
@@ -118,12 +127,23 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
         TimeManager manager = TimeManager.EnsureInstance();
         counterPauseHandle = manager != null ? manager.AcquireGlobalPause(this) : default;
+        foreach (var state in FindObjectsByType<EnemyCinematicState>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (state.IsSuspended) continue;
+            suspendedForCounter.Add(state);
+            state.SetSuspended(true);
+        }
         if (!StartCounterSkill(skill))
         {
+            RestoreCounterEnemies();
             ReleaseCounterPause();
             combatManager.CancelCounterCinematic();
             UnlockPlayer();
+            return false;
         }
+        guardHeld = false;
+        EnemySkills.PlayOutcomeFeedback(attack, combatManager.PlayerRoot, EnemyAttackOutcome.Countered);
+        return true;
     }
 
     public void EndGuard()
@@ -206,14 +226,14 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         }
     }
 
-    public static int ModifyGuardDamage(int damage)
+    public static int ModifyGuardDamage(int damage, bool playFeedback = true)
     {
         if (damage <= 0 || Instance == null || !Instance.guardHeld || Instance.cinematicPlaying)
         {
             return damage;
         }
 
-        Instance.PlayGuardedImpactFeedback();
+        if (playFeedback) Instance.PlayGuardedImpactFeedback();
         return Mathf.Max(0, Mathf.CeilToInt(damage * Instance.guardedDamageMultiplier));
     }
 
@@ -232,6 +252,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         cinematicPlaying = false;
         ReleaseCounterPause();
         combatManager?.CompleteCounterAttack();
+        RestoreCounterEnemies();
         UnlockPlayer();
         combatManager?.ResolveDeferredCombatOutcome();
         activeSkill = null;
@@ -255,6 +276,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (director != null && director.state == PlayState.Playing) director.Stop();
         ReleaseCounterPause();
         if (hadCounterState) combatManager?.CancelCounterCinematic();
+        RestoreCounterEnemies();
         UnlockPlayer();
         activeSkill = null;
         if (!usingPooledRig) cameraRig?.End();
@@ -274,6 +296,13 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (!counterPauseHandle.IsValid) return;
         TimeManager.Instance?.Release(counterPauseHandle);
         counterPauseHandle = default;
+    }
+
+    private void RestoreCounterEnemies()
+    {
+        foreach (var state in suspendedForCounter)
+            if (state != null) state.SetSuspended(false);
+        suspendedForCounter.Clear();
     }
 
     private void PlayGuardStartFeedback()

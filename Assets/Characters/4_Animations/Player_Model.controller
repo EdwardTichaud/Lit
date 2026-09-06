@@ -87,7 +87,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 947b92615dbc7c347aa6dd5daab04acd, type: 3}
+  m_Motion: {fileID: 7400000, guid: e4d3fd713d415b546a33a2e2ca2b1ac7, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -284,7 +284,7 @@ AnimatorState:
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 7400000, guid: 5c02e50f216eb1445a2dccf169ba0c00, type: 2}
-  m_Tag: RealTimeCombatRootMotion
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -309,8 +309,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 2eee9574d11a3e94d94c0b0d10bfc35d, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 0679cb065545edd4fa802776e5494da4, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -592,8 +592,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: e3dfd4c96625a0d41ae0ee6f4271c469, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: cd7c941830f277140aa2621ee0d8cf38, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -680,8 +680,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: c421e761ada49ce41bdbd4f3d05d77cc, type: 2}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 633be3fc5edac7a43a1313fc22f77247, type: 2}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -706,8 +706,34 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 2a416762e5197734ebfcee7606c66b81, type: 2}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 7bff13e5ed5ecdf4c8060a1e239628fb, type: 2}
+  m_Tag: RealTimeCombatInPlace
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
+--- !u!1102 &-4353000246675640658
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Twinblades_Idle_Inplace
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 7400000, guid: 63c42a314261def49a3a549d82121e1a, type: 3}
+  m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -859,8 +885,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 6cbff1cb03868ab418b3c890a6b9cb87, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: bc5865679ac312c40881bc374a131342, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -913,7 +939,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 3c63a86312265964889c6dae10213e68, type: 3}
+  m_Motion: {fileID: 7400000, guid: 3b1160b62faba2041ba642fc2b9140ee, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -939,8 +965,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 1091fcf4d36e4734f8f089a2923b3e1d, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400002, guid: 0307ba59a626bab479a5542f4fe9ae81, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -966,7 +992,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 3c63a86312265964889c6dae10213e68, type: 3}
+  m_Motion: {fileID: 7400000, guid: 3b1160b62faba2041ba642fc2b9140ee, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -1017,8 +1043,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 36f235524de185e44bcf9c2a3187a349, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: c1d369fcdbb130d4ba3720637a2b7095, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1096,7 +1122,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: f3431bc85c7aff848baf73c76c1adacc, type: 3}
+  m_Motion: {fileID: 7400000, guid: b8af9bff6d73bef45bc2fe41861a301b, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -1172,8 +1198,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 536ac88e462ae0b47b1ed2f7c2fb9517, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400002, guid: d83ba7b4e98fa7a45b32b8217d2d8004, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1225,8 +1251,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: a1a74536f0a74c04a8139728ae5a0150, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: c8e8769a0445b7246ba0a550de2fafd4, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1282,8 +1308,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: bb297f84c25d73042938ad4a09986c6f, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 66e3ace2f2f5b6b499443247bd0c41bf, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1339,8 +1365,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: ab7be681e532ec94bbb6449262e2b168, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400002, guid: 903d5f7fbe039ac448843a54b3d014eb, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1365,8 +1391,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 62d052a61a3e68c448e6716934fc2f14, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: b73514d3ac63f6b498752a92c3825cbb, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1391,8 +1417,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: f80c00c342150c543a14cb842f8a753a, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: b31b59d36da700a4d81540def66f283d, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1698,8 +1724,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: d0b2c4d963d9f0143884aad49a4c349c, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: c0549798d5c8142449bdf09838c79aea, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -1899,8 +1925,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 937d7e763fbf0a84fb07dc6e2175f737, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: c3c6f835b336b854284b9998038d487c, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -2306,7 +2332,7 @@ AnimatorState:
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 7400000, guid: 8a0a8d6b1b6feb24683287416aef46f2, type: 2}
-  m_Tag: RealTimeCombatRootMotion
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -2358,8 +2384,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: e9f9a5300ebeec241b3708751144afb1, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: e42e59eb170e10d4db7d76fccf3a8351, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -2384,8 +2410,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: cff8aa6a6d9cad5479e5e943c4bfeb95, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 37a39a4abdd19a44f93d86728dd1b6ef, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -2410,8 +2436,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 2bdb93475e04c134d885be04f49b0f00, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: df1580fd2fa41ab4890a0725f4ff1dc4, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -2437,7 +2463,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: f36ce0c871b8f5a4ea6d822e99e0525a, type: 3}
+  m_Motion: {fileID: 7400000, guid: dea3f9a158b40344997859db0dce75bb, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -2464,7 +2490,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 697a5b652b7ecb243be0c02b9668c011, type: 3}
+  m_Motion: {fileID: 7400000, guid: 28d8164ed37ecfe47bd9fb6cd7eba0d9, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -2491,7 +2517,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: df8a0d0287e35f24da74204738d24c42, type: 3}
+  m_Motion: {fileID: 7400000, guid: 2d9b2743fe10b684eb91007c4710475f, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -2518,7 +2544,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: f086628f7a53c1e4b9f45304ce3c95c2, type: 3}
+  m_Motion: {fileID: 7400000, guid: dce3d46c4f66df841a31f1aa7aaeab92, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -2622,7 +2648,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: f164eea279768174e9842e97d92fc518, type: 3}
+  m_Motion: {fileID: 7400002, guid: 30d82421e7d1dc1429b4642eae1d888d, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3301,7 +3327,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 44bd3b2ac9967c440a1e020a9801632a, type: 2}
+  m_Motion: {fileID: 7400000, guid: 96684f33533c0444897e34301f76439f, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3327,7 +3353,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 44bd3b2ac9967c440a1e020a9801632a, type: 2}
+  m_Motion: {fileID: 7400000, guid: 96684f33533c0444897e34301f76439f, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3354,7 +3380,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: f2b24e0f64b422c4c969de7e44ac56df, type: 2}
+  m_Motion: {fileID: 7400000, guid: 73a1faa9b31a8814595edd081f6158c7, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3661,8 +3687,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: e567a02f20cceb5469c8ba8fd44f229f, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 7a95c330558f88242bbeaebf7810ce2c, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -3715,7 +3741,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 7ac9514ac36ae2e4181353c010cd588b, type: 2}
+  m_Motion: {fileID: 7400000, guid: e93f00a3d412dc748a8c8345b5084708, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3741,8 +3767,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 1342be109c9aa314db3a3a6687c05b64, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 1330e50f8c5e9b44ca5d9d80c3246177, type: 2}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -3797,7 +3823,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 3c63a86312265964889c6dae10213e68, type: 3}
+  m_Motion: {fileID: 7400000, guid: 3b1160b62faba2041ba642fc2b9140ee, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3824,7 +3850,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: f9f647f45f9da6b43a19c72e4fef2976, type: 3}
+  m_Motion: {fileID: 7400000, guid: d2734b4e711b7f242a661e3d8c50b399, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3850,7 +3876,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 0ec704e33e4e6124687f8c0b8e809a39, type: 2}
+  m_Motion: {fileID: 7400000, guid: 6ef8f2661e1a6c24281e28b6a8b479f5, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3929,8 +3955,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 7431ecc82ea77124aad34249722a914e, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 645059ffcbf080e4cbcf55419067365d, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4057,8 +4083,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 454e633b07861d546a8b881d2910ffc8, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: c4580e3edc8ba82449528ca55834a024, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4083,8 +4109,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: dd97af298ca4e7749846d1c6ad5edd82, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 3c187c6455b20fb469a553fa70bdef90, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4109,8 +4135,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 17c8abf0b02405f4da926becda39cbff, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: b2662e308454c9b49a3f8fe5373afd72, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4135,8 +4161,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 7f04570ec97720d42b2bf641c5c56125, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 96b63af6c244e3a4a8a6af7dc6816c4b, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4150,7 +4176,7 @@ BlendTree:
   m_Name: Player_Locomotion_ForwardOnly_BlendTree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400002, guid: d5864aebdde35c942b96c48f37ba5a3d, type: 3}
+    m_Motion: {fileID: 7400002, guid: 31ebc9657c8e42f4094188904bdd0002, type: 3}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -4158,7 +4184,7 @@ BlendTree:
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400002, guid: b47cbb24d4baefa488856a86da417fc0, type: 3}
+    m_Motion: {fileID: 7400002, guid: 179eb55004230974f96f798444dacc47, type: 3}
     m_Threshold: 1.35
     m_Position: {x: 0, y: 1.35}
     m_TimeScale: 1
@@ -4166,7 +4192,7 @@ BlendTree:
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400002, guid: f164eea279768174e9842e97d92fc518, type: 3}
+    m_Motion: {fileID: 7400002, guid: 30d82421e7d1dc1429b4642eae1d888d, type: 3}
     m_Threshold: 3.25
     m_Position: {x: 0, y: 3.25}
     m_TimeScale: 1
@@ -4189,7 +4215,7 @@ BlendTree:
   m_Name: Player_MoveStart_ForwardOnly_BlendTree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 950cb532fb93ce54d9c94f33a0635516, type: 3}
+    m_Motion: {fileID: 7400000, guid: 5dfd00dc3373a0f43a27ef86fb44153c, type: 3}
     m_Threshold: 1.35
     m_Position: {x: 0, y: 1.35}
     m_TimeScale: 1
@@ -4212,7 +4238,7 @@ BlendTree:
   m_Name: Player_MoveStop_ForwardOnly_BlendTree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: e4c24dca4815c97479d36762533a0ae0, type: 3}
+    m_Motion: {fileID: 7400000, guid: 05a6490a5b2f06f488acc5ee572c74a6, type: 3}
     m_Threshold: 1.35
     m_Position: {x: 0, y: 1.35}
     m_TimeScale: 1
@@ -4332,7 +4358,7 @@ BlendTree:
   m_Name: Player_Flame_Locomotion_BlendTree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: 41f0ac36b3e858b42b0b34f1991064d9, type: 3}
+    m_Motion: {fileID: 7400000, guid: b4462e926cc581d458aea8fca5aae91a, type: 2}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -4340,7 +4366,7 @@ BlendTree:
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: f1807c0d8bf8ec74290ec9cf9e992181, type: 3}
+    m_Motion: {fileID: 7400000, guid: 8ac48eed80389c046ac45c3eba7ef5f9, type: 2}
     m_Threshold: 1.35
     m_Position: {x: 1.35, y: 0}
     m_TimeScale: 1
@@ -4348,7 +4374,7 @@ BlendTree:
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: f1807c0d8bf8ec74290ec9cf9e992181, type: 3}
+    m_Motion: {fileID: 7400000, guid: 8ac48eed80389c046ac45c3eba7ef5f9, type: 2}
     m_Threshold: 2.5
     m_Position: {x: 2.5, y: 0}
     m_TimeScale: 1.04
@@ -4356,7 +4382,7 @@ BlendTree:
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: f1807c0d8bf8ec74290ec9cf9e992181, type: 3}
+    m_Motion: {fileID: 7400000, guid: 8ac48eed80389c046ac45c3eba7ef5f9, type: 2}
     m_Threshold: 3.25
     m_Position: {x: 3.25, y: 0}
     m_TimeScale: 1.12
@@ -4390,8 +4416,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: beba5bf3760b68e4382080c23cca5c26, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 7e99a2726baa3f342b522905ccdd6069, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4441,8 +4467,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 66d32c0851ce7cd48aac03699a7ea11f, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 9e133b016786246428aedcf6835423ee, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4489,8 +4515,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 80faaeb97f1383e40bfc96db2ba11cb1, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400002, guid: bad8b5da7e973e741a6a82e3f32291c3, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4520,6 +4546,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!1102 &4969246511777826196
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Twinblades_Idle_Inplace_LucianAligned
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 7400000, guid: 435fbfc02c5b2ca419c1c60b6da164fc, type: 2}
+  m_Tag: 
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!1101 &5182663389176877366
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -4565,7 +4617,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: caf4ceb2d13b8e444981a4e255c3b4e8, type: 2}
+  m_Motion: {fileID: 7400000, guid: 2250c8b056727744897bd7a47aedf44b, type: 2}
   m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -4861,6 +4913,12 @@ AnimatorStateMachine:
   - serializedVersion: 1
     m_State: {fileID: 2821029450909009566}
     m_Position: {x: 920, y: 980, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -4353000246675640658}
+    m_Position: {x: 1942.2125, y: 901.9742, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: 4969246511777826196}
+    m_Position: {x: 1300.8835, y: 1071.9108, z: 0}
   m_ChildStateMachines:
   - serializedVersion: 1
     m_StateMachine: {fileID: -8744604001195188168}
@@ -4904,7 +4962,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: df5b33c84ed242a449dc5ffbba9520c0, type: 2}
+  m_Motion: {fileID: 7400000, guid: c3d8108daefd83d45a509c07ea6ed571, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -5049,8 +5107,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 6e6ce5d65c303fc47a58c7f861d21ac9, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400002, guid: df1e6b98091bd5b448562e472ee7d42e, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -5143,8 +5201,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 4707cb17256958b4fbe6cc965bc0bb4d, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 707ed25a34ca15d47acc5e83dece26fb, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -5170,7 +5228,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 92641b99ff3967a4cb61d5f8cae63e13, type: 2}
+  m_Motion: {fileID: 7400000, guid: 29bef0ff6a0e30d4781f8f9538eb1d84, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -5196,8 +5254,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 5bde145ebaa98934cbf3fbc21746281a, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 6cdc6a99a3497e842a98cb857e068747, type: 2}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -5248,8 +5306,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 3a04f52fdd7c0d24cba0d79544de9e54, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 4da2f53b0c34d3249a6f4549aa0c3a6a, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -5359,8 +5417,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: f37f637f20cc5124fbc4e0b68385c979, type: 2}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 90065e461f445774282e46bac5ba3899, type: 2}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -5407,8 +5465,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400002, guid: 2538680e13e294d46b1ca1a039113733, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 63c42a314261def49a3a549d82121e1a, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -5433,8 +5491,8 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: ac7fa07ad0751f7438eeb727666e06ab, type: 3}
-  m_Tag: RealTimeCombatRootMotion
+  m_Motion: {fileID: 7400000, guid: 5fecd8c7e3e8e6b42b0ad55473a9b6f6, type: 3}
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 

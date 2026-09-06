@@ -66,7 +66,9 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     public bool IsHitRecovering => hitRecoveryRoutine != null;
     public int CommittedRetaliationDamage => committedRetaliationDamage;
     public SkillSO ActiveSkill => activeSkill;
+    public int ActionSequenceId { get; private set; }
     public bool HasRetaliationPending => activeSkill != null;
+    public bool IsAttackCommitted => activeSkill != null || GetComponent<EnemyCombatBrain>()?.IsAutonomousActionActive == true;
     public bool HasStoredLightDamage => storedMaximumLightDamage > 0;
     public bool IsRetaliationReady => activeSkill == null && storedMaximumLightDamage > 0 && Time.time >= retaliationReadyAt;
 
@@ -105,6 +107,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     private void OnDisable()
     {
+        CombatHealthThresholdController.Instance?.EndEnemyReactionAction(this);
         CancelHitRecovery();
     }
 
@@ -276,6 +279,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         activeSkill = PeekRetaliationSkill(meleePreference);
+        ActionSequenceId++;
         if (activeSkill == null || enemySkills == null || !enemySkills.SetActiveSkill(activeSkill))
         {
             activeSkill = null;
@@ -324,6 +328,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         activeSkill = skill;
+        ActionSequenceId++;
         plannedRetaliationSkill = null;
         committedRetaliationDamage = Mathf.Max(0, Mathf.RoundToInt(skill.Damages));
         physicsMotor?.BeginEnemyAction(skill);
@@ -354,6 +359,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         activeSkill = skill;
+        ActionSequenceId++;
         plannedRetaliationSkill = null;
         // A visible player is enough to start an encounter. Before the first
         // player hit there is no light-damage ledger, so use the skill's
@@ -508,7 +514,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     public void PlayHitAnimation()
     {
-        if (deathAnimationPlayed ||
+        if (IsAttackCommitted || deathAnimationPlayed ||
             (health != null && health.IsDead) ||
             animator == null ||
             string.IsNullOrWhiteSpace(hitAnimatorState))

@@ -104,9 +104,12 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             return;
         }
 
-        LocalPlayerInput.SetCombatInputActive(false);
+        ClosePalette(resolveIfMissing: false);
+        // Release only this component's suppression, even if its local flag is stale.
+        LocalInputRouter.PopInteractionAndJumpSuppression(this);
+        CounterSkillCombatController.Instance?.EndGuard();
         GamepadInputContextStack.Pop(this);
-        ClosePalette();
+        LocalPlayerInput.SetCombatInputActive(false);
         ClearBasicSkillCombo();
         Trace("Combat input inactive | " + InputDiagnostics + ".");
     }
@@ -228,7 +231,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             counterAction.started += OnCounterStarted;
             counterAction.canceled += OnCounterCanceled;
         }
-        if (dodgeAction != null) dodgeAction.performed += OnDodge;
+        if (dodgeAction != null)
+        {
+            dodgeAction.performed += OnDodge;
+            dodgeAction.canceled += OnDodgeCanceled;
+        }
         if (basicAttackAction != null) basicAttackAction.performed += OnBasicAttack;
         if (jumpAction != null) jumpAction.performed += OnJump;
         if (paletteAction != null)
@@ -256,7 +263,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             counterAction.started -= OnCounterStarted;
             counterAction.canceled -= OnCounterCanceled;
         }
-        if (dodgeAction != null) dodgeAction.performed -= OnDodge;
+        if (dodgeAction != null)
+        {
+            dodgeAction.performed -= OnDodge;
+            dodgeAction.canceled -= OnDodgeCanceled;
+        }
         if (basicAttackAction != null) basicAttackAction.performed -= OnBasicAttack;
         if (jumpAction != null) jumpAction.performed -= OnJump;
         if (paletteAction != null)
@@ -274,23 +285,40 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnCounterStarted(InputAction.CallbackContext context)
     {
+        if (!paletteOpen && !IsCounterCinematicPlaying &&
+            CombatHealthThresholdController.Instance != null &&
+            CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Counter)) return;
         if (!paletteOpen && !IsCounterCinematicPlaying) CounterSkillCombatController.Instance?.BeginGuard();
     }
 
     private void OnCounterCanceled(InputAction.CallbackContext context)
     {
+        CombatHealthThresholdController.Instance?.ReleaseEnemyReactionButton(EnemyAttackReaction.Counter);
         CounterSkillCombatController.Instance?.EndGuard();
     }
 
     private void OnDodge(InputAction.CallbackContext context)
     {
         if (IsCounterCinematicPlaying) return;
+        if (!paletteOpen && CombatHealthThresholdController.Instance != null &&
+            CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Dodge)) return;
 
         RealTimeCombatManager.Instance?.RegisterReaction(RealTimeCombatReaction.Dodge);
         if (!paletteOpen)
         {
             GetComponent<CombatMobilityController>()?.RequestDodge();
         }
+    }
+
+    public bool IsReactionButtonHeld(EnemyAttackReaction reaction)
+    {
+        InputAction action = reaction == EnemyAttackReaction.Dodge ? dodgeAction : counterAction;
+        return action != null && action.enabled && action.ReadValue<float>() > .5f;
+    }
+
+    private void OnDodgeCanceled(InputAction.CallbackContext context)
+    {
+        CombatHealthThresholdController.Instance?.ReleaseEnemyReactionButton(EnemyAttackReaction.Dodge);
     }
 
     private void OnBasicAttack(InputAction.CallbackContext context)

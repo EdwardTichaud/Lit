@@ -55,9 +55,10 @@ MonoBehaviour:
   preferredCombatDistance: 2.6
   pursuitRadius: 35
   disengagePauseSeconds: 1
+  returnReengageDistance: 6
   observationSeconds: {x: 0.4, y: 0.8}
   guardChance: 0.08
   guardCooldownSeconds: 4
   guardDurationSeconds: 0.6
   guardedDamageMultiplier: 0.45
-  trackingDegreesPerSecond: 180
+  trackingDegreesPerSecond: 720

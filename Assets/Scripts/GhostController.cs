@@ -726,6 +726,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public bool InteractWithGhost()
     {
+        if (TryGetComponent<NinaGhostInteraction>(out var cycleInteraction))
+            return cycleInteraction.Interact(this);
+
         if (ghostData == null)
         {
             return false;

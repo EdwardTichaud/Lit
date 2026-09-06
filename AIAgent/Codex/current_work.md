@@ -1,11 +1,178 @@
 # Travail en cours
 
+## Cycle Nina
+
+Scene District_1_Enigme_Ghost_Nina et donnees creees, ajoutees au manifest District_1.
+Mort scientifique -> Timeline groupe -> Existence des chimeres; lecture Item_Edward
+-> Dilemme Edouard -> Nina Dead/sang; visite Dead apres cinematic -> Scar -> Cicatrice.
+Progression serveur via variables monde persistantes, replication active NGO.
+SkillsManager compose les recompenses avec les skills auteur sans modifier CharacterData.
+Modeles, clips, Timeline, placement final et SkillSO Cicatrice restent explicitement a assigner.
+Voir Assets/Narrative/NinaCycle/README.md. Validation multijoueur et visuelle restante.
+Compilation C# runtime/editeur validee avec les references et le compilateur Unity.
+Tests NUnit de prerequisites et de lecture ajoutes, non executes dans Unity.
+
+## EnemyAttack : impact instantane unifie
+
+EnemyAttack(SkillSO) remplace les evenements ennemis separes de contact et de
+VFX. EnemySkills echantillonne les colliders uniquement a cet instant, deduplique
+les victimes et refuse un second impact du meme ActionSequenceId. La resolution
+centrale preserve esquive ciblee, invulnerabilite, reduction de garde et affichage
+des PV effectivement perdus. SkillSO expose les feedbacks degat/garde/contre;
+ses VfxCues existants sont conserves. Aucun effet camera ajoute.
+Les quatre attaques Juggernaut sont migrees, Assomoir a 1.70 s explicitement.
+GiantJuggernaut Jump conserve sa condition de cible au sol dans enemyImpact.
+Les impacts cinematiques Light/Counter/Skill restent distincts et inchanges.
+Compilation runtime et editeur reussie; tests auteur ajoutes/actualises.
+Execution des tests Unity et validation en combat non realisees dans cette passe.
+
+## Affichage des degats recus
+
+SquadCharacterController.RecordDamageApplied affiche le montant effectivement
+subi avec CombatDamageWorldFeedback, y compris les coups UCC hors gestionnaire
+de combat. Les appels Lit vers UCC rapportent une seule fois leur resultat mesure;
+le callback UCC ne duplique pas ce feedback. Le gestionnaire conserve seulement
+l'affichage de son fallback CombatHealth. Aucune sante disponible = aucun degat
+fictif ni nombre affiche. Les feedbacks ennemis restent inchanges.
+
+## Reactions ennemies invisibles B/Y
+
+OpenEnemyReactionOpportunity ouvre B pendant 0.5 s et Y pendant 0.2 s reelles.
+Le ralenti global 0.4 est configurable sur CombatHealthThresholdController
+(1 = sans ralenti). Aucun panneau ni changement de map; les paliers gardent
+leurs QTE visibles. B doit demarrer une roulade immediate sans buffer avant
+d'accorder une protection ciblee au coup; Y utilise uniquement le CounterSkill.
+ActionSequenceId distingue aussi deux coups consecutifs utilisant le meme skill.
+Le handle de temps, les echeances et la protection sont independants des paliers.
+Les clips Juggernaut et l'installateur utilisent le nouveau declenchement.
+Assomoir utilise maintenant EnemyAttack a 1.70 s, timing confirme par l'auteur.
+Compilation runtime/editeur reussie. Tests de fenetres, doublons, maintien et
+identite ajoutes; execution Unity a revalider, aucun rapport recent obtenu.
+Validation de combat Play Mode non realisee (capture de l'editeur indisponible).
+
+## EnemyRush 3D
+
+La ruee utilise le vecteur cible complet XYZ et un CapsuleCast dans cette
+direction. Pendant la ruee, le moteur remplace la verticale balistique par
+la verticale de ruee; a l'arret, la gravite reprend sans impulsion ascendante
+residuelle. Un obstacle termine la ruee. La demande d'atterrissage reste
+memorisee sans ecraser sa trajectoire; le timeout aerien reste prioritaire.
+Distance d'arret mesuree en 3D. BeginEnemyRush applique maintenant une vitesse
+immediate dans une direction capturee une fois, sans homing ni interpolation.
+Fin automatique apres rushImpulseDuration (0.35 s locales par defaut), distance
+maximale ou collision. EndEnemyRush retire du clip Assomoir et du contrat auteur;
+l'API interne reste disponible pour annulation. Acceleration et homing historiques
+retires. Compilation verifiee; validation en combat restant a effectuer.
+
+## Selection adaptee aux skills equipes
+
+EnemyCombatBrain applique la preference melee seulement si un pattern terrestre
+complet est equipe. Un equipement uniquement aerien poursuit/recul selon sa portee
+et choisit ses attaques sans tirage alternatif a 25 %. Un unique pattern peut se
+repeter apres son cooldown et sa recuperation; les limites de repetition restent
+actives avec plusieurs patterns equipes valides. Les combos incomplets sont exclus.
+La validation editeur n'impose plus quatre skills equipes au Juggernaut.
+
+## Juggernaut : evenements essentiels
+
+Les quatre SkillSO utilisent un seul QTE Y (Strike/Followup 0.55 s, Sweep
+0.625 s, Assomoir 0.837 s). Warning, telegraphie, reactions legacy et VFX
+hors impact retires des clips/profils. Les deplacements gardent leurs timings.
+Assomoir ouvre/ferme sa hitbox au meme instant (1.70 s). Les ripostes de palier
+reutilisent ces evenements avec detection spatiale et impact unique.
+Le menu Lit/Combat/Clean Juggernaut Animation Events effectue le nettoyage
+cible sans reconstruire patterns, controller ou trajectoires. Les deux
+installateurs deleguent au meme contrat pour ne pas recreer les warnings.
+HitPlayerIf reste present pour GiantJuggernaut; les anciens dash et selections
+par evenements sans references ont ete retires. Verification visuelle en combat
+encore necessaire; ne pas confondre tests EditMode et validation Play Mode.
+Verification du nettoyage : compilation runtime/editeur reussie, validation
+prefab/bindings reussie, 22/22 tests EditMode passes (dont les quatre clips et
+leur reinstallation idempotente), rapport Library/EnemyMotionTests.xml.
+
+## Attaques engagees et contre QTE
+
+Une attaque ennemie engagee ignore Hit/Stagger. Un evenement ennemi QTE(A/B/X/Y)
+ouvre le panneau existant (0.5 s reelle, temps global 0.4 configurable). La reussite
+lance uniquement le CounterSkill cinematique equipe; un echec laisse le coup continuer.
+Mort et LightSkill restent prioritaires. Un palier Pending attend la fin du coup
+et empeche le coup suivant du combo. Countered retire du controller Juggernaut,
+mais son clip cinematique conserve. Compilation runtime reussie et 18 tests
+EditMode passes, dont PendingThresholdDoesNotSuspendCommittedAttack.
+Validation Play Mode encore necessaire; les boutons QTE des clips restent auteur.
+
 ## Objectif actuel
 
 Utiliser `AIAgent` comme espace documentaire leger pour preparer des prompts
 Codex efficaces et economes en tokens.
 
 ## Etat actuel
+
+Atterrissage joueur : verrou horizontal et rotation dans le cycle UCC tant
+que Jump_End/Landing/Landing_Hard restent visibles et que le joueur touche
+le sol. Restitution des inputs a la sortie, liberation en cinematique ou
+desactivation. Script, impulsion et trajectoire du saut inchanges.
+Compilation Unity et test Play Mode reussis : landing normal/fort immobiles
+malgre inertie et direction maintenue, rotation bloquee et inputs restitues.
+
+Orientation retour : le controleur de locomotion regarde le point de retour
+pendant la pause, puis le prochain virage NavMesh durant le trajet. Yaw NavMesh
+desactive pour eviter deux rotations concurrentes. Arret/reengagement nettoient
+cette consigne ; orientation de spawn conservee a l'arrivee. Compilation reussie,
+test de nettoyage ajoute ; verification visuelle en jeu restante.
+
+Reengagement au retour : vision normale reautorisee pendant retour/pause,
+ou proximite 360 degres a 6 m (returnReengageDistance) avec obstruction testee.
+Le joueur doit rentrer a 0.5 m a l'interieur de la zone de poursuite pendant le
+retour. Arret du chemin de retour et decision neuve ; aucune attaque gratuite.
+Compilation reussie, test de proximite arriere ajoute, validation en jeu restante.
+
+Sortie de combat par fuite : decision de desengagement avant EnsureReady NavMesh.
+Le retour physique peut attendre le NavMesh sans garder le combat actif.
+SetInputActive(false) libere la garde et la suppression d'interactions de son
+proprietaire ; EndCombat restaure Exploration et rescane les interactions.
+Compilation C# reussie ; regression ajoutee pour retour avec ennemi vivant et
+navigation indisponible. Validation en jeu echelles/items apres fuite a effectuer.
+
+Les 92 ressources d'animation utilisees par Lucian (clips et modeles FBX)
+sont regroupees dans `Assets/Characters/1_Squad/Lucian/Animation`. Les GUID,
+identifiants de sous-clips et contenus sont conserves ; les references partagees
+restent valides. Les chemins Editor et le manifeste suivent ce rangement.
+
+2026-09-06 : migration gameplay Lucian InPlace appliquee dans Unity : 57 clips
+remplaces (17 copies dediees, 40 equivalents fournisseur), 33 profils d'etat
+mesures sur Lucian et appliques dans le cycle UCC avant collisions. Les clips
+sources, le saut complet (hauteur cible 100), les reglages d'esquive et les
+assets InPlace preexistants sont proteges par empreintes. Le Root gameplay
+du bridge et l'ancien enum joueur sont retires ; le relay cinematique reste
+borne par son jeton. Les compagnons partages conservent leurs reglages utiles.
+Audit/prevalidation puis application explicite, migration idempotente,
+installateur sans reecriture inutile et validateur avant build ajoutes.
+Compilation Unity reussie ; 11 tests Editor passes. Le parcours physique UCC
+sur sol libre et contre un mur passe, ainsi que le retour InPlace apres session
+cinematique. Annulation, desactivation et interruption cinematique liberent
+leur verrou dans les essais avec et sans Domain Reload. Rapports :
+`Library/PlayerInPlaceTests.xml`, `Library/PlayerInPlaceRuntimeTests.xml` et
+`Library/PlayerInPlaceRuntimeReloadTests.xml`.
+L'outil Editor preexistant `MainMenuMissingPrefabRepair` tente d'ouvrir une
+scene lors du Domain Reload en Play Mode ; cet effet est isole dans le montage
+du test, sans changer cet outil. Les references deja manquantes du controller
+(motion LucianAligned, destinations 812330941234567102/105 et masque de la
+couche Flame) restent intactes ; aucune destination n'a ete inventee.
+La recette visuelle complete (huit directions, contacts, toutes les actions,
+sauts compares en scene, ralenti, cinematiques Timeline et host/client) reste
+a effectuer ; les tests automatises ne valent pas validation de ces parcours.
+
+2026-09-06 : rotation Juggernaut 720 deg/s dans le profil. Cadence locale a
+CombatLocomotion, reference marche/course 1.8/3.6 m/s, plafond 1.35,
+hysteresis activite .08/.03 m/s et retour Idle pendant un fondu entrant.
+Commande Update Juggernaut Locomotion sans reinstallation des patterns.
+Axes de diagnostic via Lit/Combat/Toggle Selected Actor Facing Axes.
+Pas de correction d'offset sans preuve ; calibration visuelle des appuis et
+dix cycles District 1 non encore valides. Compilation C# reussie.
+14 tests Edit Mode passes (Library/EnemyMotionTests.xml), dont cadence et
+hysteresis. Mise a jour controller appliquee dans Unity. Capture UI indisponible
+(SetIsBorderRequired 0x80004002) : aucun resultat visuel Play Mode revendique.
 
 Juggernaut InPlace : mode ScriptedOnly, clips dedies neutralises, avancees
 scriptes Frappe/Followup et preference approche melee. Les composants

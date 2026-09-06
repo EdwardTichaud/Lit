@@ -7780,8 +7780,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 345b9152cdf84d6d95c0ab5f4e108d61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySkills
-  enemy: {fileID: 0}
-  animationContract: {fileID: 0}
+  enemy: {fileID: 900000000000000002}
+  animationContract: {fileID: 4532544328156619208}
   animator: {fileID: 4280753887478595955}
   timeDomain: {fileID: 0}
   casterVfxPoint: {fileID: 0}
@@ -7850,6 +7850,8 @@ MonoBehaviour:
     runSpeedThreshold: 3.4
   facingSpeedDegreesPerSecond: 540
   animatorDampTime: 0.08
+  walkCycleSpeed: 1.8
+  runCycleSpeed: 3.6
   navMeshEdgeClearance: 0.45
   clearanceSearchRadius: 2
   clearanceSearchSamples: 12
@@ -7905,14 +7907,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 99444493
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 4166186824
+  InScenePlacedSourceGlobalObjectIdHash: 1905252808
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1

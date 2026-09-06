@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: NinaCycle
+  m_EditorClassIdentifier: Assembly-CSharp::NinaCycleDefinition
+  cycleId: district1.nina
+  existence: {fileID: 11400000, guid: c5df294c93ed1724692a1b16d61f311d, type: 2}
+  dilemma: {fileID: 11400000, guid: e45994b22ba98e948830e4f460222de7, type: 2}
+  cicatrice: {fileID: 0}
+  deathDelay: 3
+  dialogueSeconds: 4
+  idleLine: "\xC9... douard ? Tu reviendras ? Je ne veux pas rester seule..."
+  deadLine: "Le souvenir se pr\xE9cise. Nina ne bouge plus. M\xEAme la science ne
+    pouvait justifier ce qu'on lui avait fait."
+  scarLine: Certaines blessures ne se referment jamais. Prends cette force, et souviens-toi
+    d'elle.

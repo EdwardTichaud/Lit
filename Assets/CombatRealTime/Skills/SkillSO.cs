@@ -145,11 +145,11 @@ public enum SkillVfxDelivery
     ProjectileFromPlayerHand
 }
 
-public enum PlayerActionRootMotionMode
+public enum PlayerActionMovementPolicy
 {
-    InPlace,
-    AuthoredRootMotion,
-    ScriptedDash
+    VisualOnly = 0,
+    StateTrajectory = 1,
+    ExistingScripted = 2
 }
 
 public enum PlayerActionFacingMode
@@ -184,13 +184,12 @@ public sealed class EnemyActionMotionProfile
     [Min(0.1f), Tooltip("Securite : l'ennemi force son retour au sol apres cette duree.")]
     public float maximumAirborneSeconds = 2.5f;
     [Header("Scripted Rush")]
-    [Tooltip("Autorise BeginEnemyRush a piloter le plan horizontal. La verticale reste exclusivement physique.")]
+    [Tooltip("Autorise une impulsion XYZ vers la cible, sans suivi ni evenement de fin obligatoire.")]
     public bool enableHomingRush;
-    public bool lockRushDestination;
-    [Min(0.1f)] public float rushMaximumSpeed = 14f;
-    [Min(0.1f)] public float rushAcceleration = 46f;
-    [Min(0.1f)] public float rushDeceleration = 62f;
-    [Min(0f), Tooltip("Distance horizontale conservee avant la cible pendant la ruée.")]
+    [Min(0.1f), Tooltip("Vitesse immediate de l'impulsion en metres par seconde.")] public float rushMaximumSpeed = 14f;
+    [Min(0.01f), Tooltip("Duree maximale de l'impulsion en secondes locales, puis reprise de la gravite.")]
+    public float rushImpulseDuration = 0.35f;
+    [Min(0f), Tooltip("Distance 3D conservee avant la cible pendant la ruee (X/Y/Z).")]
     public float rushStoppingDistance = 1.25f;
     [Min(0f), Tooltip("Marge supplementaire employee par le CapsuleCast anti-traversee.")]
     public float rushCollisionSkin = 0.04f;
@@ -206,15 +205,33 @@ public sealed class EnemyActionMotionProfile
 [Serializable]
 public sealed class EnemySkillImpactShape
 {
+    [Tooltip("EnemyAttack applique uniquement aux cibles actuellement au sol.")]
+    public bool requireGroundedTarget;
     public Vector3 offset = new Vector3(0f, 1f, 1.3f);
     [Min(.05f)] public float radius = 1.4f;
     [Range(1f, 360f)] public float arcDegrees = 110f;
     public LayerMask targetMask = ~0;
 }
 
+public enum EnemyAttackOutcome { Miss, Damaged, Guarded, Avoided, Countered }
+
+[Serializable]
+public sealed class EnemyAttackFeedbackProfile
+{
+    public GameObject damageVfx;
+    public AudioClipSO damageAudio;
+    public GameObject guardVfx;
+    public AudioClipSO guardAudio;
+    public GameObject counterVfx;
+    public AudioClipSO counterAudio;
+    [Min(0f)] public float height = 1.2f;
+    [Min(.1f)] public float lifetimeSeconds = 3f;
+}
+
 [Serializable]
 public sealed class PlayerActionPresentationProfile
 {
+    public PlayerActionMovementPolicy movementPolicy = PlayerActionMovementPolicy.StateTrajectory;
     [Range(0f, 0.25f)] public float entryBlendSeconds = 0.06f;
     [Range(0.05f, 1f)] public float chainNormalizedTime = 0.7f;
     [Range(0.05f, 1f), Tooltip("Instant ou une BasicSkill bufferisee interrompt le clip courant. Il est automatiquement borne entre l'ouverture de chaine et la recuperation.")]
@@ -226,11 +243,6 @@ public sealed class PlayerActionPresentationProfile
     [Header("Motion Handoff")]
     [Tooltip("Conditions physiques et Animator a satisfaire avant de rendre l'action a la locomotion.")]
     public MotionHandoffProfile handoff = MotionHandoffProfile.CreateActionDefault();
-    [Header("Root Motion")]
-    [Tooltip("InPlace: aucun deplacement racine. AuthoredRootMotion: le clip deplace UCC. ScriptedDash: le script pilote le dash.")]
-    public PlayerActionRootMotionMode rootMotionMode = PlayerActionRootMotionMode.AuthoredRootMotion;
-    [Tooltip("Autorise un BasicSkill aerien a conserver son root motion pendant un saut. La gravite UCC reste toujours active.")]
-    public bool allowAirborneRootMotion;
     [Header("Facing And Inertia")]
     [Tooltip("UccBody : la capsule UCC conserve l'orientation vers la cible apres l'action. VisualOnly ne tourne que le rig et convient aux poses non dirigees.")]
     public PlayerActionFacingMode facingMode = PlayerActionFacingMode.UccBody;
@@ -249,6 +261,8 @@ public sealed class PlayerActionPresentationProfile
 public class SkillSO : ScriptableObject
 {
     public EnemySkillImpactShape enemyImpact = new EnemySkillImpactShape();
+    [Header("EnemyAttack - Result Feedback (No Camera)")]
+    public EnemyAttackFeedbackProfile enemyAttackFeedback = new EnemyAttackFeedbackProfile();
     [Header("Identity")]
     public string skillName;
     [TextArea] public string description;

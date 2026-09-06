@@ -53,40 +53,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool orientLookSourceFromMovement = true;
     [SerializeField, Tooltip("Configure the Rigidbody as kinematic/no-gravity while UCC is active.")]
     private bool configureRigidbodyForOpsive = true;
-    [Header("Root Motion Locomotion")]
-    [SerializeField, Tooltip("Lets UCC consume Animator root motion for grounded locomotion instead of using motor-force displacement.")]
-    private bool useRootMotionLocomotion = false;
-    [SerializeField, Min(0f)] private float rootMotionSpeedMultiplier = 1.04f;
-    [SerializeField, Min(0f)] private float rootMotionRotationMultiplier = 1f;
-    [SerializeField, Tooltip("Lets UCC/look-source rotation drive regular root-motion locomotion so directional clips cannot lock the body facing. Pivot clips can still use authored root rotation.")]
-    private bool preferLookSourceRotationForRootMotionLocomotion = true;
-    [SerializeField, Tooltip("Allows authored root rotation during start/stop clips. Keep disabled when clips contain little or conflicting deltaRotation.")]
-    private bool allowRootMotionRotationDuringStartStop = false;
-    [SerializeField, Tooltip("Zeros tiny idle root-motion displacement so authored idle drift cannot vibrate the capsule at rest.")]
-    private bool suppressIdleRootMotionPosition = true;
-    [SerializeField, Min(0f), Tooltip("Maximum planar speed still considered idle for root-motion drift suppression.")]
-    private float idleRootMotionVelocityThreshold = 0.06f;
-    [SerializeField, Tooltip("Applies additional root-motion tuning based on the active grounded animation phase.")]
-    private bool useRootMotionPhaseMultipliers = true;
-    [SerializeField, Min(0f)] private float rootMotionLoopSpeedScale = 1.02f;
-    [SerializeField, Min(0f)] private float rootMotionLoopRotationScale = 1f;
-    [SerializeField, Min(0f)] private float rootMotionStartSpeedScale = 1.18f;
-    [SerializeField, Min(0f)] private float rootMotionStartRotationScale = 1f;
-    [SerializeField, Min(0f)] private float rootMotionStopSpeedScale = 0.7f;
-    [SerializeField, Min(0f)] private float rootMotionStopRotationScale = 0.94f;
-    [SerializeField, Min(0f)] private float rootMotionPivotSpeedScale = 0.88f;
-    [SerializeField, Min(0f)] private float rootMotionPivotRotationScale = 1.12f;
-    [SerializeField, Tooltip("Keeps Animator.applyRootMotion enabled while UCC reads deltaPosition/deltaRotation through AnimatorMonitor.")]
-    private bool preserveAnimatorRootMotion = true;
-    [SerializeField, Tooltip("Restores the previous UCC root motion settings when the bridge is disabled.")]
-    private bool restoreRootMotionSettingsOnDisable = true;
-    [SerializeField, Tooltip("Reapplies root motion multipliers every frame so Play Mode inspector tuning is felt immediately.")]
-    private bool refreshRootMotionSettingsEveryFrame = true;
-    [SerializeField, Tooltip("Legacy directional root-motion input. Keep disabled for forward-only grounded locomotion.")]
-    private bool driveDirectionalRootMotionInput = false;
-    [SerializeField, Tooltip("When the look source already points toward movement, feeds UCC forward input to avoid double-rotating movement space.")]
-    private bool useLookSourceForwardInputForRootMotion = true;
-
     [Header("Run Start Response")]
     [SerializeField, Tooltip("Applies a short, collision-respecting UCC impulse when a held sprint starts or resumes after an action.")]
     private bool enableRunStartResponse = true;
@@ -112,13 +78,19 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private float groundReliefMinSlopeLimit = 58f;
     [SerializeField, Min(0f), Tooltip("Minimum UCC stick-to-ground distance used while this bridge drives locomotion.")]
     private float groundReliefMinStickToGroundDistance = 0.55f;
-    [SerializeField, Tooltip("Blends stronger relief tolerance while root-motion locomotion is moving across uneven surfaces.")]
-    private bool adaptRootMotionGroundRelief = true;
-    [SerializeField, Min(0f)] private float rootMotionMovingStepHeight = 0.58f;
-    [SerializeField, Range(0f, 89f)] private float rootMotionMovingSlopeLimit = 62f;
-    [SerializeField, Min(0f)] private float rootMotionMovingStickToGroundDistance = 0.86f;
-    [SerializeField, Min(0f)] private float rootMotionIdleStickToGroundDistance = 0.64f;
-    [SerializeField, Min(0f)] private float rootMotionGroundReliefAdaptationSpeed = 7.5f;
+    [SerializeField, Tooltip("Blends stronger relief tolerance while scripted locomotion is moving across uneven surfaces.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("adaptRootMotionGroundRelief")]
+    private bool adaptMovingGroundRelief = true;
+    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionMovingStepHeight")]
+    [SerializeField, Min(0f)] private float movingStepHeight = 0.58f;
+    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionMovingSlopeLimit")]
+    [SerializeField, Range(0f, 89f)] private float movingSlopeLimit = 62f;
+    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionMovingStickToGroundDistance")]
+    [SerializeField, Min(0f)] private float movingStickToGroundDistance = 0.86f;
+    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionIdleStickToGroundDistance")]
+    [SerializeField, Min(0f)] private float idleStickToGroundDistance = 0.64f;
+    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionGroundReliefAdaptationSpeed")]
+    [SerializeField, Min(0f)] private float groundReliefAdaptationSpeed = 7.5f;
 
     [Header("Flight")]
     [SerializeField, Tooltip("Restores the pre-UCC LocomotionMode flight toggle through a lightweight UCC ability.")]
@@ -170,12 +142,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool previousUseGravity;
     private bool previousIsKinematic;
     private CollisionDetectionMode previousCollisionMode;
-    private bool rootMotionLocomotionApplied;
-    private bool previousUseRootMotionPosition;
-    private float previousRootMotionSpeedMultiplier;
-    private bool previousUseRootMotionRotation;
-    private float previousRootMotionRotationMultiplier;
-    private bool previousAnimatorApplyRootMotion;
     private bool groundReliefToleranceApplied;
     private bool previousUccStickToGround;
     private float previousUccMaxStepHeight;
@@ -220,10 +186,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool externalLockInputDisabled;
     private int scriptedPlanarMotionLockCount;
     private bool progressiveExternalStopActive;
-    private bool hasPlayerActionRootMotionMode;
-    private PlayerActionRootMotionMode playerActionRootMotionMode;
-    private bool suppressPlayerActionRootMotionRotation;
-    private bool allowPlayerActionAirborneRootMotion;
     private readonly RaycastHit[] motionHandoffProbeHits = new RaycastHit[8];
     private bool runStartResponseArmed;
     private bool wasSprintMoving;
@@ -258,7 +220,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private static readonly int CombatLocomotionStateHash = Animator.StringToHash("Base Layer.CombatLocomotion");
     private static readonly int CombatIdleStateHash = Animator.StringToHash("Base Layer.CombatIdle");
 
-    private enum RootMotionPhase
+    private enum AnimationPhase
     {
         Locomotion,
         Start,
@@ -276,10 +238,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0 || scriptedTraversalReleaseRoutine != null;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsScriptedPlanarMotionActive => scriptedPlanarMotionLockCount > 0;
+    public bool HasCompetingStateMotionLock => externalLockCount > 1 || scriptedPlanarMotionLockCount > 1;
+    public void ApplyStateMotionVerticalImpulse(float speed)
+    {
+        if (locomotion != null && IsDriving && IsScriptedPlanarMotionActive && locomotion.Grounded)
+            locomotion.AddForce(transform.up * Mathf.Max(0f, speed), 1, false);
+    }
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
     public bool IsFlightActive => IsFlightModeActive;
     public bool Grounded => locomotion != null && locomotion.Grounded;
-    public bool ShouldPreserveAnimatorRootMotion => useRootMotionLocomotion && preserveAnimatorRootMotion;
+    public bool IsCinematicMotionSessionActive => GetComponent<CombatActorAnimationRoot>()?.IsCinematicMotionActive == true;
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
     public float VerticalVelocity => Vector3.Dot(Velocity, transform.up);
@@ -298,7 +266,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsCombatDirectionalEvasionFacing => combatDirectionalEvasionFacing;
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
     private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive;
-    public string CurrentRootMotionPhase => ResolveCurrentRootMotionPhase().ToString();
+    public string CurrentAnimationPhase => ResolveCurrentAnimationPhase().ToString();
     public LocomotionPresentationState CurrentLocomotionPresentationState => groundedPresentationState;
     public bool CanDriveScriptedTraversal
     {
@@ -311,20 +279,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnValidate()
     {
-        rootMotionSpeedMultiplier = Mathf.Max(0f, rootMotionSpeedMultiplier);
-        rootMotionRotationMultiplier = Mathf.Max(0f, rootMotionRotationMultiplier);
-        rootMotionLoopSpeedScale = Mathf.Max(0f, rootMotionLoopSpeedScale);
-        rootMotionLoopRotationScale = Mathf.Max(0f, rootMotionLoopRotationScale);
-        rootMotionStartSpeedScale = Mathf.Max(0f, rootMotionStartSpeedScale);
-        rootMotionStartRotationScale = Mathf.Max(0f, rootMotionStartRotationScale);
-        rootMotionStopSpeedScale = Mathf.Max(0f, rootMotionStopSpeedScale);
-        rootMotionStopRotationScale = Mathf.Max(0f, rootMotionStopRotationScale);
-        rootMotionPivotSpeedScale = Mathf.Max(0f, rootMotionPivotSpeedScale);
-        rootMotionPivotRotationScale = Mathf.Max(0f, rootMotionPivotRotationScale);
         runStartVelocityBonus = Mathf.Max(0f, runStartVelocityBonus);
         runStartResponseCooldown = Mathf.Max(0f, runStartResponseCooldown);
         runStartResponseMaximumPlanarSpeed = Mathf.Max(0f, runStartResponseMaximumPlanarSpeed);
-        idleRootMotionVelocityThreshold = Mathf.Max(0f, idleRootMotionVelocityThreshold);
         combatFacingSpeedDegreesPerSecond = Mathf.Max(1f, combatFacingSpeedDegreesPerSecond);
         combatOrbitPureLateralThreshold = Mathf.Clamp(combatOrbitPureLateralThreshold, 0.01f, 0.5f);
         combatOrbitRadiusDeadZone = Mathf.Max(0f, combatOrbitRadiusDeadZone);
@@ -333,11 +290,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         groundReliefMinStepHeight = Mathf.Max(0f, groundReliefMinStepHeight);
         groundReliefMinSlopeLimit = Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f);
         groundReliefMinStickToGroundDistance = Mathf.Max(0f, groundReliefMinStickToGroundDistance);
-        rootMotionMovingStepHeight = Mathf.Max(0f, rootMotionMovingStepHeight);
-        rootMotionMovingSlopeLimit = Mathf.Clamp(rootMotionMovingSlopeLimit, 0f, 89f);
-        rootMotionMovingStickToGroundDistance = Mathf.Max(0f, rootMotionMovingStickToGroundDistance);
-        rootMotionIdleStickToGroundDistance = Mathf.Max(0f, rootMotionIdleStickToGroundDistance);
-        rootMotionGroundReliefAdaptationSpeed = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        movingStepHeight = Mathf.Max(0f, this.movingStepHeight);
+        movingSlopeLimit = Mathf.Clamp(this.movingSlopeLimit, 0f, 89f);
+        movingStickToGroundDistance = Mathf.Max(0f, movingStickToGroundDistance);
+        idleStickToGroundDistance = Mathf.Max(0f, idleStickToGroundDistance);
+        groundReliefAdaptationSpeed = Mathf.Max(0f, groundReliefAdaptationSpeed);
         scriptedTraversalDiagnosticTickInterval = Mathf.Max(1, scriptedTraversalDiagnosticTickInterval);
         scriptedTraversalExternalCorrectionDistance = Mathf.Max(0f, scriptedTraversalExternalCorrectionDistance);
         scriptedTraversalExternalCorrectionDegrees = Mathf.Clamp(scriptedTraversalExternalCorrectionDegrees, 0f, 45f);
@@ -357,32 +314,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         Vector2 worldInput = isWorldSpace || squadController == null ? input : squadController.GetWorldSpaceInput(input);
         ApplyWorldMoveInput(worldInput);
-    }
-
-    public void SetPlayerActionRootMotionMode(
-        PlayerActionRootMotionMode mode,
-        bool suppressRootRotation = false,
-        bool allowAirborneRootMotion = false)
-    {
-        ResetCombatOrbitRadius();
-        hasPlayerActionRootMotionMode = true;
-        playerActionRootMotionMode = mode;
-        suppressPlayerActionRootMotionRotation = suppressRootRotation;
-        allowPlayerActionAirborneRootMotion = allowAirborneRootMotion;
-        RefreshRootMotionLocomotionSettings();
-    }
-
-    public void ClearPlayerActionRootMotionMode()
-    {
-        if (!hasPlayerActionRootMotionMode)
-        {
-            return;
-        }
-
-        hasPlayerActionRootMotionMode = false;
-        suppressPlayerActionRootMotionRotation = false;
-        allowPlayerActionAirborneRootMotion = false;
-        RefreshRootMotionLocomotionSettings();
     }
 
     public void RefreshLocomotionPresentation()
@@ -945,7 +876,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         externalLockInputDisabled = false;
         scriptedTraversalInputDisabled = false;
         ConfigureRigidbody();
-        RefreshRootMotionLocomotionSettings();
+        EnforceGameplayMotionAuthority();
         ForceZeroInput();
         AttachLookSourceIfNeeded(true);
         RequestRunStartResponse();
@@ -1051,7 +982,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool ApplyCinematicRootMotion(Vector3 worldDeltaPosition, Quaternion deltaRotation)
     {
         ResolveReferences();
-        if (locomotion == null)
+        if (locomotion == null || !IsCinematicMotionSessionActive)
         {
             return false;
         }
@@ -1278,7 +1209,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         EnsureCompanionBridges();
         CacheRigidbodyState();
         ConfigureRigidbody();
-        RefreshRootMotionLocomotionSettings();
+        EnforceGameplayMotionAuthority();
         ConfigureGroundReliefTolerance();
         ConfigureGroundedFeelProfile();
         ResetOrientationFeelState();
@@ -1322,7 +1253,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetLitAnimatorSpeedParameterOverride(false);
         UnregisterExternalDriver();
         RestoreGroundedFeelProfile();
-        RestoreRootMotionLocomotion();
+        EnforceGameplayMotionAuthority();
         ResetOrientationFeelState();
         ResetGroundedFeelState();
         RestoreGroundReliefTolerance();
@@ -1331,7 +1262,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void Update()
     {
-        RefreshRootMotionLocomotionSettings();
+        EnforceGameplayMotionAuthority();
         RefreshGroundReliefTolerance(immediate: false);
         TickLocomotionDiagnostics();
         MaintainCombatAirborneHold();
@@ -1633,7 +1564,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             }
         }
 
-        RefreshRootMotionLocomotionSettings();
+        EnforceGameplayMotionAuthority();
     }
 
     /// <summary>Returns yaw authority to lock-on or ordinary locomotion after a dodge.</summary>
@@ -1646,7 +1577,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         combatDirectionalEvasionFacing = false;
         MaintainCombatLockFacing();
-        RefreshRootMotionLocomotionSettings();
+        EnforceGameplayMotionAuthority();
     }
 
     private void MaintainCombatLockFacing()
@@ -2311,11 +2242,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
     }
 
-    private bool ShouldUseDirectionalRootMotionInput()
-    {
-        return driveDirectionalRootMotionInput && IsRootMotionLocomotionEnabled();
-    }
-
     private Vector2 ResolveOpsiveMoveInput(Vector3 worldDirection, float magnitude)
     {
         float clampedMagnitude = Mathf.Clamp01(magnitude);
@@ -2334,16 +2260,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         if (UseForwardOnlyGroundedLocomotion)
-        {
-            return new Vector2(0f, clampedMagnitude);
-        }
-
-        if (!ShouldUseDirectionalRootMotionInput())
-        {
-            return new Vector2(0f, clampedMagnitude);
-        }
-
-        if (useLookSourceForwardInputForRootMotion && orientLookSourceFromMovement && lookSource != null)
         {
             return new Vector2(0f, clampedMagnitude);
         }
@@ -2690,266 +2606,73 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
     }
 
-    private void ConfigureRootMotionLocomotion()
+    /// <summary>Gameplay is always script-driven. Only a live cinematic session may produce deltas.</summary>
+    public void EnforceGameplayMotionAuthority()
     {
-        if (!useRootMotionLocomotion || locomotion == null || rootMotionLocomotionApplied)
+        // Cinematic teardown can run before Awake or after the bridge was disabled.
+        if (locomotion == null) locomotion = GetComponent<UltimateCharacterLocomotion>();
+        if (animator == null)
         {
-            return;
+            var contract = GetComponent<CombatActorAnimationRoot>();
+            animator = contract != null ? contract.Animator : GetComponent<Animator>();
         }
-
-        previousUseRootMotionPosition = locomotion.UseRootMotionPosition;
-        previousRootMotionSpeedMultiplier = locomotion.RootMotionSpeedMultiplier;
-        previousUseRootMotionRotation = locomotion.UseRootMotionRotation;
-        previousRootMotionRotationMultiplier = locomotion.RootMotionRotationMultiplier;
-        previousAnimatorApplyRootMotion = animator != null && animator.applyRootMotion;
-
-        ApplyRootMotionLocomotionSettings();
-        rootMotionLocomotionApplied = true;
-    }
-
-    private void RefreshRootMotionLocomotionSettings()
-    {
-        if (!useRootMotionLocomotion)
+        if (locomotion != null)
         {
-            if (rootMotionLocomotionApplied)
-            {
-                RestoreRootMotionLocomotion();
-            }
-
-            return;
+            locomotion.UseRootMotionPosition = false;
+            locomotion.UseRootMotionRotation = false;
         }
-
-        if (locomotion == null)
+        if (animator != null)
         {
-            return;
-        }
-
-        if (!rootMotionLocomotionApplied)
-        {
-            ConfigureRootMotionLocomotion();
-            return;
-        }
-
-        if (refreshRootMotionSettingsEveryFrame)
-        {
-            ApplyRootMotionLocomotionSettings();
-        }
-    }
-
-    private void ApplyRootMotionLocomotionSettings()
-    {
-        if (locomotion == null)
-        {
-            return;
-        }
-
-        RootMotionPhase phase = ResolveCurrentRootMotionPhase();
-        // Jump presentation is always visual. UCC owns gravity, vertical
-        // position and inherited planar inertia, so no active aerial action
-        // may leak an authored clip delta into Jump_Loop or Falling.
-        bool isJumpPresentation = phase == RootMotionPhase.Jump;
-        bool suppressIdlePosition = ShouldSuppressIdleRootMotionPosition(phase);
-        bool useRootMotionRotation = ResolveUseRootMotionRotation(phase);
-        bool useAuthoredActionRootMotion = !hasPlayerActionRootMotionMode ||
-            playerActionRootMotionMode == PlayerActionRootMotionMode.AuthoredRootMotion;
-        // Continuous lock locomotion is deliberately InPlace. UCC alone owns
-        // its translation, collision, slope handling and inertia. Authored
-        // actions opt in through PlayerActionRootMotionMode and remain intact.
-        bool combatLockLocomotionInPlace = combatLockActive &&
-                                           !hasPlayerActionRootMotionMode &&
-                                           !combatDirectionalEvasionFacing &&
-                                           IsCombatLockLocomotionPresentation();
-        // The physical grounded state, rather than an Animator state name,
-        // decides whether an airborne action may move the capsule. This keeps
-        // regular aerial BasicSkills visual by default and makes authored air
-        // movement an explicit per-skill choice.
-        bool allowAirborneRootMotion = locomotion.Grounded ||
-                                        (hasPlayerActionRootMotionMode && allowPlayerActionAirborneRootMotion);
-        locomotion.UseRootMotionPosition = !combatLockLocomotionInPlace && !isJumpPresentation && useAuthoredActionRootMotion && allowAirborneRootMotion;
-        locomotion.RootMotionSpeedMultiplier = combatLockLocomotionInPlace || isJumpPresentation || !useAuthoredActionRootMotion || !allowAirborneRootMotion || suppressIdlePosition
-            ? 0f
-            : ResolveEffectiveRootMotionSpeedMultiplier(phase);
-        useRootMotionRotation &= !isJumpPresentation && useAuthoredActionRootMotion && allowAirborneRootMotion && !suppressPlayerActionRootMotionRotation;
-        if (combatLockLocomotionInPlace)
-        {
-            // The locked target owns yaw during continuous locomotion.
-            useRootMotionRotation = false;
-        }
-        locomotion.UseRootMotionRotation = useRootMotionRotation;
-        locomotion.RootMotionRotationMultiplier = useRootMotionRotation
-            ? ResolveEffectiveRootMotionRotationMultiplier(phase)
-            : 0f;
-
-        if (animator != null && preserveAnimatorRootMotion)
-        {
-            animator.applyRootMotion = true;
-            // Le joueur persiste pendant les chargements additifs. Le root
-            // motion doit continuer a etre produit meme lorsqu'aucune camera
-            // ne le rend pendant quelques images.
+            animator.applyRootMotion = IsCinematicMotionSessionActive;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         }
     }
 
-    private bool IsCombatLockLocomotionPresentation()
+    private AnimationPhase ResolveCurrentAnimationPhase()
     {
         if (animator == null)
         {
-            return true;
-        }
-
-        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
-        if (current.fullPathHash == CombatLocomotionStateHash || current.fullPathHash == CombatIdleStateHash)
-        {
-            return true;
-        }
-
-        return animator.IsInTransition(0) &&
-               (animator.GetNextAnimatorStateInfo(0).fullPathHash == CombatLocomotionStateHash ||
-                animator.GetNextAnimatorStateInfo(0).fullPathHash == CombatIdleStateHash);
-    }
-
-    private bool ResolveUseRootMotionRotation(RootMotionPhase phase)
-    {
-        if (!preferLookSourceRotationForRootMotionLocomotion)
-        {
-            return true;
-        }
-
-        if (phase == RootMotionPhase.Pivot)
-        {
-            return !commitRootRotationDuringPivot;
-        }
-
-        return phase == RootMotionPhase.Combat ||
-               (allowRootMotionRotationDuringStartStop &&
-                (phase == RootMotionPhase.Start || phase == RootMotionPhase.Stop));
-    }
-
-    private bool ShouldSuppressIdleRootMotionPosition(RootMotionPhase phase)
-    {
-        if (!suppressIdleRootMotionPosition ||
-            locomotion == null ||
-            !locomotion.Grounded ||
-            phase == RootMotionPhase.Start ||
-            phase == RootMotionPhase.Stop ||
-            phase == RootMotionPhase.Pivot ||
-            phase == RootMotionPhase.Combat)
-        {
-            return false;
-        }
-
-        float deadZoneSqr = movementDeadZone * movementDeadZone;
-        if (currentWorldMoveInput.sqrMagnitude > deadZoneSqr ||
-            desiredGroundedWorldMoveInput.sqrMagnitude > deadZoneSqr)
-        {
-            return false;
-        }
-
-        Vector3 planarVelocity = locomotion.Velocity;
-        planarVelocity.y = 0f;
-        float threshold = Mathf.Max(0f, idleRootMotionVelocityThreshold);
-        return planarVelocity.sqrMagnitude <= threshold * threshold;
-    }
-
-    private float ResolveEffectiveRootMotionSpeedMultiplier(RootMotionPhase phase)
-    {
-        return Mathf.Max(0f, rootMotionSpeedMultiplier) * ResolveRootMotionPhaseSpeedScale(phase);
-    }
-
-    private float ResolveEffectiveRootMotionRotationMultiplier(RootMotionPhase phase)
-    {
-        return Mathf.Max(0f, rootMotionRotationMultiplier) * ResolveRootMotionPhaseRotationScale(phase);
-    }
-
-    private float ResolveRootMotionPhaseSpeedScale(RootMotionPhase phase)
-    {
-        if (!useRootMotionPhaseMultipliers)
-        {
-            return 1f;
-        }
-
-        switch (phase)
-        {
-            case RootMotionPhase.Start:
-                return Mathf.Max(0f, rootMotionStartSpeedScale);
-            case RootMotionPhase.Stop:
-                return Mathf.Max(0f, rootMotionStopSpeedScale);
-            case RootMotionPhase.Pivot:
-                return Mathf.Max(0f, rootMotionPivotSpeedScale);
-            case RootMotionPhase.Locomotion:
-                return Mathf.Max(0f, rootMotionLoopSpeedScale);
-            default:
-                return 1f;
-        }
-    }
-
-    private float ResolveRootMotionPhaseRotationScale(RootMotionPhase phase)
-    {
-        if (!useRootMotionPhaseMultipliers)
-        {
-            return 1f;
-        }
-
-        switch (phase)
-        {
-            case RootMotionPhase.Start:
-                return Mathf.Max(0f, rootMotionStartRotationScale);
-            case RootMotionPhase.Stop:
-                return Mathf.Max(0f, rootMotionStopRotationScale);
-            case RootMotionPhase.Pivot:
-                return Mathf.Max(0f, rootMotionPivotRotationScale);
-            case RootMotionPhase.Locomotion:
-                return Mathf.Max(0f, rootMotionLoopRotationScale);
-            default:
-                return 1f;
-        }
-    }
-
-    private RootMotionPhase ResolveCurrentRootMotionPhase()
-    {
-        if (!useRootMotionPhaseMultipliers || animator == null)
-        {
-            return RootMotionPhase.Other;
+            return AnimationPhase.Other;
         }
 
         const int baseLayer = 0;
         if (animator.IsInTransition(baseLayer))
         {
-            RootMotionPhase nextPhase = ResolveRootMotionPhase(animator.GetNextAnimatorStateInfo(baseLayer));
-            if (nextPhase == RootMotionPhase.Start ||
-                nextPhase == RootMotionPhase.Stop ||
-                nextPhase == RootMotionPhase.Pivot)
+            AnimationPhase nextPhase = ResolveAnimationPhase(animator.GetNextAnimatorStateInfo(baseLayer));
+            if (nextPhase == AnimationPhase.Start ||
+                nextPhase == AnimationPhase.Stop ||
+                nextPhase == AnimationPhase.Pivot)
             {
                 return nextPhase;
             }
 
-            RootMotionPhase currentPhase = ResolveRootMotionPhase(animator.GetCurrentAnimatorStateInfo(baseLayer));
-            if (currentPhase == RootMotionPhase.Start ||
-                currentPhase == RootMotionPhase.Stop ||
-                currentPhase == RootMotionPhase.Pivot)
+            AnimationPhase currentPhase = ResolveAnimationPhase(animator.GetCurrentAnimatorStateInfo(baseLayer));
+            if (currentPhase == AnimationPhase.Start ||
+                currentPhase == AnimationPhase.Stop ||
+                currentPhase == AnimationPhase.Pivot)
             {
                 return currentPhase;
             }
 
-            if (nextPhase != RootMotionPhase.Other)
+            if (nextPhase != AnimationPhase.Other)
             {
                 return nextPhase;
             }
         }
 
-        return ResolveRootMotionPhase(animator.GetCurrentAnimatorStateInfo(baseLayer));
+        return ResolveAnimationPhase(animator.GetCurrentAnimatorStateInfo(baseLayer));
     }
 
-    private RootMotionPhase ResolveRootMotionPhase(AnimatorStateInfo stateInfo)
+    private AnimationPhase ResolveAnimationPhase(AnimatorStateInfo stateInfo)
     {
         if (stateInfo.IsName("Walk_Start") || stateInfo.IsName("Run_Start"))
         {
-            return RootMotionPhase.Start;
+            return AnimationPhase.Start;
         }
 
         if (stateInfo.IsName("Walk_Stop") || stateInfo.IsName("Run_Stop"))
         {
-            return RootMotionPhase.Stop;
+            return AnimationPhase.Stop;
         }
 
         if (stateInfo.IsName("Turn_L90") ||
@@ -2957,12 +2680,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             stateInfo.IsName("Turn_L180") ||
             stateInfo.IsName("Turn_R180"))
         {
-            return RootMotionPhase.Pivot;
+            return AnimationPhase.Pivot;
         }
 
         if (stateInfo.IsName("Locomotion"))
         {
-            return RootMotionPhase.Locomotion;
+            return AnimationPhase.Locomotion;
         }
 
         if (stateInfo.IsName("Jump_Start") ||
@@ -2972,43 +2695,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             stateInfo.IsName("Landing_Hard") ||
             stateInfo.IsName("Jump_End"))
         {
-            return RootMotionPhase.Jump;
+            return AnimationPhase.Jump;
         }
 
-        if (stateInfo.IsTag("RealTimeCombatRootMotion"))
+        if (stateInfo.IsTag("RealTimeCombatInPlace"))
         {
-            return RootMotionPhase.Combat;
+            return AnimationPhase.Combat;
         }
 
-        return RootMotionPhase.Other;
-    }
-
-    private void RestoreRootMotionLocomotion()
-    {
-        if (!rootMotionLocomotionApplied)
-        {
-            return;
-        }
-
-        if (restoreRootMotionSettingsOnDisable && locomotion != null)
-        {
-            locomotion.UseRootMotionPosition = previousUseRootMotionPosition;
-            locomotion.RootMotionSpeedMultiplier = previousRootMotionSpeedMultiplier;
-            locomotion.UseRootMotionRotation = previousUseRootMotionRotation;
-            locomotion.RootMotionRotationMultiplier = previousRootMotionRotationMultiplier;
-        }
-
-        if (restoreRootMotionSettingsOnDisable && animator != null && preserveAnimatorRootMotion)
-        {
-            animator.applyRootMotion = previousAnimatorApplyRootMotion;
-        }
-
-        rootMotionLocomotionApplied = false;
-    }
-
-    private bool IsRootMotionLocomotionEnabled()
-    {
-        return useRootMotionLocomotion && locomotion != null;
+        return AnimationPhase.Other;
     }
 
     private void ConfigureGroundReliefTolerance()
@@ -3036,7 +2731,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         GroundReliefTargets targets = ResolveGroundReliefTargets();
         float deltaTime = ResolveGroundReliefDeltaTime();
-        float rate = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        float rate = Mathf.Max(0f, groundReliefAdaptationSpeed);
         float step = immediate || rate <= 0f ? float.PositiveInfinity : rate * deltaTime;
 
         locomotion.StickToGround = true;
@@ -3056,16 +2751,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             previousUccStickToGroundDistance,
             Mathf.Max(0f, groundReliefMinStickToGroundDistance));
 
-        if (!adaptRootMotionGroundRelief || !IsRootMotionLocomotionEnabled())
+        if (!adaptMovingGroundRelief)
         {
             return new GroundReliefTargets(baseStepHeight, baseSlopeLimit, baseStickDistance);
         }
 
-        float reliefBlend = ResolveRootMotionGroundReliefBlend();
-        float movingStepHeight = Mathf.Max(baseStepHeight, Mathf.Max(0f, rootMotionMovingStepHeight));
-        float movingSlopeLimit = Mathf.Max(baseSlopeLimit, Mathf.Clamp(rootMotionMovingSlopeLimit, 0f, 89f));
-        float idleStickDistance = Mathf.Max(baseStickDistance, Mathf.Max(0f, rootMotionIdleStickToGroundDistance));
-        float movingStickDistance = Mathf.Max(idleStickDistance, Mathf.Max(0f, rootMotionMovingStickToGroundDistance));
+        float reliefBlend = ResolveMovingGroundReliefBlend();
+        float movingStepHeight = Mathf.Max(baseStepHeight, Mathf.Max(0f, this.movingStepHeight));
+        float movingSlopeLimit = Mathf.Max(baseSlopeLimit, Mathf.Clamp(this.movingSlopeLimit, 0f, 89f));
+        float idleStickDistance = Mathf.Max(baseStickDistance, Mathf.Max(0f, idleStickToGroundDistance));
+        float movingStickDistance = Mathf.Max(idleStickDistance, Mathf.Max(0f, movingStickToGroundDistance));
 
         return new GroundReliefTargets(
             Mathf.Lerp(baseStepHeight, movingStepHeight, reliefBlend),
@@ -3073,7 +2768,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             Mathf.Lerp(idleStickDistance, movingStickDistance, reliefBlend));
     }
 
-    private float ResolveRootMotionGroundReliefBlend()
+    private float ResolveMovingGroundReliefBlend()
     {
         float inputMagnitude = Mathf.Clamp01(currentWorldMoveInput.magnitude);
         float speedMagnitude = 0f;

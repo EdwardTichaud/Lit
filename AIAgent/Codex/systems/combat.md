@@ -1,5 +1,148 @@
 # Combat
 
+## EnemyAttack : contrat auteur instantane
+
+Dans un clip ennemi, ajouter EnemyAttack et assigner le SkillSO dans le parametre
+Object de l'Animation Event. Le skill doit etre equipe et correspondre a l'action
+active. Un parametre vide reprend le skill actif pour les clips partages.
+Un seul impact est accepte par action, sans fenetre persistante ni degat retarde.
+enemyImpact definit sphere locale, rayon, angle, layers et condition sol;
+les bornes de portee du SkillSO restent appliquees. Plusieurs colliders d'une
+victime ne produisent qu'un degat. Les decisions de degats restent serveur.
+
+Les VfxCues non DirectOnTarget sont emis a l'evenement; DirectOnTarget seulement
+au contact valide. enemyAttackFeedback configure VFX/audio de degat, garde et
+contre. Le contre est presente au demarrage effectif du CounterSkill, puisque
+l'attaque ennemie annulee ne doit plus infliger son impact. Les degats gardes
+passent par ModifyGuardDamage; une esquive ne produit pas de feedback de contact.
+Une riposte de palier utilise ce meme contact et ne demande le recul de Lucian
+qu'apres degats reels sur celui-ci. Aucun effet camera n'est ajoute.
+
+Open/CloseEnemyAttackHitbox, HitPlayer/HitPlayerIf, ResolveThresholdFailureImpact
+et InstantiateEnemySkillVFX/AtIndex ne sont plus des recepteurs d'AnimationEvent.
+L'installateur migre les anciens clips et preserve les VfxCues auteur. Assomoir
+possede EnemyAttack(Skill_Juggernaut_Assomoir) a 1.70 s. Les evenements physiques,
+de reaction et EndEnemyAttack restent necessaires. Les cinematiques de skills,
+LightSkills et CounterSkills conservent leurs evenements d'impact specifiques.
+
+## Degats recus : presentation unique
+
+RecordDamageApplied dans SquadCharacterController affiche un nombre rouge pres
+du personnage uniquement pour une perte de PV positive. Les coups Lit/UCC et
+les dangers passant par ces points d'entree partagent ce feedback.
+LitUccDamageBridge rapporte le resultat mesure apres CharacterHealth.Damage pour
+les appels Lit; son callback reste le chemin des degats UCC natifs. Le gestionnaire
+de combat n'affiche pas une seconde fois les degats de squad et ne conserve que
+le fallback CombatHealth. Montant nul, invulnerabilite ou esquive : aucun nombre.
+
+## Reactions invisibles aux attaques
+
+OpenEnemyReactionOpportunity() ouvre simultanement les fenetres B (0.5 s) et Y
+(0.2 s) en temps reel. Les trois reglages dodgeWindowSeconds,
+counterWindowSeconds et reactionTimeScale (0.4, 1 sans ralenti) sont sur le
+CombatHealthThresholdController du BattleManager. Les anciens champs de temps
+sont migres par FormerlySerializedAs. Les QTE des paliers restent independants.
+
+B demarre la roulade par TryDodgeImmediate sans buffer; un refus ne donne aucune
+protection. Une roulade acceptee protege seulement la victime du skill et de
+l'ActionSequenceId ennemis captures, pour toutes les fenetres de ce coup.
+L'impact ferme l'opportunite mais conserve cette protection jusqu'a la fin du
+coup. Le coup suivant, meme avec le meme SkillSO, n'est pas protege.
+Y demarre uniquement TryStartFromSuccessfulQte. Hors fenetre, garde et roulade
+habituelles restent disponibles. Premier choix accepte gagnant, doublons ignores,
+aucune validation automatique d'une touche maintenue avant l'ouverture.
+
+Le ralenti utilise un handle propre : fin, expiration, impact, cinematique,
+desengagement ou desactivation le liberent sans imposer Time.timeScale = 1.
+Pas de panneau QTE, de map CombatQTE ni d'effet camera ajoute pour ces reactions.
+QTE(input) sur un ancien clip ennemi delegue avec un avertissement unique par clip.
+Le chemin reseau reste autoritaire serveur; aucune validation de timing declaree
+par un client distant n'est ajoutee dans cette passe.
+
+## Ruee ennemie tridimensionnelle
+
+BeginEnemyRush conserve la condition de phase aerienne et la cible configuree,
+mais ResolveRushDelta utilise maintenant X/Y/Z. Le moteur est l'unique autorite
+de translation et suspend la gravite durant la ruee. Le cast capsule suit le
+vecteur 3D et arrete la ruee contre le decor. La fin automatique rend la verticale
+a la gravite; RequestEnemyLanding pendant la ruee ne la detourne pas.
+Les durees utilisent toujours le temps local; le timeout et les securites de
+sol restent actifs. rushStoppingDistance est une distance 3D, pas horizontale.
+L'impulsion atteint immediatement rushMaximumSpeed dans la direction initiale,
+sans suivre ensuite la cible. rushImpulseDuration limite sa duree (0.35 s locales
+par defaut); la distance initiale moins rushStoppingDistance limite son trajet.
+EndEnemyRush n'est plus requis dans les clips; l'API reste une annulation interne
+et une compatibilite pour les autres anciens clips. Fin d'action, interruption,
+cinematique et desactivation annulent toujours l'impulsion.
+
+## Patterns et equipement effectif
+
+La selection et la poursuite utilisent les patterns dont tous les skills sont
+equipes, avec poids positif et portee initiale coherente. La preference melee
+est inactive sans pattern terrestre equipe : Assomoir seul peut poursuivre,
+se mettre a portee et attaquer. Le seul pattern valide est repetable sans
+ignorer cooldown ou recuperation; une alternative equipee reactive la limite
+de repetition. Aucun skill absent du CharacterData n'est rajoute automatiquement.
+
+## Contrat minimal Juggernaut
+
+- Un QTE par coup, Y par defaut, 0.5 s reelle et temps global 0.4 via le
+  controleur existant. Reussite : CounterSkill cinematique; echec : coup continue.
+- Plus de warning, telegraphie, reactions parfaites Dodge/Jump, ni VFX Light/Slash
+  autonomes pour les quatre skills. Garde, invulnerabilite physique et feedback
+  des degats conservent leurs chemins existants. EN GARDE reste lie a l'aggro.
+- OpenEnemyAttackHitbox/CloseEnemyAttackHitbox sont le seul contrat d'impact
+  de ces clips; paire au meme temps 1.70 s pour Assomoir, sans seconde fenetre.
+- Les ripostes de palier hors pattern echantillonnent aussi le volume balaye
+  durant la fenetre, respectent portee/arc et n'appliquent qu'un impact/recul.
+- JuggernautEssentialEvents valide QTE, paire de hitbox, mouvements et fin;
+  nettoie seulement les skills/clips et preserve les boutons QTE deja auteurs.
+  Les installateurs de patterns et CounterSkill ne reintroduisent plus l'ancien flux.
+
+## Contre par QTE d'attaque
+
+RealTimeCombatAnimationEvents.QTE route les evenements ennemis vers OpenAttackQte,
+les evenements joueur vers les sequences de paliers existantes. Le QTE ennemi
+capture skill et ActionId; fin de coup, impact, mort ou cinematique invalident
+la fenetre. Seule une nouvelle pression correcte lance le CounterSkill cinematique.
+La garde et RegisterReaction(Counter) ne produisent plus de contre simple.
+L'echec ne suspend pas l'attaque. La cinematique suspend les cerveaux et moteurs,
+annule leurs hitboxes puis restitue les suspensions qu'elle a acquises.
+Un palier atteint pendant un coup reste Pending sans suspendre celui-ci; le combo
+ne lance pas de coup supplementaire. Mort et LightSkills restent prioritaires.
+Les Skills cinematiques ordinaires sont refuses contre un ennemi en attaque.
+
+## Interactions apres desengagement
+
+SetReturnFacing(home) oriente le retour : point d'origine pendant la pause,
+steeringTarget NavMesh pendant le trajet pour suivre les virages. Le controleur
+de locomotion possede le yaw ; StopNavigation et SetCombatTarget annulent cette
+consigne. La rotation d'origine est retablie a l'arrivee par la phase de retour.
+
+Pendant retour et pause, la vision peut reengager le combat. Une detection de
+proximite a 360 degres complete le cone, par defaut 6 m et avec le meme masque
+d'obstruction. returnReengageDistance est configurable par profil (0 desactive
+la proximite seule). Une marge de 0.5 m dans la zone de poursuite evite les
+reengagements immediatement annules a la frontiere. La reprise annule le chemin
+de retour, rend la cible au cerveau et passe par BeginEnemyAggro pour UI/inputs.
+
+Une fuite hors zone ferme le combat sans attendre le retour au spawn ni la mort
+de l'ennemi. La decision precede la disponibilite NavMesh ; seule la navigation
+de retour attend EnsureReady. Une attaque deja engagee conserve sa fin normale.
+EndCombat retire l'agression suivie, rend les inputs Exploration et rescane les
+interactions. L'input combat libere sa propre suppression et sa garde, sans
+supprimer les verrous des UI, cinematographiques ou UCC encore legitimes.
+
+## Rotation et cadence Juggernaut
+
+Le profil impose 720 deg/s avant le verrou d'attaque. La valeur de secours
+du composant n'est plus ecrasee : EffectiveFacingSpeed expose la valeur active.
+CombatLocomotionPlaybackRate ajuste uniquement l'etat de locomotion au rapport
+vitesse NavMesh / (echelle locale * vitesse de cycle), plafond 1.35, fondu .08 s.
+Les vitesses de cycle 1.8/3.6 sont independantes des vitesses de navigation.
+Activite avec hysteresis .08/.03 ; l'arret interrompt aussi un fondu entrant.
+Les diagnostics optionnels distinguent navigation et action/suspension.
+
 ## Juggernaut sans IA concurrente
 
 JuggernautPatternSetup est l'unique installateur du Juggernaut. Il retire
@@ -100,10 +243,35 @@ doivent pas ecrire le Transform de Lucian directement pendant le lock.
 La locomotion continue sous lock est InPlace : `CombatIdle` et
 `CombatLocomotion` utilisent les clips Twinblades InPlace et le tag
 `RealTimeCombatInPlace`. Le bridge impose `UseRootMotionPosition=false` et
-`UseRootMotionRotation=false` dans ces deux états. UCC applique donc seul
-l'approche, le recul, l'orbite, les collisions et l'inertie. Les root motions
-des actions engagées (roulade, saut, skills, impulsions et cinématiques) restent
-pilotés par leurs profils explicites.
+`UseRootMotionRotation=false` dans tout le gameplay. UCC applique seul
+l'approche, le recul, l'orbite, les collisions et l'inertie.
+Les actions anciennement Root utilisent `PlayerStateMotionLibrary` et
+`PlayerStateMotionController` : les trajectoires sont mesurees dans l'Editor
+sur l'avatar de Lucian, puis appliquees par `LitUccStateMotionAbility` avant
+la resolution des collisions UCC. Aucun delta Animator n'est lu par ce pilote.
+`PlayerActionMovementPolicy` distingue presentation seule, trajectoire d'etat
+et mouvement deja scripte. Esquives, approches ciblees et franchissements
+gardent leur propre commande ; une trajectoire d'etat ne prend pas leur verrou.
+Le saut existant est integralement protege, sans recalibration.
+
+Le Root de Lucian reste autorise uniquement pendant une session cinematique
+explicite de `CombatActorAnimationRoot`. Le relay applique alors les deltas,
+avec le consommateur Root UCC toujours desactive. La fin du bon jeton et la
+desactivation referment cette autorite. Les clips cinematiques et ceux des
+autres acteurs restent dans leurs ressources dediees.
+
+Les menus `Lit/Animation` proposent audit, migration explicite et validation.
+L'audit effectue la prevalidation des copies en memoire et ecrit
+`Library/PlayerInPlacePreflight.json`. L'application exige le meme manifeste
+et les memes empreintes d'entree ; une divergence demande un nouvel audit.
+Les clips et modeles d'animation consommes par Lucian sont regroupes dans
+`Assets/Characters/1_Squad/Lucian/Animation`, avec leurs GUID conserves.
+Les copies gameplay et le manifeste sont dans
+`Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace` ; les originaux fournisseur
+restent intacts. L'installateur combat n'est plus execute automatiquement
+a chaque compilation et conserve les clips InPlace deja assignes. Le
+validateur avant build controle references, evenements, profils et donnees
+protegees. Les anciens noms d'etats contenant Root restent des identifiants.
 Gauche/droite sous lock memorise le rayon initial autour de `EnemyLockPoint`.
 Le bridge ajoute ensuite une faible correction radiale sous forme d'intention
 UCC, jamais par ecriture directe du Transform : le strafe reste circulaire sur

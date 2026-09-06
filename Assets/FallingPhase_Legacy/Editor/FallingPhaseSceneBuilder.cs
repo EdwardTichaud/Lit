@@ -250,7 +250,7 @@ public static class FallingPhaseSceneBuilder
         AnimatorState boost = FindOrCreateState(stateMachine, "Falling_Boost");
         AnimatorState impact = FindOrCreateState(stateMachine, "Falling_Impact");
         AnimatorState grapple = FindOrCreateState(stateMachine, "Falling_Grapple");
-        falling.motion = LoadClip("Assets/Characters/4_Animations/Mixamo_Flying.fbx");
+        falling.motion = LoadClip("Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Flying.fbx");
         charge.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Moving_Backward.fbx");
         boost.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Strike_Fly.fbx");
         impact.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Get_Hit_Hard.fbx");

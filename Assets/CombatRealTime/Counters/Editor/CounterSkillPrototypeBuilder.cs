@@ -19,7 +19,7 @@ public static class CounterSkillPrototypeBuilder
     private const string CounterSwordGuid = "2622150291d55c442964e5d6fc048a04";
     private const string JuggernautCounteredGuid = "37a89e362d7404e4b99804c51c57ed3b";
     private const string SouthButtonPath = "Assets/UI/Inputs/XBox GamePad SouthButton.png";
-    private const string AssomoirPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Assomoir.anim";
+    private const string AssomoirPath = "Assets/Characters/1_Squad/Lucian/Animation/Juggernaut_Assomoir.anim";
     private const string AssomoirSkillPath = "Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset";
     private const string AttackAlertPath = "Assets/CombatRealTime/Presentation/AttackLightAlert.prefab";
     private const string EastButtonPath = "Assets/UI/Inputs/XBox GamePad EastButton.png";
@@ -42,7 +42,7 @@ public static class CounterSkillPrototypeBuilder
         TimelineAsset timeline = BuildTimeline(playerClip, enemyClip);
         CounterSkillSO skill = BuildSkill(timeline);
         ConfigureCounterAnimationEvent(playerClip);
-        ConfigureAssomoirReactionTelegraph();
+        ConfigureAssomoirEvents();
         ConfigureSessionRoot(skill);
         RemoveBootstrapCounterWheel();
         RemoveBootstrapReactionPrompt();
@@ -55,7 +55,7 @@ public static class CounterSkillPrototypeBuilder
     [MenuItem("Lit/Combat/Configure Reaction Telegraph")]
     public static void ConfigureReactionTelegraph()
     {
-        ConfigureAssomoirReactionTelegraph();
+        ConfigureAssomoirEvents();
         ConfigureSessionRoot(AssetDatabase.LoadAssetAtPath<CounterSkillSO>(SkillPath));
         RemoveBootstrapReactionPrompt();
         AssetDatabase.SaveAssets();
@@ -184,98 +184,28 @@ public static class CounterSkillPrototypeBuilder
     private static void ConfigureCounterAnimationEvent(AnimationClip clip)
     {
         List<AnimationEvent> events = new List<AnimationEvent>(AnimationUtility.GetAnimationEvents(clip));
+        AnimationEvent impact = events.Find(e => e.functionName == "ResolveCounterSkillImpact");
         for (int i = events.Count - 1; i >= 0; i--)
         {
-            if (events[i].functionName == "ResolveCounterSkillImpact") events.RemoveAt(i);
+            string name = events[i].functionName;
+            if (name == "Take" || name == "Release" || name == "SlowCombatTimeTo" ||
+                name == "RestoreCombatTime" || name == "CounterHit" || name == "ResolveCounterSkillImpact")
+                events.RemoveAt(i);
         }
-        events.Add(new AnimationEvent
+        events.Add(impact ?? new AnimationEvent
         {
             functionName = "ResolveCounterSkillImpact",
             time = clip.length * 0.58f
         });
+        events.Sort((a, b) => a.time.CompareTo(b.time));
         AnimationUtility.SetAnimationEvents(clip, events.ToArray());
         EditorUtility.SetDirty(clip);
     }
 
-    private static void ConfigureAssomoirReactionTelegraph()
+    private static void ConfigureAssomoirEvents()
     {
-        SkillSO assomoir = AssetDatabase.LoadAssetAtPath<SkillSO>(AssomoirSkillPath);
-        if (assomoir != null)
-        {
-            SerializedObject serialized = new SerializedObject(assomoir);
-            SerializedProperty reactions = serialized.FindProperty("acceptedEnemyReactions");
-            bool containsCounter = false;
-            for (int i = 0; i < reactions.arraySize; i++) containsCounter |= reactions.GetArrayElementAtIndex(i).enumValueIndex == (int)RealTimeCombatReaction.Counter;
-            if (!containsCounter)
-            {
-                reactions.InsertArrayElementAtIndex(reactions.arraySize);
-                reactions.GetArrayElementAtIndex(reactions.arraySize - 1).enumValueIndex = (int)RealTimeCombatReaction.Counter;
-            }
-
-            SerializedProperty profile = serialized.FindProperty("reactionTelegraph");
-            profile.FindPropertyRelative("enabled").boolValue = true;
-            profile.FindPropertyRelative("alertPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(AttackAlertPath);
-            profile.FindPropertyRelative("threatColor").colorValue = new Color(0.85f, 0.08f, 0.4f, 1f);
-            profile.FindPropertyRelative("perfectWindowColor").colorValue = new Color(0.72f, 0.94f, 1f, 1f);
-            profile.FindPropertyRelative("heightOffset").floatValue = 1.1f;
-            profile.FindPropertyRelative("fadeSeconds").floatValue = 0.16f;
-            profile.FindPropertyRelative("anticipationAudio").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClipSO>(ThreatAudioPath);
-            profile.FindPropertyRelative("perfectWindowAudio").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClipSO>(PerfectAudioPath);
-            profile.FindPropertyRelative("successfulReactionAudio").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClipSO>(PerfectAudioPath);
-            profile.FindPropertyRelative("usePerfectWindowSlowMotion").boolValue = true;
-            profile.FindPropertyRelative("perfectWindowTimeScale").floatValue = 0.85f;
-            profile.FindPropertyRelative("perfectWindowSlowMotionSeconds").floatValue = 0.15f;
-
-            SerializedProperty warning = serialized.FindProperty("combatWarning");
-            warning.FindPropertyRelative("enabled").boolValue = true;
-            warning.FindPropertyRelative("color").colorValue = new Color(1f, 0.08f, 0.36f, 1f);
-            warning.FindPropertyRelative("intensity").floatValue = 0.9f;
-            warning.FindPropertyRelative("pulseFrequency").floatValue = 2.8f;
-            warning.FindPropertyRelative("vignette").floatValue = 0.24f;
-            warning.FindPropertyRelative("chromaticAberration").floatValue = 0.012f;
-            warning.FindPropertyRelative("enemyFocusBias").floatValue = 0.92f;
-            warning.FindPropertyRelative("recenterDegreesPerSecond").floatValue = 300f;
-            warning.FindPropertyRelative("focusSharpness").floatValue = 30f;
-            warning.FindPropertyRelative("fieldOfViewOffset").floatValue = -2f;
-            warning.FindPropertyRelative("fadeOutSeconds").floatValue = 0.16f;
-            warning.FindPropertyRelative("warningAudio").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClipSO>(ThreatAudioPath);
-            warning.FindPropertyRelative("useSlowMotion").boolValue = true;
-            warning.FindPropertyRelative("slowMotionTimeScale").floatValue = 0.85f;
-            warning.FindPropertyRelative("slowMotionSeconds").floatValue = 0.15f;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(assomoir);
-        }
-
-        AnimationClip assomoirClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(AssomoirPath);
-        if (assomoirClip == null) return;
-        List<AnimationEvent> events = new List<AnimationEvent>(AnimationUtility.GetAnimationEvents(assomoirClip));
-        float impactTime = assomoirClip.length * 0.72f;
-        bool foundLegacyHit = false;
-        for (int i = 0; i < events.Count; i++)
-        {
-            if (events[i].functionName == "ResolveEnemyAttackImpact" && !foundLegacyHit) impactTime = events[i].time;
-            if (events[i].functionName == "HitPlayer")
-            {
-                // HitPlayer was the former resolution event. Preserve its authored
-                // contact frame but keep a single authority for the damage.
-                impactTime = events[i].time;
-                foundLegacyHit = true;
-                events.RemoveAt(i--);
-                continue;
-            }
-            if (events[i].functionName == "ShowReactionPrompt") events[i].functionName = "BeginReactionTelegraph";
-            if (events[i].functionName == "ShowInput" || events[i].functionName == "HideInput") events.RemoveAt(i--);
-        }
-        float warningTime = Mathf.Min(assomoirClip.length * 0.12f, impactTime * 0.28f);
-        float telegraphTime = Mathf.Min(assomoirClip.length * 0.2f, impactTime * 0.45f);
-        float windowTime = Mathf.Min(impactTime - 0.03f, Mathf.Max(0.01f, impactTime * 0.62f));
-        EnsureEvent(events, "CombatWarningOn", warningTime);
-        EnsureEvent(events, "BeginReactionTelegraph", telegraphTime);
-        EnsureFloatEvent(events, "OpenReactionWindow", windowTime, Mathf.Max(0.1f, impactTime - windowTime - 0.02f));
-        EnsureEvent(events, "ResolveEnemyAttackImpact", impactTime);
-        EnsureEvent(events, "CombatWarningOff", impactTime + 0.01f);
-        AnimationUtility.SetAnimationEvents(assomoirClip, events.ToArray());
-        EditorUtility.SetDirty(assomoirClip);
+        var skill = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset");
+        if (skill != null) JuggernautEssentialEvents.ConfigureSkill(skill, .837f);
     }
 
     private static RealTimeCombatReactionPrompt CreateReactionPrompt(Transform battleManager)
@@ -341,29 +271,6 @@ public static class CounterSkillPrototypeBuilder
         EditorSceneManager.SaveScene(scene);
     }
 
-    private static void EnsureEvent(List<AnimationEvent> events, string functionName, float time)
-    {
-        for (int i = 0; i < events.Count; i++)
-        {
-            if (events[i].functionName != functionName) continue;
-            events[i].time = time;
-            return;
-        }
-        events.Add(new AnimationEvent { functionName = functionName, time = time });
-    }
-
-    private static void EnsureFloatEvent(List<AnimationEvent> events, string functionName, float time, float value)
-    {
-        for (int i = 0; i < events.Count; i++)
-        {
-            if (events[i].functionName != functionName) continue;
-            events[i].time = time;
-            events[i].floatParameter = value;
-            return;
-        }
-
-        events.Add(new AnimationEvent { functionName = functionName, time = time, floatParameter = value });
-    }
 
     private static void ConfigureCombatWarning(Transform battleManager)
     {

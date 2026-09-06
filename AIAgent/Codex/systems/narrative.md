@@ -45,6 +45,16 @@ connaissances et résoudre les interactions narratives.
 
 ## Pièges observés
 
+Le cycle Nina (`Assets/Narrative/NinaCycle`) utilise un controleur serveur et les
+variables monde sauvegardees pour ses quatre jalons. La lettre ne donne Dilemme
+Edouard qu'a sa lecture. Nina change immediatement de pose avec ce savoir; la
+visite qui active Scar exige aussi la cinematique terminee et Existence des chimeres.
+DialoguePanelUI.TryShowTimedConversation distingue fin naturelle et annulation.
+NinaGhostInteraction adapte uniquement les deux fantomes de ce cycle. La scene
+contient des emplacements explicites; les ressources artistiques restent a assigner.
+La competence de Scar est composee a la lecture par SkillsManager depuis la variable
+de monde, sans mutation de CharacterData ni duplication de recompense.
+
 - `dialogueMaxDisplayDuration = 0` attend indéfiniment `Interact`.
 - Chaque chemin de sortie d’une séquence doit libérer focus, caméra et verrou UCC.
 - Les IDs narratifs sont persistants; les renommer nécessite une migration.

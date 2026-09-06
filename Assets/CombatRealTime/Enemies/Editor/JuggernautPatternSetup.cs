@@ -15,6 +15,12 @@ public static class JuggernautPatternSetup
     static JuggernautPatternSetup() { EditorApplication.update += Poll; }
     private static void Poll()
     {
+        if (!EditorApplication.isCompiling && !EditorApplication.isPlayingOrWillChangePlaymode && File.Exists("Library/JuggernautLocomotion.request"))
+        {
+            File.Delete("Library/JuggernautLocomotion.request");
+            try { ConfigureLocomotion(); File.WriteAllText("Library/JuggernautLocomotion.result", "PASS"); }
+            catch (Exception e) { File.WriteAllText("Library/JuggernautLocomotion.result", e.ToString()); }
+        }
         if (EditorApplication.isCompiling || EditorApplication.isPlayingOrWillChangePlaymode || !File.Exists(Request)) return;
         File.Delete(Request);
         try { Configure(); File.WriteAllText("Library/JuggernautPatternSetup.result", "PASS"); }
@@ -55,9 +61,8 @@ public static class JuggernautPatternSetup
                 AnimationUtility.SetAnimationClipSettings(clip, settings);
                 float length = clip.length;
                 AnimationUtility.SetAnimationEvents(clip, new[] {
-                    Event("CombatWarningOn", length * .15f), Event("OpenReactionWindow", length * .3f, .3f),
-                    Event("LockEnemyAttackDirection", length * .42f), Event("OpenEnemyAttackHitbox", length * .48f),
-                    Event("CloseEnemyAttackHitbox", length * .66f), Event("CombatWarningOff", length * .67f),
+                    new AnimationEvent { functionName = "OpenEnemyReactionOpportunity", time = length * .3f },
+                    Event("LockEnemyAttackDirection", length * .42f), Event("EnemyAttack", length * .48f),
                     Event("EndEnemyAttack", length * .94f) });
                 AssetDatabase.CreateAsset(clip, Folder + names[i] + ".anim");
             }
@@ -93,6 +98,7 @@ public static class JuggernautPatternSetup
             skill.EnemyActionMotion.enableAdvance = i < 2;
             skill.EnemyActionMotion.advanceDistance = i == 0 ? .4f : i == 1 ? .5f : 0f;
             skill.EnemyActionMotion.advanceDuration = i == 0 ? .18f : .2f;
+            JuggernautEssentialEvents.ConfigureSkill(skill, i == 2 ? .625f : .55f);
             EnsureState(machine, names[i], clip);
             EditorUtility.SetDirty(skill);
             skills.Add(skill);
@@ -105,26 +111,23 @@ public static class JuggernautPatternSetup
         // Apex at warning (0.837s), with takeoff at 0.1s.
         assomoirData.FindProperty("enemyActionMotion.initialUpwardSpeed").floatValue = 10.5f;
         assomoirData.FindProperty("enemyActionMotion.gravity").floatValue = 10.5f / .737f;
-        assomoirData.FindProperty("enemyActionMotion.lockRushDestination").boolValue = true;
         assomoirData.ApplyModifiedPropertiesWithoutUndo();
         AnimationEvent[] jumpEvents = AnimationUtility.GetAnimationEvents(assomoir.AnimationClip);
         foreach (var entry in jumpEvents)
         {
             if (entry.functionName == "RequestEnemyLanding") entry.time = 1.25f;
-            if (entry.functionName == "ResolveEnemyAttackImpact") entry.time = 1.7f;
-            if (entry.functionName == "CombatWarningOff") entry.time = 1.71f;
-            if (entry.functionName == "EndEnemyRush") entry.time = 1.72f;
         }
         AnimationUtility.SetAnimationEvents(assomoir.AnimationClip, jumpEvents.OrderBy(e => e.time).ToArray());
+        JuggernautEssentialEvents.ConfigureSkill(assomoir, .837f);
         EditorUtility.SetDirty(assomoir.AnimationClip);
         EnsureState(machine, "Juggernaut_Assomoir", assomoir.AnimationClip);
-        foreach (string name in new[] { "Guard", "Hit", "Countered", "GetUp", "Death" })
+        foreach (string name in new[] { "Guard", "Hit", "GetUp", "Death" })
         {
             Motion motion = Find(old.layers[0].stateMachine, name)?.motion;
             if (motion == null) throw new InvalidOperationException("Clip requis absent : " + name);
             EnsureState(machine, name, motion);
         }
-        var kept = new HashSet<string>(names.Concat(new[] { "CombatIdle", "CombatLocomotion", "Juggernaut_Assomoir", "Guard", "Hit", "Countered", "GetUp", "Death" }));
+        var kept = new HashSet<string>(names.Concat(new[] { "CombatIdle", "CombatLocomotion", "Juggernaut_Assomoir", "Guard", "Hit", "GetUp", "Death" }));
         foreach (var transition in machine.anyStateTransitions) machine.RemoveAnyStateTransition(transition);
         foreach (var transition in machine.entryTransitions) machine.RemoveEntryTransition(transition);
         foreach (var child in machine.stateMachines) machine.RemoveStateMachine(child.stateMachine);
@@ -145,6 +148,7 @@ public static class JuggernautPatternSetup
         profile.preferMeleeApproach = true;
         profile.airborneAlternativeChance = .25f;
         foreach (var child in machine.states) child.state.motion = ConvertMotion(child.state.motion);
+        ConfigureLocomotion(controller);
         MakeInPlace(assomoir.AnimationClip);
         data.combatSkills = skills;
         data.enemyCombatProfile = profile;
@@ -204,6 +208,45 @@ public static class JuggernautPatternSetup
         }
         MakeInPlace(clip);
         return clip;
+    }
+
+    [MenuItem("Lit/Combat/Update Juggernaut Locomotion")]
+    public static void ConfigureLocomotion()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Quitter Play Mode.");
+        ConfigureLocomotion(AssetDatabase.LoadAssetAtPath<AnimatorController>(Folder + "Juggernaut_Model.controller"));
+        AssetDatabase.SaveAssets();
+    }
+
+    private static void ConfigureLocomotion(AnimatorController controller)
+    {
+        const string parameter = "CombatLocomotionPlaybackRate";
+        if (controller == null) throw new InvalidOperationException("Controller Juggernaut absent.");
+        if (!controller.parameters.Any(p => p.name == parameter))
+            controller.AddParameter(new AnimatorControllerParameter { name = parameter, type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
+        var state = Find(controller.layers[0].stateMachine, "CombatLocomotion");
+        if (state == null) throw new InvalidOperationException("CombatLocomotion absent.");
+        state.speedParameter = parameter;
+        state.speedParameterActive = true;
+        state.speed = 1f;
+        // One cycle per direction: match duration without changing clip events or orientation.
+        if (state.motion is BlendTree tierTree)
+            foreach (var tier in tierTree.children)
+                if (tier.motion is BlendTree directions)
+                {
+                    var children = directions.children;
+                    var clips = children.Select(c => c.motion as AnimationClip).Where(c => c != null && c.length > 0f).ToArray();
+                    var forward = children.FirstOrDefault(c => c.position == Vector2.up).motion as AnimationClip;
+                    float duration = forward != null ? forward.length : clips.FirstOrDefault()?.length ?? 0f;
+                    if (duration <= 0f) continue;
+                    for (int i = 0; i < children.Length; i++)
+                        if (children[i].motion is AnimationClip clip)
+                            children[i].timeScale = children[i].position == Vector2.zero ? 1f : clip.length / duration;
+                    directions.children = children;
+                    EditorUtility.SetDirty(directions);
+                }
+        EditorUtility.SetDirty(state);
+        EditorUtility.SetDirty(controller);
     }
 
     private static void MakeInPlace(AnimationClip clip)

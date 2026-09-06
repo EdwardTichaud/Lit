@@ -2370,6 +2370,7 @@ GameObject:
   - component: {fileID: -2401253528140462390}
   - component: {fileID: 6197907773269782780}
   - component: {fileID: 896591531191039168}
+  - component: {fileID: 8700175782987068785}
   m_Layer: 6
   m_Name: Player_Model_Mia
   m_TagString: PNJ
@@ -2859,6 +2860,7 @@ MonoBehaviour:
   - rid: 2938102941717364751
   - rid: 2938102941717364752
   - rid: 2938102941717364753
+  - rid: 1694578457633095826
   m_ItemAbilities: []
   m_Effects: []
   m_OnMovementTypeActiveEvent:
@@ -2887,6 +2889,59 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+    - rid: 1694578457633095826
+      type: {class: LitUccStateMotionAbility, ns: , asm: Assembly-CSharp}
+      data:
+        m_States:
+        - m_Name: Default
+          m_Preset: {fileID: 0}
+          m_BlockList: []
+          m_Default: 1
+        m_Enabled: 1
+        m_StartType: 0
+        m_StopType: 1
+        m_InputNames: []
+        m_WaitForDoublePressTapTimeout: 0
+        m_LongPressDuration: 0.5
+        m_WaitForLongPressRelease: 0
+        m_AbilityStarter:
+          rid: -2
+        m_AbilityStopper:
+          rid: -2
+        m_AttributeModifier:
+          m_AttributeName: 
+          m_Amount: 0
+          m_AutoUpdate: 0
+          m_AutoUpdateStartDelay: 1
+          m_AutoUpdateInterval: 0.1
+          m_AutoUpdateDuration: -1
+        m_State: 
+        m_StateAppendItemIdentifierName: 0
+        m_AbilityIndexParameter: -1
+        m_StartAudioClipSet:
+          m_AudioConfig: {fileID: 0}
+          m_AudioClips: []
+        m_StopAudioClipSet:
+          m_AudioConfig: {fileID: 0}
+          m_AudioClips: []
+        m_AllowPositionalInput: 1
+        m_AllowRotationalInput: 1
+        m_UseGravity: 0
+        m_UseRootMotionPosition: 0
+        m_UseRootMotionRotation: 0
+        m_DetectHorizontalCollisions: 0
+        m_DetectVerticalCollisions: 0
+        m_DetectGroundCollisions: 0
+        m_AnimatorMotion: {fileID: 0}
+        m_StartEffectName: 
+        m_StartEffectIndex: -1
+        m_AllowEquippedSlotsMask: -1
+        m_AllowItemDefinitions: []
+        m_ImmediateUnequip: 0
+        m_ReequipSlots: 1
+        m_AbilityMessageText: 
+        m_AbilityMessageIcon: {fileID: 0}
+        m_InspectorDescription: 
     - rid: 2938102941717364748
       type: {class: Adventure, ns: Opsive.UltimateCharacterController.ThirdPersonController.Character.MovementTypes, asm: Opsive.UltimateCharacterController}
       data:
@@ -3225,7 +3280,6 @@ MonoBehaviour:
   moveStopTriggerParam: MoveStopTrigger
   turnInPlaceParam: TurnInPlace
   groundedAnimationSpeedToBlend: 0.48
-  groundedRootMotionSpeedToBlend: 0.22
   groundedAnimatorSpeedRiseRate: 13.5
   groundedAnimatorSpeedFallRate: 5.4
   groundedAnimatorTurnRate: 5.4
@@ -3240,7 +3294,7 @@ MonoBehaviour:
   groundedMoveTransitionDirectionHoldTime: 0.18
   groundedMoveTransitionParameterSpeed: 1.22
   useForwardOnlyGroundedLocomotion: 1
-  enableRootMotionPivotTurns: 0
+  enableScriptedPivotTurns: 0
   groundedPivotMinAngle: 85
   groundedPivot180Angle: 135
   groundedSnapStationaryTurn: 0
@@ -3256,7 +3310,7 @@ MonoBehaviour:
   groundedPivotMovementReleaseStart: 0.38
   groundedPivotMovementReleaseMaxAngle: 72
   groundedPivotMovementReleaseScale: 0.58
-  commitRootRotationDuringPivot: 1
+  commitBodyRotationDuringPivot: 1
   groundedPivotRotationCommitRate: 960
   recordLocomotionDiagnostics: 0
   debugLocomotionDiagnostics: 0
@@ -3295,6 +3349,7 @@ MonoBehaviour:
   animator: {fileID: 0}
   animatorMonitor: {fileID: 0}
   scriptedJumpController: {fileID: 0}
+  timeDomain: {fileID: 0}
   logScriptedTraversalDiagnostics: 0
   scriptedTraversalDiagnosticTickInterval: 8
   scriptedTraversalExternalCorrectionDistance: 0.02
@@ -3303,27 +3358,6 @@ MonoBehaviour:
   overrideOpsiveHandlerInput: 1
   orientLookSourceFromMovement: 1
   configureRigidbodyForOpsive: 1
-  useRootMotionLocomotion: 0
-  rootMotionSpeedMultiplier: 1.04
-  rootMotionRotationMultiplier: 1
-  preferLookSourceRotationForRootMotionLocomotion: 1
-  allowRootMotionRotationDuringStartStop: 0
-  suppressIdleRootMotionPosition: 1
-  idleRootMotionVelocityThreshold: 0.06
-  useRootMotionPhaseMultipliers: 1
-  rootMotionLoopSpeedScale: 1.02
-  rootMotionLoopRotationScale: 1
-  rootMotionStartSpeedScale: 1.18
-  rootMotionStartRotationScale: 1
-  rootMotionStopSpeedScale: 0.7
-  rootMotionStopRotationScale: 0.94
-  rootMotionPivotSpeedScale: 0.88
-  rootMotionPivotRotationScale: 1.12
-  preserveAnimatorRootMotion: 1
-  restoreRootMotionSettingsOnDisable: 1
-  refreshRootMotionSettingsEveryFrame: 1
-  driveDirectionalRootMotionInput: 0
-  useLookSourceForwardInputForRootMotion: 1
   enableRunStartResponse: 1
   runStartVelocityBonus: 0.55
   runStartResponseCooldown: 0.25
@@ -3335,12 +3369,12 @@ MonoBehaviour:
   groundReliefMinStepHeight: 0.6
   groundReliefMinSlopeLimit: 58
   groundReliefMinStickToGroundDistance: 0.55
-  adaptRootMotionGroundRelief: 1
-  rootMotionMovingStepHeight: 0.58
-  rootMotionMovingSlopeLimit: 62
-  rootMotionMovingStickToGroundDistance: 0.86
-  rootMotionIdleStickToGroundDistance: 0.64
-  rootMotionGroundReliefAdaptationSpeed: 7.5
+  adaptMovingGroundRelief: 0
+  movingStepHeight: 0.58
+  movingSlopeLimit: 62
+  movingStickToGroundDistance: 0.86
+  idleStickToGroundDistance: 0.64
+  groundReliefAdaptationSpeed: 7.5
   enableUccFlight: 1
   flightTakeoffVerticalSpeed: 6.5
   flightTakeoffDuration: 0.45
@@ -3379,9 +3413,10 @@ MonoBehaviour:
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
   combatFacingSpeedDegreesPerSecond: 900
-  combatOrbitRadiusCorrection: 0.7
+  combatOrbitPureLateralThreshold: 0.12
+  combatOrbitRadiusDeadZone: 0.035
+  combatOrbitRadiusCorrectionGain: 2.25
   combatOrbitMaximumCorrection: 0.35
-  combatOrbitLateralVerticalThreshold: 0.2
   logCombatLockMotionDiagnostics: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:
@@ -3692,6 +3727,8 @@ MonoBehaviour:
   locomotionBridge: {fileID: 0}
   animator: {fileID: 0}
   jumpHeight: 5
+  jumpStartTakeoffNormalizedTime: 0.13
+  jumpStartPlanarSlowdown: 0
   apexGravityEntryVelocity: 2.4
   apexGravityMultiplier: 0.28
   descentGravityMultiplier: 0.72
@@ -3707,6 +3744,19 @@ MonoBehaviour:
     locomotionBlendSeconds: 0.12
     preLandingProbeDistance: 1.2
     preLandingLeadSeconds: 0.14
+--- !u!114 &8700175782987068785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05ed3c85e90cf6f45bfb977d1a5051c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMotionController
+  library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

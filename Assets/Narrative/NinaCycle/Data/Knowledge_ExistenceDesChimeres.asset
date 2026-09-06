@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_ExistenceDesChimeres
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: c5df294c93ed1724692a1b16d61f311d
+  knowledgeId: nina.ExistenceDesChimeres
+  title: "Existence des chim\xE8res"
+  description: "Des \xEAtres vivants ont \xE9t\xE9 fusionn\xE9s artificiellement
+    par le Scientifique fou."
+  category: 16
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: district_1
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 0}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

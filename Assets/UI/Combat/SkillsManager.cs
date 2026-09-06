@@ -18,9 +18,18 @@ public sealed class SkillsManager : MonoBehaviour
 
     public event Action<IReadOnlyList<SkillSO>> EquippedSkillsChanged;
 
-    public IReadOnlyList<SkillSO> KnownSkills => playerController != null && playerController.CharacterData != null && playerController.CharacterData.combatSkills != null
-        ? playerController.CharacterData.combatSkills
-        : Array.Empty<SkillSO>();
+    private readonly List<SkillSO> knownSkillsView = new List<SkillSO>();
+    public IReadOnlyList<SkillSO> KnownSkills
+    {
+        get
+        {
+            knownSkillsView.Clear();
+            if (playerController != null && playerController.CharacterData != null && playerController.CharacterData.combatSkills != null)
+                knownSkillsView.AddRange(playerController.CharacterData.combatSkills);
+            NinaSharedSkills.AppendTo(knownSkillsView);
+            return knownSkillsView;
+        }
+    }
 
     public IReadOnlyList<SkillSO> EquippedSkills => equippedSkills;
     public IReadOnlyList<BasicSkillsSO> GroundBasicSkills => GetBasicSkillList(BasicSkillContext.Grounded);
@@ -49,7 +58,9 @@ public sealed class SkillsManager : MonoBehaviour
 
     public bool IsKnown(SkillSO skill)
     {
-        return skill != null && playerController != null && playerController.CharacterData != null && playerController.CharacterData.combatSkills != null && playerController.CharacterData.combatSkills.Contains(skill);
+        if (skill == null || playerController == null) return false;
+        foreach (var known in KnownSkills) if (known == skill) return true;
+        return false;
     }
 
     public SkillSO GetEquippedSkill(int slotIndex)

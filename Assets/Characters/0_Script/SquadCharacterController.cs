@@ -3459,14 +3459,14 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        animator.applyRootMotion = ShouldPreserveAnimatorRootMotion();
+        animator.applyRootMotion = HasCinematicMotionAuthority();
         animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
     }
 
-    private bool ShouldPreserveAnimatorRootMotion()
+    private bool HasCinematicMotionAuthority()
     {
         LitOpsiveLocomotionBridge locomotionBridge = GetComponent<LitOpsiveLocomotionBridge>();
-        return locomotionBridge != null && locomotionBridge.ShouldPreserveAnimatorRootMotion;
+        return locomotionBridge != null && locomotionBridge.IsCinematicMotionSessionActive;
     }
 
     private void EnsureRigidbodyCollisionSafety()

@@ -38,6 +38,7 @@ public class LitUccDamageBridge : MonoBehaviour
     private bool characterHealthRuntimeReady;
     private SquadCharacterController subscribedSquadController;
     private string pendingLitDamageSource;
+    private int litDamageApplicationDepth;
 
     private void Awake()
     {
@@ -107,7 +108,10 @@ public class LitUccDamageBridge : MonoBehaviour
         }
 
         float previousHealth = healthAttribute.Value;
+        int previousHp = ToLitHealthValue(previousHealth, healthAttribute.MaxValue);
+        string previousDamageSource = pendingLitDamageSource;
         pendingLitDamageSource = source;
+        litDamageApplicationDepth++;
         try
         {
             Vector3 force = ResolveDamageForce(null);
@@ -122,11 +126,14 @@ public class LitUccDamageBridge : MonoBehaviour
         }
         finally
         {
-            pendingLitDamageSource = null;
+            litDamageApplicationDepth--;
+            pendingLitDamageSource = previousDamageSource;
         }
 
         applied = Mathf.CeilToInt(Mathf.Max(0f, previousHealth - healthAttribute.Value));
         SyncSquadHealthFromCharacterHealth();
+        if (applied > 0 && squadController != null)
+            squadController.RecordDamageApplied(sanitizedAmount, applied, previousHp, squadController.CurrentHp, source);
         return true;
     }
 
@@ -429,6 +436,9 @@ public class LitUccDamageBridge : MonoBehaviour
         int requestedAmount = damageData != null ? Mathf.CeilToInt(Mathf.Max(0f, damageData.Amount)) : 0;
         SyncSquadHealthFromCharacterHealth();
 
+        // Lit-owned calls report their measured result after Damage returns.
+        // Native UCC hits still report here, without a duplicate popup/audio cue.
+        if (litDamageApplicationDepth > 0) return;
         int applied = Mathf.CeilToInt(Mathf.Max(0f, previousHealth - healthAttribute.Value));
         if (applied <= 0 && requestedAmount > 0)
         {

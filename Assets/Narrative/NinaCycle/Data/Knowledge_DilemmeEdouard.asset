@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_DilemmeEdouard
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: e45994b22ba98e948830e4f460222de7
+  knowledgeId: nina.DilemmeEdouard
+  title: "Dilemme \xC9douard"
+  description: "\xC9douard a d\xE9couvert que Nina \xE9tait issue de la fusion d'une
+    enfant et d'un chien. Comment lui venir en aide sans lui infliger davantage de
+    souffrance ?"
+  category: 16
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: district_1
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: 49f76a6220b4c054c9f76bfbc164646f, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

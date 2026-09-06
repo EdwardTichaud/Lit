@@ -26,6 +26,8 @@ public sealed class EnemyCombatProfileSO : ScriptableObject
     [Min(.1f)] public float preferredCombatDistance = 2.6f;
     [Min(1f)] public float pursuitRadius = 20f;
     [Min(0f)] public float disengagePauseSeconds = 1f;
+    [Min(0f), Tooltip("Detection a 360 degres pendant le retour, avec ligne de vue. Zero desactive cette proximite.")]
+    public float returnReengageDistance = 6f;
     public Vector2 observationSeconds = new Vector2(.4f, .8f);
     [Range(0f, 1f)] public float guardChance = .08f;
     [Min(0f)] public float guardCooldownSeconds = 4f;

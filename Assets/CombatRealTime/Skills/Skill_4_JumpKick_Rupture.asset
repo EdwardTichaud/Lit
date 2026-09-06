@@ -12,22 +12,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
   m_Name: Skill_4_JumpKick_Rupture
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
+  enemyImpact:
+    offset: {x: 0, y: 1, z: 1.3}
+    radius: 1.4
+    arcDegrees: 110
+    targetMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   skillName: Saut de rupture
   description: Lucian prend appui sur sa cible et se projette puissamment en arriere.
   icon: {fileID: 21300000, guid: 2d089513ae4adfc48a683c362ad9992c, type: 3}
   animationClip: {fileID: 7400000, guid: 8a0a8d6b1b6feb24683287416aef46f2, type: 2}
   animatorState: Base Layer.Skill_4_JumpKick_Rupture
   damages: 15
-  lightChargeOnHit: 1
+  clarityGainOnHit: 1
   presentation:
+    movementPolicy: 2
     entryBlendSeconds: 0.05
     chainNormalizedTime: 1
     chainTransitionNormalizedTime: 1
     mobilityCancelNormalizedTime: 0.7
     recoveryNormalizedTime: 0.96
     exitBlendSeconds: 0.1
-    rootMotionMode: 2
-    allowAirborneRootMotion: 0
+    handoff:
+      minimumContactSeconds: 0
+      animationExitNormalizedTime: 0.82
+      planarSettledSpeed: 0.18
+      verticalSettledSpeed: 0.25
+      planarDampingPerSecond: 0
+      maximumSettleSeconds: 0.2
+      locomotionBlendSeconds: 0.08
+      preLandingProbeDistance: 1.2
+      preLandingLeadSeconds: 0.14
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
@@ -98,6 +114,18 @@ MonoBehaviour:
     maximumInputLockSeconds: 3.5
     airborneInertiaSeconds: 0.6
     airborneInertiaEndSpeedMultiplier: 0.35
+  targetLunge:
+    enabled: 0
+    approachDurationSeconds: 0.18
+    maximumApproachSpeed: 42
+    stoppingDistance: 0.85
+    contactTolerance: 0.18
+    reboundHorizontalImpulse: 16
+    reboundVerticalImpulse: 8
+    minimumInputLockSeconds: 0.1
+    maximumInputLockSeconds: 2.5
+    airborneInertiaSeconds: 0.08
+    airborneInertiaEndSpeedMultiplier: 0.25
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000
@@ -105,6 +133,33 @@ MonoBehaviour:
   playerAttackSfx: {fileID: 11400000, guid: d97b66c20f2140bfa449b56b1a29afd1, type: 2}
   enemyAttackSfx: {fileID: 11400000, guid: d97b66c20f2140bfa449b56b1a29afd1, type: 2}
   enemyActionMotion:
+    enableAdvance: 0
+    advanceDistance: 0.4
+    advanceDuration: 0.18
+    advanceProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
     movementMode: 0
     initialUpwardSpeed: 12
     gravity: 32
@@ -112,6 +167,7 @@ MonoBehaviour:
     minimumLandingSpeed: 4
     maximumAirborneSeconds: 2.5
     enableHomingRush: 0
+    lockRushDestination: 0
     rushMaximumSpeed: 14
     rushAcceleration: 46
     rushDeceleration: 62

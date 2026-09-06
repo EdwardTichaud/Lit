@@ -265,3 +265,180 @@ Assets/Audio/AudioClips/AudioClip_Ambiance_Exploration.asset
 Assets/Editor/Tests/UiPanelTests.cs.meta
 Assets/Environment/1_Volumes/Settings/SkyandFogSettingsProfile.asset
 Assets/CombatRealTime/Enemies/Editor/JuggernautCombatSetupUtility.cs.meta
+Assets/Sci-Fi Dog.meta
+Assets/Sci-Fi Dog/Mesh.meta
+Assets/Sci-Fi Dog/Prefab.meta
+Assets/Sci-Fi Dog/Textures.meta
+Assets/Sci-Fi Dog/ExtractMe.meta
+Assets/Sci-Fi Dog/Materials.meta
+Assets/Sci-Fi Dog/Animations.meta
+Assets/Sci-Fi Dog/Sci-Fi Dog.unity
+Assets/Sci-Fi Dog/Textures/Skin1.meta
+Assets/Sci-Fi Dog/Textures/Skin2.meta
+Assets/Sci-Fi Dog/Textures/Skin3.meta
+Assets/Sci-Fi Dog/Textures/Skin4.meta
+Assets/Sci-Fi Dog/Sci-Fi Dog.unity.meta
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin1.fbx
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin2.fbx
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin3.fbx
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin4.fbx
+Assets/Sci-Fi Dog/ExtractMe/Documentation.txt
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin1.fbx.meta
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin2.fbx.meta
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin3.fbx.meta
+Assets/Sci-Fi Dog/Mesh/Sci-Fi Dog Skin4.fbx.meta
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin1.prefab
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin2.prefab
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin3.prefab
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin4.prefab
+Assets/Sci-Fi Dog/ExtractMe/Documentation.txt.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Run.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle1.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle3.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle4.fbx
+Assets/Sci-Fi Dog/ExtractMe/BuiltInToURP.unitypackage
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin1.prefab.meta
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin2.prefab.meta
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin3.prefab.meta
+Assets/Sci-Fi Dog/Prefab/Sci-Fi Dog Skin4.prefab.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Death1.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Death2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Walk_F.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Walk_L.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Walk_R.fbx
+Assets/Sci-Fi Dog/ExtractMe/BuiltInToHDRP.unitypackage
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin1.mat
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin2.mat
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin3.mat
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin4.mat
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Attack1.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Attack2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Attack3.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Barking.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@JumpEnd.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Turn180.fbx
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin1.mat
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin2.mat
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin3.mat
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin4.mat
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_B.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_F.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_L.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_R.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@JumpLoop.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Run.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_B2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_F2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_L2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_R2.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@JumpStart.fbx
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle1.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle3.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Idle4.fbx.meta
+Assets/Sci-Fi Dog/ExtractMe/BuiltInToURP.unitypackage.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Death1.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Death2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Walk_F.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Walk_L.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Walk_R.fbx.meta
+Assets/Sci-Fi Dog/ExtractMe/BuiltInToHDRP.unitypackage.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin1.mat.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin2.mat.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin3.mat.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin4.mat.meta
+Assets/Sci-Fi Dog/Sci-Fi Dog Animator Controller.controller
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Attack1.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Attack2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Attack3.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Barking.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@JumpEnd.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@Turn180.fbx.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin1.mat.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin2.mat.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin3.mat.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin4.mat.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_B.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_F.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_L.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_R.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@JumpLoop.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_B2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_F2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_L2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@GetHit_R2.fbx.meta
+Assets/Sci-Fi Dog/Animations/Anim_SciFi_Dog@JumpStart.fbx.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin1_MaskMap.png
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin2_MaskMap.png
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin3_MaskMap.png
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin4_MaskMap.png
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_AO_Skin1.tga
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin1_MaskMap.png
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin2_MaskMap.png
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin3_MaskMap.png
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin4_MaskMap.png
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_AO_Skin1.tga
+Assets/Sci-Fi Dog/Sci-Fi Dog Animator Controller.controller.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_Normal_Skin1.tga
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin1_MaskMap.png.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin2_MaskMap.png.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin3_MaskMap.png.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Body_Skin4_MaskMap.png.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_Normal_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_AO_Skin1.tga.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin1_MaskMap.png.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin2_MaskMap.png.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin3_MaskMap.png.meta
+Assets/Sci-Fi Dog/Materials/M_SciFi_Dog_Armor_Skin4_MaskMap.png.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_AO_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_Emissive_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Body_Emissive_Skin2.tga
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Body_Emissive_Skin3.tga
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Body_Emissive_Skin4.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_Emissive_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_BaseColor_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Armor_Emissive_Skin2.tga
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Body_BaseColor_Skin2.tga
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Armor_Emissive_Skin3.tga
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Body_BaseColor_Skin3.tga
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Armor_Emissive_Skin4.tga
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Body_BaseColor_Skin4.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_BaseColor_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Armor_BaseColor_Skin2.tga
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Armor_BaseColor_Skin3.tga
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Armor_BaseColor_Skin4.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_MetallGloss_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_Normal_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Body_MetallGloss_Skin2.tga
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Body_MetallGloss_Skin3.tga
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Body_MetallGloss_Skin4.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_MetallGloss_Skin1.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_Normal_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Armor_MetallGloss_Skin2.tga
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Armor_MetallGloss_Skin3.tga
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Armor_MetallGloss_Skin4.tga
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_Emissive_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Body_Emissive_Skin2.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Body_Emissive_Skin3.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Body_Emissive_Skin4.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_Emissive_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_BaseColor_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Armor_Emissive_Skin2.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Body_BaseColor_Skin2.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Armor_Emissive_Skin3.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Body_BaseColor_Skin3.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Armor_Emissive_Skin4.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Body_BaseColor_Skin4.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_BaseColor_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Armor_BaseColor_Skin2.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Armor_BaseColor_Skin3.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Armor_BaseColor_Skin4.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Body_MetallGloss_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Body_MetallGloss_Skin2.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Body_MetallGloss_Skin3.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Body_MetallGloss_Skin4.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin1/T_SciFi_Dog_Armor_MetallGloss_Skin1.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin2/T_SciFi_Dog_Armor_MetallGloss_Skin2.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin3/T_SciFi_Dog_Armor_MetallGloss_Skin3.tga.meta
+Assets/Sci-Fi Dog/Textures/Skin4/T_SciFi_Dog_Armor_MetallGloss_Skin4.tga.meta

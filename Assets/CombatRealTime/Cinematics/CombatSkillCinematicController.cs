@@ -91,6 +91,11 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
 
         CombatSkillCinematicDefinition definition = skill.Cinematic;
+        if (casterRole == CombatCinematicCasterRole.Player && combatManager.LockedEnemy.IsAttackCommitted)
+        {
+            Debug.Log("[CombatCinematic] Skill refuse pendant l'attaque ennemie : seuls LightSkill, QTE reussi ou mort interrompent le coup.", this);
+            return false;
+        }
         active = true;
         playbackStarted = false;
         impactResolved = false;

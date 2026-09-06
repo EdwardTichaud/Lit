@@ -21,7 +21,6 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private bool targetLungeOwnsPlanarMotion;
     private int activeStateHash;
     private int activeToken;
-    private PlayerActionRootMotionMode activeRootMotionMode;
     private PlayerActionFacingMode activeFacingMode;
     private bool actionActive;
     private bool chainWindowOpen;
@@ -160,7 +159,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         activeAirborneLandingHandoff = null;
         activeLandingRequested = false;
         activeHandoffStartedAt = 0f;
-        locomotionBridge?.ClearPlayerActionRootMotionMode();
+        locomotionBridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
         if (hadAction)
         {
             ActionEnded?.Invoke();
@@ -208,7 +207,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
 
         CancelAction();
-        locomotionBridge?.ClearPlayerActionRootMotionMode();
+        locomotionBridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
         locomotionBridge?.RefreshLocomotionPresentation();
 
         string destination = ResolveLocomotionDestination(movementHeld, sprintHeld);
@@ -249,7 +248,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         CancelTargetLunge();
         // A target lunge is authored as an in-place animation even if a stale
         // Skill asset still carries an old root-motion presentation setting.
-        locomotionBridge.SetPlayerActionRootMotionMode(PlayerActionRootMotionMode.InPlace, false, false);
+        locomotionBridge.GetComponent<PlayerStateMotionController>()?.Cancel();
         targetLungeRoutine = StartCoroutine(RunTargetLunge(profile, target, ++targetLungeToken, activeToken));
     }
 
@@ -422,7 +421,6 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         activeToken++;
         activeStateHash = stateHash;
-        activeRootMotionMode = profile.rootMotionMode;
         activeFacingMode = profile.facingMode;
         actionActive = true;
         chainWindowOpen = false;
@@ -434,10 +432,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         activeAirborneLandingHandoff = basicSkill != null ? basicSkill.AirborneLandingHandoff : null;
         activeLandingRequested = false;
         activeHandoffStartedAt = 0f;
-        locomotionBridge?.SetPlayerActionRootMotionMode(
-            profile.rootMotionMode,
-            profile.facingMode == PlayerActionFacingMode.VisualOnly,
-            profile.allowAirborneRootMotion);
+        locomotionBridge?.GetComponent<PlayerStateMotionController>()?.SetActionPolicy(stateHash, profile.movementPolicy);
         if (activeHoldsAirborne)
         {
             locomotionBridge?.BeginCombatAirborneHold();
@@ -694,7 +689,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         activeLandingRequested = false;
         activeHandoffStartedAt = 0f;
         actionRoutine = null;
-        locomotionBridge?.ClearPlayerActionRootMotionMode();
+        locomotionBridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
         ActionEnded?.Invoke();
         RequestLocomotionHandoff();
     }
@@ -785,12 +780,11 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         AnimatorStateInfo next = animator != null && animator.IsInTransition(0)
             ? animator.GetNextAnimatorStateInfo(0)
             : default(AnimatorStateInfo);
-        Vector3 delta = animator != null ? animator.deltaPosition : Vector3.zero;
-        string rootPhase = locomotionBridge != null ? locomotionBridge.CurrentRootMotionPhase : "None";
+        string rootPhase = locomotionBridge != null ? locomotionBridge.CurrentAnimationPhase : "None";
         Debug.Log(
             $"[PlayerAction] {phase} action='{actionName}' current={current.fullPathHash}/{current.normalizedTime:F2} " +
-            $"next={next.fullPathHash}/{next.normalizedTime:F2} input={input:F2} rootMode={profile.rootMotionMode} " +
-            $"rootPhase={rootPhase} delta={delta:F4}",
+            $"next={next.fullPathHash}/{next.normalizedTime:F2} input={input:F2} movement={profile.movementPolicy} " +
+            $"animationPhase={rootPhase}",
             this);
     }
 }

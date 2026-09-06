@@ -71,7 +71,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         public Coroutine routine;
         public LitOpsiveLocomotionBridge bridge;
         public bool ownsExternalLock;
-        public bool ownsRootMotionMode;
+        public bool ownsMotionAuthority;
     }
 
     private void Reset() => ResolveEndpoints();
@@ -211,8 +211,8 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
 
         PassageRuntime runtime = new PassageRuntime { bridge = bridge, ownsExternalLock = true };
         activePassages.Add(controller.transform, runtime);
-        bridge.SetPlayerActionRootMotionMode(PlayerActionRootMotionMode.InPlace, suppressRootRotation: true);
-        runtime.ownsRootMotionMode = true;
+        bridge.GetComponent<PlayerStateMotionController>()?.Cancel();
+        runtime.ownsMotionAuthority = true;
 
         Animator animator = controller.GetComponent<Animator>() ?? controller.GetComponentInChildren<Animator>(true);
         ScheduleTeleportVfx(disappearVfxPrefab, controller.transform.position, controller.transform.rotation, disappearVfxDelay);
@@ -287,7 +287,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     private void EndPassage(Transform traveler, PassageRuntime runtime)
     {
         if (runtime == null) return;
-        if (runtime.ownsRootMotionMode && runtime.bridge != null) runtime.bridge.ClearPlayerActionRootMotionMode();
+        if (runtime.ownsMotionAuthority && runtime.bridge != null) runtime.bridge.EnforceGameplayMotionAuthority();
         if (runtime.ownsExternalLock && runtime.bridge != null) runtime.bridge.EndExternalLock();
         if (traveler != null && activePassages.TryGetValue(traveler, out PassageRuntime active) && active == runtime) activePassages.Remove(traveler);
     }
@@ -300,7 +300,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         {
             PassageRuntime runtime = passage.Value;
             if (runtime != null && runtime.routine != null) StopCoroutine(runtime.routine);
-            if (runtime != null && runtime.ownsRootMotionMode && runtime.bridge != null) runtime.bridge.ClearPlayerActionRootMotionMode();
+            if (runtime != null && runtime.ownsMotionAuthority && runtime.bridge != null) runtime.bridge.EnforceGameplayMotionAuthority();
             if (runtime != null && runtime.ownsExternalLock && runtime.bridge != null) runtime.bridge.EndExternalLock();
         }
     }

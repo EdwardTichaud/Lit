@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 /// Animator-driven and deliberately independent from combat Timelines.
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class CombatHealthThresholdController : MonoBehaviour
+public sealed partial class CombatHealthThresholdController : MonoBehaviour
 {
     private enum SequenceState { Idle, Pending, PlayingSequence, SuccessPresentation, FailureRetaliation }
 
@@ -83,6 +83,10 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
                 state == SequenceState.SuccessPresentation);
     }
 
+    public bool HasPendingStage(RealTimeCombatEnemy enemy) => enemy != null && enemy == activeEnemy && state == SequenceState.Pending;
+    public bool ShouldSuspendEnemy(RealTimeCombatEnemy enemy) => BlocksEnemyActions(enemy) &&
+        (!HasPendingStage(enemy) || !enemy.IsAttackCommitted);
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -98,12 +102,14 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearAttackReaction();
         AbortActiveSequence("desactivation");
         SetQteInputEnabled(false);
     }
 
     private void OnDestroy()
     {
+        ClearAttackReaction();
         if (Instance == this) Instance = null;
         SetQteInputEnabled(false);
         ReleaseQteSlowMotion();
@@ -162,28 +168,15 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
     }
 
     /// <summary>Animation Event placed on the configured failure-retaliation skill.</summary>
-    public bool TryResolveThresholdFailureImpact(RealTimeCombatEnemy enemy)
-    {
-        if (state != SequenceState.FailureRetaliation || enemy == null || enemy != activeEnemy || activeStage == null)
-        {
-            return false;
-        }
+    private bool failureImpactResolved;
 
-        ThresholdSequenceStep step = GetCurrentStep();
-        int applied = combatManager != null && step != null
-            ? combatManager.ApplyEnemySkillDamageToPlayer(enemy, step.failureRetaliationSkill)
-            : 0;
-        if (applied > 0)
-        {
-            combatManager?.ApplyThresholdFailureKnockback(enemy, 3f);
-        }
+    public void NotifyFailureRetaliationImpact(RealTimeCombatEnemy enemy, SkillSO skill, int applied)
+    {
+        if (state != SequenceState.FailureRetaliation || enemy == null || enemy != activeEnemy ||
+            activeStage == null || failureImpactResolved || GetCurrentStep()?.failureRetaliationSkill != skill) return;
+        failureImpactResolved = true;
+        if (applied > 0) combatManager?.ApplyThresholdFailureKnockback(enemy, 3f);
         Trace("Impact de riposte palier | enemy='" + enemy.name + "' | damage=" + applied + ".");
-        return true;
-    }
-
-    public void ResolveThresholdFailureImpact(RealTimeCombatEnemy enemy)
-    {
-        TryResolveThresholdFailureImpact(enemy);
     }
 
     /// <summary>Allows the existing EndEnemyAttack event to finish a failed QTE attack.</summary>
@@ -200,6 +193,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
     public void AbortActiveSequence(string reason)
     {
+        ClearAttackReaction();
         if (state == SequenceState.Idle)
         {
             return;
@@ -243,7 +237,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
             // Let an already-authored enemy action complete, but do not allow
             // the AI to arm another one while the stage is pending.
-            if (!activeEnemy.HasRetaliationPending && !combatManager.IsCinematicSequenceActive)
+            if (!activeEnemy.IsAttackCommitted && !combatManager.IsCinematicSequenceActive && !attackQteActive)
             {
                 if (TryResolveStagePose(out Vector3 playerPosition, out Quaternion playerRotation, out Quaternion enemyRotation, out string poseIssue))
                 {
@@ -428,6 +422,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         ReleaseQteSlowMotion();
         qtePanel?.ResolveFailure();
         state = SequenceState.FailureRetaliation;
+        failureImpactResolved = false;
         MarkActiveStageResolved();
         ClearPlayerThresholdVisualState();
         RestorePlayerThresholdAnimationBindings();
@@ -1210,7 +1205,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         LitOpsiveLocomotionBridge bridge = playerRoot != null
             ? playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)
             : null;
-        bridge?.SetPlayerActionRootMotionMode(PlayerActionRootMotionMode.InPlace, false, false);
+        bridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
     }
 
     private void ClearPlayerThresholdVisualState()
@@ -1219,7 +1214,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         LitOpsiveLocomotionBridge bridge = playerRoot != null
             ? playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)
             : null;
-        bridge?.ClearPlayerActionRootMotionMode();
+        bridge?.EnforceGameplayMotionAuthority();
     }
 
     private bool BindSequenceAnimationClips(Animator animator, out string issue)

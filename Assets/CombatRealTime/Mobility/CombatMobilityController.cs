@@ -149,6 +149,8 @@ public sealed class CombatMobilityController : MonoBehaviour
         TryExecute(MobilityCommand.Dodge, true);
     }
 
+    public bool TryDodgeImmediate() => TryExecute(MobilityCommand.Dodge, false);
+
     public void RequestJump()
     {
         TryExecute(MobilityCommand.Jump, true);
@@ -261,7 +263,7 @@ public sealed class CombatMobilityController : MonoBehaviour
             return false;
         }
 
-        if (!TryPlayMobilityState(state, dodge, PlayerActionRootMotionMode.ScriptedDash, "Dodge"))
+        if (!TryPlayMobilityState(state, dodge, PlayerActionMovementPolicy.ExistingScripted, "Dodge"))
         {
             return false;
         }
@@ -292,7 +294,7 @@ public sealed class CombatMobilityController : MonoBehaviour
     private bool TryPlayMobilityState(
         string stateName,
         CombatMobilityActionSettings settings,
-        PlayerActionRootMotionMode rootMotionMode,
+        PlayerActionMovementPolicy movementPolicy,
         string debugName)
     {
         if (actionPresentation == null || string.IsNullOrWhiteSpace(stateName))
@@ -309,7 +311,7 @@ public sealed class CombatMobilityController : MonoBehaviour
             mobilityCancelNormalizedTime = settings.movementCancelNormalizedTime,
             recoveryNormalizedTime = settings.recoveryNormalizedTime,
             exitBlendSeconds = 0.08f,
-            rootMotionMode = rootMotionMode,
+            movementPolicy = movementPolicy,
             facingMode = PlayerActionFacingMode.UccBody,
             allowMoveAfterRecovery = true,
             allowDodgeAfterRecovery = true,

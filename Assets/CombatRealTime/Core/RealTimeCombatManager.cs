@@ -352,6 +352,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         CloseReactionWindow(notify: false);
         if (engagedEnemy != null)
         {
+            SetEnemyAttackMode(engagedEnemy, false);
             engagedEnemy.CompleteRetaliation();
         }
 
@@ -360,8 +361,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         SetLockedEnemy(null);
         playerLocomotionBridge?.ClearCombatLockTarget();
         combatInput?.SetInputActive(false);
+        if (combatInput == null) LocalPlayerInput.SetCombatInputActive(false);
         stopPlayerWhenMovementReleased = true;
         CombatStateChanged?.Invoke(false);
+        ResolvePlayerReferences();
         playerController?.RefreshLocalInteractionDetectionForExternalLocomotion();
     }
 
@@ -984,16 +987,17 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         IsCinematicSequenceActive = active;
         if (active)
         {
+            combatHealthThresholdController?.CancelAttackQte(engagedEnemy);
             CloseReactionWindow(notify: false);
             reactionSucceeded = false;
         }
     }
 
     /// <summary>Closes the current reaction window and freezes its attack for an immediate CounterSkill.</summary>
-    public bool TryBeginCounterCinematic()
+    public bool TryBeginCounterCinematic(RealTimeCombatEnemy attacker, SkillSO attack)
     {
-        if (IsCinematicSequenceActive || !combatActive || !reactionWindowOpen || engagedEnemy == null ||
-            engagedEnemy.ActiveSkill == null || !engagedEnemy.ActiveSkill.AcceptsEnemyReaction(RealTimeCombatReaction.Counter))
+        if (IsCinematicSequenceActive || !combatActive || attacker == null || attacker != engagedEnemy ||
+            attack == null || attacker.ActiveSkill != attack || attacker.Health != null && attacker.Health.IsDead)
         {
             return false;
         }
@@ -1165,37 +1169,52 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>
     /// Applique un impact de SkillSO ennemi declenche par un Animation Event.
     /// </summary>
-    /// <summary>Single authoritative damage path for spatial pattern impacts.</summary>
-    public int ResolveEnemyPatternImpact(RealTimeCombatEnemy attacker, SquadCharacterController victim,
-                                         SkillSO skill, int actionId, int windowId)
+    public int ResolveEnemyAttackContact(RealTimeCombatEnemy attacker, SquadCharacterController victim,
+                                         SkillSO skill, int actionId, out EnemyAttackOutcome outcome)
     {
+        outcome = EnemyAttackOutcome.Miss;
         var network = Unity.Netcode.NetworkManager.Singleton;
         if (network != null && network.IsListening && !network.IsServer) return 0;
-        EnemyCombatBrain brain = attacker != null ? attacker.GetComponent<EnemyCombatBrain>() : null;
-        if (victim == null || victim.CurrentHp <= 0 || brain == null || !brain.IsAutonomousActionActive ||
-            brain.ActionId != actionId || attacker.ActiveSkill != skill ||
+        if (victim == null || victim.CurrentHp <= 0 || attacker == null || !attacker.isActiveAndEnabled ||
+            attacker.ActionSequenceId != actionId || attacker.ActiveSkill != skill ||
             attacker.Health != null && attacker.Health.IsDead || IsCinematicSequenceActive) return 0;
 
         if (victim == playerController)
         {
-            bool avoided = attacker == engagedEnemy && reactionSucceeded;
+            CombatHealthThresholdController.Instance?.CancelAttackQte(attacker);
+            bool avoided = CombatHealthThresholdController.Instance != null &&
+                CombatHealthThresholdController.Instance.IsAttackDodged(attacker, victim.transform, skill);
+            avoided |= attacker == engagedEnemy && reactionSucceeded && skill.AcceptedEnemyReactions.Count > 0;
+            avoided |= playerMobility != null && playerMobility.IsDamageInvulnerable;
             if (attacker == engagedEnemy) CloseReactionWindow(notify: true);
-            int damage = CounterSkillCombatController.ModifyGuardDamage(attacker.CommittedRetaliationDamage);
-            int applied = avoided ? 0 : ApplyPlayerDamage(damage);
-            ReactionImpactResolved?.Invoke(skill, avoided);
+            if (avoided)
+            {
+                outcome = EnemyAttackOutcome.Avoided;
+                ReactionImpactResolved?.Invoke(skill, true);
+                return 0;
+            }
+            bool guarded = CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsGuardHeld;
+            var feedback = skill.enemyAttackFeedback;
+            bool ownGuardFeedback = feedback != null && (feedback.guardVfx != null || feedback.guardAudio != null);
+            int damage = CounterSkillCombatController.ModifyGuardDamage(attacker.CommittedRetaliationDamage, !ownGuardFeedback);
+            int applied = ApplyPlayerDamage(damage);
+            outcome = guarded ? EnemyAttackOutcome.Guarded : applied > 0 ? EnemyAttackOutcome.Damaged : EnemyAttackOutcome.Avoided;
+            ReactionImpactResolved?.Invoke(skill, false);
             if (applied > 0) { PlayerDamaged?.Invoke(applied); EvaluateCombatOutcome(); }
             return applied;
         }
-        // Remote actors use their own damage entry point, never the local HUD's health.
         var mobility = victim.GetComponentInChildren<CombatMobilityController>(true);
-        if (mobility != null && mobility.IsDamageInvulnerable) return 0;
-        int remoteApplied = victim.ApplyDamage(attacker.CommittedRetaliationDamage, "EnemyPattern");
-        CombatDamageWorldFeedback.Show(victim.transform, remoteApplied, new Color(1f, .48f, .48f), 2.05f);
+        if (mobility != null && mobility.IsDamageInvulnerable) { outcome = EnemyAttackOutcome.Avoided; return 0; }
+        int remoteApplied = victim.ApplyDamage(attacker.CommittedRetaliationDamage, "EnemyAttack");
+        outcome = remoteApplied > 0 ? EnemyAttackOutcome.Damaged : EnemyAttackOutcome.Avoided;
         return remoteApplied;
     }
 
     public int ApplyEnemySkillDamageToPlayer(RealTimeCombatEnemy caster, SkillSO skill)
     {
+        CombatHealthThresholdController.Instance?.CancelAttackQte(caster);
+        if (CombatHealthThresholdController.Instance != null &&
+            CombatHealthThresholdController.Instance.IsAttackDodged(caster, playerRoot, skill)) return 0;
         if (!combatActive || caster == null || caster != engagedEnemy || skill == null ||
             (caster.Health != null && caster.Health.IsDead))
         {
@@ -1253,6 +1272,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void RegisterReaction(RealTimeCombatReaction reaction)
     {
+        // A counter is earned only through the authored attack QTE and its cinematic.
+        if (reaction == RealTimeCombatReaction.Counter) return;
         if (!reactionWindowOpen || engagedEnemy == null || engagedEnemy.ActiveSkill == null ||
             (reaction != RealTimeCombatReaction.Counter &&
              reaction != RealTimeCombatReaction.Dodge &&
@@ -1292,22 +1313,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         CloseReactionWindow(notify: true);
-    }
-
-    public void ResolveEnemyAttackImpact(RealTimeCombatEnemy enemy)
-    {
-        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != engagedEnemy || enemy.ActiveSkill == null)
-        {
-            return;
-        }
-
-        CloseReactionWindow(notify: true);
-        bool succeeded = reactionSucceeded;
-        if (!succeeded)
-        {
-            ApplyEnemySkillDamageToPlayer(enemy, enemy.ActiveSkill);
-        }
-        ReactionImpactResolved?.Invoke(enemy.ActiveSkill, succeeded);
     }
 
     private System.Collections.IEnumerator CloseReactionWindowAfterRealtime(
@@ -1539,9 +1544,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         int sanitizedDamage = Mathf.Max(0, damage);
         int applied = playerController != null
             ? playerController.ApplyDamage(sanitizedDamage, "RealTimeCombat")
-            : playerHealth != null ? playerHealth.ApplyDamage(sanitizedDamage) : sanitizedDamage;
+            : playerHealth != null ? playerHealth.ApplyDamage(sanitizedDamage) : 0;
 
-        CombatDamageWorldFeedback.Show(playerRoot, applied, new Color(1f, 0.48f, 0.48f), 2.05f);
+        // Squad/UCC health reports its own damage. Keep presentation only for
+        // the CombatHealth fallback, which has no squad damage recorder.
+        if (playerController == null)
+            CombatDamageWorldFeedback.Show(playerRoot, applied, new Color(1f, 0.48f, 0.48f), 2.05f);
         if (applied > 0 && !IsPlayerDead())
         {
             PlayPlayerHurtAnimation();

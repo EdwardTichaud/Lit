@@ -31,6 +31,12 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     public bool ShouldConsumeAnimatorRootMotion => IsCinematicMotionActive ||
                                                    (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion);
 
+    private void OnDisable()
+    {
+        cinematicSessionToken = -1;
+        GetComponent<LitOpsiveLocomotionBridge>()?.EnforceGameplayMotionAuthority();
+    }
+
     private void Reset()
     {
         animationRoot = transform;
@@ -161,6 +167,8 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     {
         cinematicSessionToken = sessionToken;
         ResolveReferences();
+        GetComponent<PlayerStateMotionController>()?.Cancel();
+        GetComponent<LitOpsiveLocomotionBridge>()?.EnforceGameplayMotionAuthority();
         if (rootMotionRelay != null)
         {
             rootMotionRelay.enabled = true;
@@ -195,6 +203,7 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         }
 
         cinematicSessionToken = -1;
+        GetComponent<LitOpsiveLocomotionBridge>()?.EnforceGameplayMotionAuthority();
         if (rootMotionRelay != null)
         {
             rootMotionRelay.enabled = false;

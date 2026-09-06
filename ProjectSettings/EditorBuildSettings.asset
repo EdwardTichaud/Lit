@@ -95,6 +95,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_Environment_Far.unity
     guid: 7a30aa2a39c80674a82941e3c44b214f
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Enigme_Ghost_Nina.unity
+    guid: 1c11bf5e6f504b84389bce7e16f35603
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

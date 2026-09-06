@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
+  m_Name: Enemy_ScientifiqueFou
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  uniqueId: 030c09c97c1b1714a912dbf5e4f2d27e
+  characterId: 
+  characterName: Scientifique fou
+  portrait: {fileID: 0}
+  worldPrefab: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  skills: []
+  combatSkills: []
+  enemyCombatProfile: {fileID: 0}
+  groundBasicSkills: []
+  airBasicSkills: []
+  stats:
+    strength: 10
+    dexterity: 10
+    constitution: 10
+    intelligence: 10
+    wisdom: 10
+    charisma: 10
+  starterItemsWithQuantity: []
+  hp: 10
+  isEnemy: 1
+  enableCombatHealthThresholds: 0
+  combatHealthThresholdStages: []
+  combatHealthThresholdStageSettings:
+    stageDistance: 2
+    stageGroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+    stageBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+    stageRetrySeconds: 0.15
+    stageClearance: 0.03
+  voiceLines: []
+  maisonWaitingPoint: 0

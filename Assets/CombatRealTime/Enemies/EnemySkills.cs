@@ -15,6 +15,8 @@ public sealed class EnemySkills : MonoBehaviour
     private List<SkillSO> skills = new List<SkillSO>();
 
     private SkillSO activeSkill;
+    private int resolvedAttackSequence = -1;
+    private readonly HashSet<SquadCharacterController> contactVictims = new HashSet<SquadCharacterController>();
 
     public IReadOnlyList<SkillSO> Skills
     {
@@ -49,15 +51,6 @@ public sealed class EnemySkills : MonoBehaviour
 
         activeSkill = skills[skillIndex];
         return true;
-    }
-
-    /// <summary>
-    /// Selectionne le SkillSO utilise par les Animation Events du clip courant,
-    /// sans interrompre ce clip.
-    /// </summary>
-    public void SetSkillForAnimationEvents(int skillIndex)
-    {
-        SetActiveSkill(skillIndex);
     }
 
     public SkillSO ChooseRetaliationSkill(float meleePreference)
@@ -147,35 +140,75 @@ public sealed class EnemySkills : MonoBehaviour
         enemy?.ReturnToIdleAnimation();
     }
 
-    public void InstantiateSkillVFX()
+    /// <summary>One instantaneous, authority-owned impact per authored enemy action.</summary>
+    public void ExecuteEnemyAttack(SkillSO authoredSkill)
     {
-        if (activeSkill == null || activeSkill.VfxCues == null)
-        {
-            return;
-        }
+        ResolveReferences();
+        var manager = RealTimeCombatManager.Instance;
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening && !network.IsServer) return;
+        SkillSO skill = authoredSkill != null ? authoredSkill : enemy != null ? enemy.ActiveSkill : null;
+        if (!isActiveAndEnabled || manager == null || manager.IsCinematicSequenceActive ||
+            enemy == null || !enemy.isActiveAndEnabled || enemy.Health != null && enemy.Health.IsDead ||
+            skill == null || enemy.ActiveSkill != skill || !skills.Contains(skill)) return;
+        if (resolvedAttackSequence == enemy.ActionSequenceId) return;
+        resolvedAttackSequence = enemy.ActionSequenceId;
+        int action = enemy.ActionSequenceId;
+        manager.GetComponent<CombatHealthThresholdController>()?.CancelAttackQte(enemy);
+        contactVictims.Clear();
+        var brain = enemy.GetComponent<EnemyCombatBrain>();
+        Transform target = brain != null && brain.Target != null ? brain.Target.transform : manager.PlayerRoot;
+        foreach (var cue in skill.VfxCues)
+            if (cue != null && cue.delivery != SkillVfxDelivery.DirectOnTarget) PlayVfxCue(cue, target);
 
-        for (int i = 0; i < activeSkill.VfxCues.Count; i++)
+        EnemySkillImpactShape shape = skill.enemyImpact ?? new EnemySkillImpactShape();
+        Vector3 center = transform.TransformPoint(shape.offset);
+        foreach (Collider collider in Physics.OverlapSphere(center, Mathf.Max(.05f, shape.radius),
+                     shape.targetMask, QueryTriggerInteraction.Ignore))
         {
-            PlayVfxCue(activeSkill.VfxCues[i]);
+            var victim = collider.GetComponentInParent<SquadCharacterController>();
+            if (victim == null || victim.CurrentHp <= 0 || !contactVictims.Add(victim)) continue;
+            Vector3 delta = Vector3.ProjectOnPlane(victim.transform.position - transform.position, Vector3.up);
+            if (!skill.IsWithinHitRange(delta.magnitude) ||
+                Vector3.Angle(transform.forward, delta) > shape.arcDegrees * .5f ||
+                shape.requireGroundedTarget && !victim.IsGrounded) continue;
+            int applied = manager.ResolveEnemyAttackContact(enemy, victim, skill, action, out var outcome);
+            if (outcome == EnemyAttackOutcome.Damaged || outcome == EnemyAttackOutcome.Guarded)
+            {
+                foreach (var cue in skill.VfxCues)
+                    if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget) PlayVfxCue(cue, victim.transform);
+                PlayOutcomeFeedback(skill, victim.transform, outcome);
+            }
+            if (manager.PlayerRoot != null &&
+                (victim.transform == manager.PlayerRoot || victim.transform.IsChildOf(manager.PlayerRoot)))
+                manager.GetComponent<CombatHealthThresholdController>()?.NotifyFailureRetaliationImpact(enemy, skill, applied);
         }
     }
 
-    public void InstantiateSkillVFXAtIndex(int cueIndex)
+    public static void PlayOutcomeFeedback(SkillSO skill, Transform target, EnemyAttackOutcome outcome)
     {
-        if (activeSkill == null || activeSkill.VfxCues == null || cueIndex < 0 || cueIndex >= activeSkill.VfxCues.Count)
+        if (skill == null || target == null || outcome == EnemyAttackOutcome.Miss ||
+            outcome == EnemyAttackOutcome.Avoided) return;
+        var profile = skill.enemyAttackFeedback ?? new EnemyAttackFeedbackProfile();
+        GameObject prefab = outcome == EnemyAttackOutcome.Countered ? profile.counterVfx :
+            outcome == EnemyAttackOutcome.Guarded ? profile.guardVfx : profile.damageVfx;
+        AudioClipSO audio = outcome == EnemyAttackOutcome.Countered ? profile.counterAudio :
+            outcome == EnemyAttackOutcome.Guarded ? profile.guardAudio : profile.damageAudio;
+        if (outcome == EnemyAttackOutcome.Damaged && skill.ImpactFeedback.enabled)
         {
-            return;
+            if (prefab == null) prefab = skill.ImpactFeedback.additionalImpactVfx;
+            if (audio == null) audio = skill.ImpactFeedback.additionalImpactAudio;
         }
-
-        PlayVfxCue(activeSkill.VfxCues[cueIndex]);
+        Vector3 position = target.position + Vector3.up * profile.height;
+        if (prefab != null)
+        {
+            var effect = Object.Instantiate(prefab, position, target.rotation, target);
+            Object.Destroy(effect, Mathf.Max(.1f, profile.lifetimeSeconds));
+        }
+        if (audio != null) AudioManager.PlayClipAtPoint(audio, position);
     }
 
-    public void HitPlayer()
-    {
-        RealTimeCombatManager.Instance?.ResolveEnemyAttackImpact(enemy);
-    }
-
-    private void PlayVfxCue(SkillVfxCue cue)
+    private void PlayVfxCue(SkillVfxCue cue, Transform target)
     {
         if (cue == null)
         {
@@ -183,7 +216,6 @@ public sealed class EnemySkills : MonoBehaviour
         }
 
         Transform caster = casterVfxPoint != null ? casterVfxPoint : transform;
-        Transform target = LocalPlayerContext.LocalCharacterRoot;
         if (cue.delivery == SkillVfxDelivery.PlayerHand)
         {
             PlayCueAudio(cue, caster.position);

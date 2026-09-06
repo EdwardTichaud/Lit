@@ -34,7 +34,12 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private static readonly int CommonZ = Animator.StringToHash("ForwardMovement");
     private static readonly int CommonMagnitude = Animator.StringToHash("CombatMoveMagnitude");
     private bool UsesCommonAnimator => GetComponent<EnemyCombatBrain>()?.HasProfile == true;
-    public void SetFacingSpeed(float speed) => facingSpeedDegreesPerSecond = speed;
+    public void SetFacingSpeed(float speed) => profileFacingSpeed = Mathf.Max(0f, speed);
+    private float? profileFacingSpeed;
+    public float EffectiveFacingSpeed => profileFacingSpeed ?? facingSpeedDegreesPerSecond;
+    private static readonly int PlaybackRate = Animator.StringToHash("CombatLocomotionPlaybackRate");
+    private bool hasPlaybackRate;
+    private float nextMotionDiagnostic;
     // Animator.HasState/CrossFade with an int expects the full state path.
     // A short-name hash silently prevented the enemy combat blend tree from
     // ever taking over, leaving NavMesh movement visually in Idle.
@@ -50,6 +55,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     [SerializeField] private CombatPositioningProfile positioning = new CombatPositioningProfile();
     [SerializeField, Min(0f)] private float facingSpeedDegreesPerSecond = 540f;
     [SerializeField, Min(0.01f)] private float animatorDampTime = 0.08f;
+    [Header("InPlace cycle reference speeds")]
+    [SerializeField, Min(.01f)] private float walkCycleSpeed = 1.8f;
+    [SerializeField, Min(.01f)] private float runCycleSpeed = 3.6f;
     [Header("Obstacle Clearance")]
     [SerializeField, Min(0f), Tooltip("Marge supplementaire entre le centre de l'ennemi et le bord du NavMesh. Elle evite les poses trop proches des murs et du decor." )]
     private float navMeshEdgeClearance = 0.45f;
@@ -69,6 +77,8 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private int lastReportedAnimatorStateHash;
     private bool wasMovingVisually;
     private bool attackFacingLocked;
+    private bool returnFacingActive;
+    private Vector3 returnFacingDestination;
     private bool baseNavigationCaptured;
     private float baseNavigationSpeed;
     private float baseNavigationAcceleration;
@@ -136,10 +146,28 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         {
             FaceTarget(combatTarget.position);
         }
+        else if (returnFacingActive && combatTarget == null &&
+            (physicsMotor == null || !physicsMotor.IsDrivingActionRootMotion) &&
+            (animationContract == null || !animationContract.IsCinematicMotionActive))
+        {
+            Vector3 facingPoint = returnFacingDestination;
+            if (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh &&
+                !navigationAgent.isStopped && navigationAgent.hasPath && !navigationAgent.pathPending)
+                facingPoint = navigationAgent.steeringTarget;
+            FaceTarget(facingPoint);
+        }
+    }
+
+    public void SetReturnFacing(Vector3 destination)
+    {
+        returnFacingDestination = destination;
+        returnFacingActive = true;
+        if (navigationAgent != null) navigationAgent.updateRotation = false;
     }
 
     public void SetCombatTarget(Transform target)
     {
+        returnFacingActive = false;
         if (combatTarget != target) lastPursuitRange = -1f;
         combatTarget = target;
         ResolveReferences();
@@ -331,6 +359,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     public void StopNavigation()
     {
+        returnFacingActive = false;
         if (logDiagnostics && wasNavigating)
         {
             Debug.Log("[CombatEnemyLocomotion] " + name + " navigation stopped.", this);
@@ -357,7 +386,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         }
 
         transform.rotation = Quaternion.RotateTowards(transform.rotation,
-            Quaternion.LookRotation(direction.normalized, Vector3.up), facingSpeedDegreesPerSecond * LocalDeltaTime);
+            Quaternion.LookRotation(direction.normalized, Vector3.up), EffectiveFacingSpeed * LocalDeltaTime);
     }
 
     private void UpdateAnimatorPresentation()
@@ -371,6 +400,10 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         if (cachedAnimator != animator)
         {
             cachedAnimator = animator;
+            hasPlaybackRate = false;
+            foreach (var parameter in animator.parameters)
+                if (parameter.nameHash == PlaybackRate && parameter.type == AnimatorControllerParameterType.Float)
+                    hasPlaybackRate = true;
             hasAnimatorParameters = UsesCommonAnimator || HasCombatLocomotionParameters(animator);
             if (!hasAnimatorParameters)
             {
@@ -415,6 +448,14 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
         if (actionOwnsAnimation)
         {
+            if (logDiagnostics && Time.unscaledTime >= nextMotionDiagnostic)
+            {
+                nextMotionDiagnostic = Time.unscaledTime + .5f;
+                Debug.Log("[EnemyMotion] " + name + " phase=" + GetComponent<EnemyCombatBrain>()?.Phase +
+                    " owner=Action/Suspension motor=" + physicsMotor?.State +
+                    " navSpeed=" + speed.ToString("F2") +
+                    " state=" + animator.GetCurrentAnimatorStateInfo(0).fullPathHash, this);
+            }
             animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
             animator.SetFloat(UsesCommonAnimator ? CommonZ : CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
             animator.SetFloat(UsesCommonAnimator ? CommonMagnitude : CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
@@ -422,7 +463,23 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             return;
         }
 
-        if (speed > 0.03f)
+        float scale = timeDomain != null ? timeDomain.Scale : 1f;
+        float unscaledSpeed = scale > .0001f ? speed / scale : 0f;
+        bool moving = ShouldPresentLocomotion(unscaledSpeed, wasMovingVisually);
+        if (hasPlaybackRate)
+            animator.SetFloat(PlaybackRate, moving ? ResolvePlaybackRate(speed, scale,
+                runPhase ? runCycleSpeed : walkCycleSpeed) : 0f, .08f, LocalDeltaTime);
+        if (logDiagnostics && Time.unscaledTime >= nextMotionDiagnostic)
+        {
+            nextMotionDiagnostic = Time.unscaledTime + .5f;
+            Debug.Log("[EnemyMotion] " + name + " phase=" + GetComponent<EnemyCombatBrain>()?.Phase +
+                " owner=NavMesh speed=" + speed.ToString("F2") + " run=" + runPhase +
+                " state=" + animator.GetCurrentAnimatorStateInfo(0).fullPathHash +
+                " next=" + animator.GetNextAnimatorStateInfo(0).fullPathHash +
+                " cadence=" + (hasPlaybackRate ? animator.GetFloat(PlaybackRate) : 1f) +
+                " facing=" + EffectiveFacingSpeed, this);
+        }
+        if (moving)
         {
             Vector3 localVelocity = transform.InverseTransformDirection(velocity / speed);
             animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, Mathf.Clamp(localVelocity.x, -1f, 1f), animatorDampTime, LocalDeltaTime);
@@ -434,7 +491,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
                 if (state.fullPathHash != CombatLocomotion &&
                     (!animator.IsInTransition(0) || animator.GetNextAnimatorStateInfo(0).fullPathHash != CombatLocomotion))
                 {
-                    animator.CrossFade(CombatLocomotion, 0.08f, 0);
+                    animator.CrossFadeInFixedTime(CombatLocomotion, 0.08f, 0);
                 }
             }
             wasMovingVisually = true;
@@ -444,10 +501,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
             animator.SetFloat(UsesCommonAnimator ? CommonZ : CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
             animator.SetFloat(UsesCommonAnimator ? CommonMagnitude : CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
-            if (wasMovingVisually)
-            {
-                ForceIdlePresentation();
-            }
+            ForceIdlePresentation();
         }
     }
 
@@ -471,12 +525,19 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         wasMovingVisually = false;
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
         int idleState = animator.HasState(0, CombatIdle) ? CombatIdle : Idle;
-        if (animator.HasState(0, idleState) && currentState.fullPathHash == CombatLocomotion &&
+        bool enteringLocomotion = animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).fullPathHash == CombatLocomotion;
+        if (animator.HasState(0, idleState) && (currentState.fullPathHash == CombatLocomotion || enteringLocomotion) &&
             (!animator.IsInTransition(0) || animator.GetNextAnimatorStateInfo(0).fullPathHash != idleState))
         {
-            animator.CrossFade(idleState, 0.08f, 0);
+            animator.CrossFadeInFixedTime(idleState, 0.08f, 0);
         }
     }
+
+    public static bool ShouldPresentLocomotion(float speed, bool wasMoving) => speed > (wasMoving ? .03f : .08f);
+
+    public static float ResolvePlaybackRate(float speed, float localScale, float referenceSpeed) =>
+        localScale > .0001f && referenceSpeed > .0001f
+            ? Mathf.Clamp(speed / (localScale * referenceSpeed), 0f, 1.35f) : 0f;
 
     private void ResolveReferences()
     {

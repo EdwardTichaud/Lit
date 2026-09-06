@@ -11,7 +11,7 @@ public partial class LitOpsiveLocomotionBridge
     private float locomotionDiagnosticInterval = 0.1f;
 
     private float nextLocomotionDiagnosticTime;
-    private RootMotionPhase lastDiagnosticRootMotionPhase = RootMotionPhase.Other;
+    private AnimationPhase lastDiagnosticAnimationPhase = AnimationPhase.Other;
     private bool lastDiagnosticInputSuppressed;
     private bool lastDiagnosticSpeedChangeActive;
     private int lastDiagnosticExternalLockCount = -1;
@@ -21,7 +21,7 @@ public partial class LitOpsiveLocomotionBridge
     {
         debugLocomotionDiagnostics = enabled;
         nextLocomotionDiagnosticTime = 0f;
-        lastDiagnosticRootMotionPhase = RootMotionPhase.Other;
+        lastDiagnosticAnimationPhase = AnimationPhase.Other;
         lastDiagnosticExternalLockCount = -1;
         lastDiagnosticTraversalLockCount = -1;
 
@@ -41,11 +41,11 @@ public partial class LitOpsiveLocomotionBridge
             return;
         }
 
-        RootMotionPhase phase = ResolveCurrentRootMotionPhase();
+        AnimationPhase phase = ResolveCurrentAnimationPhase();
         SpeedChange speedChange = locomotion != null ? locomotion.GetAbility<SpeedChange>() : null;
         bool speedChangeActive = speedChange != null && speedChange.IsActive;
         bool inputSuppressed = IsInputSuppressedByUcc;
-        bool stateChanged = phase != lastDiagnosticRootMotionPhase ||
+        bool stateChanged = phase != lastDiagnosticAnimationPhase ||
             inputSuppressed != lastDiagnosticInputSuppressed ||
             speedChangeActive != lastDiagnosticSpeedChangeActive ||
             externalLockCount != lastDiagnosticExternalLockCount ||
@@ -54,12 +54,12 @@ public partial class LitOpsiveLocomotionBridge
         if (stateChanged)
         {
             Debug.Log(
-                $"[Lit/UCC LocomotionChange] phase={lastDiagnosticRootMotionPhase}->{phase} " +
+                $"[Lit/UCC LocomotionChange] phase={lastDiagnosticAnimationPhase}->{phase} " +
                 $"suppressed={lastDiagnosticInputSuppressed}->{inputSuppressed} " +
                 $"speedChange={lastDiagnosticSpeedChangeActive}->{speedChangeActive} " +
                 $"externalLocks={externalLockCount} traversalLocks={scriptedTraversalLockCount}",
                 this);
-            lastDiagnosticRootMotionPhase = phase;
+            lastDiagnosticAnimationPhase = phase;
             lastDiagnosticInputSuppressed = inputSuppressed;
             lastDiagnosticSpeedChangeActive = speedChangeActive;
             lastDiagnosticExternalLockCount = externalLockCount;
@@ -77,7 +77,7 @@ public partial class LitOpsiveLocomotionBridge
     }
 
 #if UNITY_EDITOR
-    private void LogLocomotionDiagnostic(RootMotionPhase phase, bool speedChangeActive)
+    private void LogLocomotionDiagnostic(AnimationPhase phase, bool speedChangeActive)
     {
         AnimatorStateInfo current = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         AnimatorStateInfo next = animator != null && animator.IsInTransition(0)

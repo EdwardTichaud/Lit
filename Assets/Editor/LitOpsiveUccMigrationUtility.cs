@@ -19,32 +19,17 @@ public static class LitOpsiveUccMigrationUtility
     private const string UccDemoAnimatorControllerPath = "Assets/Opsive/UltimateCharacterController/RuntimeAnimator/Characters/Demo.controller";
     private const string LucianAnimatorControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
     private const float UccAnimatorSpeed = 0.8f;
-    private const float LucianRootMotionAnimatorSpeed = 1f;
-    private const float LucianRootMotionSpeedMultiplier = 1.04f;
-    private const float LucianRootMotionRotationMultiplier = 1.08f;
-    private const bool LucianPreferLookSourceRotationForRootMotionLocomotion = true;
-    private const bool LucianAllowRootMotionRotationDuringStartStop = false;
-    private const bool LucianUseLookSourceForwardInputForRootMotion = true;
+    private const float LucianAnimatorPlaybackSpeed = 1f;
     private const bool LucianUseStableWorldPlanarLookSource = true;
     private const float LucianLookSourcePlanarYawOffset = 0f;
-    private const bool LucianSuppressIdleRootMotionPosition = true;
-    private const float LucianIdleRootMotionVelocityThreshold = 0.06f;
-    private const float LucianRootMotionLoopSpeedScale = 1.02f;
-    private const float LucianRootMotionLoopRotationScale = 1f;
-    private const float LucianRootMotionStartSpeedScale = 1.18f;
-    private const float LucianRootMotionStartRotationScale = 1f;
-    private const float LucianRootMotionStopSpeedScale = 0.7f;
-    private const float LucianRootMotionStopRotationScale = 0.94f;
-    private const float LucianRootMotionPivotSpeedScale = 0.88f;
-    private const float LucianRootMotionPivotRotationScale = 1.12f;
     private const float LucianGroundReliefMinStepHeight = 0.5f;
     private const float LucianGroundReliefMinSlopeLimit = 60f;
     private const float LucianGroundReliefMinStickToGroundDistance = 0.72f;
-    private const float LucianRootMotionMovingStepHeight = 0.58f;
-    private const float LucianRootMotionMovingSlopeLimit = 62f;
-    private const float LucianRootMotionMovingStickToGroundDistance = 0.86f;
-    private const float LucianRootMotionIdleStickToGroundDistance = 0.64f;
-    private const float LucianRootMotionGroundReliefAdaptationSpeed = 7.5f;
+    private const float LucianMovingStepHeight = 0.58f;
+    private const float LucianMovingSlopeLimit = 62f;
+    private const float LucianMovingStickToGroundDistance = 0.86f;
+    private const float LucianIdleStickToGroundDistance = 0.64f;
+    private const float LucianGroundReliefAdaptationSpeed = 7.5f;
     private const float LucianGroundedInputAcceleration = 6.2f;
     private const float LucianGroundedSprintInputAcceleration = 5f;
     private const float LucianGroundedInputDeceleration = 6.2f;
@@ -53,7 +38,6 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianGroundedAnimatorSpeedFallRate = 5.4f;
     private const float LucianGroundedAnimatorTurnRate = 5.4f;
     private const float LucianGroundedStopTriggerMinSpeed = 0.48f;
-    private const float LucianGroundedRootMotionSpeedToBlend = 0.22f;
     private const float LucianGroundedMoveTransitionDirectionHoldTime = 0.18f;
     private const float LucianGroundedMoveTransitionParameterSpeed = 1.22f;
     private const bool LucianUseForwardOnlyGroundedLocomotion = true;
@@ -72,7 +56,7 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianGroundedPivotMovementReleaseStart = 0.38f;
     private const float LucianGroundedPivotMovementReleaseMaxAngle = 72f;
     private const float LucianGroundedPivotMovementReleaseScale = 0.58f;
-    private const bool LucianCommitRootRotationDuringPivot = true;
+    private const bool LucianCommitBodyRotationDuringPivot = true;
     private const float LucianGroundedPivotRotationCommitRate = 960f;
     private const float LucianOrientationInputDeadZone = 0.14f;
     private const float LucianOrientationWalkTurnRate = 360f;
@@ -340,6 +324,11 @@ public static class LitOpsiveUccMigrationUtility
             return;
         }
 
+        if (character.GetComponent<PlayerStateMotionController>()?.Library != null)
+        {
+            character.GetComponent<LitOpsiveLocomotionBridge>()?.EnforceGameplayMotionAuthority();
+            return; // This character is already migrated; preserve its authored jump and locomotion settings.
+        }
         Animator animator = character.GetComponent<Animator>();
         RuntimeAnimatorController animatorController = useLucianAnimatorController
             ? ResolveLucianAnimatorController()
@@ -376,14 +365,14 @@ public static class LitOpsiveUccMigrationUtility
 
         ConfigureLocomotionAnimationMode(
             character.GetComponent<UltimateCharacterLocomotion>(),
-            useRootMotionPosition: useLucianAnimatorController,
-            useRootMotionRotation: useLucianAnimatorController,
-            rootMotionSpeedMultiplier: useLucianAnimatorController ? LucianRootMotionSpeedMultiplier : 1f,
-            rootMotionRotationMultiplier: useLucianAnimatorController ? LucianRootMotionRotationMultiplier : 1f);
+            useRootMotionPosition: false,
+            useRootMotionRotation: false,
+            rootMotionSpeedMultiplier: 1f,
+            rootMotionRotationMultiplier: 1f);
         EnsureSingleStandardAbilities(character.GetComponent<UltimateCharacterLocomotion>());
         ConfigureAnimatorMonitor(
             character.GetComponent<AnimatorMonitor>(),
-            useLucianAnimatorController ? LucianRootMotionAnimatorSpeed : UccAnimatorSpeed);
+            useLucianAnimatorController ? LucianAnimatorPlaybackSpeed : UccAnimatorSpeed);
         EnsureLookSource(character);
         ConfigureCharacterIk(character);
         ConfigureCharacterHealthAuthority(character);
@@ -395,7 +384,7 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         ConfigureBridgeAnimatorMode(bridge, driveLitAnimatorParameters: useLucianAnimatorController);
-        ConfigureBridgeRootMotionMode(bridge, useRootMotionLocomotion: useLucianAnimatorController);
+        ConfigureBridgePresentation(bridge, useLucianPresentation: useLucianAnimatorController);
         ConfigureBridgeCompanionMode(bridge, autoInstallCompanionBridges: false);
         EnsureExplicitCompanionBridges(character);
         ConfigureDamageBridgeHealthAuthority(character);
@@ -565,7 +554,7 @@ public static class LitOpsiveUccMigrationUtility
         }
     }
 
-    private static void ConfigureBridgeRootMotionMode(LitOpsiveLocomotionBridge bridge, bool useRootMotionLocomotion)
+    private static void ConfigureBridgePresentation(LitOpsiveLocomotionBridge bridge, bool useLucianPresentation)
     {
         if (bridge == null)
         {
@@ -573,64 +562,7 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         SerializedObject serializedObject = new SerializedObject(bridge);
-        SetSerializedBool(serializedObject, "useRootMotionLocomotion", useRootMotionLocomotion);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionSpeedMultiplier",
-            useRootMotionLocomotion ? LucianRootMotionSpeedMultiplier : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionRotationMultiplier",
-            useRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f);
-        SetSerializedBool(
-            serializedObject,
-            "preferLookSourceRotationForRootMotionLocomotion",
-            useRootMotionLocomotion && LucianPreferLookSourceRotationForRootMotionLocomotion);
-        SetSerializedBool(
-            serializedObject,
-            "allowRootMotionRotationDuringStartStop",
-            useRootMotionLocomotion && LucianAllowRootMotionRotationDuringStartStop);
-        SetSerializedBool(
-            serializedObject,
-            "suppressIdleRootMotionPosition",
-            useRootMotionLocomotion && LucianSuppressIdleRootMotionPosition);
-        SetSerializedFloat(
-            serializedObject,
-            "idleRootMotionVelocityThreshold",
-            LucianIdleRootMotionVelocityThreshold);
-        SetSerializedBool(serializedObject, "useRootMotionPhaseMultipliers", useRootMotionLocomotion);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionLoopSpeedScale",
-            useRootMotionLocomotion ? LucianRootMotionLoopSpeedScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionLoopRotationScale",
-            useRootMotionLocomotion ? LucianRootMotionLoopRotationScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionStartSpeedScale",
-            useRootMotionLocomotion ? LucianRootMotionStartSpeedScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionStartRotationScale",
-            useRootMotionLocomotion ? LucianRootMotionStartRotationScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionStopSpeedScale",
-            useRootMotionLocomotion ? LucianRootMotionStopSpeedScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionStopRotationScale",
-            useRootMotionLocomotion ? LucianRootMotionStopRotationScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionPivotSpeedScale",
-            useRootMotionLocomotion ? LucianRootMotionPivotSpeedScale : 1f);
-        SetSerializedFloat(
-            serializedObject,
-            "rootMotionPivotRotationScale",
-            useRootMotionLocomotion ? LucianRootMotionPivotRotationScale : 1f);
+
         SetSerializedBool(serializedObject, "relaxGroundReliefTolerance", true);
         SetSerializedFloat(serializedObject, "groundReliefMinStepHeight", LucianGroundReliefMinStepHeight);
         SetSerializedFloat(serializedObject, "groundReliefMinSlopeLimit", LucianGroundReliefMinSlopeLimit);
@@ -638,29 +570,22 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "groundReliefMinStickToGroundDistance",
             LucianGroundReliefMinStickToGroundDistance);
-        SetSerializedBool(serializedObject, "adaptRootMotionGroundRelief", useRootMotionLocomotion);
-        SetSerializedFloat(serializedObject, "rootMotionMovingStepHeight", LucianRootMotionMovingStepHeight);
-        SetSerializedFloat(serializedObject, "rootMotionMovingSlopeLimit", LucianRootMotionMovingSlopeLimit);
+        SetSerializedBool(serializedObject, "adaptMovingGroundRelief", useLucianPresentation);
+        SetSerializedFloat(serializedObject, "movingStepHeight", LucianMovingStepHeight);
+        SetSerializedFloat(serializedObject, "movingSlopeLimit", LucianMovingSlopeLimit);
         SetSerializedFloat(
             serializedObject,
-            "rootMotionMovingStickToGroundDistance",
-            LucianRootMotionMovingStickToGroundDistance);
+            "movingStickToGroundDistance",
+            LucianMovingStickToGroundDistance);
         SetSerializedFloat(
             serializedObject,
-            "rootMotionIdleStickToGroundDistance",
-            LucianRootMotionIdleStickToGroundDistance);
+            "idleStickToGroundDistance",
+            LucianIdleStickToGroundDistance);
         SetSerializedFloat(
             serializedObject,
-            "rootMotionGroundReliefAdaptationSpeed",
-            LucianRootMotionGroundReliefAdaptationSpeed);
-        SetSerializedBool(serializedObject, "preserveAnimatorRootMotion", true);
-        SetSerializedBool(serializedObject, "restoreRootMotionSettingsOnDisable", true);
-        SetSerializedBool(serializedObject, "refreshRootMotionSettingsEveryFrame", true);
-        SetSerializedBool(serializedObject, "driveDirectionalRootMotionInput", false);
-        SetSerializedBool(
-            serializedObject,
-            "useLookSourceForwardInputForRootMotion",
-            useRootMotionLocomotion && LucianUseLookSourceForwardInputForRootMotion);
+            "groundReliefAdaptationSpeed",
+            LucianGroundReliefAdaptationSpeed);
+
         SetSerializedString(serializedObject, "horizontalMovementParam", "HorizontalMovement");
         SetSerializedString(serializedObject, "forwardMovementParam", "ForwardMovement");
         SetSerializedFloat(serializedObject, "groundedInputAcceleration", LucianGroundedInputAcceleration);
@@ -674,7 +599,7 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "groundedAnimatorSpeedFallRate", LucianGroundedAnimatorSpeedFallRate);
         SetSerializedFloat(serializedObject, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate);
         SetSerializedFloat(serializedObject, "groundedStopTriggerMinSpeed", LucianGroundedStopTriggerMinSpeed);
-        SetSerializedFloat(serializedObject, "groundedRootMotionSpeedToBlend", LucianGroundedRootMotionSpeedToBlend);
+
         SetSerializedFloat(
             serializedObject,
             "groundedMoveTransitionDirectionHoldTime",
@@ -687,7 +612,7 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "useForwardOnlyGroundedLocomotion",
             LucianUseForwardOnlyGroundedLocomotion);
-        SetSerializedBool(serializedObject, "enableRootMotionPivotTurns", useRootMotionLocomotion);
+        SetSerializedBool(serializedObject, "enableScriptedPivotTurns", useLucianPresentation);
         SetSerializedFloat(serializedObject, "groundedPivotMinAngle", LucianGroundedPivotMinAngle);
         SetSerializedFloat(serializedObject, "groundedPivot180Angle", LucianGroundedPivot180Angle);
         SetSerializedBool(serializedObject, "groundedSnapStationaryTurn", LucianGroundedSnapStationaryTurn);
@@ -721,22 +646,22 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "groundedPivotMovementReleaseScale",
             LucianGroundedPivotMovementReleaseScale);
-        SetSerializedBool(serializedObject, "commitRootRotationDuringPivot", LucianCommitRootRotationDuringPivot);
+        SetSerializedBool(serializedObject, "commitBodyRotationDuringPivot", LucianCommitBodyRotationDuringPivot);
         SetSerializedFloat(
             serializedObject,
             "groundedPivotRotationCommitRate",
             LucianGroundedPivotRotationCommitRate);
-        SetSerializedBool(serializedObject, "enableCinematicOrientationFeel", useRootMotionLocomotion);
+        SetSerializedBool(serializedObject, "enableCinematicOrientationFeel", useLucianPresentation);
         SetSerializedFloat(serializedObject, "orientationInputDeadZone", LucianOrientationInputDeadZone);
         SetSerializedFloat(serializedObject, "orientationWalkTurnRate", LucianOrientationWalkTurnRate);
         SetSerializedFloat(serializedObject, "orientationSprintTurnRate", LucianOrientationSprintTurnRate);
         SetSerializedFloat(serializedObject, "orientationSharpTurnRate", LucianOrientationSharpTurnRate);
         SetSerializedFloat(serializedObject, "orientationSharpTurnAngle", LucianOrientationSharpTurnAngle);
         SetSerializedFloat(serializedObject, "orientationVelocityBlend", LucianOrientationVelocityBlend);
-        SetSerializedBool(serializedObject, "driveJumpLandingAnimatorParameters", useRootMotionLocomotion);
+        SetSerializedBool(serializedObject, "driveJumpLandingAnimatorParameters", useLucianPresentation);
         SetSerializedString(serializedObject, "jumpTriggerParam", "JumpTrigger");
         SetSerializedString(serializedObject, "isAirborneParam", "IsAirborne");
-        SetSerializedBool(serializedObject, "enableObstacleTraversal", useRootMotionLocomotion);
+        SetSerializedBool(serializedObject, "enableObstacleTraversal", useLucianPresentation);
         SetSerializedFloat(serializedObject, "ignoredObstacleMaxHeight", LucianIgnoredObstacleMaxHeight);
         SetSerializedFloat(serializedObject, "traversableObstacleMaxHeight", LucianTraversableObstacleMaxHeight);
         SetSerializedFloat(serializedObject, "obstacleProbeDistance", LucianObstacleProbeDistance);
@@ -1286,7 +1211,7 @@ public static class LitOpsiveUccMigrationUtility
         return string.Join("/", parts);
     }
 
-    private static bool ShouldExpectRootMotionLocomotion(
+    private static bool UsesPlayerPresentation(
         GameObject character,
         string expectedAnimatorControllerPath,
         LitOpsiveLocomotionBridge bridge)
@@ -1296,9 +1221,7 @@ public static class LitOpsiveUccMigrationUtility
             return true;
         }
 
-        return bridge != null &&
-               TryGetSerializedBool(bridge, "useRootMotionLocomotion", out bool useRootMotionLocomotion) &&
-               useRootMotionLocomotion;
+        return false;
     }
 
     private static bool TryGetSerializedBool(UnityEngine.Object target, string propertyName, out bool value)
@@ -1370,6 +1293,11 @@ public static class LitOpsiveUccMigrationUtility
             ValidateAnimatorController(character, label, errors, expectedAnimatorControllerPath);
         }
 
+        if (character.GetComponent<PlayerStateMotionController>()?.Library != null)
+        {
+            PlayerInPlaceMigration.ValidatePlayer(character, errors);
+            return; // Authored InPlace tuning is validated by its contract, not old installer defaults.
+        }
         ValidateCharacterIkMigration(character, label, errors);
         ValidateCharacterHealthMigration(character, label, errors);
         ValidateSingleUccColliderGroup(character, label, errors);
@@ -1390,7 +1318,7 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         LitOpsiveLocomotionBridge bridge = character.GetComponent<LitOpsiveLocomotionBridge>();
-        bool expectedRootMotionLocomotion = ShouldExpectRootMotionLocomotion(character, expectedAnimatorControllerPath, bridge);
+        bool useLucianPresentation = UsesPlayerPresentation(character, expectedAnimatorControllerPath, bridge);
 
         UltimateCharacterLocomotion locomotion = character.GetComponent<UltimateCharacterLocomotion>();
         if (locomotion != null)
@@ -1399,11 +1327,11 @@ public static class LitOpsiveUccMigrationUtility
                 locomotion,
                 label,
                 errors,
-                expectedRootMotionPosition: expectedRootMotionLocomotion,
-                expectedRootMotionRotation: expectedRootMotionLocomotion,
-                expectedRootMotionSpeedMultiplier: expectedRootMotionLocomotion ? LucianRootMotionSpeedMultiplier : 1f,
-                expectedRootMotionRotationMultiplier: expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f);
-            ValidateSingleAbility<Jump>(locomotion, label, errors);
+                expectedRootMotionPosition: false,
+                expectedRootMotionRotation: false,
+                expectedRootMotionSpeedMultiplier: 1f,
+                expectedRootMotionRotationMultiplier: 1f);
+            if (character.GetComponent<PlayerScriptedJumpController>() == null) ValidateSingleAbility<Jump>(locomotion, label, errors);
             ValidateSingleAbility<Fall>(locomotion, label, errors);
             ValidateSingleAbility<MoveTowards>(locomotion, label, errors);
             ValidateSingleAbility<SpeedChange>(locomotion, label, errors);
@@ -1421,7 +1349,7 @@ public static class LitOpsiveUccMigrationUtility
                 animatorMonitor,
                 label,
                 errors,
-                expectedRootMotionLocomotion ? LucianRootMotionAnimatorSpeed : UccAnimatorSpeed);
+                useLucianPresentation ? LucianAnimatorPlaybackSpeed : UccAnimatorSpeed);
         }
 
         if (bridge != null)
@@ -1430,88 +1358,11 @@ public static class LitOpsiveUccMigrationUtility
             ValidateBridgeBoolean(bridge, label, "overrideOpsiveHandlerInput", true, errors);
             ValidateBridgeBoolean(bridge, label, "orientLookSourceFromMovement", true, errors);
             ValidateBridgeBoolean(bridge, label, "configureRigidbodyForOpsive", true, errors);
-            ValidateBridgeBoolean(bridge, label, "useRootMotionLocomotion", expectedRootMotionLocomotion, errors);
-            ValidateBridgeBoolean(bridge, label, "refreshRootMotionSettingsEveryFrame", true, errors);
-            ValidateBridgeBoolean(bridge, label, "driveDirectionalRootMotionInput", false, errors);
-            ValidateBridgeBoolean(
-                bridge,
-                label,
-                "useLookSourceForwardInputForRootMotion",
-                expectedRootMotionLocomotion && LucianUseLookSourceForwardInputForRootMotion,
-                errors);
-            ValidateBridgeBoolean(bridge, label, "enableRootMotionPivotTurns", expectedRootMotionLocomotion, errors);
+
+            ValidateBridgeBoolean(bridge, label, "enableScriptedPivotTurns", useLucianPresentation, errors);
             ValidateBridgeString(bridge, label, "horizontalMovementParam", "HorizontalMovement", errors);
             ValidateBridgeString(bridge, label, "forwardMovementParam", "ForwardMovement", errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionSpeedMultiplier",
-                expectedRootMotionLocomotion ? LucianRootMotionSpeedMultiplier : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionRotationMultiplier",
-                expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f,
-                errors);
-            ValidateBridgeBoolean(
-                bridge,
-                label,
-                "preferLookSourceRotationForRootMotionLocomotion",
-                expectedRootMotionLocomotion && LucianPreferLookSourceRotationForRootMotionLocomotion,
-                errors);
-            ValidateBridgeBoolean(
-                bridge,
-                label,
-                "allowRootMotionRotationDuringStartStop",
-                expectedRootMotionLocomotion && LucianAllowRootMotionRotationDuringStartStop,
-                errors);
-            ValidateBridgeBoolean(
-                bridge,
-                label,
-                "suppressIdleRootMotionPosition",
-                expectedRootMotionLocomotion && LucianSuppressIdleRootMotionPosition,
-                errors);
-            ValidateSerializedFloat(bridge, "idleRootMotionVelocityThreshold", LucianIdleRootMotionVelocityThreshold, errors);
-            ValidateBridgeBoolean(bridge, label, "useRootMotionPhaseMultipliers", expectedRootMotionLocomotion, errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionLoopSpeedScale",
-                expectedRootMotionLocomotion ? LucianRootMotionLoopSpeedScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionLoopRotationScale",
-                expectedRootMotionLocomotion ? LucianRootMotionLoopRotationScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionStartSpeedScale",
-                expectedRootMotionLocomotion ? LucianRootMotionStartSpeedScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionStartRotationScale",
-                expectedRootMotionLocomotion ? LucianRootMotionStartRotationScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionStopSpeedScale",
-                expectedRootMotionLocomotion ? LucianRootMotionStopSpeedScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionStopRotationScale",
-                expectedRootMotionLocomotion ? LucianRootMotionStopRotationScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionPivotSpeedScale",
-                expectedRootMotionLocomotion ? LucianRootMotionPivotSpeedScale : 1f,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionPivotRotationScale",
-                expectedRootMotionLocomotion ? LucianRootMotionPivotRotationScale : 1f,
-                errors);
+
             ValidateBridgeBoolean(bridge, label, "relaxGroundReliefTolerance", true, errors);
             ValidateSerializedFloat(bridge, "groundReliefMinStepHeight", LucianGroundReliefMinStepHeight, errors);
             ValidateSerializedFloat(bridge, "groundReliefMinSlopeLimit", LucianGroundReliefMinSlopeLimit, errors);
@@ -1523,25 +1374,25 @@ public static class LitOpsiveUccMigrationUtility
             ValidateBridgeBoolean(
                 bridge,
                 label,
-                "adaptRootMotionGroundRelief",
-                expectedRootMotionLocomotion,
+                "adaptMovingGroundRelief",
+                useLucianPresentation,
                 errors);
-            ValidateSerializedFloat(bridge, "rootMotionMovingStepHeight", LucianRootMotionMovingStepHeight, errors);
-            ValidateSerializedFloat(bridge, "rootMotionMovingSlopeLimit", LucianRootMotionMovingSlopeLimit, errors);
+            ValidateSerializedFloat(bridge, "movingStepHeight", LucianMovingStepHeight, errors);
+            ValidateSerializedFloat(bridge, "movingSlopeLimit", LucianMovingSlopeLimit, errors);
             ValidateSerializedFloat(
                 bridge,
-                "rootMotionMovingStickToGroundDistance",
-                LucianRootMotionMovingStickToGroundDistance,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "rootMotionIdleStickToGroundDistance",
-                LucianRootMotionIdleStickToGroundDistance,
+                "movingStickToGroundDistance",
+                LucianMovingStickToGroundDistance,
                 errors);
             ValidateSerializedFloat(
                 bridge,
-                "rootMotionGroundReliefAdaptationSpeed",
-                LucianRootMotionGroundReliefAdaptationSpeed,
+                "idleStickToGroundDistance",
+                LucianIdleStickToGroundDistance,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundReliefAdaptationSpeed",
+                LucianGroundReliefAdaptationSpeed,
                 errors);
             ValidateSerializedFloat(bridge, "groundedInputAcceleration", LucianGroundedInputAcceleration, errors);
             ValidateSerializedFloat(
@@ -1630,8 +1481,8 @@ public static class LitOpsiveUccMigrationUtility
             ValidateBridgeBoolean(
                 bridge,
                 label,
-                "commitRootRotationDuringPivot",
-                LucianCommitRootRotationDuringPivot,
+                "commitBodyRotationDuringPivot",
+                LucianCommitBodyRotationDuringPivot,
                 errors);
             ValidateSerializedFloat(
                 bridge,
@@ -1642,7 +1493,7 @@ public static class LitOpsiveUccMigrationUtility
                 bridge,
                 label,
                 "enableCinematicOrientationFeel",
-                expectedRootMotionLocomotion,
+                useLucianPresentation,
                 errors);
             ValidateSerializedFloat(bridge, "orientationInputDeadZone", LucianOrientationInputDeadZone, errors);
             ValidateSerializedFloat(bridge, "orientationWalkTurnRate", LucianOrientationWalkTurnRate, errors);
@@ -1654,11 +1505,11 @@ public static class LitOpsiveUccMigrationUtility
                 bridge,
                 label,
                 "driveJumpLandingAnimatorParameters",
-                expectedRootMotionLocomotion,
+                useLucianPresentation,
                 errors);
             ValidateBridgeString(bridge, label, "jumpTriggerParam", "JumpTrigger", errors);
             ValidateBridgeString(bridge, label, "isAirborneParam", "IsAirborne", errors);
-            ValidateBridgeBoolean(bridge, label, "enableObstacleTraversal", expectedRootMotionLocomotion, errors);
+            ValidateBridgeBoolean(bridge, label, "enableObstacleTraversal", useLucianPresentation, errors);
             ValidateSerializedFloat(bridge, "ignoredObstacleMaxHeight", LucianIgnoredObstacleMaxHeight, errors);
             ValidateSerializedFloat(bridge, "traversableObstacleMaxHeight", LucianTraversableObstacleMaxHeight, errors);
             ValidateSerializedFloat(bridge, "obstacleProbeDistance", LucianObstacleProbeDistance, errors);

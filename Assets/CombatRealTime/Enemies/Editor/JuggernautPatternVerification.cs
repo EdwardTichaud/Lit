@@ -119,7 +119,9 @@ public static class JuggernautPatternVerification
     public static void ValidateAssets()
     {
         var data = AssetDatabase.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset");
-        if (data == null || data.combatSkills.Count != 4 || data.enemyCombatProfile.patterns.Count != 4) throw new Exception("4 skills/patterns requis");
+        if (data == null || data.combatSkills == null || data.combatSkills.Count == 0 || data.enemyCombatProfile == null ||
+            !data.enemyCombatProfile.patterns.Any(p => p != null && p.IsConfigured && p.weight > 0 && p.skills.All(data.combatSkills.Contains)))
+            throw new Exception("Au moins un pattern complet doit correspondre aux skills equipes.");
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "Juggernaut_Combat.prefab");
         var controller = prefab.GetComponent<Animator>().runtimeAnimatorController as AnimatorController;
         if (controller == null || controller.name != "Juggernaut_Model") throw new Exception("controller invalide");
@@ -127,9 +129,7 @@ public static class JuggernautPatternVerification
         foreach (var skill in data.combatSkills)
         {
             if (!skill.AnimationClip.humanMotion || !machine.states.Any(s => s.state.name == skill.AnimatorState && s.state.motion == skill.AnimationClip)) throw new Exception("binding incorrect: " + skill.name);
-            var events = AnimationUtility.GetAnimationEvents(skill.AnimationClip);
-            if (events.Count(e => e.functionName == "EndEnemyAttack") != 1) throw new Exception("fin d'attaque incorrecte");
-            if (!events.Any(e => e.functionName == "OpenEnemyAttackHitbox" || e.functionName == "ResolveEnemyAttackImpact")) throw new Exception("impact absent");
+            JuggernautEssentialEvents.Validate(skill);
         }
         RealTimeCombatEnemyBehaviour legacyBehaviour = prefab.GetComponent<RealTimeCombatEnemyBehaviour>();
         if (prefab.GetComponent<EnemyTacticalResponseController>() != null ||

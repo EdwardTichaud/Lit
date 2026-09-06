@@ -3,45 +3,44 @@ using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
-[InitializeOnLoad]
 public static class RealTimeCombatAnimatorInstaller
 {
     private const string ControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
     private const string StateMachineName = "RealTimeCombat_RootMotion";
-    private const string StateTag = "RealTimeCombatRootMotion";
+    private const string StateTag = "RealTimeCombatInPlace";
     private const string CombatInPlaceTag = "RealTimeCombatInPlace";
     private const string CombatLocomotionStateName = "CombatLocomotion";
     private const string CombatIdleStateName = "CombatIdle";
     private const string Root = "Assets/0 - UnityPackages/Fab/TwinBladesBundle/";
-    private const string InPlaceRoot = Root + "Twinblades_Expansion_V2/Animation/Inplace/";
-    private const string GuardClipPath = "Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_Two/Anim_SF_Block_v2.fbx";
+    private const string InPlaceRoot = "Assets/Characters/1_Squad/Lucian/Animation/";
+    private const string GuardClipPath = "Assets/Characters/1_Squad/Lucian/Animation/Anim_SF_Block_v2.fbx";
     private const string GuardStateName = "Guard_Block";
 
     private static readonly string[] CombatWalkInPlaceClipPaths =
     {
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_F_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_B_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_FL_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_FR_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_BL_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_BR_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_L_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Walk_R_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_F_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_B_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_FL_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_FR_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_BL_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_BR_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_L_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Walk_R_Inplace.FBX",
     };
 
     private static readonly string[] CombatRunInPlaceClipPaths =
     {
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_F_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_B_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_FL_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_FR_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_BL_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_BR_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_L_Inplace.FBX",
-        InPlaceRoot + "Movement/Twinblades_Strafe_Run_R_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_F_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_B_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_FL_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_FR_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_BL_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_BR_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_L_Inplace.FBX",
+        InPlaceRoot + "Twinblades_Strafe_Run_R_Inplace.FBX",
     };
 
-    private const string CombatIdleInPlaceClipPath = InPlaceRoot + "Battle/Twinblades_Idle_Inplace.FBX";
+    private const string CombatIdleInPlaceClipPath = InPlaceRoot + "Twinblades_Idle_Inplace.FBX";
 
     private static readonly string[] ClipPaths =
     {
@@ -79,50 +78,56 @@ public static class RealTimeCombatAnimatorInstaller
         Root + "Twinblades_Expansion_V2/Animation/Root/Battle/Twinblades_Idle_Root.FBX",
     };
 
-    static RealTimeCombatAnimatorInstaller()
-    {
-        EditorApplication.delayCall += Install;
-    }
 
-    [MenuItem("Lit/Combat/Install Root Motion States And Combat InPlace Locomotion")]
+    [MenuItem("Lit/Combat/Install Player InPlace States")]
     public static void Install()
     {
         AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null) return;
 
-        AnimatorStateMachine machine = FindStateMachine(controller.layers[0].stateMachine, StateMachineName)
-            ?? controller.layers[0].stateMachine.AddStateMachine(StateMachineName, new Vector3(2300f, 500f, 0f));
+        bool changed = false;
+        AnimatorStateMachine machine = FindStateMachine(controller.layers[0].stateMachine, StateMachineName);
+        if (machine == null)
+        {
+            machine = controller.layers[0].stateMachine.AddStateMachine(StateMachineName, new Vector3(2300f, 500f, 0f));
+            changed = true;
+        }
 
         for (int i = 0; i < ClipPaths.Length; i++)
         {
             AnimationClip clip = LoadClip(ClipPaths[i]);
             if (clip == null) continue;
 
-            AnimatorState state = FindState(machine, clip.name) ?? machine.AddState(clip.name, new Vector3((i % 4) * 260f, (i / 4) * 85f, 0f));
-            state.motion = clip;
-            state.tag = StateTag;
-            state.writeDefaultValues = true;
+            AnimatorState state = FindState(machine, clip.name);
+            if (state == null) { state = machine.AddState(clip.name, new Vector3((i % 4) * 260f, (i / 4) * 85f, 0f)); changed = true; }
+            if (state.motion == null || state.motion is AnimationClip existing && PlayerInPlaceAudit.IsRootCandidate(existing))
+            { state.motion = PlayerInPlaceMigration.ResolveReplacement(clip); changed = true; }
+            if (state.tag != StateTag) { state.tag = StateTag; changed = true; }
         }
 
         AnimationClip guardClip = LoadClip(GuardClipPath);
         if (guardClip != null)
         {
-            AnimatorState guardState = FindState(machine, GuardStateName)
-                ?? machine.AddState(GuardStateName, new Vector3(1040f, 640f, 0f));
-            guardState.motion = guardClip;
-            guardState.writeDefaultValues = true;
+            AnimatorState guardState = FindState(machine, GuardStateName);
+            if (guardState == null) { guardState = machine.AddState(GuardStateName, new Vector3(1040f, 640f, 0f)); changed = true; }
+            if (guardState.motion == null)
+            { guardState.motion = PlayerInPlaceMigration.ResolveReplacement(guardClip); changed = true; }
         }
 
-        EnsureCombatLocomotionInPlace(controller);
+        if (FindState(controller.layers[0].stateMachine, CombatLocomotionStateName) == null)
+            EnsureCombatLocomotionInPlace(controller);
 
-        EditorUtility.SetDirty(controller);
-        AssetDatabase.SaveAssets();
+        if (changed)
+        {
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+        }
     }
 
     [MenuItem("Lit/Combat/Migrate Combat Locomotion To InPlace")]
     private static void MigrateCombatLocomotionToInPlace()
     {
-        EnsureCombatLocomotionInPlace(AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath));
+        PlayerInPlaceMigration.Migrate();
     }
 
     private static void EnsureCombatLocomotionInPlace(AnimatorController controller)

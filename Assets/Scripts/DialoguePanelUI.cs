@@ -37,6 +37,23 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     private bool externallyControlled;
     private int shownFrame = -1;
     private Action onHiddenCallback;
+    private bool timedConversationCompleted;
+    private bool timedConversation;
+    private object timedConversationOwner;
+
+    /// <summary>Reports natural timed completion separately from dismissal, replacement or teardown.</summary>
+    public static bool TryShowTimedConversation(string message, float duration, Action<bool> finished, object owner = null)
+    {
+        var ui = GetOrCreate();
+        bool shown = ui.ShowMessageInternal(message, duration, () => finished?.Invoke(ui.timedConversationCompleted), true, true);
+        if (shown) ui.timedConversationOwner = owner;
+        return shown;
+    }
+
+    public static void CancelTimedConversation(object owner)
+    {
+        if (owner != null && Instance != null && ReferenceEquals(Instance.timedConversationOwner, owner)) Instance.HideImmediate();
+    }
 
     public bool IsShowing => isShowing;
     public bool IsExternallyControlled => externallyControlled;
@@ -69,6 +86,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     private void OnDisable()
     {
+        timedConversationCompleted = false;
         LocalInputRouter.Interact -= OnInteractPerformed;
         InputFocusStack.Pop(this);
         isShowing = false;
@@ -143,7 +161,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         return ShowMessageInternal(message, duration, onHidden, blocksGameplayInput: true);
     }
 
-    private bool ShowMessageInternal(string message, float duration, Action onHidden, bool blocksGameplayInput)
+    private bool ShowMessageInternal(string message, float duration, Action onHidden, bool blocksGameplayInput, bool forceTimed = false)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -156,6 +174,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
             return false;
         }
 
+        timedConversationCompleted = false;
         if (hideRoutine != null)
         {
             StopCoroutine(hideRoutine);
@@ -168,6 +187,8 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         }
 
         externallyControlled = false;
+        timedConversationCompleted = false;
+        timedConversation = forceTimed;
         onHiddenCallback = onHidden;
         dialogueText.text = message;
         SetVisible(true);
@@ -180,7 +201,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
             InputFocusStack.PushDialogue(this);
         }
 
-        if (blocksGameplayInput && requireInteractToClose)
+        if (blocksGameplayInput && requireInteractToClose && !forceTimed)
         {
             hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
         }
@@ -245,6 +266,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     public void HideImmediate()
     {
+        timedConversationCompleted = false;
         if (hideRoutine != null)
         {
             StopCoroutine(hideRoutine);
@@ -289,6 +311,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
             yield return null;
         }
 
+        timedConversationCompleted = true;
         yield return HideRoutine();
     }
 
@@ -335,6 +358,11 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     public bool HandleInputModeAction(InputModeAction action, InputAction.CallbackContext context)
     {
         if (!isShowing || !InputFocusStack.HasFocus(this)) return false;
+        if (timedConversation && action == InputModeAction.Cancel)
+        {
+            HideManually();
+            return true;
+        }
         if (action == InputModeAction.Submit && !externallyControlled && requireInteractToClose && Time.frameCount != shownFrame)
         {
             HideManually();
@@ -345,6 +373,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     private void HideManually()
     {
+        timedConversationCompleted = false;
         if (!isShowing)
         {
             return;
@@ -388,6 +417,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     private void CancelActivePresentation()
     {
+        timedConversationCompleted = false;
         if (hideRoutine != null)
         {
             StopCoroutine(hideRoutine);
@@ -540,6 +570,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     {
         Action callback = onHiddenCallback;
         onHiddenCallback = null;
+        timedConversationOwner = null;
         callback?.Invoke();
     }
 }

@@ -19,9 +19,6 @@ MonoBehaviour:
   worldPrefab: {fileID: 6700739663857040827, guid: f5bf933f572371045aef154a22c977f5, type: 3}
   skills: []
   combatSkills:
-  - {fileID: 11400000, guid: 3574dc0264b01b24ea983ed7db44c598, type: 2}
-  - {fileID: 11400000, guid: b3a4d6f55f403a4498b9a4d2f11d4fa2, type: 2}
-  - {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
   enemyCombatProfile: {fileID: 11400000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d05, type: 2}
   groundBasicSkills: []

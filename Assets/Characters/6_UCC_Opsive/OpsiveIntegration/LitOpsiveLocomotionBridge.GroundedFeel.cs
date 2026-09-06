@@ -41,8 +41,6 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField] private string moveStopTriggerParam = "MoveStopTrigger";
     [SerializeField] private string turnInPlaceParam = "TurnInPlace";
     [SerializeField, Min(0.01f)] private float groundedAnimationSpeedToBlend = 0.48f;
-    [SerializeField, Min(0.01f), Tooltip("Lower physical-speed feedback while root motion drives displacement, keeping animation selection input-led.")]
-    private float groundedRootMotionSpeedToBlend = 0.22f;
     [SerializeField, Min(0f)] private float groundedAnimatorSpeedRiseRate = 13.5f;
     [SerializeField, Min(0f)] private float groundedAnimatorSpeedFallRate = 5.4f;
     [SerializeField, Min(0f)] private float groundedAnimatorTurnRate = 5.4f;
@@ -65,7 +63,8 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Tooltip("Keeps grounded locomotion on forward clips only; rotation turns the character instead of blending strafe/backward clips.")]
     private bool useForwardOnlyGroundedLocomotion = true;
     [SerializeField, Tooltip("Uses root-motion turn clips when movement starts from a sharp angle change. Disabled by default because exploration direction changes must keep moving instead of pivoting on the spot.")]
-    private bool enableRootMotionPivotTurns = false;
+    [UnityEngine.Serialization.FormerlySerializedAs("enableRootMotionPivotTurns")]
+    private bool enableScriptedPivotTurns = false;
     [SerializeField, Range(45f, 180f)] private float groundedPivotMinAngle = 85f;
     [SerializeField, Range(90f, 180f)] private float groundedPivot180Angle = 135f;
     [SerializeField, Tooltip("Snaps starts from rest toward the requested direction instead of playing turn-in-place clips.")]
@@ -88,7 +87,8 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Range(0f, 1f), Tooltip("Maximum movement input scale allowed while a pivot is finishing.")]
     private float groundedPivotMovementReleaseScale = 0.58f;
     [SerializeField, Tooltip("Commits the gameplay root rotation toward the authored turn target so turn clips cannot visually rotate and then snap back.")]
-    private bool commitRootRotationDuringPivot = true;
+    [UnityEngine.Serialization.FormerlySerializedAs("commitRootRotationDuringPivot")]
+    private bool commitBodyRotationDuringPivot = true;
     [SerializeField, Min(1f)] private float groundedPivotRotationCommitRate = 960f;
 
     private Vector2 desiredGroundedWorldMoveInput;
@@ -135,7 +135,6 @@ public partial class LitOpsiveLocomotionBridge
         public int CurrentStateHash;
         public int NextStateHash;
         public bool InTransition;
-        public Vector3 RootMotionDelta;
     }
 
     private bool groundedFeelProfileApplied;
@@ -167,7 +166,7 @@ public partial class LitOpsiveLocomotionBridge
             return;
         }
 
-        if (IsRootMotionLocomotionEnabled() || !tuneGroundedUccPhysics || groundedFeelProfileApplied)
+        if (!tuneGroundedUccPhysics || groundedFeelProfileApplied)
         {
             ConfigureGroundedSprintSpeedChange();
             return;
@@ -438,9 +437,7 @@ public partial class LitOpsiveLocomotionBridge
 
     private float ResolveGroundedPresentationSpeed(float physicalSpeed)
     {
-        float physicalSpeedToBlend = IsRootMotionLocomotionEnabled()
-            ? groundedRootMotionSpeedToBlend
-            : groundedAnimationSpeedToBlend;
+        float physicalSpeedToBlend = groundedAnimationSpeedToBlend;
         float scaledPhysicalSpeed = physicalSpeed * Mathf.Max(0.01f, physicalSpeedToBlend);
         float inputBlendSpeed = 0f;
         float inputMagnitude = currentWorldMoveInput.magnitude;
@@ -528,8 +525,7 @@ public partial class LitOpsiveLocomotionBridge
 
     private bool TryStartGroundedPivotTurn(Vector2 targetWorldMoveInput, float targetMagnitude)
     {
-        if (!enableRootMotionPivotTurns ||
-            !IsRootMotionLocomotionEnabled() ||
+        if (!enableScriptedPivotTurns ||
             locomotion == null ||
             !locomotion.Grounded ||
             !groundedMoveIntent ||
@@ -674,7 +670,7 @@ public partial class LitOpsiveLocomotionBridge
 
     private void ApplyGroundedPivotRotationCommit(float deltaTime, bool forceComplete)
     {
-        if (!commitRootRotationDuringPivot ||
+        if (!commitBodyRotationDuringPivot ||
             locomotion == null ||
             !hasGroundedPivotTargetDirection ||
             groundedPivotTargetDirection.sqrMagnitude <= 0.0001f)
@@ -1100,8 +1096,7 @@ public partial class LitOpsiveLocomotionBridge
             State = groundedPresentationState,
             CurrentStateHash = current.fullPathHash,
             NextStateHash = next.fullPathHash,
-            InTransition = animator != null && animator.IsInTransition(0),
-            RootMotionDelta = animator != null ? animator.deltaPosition : Vector3.zero
+            InTransition = animator != null && animator.IsInTransition(0)
         };
         locomotionHistoryNext = (locomotionHistoryNext + 1) % LocomotionHistoryCapacity;
         locomotionHistoryCount = Mathf.Min(locomotionHistoryCount + 1, LocomotionHistoryCapacity);
@@ -1122,8 +1117,7 @@ public partial class LitOpsiveLocomotionBridge
                 .Append(" state=").Append(sample.State)
                 .Append(" animator=").Append(sample.CurrentStateHash)
                 .Append(" next=").Append(sample.NextStateHash)
-                .Append(" transition=").Append(sample.InTransition)
-                .Append(" rootDelta=").Append(sample.RootMotionDelta);
+                .Append(" transition=").Append(sample.InTransition);
         }
 
         Debug.Log(report.ToString(), this);

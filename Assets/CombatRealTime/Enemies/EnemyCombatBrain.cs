@@ -21,15 +21,13 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
     private EnemyCombatPattern pattern;
     private EnemyCombatPattern previousPattern;
     private readonly Dictionary<EnemyCombatPattern, float> cooldowns = new Dictionary<EnemyCombatPattern, float>();
-    private readonly HashSet<SquadCharacterController> hitPlayers = new HashSet<SquadCharacterController>();
     private Vector3 home;
     private Quaternion homeRotation;
     private float readyAt, observeUntil, guardUntil, nextGuardAt, returnAt;
-    private int stepIndex, consecutiveUses, actionId, windowId;
-    private bool returning, suspended, hitboxOpen, finishing;
+    private int stepIndex, consecutiveUses, actionId;
+    private bool returning, suspended, finishing;
     private bool visibilitySampled;
     private bool previousVisibility;
-    private Vector3 previousHitboxCenter;
     private CombatPhase phase;
     private NavMeshPath path;
     private bool airborneChoiceMade;
@@ -116,7 +114,7 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
             return;
         }
         bool blocked = cinematic != null && cinematic.IsSuspended ||
-            CombatHealthThresholdController.Instance != null && CombatHealthThresholdController.Instance.BlocksEnemyActions(enemy);
+            CombatHealthThresholdController.Instance != null && CombatHealthThresholdController.Instance.ShouldSuspendEnemy(enemy);
         if (blocked)
         {
             Suspend();
@@ -131,7 +129,6 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
         if (pattern != null)
         {
             if (target == null || target.CurrentHp <= 0) { CancelAction("cible perdue"); return; }
-            if (hitboxOpen) SampleHitbox();
             return;
         }
         // Foreign actions include the authored QTE failure retaliation.
@@ -139,7 +136,7 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
             motor.State != CombatEnemyPhysicsState.Navigation) return;
         // Vision is now a valid combat trigger. The player does not need to
         // land the first hit before this brain can pursue and attack.
-        if (target == null && !returning && enemy.CanSeePlayer)
+        if (target == null)
         {
             Transform visiblePlayerRoot = LocalPlayerContext.LocalCharacterRoot;
             if (visiblePlayerRoot == null && RealTimeCombatManager.Instance != null)
@@ -147,17 +144,33 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
                 visiblePlayerRoot = RealTimeCombatManager.Instance.PlayerRoot;
             }
             SquadCharacterController visiblePlayer = ResolvePlayerController(visiblePlayerRoot);
-            if (visiblePlayer != null && visiblePlayer.CurrentHp > 0)
+            bool canDetect = visiblePlayer != null && (enemy.CanSeePlayer || returning &&
+                enemy.VisionField != null && enemy.VisionField.CanSenseNearby(visiblePlayer.transform, profile.returnReengageDistance));
+            float entryRadius = returning ? Mathf.Max(0f, profile.pursuitRadius - .5f) : profile.pursuitRadius;
+            if (canDetect && visiblePlayer.CurrentHp > 0 && Distance(home, visiblePlayer.transform.position) <= entryRadius)
             {
+                locomotion.StopNavigation();
                 target = visiblePlayer;
                 observeUntil = 0f;
                 returning = false;
+                returnAt = 0f;
+                readyAt = Now;
+                guardUntil = 0f;
+                airborneChoiceMade = false;
+                airborneChoice = null;
                 Transform playerRoot = visiblePlayer.transform;
                 RealTimeCombatManager.Instance?.BeginEnemyAggro(playerRoot, enemy);
-                SetPhase(CombatPhase.Alert, "joueur visible");
+                SetPhase(CombatPhase.Alert, "joueur detecte, reprise decision");
             }
         }
 
+        // Disengagement is a combat decision, not a navigation operation.
+        // A temporarily unavailable NavMesh must not keep world interactions locked.
+        if (target == null || target.CurrentHp <= 0 || Distance(home, target.transform.position) > profile.pursuitRadius)
+        {
+            TickReturn();
+            return;
+        }
         if (!navigation.EnsureReady())
         {
             // A retry window or a world still being built must not erase the
@@ -167,11 +180,6 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
             {
                 SetPhase(CombatPhase.Idle, "NavMesh invalide | " + navigation.LastFailure);
             }
-            return;
-        }
-        if (target == null || target.CurrentHp <= 0 || Distance(home, target.transform.position) > profile.pursuitRadius)
-        {
-            TickReturn();
             return;
         }
         returning = false;
@@ -299,11 +307,13 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
 
     private bool TryResolveApproach(float distance, out bool inRange, out float approachDistance)
     {
-        if (profile.preferMeleeApproach && !airborneChoiceMade)
+        bool preferMelee = ShouldPreferMelee();
+        if (!preferMelee) { airborneChoiceMade = false; airborneChoice = null; }
+        if (preferMelee && !airborneChoiceMade)
         {
             foreach (var candidate in profile.patterns)
             {
-                if (candidate == null || !candidate.IsConfigured || !candidate.skills[0].EnemyActionMotion.IsAirborne ||
+                if (!IsPatternEquipped(candidate) || !candidate.skills[0].EnemyActionMotion.IsAirborne ||
                     !IsPatternAvailable(candidate) || distance < candidate.minimumStartDistance ||
                     !CanStart(candidate.skills[0], candidate.maximumStartAngle)) continue;
                 airborneChoiceMade = true;
@@ -317,17 +327,16 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
         int bestPriority = int.MaxValue;
         foreach (var candidate in profile.patterns)
         {
-            if (candidate == null || !candidate.IsConfigured ||
-                !System.Linq.Enumerable.Contains(skills.Skills, candidate.skills[0])) continue;
+            if (!IsPatternEquipped(candidate)) continue;
             SkillSO skill = candidate.skills[0];
-            if (profile.preferMeleeApproach && skill.EnemyActionMotion.IsAirborne && candidate != airborneChoice) continue;
+            if (preferMelee && skill.EnemyActionMotion.IsAirborne && candidate != airborneChoice) continue;
             float minimum = Mathf.Max(candidate.minimumStartDistance, skill.MinimumHitDistance);
             float maximum = skill.MaximumHitDistance;
             if (minimum > maximum) continue;
-            float desired = profile.preferMeleeApproach && !skill.EnemyActionMotion.IsAirborne
+            float desired = preferMelee && !skill.EnemyActionMotion.IsAirborne
                 ? Mathf.Clamp(profile.preferredCombatDistance, minimum, ResolveApproachDistance(minimum, maximum))
                 : ResolveApproachDistance(minimum, maximum);
-            inRange |= distance >= minimum && distance <= (profile.preferMeleeApproach && !skill.EnemyActionMotion.IsAirborne
+            inRange |= distance >= minimum && distance <= (preferMelee && !skill.EnemyActionMotion.IsAirborne
                 ? Mathf.Min(maximum, desired + .15f) : maximum);
             int priority = IsPatternAvailable(candidate) ? 0 : 1;
             float gap = Mathf.Abs(distance - desired);
@@ -339,16 +348,38 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
         return bestPriority != int.MaxValue;
     }
 
-    private bool IsPatternAvailable(EnemyCombatPattern candidate) =>
-        !(cooldowns.TryGetValue(candidate, out float until) && Now < until) &&
-        !(candidate == previousPattern && consecutiveUses >= candidate.maximumConsecutiveUses);
+    private bool IsPatternEquipped(EnemyCombatPattern candidate)
+    {
+        if (candidate == null || !candidate.IsConfigured || candidate.weight <= 0 || skills == null) return false;
+        var equipped = skills.Skills;
+        foreach (var skill in candidate.skills)
+            if (!System.Linq.Enumerable.Contains(equipped, skill)) return false;
+        return Mathf.Max(candidate.minimumStartDistance, candidate.skills[0].MinimumHitDistance) <= candidate.skills[0].MaximumHitDistance;
+    }
+
+    private bool ShouldPreferMelee()
+    {
+        if (profile == null || !profile.preferMeleeApproach) return false;
+        foreach (var candidate in profile.patterns)
+            if (IsPatternEquipped(candidate) && !candidate.skills[0].EnemyActionMotion.IsAirborne) return true;
+        return false;
+    }
+
+    private bool IsPatternAvailable(EnemyCombatPattern candidate)
+    {
+        if (!IsPatternEquipped(candidate) || cooldowns.TryGetValue(candidate, out float until) && Now < until) return false;
+        if (candidate != previousPattern || consecutiveUses < candidate.maximumConsecutiveUses) return true;
+        // Repetition limits require an equipped alternative, never an unequipped profile entry.
+        foreach (var other in profile.patterns)
+            if (other != candidate && IsPatternEquipped(other)) return false;
+        return true;
+    }
 
     private string ExplainAttackWait()
     {
         foreach (var candidate in profile.patterns)
         {
-            if (candidate == null || !candidate.IsConfigured || !IsPatternAvailable(candidate) ||
-                !System.Linq.Enumerable.Contains(skills.Skills, candidate.skills[0])) continue;
+            if (!IsPatternAvailable(candidate)) continue;
             Vector3 delta = target.transform.position - transform.position;
             delta.y = 0f;
             if (!candidate.skills[0].IsWithinHitRange(delta.magnitude) || delta.magnitude < candidate.minimumStartDistance) continue;
@@ -360,14 +391,13 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
 
     private EnemyCombatPattern ChoosePattern()
     {
+        bool preferMelee = ShouldPreferMelee();
         EnemyCombatPattern selected = null;
         int weight = 0;
         foreach (var candidate in profile.patterns)
         {
-            if (candidate == null || !candidate.IsConfigured ||
-                profile.preferMeleeApproach && candidate.skills[0].EnemyActionMotion.IsAirborne && candidate != airborneChoice ||
-                cooldowns.TryGetValue(candidate, out float until) && Now < until ||
-                candidate == previousPattern && consecutiveUses >= candidate.maximumConsecutiveUses ||
+            if (!IsPatternAvailable(candidate) ||
+                preferMelee && candidate.skills[0].EnemyActionMotion.IsAirborne && candidate != airborneChoice ||
                 Distance(transform.position, target.transform.position) < candidate.minimumStartDistance ||
                 !CanStart(candidate.skills[0], candidate.maximumStartAngle)) continue;
             weight += Mathf.Max(1, candidate.weight);
@@ -387,10 +417,7 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
 
     private void StartStep()
     {
-        hitboxOpen = false;
         finishing = false;
-        windowId = 0;
-        hitPlayers.Clear();
         actionId++;
         locomotion.StopNavigation();
         locomotion.SetAttackFacingLocked(false);
@@ -410,45 +437,10 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
         SetPhase(CombatPhase.Active, "direction engagee");
     }
 
-    public void OpenHitbox()
-    {
-        if (!Authority || pattern == null || finishing || hitboxOpen) return;
-        windowId++;
-        hitPlayers.Clear();
-        hitboxOpen = true;
-        previousHitboxCenter = transform.TransformPoint(enemy.ActiveSkill.enemyImpact.offset);
-        SampleHitbox();
-    }
-
-    public void CloseHitbox() { hitboxOpen = false; }
-
-    private void SampleHitbox()
-    {
-        if (!hitboxOpen || enemy.ActiveSkill == null) return;
-        SkillSO skill = enemy.ActiveSkill;
-        EnemySkillImpactShape shape = skill.enemyImpact;
-        Vector3 center = transform.TransformPoint(shape.offset);
-        // Swept volume prevents a moving attack from tunnelling between frames.
-        Collider[] hits = Physics.OverlapCapsule(previousHitboxCenter, center, shape.radius, shape.targetMask, QueryTriggerInteraction.Ignore);
-        previousHitboxCenter = center;
-        foreach (Collider collider in hits)
-        {
-            var player = collider.GetComponentInParent<SquadCharacterController>();
-            if (player == null || player.CurrentHp <= 0 || hitPlayers.Contains(player)) continue;
-            Vector3 delta = player.transform.position - transform.position;
-            delta.y = 0f;
-            if (Vector3.Angle(transform.forward, delta) > shape.arcDegrees * .5f ||
-                !skill.IsWithinHitRange(delta.magnitude)) continue;
-            hitPlayers.Add(player);
-            RealTimeCombatManager.Instance?.ResolveEnemyPatternImpact(enemy, player, skill, actionId, windowId);
-        }
-    }
-
     public void ResolveAnimationAttackEnded()
     {
         if (!Authority || pattern == null || finishing) return;
         finishing = true;
-        CloseHitbox();
         int token = actionId;
         enemy.CompleteEnemyAttackWhenGrounded(() => CompleteStep(token, false));
     }
@@ -462,7 +454,8 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
     {
         if (pattern == null || token != actionId) return;
         enemy.CompleteAutonomousAttack();
-        if (!abortCombo && target != null && Distance(home, target.transform.position) <= profile.pursuitRadius &&
+        if (!abortCombo && CombatHealthThresholdController.Instance?.HasPendingStage(enemy) != true &&
+            target != null && Distance(home, target.transform.position) <= profile.pursuitRadius &&
             stepIndex + 1 < pattern.skills.Count && CanStart(pattern.skills[stepIndex + 1], pattern.maximumStartAngle))
         {
             stepIndex++;
@@ -475,7 +468,6 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
         airborneChoiceMade = false;
         airborneChoice = null;
         finishing = false;
-        CloseHitbox();
         locomotion.SetAttackFacingLocked(false);
         readyAt = Now + recovery;
         observeUntil = 0f;
@@ -495,7 +487,7 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
 
     public void EnterStagger(float seconds)
     {
-        if (!Authority) return;
+        if (!Authority || enemy.IsAttackCommitted) return;
         CancelAction("stagger");
         readyAt = Now + Mathf.Max(0f, seconds);
         SetPhase(CombatPhase.Stagger, "interruption forcee");
@@ -507,8 +499,6 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
         airborneChoice = null;
         motor?.EndEnemyAdvance();
         actionId++;
-        CloseHitbox();
-        hitPlayers.Clear();
         pattern = null;
         finishing = false;
         observeUntil = 0f;
@@ -547,6 +537,7 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
             locomotion.SetCombatTarget(null);
             locomotion.StopNavigation();
         }
+        locomotion.SetReturnFacing(home);
         if (Now < returnAt) return;
         if (Distance(transform.position, home) <= .25f)
         {
@@ -559,7 +550,12 @@ public sealed class EnemyCombatBrain : NetworkBehaviour
             }
             SetPhase(CombatPhase.Idle, "spawn");
         }
-        else { locomotion.NavigateTo(home, .15f); SetPhase(CombatPhase.Return, "retour spawn"); }
+        else if (navigation != null && navigation.EnsureReady())
+        {
+            locomotion.NavigateTo(home, .15f);
+            SetPhase(CombatPhase.Return, "retour spawn");
+        }
+        else locomotion.StopNavigation();
     }
 
     public int ResolveGuardDamage(int damage)

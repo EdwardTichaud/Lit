@@ -11,7 +11,6 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     [SerializeField] private PlayerBow playerBow;
     [SerializeField] private PlayerSword playerSword;
     private PlayerActionPresentationController playerActionPresentation;
-
     [Header("Input Prompt Animation Events")]
     [SerializeField] private Transform inputPromptAnchor;
     [SerializeField] private Vector3 inputPromptOffset = new Vector3(0f, 1.25f, 0f);
@@ -26,12 +25,9 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     [SerializeField, Min(0f)] private float stopDashDeceleration = 65f;
 
     private Vector3 lastDashDirection;
-    private Vector3 enemyDashInitialPosition;
-    private bool hasEnemyDashInitialPosition;
     private Coroutine stopDashRoutine;
     private Coroutine hideSwordAfterComboRoutine;
     private CombatInputWorldPrompt activeInputPrompt;
-    private readonly HashSet<string> warnedUnknownPlayerHitConditions = new HashSet<string>();
 
     private void Reset()
     {
@@ -48,7 +44,6 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         HideBow();
         HideSword();
         HideInput();
-        ClearEnemyDashInitialPosition();
     }
 
     private void OnDisable()
@@ -105,78 +100,13 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
     }
 
-    public void ShowReactionPrompt()
+
+
+    /// <summary>Instantaneous authored enemy contact, including skill and result effects.</summary>
+    public void EnemyAttack(SkillSO skill)
     {
-        RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy());
-    }
-
-    /// <summary>Enemy Animation Event: starts presentation only; it never opens the logical reaction window.</summary>
-    public void BeginReactionTelegraph()
-    {
-        CombatReactionTelegraphController.Instance?.BeginTelegraph(ResolveEnemy());
-    }
-
-    public void CombatWarningOn()
-    {
-        TraceEnemyEvent(nameof(CombatWarningOn));
-        CombatWarningPresentationController.Instance?.BeginWarning(ResolveEnemy());
-    }
-
-    public void CombatWarningOff()
-    {
-        TraceEnemyEvent(nameof(CombatWarningOff));
-        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
-        CombatWarningPresentationController.Instance?.EndWarning(currentEnemy);
-        RealTimeCombatManager.Instance?.CancelEnemyAttackWindow(currentEnemy);
-    }
-
-    /// <summary>
-    /// Enemy Animation Event: opens a reaction window for real-time seconds.
-    /// The timeout closes eligibility only; ResolveEnemyAttackImpact remains
-    /// responsible for the actual attack resolution.
-    /// </summary>
-    public void OpenReactionWindow(float durationSeconds)
-    {
-        TraceEnemyEvent(nameof(OpenReactionWindow) + "(" + durationSeconds.ToString("F3") + ")");
-        RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy(), durationSeconds);
-    }
-
-    public void ResolveEnemyAttackImpact()
-    {
-        TraceEnemyEvent(nameof(ResolveEnemyAttackImpact));
-        RealTimeCombatEnemy enemy = ResolveEnemy();
-
-        EnemyCombatBrain brain = enemy != null ? enemy.GetComponent<EnemyCombatBrain>() : null;
-        if (brain != null && brain.IsAutonomousActionActive)
-        {
-            brain.OpenHitbox();
-            brain.CloseHitbox();
-            return;
-        }
-
-        // A threshold retaliation can reuse any authored enemy attack. Its
-        // ordinary impact event becomes the threshold-specific hit while that
-        // one-off response owns the encounter.
-        if (CombatHealthThresholdController.Instance?.TryResolveThresholdFailureImpact(enemy) == true)
-        {
-            return;
-        }
-
-        RealTimeCombatManager.Instance?.ResolveEnemyAttackImpact(enemy);
-    }
-
-    /// <summary>Enemy Animation Event: opens the current autonomous attack's server-side spatial hitbox.</summary>
-    public void OpenEnemyAttackHitbox()
-    {
-        TraceEnemyEvent(nameof(OpenEnemyAttackHitbox));
-        ResolveEnemy()?.GetComponent<EnemyCombatBrain>()?.OpenHitbox();
-    }
-
-    /// <summary>Enemy Animation Event: closes the current autonomous attack's spatial hitbox.</summary>
-    public void CloseEnemyAttackHitbox()
-    {
-        TraceEnemyEvent(nameof(CloseEnemyAttackHitbox));
-        ResolveEnemy()?.GetComponent<EnemyCombatBrain>()?.CloseHitbox();
+        TraceEnemyEvent(nameof(EnemyAttack));
+        ResolveEnemySkills()?.ExecuteEnemyAttack(skill);
     }
 
     /// <summary>Enemy Animation Event: locks the autonomous attack facing before its committed impact.</summary>
@@ -187,27 +117,24 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     }
 
     /// <summary>
-    /// Enemy Animation Event reserved for the retaliation following a missed
-    /// health-threshold QTE. It applies the authored skill impact once, then
-    /// lets UCC perform the collision-aware three metre recoil.
-    /// </summary>
-    public void ResolveThresholdFailureImpact()
-    {
-        TraceEnemyEvent(nameof(ResolveThresholdFailureImpact));
-        CombatHealthThresholdController.Instance?.ResolveThresholdFailureImpact(ResolveEnemy());
-    }
-
-    /// <summary>
     /// Player animation event for a health-threshold QTE. Valid values are
     /// Y, B, A and X; the active threshold session owns validation and timing.
     /// </summary>
     public void QTE(string input)
     {
-        CombatHealthThresholdController.Instance?.OpenQte(input);
+        var enemy = ResolveEnemy();
+        if (enemy != null) CombatHealthThresholdController.Instance?.OpenAttackQte(enemy, input);
+        else CombatHealthThresholdController.Instance?.OpenQte(input);
+    }
+
+    public void OpenEnemyReactionOpportunity()
+    {
+        CombatHealthThresholdController.Instance?.OpenEnemyReactionOpportunity(ResolveEnemy());
     }
 
     public void EndEnemyAttack()
     {
+        CombatHealthThresholdController.Instance?.EndEnemyReactionAction(ResolveEnemy());
         TraceEnemyEvent(nameof(EndEnemyAttack));
         RealTimeCombatEnemy currentEnemy = ResolveEnemy();
         if (currentEnemy == null)
@@ -215,7 +142,6 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             return;
         }
 
-        ClearEnemyDashInitialPosition();
         EnemyCombatBrain brain = currentEnemy.GetComponent<EnemyCombatBrain>();
         if (brain != null && brain.IsAutonomousActionActive)
         {
@@ -474,60 +400,6 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         stopDashRoutine = StartCoroutine(StopDashRoutine(lastDashDirection));
     }
 
-    /// <summary>
-    /// Enemy Animation Event. Moves the enemy from its position at the start of
-    /// the dash towards the player. The float is a normalized Lerp value: 0 keeps
-    /// the initial position and 1 reaches the player's current planar position.
-    /// </summary>
-    public void DashToTarget(float lerp)
-    {
-        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
-        Transform target = ResolveEnemyDashTarget();
-        if (currentEnemy == null || target == null)
-        {
-            return;
-        }
-
-        if (!hasEnemyDashInitialPosition)
-        {
-            enemyDashInitialPosition = currentEnemy.transform.position;
-            hasEnemyDashInitialPosition = true;
-        }
-
-        Vector3 targetPosition = target.position;
-        targetPosition.y = enemyDashInitialPosition.y;
-        Vector3 destination = Vector3.Lerp(
-            enemyDashInitialPosition,
-            targetPosition,
-            Mathf.Clamp01(lerp));
-        currentEnemy.SetActionPlanarPosition(destination);
-    }
-
-    /// <summary>
-    /// Enemy Animation Event. Returns the enemy towards the position recorded by
-    /// DashToTarget. The float is a normalized Lerp value: 0 keeps the current
-    /// position and 1 returns fully to the recorded initial position.
-    /// </summary>
-    public void DashToInitialPosition(float lerp)
-    {
-        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
-        if (currentEnemy == null || !hasEnemyDashInitialPosition)
-        {
-            return;
-        }
-
-        float normalizedLerp = Mathf.Clamp01(lerp);
-        Vector3 destination = Vector3.Lerp(
-            currentEnemy.transform.position,
-            enemyDashInitialPosition,
-            normalizedLerp);
-        currentEnemy.SetActionPlanarPosition(destination);
-
-        if (normalizedLerp >= 1f)
-        {
-            ClearEnemyDashInitialPosition();
-        }
-    }
 
     private void PlaySkillVfxCue(SkillVfxCue cue, RealTimeCombatEnemy target)
     {
@@ -734,86 +606,6 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Animation Event ennemi : selectionne puis joue un SkillSO de EnemySkills.
-    /// </summary>
-    public void PlayEnemySkill(int skillIndex)
-    {
-        ResolveEnemySkills()?.PlaySkill(skillIndex);
-    }
-
-    /// <summary>
-    /// Animation Event ennemi : choisit le SkillSO du clip courant sans le relancer.
-    /// </summary>
-    public void SetEnemySkill(int skillIndex)
-    {
-        ResolveEnemySkills()?.SetSkillForAnimationEvents(skillIndex);
-    }
-
-    /// <summary>
-    /// Animation Event ennemi : joue tous les VFX du SkillSO ennemi actif.
-    /// </summary>
-    public void InstantiateEnemySkillVFX()
-    {
-        ResolveEnemySkills()?.InstantiateSkillVFX();
-    }
-
-    /// <summary>
-    /// Animation Event ennemi : joue un VFX du SkillSO ennemi actif.
-    /// </summary>
-    public void InstantiateEnemySkillVFXAtIndex(int cueIndex)
-    {
-        ResolveEnemySkills()?.InstantiateSkillVFXAtIndex(cueIndex);
-    }
-
-    /// <summary>
-    /// Animation Event ennemi : applique les degats du SkillSO ennemi actif a Lucian.
-    /// </summary>
-    public void HitPlayer()
-    {
-        ResolveEnemySkills()?.HitPlayer();
-    }
-
-    /// <summary>
-    /// Animation Event ennemi : applique les degats seulement si la condition cible est valide.
-    /// Les conditions sont exprimees par nom pour pouvoir en ajouter sans modifier les clips existants.
-    /// </summary>
-    public void HitPlayerIf(string conditionName)
-    {
-        if (!MeetsPlayerHitCondition(conditionName))
-        {
-            return;
-        }
-
-        HitPlayer();
-    }
-
-    private bool MeetsPlayerHitCondition(string conditionName)
-    {
-        string normalizedCondition = string.IsNullOrWhiteSpace(conditionName)
-            ? "Always"
-            : conditionName.Trim();
-        if (string.Equals(normalizedCondition, "Always", System.StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (string.Equals(normalizedCondition, "Grounded", System.StringComparison.OrdinalIgnoreCase))
-        {
-            RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-            SquadCharacterController player = manager != null && manager.PlayerRoot != null
-                ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true)
-                : null;
-            return player != null && player.IsGrounded;
-        }
-
-        if (warnedUnknownPlayerHitConditions.Add(normalizedCondition))
-        {
-            Debug.LogWarning("[RealTimeCombatAnimationEvents] Condition HitPlayerIf inconnue : '" + normalizedCondition + "'. L'impact est ignore.", this);
-        }
-
-        return false;
-    }
 
     private RealTimeCombatEnemy ResolveEnemy()
     {
@@ -840,11 +632,6 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             : null;
     }
 
-    private void ClearEnemyDashInitialPosition()
-    {
-        hasEnemyDashInitialPosition = false;
-        enemyDashInitialPosition = Vector3.zero;
-    }
 
     private EnemySkills ResolveEnemySkills()
     {

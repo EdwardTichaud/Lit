@@ -12,14 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b0c9fe1cd7d4328ba35f67c6d5dd193, type: 3}
   m_Name: BasicSkill_1
   m_EditorClassIdentifier: Assembly-CSharp::BasicSkillsSO
+  enemyImpact:
+    offset: {x: 0, y: 1, z: 1.3}
+    radius: 1.4
+    arcDegrees: 110
+    targetMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   skillName: Attaque basique 1
   description: 
   icon: {fileID: 0}
-  animationClip: {fileID: 7400000, guid: c421e761ada49ce41bdbd4f3d05d77cc, type: 2}
+  animationClip: {fileID: 7400000, guid: 633be3fc5edac7a43a1313fc22f77247, type: 2}
   animatorState: Base Layer.BasicSkill_1
   damages: 5
   clarityGainOnHit: 50
   presentation:
+    movementPolicy: 1
     entryBlendSeconds: 0.05
     chainNormalizedTime: 0.35
     chainTransitionNormalizedTime: 0.5
@@ -36,8 +44,6 @@ MonoBehaviour:
       locomotionBlendSeconds: 0.08
       preLandingProbeDistance: 1.2
       preLandingLeadSeconds: 0.14
-    rootMotionMode: 1
-    allowAirborneRootMotion: 0
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
@@ -102,6 +108,18 @@ MonoBehaviour:
     maximumInputLockSeconds: 3.5
     airborneInertiaSeconds: 0
     airborneInertiaEndSpeedMultiplier: 0.3
+  targetLunge:
+    enabled: 0
+    approachDurationSeconds: 0.18
+    maximumApproachSpeed: 42
+    stoppingDistance: 0.85
+    contactTolerance: 0.18
+    reboundHorizontalImpulse: 16
+    reboundVerticalImpulse: 8
+    minimumInputLockSeconds: 0.1
+    maximumInputLockSeconds: 2.5
+    airborneInertiaSeconds: 0.08
+    airborneInertiaEndSpeedMultiplier: 0.25
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000
@@ -109,6 +127,33 @@ MonoBehaviour:
   playerAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
   enemyAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
   enemyActionMotion:
+    enableAdvance: 0
+    advanceDistance: 0.4
+    advanceDuration: 0.18
+    advanceProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
     movementMode: 0
     initialUpwardSpeed: 12
     gravity: 32
@@ -116,6 +161,7 @@ MonoBehaviour:
     minimumLandingSpeed: 4
     maximumAirborneSeconds: 2.5
     enableHomingRush: 0
+    lockRushDestination: 0
     rushMaximumSpeed: 14
     rushAcceleration: 46
     rushDeceleration: 62

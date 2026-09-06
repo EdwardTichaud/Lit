@@ -34,8 +34,8 @@ public static class PlayerScriptedJumpMigrationUtility
         AnimatorStateMachine root = controller.layers[0].stateMachine;
         SetMotion(root, "Jump_Start", "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/inplace/jump_start_inplace.fbx");
         SetMotion(root, "Jump_Loop", "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/inplace/jump_inplace.fbx");
-        SetMotion(root, "Falling", "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/inplace/jump_falling_loop_inplace.fbx");
-        SetMotion(root, "Jump_End", "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/inplace/jump_landing_inplace.fbx");
+        SetMotion(root, "Falling", "Assets/Characters/1_Squad/Lucian/Animation/jump_falling_loop_inplace.fbx");
+        SetMotion(root, "Jump_End", "Assets/Characters/1_Squad/Lucian/Animation/jump_landing_inplace.fbx");
         RemoveJumpRoll(root);
         RemoveMissingBehaviours(root);
         int jumpRollParameterIndex = System.Array.FindIndex(controller.parameters, parameter => parameter.name == "JumpRollTrigger");
