@@ -39837,6 +39837,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2539553842076603401}
   - component: {fileID: 7400889216693721768}
+  - component: {fileID: 7400889216693721769}
   m_Layer: 0
   m_Name: AnimationLab
   m_TagString: Untagged
@@ -39864,6 +39865,22 @@ MonoBehaviour:
   previewEnemyActorRoot: {fileID: 1264755830849200618}
   previewCameraBrain: {fileID: 6563474756955553008}
   previewSignalReceiver: {fileID: 9058773453078835134}
+--- !u!114 &7400889216693721769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7400889216693721767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e073ace11ad34fb4860ce7efcab31e98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraProfilPreviewTool
+  cameraProfil: {fileID: 11400000, guid: 032149e9c0c141a5bdbe21863e6aeeea, type: 2}
+  anchorOverride: {fileID: 0}
+  previewCameraOverride: {fileID: 0}
+  previewBrainOverride: {fileID: 0}
 --- !u!4 &7401364454186204080
 Transform:
   m_ObjectHideFlags: 0

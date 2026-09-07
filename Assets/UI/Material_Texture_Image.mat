@@ -65,6 +65,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _HDRIntensity: -10
     - _AddPrecomputedVelocity: 0
     - _AlphaCutoffEnable: 0
     - _AlphaDstBlend: 1
@@ -119,7 +120,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _HDRColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HDRColor: {r: 0.0007314645, g: 0.0007314645, b: 0.0007314645, a: 1}
     - _Offset: {r: 0.065, g: 0.095, b: 0, a: 0}
     - _Speed: {r: 0, g: 0, b: 0, a: 0}
     - _Tilling: {r: 0.9, g: 0.9, b: 0, a: 0}

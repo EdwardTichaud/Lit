@@ -1177,3 +1177,11 @@ chargees. Un agent n'est rattache que si sa projection locale respecte 0,15 m en
 horizontal et en vertical; un polygone sur un autre niveau est refuse et aucun Warp
 n'est effectue. Les traces de validation indiquent la position attendue, le point
 NavMesh trouve, le delta, l'etat de l'agent et la destination de locomotion.
+
+# Presentation Melt de Munin
+
+- `SpiritBondController.MeltTheIce()` est le point d'entree de la fusion manuelle : il lance la presentation locale puis le trigger Animator `Melt`; seul l'Animation Event existant confirme l'etat de fusion. Une Rupture garde son flux precedent et ne rejoue jamais cette presentation.
+- `CameraProfilSO` decrit une courte pose locale autour d'un ancrage. `CameraProfilPlayer` remet temporairement l'autorite a une `CinemachineCamera` via `LitCameraDirector`, puis rend la main a UCC et son snap de retour. Il n'ecrit jamais le transform de la Main Camera.
+- `CameraProfil_Melt` cadre Lucian en trois-quarts avec l'offset `(2, 1.8, -3.5)`, une entree/sortie de `0.5 s` et un maintien de `1 s`. Les durees UI et camera utilisent `Time.unscaledDeltaTime`.
+- `CameraProfilPreviewTool`, attache a AnimationLab, permet de lire un `CameraProfilSO` hors Play Mode. Son Inspector fournit `Play`, `Rejouer` et `Stop`; il utilise une CinemachineCamera temporaire et restaure la pose de `Preview_MainCamera` apres chaque lecture. Le FOV et sa duree de transition sont maintenant des donnees du profil, partagees entre l'aperçu et le runtime.
+- La presentation Melt capture puis restitue alpha, raycasts, HDR du givre et camera apres `endLerp`; aucun etat de presentation local ne persiste a la fin ou lors d'une interruption.

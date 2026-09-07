@@ -2261,6 +2261,9 @@ MonoBehaviour:
   spiritVisualRoot: {fileID: 0}
   holyEffect: {fileID: 0}
   transitionSeconds: 0.35
+  meltCameraProfile: {fileID: 11400000, guid: 032149e9c0c141a5bdbe21863e6aeeea, type: 2}
+  meltFrostFadeSeconds: 0.5
+  meltHdrIntensitySeconds: 1
 --- !u!1 &2160324580470185257
 GameObject:
   m_ObjectHideFlags: 0
