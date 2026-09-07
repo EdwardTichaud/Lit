@@ -19,7 +19,6 @@ public sealed class StabReadableInteractable : MonoBehaviour, ICharacterDetected
     private void Awake()
     {
         ResolveInteractionCollider();
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     private void OnValidate()

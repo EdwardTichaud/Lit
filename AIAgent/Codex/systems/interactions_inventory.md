@@ -41,12 +41,30 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 ## Pièges observés
 
 - Un seul propriétaire doit contrôler l’Outline global.
+- Un `RuntimeOutlineTarget` ne change que le layer de son propre GameObject,
+  jamais celui de ses enfants. Chaque renderer à entourer doit donc porter sa
+  propre cible. `RuntimeOutlineRendererReference` ne fait que sélectionner un
+  renderer déjà équipé ; aucun `RuntimeOutlineTarget` n'est créé automatiquement
+  en jeu ou par les outils de configuration.
 - Les suspensions d'Outline doivent toujours etre relachees par leur owner
   (`PopSuspension`) pour eviter un outline durablement invisible.
 - Les UI d’inventaire utilisent `InputFocusStack` et des verrous de squad.
 - Les interactions peuvent être masquées par `TimePeriodVisibility` ou exiger
   une influence lumineuse.
 - En réseau, le client ne doit pas modifier seul un inventaire ou un objet monde.
+- Un livre, parchemin ou note posé dans le monde est d'abord lu : ses knowledges
+  de lecture sont alors révélés, même si le joueur choisit ensuite de le laisser.
+  Pendant cette lecture, **A / SouthButton** le prend et ferme le panneau ;
+  **B / EastButton** ferme simplement le panneau. Seul A ajoute l'item à
+  l'inventaire via le chemin serveur existant. L'UI auteur doit fournir
+  `ReadableActionInputs`, avec ses enfants `A` et `B` ; il est réutilisé pour
+  livre et parchemin, jamais créé au runtime. Les stèles restent des lectures
+  fixes et non récupérables.
+- Tous les fantômes suivent la révélation de proximité de `GhostController` :
+  hors de leur rayon ils sont invisibles, sans interaction ni outline ; en
+  approchant ils retrouvent progressivement leur présentation et leur contrat
+  de détection. Les adaptateurs narratifs ne peuvent modifier que leurs
+  préconditions de scénario, pas contourner cette distance.
 - La `planche de bois` est un item défensif à 1 PV : une unité absorbe jusqu'à
   1 dégât de l'attaque ennemie puis est retirée si elle casse.
 - Le Building legacy est désactivé via

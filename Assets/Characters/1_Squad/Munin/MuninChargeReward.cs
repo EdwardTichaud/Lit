@@ -96,14 +96,12 @@ public class MuninChargeReward : MonoBehaviour, ICharacterDetectedInteractable, 
             this,
             interactionCollider,
             allowRuntimeFallback: false);
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     protected virtual void Awake()
     {
         interactionAnchor = interactionAnchor != null ? interactionAnchor : transform;
         interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         ApplyConsumedPresentation();
     }
 

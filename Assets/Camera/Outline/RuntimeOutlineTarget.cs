@@ -1,26 +1,25 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 [DisallowMultipleComponent]
 public class RuntimeOutlineTarget : MonoBehaviour
 {
     [SerializeField] private bool outlined;
 
-    private readonly Dictionary<GameObject, int> originalLayers = new Dictionary<GameObject, int>();
-    private bool capturedOriginalLayers;
+    private int originalLayer;
+    private bool capturedOriginalLayer;
     private const string OutlineLayerName = "RuntimeOutline";
 
     private void Awake()
     {
-        CaptureOriginalLayers();
+        CaptureOriginalLayer();
         Apply();
     }
 
     private void OnEnable()
     {
-        if (!capturedOriginalLayers)
+        if (!capturedOriginalLayer)
         {
-            CaptureOriginalLayers();
+            CaptureOriginalLayer();
         }
 
         Apply();
@@ -39,9 +38,9 @@ public class RuntimeOutlineTarget : MonoBehaviour
 
     private void Apply()
     {
-        if (!capturedOriginalLayers)
+        if (!capturedOriginalLayer)
         {
-            CaptureOriginalLayers();
+            CaptureOriginalLayer();
         }
 
         int outlineLayer = LayerMask.NameToLayer(OutlineLayerName);
@@ -52,62 +51,15 @@ public class RuntimeOutlineTarget : MonoBehaviour
             return;
         }
 
-        if (outlined)
-        {
-            SetLayerRecursively(gameObject, outlineLayer);
-            return;
-        }
-
-        RestoreLayersRecursively(gameObject);
+        // Un RuntimeOutlineTarget ne possede que le Renderer pose sur son
+        // propre GameObject. Il ne doit jamais modifier les layers de ses
+        // enfants (cheveux, accessoires, VFX, etc.).
+        gameObject.layer = outlined ? outlineLayer : originalLayer;
     }
 
-    private static void SetLayerRecursively(GameObject obj, int layer)
+    private void CaptureOriginalLayer()
     {
-        obj.layer = layer;
-
-        foreach (Transform child in obj.transform)
-        {
-            SetLayerRecursively(child.gameObject, layer);
-        }
-    }
-
-    private void RestoreLayersRecursively(GameObject obj)
-    {
-        if (obj == null)
-        {
-            return;
-        }
-
-        if (originalLayers.TryGetValue(obj, out int layer))
-        {
-            obj.layer = layer;
-        }
-
-        foreach (Transform child in obj.transform)
-        {
-            RestoreLayersRecursively(child.gameObject);
-        }
-    }
-
-    private void CaptureOriginalLayers()
-    {
-        originalLayers.Clear();
-        CaptureOriginalLayersRecursively(gameObject);
-        capturedOriginalLayers = true;
-    }
-
-    private void CaptureOriginalLayersRecursively(GameObject obj)
-    {
-        if (obj == null)
-        {
-            return;
-        }
-
-        originalLayers[obj] = obj.layer;
-
-        foreach (Transform child in obj.transform)
-        {
-            CaptureOriginalLayersRecursively(child.gameObject);
-        }
+        originalLayer = gameObject.layer;
+        capturedOriginalLayer = true;
     }
 }

@@ -2572,7 +2572,6 @@ public class BuildingPanelController : MonoBehaviour
             return null;
         }
 
-        RuntimeOutlineUtility.EnsureOutlineTargets(instance);
         if (currentBuilder != null)
         {
             currentBuilder.EnsureBuildingParent(instance.transform);

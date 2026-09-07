@@ -58,6 +58,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private float clarity;
     private int combatMusicOverrideToken;
     private Coroutine playerDefeatRoutine;
+    private Coroutine explorationOutlineRecoveryRoutine;
 
     public event Action<RealTimeCombatEnemy> LockChanged;
     public event Action<float, CombatClarityRank> ClarityChanged;
@@ -201,6 +202,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ReleaseCombatMusicOverride();
         if (Instance == this)
         {
+            // A scene unload or a forced destruction can bypass EndCombat.
+            // Do not leave the static outline service believing that combat is
+            // still active in an additive scene that remains loaded.
+            combatActive = false;
+            IsCinematicSequenceActive = false;
+            RuntimeOutlineSelectionManager.RestoreAfterCombat();
             Instance = null;
         }
     }
@@ -364,8 +371,36 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (combatInput == null) LocalPlayerInput.SetCombatInputActive(false);
         stopPlayerWhenMovementReleased = true;
         CombatStateChanged?.Invoke(false);
+        ScheduleExplorationOutlineRecovery();
+    }
+
+    /// <summary>
+    /// Combat clears local interaction selection on entry. Rebuild it one frame
+    /// after every exit path, once combat and transient UI have settled.
+    /// </summary>
+    private void ScheduleExplorationOutlineRecovery()
+    {
+        if (explorationOutlineRecoveryRoutine != null)
+        {
+            StopCoroutine(explorationOutlineRecoveryRoutine);
+        }
+
+        explorationOutlineRecoveryRoutine = StartCoroutine(RestoreExplorationOutlineRoutine());
+    }
+
+    private System.Collections.IEnumerator RestoreExplorationOutlineRoutine()
+    {
+        yield return null;
+        explorationOutlineRecoveryRoutine = null;
+        if (combatActive || IsCinematicSequenceActive)
+        {
+            yield break;
+        }
+
+        RuntimeOutlineSelectionManager.RestoreAfterCombat();
         ResolvePlayerReferences();
         playerController?.RefreshLocalInteractionDetectionForExternalLocomotion();
+        RuntimeOutlineSelectionManager.RestoreAfterCombat();
     }
 
     /// <summary>

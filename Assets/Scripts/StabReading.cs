@@ -74,7 +74,6 @@ public class StabReading : MonoBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         ResolveRuntimeReferences(logWarnings: false);
         resolvedInteractionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
         if (interactionCollider == null)

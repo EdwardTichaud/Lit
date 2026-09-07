@@ -135,11 +135,6 @@ public static class MainMenuTitleSceneInstaller
             interaction = target.AddComponent<CursorIntercation>();
         }
 
-        RuntimeOutlineUtility.EnsureOutlineTargets(target);
-
-        SerializedObject serialized = new SerializedObject(interaction);
-        serialized.FindProperty("createOutlineIfMissing").boolValue = true;
-        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static GameObject InstallPointerCursor(Canvas canvas, Camera camera, Light flameLight)

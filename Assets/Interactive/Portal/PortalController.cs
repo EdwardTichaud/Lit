@@ -75,14 +75,12 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     {
         EnsureDestinationPoints();
         ResolveReferences(createFallback: false);
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     private void Awake()
     {
         EnsureDestinationPoints();
         ResolveReferences(createFallback: true);
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         netcodeId = NetcodeSceneIdUtility.GetStableId(transform);
         ValidateConfiguration();
     }

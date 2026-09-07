@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: c4011d4121eb9874792a27d28b24071d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _HeightMapR: {instanceID: 0}
+  - _AlbedoR: {instanceID: 0}
+  - _NormalMapR: {instanceID: 0}
+  - _HeightMapG: {instanceID: 0}
+  - _AlbedoG: {instanceID: 0}
+  - _NormalMapG: {instanceID: 0}
+  - _HeightMapB: {instanceID: 0}
+  - _AlbedoB: {instanceID: 0}
+  - _NormalMapB: {instanceID: 0}
+  - _NormalBase: {instanceID: 0}
+  - _AlbedoBase: {instanceID: 0}
+  - _texcoord: {instanceID: 0}
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

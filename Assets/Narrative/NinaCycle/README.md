@@ -5,8 +5,13 @@ Ses objets sont des emplacements à placer, pas des ressources artistiques tempo
 
 ## Configuration
 
-- Sur le marker ScientifiqueFou, assigner le WorldPrefab du CharacterData et baker.
-  Il doit utiliser le combat ennemi existant et CombatHealth. Ses attaques restent à auteuriser.
+- Utiliser `Lit/Narrative/Configure Mad Scientist Combat` après toute modification
+  du prefab ou du marker. L'outil configure le prefab et la copie baked (physique,
+  NavMesh, cerveau, attaque Slash), recale le marker sur sa surface NavMesh locale,
+  puis répare le collider racine du parchemin et l'outline de Flame_Base_5.
+- Le Scientifique est passif avant l'interaction : `Interact` joue sa réplique
+  pour le groupe, puis active son combat serveur. La réplique et sa durée sont
+  éditables sur `ScientistEncounterController`.
 - Ajouter le modèle animal sous Ghost_Nina et assigner son Animator au contrôleur du cycle.
   Fournir les états Idle/Dead et leurs vrais clips. Le contrôleur ne crée aucune animation.
 - Placer le prefab de sang sous `Nina's blood_A_ASSIGNER`, qui sert de root d'activation.
@@ -21,7 +26,10 @@ Ses objets sont des emplacements à placer, pas des ressources artistiques tempo
 ## Progression
 
 Mort confirmée → délai réel 3 s → cinématique de groupe terminée → Existence des chimères.
-Lire la lettre → Dilemme Édouard → Nina Dead et sang, même avant le combat.
+Lire la lettre → Dilemme Édouard → Nina Dead. Le sang n'apparaît qu'après la
+fin valide d'une interaction avec Nina dans cet état.
+Nina reste visible, outlineable et écoutable avant ce savoir ; son dialogue est
+alors Idle et ne valide aucune progression.
 Les deux savoirs et la cinématique sont nécessaires pour valider la visite Dead.
 Le dialogue se ferme automatiquement après 4 s plus fondus. Une fermeture anticipée,
 un remplacement de dialogue ou une désactivation annule la validation.

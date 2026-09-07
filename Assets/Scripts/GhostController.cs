@@ -226,6 +226,17 @@ public sealed class GhostResolutionSpawnMarker : MonoBehaviour
 }
 
 /// <summary>
+/// Optional story-specific availability policy. It lets a narrative adapter
+/// keep a ghost visible and interactable without weakening the reveal rules of
+/// ordinary ghosts.
+/// </summary>
+public interface IGhostInteractionAvailability
+{
+    bool TryEvaluateGhostReveal(GhostController ghost, SquadCharacterController controller, out float distance01);
+    bool AllowsGhostRuntimeOutline(GhostController ghost);
+}
+
+/// <summary>
 /// Assigns a GhostData asset to a scene ghost and resolves reactions from unlocked knowledge.
 /// </summary>
 [DisallowMultipleComponent]
@@ -457,11 +468,36 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     public IReadOnlyList<GhostResolutionActionBinding> ResolutionActionBindings => resolutionActionBindings;
     public bool HasAppearedToPlayer => hasAppearedToPlayer;
     public bool IsRevealedToPlayer => isRevealedToPlayer;
-    public bool AllowsRuntimeOutline => outlineWhileGhostIsRevealed &&
-                                        isRevealedToPlayer &&
-                                        ghostRenderersVisible &&
-                                        CanAppearAtAll() &&
-                                        IsControlledPlayerWithinGhostOutlineRange();
+    /// <summary>
+    /// Point d'entree pour les adaptateurs narratifs : ils peuvent conserver
+    /// leurs propres preconditions sans contourner la revelation de proximite
+    /// commune a tous les fantomes.
+    /// </summary>
+    public bool TryEvaluateDefaultProximityReveal(SquadCharacterController controller, out float distance01)
+    {
+        return TryEvaluateDefaultRevealForController(controller, out distance01);
+    }
+
+    /// <summary>Version du gate outline qui ne repasse pas par un adaptateur.</summary>
+    public bool AllowsDefaultRuntimeOutline => outlineWhileGhostIsRevealed &&
+                                               isRevealedToPlayer &&
+                                               ghostRenderersVisible &&
+                                               CanAppearAtAll() &&
+                                               IsControlledPlayerWithinGhostOutlineRange();
+
+    public bool AllowsRuntimeOutline
+    {
+        get
+        {
+            IGhostInteractionAvailability availability = GetInteractionAvailability();
+            if (availability != null)
+            {
+                return availability.AllowsGhostRuntimeOutline(this);
+            }
+
+            return AllowsDefaultRuntimeOutline;
+        }
+    }
     public event System.Action<GhostController> Understood;
 
     private void Reset()
@@ -480,7 +516,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         NormalizeProximityDissolveConfiguration();
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         resolvedInteractionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
         if (interactionCollider == null)
         {
@@ -599,6 +634,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
+        IGhostInteractionAvailability availability = GetInteractionAvailability();
+        if (availability != null)
+        {
+            return availability.TryEvaluateGhostReveal(this, controller, out _);
+        }
+
         return TryEvaluateRevealForController(controller, out _);
     }
 
@@ -881,7 +922,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             AddGhostVisibilityRenderers(gameObject);
         }
 
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     private void AddGhostVisibilityRenderers(GameObject target)
@@ -978,6 +1018,17 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private bool TryEvaluateRevealForController(SquadCharacterController controller, out float distance01)
     {
+        IGhostInteractionAvailability availability = GetInteractionAvailability();
+        if (availability != null)
+        {
+            return availability.TryEvaluateGhostReveal(this, controller, out distance01);
+        }
+
+        return TryEvaluateDefaultRevealForController(controller, out distance01);
+    }
+
+    private bool TryEvaluateDefaultRevealForController(SquadCharacterController controller, out float distance01)
+    {
         distance01 = 1f;
         if (!CanAttemptRevealForController(controller))
         {
@@ -991,6 +1042,20 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         return TryResolveProximityDistance01(controller, out distance01);
+    }
+
+    private IGhostInteractionAvailability GetInteractionAvailability()
+    {
+        MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IGhostInteractionAvailability availability && behaviours[i].isActiveAndEnabled)
+            {
+                return availability;
+            }
+        }
+
+        return null;
     }
 
     private bool CanAttemptRevealForController(SquadCharacterController controller)

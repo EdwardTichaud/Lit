@@ -102,8 +102,8 @@ public static class NinaCycleSetup
         ghost.SetGhostData(data);
         var config = new SerializedObject(ghost);
         config.FindProperty("playOnce").boolValue = false;
-        config.FindProperty("enableProximityDissolve").boolValue = false;
-        config.FindProperty("enableProximityPresentation").boolValue = false;
+        config.FindProperty("enableProximityDissolve").boolValue = true;
+        config.FindProperty("enableProximityPresentation").boolValue = true;
         config.ApplyModifiedPropertiesWithoutUndo();
         var adapter = actor.AddComponent<NinaGhostInteraction>();
         adapter.cycle = cycle; adapter.isScar = scar;

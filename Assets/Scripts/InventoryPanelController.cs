@@ -220,6 +220,12 @@ public class InventoryPanelController : MonoBehaviour
     private TextMeshProUGUI bookLeftPageText;
     private TextMeshProUGUI bookRightPageText;
     private TextMeshProUGUI parchoText;
+    // Ces callbacks ne sont renseignes que pour un document encore pose dans le monde.
+    // Un document deja dans l'inventaire garde simplement B pour fermer sa lecture.
+    private System.Action readablePanelTakeCallback;
+    private GameObject readableActionInputs;
+    private Transform readableActionInputsInitialParent;
+    private bool worldReadableSession;
 
     private readonly List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
     private readonly List<InventoryEntry> entries = new List<InventoryEntry>();
@@ -379,14 +385,14 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        if (!inventoryOpen)
-        {
-            return;
-        }
-
         if (readablePanelOpen)
         {
             HandleReadablePanelNavigation();
+            return;
+        }
+
+        if (!inventoryOpen)
+        {
             return;
         }
 
@@ -416,6 +422,12 @@ public class InventoryPanelController : MonoBehaviour
     {
         if (!CanReceiveInventoryInput())
         {
+            return;
+        }
+
+        if (readablePanelOpen)
+        {
+            CloseReadablePanel();
             return;
         }
 
@@ -486,13 +498,14 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        if (depositQuantityActive || placementActive || inventoryOpen)
+        if (depositQuantityActive || placementActive || inventoryOpen || readablePanelOpen)
         {
             LocalInputRouter.ConsumeInteract();
         }
 
         if (readablePanelOpen)
         {
+            TakeReadableWorldItemAndClose();
             return;
         }
 
@@ -1688,8 +1701,11 @@ public class InventoryPanelController : MonoBehaviour
         return OpenReadableItem(item, LocalPlayerUtils.GetControlledCharacter());
     }
 
-    /// <summary>Ouvre un document de decor sans l'ajouter a l'inventaire.</summary>
-    public bool TryOpenReadableItemFromWorld(Item item, GameObject revealer)
+    /// <summary>
+    /// Ouvre un document de decor sans l'ajouter a l'inventaire. Le callback de
+    /// prise est execute uniquement si le joueur valide A pendant la lecture.
+    /// </summary>
+    public bool TryOpenReadableItemFromWorld(Item item, GameObject revealer, System.Action onTake = null)
     {
         if (item == null || !item.IsReadable())
         {
@@ -1704,6 +1720,13 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         OpenReadableItem(item, revealer);
+        if (readablePanelOpen)
+        {
+            readablePanelTakeCallback = onTake;
+            BeginWorldReadableSession();
+            RefreshReadableActionInputs();
+        }
+
         return readablePanelOpen;
     }
 
@@ -1741,6 +1764,7 @@ public class InventoryPanelController : MonoBehaviour
             SetReadablePanelVisible(parchoPanelCanvasGroup, false);
             UpdateReadableBookPages();
             SetReadablePanelVisible(bookPanelCanvasGroup, true);
+            RefreshReadableActionInputs();
             PlayUiActionAudio(ActionAudioCue.InventoryReadOpen);
             return false;
         }
@@ -1758,6 +1782,7 @@ public class InventoryPanelController : MonoBehaviour
             parchoText.text = item.GetParchmentText();
             SetReadablePanelVisible(bookPanelCanvasGroup, false);
             SetReadablePanelVisible(parchoPanelCanvasGroup, true);
+            RefreshReadableActionInputs();
             PlayUiActionAudio(ActionAudioCue.InventoryReadOpen);
             return false;
         }
@@ -1777,6 +1802,8 @@ public class InventoryPanelController : MonoBehaviour
 
     private void CloseReadablePanel()
     {
+        readablePanelTakeCallback = null;
+
         if (readablePanelOpen)
         {
             PlayUiActionAudio(ActionAudioCue.InventoryReadClose);
@@ -1789,6 +1816,60 @@ public class InventoryPanelController : MonoBehaviour
         ResetReadableNavigation();
         SetReadablePanelVisible(bookPanelCanvasGroup, false);
         SetReadablePanelVisible(parchoPanelCanvasGroup, false);
+        EndWorldReadableSession();
+        SetReadableActionInputsVisible(false);
+    }
+
+    /// <summary>
+    /// SouthButton/Interact prend le document monde apres sa lecture. La fermeture
+    /// precede le callback afin de rendre au joueur son focus UI et sa locomotion
+    /// avant le RPC eventuel de ramassage.
+    /// </summary>
+    private void TakeReadableWorldItemAndClose()
+    {
+        System.Action onTake = readablePanelTakeCallback;
+        if (onTake == null)
+        {
+            CloseReadablePanel();
+            return;
+        }
+
+        readablePanelTakeCallback = null;
+        CloseReadablePanel();
+        try
+        {
+            onTake.Invoke();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception, this);
+        }
+    }
+
+    private void BeginWorldReadableSession()
+    {
+        if (worldReadableSession)
+        {
+            return;
+        }
+
+        worldReadableSession = true;
+        InputFocusStack.Push(this);
+        SetSquadInputLock(true);
+        DisableInventoryCursorController();
+    }
+
+    private void EndWorldReadableSession()
+    {
+        if (!worldReadableSession)
+        {
+            return;
+        }
+
+        worldReadableSession = false;
+        InputFocusStack.Pop(this);
+        SetSquadInputLock(false);
+        RestoreInventoryCursorController();
     }
 
     private void HandleReadablePanelNavigation()
@@ -1904,6 +1985,71 @@ public class InventoryPanelController : MonoBehaviour
     {
         readableBookLastDirection = 0;
         readableBookNextMoveTime = 0f;
+    }
+
+    /// <summary>
+    /// Reutilise le panneau auteur ReadableActionInputs. Aucun element UI n'est
+    /// cree au runtime : A est masque lorsqu'un document est deja possede, B
+    /// reste toujours visible pour fermer la lecture.
+    /// </summary>
+    private void RefreshReadableActionInputs()
+    {
+        if (!ResolveReadableActionInputs())
+        {
+            return;
+        }
+
+        Transform takeInput = readableActionInputs.transform.Find("A");
+        if (takeInput != null && takeInput.gameObject.activeSelf != (readablePanelTakeCallback != null))
+        {
+            takeInput.gameObject.SetActive(readablePanelTakeCallback != null);
+        }
+
+        SetReadableActionInputsVisible(readablePanelOpen);
+    }
+
+    private bool ResolveReadableActionInputs()
+    {
+        if (readableActionInputs != null)
+        {
+            return true;
+        }
+
+        readableActionInputs = GameObject.Find("ReadableActionInputs");
+        if (readableActionInputs == null)
+        {
+            return false;
+        }
+
+        readableActionInputsInitialParent = readableActionInputs.transform.parent;
+        return true;
+    }
+
+    private void SetReadableActionInputsVisible(bool visible)
+    {
+        if (!ResolveReadableActionInputs())
+        {
+            return;
+        }
+
+        Transform desiredParent = readableActionInputsInitialParent;
+        if (visible && readablePanelKind == ReadablePanelKind.Book && bookPanelCanvasGroup != null)
+        {
+            // ReadableActionInputs est auteurise sous ParchoPanel. Le deplacer
+            // temporairement evite que l'alpha du parchemin masque les inputs
+            // pendant la lecture d'un livre.
+            desiredParent = bookPanelCanvasGroup.transform;
+        }
+
+        if (desiredParent != null && readableActionInputs.transform.parent != desiredParent)
+        {
+            readableActionInputs.transform.SetParent(desiredParent, false);
+        }
+
+        if (readableActionInputs.activeSelf != visible)
+        {
+            readableActionInputs.SetActive(visible);
+        }
     }
 
     private bool ResolveReadablePanels()

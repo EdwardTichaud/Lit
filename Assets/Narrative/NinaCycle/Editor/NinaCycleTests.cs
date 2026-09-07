@@ -26,5 +26,14 @@ public sealed class NinaCycleTests
         Assert.IsEmpty(letter.knowledgeUnlockedOnPickup);
         Assert.IsFalse(letter.knowledgeUnlockedOnRead.Contains(definition.existence));
     }
+
+    [TestCase(0, true, false)]
+    [TestCase(NinaCycleController.CinematicCompleted, true, false)]
+    [TestCase(NinaCycleController.NinaVisited, false, false)]
+    [TestCase(NinaCycleController.NinaVisited, true, true)]
+    public void NinaBloodRequiresCompletedDeadInteraction(int state, bool dilemmaKnown, bool expected)
+    {
+        Assert.AreEqual(expected, NinaCycleController.ShouldShowNinaBlood(state, dilemmaKnown));
+    }
 }
 #endif

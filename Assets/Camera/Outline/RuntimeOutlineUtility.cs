@@ -8,78 +8,11 @@ public interface IRuntimeOutlineVisibilityGate
 
 public static class RuntimeOutlineUtility
 {
-    public static int EnsureOutlineTargets(GameObject root)
-    {
-        if (root == null)
-        {
-            return 0;
-        }
-
-        // An explicit reference deliberately avoids the hierarchy scan. This
-        // is the preferred setup for interactables with complex prefabs.
-        if (root.TryGetComponent(out RuntimeOutlineRendererReference reference))
-        {
-            if (reference.outlineRenderer == null)
-            {
-                return 0;
-            }
-
-            EnsureOutlineTarget(reference.outlineRenderer);
-            return 1;
-        }
-
-        Renderer rootRenderer = root.GetComponent<Renderer>();
-        if (rootRenderer != null)
-        {
-            EnsureOutlineTarget(rootRenderer);
-            return 1;
-        }
-
-        int ensuredCount = 0;
-        Queue<Transform> pendingTransforms = new Queue<Transform>();
-        for (int i = 0; i < root.transform.childCount; i++)
-        {
-            pendingTransforms.Enqueue(root.transform.GetChild(i));
-        }
-
-        while (pendingTransforms.Count > 0)
-        {
-            Transform current = pendingTransforms.Dequeue();
-            if (current == null)
-            {
-                continue;
-            }
-
-            Renderer[] renderers = current.GetComponents<Renderer>();
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                if (renderers[i] == null)
-                {
-                    continue;
-                }
-
-                EnsureOutlineTarget(renderers[i]);
-                ensuredCount++;
-            }
-
-            for (int i = 0; i < current.childCount; i++)
-            {
-                pendingTransforms.Enqueue(current.GetChild(i));
-            }
-        }
-
-        return ensuredCount;
-    }
-
-    private static void EnsureOutlineTarget(Renderer renderer)
-    {
-        if (renderer != null && renderer.GetComponent<RuntimeOutlineTarget>() == null)
-        {
-            renderer.gameObject.AddComponent<RuntimeOutlineTarget>();
-        }
-    }
-
-    public static void CollectOutlineTargets(Component owner, List<RuntimeOutlineTarget> results, bool ensureTargets)
+    /// <summary>
+    /// Collects targets authored on the selected renderer hierarchy.
+    /// This utility is deliberately passive: it never adds targets at runtime.
+    /// </summary>
+    public static void CollectOutlineTargets(Component owner, List<RuntimeOutlineTarget> results)
     {
         if (results == null)
         {
@@ -107,11 +40,6 @@ public static class RuntimeOutlineUtility
                 return;
             }
 
-            if (ensureTargets)
-            {
-                EnsureOutlineTarget(renderer);
-            }
-
             RuntimeOutlineTarget explicitTarget = renderer.GetComponent<RuntimeOutlineTarget>();
             if (explicitTarget != null)
             {
@@ -119,11 +47,6 @@ public static class RuntimeOutlineUtility
             }
 
             return;
-        }
-
-        if (ensureTargets)
-        {
-            EnsureOutlineTargets(root);
         }
 
         RuntimeOutlineTarget[] targets = root.GetComponentsInChildren<RuntimeOutlineTarget>(true);

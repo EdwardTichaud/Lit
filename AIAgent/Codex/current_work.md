@@ -4,13 +4,45 @@
 
 Scene District_1_Enigme_Ghost_Nina et donnees creees, ajoutees au manifest District_1.
 Mort scientifique -> Timeline groupe -> Existence des chimeres; lecture Item_Edward
--> Dilemme Edouard -> Nina Dead/sang; visite Dead apres cinematic -> Scar -> Cicatrice.
+-> Dilemme Edouard -> Nina Dead; visite Dead apres cinematic -> sang/Scar -> Cicatrice.
 Progression serveur via variables monde persistantes, replication active NGO.
 SkillsManager compose les recompenses avec les skills auteur sans modifier CharacterData.
 Modeles, clips, Timeline, placement final et SkillSO Cicatrice restent explicitement a assigner.
 Voir Assets/Narrative/NinaCycle/README.md. Validation multijoueur et visuelle restante.
 Compilation C# runtime/editeur validee avec les references et le compilateur Unity.
 Tests NUnit de prerequisites et de lecture ajoutes, non executes dans Unity.
+
+Correctif en attente d'import Unity : le parchemin Édouard reçoit un collider
+racine afin que son world-info ne puisse plus échouer, Nina délègue sa
+disponibilité/outline au cycle narratif, et le Scientifique utilise une porte
+réseau `Interact → réplique groupe → combat`. Le configurateur éditeur recale
+son marker sur le NavMesh et configure aussi Flame_Base_5. Au moment de la
+dernière tentative, Unity est bloqué par une OutOfMemoryException d'AssetImport;
+la compilation et le bake doivent être rejoués après récupération de l'éditeur.
+
+## Interactions et outlines
+
+`LitUccStateMotionAbility` est un hook UCC automatique et concurrent. Il reste
+actif au repos, mais n'est plus considéré comme une ability bloquante par
+`LitUccInteractionBridge`; autrement la détection Lit est annulée avant même la
+sélection et aucun outline ne peut apparaître.
+
+Les notes, parchemins et livres monde sont maintenant lus avant tout ramassage.
+La lecture révèle leurs knowledges ; A / SouthButton prend ensuite le document,
+tandis que B / EastButton ferme la lecture et le laisse en monde. Le panneau
+auteur `ReadableActionInputs` (enfants `A` et `B`) est reutilise, jamais cree
+au runtime. Les stèles restent des lectures fixes.
+
+Tous les Ghost suivent maintenant la revelation de proximite de Ghost_Luc : hors
+rayon, aucun rendu, outline ou interaction; l'approche restaure progressivement
+leur presentation. Nina et Scar gardent leurs preconditions narratives sans
+contourner ce contrat.
+
+`RuntimeOutlineTarget` est strictement local : il ne modifie plus les layers de
+ses enfants, afin qu'un target corps n'entoure jamais cheveux, accessoires ou VFX.
+La sélection d'outline est désormais entièrement passive : chaque cible est
+posée par l'auteur sur le renderer voulu et aucun script ne peut en ajouter
+automatiquement au runtime ou durant une configuration éditeur.
 
 ## EnemyAttack : impact instantane unifie
 
@@ -1125,6 +1157,11 @@ Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 - `CombatTimeDomain` est automatiquement present sur chaque `ActorRoot` de combat. Il ralentit localement Animator, locomotion, IA, NavMesh, physique et actions sans ecrire le temps global.
 - Les QTE gardent leur fenetre et leur overlay en temps reel non scale. Ils demandent temporairement une echelle globale au `TimeManager`; la fenetre reste donc exactement de la duree configuree. Les autres Timelines cinematographiques restent en lecture non scale.
 # Navigation centralisee
+
+# Outlines apres combat
+
+- `RealTimeCombatManager` masque les interactions a l'entree d'un combat, puis planifie systematiquement, une image apres sa sortie, une restauration et un nouveau scan local. Cela couvre victoire, fuite, ennemi detruit et interruption forcee sans reveler un objet sous une UI ou une cinematique encore active.
+- `RuntimeOutlineSelectionManager` elimine les proprietaires de suspension Unity detruits et refuse les suspensions anonymes. Une suspension UI/cinematique vivante reste prioritaire : les outlines ne reviennent que lorsque le joueur est effectivement hors combat et hors presentation bloquante.
 
 Le cycle NavMesh est centralise dans `NavMeshWorldService` sur `GameplaySessionRoot`. Les zones peuvent fournir un `NavMeshData` pre-bake dans leur `ZoneManifest`; sinon un bake runtime controle est execute apres chargement complet. Les markers et agents attendent l'etat `Ready`.
 

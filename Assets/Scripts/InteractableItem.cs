@@ -216,7 +216,6 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         InitializeInteractionTrigger();
         RefreshRecoverableWorldInfo();
 
@@ -1078,6 +1077,12 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void CompletePrimaryInteraction()
     {
+        if (IsWorldReadableDocument())
+        {
+            OpenReadableWorldItem();
+            return;
+        }
+
         if (interactableCategory == InteractableCategory.RecoverableItem)
         {
             TakeAllItems();
@@ -1095,8 +1100,6 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void OpenReadableWorldItem()
     {
-        // Un ReadableItem est un document de decor : aucun contenu ne peut etre
-        // ouvert ni recupere depuis cette interaction.
         if (representedItem == null || !representedItem.IsReadable())
         {
             ShowActionFeedback("Ce document lisible n'est pas configure.");
@@ -1104,10 +1107,49 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         InventoryPanelController inventory = GetInventoryPanelController();
-        if (inventory == null || !inventory.TryOpenReadableItemFromWorld(representedItem, currentCharacter))
+        System.Action onTake = CanTakeWorldReadableAfterReading()
+            ? TakeWorldReadableAfterReading
+            : null;
+        if (inventory == null || !inventory.TryOpenReadableItemFromWorld(representedItem, currentCharacter, onTake))
         {
             ShowActionFeedback("Lecture indisponible.");
         }
+    }
+
+    /// <summary>
+    /// Les livres et parchemins poses dans le monde sont toujours consultes avant
+    /// leur ramassage. Une stele reste une lecture non bloquante et ne peut pas
+    /// etre emportee.
+    /// </summary>
+    private bool IsWorldReadableDocument()
+    {
+        return representedItem != null &&
+               (representedItem.IsReadableBook() || representedItem.IsReadableParchment());
+    }
+
+    private bool CanTakeWorldReadableAfterReading()
+    {
+        return IsWorldReadableDocument() &&
+               allowTake &&
+               CanTakeRepresentedItemDirect(out _);
+    }
+
+    private void TakeWorldReadableAfterReading()
+    {
+        if (this == null || !isActiveAndEnabled || !CanTakeWorldReadableAfterReading())
+        {
+            return;
+        }
+
+        UpdateCurrentCharacter();
+        if (currentCharacter == null)
+        {
+            return;
+        }
+
+        // La prise passe par le chemin existant, donc reste autoritaire serveur
+        // en reseau. Le savoir a deja ete revele au moment de la lecture.
+        TakeAllItems();
     }
 
     private void CloseLoot()
@@ -2818,12 +2860,40 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        if (IsNetworked() && IsServer)
+        RemoveEmptyWorldObject();
+    }
+
+    /// <summary>
+    /// Retire un objet monde vide sans detruire un <see cref="NetworkObject"/>
+    /// pendant l'etat intermediaire ou NGO est installe mais n'ecoute pas de
+    /// session. Dans cet etat, NGO a deja libere son registre de spawns et son
+    /// OnDestroy peut dereferencer ce registre. Le retrait visuel local est
+    /// suffisant : l'objet est recree par la scene au prochain chargement.
+    /// </summary>
+    private void RemoveEmptyWorldObject()
+    {
+        NetworkObject networkObject = GetComponent<NetworkObject>();
+        NetworkManager networkManager = networkObject != null ? networkObject.NetworkManager : null;
+
+        if (networkObject != null && networkManager != null)
         {
-            NetworkObject networkObject = GetComponent<NetworkObject>();
-            if (networkObject != null)
+            if (!networkManager.IsListening)
             {
-                networkObject.Despawn(true);
+                // Mode local : ne pas appeler Destroy sur un NetworkObject dont
+                // le NetworkManager residuel n'a pas de SpawnedObjects valide.
+                gameObject.SetActive(false);
+                return;
+            }
+
+            if (networkObject.IsSpawned)
+            {
+                // Seul le serveur detruit un objet reseau. Un client attend le
+                // despawn replique afin de ne pas diverger du monde autoritaire.
+                if (networkManager.IsServer)
+                {
+                    networkObject.Despawn(true);
+                }
+
                 return;
             }
         }
@@ -2994,7 +3064,25 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             recoverableWorldInfo = GetComponent<BuildingInfoInteractable>();
             if (recoverableWorldInfo == null)
             {
+                // BuildingInfoInteractable has a same-object Collider requirement.
+                // A recoverable may legitimately use a child collider for its
+                // interaction volume, so do not let Unity's failed AddComponent
+                // leave this refresh path with a null reference.
+                Collider rootCollider = GetComponent<Collider>();
+                if (rootCollider == null)
+                {
+                    Debug.LogWarning("[InteractableItem] World info ignored for '" + name +
+                                     "': the interactive root has no Collider. " +
+                                     "Assign a root interaction trigger before enabling world info.", this);
+                    return;
+                }
+
                 recoverableWorldInfo = gameObject.AddComponent<BuildingInfoInteractable>();
+                if (recoverableWorldInfo == null)
+                {
+                    Debug.LogWarning("[InteractableItem] Unable to create world info for '" + name + "'.", this);
+                    return;
+                }
             }
         }
 

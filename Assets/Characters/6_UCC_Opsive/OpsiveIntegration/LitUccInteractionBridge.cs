@@ -114,7 +114,12 @@ public class LitUccInteractionBridge : MonoBehaviour
             ability is AlignUpDirection ||
             ability is QuickStart ||
             ability is QuickStop ||
-            ability is QuickTurn)
+            ability is QuickTurn ||
+            // This UCC integration hook is deliberately automatic and
+            // concurrent. It only supplies motion while an authored action
+            // owns PlayerStateMotionController, so its idle presence must not
+            // disable every Lit interaction and runtime outline.
+            ability is LitUccStateMotionAbility)
         {
             return true;
         }

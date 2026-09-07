@@ -117,7 +117,6 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private void Awake()
     {
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         EnsureBuildingData();
 
         if (IsLegacyBuilding && !LegacyBuildingSystem.Enabled)

@@ -456,7 +456,6 @@ public static class NetcodePrefabRegistry
             return null;
         }
 
-        RuntimeOutlineUtility.EnsureOutlineTargets(instance);
         if (withLootContainer)
         {
             WorldPickupUtility.EnsurePickupInfrastructure(instance);

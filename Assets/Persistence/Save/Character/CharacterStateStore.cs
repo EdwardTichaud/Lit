@@ -1718,7 +1718,6 @@ public class CharacterStateStore : MonoBehaviour
                 continue;
             }
 
-            RuntimeOutlineUtility.EnsureOutlineTargets(instance);
             instance.transform.localScale = entry.scale;
 
             BuildingInfoInteractable info = instance.GetComponent<BuildingInfoInteractable>();

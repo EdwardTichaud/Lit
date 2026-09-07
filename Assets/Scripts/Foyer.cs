@@ -19,13 +19,11 @@ public sealed class Foyer : MonoBehaviour, ICharacterDetectedInteractable, ILoca
     private void Reset()
     {
         ResolveReferences();
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     private void Awake()
     {
         ResolveReferences();
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     private void OnDisable()

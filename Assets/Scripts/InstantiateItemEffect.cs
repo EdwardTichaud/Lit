@@ -68,7 +68,6 @@ public class InstantiateItemEffect : Effect
             return false;
         }
 
-        RuntimeOutlineUtility.EnsureOutlineTargets(instance);
         return true;
     }
 

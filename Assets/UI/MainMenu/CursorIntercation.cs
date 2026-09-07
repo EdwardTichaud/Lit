@@ -7,9 +7,6 @@ using UnityEngine.Events;
 [DisallowMultipleComponent]
 public class CursorIntercation : MonoBehaviour
 {
-    [Header("Outline")]
-    [SerializeField] private bool createOutlineIfMissing = true;
-
     [Header("Events")]
     [SerializeField] private UnityEvent onCursorEnter;
     [SerializeField] private UnityEvent onCursorExit;
@@ -68,6 +65,6 @@ public class CursorIntercation : MonoBehaviour
 
     private void ResolveOutline()
     {
-        RuntimeOutlineUtility.CollectOutlineTargets(this, outlineTargets, createOutlineIfMissing && Application.isPlaying);
+        RuntimeOutlineUtility.CollectOutlineTargets(this, outlineTargets);
     }
 }

@@ -24,10 +24,6 @@ public class TrouEtroit : MonoBehaviour
     [Tooltip("Inclut les renderers inactifs dans le cache.")]
     public bool includeInactiveRenderers = true;
 
-    [Header("Glow")]
-    [Tooltip("Cree des RuntimeOutlineTarget si manquants.")]
-    public bool createOutlineIfMissing = true;
-
     [Header("UI - Interaction")]
     [Tooltip("Prefab/objet UI d'interaction.")]
     public GameObject interactionBox;
@@ -298,7 +294,7 @@ public class TrouEtroit : MonoBehaviour
 
     private void SetGlow(bool visible)
     {
-        RuntimeOutlineUtility.CollectOutlineTargets(this, glowTargets, createOutlineIfMissing);
+        RuntimeOutlineUtility.CollectOutlineTargets(this, glowTargets);
         for (int i = 0; i < glowTargets.Count; i++)
         {
             RuntimeOutlineTarget target = glowTargets[i];

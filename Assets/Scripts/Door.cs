@@ -132,7 +132,6 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
     private void Awake()
     {
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         InitializeRuntime();
     }
 

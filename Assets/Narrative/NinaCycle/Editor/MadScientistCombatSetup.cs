@@ -16,6 +16,7 @@ using Unity.Netcode.Components;
 public static class MadScientistCombatSetup
 {
     private const string ScenePath = "Assets/Scenes/District_1/District_1_Enigme_Ghost_Nina.unity";
+    private const string FlameScenePath = "Assets/Scenes/District_1/District_1_Corridor_Flammes.unity";
     private const string PrefabPath = "Assets/Characters/9_Ghosts/Luc/Enemy_Model_MadScientist.prefab";
     private const string CharacterPath = "Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset";
     private const string Folder = "Assets/Narrative/NinaCycle/Combat";
@@ -65,6 +66,7 @@ public static class MadScientistCombatSetup
 
         ConfigurePrefab(skill);
         ConfigureBakedSceneInstance(skill);
+        ConfigureFlameOutline();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[MadScientistCombat] Scientifique fou configure : perception, NavMesh, physique, IA et attaque Slash.");
@@ -226,7 +228,13 @@ public static class MadScientistCombatSetup
         }
         if (marker == null || marker.BakedCharacterInstance == null)
             throw new System.InvalidOperationException("Marker ou copie bakee du Scientifique fou introuvable.");
+
+        // This is the nearest validated NavMesh position reported by the world
+        // bake. Fix the authored marker rather than relaxing world tolerance or
+        // allowing runtime teleportation to another floor.
+        marker.transform.position = new Vector3(45.33f, -98.16f, 118.97f);
         ConfigureActor(marker.BakedCharacterInstance, skill);
+        ConfigureSceneInteractions(scene);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         if (!wasAlreadyLoaded) EditorSceneManager.CloseScene(scene, true);
@@ -263,10 +271,11 @@ public static class MadScientistCombatSetup
         CombatEnemyPhysicsMotor motor = Ensure<CombatEnemyPhysicsMotor>(root);
         Ensure<CombatEnemyLocomotionController>(root);
         Ensure<EnemyAttackRecoverySafety>(root);
-        Ensure<EnemyNavigationController>(root);
+        EnemyNavigationController navigation = Ensure<EnemyNavigationController>(root);
         Ensure<EnemyCinematicState>(root);
         Ensure<CombatEnemyRuntimeContract>(root);
-        Ensure<EnemyCombatBrain>(root);
+        EnemyCombatBrain brain = Ensure<EnemyCombatBrain>(root);
+        ScientistEncounterController encounter = Ensure<ScientistEncounterController>(root);
         Ensure<RealTimeCombatAnimationEvents>(root);
         Ensure<NetworkObject>(root);
         Ensure<NetworkTransform>(root);
@@ -313,8 +322,67 @@ public static class MadScientistCombatSetup
         SetFloat(vision, "eyeHeight", 0f);
         SetFloat(vision, "targetHeight", 1f);
 
+        // The dialogue gate owns activation. Combat systems stay dormant until
+        // the server completes the shared introduction.
+        enemy.enabled = false;
+        brain.enabled = false;
+        navigation.enabled = false;
+        EditorUtility.SetDirty(encounter);
+
         health.SetHealth(Mathf.Max(60, info.CharacterData.ResolveMaxHp()), Mathf.Max(60, info.CharacterData.ResolveMaxHp()));
         EditorUtility.SetDirty(root);
+    }
+
+    private static void ConfigureSceneInteractions(Scene scene)
+    {
+        GameObject letter = FindInScene(scene, "Lettre manuscrite d'Édouard");
+        if (letter != null)
+        {
+            BoxCollider rootCollider = letter.GetComponent<BoxCollider>() ?? letter.AddComponent<BoxCollider>();
+            rootCollider.isTrigger = true;
+            rootCollider.center = Vector3.zero;
+            rootCollider.size = Vector3.one * 1.2f;
+            InteractableItem item = letter.GetComponent<InteractableItem>();
+            if (item != null) SetReference(item, "interactionTrigger", rootCollider);
+            EditorUtility.SetDirty(letter);
+        }
+
+        GameObject nina = FindInScene(scene, "Ghost_Nina");
+    }
+
+    private static GameObject FindInScene(Scene scene, string objectName)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (Transform candidate in root.GetComponentsInChildren<Transform>(true))
+                if (candidate.name == objectName) return candidate.gameObject;
+        }
+
+        return null;
+    }
+
+    private static void ConfigureFlameOutline()
+    {
+        Scene scene = SceneManager.GetSceneByPath(FlameScenePath);
+        bool wasAlreadyLoaded = scene.IsValid() && scene.isLoaded;
+        if (!wasAlreadyLoaded) scene = EditorSceneManager.OpenScene(FlameScenePath, OpenSceneMode.Additive);
+        GameObject flameRoot = FindInScene(scene, "Flame_Base_5");
+        if (flameRoot == null) throw new System.InvalidOperationException("Flame_Base_5 introuvable.");
+        Flame flame = flameRoot.GetComponent<Flame>();
+        Renderer renderer = flameRoot.GetComponent<Renderer>();
+        if (flame == null || renderer == null) throw new System.InvalidOperationException("Contrat Flame_Base_5 incomplet.");
+
+        // The state dialogue remains informational; enabling Interact also
+        // makes the authored trigger a first-class local interaction target.
+        flame.useInteractInput = true;
+        RuntimeOutlineRendererReference reference = flameRoot.GetComponent<RuntimeOutlineRendererReference>() ??
+                                                    flameRoot.AddComponent<RuntimeOutlineRendererReference>();
+        reference.outlineRenderer = renderer;
+        EditorUtility.SetDirty(flame);
+        EditorUtility.SetDirty(reference);
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        if (!wasAlreadyLoaded) EditorSceneManager.CloseScene(scene, true);
     }
 
     private static T Ensure<T>(GameObject root) where T : Component => root.GetComponent<T>() ?? root.AddComponent<T>();

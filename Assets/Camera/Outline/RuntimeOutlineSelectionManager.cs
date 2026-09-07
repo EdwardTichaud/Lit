@@ -64,13 +64,37 @@ public static class RuntimeOutlineSelectionManager
         }
 
         CandidateTargets.Clear();
-        RuntimeOutlineUtility.CollectOutlineTargets(activeInteractable as Component, CandidateTargets, ensureTargets: true);
+        RuntimeOutlineUtility.CollectOutlineTargets(activeInteractable as Component, CandidateTargets);
         SetActiveTargets(activeOwner, CandidateTargets);
+    }
+
+    /// <summary>
+    /// Restores the selected outline once combat has relinquished ownership.
+    /// Live UI/cinematic suspensions are preserved; only destroyed suspension
+    /// owners are removed so an interrupted combat cannot hide outlines forever.
+    /// </summary>
+    public static void RestoreAfterCombat()
+    {
+        PurgeInvalidSuspensionOwners();
+        if (IsSuspended)
+        {
+            return;
+        }
+
+        if (activeInteractable != null)
+        {
+            RefreshActiveInteractable();
+        }
+        else
+        {
+            ShowActiveTargets();
+        }
     }
 
     public static void PushSuspension(Object owner)
     {
-        if (owner != null && SuspensionOwners.Contains(owner))
+        // A null owner cannot release its own suspension later.
+        if (owner == null || SuspensionOwners.Contains(owner))
         {
             return;
         }
@@ -90,17 +114,7 @@ public static class RuntimeOutlineSelectionManager
             SuspensionOwners.Remove(owner);
         }
 
-        if (!IsSuspended)
-        {
-            if (activeInteractable != null)
-            {
-                RefreshActiveInteractable();
-            }
-            else
-            {
-                ShowActiveTargets();
-            }
-        }
+        RestoreAfterCombat();
     }
 
     public static void SetActiveComponent(Component component)
@@ -117,7 +131,7 @@ public static class RuntimeOutlineSelectionManager
 
         activeInteractable = null;
         CandidateTargets.Clear();
-        RuntimeOutlineUtility.CollectOutlineTargets(component, CandidateTargets, ensureTargets: true);
+        RuntimeOutlineUtility.CollectOutlineTargets(component, CandidateTargets);
         SetActiveTargets(owner, CandidateTargets);
     }
 
@@ -205,6 +219,17 @@ public static class RuntimeOutlineSelectionManager
     private static bool IsRealTimeCombatActive()
     {
         return RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.IsCombatActive;
+    }
+
+    private static void PurgeInvalidSuspensionOwners()
+    {
+        for (int i = SuspensionOwners.Count - 1; i >= 0; i--)
+        {
+            if (SuspensionOwners[i] == null)
+            {
+                SuspensionOwners.RemoveAt(i);
+            }
+        }
     }
 
     private static void HideActiveTargets()

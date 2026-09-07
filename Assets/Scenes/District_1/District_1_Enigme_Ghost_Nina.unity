@@ -1216,7 +1216,7 @@ MonoBehaviour:
   closeChoiceText: Reculer
   reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules: []
-  enableProximityDissolve: 0
+  enableProximityDissolve: 1
   proximityDissolveTargets: []
   proximitySpherecastRadius: 6
   proximitySpherecastLayerMask:
@@ -1232,7 +1232,7 @@ MonoBehaviour:
   proximityRevealExitHysteresis: 0.5
   ghostAppearanceRendererDelay: 0.45
   ghostDisappearanceRendererDelay: 1
-  enableProximityPresentation: 0
+  enableProximityPresentation: 1
   proximityPresentationDistance: 1.5
   proximityFresnelTransitionDuration: 0.35
   revealedFresnelTexturePower: 0.96
@@ -4971,7 +4971,7 @@ MonoBehaviour:
   closeChoiceText: Reculer
   reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules: []
-  enableProximityDissolve: 0
+  enableProximityDissolve: 1
   proximityDissolveTargets: []
   proximitySpherecastRadius: 6
   proximitySpherecastLayerMask:
@@ -4987,7 +4987,7 @@ MonoBehaviour:
   proximityRevealExitHysteresis: 0.5
   ghostAppearanceRendererDelay: 0.45
   ghostDisappearanceRendererDelay: 1
-  enableProximityPresentation: 0
+  enableProximityPresentation: 1
   proximityPresentationDistance: 1.5
   proximityFresnelTransitionDuration: 0.35
   revealedFresnelTexturePower: 0.96

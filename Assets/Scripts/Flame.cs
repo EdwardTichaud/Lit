@@ -138,7 +138,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         EnsureInteractionTrigger();
         EnsureRevealSource();
         EnsureId();

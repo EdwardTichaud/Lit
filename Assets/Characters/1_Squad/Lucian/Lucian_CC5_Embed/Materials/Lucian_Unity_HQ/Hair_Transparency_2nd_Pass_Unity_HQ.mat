@@ -31,11 +31,8 @@ Material:
   - _ALPHATEST_ON
   - _DISABLE_SSR_TRANSPARENT
   - _DOUBLESIDED_ON
-  - _ENABLE_FOG_ON_TRANSPARENT
   - _MASKMAP
   - _NORMALMAP_TANGENT_SPACE
-  - _SURFACE_TYPE_TRANSPARENT
-  - _TRANSPARENT_WRITES_MOTION_VEC
   m_InvalidKeywords:
   - BOOLEAN_SECONDPASS_ON
   - _ALPHATOMASK_ON
@@ -43,15 +40,16 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 1
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: 2475
   stringTagMap:
     MotionVector: User
-    RenderType: Transparent
+    RenderType: TransparentCutout
   disabledShaderPasses:
   - RayTracingPrepass
   - MOTIONVECTORS
   - TransparentDepthPrepass
   - TransparentDepthPostpass
+  - TransparentBackface
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -197,7 +195,7 @@ Material:
     - _AlphaCutoffPostpass: 0.45
     - _AlphaCutoffPrepass: 0.45
     - _AlphaCutoffShadow: 0.45
-    - _AlphaDstBlend: 10
+    - _AlphaDstBlend: 0
     - _AlphaPower: 0.7
     - _AlphaRemap: 1
     - _AlphaRemapMax: 1
@@ -210,7 +208,7 @@ Material:
     - _CoatMask: 0
     - _ConservativeDepthOffsetEnable: 0
     - _CullMode: 0
-    - _CullModeForward: 2
+    - _CullModeForward: 0
     - _Cutoff: 0.45
     - _DepthOffsetEnable: 0
     - _DetailAlbedoScale: 1
@@ -225,8 +223,8 @@ Material:
     - _DoubleSidedEnable: 1
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
-    - _DstBlend: 10
-    - _DstBlend2: 10
+    - _DstBlend: 0
+    - _DstBlend2: 0
     - _ENUMCLIPQUALITY_ON: 0
     - _EmissiveColorMode: 1
     - _EmissiveExposureWeight: 1
@@ -304,10 +302,10 @@ Material:
     - _SpecularShiftMin: 0
     - _SrcBlend: 1
     - _StencilRef: 0
-    - _StencilRefDepth: 0
+    - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4
-    - _StencilRefGBuffer: 2
-    - _StencilRefMV: 32
+    - _StencilRefGBuffer: 10
+    - _StencilRefMV: 40
     - _StencilWriteMask: 6
     - _StencilWriteMaskDepth: 9
     - _StencilWriteMaskDistortionVec: 4
@@ -315,7 +313,7 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SubsurfaceMask: 1
     - _SupportDecals: 1
-    - _SurfaceType: 1
+    - _SurfaceType: 0
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
     - _Thickness: 1
@@ -334,10 +332,10 @@ Material:
     - _UseEmissiveIntensity: 0
     - _UseShadowThreshold: 1
     - _VertexColorStrength: 0.875
-    - _ZTestDepthEqualForOpaque: 2
+    - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 3
     - _ZTestTransparent: 2
-    - _ZWrite: 0
+    - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.99999994, g: 0.99999994, b: 0.99999994, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
