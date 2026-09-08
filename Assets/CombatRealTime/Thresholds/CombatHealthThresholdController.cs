@@ -695,7 +695,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private void SuspendEncounter()
     {
         suspendedEnemies.Clear();
-        RealTimeCombatEnemyBehaviour[] behaviours = FindObjectsByType<RealTimeCombatEnemyBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        RealTimeCombatEnemyBehaviour[] behaviours = FindObjectsByType<RealTimeCombatEnemyBehaviour>(FindObjectsInactive.Exclude);
         for (int i = 0; i < behaviours.Length; i++)
         {
             if (behaviours[i] == null) continue;
@@ -1141,7 +1141,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
         if (qtePanel == null) qtePanel = QTEPanelController.Instance;
-        if (qtePanel == null) qtePanel = UnityEngine.Object.FindFirstObjectByType<QTEPanelController>(FindObjectsInactive.Include);
+        if (qtePanel == null) qtePanel = UnityEngine.Object.FindAnyObjectByType<QTEPanelController>(FindObjectsInactive.Include);
         if (qtePanel == null)
         {
             QTEPanelController[] allPanels = Resources.FindObjectsOfTypeAll<QTEPanelController>();

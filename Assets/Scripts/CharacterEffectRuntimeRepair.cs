@@ -38,9 +38,9 @@ public static class CharacterEffectRuntimeRepair
     private static void RepairLoadedCharacterEffects()
     {
 #if UNITY_2023_1_OR_NEWER
-        CharacterEffect[] effects = UnityEngine.Object.FindObjectsByType<CharacterEffect>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        CharacterEffect[] effects = UnityEngine.Object.FindObjectsByType<CharacterEffect>(FindObjectsInactive.Include);
 #else
-        CharacterEffect[] effects = UnityEngine.Object.FindObjectsOfType<CharacterEffect>(true);
+        CharacterEffect[] effects = UnityEngine.Object.FindObjectsByType<CharacterEffect>(true);
 #endif
         for (int i = 0; i < effects.Length; i++)
         {

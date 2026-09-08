@@ -127,7 +127,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
         TimeManager manager = TimeManager.EnsureInstance();
         counterPauseHandle = manager != null ? manager.AcquireGlobalPause(this) : default;
-        foreach (var state in FindObjectsByType<EnemyCinematicState>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        foreach (var state in FindObjectsByType<EnemyCinematicState>(FindObjectsInactive.Exclude))
         {
             if (state.IsSuspended) continue;
             suspendedForCounter.Add(state);

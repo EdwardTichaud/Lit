@@ -316,9 +316,9 @@ public static class NetcodePrefabRegistry
     private static void RegisterSceneMarkerCharacterHandlers()
     {
 #if UNITY_2023_1_OR_NEWER
-        SceneMarker[] markers = Object.FindObjectsByType<SceneMarker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        SceneMarker[] markers = Object.FindObjectsByType<SceneMarker>(FindObjectsInactive.Include);
 #else
-        SceneMarker[] markers = Object.FindObjectsOfType<SceneMarker>(true);
+        SceneMarker[] markers = Object.FindObjectsByType<SceneMarker>(true);
 #endif
         for (int i = 0; i < markers.Length; i++)
         {

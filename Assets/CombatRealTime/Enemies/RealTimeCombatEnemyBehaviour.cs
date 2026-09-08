@@ -189,7 +189,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             enemy.LightAbsorbed += OnLightAbsorbed;
         }
 
-        BindNavMeshManager(FindFirstObjectByType<SquadAIManager>());
+        BindNavMeshManager(FindAnyObjectByType<SquadAIManager>());
         TryPrepareNavigationAgent();
     }
 
@@ -197,7 +197,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     {
         if (navMeshManager == null)
         {
-            BindNavMeshManager(FindFirstObjectByType<SquadAIManager>());
+            BindNavMeshManager(FindAnyObjectByType<SquadAIManager>());
         }
 
         player = LocalPlayerContext.LocalCharacterRoot;
@@ -804,7 +804,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
 
         nextNavMeshRebuildRequestTime = LocalTime + Mathf.Max(0.1f, navMeshRebuildRequestInterval);
-        SquadAIManager manager = FindFirstObjectByType<SquadAIManager>();
+        SquadAIManager manager = FindAnyObjectByType<SquadAIManager>();
         if (manager == null)
         {
             ReportNavigationFailure("SquadAIManager introuvable pour rebuild NavMesh");

@@ -632,7 +632,7 @@ public sealed class LoadingScreenService : MonoBehaviour
         // camera de secours peut donc prendre le relais sans casser le fondu
         // d'apparition de l'ecran noir.
         SetLoadingPresentationCameraActive(true);
-        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
         for (int i = 0; i < cameras.Length; i++)
         {
             Camera camera = cameras[i];
@@ -991,7 +991,7 @@ public sealed class LoadingScreenService : MonoBehaviour
 
         // La camera peut etre placee directement a la racine de Bootstrap
         // plutot que sous LoadingScreenService.
-        cameras = FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        cameras = FindObjectsByType<Camera>(FindObjectsInactive.Include);
         for (int i = 0; i < cameras.Length; i++)
         {
             if (cameras[i] != null && cameras[i].name == "LoadingOrbCamera")

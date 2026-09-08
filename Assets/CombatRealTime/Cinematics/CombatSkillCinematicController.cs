@@ -214,7 +214,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     private void SuspendEncounter()
     {
         suspendedEnemies.Clear();
-        RealTimeCombatEnemyBehaviour[] behaviours = FindObjectsByType<RealTimeCombatEnemyBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        RealTimeCombatEnemyBehaviour[] behaviours = FindObjectsByType<RealTimeCombatEnemyBehaviour>(FindObjectsInactive.Exclude);
         for (int i = 0; i < behaviours.Length; i++)
         {
             if (behaviours[i] == null) continue;

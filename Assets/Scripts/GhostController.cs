@@ -2145,7 +2145,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private static bool HasSpawnMarker(string actionId)
     {
-        GhostResolutionSpawnMarker[] markers = FindObjectsByType<GhostResolutionSpawnMarker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        GhostResolutionSpawnMarker[] markers = FindObjectsByType<GhostResolutionSpawnMarker>(FindObjectsInactive.Include);
         for (int i = 0; i < markers.Length; i++)
             if (markers[i] != null && string.Equals(markers[i].ActionId, actionId, System.StringComparison.Ordinal)) return true;
         return false;

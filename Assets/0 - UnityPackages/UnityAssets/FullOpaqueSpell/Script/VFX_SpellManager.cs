@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace FullOpaqueVFX
@@ -13,7 +13,7 @@ namespace FullOpaqueVFX
         void Start()
         {
             if (!Application.isPlaying) return;
-            cameraShake = FindObjectOfType<CameraShake>();
+            cameraShake = FindAnyObjectByType<CameraShake>();
         }
 
         void Update()

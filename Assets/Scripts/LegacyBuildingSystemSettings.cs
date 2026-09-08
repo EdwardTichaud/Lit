@@ -84,17 +84,13 @@ public static class LegacyBuildingSystem
     {
         bool active = Enabled;
         SetComponentsEnabled(Object.FindObjectsByType<BuilderController>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None), active);
+            FindObjectsInactive.Include), active);
         SetBuildingInteractablesEnabled(Object.FindObjectsByType<BuildingInfoInteractable>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None), active);
+            FindObjectsInactive.Include), active);
         SetPanelsEnabled(Object.FindObjectsByType<BuildingPanelController>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None), active);
+            FindObjectsInactive.Include), active);
         SetPanelsEnabled(Object.FindObjectsByType<CraftingConstructionPanel>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None), active);
+            FindObjectsInactive.Include), active);
     }
 
     private static void SetComponentsEnabled<T>(T[] components, bool active)

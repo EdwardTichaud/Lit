@@ -537,7 +537,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return null;
         }
 
-        RealTimeCombatEnemy[] enemies = FindObjectsOfType<RealTimeCombatEnemy>();
+        RealTimeCombatEnemy[] enemies = FindObjectsByType<RealTimeCombatEnemy>();
         RealTimeCombatEnemy closest = null;
         float closestDistanceSqr = maximumDistance * maximumDistance;
         for (int i = 0; i < enemies.Length; i++)
@@ -567,7 +567,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return candidates;
         }
 
-        RealTimeCombatEnemy[] enemies = FindObjectsOfType<RealTimeCombatEnemy>();
+        RealTimeCombatEnemy[] enemies = FindObjectsByType<RealTimeCombatEnemy>();
         for (int i = 0; i < enemies.Length; i++)
         {
             RealTimeCombatEnemy candidate = enemies[i];
@@ -605,7 +605,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return null;
         }
 
-        RealTimeCombatEnemy[] enemies = FindObjectsOfType<RealTimeCombatEnemy>();
+        RealTimeCombatEnemy[] enemies = FindObjectsByType<RealTimeCombatEnemy>();
         RealTimeCombatEnemy preferred = null;
         float preferredScale = float.NegativeInfinity;
         float preferredDistanceSqr = float.PositiveInfinity;

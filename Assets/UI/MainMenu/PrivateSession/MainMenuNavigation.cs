@@ -69,7 +69,7 @@ public sealed class MainMenuNavigation : MonoBehaviour
         if (Time.unscaledTime >= nextScaleCheck)
         {
             nextScaleCheck = Time.unscaledTime + .5f;
-            foreach (CanvasScaler scaler in FindObjectsByType<CanvasScaler>(FindObjectsSortMode.None))
+            foreach (CanvasScaler scaler in FindObjectsByType<CanvasScaler>())
             {
                 if (scaler.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize) continue;
                 if (scaler.gameObject.scene.name != MainMenuController.DefaultMenuSceneName && scaler.GetComponentInParent<PrivateSessionPanel>() == null) continue;
@@ -143,7 +143,7 @@ public sealed class MainMenuNavigation : MonoBehaviour
     {
         targets.Clear();
         bool privatePanel = session != null && (session.IsBusy || session.Phase == PrivateSessionPhase.Lobby);
-        foreach (MonoBehaviour component in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        foreach (MonoBehaviour component in FindObjectsByType<MonoBehaviour>())
         {
             if (!(component is IMenuCursorHandler) && !(component is Button) && !(component is TMP_InputField)) continue;
             GameObject go = component.gameObject;

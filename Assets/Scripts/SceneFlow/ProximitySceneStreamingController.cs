@@ -43,7 +43,7 @@ public sealed class ProximitySceneStreamingController : MonoBehaviour
         acceptingRequests = true;
         nextPollTime = 0f;
 
-        ProximitySceneVolume[] volumes = FindObjectsByType<ProximitySceneVolume>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        ProximitySceneVolume[] volumes = FindObjectsByType<ProximitySceneVolume>(FindObjectsInactive.Include);
         for (int i = 0; i < volumes.Length; i++)
         {
             ProximitySceneVolume volume = volumes[i];

@@ -143,7 +143,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 #if UNITY_2023_1_OR_NEWER
             ui = FindAnyObjectByType<DialoguePanelUI>();
 #else
-            ui = FindObjectOfType<DialoguePanelUI>();
+            ui = FindAnyObjectByType<DialoguePanelUI>();
 #endif
         }
 

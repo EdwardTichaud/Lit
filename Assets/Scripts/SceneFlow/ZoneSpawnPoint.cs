@@ -26,7 +26,7 @@ public sealed class ZoneSpawnPoint : MonoBehaviour
             return results;
         }
 
-        ZoneSpawnPoint[] points = FindObjectsByType<ZoneSpawnPoint>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        ZoneSpawnPoint[] points = FindObjectsByType<ZoneSpawnPoint>(FindObjectsInactive.Include);
         for (int i = 0; i < points.Length; i++)
         {
             ZoneSpawnPoint point = points[i];
@@ -48,7 +48,7 @@ public sealed class ZoneSpawnPoint : MonoBehaviour
             return null;
         }
 
-        ZoneSpawnPoint[] points = FindObjectsByType<ZoneSpawnPoint>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        ZoneSpawnPoint[] points = FindObjectsByType<ZoneSpawnPoint>(FindObjectsInactive.Include);
         for (int i = 0; i < points.Length; i++)
         {
             ZoneSpawnPoint point = points[i];

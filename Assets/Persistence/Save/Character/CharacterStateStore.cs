@@ -490,9 +490,9 @@ public class CharacterStateStore : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        NetworkInventory[] inventories = FindObjectsByType<NetworkInventory>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        NetworkInventory[] inventories = FindObjectsByType<NetworkInventory>(FindObjectsInactive.Include);
 #else
-        NetworkInventory[] inventories = FindObjectsOfType<NetworkInventory>(true);
+        NetworkInventory[] inventories = FindObjectsByType<NetworkInventory>(true);
 #endif
         if (inventories == null)
         {

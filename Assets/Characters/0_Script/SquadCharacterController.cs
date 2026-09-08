@@ -3402,7 +3402,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
 #else
         Camera[] cameras = FindObjectsByType<Camera>();
 #endif

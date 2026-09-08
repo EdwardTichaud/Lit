@@ -210,9 +210,9 @@ public class NetcodeBootstrap : MonoBehaviour
     private static NetworkManager[] FindNetworkManagers()
     {
 #if UNITY_2023_1_OR_NEWER
-        return FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        return FindObjectsByType<NetworkManager>(FindObjectsInactive.Include);
 #else
-        return FindObjectsOfType<NetworkManager>(true);
+        return FindObjectsByType<NetworkManager>(true);
 #endif
     }
 

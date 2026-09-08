@@ -166,7 +166,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public static void CloseAllOpenLootForCombat()
     {
-        InteractableItem[] interactables = FindObjectsByType<InteractableItem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        InteractableItem[] interactables = FindObjectsByType<InteractableItem>(FindObjectsInactive.Include);
         for (int i = 0; i < interactables.Length; i++)
         {
             InteractableItem interactable = interactables[i];
