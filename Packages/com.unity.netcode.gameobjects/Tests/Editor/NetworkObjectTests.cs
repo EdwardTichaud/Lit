@@ -8,6 +8,55 @@ namespace Unity.Netcode.EditorTests
 {
     internal class NetworkObjectTests
     {
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DestroyWithUnavailableSpawnStateDoesNotThrow(bool hasIncompleteSpawnManager)
+        {
+            var manager = new GameObject(nameof(NetworkManager)).AddComponent<NetworkManager>();
+            var instance = new GameObject(nameof(DestroyWithUnavailableSpawnStateDoesNotThrow));
+            var networkObject = instance.AddComponent<NetworkObject>();
+            networkObject.NetworkManagerOwner = manager;
+            var spawnField = typeof(NetworkManager).GetField("<SpawnManager>k__BackingField",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(spawnField, Is.Not.Null);
+            try
+            {
+                // Reproduce an editor-restored service without its runtime collections.
+                spawnField.SetValue(manager, hasIncompleteSpawnManager
+                    ? System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(NetworkSpawnManager))
+                    : null);
+                Object.DestroyImmediate(instance);
+                LogAssert.NoUnexpectedReceived();
+            }
+            finally
+            {
+                spawnField.SetValue(manager, null);
+                if (instance != null) Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(manager.gameObject);
+            }
+        }
+
+        [Test]
+        public void RemoveSceneTrackingDoesNotRequireLiveNetworkConfiguration()
+        {
+            var spawnManager = (NetworkSpawnManager)System.Runtime.Serialization.FormatterServices
+                .GetUninitializedObject(typeof(NetworkSpawnManager));
+            var instance = new GameObject(nameof(RemoveSceneTrackingDoesNotRequireLiveNetworkConfiguration));
+            var networkObject = instance.AddComponent<NetworkObject>();
+            try
+            {
+                Assert.DoesNotThrow(() => spawnManager.RemoveNetworkObjectFromSceneChangedUpdates(networkObject));
+                spawnManager.NetworkObjectsToSynchronizeSceneChanges =
+                    new System.Collections.Generic.Dictionary<ulong, NetworkObject> { { networkObject.NetworkObjectId, networkObject } };
+                spawnManager.RemoveNetworkObjectFromSceneChangedUpdates(networkObject);
+                Assert.That(spawnManager.NetworkObjectsToSynchronizeSceneChanges, Is.Empty);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
         [Test]
         public void NetworkManagerOverrideTest()
         {

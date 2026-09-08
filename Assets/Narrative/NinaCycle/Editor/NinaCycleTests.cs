@@ -4,12 +4,15 @@ using UnityEditor;
 
 public sealed class NinaCycleTests
 {
-    [TestCase(0, true, true, false)]
-    [TestCase(NinaCycleController.ScientistDefeated, true, true, false)]
+    [TestCase(0, false, false, false)]
+    [TestCase(0, false, true, false)]
+    [TestCase(0, true, false, false)]
+    [TestCase(0, true, true, true)]
+    [TestCase(NinaCycleController.ScientistDefeated, true, true, true)]
     [TestCase(NinaCycleController.CinematicCompleted, false, true, false)]
     [TestCase(NinaCycleController.CinematicCompleted, true, false, false)]
     [TestCase(NinaCycleController.CinematicCompleted, true, true, true)]
-    public void NinaRequiresBothRevelationsAndCompletedCinematic(int state, bool dilemma, bool existence, bool expected)
+    public void NinaRequiresBothRevelationsRegardlessOfCinematicState(int state, bool dilemma, bool existence, bool expected)
     {
         Assert.AreEqual(expected, NinaCycleController.CanVisitNina(state, dilemma, existence));
     }

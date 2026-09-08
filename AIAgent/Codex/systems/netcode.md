@@ -33,6 +33,11 @@ faire respecter l’autorité serveur.
 
 ## Pièges observés
 
+- Le package NGO embarque un garde-fou dans `NetworkObject.OnDestroy` lorsque
+  le SpawnManager subsiste sans son dictionnaire runtime pendant le teardown
+  editeur. Le retrait du suivi de scene ne depend plus de NetworkConfig et
+  tolere une collection deja absente. Conserver ces correctifs lors d'une mise
+  a jour du package; le controle d'autorite reste actif pour les objets spawnes.
 - `AutoSpawnPlayerPrefabClientSide` est désactivé : le spawner projet est maître.
 - L’ownership NGO et l’assignation métier sont deux informations distinctes.
 - Les mutations monde, inventaire et combat sont autoritaires serveur.

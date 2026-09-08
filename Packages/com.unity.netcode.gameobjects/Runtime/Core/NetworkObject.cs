@@ -1737,8 +1737,16 @@ namespace Unity.Netcode
                 return;
             }
 
+            // Editor teardown can retain a managed service whose runtime collections
+            // are no longer available. There is no registered spawn to clean up then.
+            var spawnManager = networkManager.SpawnManager;
+            if (spawnManager == null || spawnManager.SpawnedObjects == null)
+            {
+                return;
+            }
+
             // Always attempt to remove from scene changed updates
-            networkManager.SpawnManager?.RemoveNetworkObjectFromSceneChangedUpdates(this);
+            spawnManager.RemoveNetworkObjectFromSceneChangedUpdates(this);
 
             if (IsSpawned && !networkManager.ShutdownInProgress)
             {
@@ -1768,11 +1776,11 @@ namespace Unity.Netcode
                 }
             }
 
-            if (networkManager.SpawnManager != null && networkManager.SpawnManager.SpawnedObjects.TryGetValue(NetworkObjectId, out var networkObject))
+            if (spawnManager.SpawnedObjects.TryGetValue(NetworkObjectId, out var networkObject))
             {
                 if (this == networkObject)
                 {
-                    networkManager.SpawnManager.OnDespawnObject(networkObject, false);
+                    spawnManager.OnDespawnObject(networkObject, false);
                 }
             }
         }

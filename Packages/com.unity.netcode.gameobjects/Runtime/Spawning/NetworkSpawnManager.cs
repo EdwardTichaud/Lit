@@ -1430,11 +1430,9 @@ namespace Unity.Netcode
 
         internal void RemoveNetworkObjectFromSceneChangedUpdates(NetworkObject networkObject)
         {
-            if ((networkObject.SceneMigrationSynchronization && NetworkManager.NetworkConfig.EnableSceneManagement) &&
-                NetworkObjectsToSynchronizeSceneChanges.ContainsKey(networkObject.NetworkObjectId))
-            {
-                NetworkObjectsToSynchronizeSceneChanges.Remove(networkObject.NetworkObjectId);
-            }
+            // Removal must also work after scene synchronization/configuration has
+            // been disabled or released during shutdown.
+            NetworkObjectsToSynchronizeSceneChanges?.Remove(networkObject.NetworkObjectId);
         }
 
         internal unsafe void UpdateNetworkObjectSceneChanges()

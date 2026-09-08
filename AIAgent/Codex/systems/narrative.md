@@ -48,7 +48,9 @@ connaissances et résoudre les interactions narratives.
 Le cycle Nina (`Assets/Narrative/NinaCycle`) utilise un controleur serveur et les
 variables monde sauvegardees pour ses quatre jalons. La lettre ne donne Dilemme
 Edouard qu'a sa lecture. Nina change immediatement de pose avec ce savoir; la
-visite qui active Scar exige aussi la cinematique terminee et Existence des chimeres.
+visite qui active le sang et Scar exige les deux savoirs, sans exiger en plus le
+bit de cinematique terminee. Des connaissances debloquees ou restaurees seules
+permettent donc de valider le dialogue Dead, mais ne remplacent pas sa fin naturelle.
 DialoguePanelUI.TryShowTimedConversation distingue fin naturelle et annulation.
 NinaGhostInteraction adapte uniquement les deux fantomes de ce cycle. La scene
 contient des emplacements explicites; les ressources artistiques restent a assigner.

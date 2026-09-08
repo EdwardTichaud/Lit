@@ -75,7 +75,7 @@ public sealed class NinaCycleController : NetworkBehaviour
         // La lettre suffit a reveler la verite et a faire basculer Nina dans sa
         // pose Dead. Le sang, lui, est la consequence de la rencontre achevee
         // avec Nina dans cet etat ; il ne doit pas annoncer cette rencontre.
-        bool showBlood = dead && (State & NinaVisited) != 0;
+        bool showBlood = ShouldShowNinaBlood(State, dead);
         if (ninaBlood != null && ninaBlood.activeSelf != showBlood) ninaBlood.SetActive(showBlood);
         if (ninaAnimator != null && ninaAnimator.isActiveAndEnabled && previousPose != (dead ? 1 : 0))
         {
@@ -308,7 +308,9 @@ public sealed class NinaCycleController : NetworkBehaviour
     }
 
     public static bool CanVisitNina(int state, bool dilemmaKnown, bool existenceKnown) =>
-        (state & CinematicCompleted) != 0 && dilemmaKnown && existenceKnown;
+        // Existence is the cinematic's revelation, but can also be unlocked or
+        // restored independently. Do not require its separate playback flag.
+        dilemmaKnown && existenceKnown;
 
     public static bool ShouldShowNinaBlood(int state, bool dilemmaKnown) =>
         dilemmaKnown && (state & NinaVisited) != 0;

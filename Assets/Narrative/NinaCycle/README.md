@@ -30,7 +30,10 @@ Lire la lettre → Dilemme Édouard → Nina Dead. Le sang n'apparaît qu'après
 fin valide d'une interaction avec Nina dans cet état.
 Nina reste visible, outlineable et écoutable avant ce savoir ; son dialogue est
 alors Idle et ne valide aucune progression.
-Les deux savoirs et la cinématique sont nécessaires pour valider la visite Dead.
+Les deux savoirs sont nécessaires pour valider la visite Dead. Le marqueur de
+cinématique n'est pas exigé en plus : Existence peut être débloquée ou restaurée
+indépendamment de la lecture de la Timeline. Les savoirs seuls n'activent pas le sang
+ni Scar ; la visite doit toujours se terminer normalement.
 Le dialogue se ferme automatiquement après 4 s plus fondus. Une fermeture anticipée,
 un remplacement de dialogue ou une désactivation annule la validation.
 Visite Dead validée → Scar visible. Dialogue Scar terminé → Cicatrice connue du groupe.
