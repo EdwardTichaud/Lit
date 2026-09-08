@@ -26,10 +26,13 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
     private EnemyNavigationController navigation;
     private Coroutine activationRoutine;
     private bool inputBound;
+    private bool stateBound;
+    private EncounterState localState;
 
     private bool Online => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     private bool Authority => !Online || IsSpawned && IsServer;
-    private bool IsDormant => state.Value == EncounterState.Dormant;
+    private EncounterState CurrentState => Online ? state.Value : localState;
+    private bool IsDormant => CurrentState == EncounterState.Dormant;
 
     private void Awake()
     {
@@ -37,7 +40,7 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
         enemy = GetComponent<RealTimeCombatEnemy>();
         navigation = GetComponent<EnemyNavigationController>();
         if (interactionCollider == null) interactionCollider = GetComponent<Collider>();
-        ApplyState(state.Value);
+        ApplyState(CurrentState);
     }
 
     private void OnEnable()
@@ -45,6 +48,8 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteract;
         inputBound = true;
+        if (IsSpawned) BindState();
+        ApplyState(CurrentState);
     }
 
     private void OnDisable()
@@ -53,17 +58,27 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
         inputBound = false;
         if (activationRoutine != null) StopCoroutine(activationRoutine);
         activationRoutine = null;
+        UnbindState();
+        // An interrupted introduction may be started again on reactivation.
+        if (Authority && CurrentState == EncounterState.Dialogue)
+            SetState(EncounterState.Dormant);
     }
 
     public override void OnNetworkSpawn()
     {
-        state.OnValueChanged += OnStateChanged;
+        if (isActiveAndEnabled) BindState();
         ApplyState(state.Value);
     }
 
     public override void OnNetworkDespawn()
     {
         state.OnValueChanged -= OnStateChanged;
+        stateBound = false;
+        if (activationRoutine != null) StopCoroutine(activationRoutine);
+        activationRoutine = null;
+        if (inputBound) LocalInputRouter.Interact -= OnInteract;
+        inputBound = false;
+        localState = EncounterState.Dormant;
     }
 
     public bool CanBeDetectedBy(SquadCharacterController controller) =>
@@ -77,7 +92,7 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
 
     private void OnInteract(InputAction.CallbackContext context)
     {
-        if (!IsDormant || LocalInputRouter.IsInteractConsumed || InputFocusStack.HasAnyFocus() ||
+        if (!isActiveAndEnabled || (Online && !IsSpawned) || !IsDormant || LocalInputRouter.IsInteractConsumed || InputFocusStack.HasAnyFocus() ||
             !RuntimeOutlineSelectionManager.IsActiveInteractable(this))
         {
             return;
@@ -98,8 +113,7 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
     private void StartEncounter(Transform player)
     {
         if (!Authority || !IsDormant || !IsPlayerInRange(player)) return;
-        state.Value = EncounterState.Dialogue;
-        ApplyState(state.Value);
+        SetState(EncounterState.Dialogue);
         if (Online && IsSpawned) ShowIntroductionClientRpc();
         else ShowIntroduction();
         activationRoutine = StartCoroutine(ActivateAfterDialogue());
@@ -108,9 +122,9 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
     private IEnumerator ActivateAfterDialogue()
     {
         yield return new WaitForSecondsRealtime(introductionSeconds);
-        if (!Authority || state.Value != EncounterState.Dialogue) yield break;
-        state.Value = EncounterState.Active;
-        ApplyState(state.Value);
+        activationRoutine = null;
+        if (!Authority || !isActiveAndEnabled || CurrentState != EncounterState.Dialogue) yield break;
+        SetState(EncounterState.Active);
         if (Online && IsSpawned) BeginCombatClientRpc();
         else BeginLocalCombat();
     }
@@ -131,6 +145,33 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
     }
 
     private void OnStateChanged(EncounterState before, EncounterState after) => ApplyState(after);
+
+    private void BindState()
+    {
+        if (stateBound) return;
+        state.OnValueChanged += OnStateChanged;
+        stateBound = true;
+        if (!inputBound)
+        {
+            LocalInputRouter.Interact += OnInteract;
+            inputBound = true;
+        }
+    }
+
+    private void UnbindState()
+    {
+        if (!stateBound) return;
+        state.OnValueChanged -= OnStateChanged;
+        stateBound = false;
+    }
+
+    private void SetState(EncounterState next)
+    {
+        if (!Authority) return;
+        if (Online) state.Value = next;
+        else localState = next;
+        ApplyState(CurrentState);
+    }
 
     private void ApplyState(EncounterState next)
     {

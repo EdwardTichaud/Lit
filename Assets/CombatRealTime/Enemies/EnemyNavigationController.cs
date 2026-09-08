@@ -66,6 +66,7 @@ public sealed class EnemyNavigationController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (navigationAgent != null) navigationAgent.enabled = false;
         readinessLogged = false;
         BindWorld(null);
         BindManager(null);
@@ -254,18 +255,29 @@ public sealed class EnemyNavigationController : MonoBehaviour
         {
             navMeshWorld.WorldReady -= OnWorldReady;
             navMeshWorld.BuildFailed -= OnWorldBuildFailed;
+            navMeshWorld.StateChanged -= OnWorldStateChanged;
         }
         navMeshWorld = next;
         if (navMeshWorld != null)
         {
             navMeshWorld.WorldReady += OnWorldReady;
             navMeshWorld.BuildFailed += OnWorldBuildFailed;
+            navMeshWorld.StateChanged += OnWorldStateChanged;
         }
     }
 
     private void OnWorldReady(NavMeshWorldService.NavMeshWorldReport _)
     {
         nextRetryAt = 0f;
+    }
+
+    private void OnWorldStateChanged(NavMeshWorldState next)
+    {
+        if (next == NavMeshWorldState.Ready) return;
+        if (navigationAgent != null) navigationAgent.enabled = false;
+        Status = ReadinessStatus.WaitingForWorld;
+        readinessLogged = false;
+        NavigationReadinessChanged?.Invoke(false);
     }
 
     private void OnWorldBuildFailed(NavMeshWorldService.NavMeshWorldReport report)

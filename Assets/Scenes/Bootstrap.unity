@@ -32517,6 +32517,8 @@ MonoBehaviour:
   setAlphaToZeroOnStart: 1
   addCanvasGroupIfMissing: 1
   disableRaycastsWhenHidden: 1
+  localItemInformationPanelPrefab: {fileID: 4865652701375795038, guid: 48b357c808b087744a3b1275337f4af6, type: 3}
+  localBuildingInformationPanelPrefab: {fileID: 4865652701375795038, guid: 8693d19c8191d354cad67928ac3d13e3, type: 3}
 --- !u!225 &1253567733
 CanvasGroup:
   m_ObjectHideFlags: 0

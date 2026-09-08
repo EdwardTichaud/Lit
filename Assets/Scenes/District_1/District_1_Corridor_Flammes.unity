@@ -12208,7 +12208,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Flame
   ShowTopMostFoldoutHeaderGroup: 1
   isLit: 0
-  flameId: scene-flame:Maison:0DE640398
+  flameId: scene-flame:District_1_Corridor_Flammes:4389905704937368489
   flameObject: {fileID: 1173658577}
   flameLight: {fileID: 1527862965}
   activateWhenLitTargets: []

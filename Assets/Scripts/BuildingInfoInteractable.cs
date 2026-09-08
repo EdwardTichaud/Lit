@@ -97,10 +97,10 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private static Transform sharedLocalPanelParent;
     private static bool sharedLocalPanelParentLookupCompleted;
 
-    private const string DefaultBuildingLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
+    private const string DefaultBuildingLocalPanelPrefabPath = "Assets/UI/World/UI_World_LocalBuildingInformationsPanel.prefab";
     private const string DefaultBuildingLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
     private const string DefaultBuildingLocalPanelResourceName = "LocalBuildingInformationsPanel";
-    private const string DefaultItemLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalItemInformationsPanel.prefab";
+    private const string DefaultItemLocalPanelPrefabPath = "Assets/UI/World/UI_World_LocalItemInformationsPanel.prefab";
     private const string DefaultItemLocalPanelResourcePath = "Prefabs/UI/LocalItemInformationsPanel";
     private const string DefaultItemLocalPanelResourceName = "LocalItemInformationsPanel";
     private const string DefaultLocalPanelParentName = "LocalsInformationsPanels";
@@ -715,7 +715,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
         if (resolveLocalPanelPrefab
             && localInformationPanelPrefab == null
-            && (!attemptedAutoLocalPanelResolution || resolvedAutoLocalPanelForItem != wantsItemPanel))
+            && (!attemptedAutoLocalPanelResolution || resolvedAutoLocalPanelForItem != wantsItemPanel || InventoryUISettings.Instance != null))
         {
             attemptedAutoLocalPanelResolution = true;
             localInformationPanelPrefab = ResolveDefaultLocalPanelPrefab(wantsItemPanel);
@@ -1009,7 +1009,11 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         string prefabPath = wantsItemPanel ? DefaultItemLocalPanelPrefabPath : DefaultBuildingLocalPanelPrefabPath;
         string resourceName = wantsItemPanel ? DefaultItemLocalPanelResourceName : DefaultBuildingLocalPanelResourceName;
         string resourcePath = wantsItemPanel ? DefaultItemLocalPanelResourcePath : DefaultBuildingLocalPanelResourcePath;
-        GameObject panelPrefab = null;
+        InventoryUISettings ui = InventoryUISettings.Instance;
+        GameObject panelPrefab = ui != null
+            ? (wantsItemPanel ? ui.localItemInformationPanelPrefab : ui.localBuildingInformationPanelPrefab)
+            : null;
+        if (panelPrefab != null) return panelPrefab;
 
 #if UNITY_EDITOR
         panelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);

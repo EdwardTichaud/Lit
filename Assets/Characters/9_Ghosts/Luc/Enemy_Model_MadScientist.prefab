@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5790821327478573786}
   - component: {fileID: 1455974754532889465}
-  - component: {fileID: 301849148840420213}
   - component: {fileID: 3291145735224976396}
   m_Layer: 6
   m_Name: CapsuleCollider
@@ -57,35 +56,6 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &301849148840420213
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 34998541266535255}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39053520c101c914d90d3f9f07b3292a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.CapsuleColliderPositioner
-  m_States:
-  - m_Name: Default
-    m_Preset: {fileID: 0}
-    m_BlockList: []
-    m_Default: 1
-  m_RotateCollider: 0
-  m_EndCapRotation: 1
-  m_RotationBone: {fileID: 7519277419822251226}
-  m_RotationBoneOffset: {x: 0, y: 0, z: 0}
-  m_AdjustHeight: 1
-  m_FirstEndCapTarget: {fileID: 1702866972060765472}
-  m_SecondEndCapTarget: {fileID: 5017115711343117738}
-  m_SecondEndCapPadding: 0
-  m_PositionBone: {fileID: 7519277419822251226}
-  m_HeightOverride: -1
-  m_CenterOffset: {x: 0, y: 0, z: 0}
-  m_RadiusAdjustment: 0
 --- !u!114 &3291145735224976396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4616,7 +4586,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
+  m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.5
   m_Speed: 2.8

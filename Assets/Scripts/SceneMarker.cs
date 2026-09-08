@@ -83,6 +83,11 @@ public sealed class SceneMarker : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        ScheduleBakedEnemyNavigationValidation();
+    }
+
     public void SetCharacterData(CharacterData data)
     {
         assetType = MarkerAssetType.Character;
@@ -286,7 +291,6 @@ public sealed class SceneMarker : MonoBehaviour
     {
         runtimeInstance = instance;
         AuditEnemyRuntimePose("clone configure");
-        ValidateSpawnedEnemyNavigation(runtimeInstance);
         ScheduleBakedEnemyNavigationValidation();
     }
 
@@ -305,10 +309,14 @@ public sealed class SceneMarker : MonoBehaviour
 
     private IEnumerator ValidateEnemyNavigationAfterWorldBake()
     {
-        NavMeshWorldService world = FindAnyObjectByType<NavMeshWorldService>();
-        SquadAIManager navigation = SquadAIManager.Instance;
-        while (world != null && !world.IsReady && world.State != NavMeshWorldState.Failed)
+        // Scene markers can awaken before the persistent session service.
+        // Keep reacquiring it rather than permanently abandoning validation.
+        NavMeshWorldService world;
+        while (true)
         {
+            world = NavMeshWorldService.Instance;
+            if (world != null && (world.IsReady || world.State == NavMeshWorldState.Failed)) break;
+            if (world == null && SquadAIManager.Instance != null && SquadAIManager.Instance.IsNavMeshReady) break;
             yield return null;
         }
 
@@ -323,13 +331,6 @@ public sealed class SceneMarker : MonoBehaviour
             }
 
             ValidateSpawnedEnemyNavigation(runtimeInstance);
-            yield break;
-        }
-
-        if (navigation == null || !navigation.IsNavMeshReady)
-        {
-            Debug.LogWarning("[SceneMarker] Validation NavMesh en attente pour l'ennemi '" + name +
-                             "' : aucun service NavMesh pret. Aucun repositionnement automatique.", this);
             yield break;
         }
 

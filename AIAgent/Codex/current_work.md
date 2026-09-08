@@ -14,14 +14,15 @@ existant au lieu d'une condition numerique avec un parametre vide.
 
 Scene District_1_Enigme_Ghost_Nina et donnees creees, ajoutees au manifest District_1.
 Mort scientifique -> Timeline groupe -> Existence des chimeres; lecture Item_Edward
--> Dilemme Edouard -> Nina Dead; visite Dead avec les deux savoirs -> sang/Scar -> Cicatrice.
-La visite ne depend plus du bit CinematicCompleted : les savoirs debloques ou
-restaures suffisent a autoriser sa validation. La scene a encore une Timeline et
-un bindingProfile non assignes; cela bloque sa revelation automatique, mais plus
-la visite lorsque les savoirs sont deja acquis. Sang/Scar attendent la fin du dialogue.
-Correctif valide par compilation runtime/editeur avec le compilateur Unity et
-12 cas NUnit de progression executes sous Mono hors editeur. Flux visuel Play Mode
-et validation multijoueur restent a effectuer.
+-> Dilemme Edouard. Toutes les connaissances du cycle (Existence + Dilemme)
+sont l'unique condition de Nina Dead. Parler a Nina Dead active ensemble sang et
+Scar (bits NinaDeadSpoken=16 et NinaVisited=4). Scar conserve la revelation Ghost
+standard : invisible au loin, apparition progressive a proximite. Son dialogue
+termine naturellement accorde Cicatrice. CinematicCompleted n'est pas requis.
+La portee utilise le collider de l'interaction. Les anciens bits 4/16 restent compatibles.
+Compilation runtime/editeur reussie avec le compilateur Unity; 15 cas NUnit de
+progression executes sous Mono hors editeur et passes.
+Flux visuel Play Mode et validation multijoueur restent a effectuer.
 Progression serveur via variables monde persistantes, replication active NGO.
 SkillsManager compose les recompenses avec les skills auteur sans modifier CharacterData.
 Modeles, clips, Timeline, placement final et SkillSO Cicatrice restent explicitement a assigner.

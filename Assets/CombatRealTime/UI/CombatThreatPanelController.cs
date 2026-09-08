@@ -184,8 +184,13 @@ public sealed class CombatThreatPanelController : MonoBehaviour
         threatPanel.blocksRaycasts = false;
         if (shouldBeVisible && threatAnimator != null && !string.IsNullOrWhiteSpace(triggerName))
         {
-            threatAnimator.ResetTrigger(triggerName);
-            threatAnimator.SetTrigger(triggerName);
+            // The authored panel controller names its entry state this way;
+            // it has no trigger parameter. Replay that state on each aggro.
+            int stateHash = Animator.StringToHash("Base Layer." + triggerName);
+            if (threatAnimator.HasState(0, stateHash))
+                threatAnimator.Play(stateHash, 0, 0f);
+            else
+                Debug.LogWarning("CombatThreatPanelController: etat d'entree introuvable: " + triggerName, this);
         }
     }
 }

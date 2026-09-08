@@ -34,7 +34,9 @@ public sealed class ArcherAnimationNamingPostprocessor : AssetPostprocessor
 
     private static void QueueFolder()
     {
-        QueueAnimationAssets(AssetDatabase.FindAssets("t:Model", new[] { ArcherAnimationsFolder }));
+        if (!AssetDatabase.IsValidFolder(ArcherAnimationsFolder.TrimEnd('/'))) return;
+        foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { ArcherAnimationsFolder }))
+            QueueAnimationAssets(new[] { AssetDatabase.GUIDToAssetPath(guid) });
     }
 
     private static void QueueAnimationAssets(IEnumerable<string> assets)

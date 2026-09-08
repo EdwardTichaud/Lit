@@ -227,7 +227,9 @@ public class SquadManager : MonoBehaviour
         ApplyPendingRoster();
         EnsureRuntimeSquad();
         KeepOnlyControlledSoloCharacterForDirectSceneStart();
-        Maison maisonComponent = GetMaison();
+        // Maison initializes its containers in Awake; district-only sessions
+        // do not require home storage merely to initialize the squad.
+        Maison maisonComponent = GetMaison(false);
         if (maisonComponent != null)
         {
             maisonComponent.EnsureHomeContainers(maisonComponent.ResolveMaisonLootContainers(null));
@@ -3307,7 +3309,7 @@ public class SquadManager : MonoBehaviour
         return ui;
     }
 
-    private Maison GetMaison()
+    private Maison GetMaison(bool required = true)
     {
         if (maison != null)
         {
@@ -3324,7 +3326,7 @@ public class SquadManager : MonoBehaviour
 #endif
         }
 
-        if (maison == null && !warnedMissingMaison)
+        if (maison == null && required && !warnedMissingMaison)
         {
             Debug.LogWarning("SquadManager: Maison non assignee. Le stockage maison ne sera pas utilise.");
             warnedMissingMaison = true;

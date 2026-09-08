@@ -12,7 +12,7 @@ public sealed class NinaCycleTests
     [TestCase(NinaCycleController.CinematicCompleted, false, true, false)]
     [TestCase(NinaCycleController.CinematicCompleted, true, false, false)]
     [TestCase(NinaCycleController.CinematicCompleted, true, true, true)]
-    public void NinaRequiresBothRevelationsRegardlessOfCinematicState(int state, bool dilemma, bool existence, bool expected)
+    public void NinaDeadRequiresAllCycleKnowledgeOnly(int state, bool dilemma, bool existence, bool expected)
     {
         Assert.AreEqual(expected, NinaCycleController.CanVisitNina(state, dilemma, existence));
     }
@@ -34,9 +34,12 @@ public sealed class NinaCycleTests
     [TestCase(NinaCycleController.CinematicCompleted, true, false)]
     [TestCase(NinaCycleController.NinaVisited, false, false)]
     [TestCase(NinaCycleController.NinaVisited, true, true)]
-    public void NinaBloodRequiresCompletedDeadInteraction(int state, bool dilemmaKnown, bool expected)
+    [TestCase(NinaCycleController.NinaDeadSpoken, true, true)]
+    [TestCase(NinaCycleController.NinaDeadSpoken, false, false)]
+    [TestCase(NinaCycleController.RewardGranted, true, false)]
+    public void NinaBloodAndScarUnlockWhenDeadDialogueStartsAndSupportExistingSaves(int state, bool allKnowledgeKnown, bool expected)
     {
-        Assert.AreEqual(expected, NinaCycleController.ShouldShowNinaBlood(state, dilemmaKnown));
+        Assert.AreEqual(expected, NinaCycleController.ShouldShowNinaBlood(state, allKnowledgeKnown));
     }
 }
 #endif

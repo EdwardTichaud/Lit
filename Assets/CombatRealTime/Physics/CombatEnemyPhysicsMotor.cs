@@ -802,7 +802,10 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     private bool IsGroundCollider(Collider collider)
     {
-        if (collider == null || IsOwnCollider(collider))
+        if (collider == null || IsOwnCollider(collider) ||
+            collider.GetComponentInParent<CharacterInfo>() != null ||
+            collider.GetComponentInParent<CombatEnemyPhysicsMotor>() != null ||
+            collider.GetComponentInParent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>() != null)
         {
             return false;
         }

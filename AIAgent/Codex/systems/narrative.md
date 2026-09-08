@@ -46,11 +46,13 @@ connaissances et résoudre les interactions narratives.
 ## Pièges observés
 
 Le cycle Nina (`Assets/Narrative/NinaCycle`) utilise un controleur serveur et les
-variables monde sauvegardees pour ses quatre jalons. La lettre ne donne Dilemme
-Edouard qu'a sa lecture. Nina change immediatement de pose avec ce savoir; la
-visite qui active le sang et Scar exige les deux savoirs, sans exiger en plus le
-bit de cinematique terminee. Des connaissances debloquees ou restaurees seules
-permettent donc de valider le dialogue Dead, mais ne remplacent pas sa fin naturelle.
+variables monde sauvegardees pour ses jalons. La lettre ne donne Dilemme
+Edouard qu'a sa lecture. Nina devient Dead uniquement lorsque toutes les connaissances
+du cycle (Existence + Dilemme) sont acquises, sans autre jalon requis. Parler a Nina
+Dead active ensemble sang et Scar (bits NinaDeadSpoken=16 et NinaVisited=4).
+Scar reste invisible au loin et apparait progressivement a proximite via le
+GhostController standard. La portee utilise le collider comme l'interaction standard.
+Les anciennes sauvegardes avec un seul des deux bits restent compatibles.
 DialoguePanelUI.TryShowTimedConversation distingue fin naturelle et annulation.
 NinaGhostInteraction adapte uniquement les deux fantomes de ce cycle. La scene
 contient des emplacements explicites; les ressources artistiques restent a assigner.

@@ -16,6 +16,9 @@ public class InventoryUISettings : MonoBehaviour
     public Transform itemsParent;
     [Tooltip("Prefab d'un slot d'item.")]
     public GameObject itemPrefab;
+    [Header("World information panels")]
+    public GameObject localItemInformationPanelPrefab;
+    public GameObject localBuildingInformationPanelPrefab;
     [Tooltip("Curseur UI de selection.")]
     public RectTransform slotCursor;
     [Tooltip("Controleur de curseur (optionnel).")]

@@ -26,20 +26,21 @@ Ses objets sont des emplacements à placer, pas des ressources artistiques tempo
 ## Progression
 
 Mort confirmée → délai réel 3 s → cinématique de groupe terminée → Existence des chimères.
-Lire la lettre → Dilemme Édouard → Nina Dead. Le sang n'apparaît qu'après la
-fin valide d'une interaction avec Nina dans cet état.
-Nina reste visible, outlineable et écoutable avant ce savoir ; son dialogue est
-alors Idle et ne valide aucune progression.
-Les deux savoirs sont nécessaires pour valider la visite Dead. Le marqueur de
-cinématique n'est pas exigé en plus : Existence peut être débloquée ou restaurée
-indépendamment de la lecture de la Timeline. Les savoirs seuls n'activent pas le sang
-ni Scar ; la visite doit toujours se terminer normalement.
-Le dialogue se ferme automatiquement après 4 s plus fondus. Une fermeture anticipée,
-un remplacement de dialogue ou une désactivation annule la validation.
-Visite Dead validée → Scar visible. Dialogue Scar terminé → Cicatrice connue du groupe.
+Lire la lettre → Dilemme Édouard. Toutes les connaissances du cycle (Dilemme et
+Existence des chimères) sont l'unique condition de Nina Dead. Sinon, Nina reste Idle.
+Parler à Nina Dead active ensemble le sang et Scar dès l'ouverture du dialogue.
+Scar conserve la révélation standard : invisible au loin, apparition progressive
+à proximité. Aucun jalon de cinématique ou de mort du scientifique n'est exigé en plus.
+Le contrôle de portée réutilise le collider et l'origine de l'interaction standard.
+Le dialogue se ferme automatiquement après 4 s plus fondus. Fermer celui de Nina
+ne retire pas le sang ni Scar. Le dialogue de Scar doit se terminer naturellement
+pour accorder Cicatrice au groupe.
 
 L'état est stocké dans WorldRulesStateManager sous `narrative.district1.nina`, bits
-1 (mort), 2 (cinématique), 4 (visite Nina), 8 (récompense). Le snapshot de monde le
+1 (mort), 2 (cinématique), 4 (visite Nina), 8 (récompense), 16 (dialogue Dead commencé).
+Les bits 4 et 16 sont inscrits ensemble au début du dialogue Dead. Chacun reste
+compatible avec les anciennes sauvegardes pour activer sang et Scar.
+Le snapshot de monde le
 conserve et NGO réplique les changements actifs. Les savoirs conservent leur service
 réseau existant. SkillsManager compose les skills auteur avec les récompenses sauvées,
 sans écrire CharacterData. Aucun équipement automatique.

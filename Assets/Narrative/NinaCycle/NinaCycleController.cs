@@ -10,6 +10,7 @@ using UnityEngine.Playables;
 public sealed class NinaCycleController : NetworkBehaviour
 {
     public const int ScientistDefeated = 1, CinematicCompleted = 2, NinaVisited = 4, RewardGranted = 8;
+    public const int NinaDeadSpoken = 16;
     public NinaCycleDefinition definition;
     public SceneMarker scientistMarker;
     public GhostController nina;
@@ -37,6 +38,7 @@ public sealed class NinaCycleController : NetworkBehaviour
     private bool Authority => !Online || IsSpawned && IsServer;
     private int State => rules != null && definition != null && rules.TryGetInt(definition.StateKey, out int value) ? value : 0;
     private bool Knows(KnowledgeSO knowledge) => knowledge != null && KnowledgeManager.Instance != null && KnowledgeManager.Instance.HasKnowledge(knowledge);
+    private bool IsNinaDead => definition != null && CanVisitNina(State, Knows(definition.dilemma), Knows(definition.existence));
 
     public override void OnNetworkSpawn()
     {
@@ -71,10 +73,9 @@ public sealed class NinaCycleController : NetworkBehaviour
                 StartCoroutine(DeathSequence());
             }
         }
-        bool dead = Knows(definition.dilemma);
-        // La lettre suffit a reveler la verite et a faire basculer Nina dans sa
-        // pose Dead. Le sang, lui, est la consequence de la rencontre achevee
-        // avec Nina dans cet etat ; il ne doit pas annoncer cette rencontre.
+        bool dead = IsNinaDead;
+        // All cycle knowledge selects Dead. Speaking to Dead Nina unlocks both
+        // blood and Scar; Scar's GhostController still owns proximity reveal.
         bool showBlood = ShouldShowNinaBlood(State, dead);
         if (ninaBlood != null && ninaBlood.activeSelf != showBlood) ninaBlood.SetActive(showBlood);
         if (ninaAnimator != null && ninaAnimator.isActiveAndEnabled && previousPose != (dead ? 1 : 0))
@@ -86,8 +87,8 @@ public sealed class NinaCycleController : NetworkBehaviour
                 previousPose = dead ? 1 : 0;
             }
         }
-        if (scar != null && scar.gameObject.activeSelf != ((State & NinaVisited) != 0))
-            scar.gameObject.SetActive((State & NinaVisited) != 0);
+        if (scar != null && scar.gameObject.activeSelf != showBlood)
+            scar.gameObject.SetActive(showBlood);
     }
     private void BindScientist()
     {
@@ -112,6 +113,7 @@ public sealed class NinaCycleController : NetworkBehaviour
     }
     private void Commit(int flag)
     {
+        ResolveRules();
         if (!Authority || rules == null || definition == null) return;
         ApplyState(State | flag);
         if (IsSpawned) replicatedState.Value = State;
@@ -228,39 +230,57 @@ public sealed class NinaCycleController : NetworkBehaviour
     public bool Interact(GhostController ghost, bool isScar)
     {
         if (definition == null || ghost == null || localDialogue || cinematicRunning) return false;
-        bool dead = Knows(definition.dilemma);
+        bool dead = IsNinaDead;
         string text = isScar ? ((State & RewardGranted) != 0 ? "Souviens-toi de Nina." : definition.scarLine) : dead ? definition.deadLine : definition.idleLine;
-        if (isScar && (State & NinaVisited) == 0) return false;
+        if (isScar && !ShouldShowNinaBlood(State, dead)) return false;
         double started = Time.realtimeSinceStartupAsDouble;
         if (Online)
         {
             if (!IsSpawned) return false;
-            BeginInteractionServerRpc(isScar);
         }
-        else BeginInteraction(0, isScar, LocalPlayerUtils.GetControlledCharacter());
         localDialogue = true;
         bool shown = DialoguePanelUI.TryShowTimedConversation(text, definition.dialogueSeconds, completed =>
         {
             localDialogue = false;
-            if (!completed || this == null || !isActiveAndEnabled || Time.realtimeSinceStartupAsDouble - started < definition.dialogueSeconds - .05f) return;
+            if (!isScar || !completed || this == null || !isActiveAndEnabled || Time.realtimeSinceStartupAsDouble - started < definition.dialogueSeconds - .05f) return;
             if (Online && IsSpawned) CompleteInteractionServerRpc(isScar);
             else CompleteInteraction(0, isScar, LocalPlayerUtils.GetControlledCharacter());
         }, this);
-        if (!shown) localDialogue = false;
+        if (!shown)
+        {
+            localDialogue = false;
+            return false;
+        }
+
+        // Only record a conversation that was actually displayed. Nina's blood
+        // must not depend on the timed completion callback used by Scar.
+        if (Online) BeginInteractionServerRpc(isScar);
+        else BeginInteraction(0, isScar, LocalPlayerUtils.GetControlledCharacter());
         return shown;
     }
     private bool Eligible(bool isScar, GameObject player)
     {
         GhostController ghost = isScar ? scar : nina;
         var controller = player != null ? player.GetComponentInParent<SquadCharacterController>() : null;
+        if (controller == null && player != null) controller = player.GetComponentInChildren<SquadCharacterController>();
         return ghost != null && ghost.isActiveAndEnabled && controller != null && controller.CurrentHp > 0 &&
-            Vector3.Distance(controller.transform.position, ghost.transform.position) <= ghost.GetInteractionMaxDistance(controller) + .5f &&
-            (isScar ? (State & NinaVisited) != 0 : CanVisitNina(State, Knows(definition.dilemma), Knows(definition.existence)));
+            CharacterInteractionDetection.IsCharacterWithinRange(controller.transform,
+                ghost.GetInteractionDetectionCollider(), ghost.GetInteractionAnchor(), ghost.GetInteractionMaxDistance(controller) + .5f) &&
+            (isScar ? ShouldShowNinaBlood(State, IsNinaDead) : IsNinaDead);
     }
     private void BeginInteraction(ulong id, bool isScar, GameObject player)
     {
         pending.Remove(id);
-        if (Eligible(isScar, player)) pending[id] = new PendingInteraction { scar = isScar, earliest = Time.realtimeSinceStartupAsDouble + definition.dialogueSeconds - .1f };
+        if (!Eligible(isScar, player)) return;
+        if (!isScar)
+        {
+            Commit(NinaDeadSpoken | NinaVisited);
+            bool revealed = ShouldShowNinaBlood(State, IsNinaDead);
+            if (ninaBlood != null) ninaBlood.SetActive(revealed);
+            if (scar != null) scar.gameObject.SetActive(revealed);
+            return;
+        }
+        pending[id] = new PendingInteraction { scar = isScar, earliest = Time.realtimeSinceStartupAsDouble + definition.dialogueSeconds - .1f };
     }
     private void CompleteInteraction(ulong id, bool isScar, GameObject player)
     {
@@ -308,10 +328,10 @@ public sealed class NinaCycleController : NetworkBehaviour
     }
 
     public static bool CanVisitNina(int state, bool dilemmaKnown, bool existenceKnown) =>
-        // Existence is the cinematic's revelation, but can also be unlocked or
-        // restored independently. Do not require its separate playback flag.
+        // Knowledge is the sole prerequisite for both the Dead pose and dialogue.
         dilemmaKnown && existenceKnown;
 
-    public static bool ShouldShowNinaBlood(int state, bool dilemmaKnown) =>
-        dilemmaKnown && (state & NinaVisited) != 0;
+    public static bool ShouldShowNinaBlood(int state, bool allCycleKnowledgeKnown) =>
+        // NinaVisited keeps saves made before NinaDeadSpoken was introduced valid.
+        allCycleKnowledgeKnown && (state & (NinaDeadSpoken | NinaVisited)) != 0;
 }
