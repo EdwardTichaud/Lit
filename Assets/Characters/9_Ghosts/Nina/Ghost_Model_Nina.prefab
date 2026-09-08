@@ -95,7 +95,49 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4717657716337766974}
+    - targetCorrespondingSourceObject: {fileID: -525266238417469999, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6319700000082238882}
+    - targetCorrespondingSourceObject: {fileID: 259224557501921055, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418522168927292853}
   m_SourcePrefab: {fileID: 100100000, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
+--- !u!1 &4531325857544727820 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -525266238417469999, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
+  m_PrefabInstance: {fileID: 5068627656071712989}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6319700000082238882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4531325857544727820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
+--- !u!1 &5030400537709094850 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 259224557501921055, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
+  m_PrefabInstance: {fileID: 5068627656071712989}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2418522168927292853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5030400537709094850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &5374492201104256396 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}

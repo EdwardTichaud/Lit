@@ -2263,7 +2263,6 @@ MonoBehaviour:
   transitionSeconds: 0.35
   meltCameraProfile: {fileID: 11400000, guid: 032149e9c0c141a5bdbe21863e6aeeea, type: 2}
   meltFrostFadeSeconds: 0.5
-  meltHdrIntensitySeconds: 1
 --- !u!1 &2160324580470185257
 GameObject:
   m_ObjectHideFlags: 0
@@ -9005,7 +9004,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82d1cc4cc2634fc8a4cc31e37c8715d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpiritBondAnimationEvents
-  bond: {fileID: 0}
+  bond: {fileID: 901000000000000201}
+  meltCameraProfile: {fileID: 11400000, guid: 032149e9c0c141a5bdbe21863e6aeeea, type: 2}
   spineAnimationPrefab: {fileID: 7736070195497459570, guid: 86a96f2fa2dcfdd40b90118ec14b93f5, type: 3}
   spineBone: {fileID: 8645191530104281420}
 --- !u!114 &7709963485712969020

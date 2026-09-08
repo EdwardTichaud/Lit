@@ -220,13 +220,14 @@ internal static class CameraProfilPreviewPlayback
 
     private static void GetProfilePose(float holdElapsed, out Vector3 position, out Quaternion rotation)
     {
-        Vector3 localOffset = activeProfile.offset + activeProfile.movementSpeed * holdElapsed;
-        position = activeAnchor.TransformPoint(localOffset);
-        Vector3 toAnchor = activeAnchor.position - position;
-        Quaternion lookAtAnchor = toAnchor.sqrMagnitude > 0.0001f
-            ? Quaternion.LookRotation(toAnchor.normalized, activeAnchor.up)
+        Vector3 localPositionOffset = activeProfile.positionOffset + activeProfile.movementSpeed * holdElapsed;
+        position = activeAnchor.TransformPoint(localPositionOffset);
+        Vector3 focusPoint = activeAnchor.TransformPoint(activeProfile.offset);
+        Vector3 toFocus = focusPoint - position;
+        Quaternion lookAtAnchor = toFocus.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(toFocus.normalized, activeAnchor.up)
             : activeAnchor.rotation;
-        rotation = lookAtAnchor * Quaternion.Euler(activeProfile.rotationSpeed * holdElapsed);
+        rotation = lookAtAnchor;
     }
 
     private static void Restore()

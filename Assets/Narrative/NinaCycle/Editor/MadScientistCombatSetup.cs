@@ -30,6 +30,23 @@ public static class MadScientistCombatSetup
     private static bool setupScheduled;
 
     [InitializeOnLoadMethod]
+    private static void InstallRequestedSetupRetry()
+    {
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        ConsumeRequestedSetup();
+    }
+
+    private static void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingPlayMode)
+        {
+            // A request deliberately refuses to edit a prefab or a scene in
+            // Play Mode. Retry it after the editor has restored authored data.
+            EditorApplication.delayCall += ConsumeRequestedSetup;
+        }
+    }
+
     private static void ConsumeRequestedSetup()
     {
         if (setupScheduled || !File.Exists(RequestPath)) return;
@@ -150,7 +167,27 @@ public static class MadScientistCombatSetup
                               controller.layers[0].stateMachine.AddState("MadScientist_Slash");
         state.motion = attackClip;
         state.writeDefaultValues = true;
+
+        // CombatActorAnimationRoot requires the canonical root-level Hit
+        // state. The source controller calls its clip differently, so create
+        // a stable alias instead of weakening the shared combat contract.
+        AnimatorStateMachine rootMachine = controller.layers[0].stateMachine;
+        AnimatorState hitState = FindRootState(rootMachine, "Hit") ?? rootMachine.AddState("Hit");
+        AnimatorState sourceHitState = FindState(rootMachine, "Twinblades_Defense_Hit_Root") ??
+                                       FindState(rootMachine, "TwinSword_Defense_Hit_Root");
+        hitState.motion = sourceHitState != null && sourceHitState.motion != null
+            ? sourceHitState.motion
+            : attackClip;
+        hitState.writeDefaultValues = true;
+        if (FindRootState(rootMachine, "Hit") == null)
+        {
+            throw new System.InvalidOperationException("Etat Animator 'Hit' impossible a creer dans MadScientist.controller.");
+        }
         EditorUtility.SetDirty(controller);
+        // Save the combat contract immediately. Scene interaction repair can
+        // fail independently afterwards; it must never leave this controller
+        // half-configured and still missing its required Hit state.
+        AssetDatabase.SaveAssets();
     }
 
     private static AnimatorState FindState(AnimatorStateMachine machine, string stateName)
@@ -162,6 +199,19 @@ public static class MadScientistCombatSetup
             AnimatorState found = FindState(child.stateMachine, stateName);
             if (found != null) return found;
         }
+        return null;
+    }
+
+    private static AnimatorState FindRootState(AnimatorStateMachine machine, string stateName)
+    {
+        foreach (ChildAnimatorState child in machine.states)
+        {
+            if (child.state != null && child.state.name == stateName)
+            {
+                return child.state;
+            }
+        }
+
         return null;
     }
 
@@ -265,9 +315,9 @@ public static class MadScientistCombatSetup
         CombatActorAnimationRoot animationRoot = Ensure<CombatActorAnimationRoot>(root);
         Ensure<CombatActorRootMotionRelay>(root);
         EnemySkills skills = Ensure<EnemySkills>(root);
-        Rigidbody body = Ensure<Rigidbody>(root);
-        CapsuleCollider capsule = Ensure<CapsuleCollider>(root);
-        NavMeshAgent agent = Ensure<NavMeshAgent>(root);
+        Rigidbody body = null;
+        CapsuleCollider capsule = null;
+        NavMeshAgent agent = null;
         CombatEnemyPhysicsMotor motor = Ensure<CombatEnemyPhysicsMotor>(root);
         Ensure<CombatEnemyLocomotionController>(root);
         Ensure<EnemyAttackRecoverySafety>(root);
@@ -279,6 +329,18 @@ public static class MadScientistCombatSetup
         Ensure<RealTimeCombatAnimationEvents>(root);
         Ensure<NetworkObject>(root);
         Ensure<NetworkTransform>(root);
+
+        // Some RequireComponent chains rebuild the component list while this
+        // editor utility is authoring the prefab. Resolve physics last so no
+        // stale (Unity fake-null) Rigidbody reference can be configured.
+        body = Ensure<Rigidbody>(root);
+        capsule = Ensure<CapsuleCollider>(root);
+        agent = Ensure<NavMeshAgent>(root);
+        if (body == null || capsule == null || agent == null)
+        {
+            throw new System.InvalidOperationException(
+                "Impossible de finaliser Rigidbody, CapsuleCollider ou NavMeshAgent sur '" + root.name + "'.");
+        }
 
         body.isKinematic = true;
         body.useGravity = false;
@@ -306,7 +368,7 @@ public static class MadScientistCombatSetup
         SetReference(enemy, "physicsMotor", motor);
         SetReference(enemy, "enemyLockPoint", lockPoint);
         SetString(enemy, "idleAnimatorState", "CombatIdle");
-        SetString(enemy, "hitAnimatorState", "Twinblades_Defense_Hit_Root");
+        SetString(enemy, "hitAnimatorState", "Hit");
         SetString(enemy, "deathAnimatorState", "Death");
         SetReference(skills, "enemy", enemy);
         SetReference(skills, "animationContract", animationRoot);
@@ -338,7 +400,10 @@ public static class MadScientistCombatSetup
         GameObject letter = FindInScene(scene, "Lettre manuscrite d'Édouard");
         if (letter != null)
         {
-            BoxCollider rootCollider = letter.GetComponent<BoxCollider>() ?? letter.AddComponent<BoxCollider>();
+            // Do not use ?? with Unity objects: a destroyed component can be
+            // a non-null CLR reference but compares null through Unity's
+            // lifetime operator. Ensure uses the latter and replaces it.
+            BoxCollider rootCollider = Ensure<BoxCollider>(letter);
             rootCollider.isTrigger = true;
             rootCollider.center = Vector3.zero;
             rootCollider.size = Vector3.one * 1.2f;
@@ -385,7 +450,11 @@ public static class MadScientistCombatSetup
         if (!wasAlreadyLoaded) EditorSceneManager.CloseScene(scene, true);
     }
 
-    private static T Ensure<T>(GameObject root) where T : Component => root.GetComponent<T>() ?? root.AddComponent<T>();
+    private static T Ensure<T>(GameObject root) where T : Component
+    {
+        T component = root.GetComponent<T>();
+        return component != null ? component : root.AddComponent<T>();
+    }
     private static void SetReference(Object target, string name, Object value)
     {
         var property = new SerializedObject(target).FindProperty(name);

@@ -9,6 +9,9 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
     private static readonly int RuptureStateHash = Animator.StringToHash("Rupture");
 
     [SerializeField] private SpiritBondController bond;
+    [Header("Melt")]
+    [Tooltip("Profil de caméra joué pendant Melt. S'il est renseigné ici, il est prioritaire sur celui du SpiritBondController.")]
+    public CameraProfilSO meltCameraProfile;
     [SerializeField, Tooltip("Prefab spawned by the InstantiateAtSpine AnimationEvent.")]
     private GameObject spineAnimationPrefab;
     [SerializeField, Tooltip("Optional explicit spine bone. Empty resolves from the humanoid rig, then by bone name.")]
@@ -17,6 +20,13 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
     private void Awake()
     {
         ResolveBond();
+        ApplyMeltCameraProfile();
+    }
+
+    private void OnValidate()
+    {
+        ResolveBond();
+        ApplyMeltCameraProfile();
     }
 
     /// <summary>AnimationEvent for the Holy burst in Melt or Rupture.</summary>
@@ -37,10 +47,10 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: PlayEffect_CharacterEffect received.", this);
 #endif
-        if (bond != null && !bond.IsCinematicFusion && (bond.IsFused || IsRupturePlaying()))
+        if (bond != null && !bond.IsCinematicFusion && IsRupturePlaying())
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log($"[SpiritBond] Frame {Time.frameCount}: legacy PlayEffect on fused bond routed to Holy stop.", this);
+            Debug.Log($"[SpiritBond] Frame {Time.frameCount}: legacy PlayEffect on Rupture routed to Holy stop.", this);
 #endif
             bond.StopHolyEffectFromAnimationEvent();
             return;
@@ -113,6 +123,14 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
         if (bond == null)
         {
             bond = SpiritBondController.FindForCharacter(gameObject);
+        }
+    }
+
+    private void ApplyMeltCameraProfile()
+    {
+        if (meltCameraProfile != null)
+        {
+            bond?.SetMeltCameraProfile(meltCameraProfile);
         }
     }
 

@@ -12,11 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dfe6b6d55dd4d1c97736c3dd8fe0701, type: 3}
   m_Name: CameraProfil_Melt
   m_EditorClassIdentifier: Assembly-CSharp::CameraProfilSO
-  offset: {x: 2, y: 1.8, z: -3.5}
+  positionOffset: {x: 2, y: 1.8, z: -3.5}
+  offset: {x: 0, y: 0, z: 0}
   movementSpeed: {x: 0, y: 0, z: 0}
-  rotationSpeed: {x: 0, y: 0, z: 0}
   startLerp: 0.5
   duration: 1
   endLerp: 0.5
   fieldOfView: 25
   fieldOfViewLerp: 1
+  muninUiHdrIntensityStart: -10
+  muninUiHdrIntensityEnd: 10
+  muninUiHdrIntensityLerp: 1

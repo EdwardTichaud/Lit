@@ -6876,6 +6876,7 @@ GameObject:
   - component: {fileID: 1860774856}
   - component: {fileID: 1860774855}
   - component: {fileID: 1860774861}
+  - component: {fileID: 1860774862}
   m_Layer: 0
   m_Name: Flame_Base_5
   m_TagString: Untagged
@@ -7019,7 +7020,7 @@ MonoBehaviour:
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
+  useInteractInput: 1
   useTriggerMuninInput: 1
   showStateDialogueOnInteract: 1
   litStateMessage: "La flamme est allum\xE9e."
@@ -7091,6 +7092,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
   outlined: 0
+--- !u!114 &1860774862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860774853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b81370473ff124b883b3ff00dd70fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineRendererReference
+  outlineRenderer: {fileID: 1860774857}
 --- !u!4 &278974291035107641
 Transform:
   m_ObjectHideFlags: 0

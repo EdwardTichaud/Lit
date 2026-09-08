@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -11,7 +12,7 @@ using UnityEngine.UI;
 /// the combat UI migration utility.
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class RealTimeCombatSceneUiController : MonoBehaviour
+public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeHandler
 {
     public static RealTimeCombatSceneUiController Instance { get; private set; }
 
@@ -373,6 +374,18 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour
     {
         combatLogLines.Clear();
         SetText(combatLogText, string.Empty);
+    }
+
+    public bool HandleInputModeAction(InputModeAction action, InputAction.CallbackContext context)
+    {
+        if (action != InputModeAction.Submit || !resultVisible ||
+            victoryPanel == null || !victoryPanel.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        OnVictoryContinue();
+        return true;
     }
 
     private void OnVictoryContinue()

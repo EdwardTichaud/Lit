@@ -28,7 +28,9 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
 
     private void Awake()
     {
-        marker = GetComponent<SceneMarker>();
+        // The provider can live on the baked actor when its parent marker must
+        // not receive a second, nested NetworkObject.
+        marker = GetComponent<SceneMarker>() ?? GetComponentInParent<SceneMarker>();
     }
 
     private void Update()

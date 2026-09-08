@@ -54,8 +54,8 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         RegisterMarker(this);
-        EnsurePersistentState();
         runtimeInstance = ResolveBakedCharacterInstance();
+        EnsurePersistentState();
         if (runtimeInstance != bakedCharacterInstance && bakedCharacterInstance != null)
         {
             Debug.LogWarning("[SceneMarker] Reference bakedCharacterInstance corrigee pour '" + name +
@@ -410,12 +410,22 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
-        if (GetComponent<PersistentSceneMarkerCharacterState>() == null)
+        // A baked combat actor can already be its own NetworkObject. Adding a
+        // second NetworkObject to the marker parent creates an illegal nested
+        // Netcode hierarchy and later causes teardown null references. In that
+        // case the actor is the persistent network root; its provider still
+        // resolves this marker through its parent.
+        GameObject persistenceRoot = runtimeInstance != null &&
+                                     runtimeInstance.GetComponent<Unity.Netcode.NetworkObject>() != null
+            ? runtimeInstance
+            : gameObject;
+
+        if (persistenceRoot.GetComponent<PersistentSceneMarkerCharacterState>() == null)
         {
-            gameObject.AddComponent<PersistentSceneMarkerCharacterState>();
+            persistenceRoot.AddComponent<PersistentSceneMarkerCharacterState>();
         }
 
-        PersistentNetworkObject persistentObject = NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(gameObject);
+        PersistentNetworkObject persistentObject = NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(persistenceRoot);
         persistentObject.AssignSceneIdentity(markerId);
     }
 

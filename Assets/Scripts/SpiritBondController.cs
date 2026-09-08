@@ -14,6 +14,7 @@ using UnityEngine.UI;
 public sealed class SpiritBondController : MonoBehaviour
 {
     private static readonly int MeltStateHash = Animator.StringToHash("Melt");
+    private static readonly int RuptureStateHash = Animator.StringToHash("Rupture");
 
     [SerializeField, Tooltip("Incarnation that hosts this spirit. Empty resolves to the parent character.")]
     private Transform hostCharacter;
@@ -27,7 +28,6 @@ public sealed class SpiritBondController : MonoBehaviour
     [SerializeField, Tooltip("Local camera profile played before the Melt Animation Event confirms fusion.")]
     private CameraProfilSO meltCameraProfile;
     [SerializeField, Min(0f)] private float meltFrostFadeSeconds = 0.5f;
-    [SerializeField, Min(0f)] private float meltHdrIntensitySeconds = 1f;
 
     private Coroutine transitionRoutine;
     private Coroutine meltPresentationRoutine;
@@ -47,14 +47,27 @@ public sealed class SpiritBondController : MonoBehaviour
     private readonly HashSet<SpiritWeaponManifestation> externalManifestations = new HashSet<SpiritWeaponManifestation>();
     private bool fused;
     private bool cinematicFusion;
-    private bool holyEffectAwaitingMeltExit;
     private bool meltPresentationActive;
     private bool meltMovementLockHeld;
     private bool meltStateObserved;
 
     public bool IsFused => fused;
+    /// <summary>True while the player is in the persistent manual Melted state.</summary>
+    public bool IsMelted => fused && !cinematicFusion;
     public bool IsCinematicFusion => cinematicFusion;
     public event Action<SpiritBondController, bool> FusionStateChanged;
+
+    /// <summary>
+    /// Allows the Animator event relay to own the authored Melt camera profile.
+    /// The value is read only when a new Melt starts.
+    /// </summary>
+    public void SetMeltCameraProfile(CameraProfilSO profile)
+    {
+        if (profile != null)
+        {
+            meltCameraProfile = profile;
+        }
+    }
 
     private void Awake()
     {
@@ -72,17 +85,9 @@ public sealed class SpiritBondController : MonoBehaviour
 
     private void Update()
     {
-        // A transition can interrupt the clip before its trailing event runs.
-        // Leaving Melt is therefore the fallback authority for its effect.
-        if (holyEffectAwaitingMeltExit && !IsMeltPlaying())
-        {
-            holyEffectAwaitingMeltExit = false;
-            StopHoly();
-        }
-
         if (meltMovementLockHeld)
         {
-            if (IsMeltPlaying())
+            if (IsMeltPlaying() || IsRupturePlaying())
             {
                 meltStateObserved = true;
             }
@@ -115,28 +120,13 @@ public sealed class SpiritBondController : MonoBehaviour
 
         cinematicFusion = false;
         fused = false;
-        holyEffectAwaitingMeltExit = false;
         RefreshSpiritVisibility();
         holyEffect?.StopEffect();
     }
 
     public bool ToggleManualFusion()
     {
-        if (cinematicFusion)
-        {
-            return false;
-        }
-
-        if (fused)
-        {
-            BeginManualDefusion();
-        }
-        else
-        {
-            BeginManualFusion();
-        }
-
-        return true;
+        return !fused ? MeltTheIce() : Unmelted();
     }
 
     /// <summary>
@@ -155,15 +145,7 @@ public sealed class SpiritBondController : MonoBehaviour
             return MeltTheIce();
         }
 
-        ResolveReferences();
-        if (hostAnimator == null)
-        {
-            return false;
-        }
-
-        hostAnimator.ResetTrigger("Melt");
-        hostAnimator.SetTrigger("Rupture");
-        return true;
+        return Unmelted();
     }
 
     /// <summary>
@@ -193,6 +175,29 @@ public sealed class SpiritBondController : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Leaves the persistent Melted state. The Rupture Animation Event stops
+    /// CharacterEffect and confirms the state change at its authored frame.
+    /// </summary>
+    public bool Unmelted()
+    {
+        if (cinematicFusion || !fused || IsRupturePlaying())
+        {
+            return false;
+        }
+
+        ResolveReferences();
+        if (hostAnimator == null)
+        {
+            return false;
+        }
+
+        AcquireMeltMovementLock();
+        hostAnimator.ResetTrigger("Melt");
+        hostAnimator.SetTrigger("Rupture");
+        return true;
+    }
+
     /// <summary>AnimationEvent: plays Holy at the precise authored frame.</summary>
     public void TriggerHolyEffectFromAnimationEvent()
     {
@@ -201,7 +206,15 @@ public sealed class SpiritBondController : MonoBehaviour
 #endif
         ResolveReferences();
         PlayHoly();
-        holyEffectAwaitingMeltExit = !cinematicFusion && IsMeltPlaying();
+
+        // Melt_df5b33c8 already contains this event at the authored moment
+        // where the transformation becomes real. Keeping this fallback makes
+        // the state robust even when a legacy clip has no explicit Confirm
+        // event, while ConfirmMeltFusion remains safely idempotent.
+        if (!cinematicFusion && IsMeltPlaying())
+        {
+            EnterMeltedState();
+        }
     }
 
     /// <summary>AnimationEvent: stops Holy at the precise authored frame.</summary>
@@ -210,8 +223,14 @@ public sealed class SpiritBondController : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: Holy stop requested by AnimationEvent.", this);
 #endif
-        holyEffectAwaitingMeltExit = false;
         StopHoly();
+
+        // Legacy Rupture clips use StopEffect_CharacterEffect as their only
+        // final event. Treat it as the authored exit point from Melted.
+        if (!cinematicFusion && IsRupturePlaying())
+        {
+            ExitMeltedState();
+        }
     }
 
     /// <summary>AnimationEvent: completes the Melt animation's fusion.</summary>
@@ -222,10 +241,7 @@ public sealed class SpiritBondController : MonoBehaviour
             return;
         }
 
-        CancelTransition();
-        fused = true;
-        RefreshSpiritVisibility();
-        NotifyFusionStateChanged();
+        EnterMeltedState();
     }
 
     /// <summary>AnimationEvent: completes the Rupture animation's defusion.</summary>
@@ -236,10 +252,7 @@ public sealed class SpiritBondController : MonoBehaviour
             return;
         }
 
-        CancelTransition();
-        fused = false;
-        RefreshSpiritVisibility();
-        NotifyFusionStateChanged();
+        ExitMeltedState();
     }
 
     public void BeginLightSkillFusion()
@@ -300,34 +313,6 @@ public sealed class SpiritBondController : MonoBehaviour
         }
     }
 
-    private void BeginManualFusion()
-    {
-        ResolveReferences();
-        CancelTransition();
-        fused = true;
-        PlayHoly();
-        transitionRoutine = StartCoroutine(CompleteFusionAfterEffect());
-        NotifyFusionStateChanged();
-    }
-
-    private void BeginManualDefusion()
-    {
-        ResolveReferences();
-        CancelTransition();
-        fused = false;
-        PlayHoly();
-        transitionRoutine = StartCoroutine(CompleteDefusionAfterEffect());
-        NotifyFusionStateChanged();
-    }
-
-    private IEnumerator CompleteFusionAfterEffect()
-    {
-        yield return WaitForTransition();
-        RefreshSpiritVisibility();
-        StopHoly();
-        transitionRoutine = null;
-    }
-
     private IEnumerator CompleteDefusionAfterEffect()
     {
         yield return WaitForTransition();
@@ -344,7 +329,33 @@ public sealed class SpiritBondController : MonoBehaviour
         }
     }
 
-    private void CancelTransition()
+    private void EnterMeltedState()
+    {
+        if (fused)
+        {
+            return;
+        }
+
+        CancelTransition(stopHoly: false);
+        fused = true;
+        RefreshSpiritVisibility();
+        NotifyFusionStateChanged();
+    }
+
+    private void ExitMeltedState()
+    {
+        if (!fused)
+        {
+            return;
+        }
+
+        CancelTransition();
+        fused = false;
+        RefreshSpiritVisibility();
+        NotifyFusionStateChanged();
+    }
+
+    private void CancelTransition(bool stopHoly = true)
     {
         if (transitionRoutine == null)
         {
@@ -353,7 +364,10 @@ public sealed class SpiritBondController : MonoBehaviour
 
         StopCoroutine(transitionRoutine);
         transitionRoutine = null;
-        StopHoly();
+        if (stopHoly)
+        {
+            StopHoly();
+        }
     }
 
     private void ResolveReferences()
@@ -419,15 +433,18 @@ public sealed class SpiritBondController : MonoBehaviour
         muninUiEffectsCanvasGroup.interactable = false;
         muninUiEffectsCanvasGroup.blocksRaycasts = false;
         muninUiEffectsCanvasGroup.alpha = 0f;
-        SetLightFrostHdrIntensity(-10f);
+        float hdrIntensityStart = GetMeltProfileHdrIntensityStart();
+        float hdrIntensityEnd = GetMeltProfileHdrIntensityEnd();
+        float hdrIntensityLerp = GetMeltProfileHdrIntensityLerp();
+        SetLightFrostHdrIntensity(hdrIntensityStart);
 
         float elapsed = 0f;
-        float presentationDuration = Mathf.Max(meltFrostFadeSeconds, meltHdrIntensitySeconds);
+        float presentationDuration = Mathf.Max(meltFrostFadeSeconds, hdrIntensityLerp);
         while (elapsed < presentationDuration)
         {
             elapsed += Time.unscaledDeltaTime;
             muninUiEffectsCanvasGroup.alpha = DurationProgress(elapsed, meltFrostFadeSeconds);
-            SetLightFrostHdrIntensity(Mathf.Lerp(-10f, 10f, DurationProgress(elapsed, meltHdrIntensitySeconds)));
+            SetLightFrostHdrIntensity(Mathf.Lerp(hdrIntensityStart, hdrIntensityEnd, DurationProgress(elapsed, hdrIntensityLerp)));
             yield return null;
         }
 
@@ -446,7 +463,7 @@ public sealed class SpiritBondController : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             float t = DurationProgress(elapsed, returnDuration);
             muninUiEffectsCanvasGroup.alpha = Mathf.Lerp(1f, meltInitialCanvasAlpha, t);
-            SetLightFrostHdrIntensity(Mathf.Lerp(10f, meltInitialHdrIntensity, t));
+            SetLightFrostHdrIntensity(Mathf.Lerp(hdrIntensityEnd, meltInitialHdrIntensity, t));
             yield return null;
         }
 
@@ -497,8 +514,12 @@ public sealed class SpiritBondController : MonoBehaviour
         meltInitialCanvasAlpha = muninUiEffectsCanvasGroup.alpha;
         meltInitialCanvasInteractable = muninUiEffectsCanvasGroup.interactable;
         meltInitialCanvasBlocksRaycasts = muninUiEffectsCanvasGroup.blocksRaycasts;
-        meltInitialHdrColor = lightFrostMaterial.GetColor("_HDRColor");
-        meltInitialHdrIntensity = lightFrostMaterial.GetFloat("_HDRIntensity");
+        meltInitialHdrColor = lightFrostMaterial.HasProperty("_HDRColor")
+            ? lightFrostMaterial.GetColor("_HDRColor")
+            : Color.white;
+        meltInitialHdrIntensity = lightFrostMaterial.HasProperty("_HDRIntensity")
+            ? lightFrostMaterial.GetFloat("_HDRIntensity")
+            : HdrIntensityFromColor(meltInitialHdrColor);
         meltUiStateCaptured = true;
     }
 
@@ -518,8 +539,8 @@ public sealed class SpiritBondController : MonoBehaviour
 
         if (lightFrostMaterial != null)
         {
-            lightFrostMaterial.SetFloat("_HDRIntensity", meltInitialHdrIntensity);
-            lightFrostMaterial.SetColor("_HDRColor", meltInitialHdrColor);
+            if (lightFrostMaterial.HasProperty("_HDRIntensity")) lightFrostMaterial.SetFloat("_HDRIntensity", meltInitialHdrIntensity);
+            if (lightFrostMaterial.HasProperty("_HDRColor")) lightFrostMaterial.SetColor("_HDRColor", meltInitialHdrColor);
         }
 
         meltUiStateCaptured = false;
@@ -529,12 +550,27 @@ public sealed class SpiritBondController : MonoBehaviour
     {
         return meltCameraProfile != null
             ? Mathf.Max(0f, meltCameraProfile.startLerp) + Mathf.Max(0f, meltCameraProfile.duration)
-            : Mathf.Max(meltFrostFadeSeconds, meltHdrIntensitySeconds);
+            : meltFrostFadeSeconds;
     }
 
     private float GetMeltProfileReturnDuration()
     {
         return meltCameraProfile != null ? Mathf.Max(0f, meltCameraProfile.endLerp) : 0f;
+    }
+
+    private float GetMeltProfileHdrIntensityStart()
+    {
+        return meltCameraProfile != null ? meltCameraProfile.muninUiHdrIntensityStart : -10f;
+    }
+
+    private float GetMeltProfileHdrIntensityEnd()
+    {
+        return meltCameraProfile != null ? meltCameraProfile.muninUiHdrIntensityEnd : 10f;
+    }
+
+    private float GetMeltProfileHdrIntensityLerp()
+    {
+        return meltCameraProfile != null ? Mathf.Max(0f, meltCameraProfile.muninUiHdrIntensityLerp) : 0f;
     }
 
     private void AcquireMeltMovementLock()
@@ -577,9 +613,15 @@ public sealed class SpiritBondController : MonoBehaviour
         // The graph exposes the EV value for authoring. HDR Color is updated to
         // the same 2^EV exposure so existing materials remain compatible while
         // the graph is reimported on every target platform.
-        lightFrostMaterial.SetFloat("_HDRIntensity", intensity);
+        if (lightFrostMaterial.HasProperty("_HDRIntensity")) lightFrostMaterial.SetFloat("_HDRIntensity", intensity);
         float exposure = Mathf.Pow(2f, Mathf.Clamp(intensity, -10f, 10f));
-        lightFrostMaterial.SetColor("_HDRColor", new Color(exposure, exposure, exposure, 1f));
+        if (lightFrostMaterial.HasProperty("_HDRColor")) lightFrostMaterial.SetColor("_HDRColor", new Color(exposure, exposure, exposure, 1f));
+    }
+
+    private static float HdrIntensityFromColor(Color color)
+    {
+        float brightness = Mathf.Max(color.r, color.g, color.b, 0.0009765625f);
+        return Mathf.Clamp(Mathf.Log(brightness, 2f), -10f, 10f);
     }
 
     private static float DurationProgress(float elapsed, float duration)
@@ -694,6 +736,19 @@ public sealed class SpiritBondController : MonoBehaviour
 
         return hostAnimator.IsInTransition(0) &&
                hostAnimator.GetNextAnimatorStateInfo(0).shortNameHash == MeltStateHash;
+    }
+
+    private bool IsRupturePlaying()
+    {
+        if (hostAnimator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo current = hostAnimator.GetCurrentAnimatorStateInfo(0);
+        return current.shortNameHash == RuptureStateHash ||
+               (hostAnimator.IsInTransition(0) &&
+                hostAnimator.GetNextAnimatorStateInfo(0).shortNameHash == RuptureStateHash);
     }
 
     private void SetSpiritVisible(bool visible)

@@ -178,13 +178,14 @@ public sealed class CameraProfilPlayer : MonoBehaviour
 
     private static void GetProfilePose(Transform anchor, CameraProfilSO profile, float holdElapsed, out Vector3 position, out Quaternion rotation)
     {
-        Vector3 localOffset = profile.offset + profile.movementSpeed * holdElapsed;
-        position = anchor.TransformPoint(localOffset);
-        Vector3 toAnchor = anchor.position - position;
-        Quaternion lookAtAnchor = toAnchor.sqrMagnitude > 0.0001f
-            ? Quaternion.LookRotation(toAnchor.normalized, anchor.up)
+        Vector3 localPositionOffset = profile.positionOffset + profile.movementSpeed * holdElapsed;
+        position = anchor.TransformPoint(localPositionOffset);
+        Vector3 focusPoint = anchor.TransformPoint(profile.offset);
+        Vector3 toFocus = focusPoint - position;
+        Quaternion lookAtAnchor = toFocus.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(toFocus.normalized, anchor.up)
             : anchor.rotation;
-        rotation = lookAtAnchor * Quaternion.Euler(profile.rotationSpeed * holdElapsed);
+        rotation = lookAtAnchor;
     }
 
     private static float DurationProgress(float elapsed, float duration)

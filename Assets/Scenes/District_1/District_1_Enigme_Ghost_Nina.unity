@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!4 &20494510 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2663386024477595524, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_PrefabInstance: {fileID: 1127182587}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &54489489
 GameObject:
   m_ObjectHideFlags: 0
@@ -2899,6 +2904,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1482067150}
     m_Modifications:
+    - target: {fileID: 789614906458039094, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemy
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 789614906458039094, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemySkills
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 819693776246483267, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1077096534
+      objectReference: {fileID: 0}
+    - target: {fileID: 819693776246483267, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 819693776246483267, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3039305646
+      objectReference: {fileID: 0}
     - target: {fileID: 1702866972060765472, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2945,11 +2970,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1957030465273736943, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
-      value: 44.43
+      value: 45.33
       objectReference: {fileID: 0}
     - target: {fileID: 1957030465273736943, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
-      value: -97.4
+      value: -98.16
       objectReference: {fileID: 0}
     - target: {fileID: 1957030465273736943, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
@@ -2962,22 +2987,42 @@ PrefabInstance:
     - target: {fileID: 1957030465273736943, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.z
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2722337685086245760, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemy
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3812608514145608465, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemy
+      value: 
+      objectReference: {fileID: 1127182593}
+    - target: {fileID: 5658577188080480298, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemy
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5658577188080480298, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemySkills
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_Name
       value: Enemy_Model_MadScientist
       objectReference: {fileID: 0}
+    - target: {fileID: 7037574825154043715, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: enemy
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7645014274984057121, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.y
       value: 307.122
       objectReference: {fileID: 0}
     - target: {fileID: 7645014274984057121, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
-      value: 44.43
+      value: 45.33
       objectReference: {fileID: 0}
     - target: {fileID: 7645014274984057121, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
-      value: -97.4
+      value: -98.16
       objectReference: {fileID: 0}
     - target: {fileID: 7645014274984057121, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
@@ -2997,11 +3042,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8902066288891202985, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
-      value: 44.43
+      value: 45.33
       objectReference: {fileID: 0}
     - target: {fileID: 8902066288891202985, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
-      value: -97.4
+      value: -98.16
       objectReference: {fileID: 0}
     - target: {fileID: 8902066288891202985, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
@@ -3083,8 +3128,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySkills
   enemy: {fileID: 1127182593}
-  animationContract: {fileID: 0}
-  animator: {fileID: 0}
+  animationContract: {fileID: 1127182609}
+  animator: {fileID: 1127182613}
   timeDomain: {fileID: 0}
   casterVfxPoint: {fileID: 0}
 --- !u!114 &1127182593
@@ -3094,28 +3139,77 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1127182588}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 42b973aefe274ecf804a743102815ad4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemy
-  health: {fileID: 1127182590}
-  animationContract: {fileID: 0}
-  animator: {fileID: 0}
-  visionField: {fileID: 0}
-  enemySkills: {fileID: 0}
-  physicsMotor: {fileID: 0}
+  health: {fileID: 1127182612}
+  animationContract: {fileID: 1127182609}
+  animator: {fileID: 1127182613}
+  visionField: {fileID: 1127182610}
+  enemySkills: {fileID: 1127182592}
+  physicsMotor: {fileID: 1127182605}
   lockOutline: {fileID: 0}
   lockIndicator: {fileID: 0}
   hitAnimatorState: Hit
   hitAnimationTransitionSeconds: 0.06
-  idleAnimatorState: Idle
+  idleAnimatorState: CombatIdle
   hitRecoveryNormalizedTime: 0.9
   hitRecoveryTransitionSeconds: 0.1
   deathAnimatorState: Death
   deathAnimationTransitionSeconds: 0.08
-  enemyLockPoint: {fileID: 0}
+  enemyLockPoint: {fileID: 20494510}
   retaliationDelaySeconds: 0.15
+--- !u!114 &1127182605 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3812608514145608465, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_PrefabInstance: {fileID: 1127182587}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127182588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82fcd1459df94c2da7699f306512c9a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatEnemyPhysicsMotor
+--- !u!114 &1127182609 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5328593863581058068, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_PrefabInstance: {fileID: 1127182587}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127182588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
+--- !u!114 &1127182610 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5611853282600674636, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_PrefabInstance: {fileID: 1127182587}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127182588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 318b3f6b3ded45e58a293a2f8b979d24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VisionField
+--- !u!114 &1127182612 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6265503266476303049, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_PrefabInstance: {fileID: 1127182587}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127182588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e656d7bea194d128df1cce3a6d2689c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatHealth
+--- !u!95 &1127182613 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 327572561411875199, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_PrefabInstance: {fileID: 1127182587}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1141546268
 GameObject:
   m_ObjectHideFlags: 0
@@ -3249,6 +3343,7 @@ GameObject:
   - component: {fileID: 1218709672}
   - component: {fileID: 1218709674}
   - component: {fileID: 1218709675}
+  - component: {fileID: 1218709676}
   m_Layer: 0
   m_Name: "Lettre manuscrite d'\xC9douard"
   m_TagString: Untagged
@@ -3356,10 +3451,31 @@ MonoBehaviour:
   actionBoxDisabledAlpha: 0.25
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: '{0}/{1}'
-  interactionTrigger: {fileID: 0}
+  interactionTrigger: {fileID: 1218709676}
   interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
+--- !u!65 &1218709676
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218709671}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2, y: 1.2, z: 1.2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1220363215
 GameObject:
   m_ObjectHideFlags: 0
@@ -4458,7 +4574,7 @@ Transform:
   m_GameObject: {fileID: 1482067148}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.63, y: 0, z: 23.4}
+  m_LocalPosition: {x: -4.7299995, y: -0.76000214, z: 23.400002}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
