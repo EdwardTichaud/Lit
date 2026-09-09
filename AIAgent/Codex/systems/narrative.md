@@ -1,5 +1,16 @@
 # Narration et connaissances
 
+## Liaison des rencontres et poses de cycle
+
+CycleController accepte un encounterEnemy explicite pour les ennemis places en
+scene sans SceneMarker. Avec un marker, RuntimeInstance est prioritaire sur la
+copie baked. Le cycle observe CharacterInfo.HealthChanged et retrouve aussi un
+ennemi deja mort lors du chargement. Nina utilise cette liaison directe.
+CyclePoseBinding peut piloter un booleen Animator suivant la condition; Nina
+utilise isDead. Les noms courts d'etats sont resolus avec le nom du layer.
+La presentation Dead requiert les deux connaissances et reste independante de
+la disponibilite de la Timeline.
+
 ## Rôle
 
 Exécuter les séquences cinématiques, afficher les dialogues, gérer les
