@@ -10,8 +10,8 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
     private RealTimeCombatManager combatManager;
     private LightSkillSO lightSkill;
-    private RealTimeCombatEnemy targetEnemy;
-    private RealTimeCombatEnemyBehaviour enemyBehaviour;
+    private EnemyController targetEnemy;
+    private EnemyController enemyBehaviour;
     private CombatLockOnCameraController lockCamera;
     private System.Action resolveImpact;
     private Coroutine projectileRoutine;
@@ -42,7 +42,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         lightSkill = skill;
         targetEnemy = context.TargetEnemy;
         resolveImpact = context.ResolveImpact;
-        enemyBehaviour = targetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+        enemyBehaviour = targetEnemy.GetComponent<EnemyController>();
         lockCamera = combatManager.GetComponent<CombatLockOnCameraController>();
         active = true;
         projectileSpawned = false;
@@ -221,7 +221,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     }
 
     private static void ApplyPostTimelineState(
-        RealTimeCombatEnemy enemy,
+        EnemyController enemy,
         Animator animator,
         LightSkillPostTimelineState state)
     {

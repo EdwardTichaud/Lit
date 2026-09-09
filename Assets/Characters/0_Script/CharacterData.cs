@@ -96,6 +96,8 @@ public class CharacterData : ScriptableObject
     /// <summary>Competences de combat temps reel connues par le personnage.</summary>
     public List<SkillSO> combatSkills = new List<SkillSO>();
     public EnemyCombatProfileSO enemyCombatProfile;
+    [Tooltip("Reglages communs du controleur ennemi. Chaque instance recoit sa propre copie au lancement.")]
+    public EnemySettings enemySettings = new EnemySettings();
 
     [Header("Basic Skills")]
     [Tooltip("Combo d'attaques basiques disponible au sol. L'ordre definit l'enchainement.")]

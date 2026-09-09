@@ -76,7 +76,7 @@ public static class NinaCycleSetup
                 new CycleActivationBinding { target = blood, condition = definition.FindDialogue("scar").condition },
                 new CycleActivationBinding { target = scar.gameObject, condition = definition.FindDialogue("scar").condition }
             };
-            cycle.poses = new[] { new CyclePoseBinding { condition = definition.FindDialogue("nina").condition } };
+            cycle.poses = new[] { new CyclePoseBinding { condition = definition.FindDialogue("nina").condition, conditionBoolParameter = "isDead" } };
             cycle.director = Child(root, "Cinematique_ScientifiqueFou_A_ASSIGNER").AddComponent<PlayableDirector>();
             cycle.director.playOnAwake = false;
             cycle.director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;

@@ -21,7 +21,7 @@ public static class CombatActorAnimationContractEditor
             GameObject root = PrefabUtility.LoadPrefabContents(PrefabPaths[i]);
             try
             {
-                CombatActorAnimationRoot contract = root.GetComponent<CombatActorAnimationRoot>();
+                CharacterAnimationController contract = root.GetComponent<CharacterAnimationController>();
                 if (contract == null)
                 {
                     report.Add(PrefabPaths[i] + ": contrat absent.");
@@ -96,10 +96,10 @@ public static class CombatActorAnimationContractEditor
                 }
             }
 
-            CombatActorAnimationRoot contract = root.GetComponent<CombatActorAnimationRoot>();
+            CharacterAnimationController contract = root.GetComponent<CharacterAnimationController>();
             if (contract == null)
             {
-                contract = root.AddComponent<CombatActorAnimationRoot>();
+                contract = root.AddComponent<PlayerAnimationController>();
             }
 
             Transform lockPoint = root.transform.Find("EnemyLockPoint");
@@ -110,9 +110,9 @@ public static class CombatActorAnimationContractEditor
                 root.AddComponent<CombatTimeDomain>();
             }
 
-            if (animator.GetComponent<CombatActorRootMotionRelay>() == null)
+            if (contract is PlayerAnimationController && animator.GetComponent<PlayerRootMotionRelay>() == null)
             {
-                animator.gameObject.AddComponent<CombatActorRootMotionRelay>();
+                animator.gameObject.AddComponent<PlayerRootMotionRelay>();
             }
 
             AssignAnimatorReferences(root, contract, animator);
@@ -149,10 +149,10 @@ public static class CombatActorAnimationContractEditor
 
     private static Animator FindGameplayAnimator(GameObject root)
     {
-        EnemySkills skills = root.GetComponent<EnemySkills>();
-        if (skills != null && skills.Animator != null && skills.Animator.runtimeAnimatorController != null)
+        EnemyController skills = root.GetComponent<EnemyController>();
+        if (skills != null && skills.SkillAnimator != null && skills.SkillAnimator.runtimeAnimatorController != null)
         {
-            return skills.Animator;
+            return skills.SkillAnimator;
         }
 
         Animator[] animators = root.GetComponentsInChildren<Animator>(true);
@@ -167,12 +167,12 @@ public static class CombatActorAnimationContractEditor
         return null;
     }
 
-    private static void AssignAnimatorReferences(GameObject root, CombatActorAnimationRoot contract, Animator animator)
+    private static void AssignAnimatorReferences(GameObject root, CharacterAnimationController contract, Animator animator)
     {
-        SetObjectReference(root.GetComponent<RealTimeCombatEnemy>(), "animationContract", contract);
-        SetObjectReference(root.GetComponent<RealTimeCombatEnemy>(), "animator", animator);
-        SetObjectReference(root.GetComponent<EnemySkills>(), "animationContract", contract);
-        SetObjectReference(root.GetComponent<EnemySkills>(), "animator", animator);
+        SetObjectReference(root.GetComponent<EnemyController>(), "ActorAnimationContract", contract);
+        SetObjectReference(root.GetComponent<EnemyController>(), "ActorAnimator", animator);
+        SetObjectReference(root.GetComponent<EnemyController>(), "ActorAnimationContract", contract);
+        SetObjectReference(root.GetComponent<EnemyController>(), "ActorAnimator", animator);
         SetObjectReference(root.GetComponent<LitOpsiveLocomotionBridge>(), "animator", animator);
         SetObjectReference(root.GetComponent<PlayerActionPresentationController>(), "animator", animator);
     }

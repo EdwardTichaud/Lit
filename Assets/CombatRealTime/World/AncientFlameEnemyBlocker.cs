@@ -52,11 +52,11 @@ public sealed class AncientFlameEnemyBlocker : MonoBehaviour
 
     private bool HasNearbyLivingEnemy()
     {
-        RealTimeCombatEnemy[] enemies = FindObjectsByType<RealTimeCombatEnemy>();
+        EnemyController[] enemies = FindObjectsByType<EnemyController>();
         float rangeSqr = enemyProximityRange * enemyProximityRange;
         for (int i = 0; i < enemies.Length; i++)
         {
-            RealTimeCombatEnemy enemy = enemies[i];
+            EnemyController enemy = enemies[i];
             if (enemy == null || !enemy.gameObject.activeInHierarchy || (enemy.Health != null && enemy.Health.IsDead))
             {
                 continue;

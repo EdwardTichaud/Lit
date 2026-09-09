@@ -11,7 +11,7 @@ public class LitUccDamageBridge : MonoBehaviour
 {
     [SerializeField] private UltimateCharacterLocomotion locomotion;
     [SerializeField] private SquadCharacterController squadController;
-    [SerializeField] private CombatHealth combatHealth;
+    [SerializeField] private CharacterInfo combatHealth;
     [SerializeField] private CharacterAttributeManager attributeManager;
     [SerializeField] private CharacterHealth characterHealth;
     [SerializeField] private string healthAttributeName = "Health";
@@ -276,7 +276,7 @@ public class LitUccDamageBridge : MonoBehaviour
 
         if (combatHealth == null)
         {
-            combatHealth = GetComponent<CombatHealth>();
+            combatHealth = GetComponent<CharacterInfo>();
         }
 
         if (squadController == null)
@@ -361,7 +361,7 @@ public class LitUccDamageBridge : MonoBehaviour
         characterHealthInitialized = true;
     }
 
-    private void OnCombatHealthChanged(CombatHealth health)
+    private void OnCombatHealthChanged(CharacterInfo health)
     {
         if (health == null || CanUseCharacterHealthAuthority())
         {

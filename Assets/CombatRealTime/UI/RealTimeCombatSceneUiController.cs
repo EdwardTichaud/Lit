@@ -248,7 +248,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         return duration > 0f ? duration : combatEngagedFallbackDuration;
     }
 
-    private void OnLockChanged(RealTimeCombatEnemy enemy)
+    private void OnLockChanged(EnemyController enemy)
     {
         if (enemy != null)
         {
@@ -353,11 +353,11 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         SquadCharacterController player = manager.PlayerRoot != null
             ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true)
             : null;
-        CombatHealth playerHealth = manager.PlayerRoot != null
-            ? manager.PlayerRoot.GetComponentInChildren<CombatHealth>(true)
+        CharacterInfo playerHealth = manager.PlayerRoot != null
+            ? manager.PlayerRoot.GetComponentInChildren<CharacterInfo>(true)
             : null;
-        RealTimeCombatEnemy enemy = manager.EngagedEnemy;
-        CombatHealth enemyHealth = enemy != null ? enemy.Health : null;
+        EnemyController enemy = manager.EngagedEnemy;
+        CharacterInfo enemyHealth = enemy != null ? enemy.Health : null;
 
         int playerCurrent = player != null ? player.CurrentHp : playerHealth != null ? playerHealth.CurrentHp : 0;
         int playerMaximum = player != null ? player.MaxHp : playerHealth != null ? playerHealth.MaxHp : 1;
@@ -467,7 +467,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         InputModeCoordinator.Exit(this);
     }
 
-    private static string ResolveEnemyName(RealTimeCombatEnemy enemy)
+    private static string ResolveEnemyName(EnemyController enemy)
     {
         CharacterInfo info = enemy != null ? enemy.GetComponentInChildren<CharacterInfo>(true) : null;
         return info != null && info.CharacterData != null

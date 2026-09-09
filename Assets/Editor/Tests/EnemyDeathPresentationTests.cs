@@ -13,20 +13,20 @@ public sealed class EnemyDeathPresentationTests
         var target = new GameObject("Player target");
         try
         {
-            var health = root.AddComponent<CombatHealth>();
-            var enemy = root.AddComponent<RealTimeCombatEnemy>();
-            var locomotion = root.AddComponent<CombatEnemyLocomotionController>();
+            var health = root.AddComponent<CharacterInfo>();
+            EnemyController enemy = root.AddComponent<EnemyController>();
+            EnemyController locomotion = enemy;
             const BindingFlags fields = BindingFlags.Instance | BindingFlags.NonPublic;
-            typeof(RealTimeCombatEnemy).GetField("health", fields).SetValue(enemy, health);
-            typeof(CombatEnemyLocomotionController).GetField("enemy", fields).SetValue(locomotion, enemy);
+            typeof(EnemyController).GetField("ActorHealth", fields).SetValue(enemy, health);
+            typeof(EnemyController).GetField("LocomotionEnemy", fields).SetValue(locomotion, enemy);
             locomotion.SetCombatTarget(target.transform);
             health.SetHealth(0, 10);
             root.transform.rotation = Quaternion.Euler(0f, 30f, 0f);
             Quaternion before = root.transform.rotation;
-            typeof(CombatEnemyLocomotionController).GetMethod("Update", fields).Invoke(locomotion, null);
+            typeof(EnemyController).GetMethod("LocomotionUpdate", fields).Invoke(locomotion, null);
             locomotion.FaceTarget(new Vector3(10f, 0f, 0f));
-            typeof(CombatEnemyLocomotionController).GetMethod("LateUpdate", fields).Invoke(locomotion, null);
-            Assert.IsNull(typeof(CombatEnemyLocomotionController).GetField("combatTarget", fields).GetValue(locomotion));
+            typeof(EnemyController).GetMethod("LocomotionLateUpdate", fields).Invoke(locomotion, null);
+            Assert.IsNull(typeof(EnemyController).GetField("LocomotionCombatTarget", fields).GetValue(locomotion));
             Assert.That(Quaternion.Angle(before, root.transform.rotation), Is.LessThan(0.001f));
         }
         finally

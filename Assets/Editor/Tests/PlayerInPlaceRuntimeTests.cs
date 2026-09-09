@@ -24,12 +24,12 @@ public sealed class PlayerInPlaceRuntimeTests
         container.SetActive(false);
         var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath), container.transform);
         var keep = new HashSet<string> { "UltimateCharacterLocomotion", "UltimateCharacterLocomotionHandler", "LitOpsivePlayerInput",
-            "LitOpsiveLocomotionBridge", "LitOpsiveLookSource", "AnimatorMonitor", "CharacterLayerManager", "CombatActorAnimationRoot",
-            "CombatActorRootMotionRelay", "PlayerStateMotionController", "PlayerScriptedJumpController", "CombatTimeDomain",
+            "LitOpsiveLocomotionBridge", "LitOpsiveLookSource", "AnimatorMonitor", "CharacterLayerManager", "PlayerAnimationController",
+            "PlayerRootMotionRelay", "PlayerStateMotionController", "PlayerScriptedJumpController", "CombatTimeDomain",
             "CharacterAttributeManager", "CharacterHealth" };
         foreach (var component in root.GetComponentsInChildren<MonoBehaviour>(true))
             if (component != null && !keep.Contains(component.GetType().Name)) Object.DestroyImmediate(component);
-        var actor = root.GetComponent<CombatActorAnimationRoot>();
+        var actor = root.GetComponent<CharacterAnimationController>();
         var animator = actor.Animator;
         foreach (var other in root.GetComponentsInChildren<Animator>(true)) other.enabled = other == animator;
         animator.fireEvents = false;

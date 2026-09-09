@@ -8,7 +8,7 @@ public sealed class EnemyAggroRegressionTests
     [Test]
     public void EnemyImpactUsesSingleSkillEventReceiver()
     {
-        var receiver = typeof(RealTimeCombatAnimationEvents);
+        var receiver = typeof(EnemyController);
         Assert.That(receiver.GetMethod("EnemyAttack", new[] { typeof(SkillSO) }), Is.Not.Null);
         foreach (string obsolete in new[] { "OpenEnemyAttackHitbox", "CloseEnemyAttackHitbox",
                      "HitPlayer", "HitPlayerIf", "ResolveThresholdFailureImpact",
@@ -44,7 +44,7 @@ public sealed class EnemyAggroRegressionTests
         try
         {
             var manager = root.AddComponent<RealTimeCombatManager>();
-            var hp = root.AddComponent<CombatHealth>();
+            var hp = root.AddComponent<CharacterInfo>();
             hp.SetHealth(health, 10);
             WriteReaction(manager, "playerRoot", root.transform);
             WriteReaction(manager, "playerHealth", hp);
@@ -122,7 +122,7 @@ public sealed class EnemyAggroRegressionTests
             controller.CancelAttackQte(enemy);
             Assert.That(controller.IsAttackDodged(enemy, player, enemy.ActiveSkill), Is.True);
             Assert.That(controller.IsAttackDodged(enemy, actor.transform, enemy.ActiveSkill), Is.False);
-            Assert.That(controller.IsAttackDodged(actor.GetComponent<RealTimeCombatEnemy>(), player, enemy.ActiveSkill), Is.False);
+            Assert.That(controller.IsAttackDodged(actor.GetComponent<EnemyController>(), player, enemy.ActiveSkill), Is.False);
             WriteReaction(enemy, "<ActionSequenceId>k__BackingField", enemy.ActionSequenceId + 1);
             Assert.That(controller.IsAttackDodged(enemy, player, enemy.ActiveSkill), Is.False);
             controller.EndEnemyReactionAction(enemy);
@@ -130,7 +130,7 @@ public sealed class EnemyAggroRegressionTests
         });
     }
 
-    private static void WithReactionFixture(System.Action<CombatHealthThresholdController, RealTimeCombatEnemy, Transform> test)
+    private static void WithReactionFixture(System.Action<CombatHealthThresholdController, EnemyController, Transform> test)
     {
         var root = new GameObject("Invisible reaction fixture");
         var enemyObject = new GameObject("Reaction enemy");
@@ -140,7 +140,7 @@ public sealed class EnemyAggroRegressionTests
         {
             var manager = root.AddComponent<RealTimeCombatManager>();
             var controller = root.AddComponent<CombatHealthThresholdController>();
-            var enemy = enemyObject.AddComponent<RealTimeCombatEnemy>();
+            EnemyController enemy = enemyObject.AddComponent<EnemyController>();
             WriteReaction(manager, "combatActive", true);
             WriteReaction(manager, "engagedEnemy", enemy);
             WriteReaction(manager, "playerRoot", player.transform);
@@ -200,23 +200,23 @@ public sealed class EnemyAggroRegressionTests
     [TestCase(3f, -4f, 5f)]
     public void RushUsesAllThreeAxesAndHonorsStopDistance(float x, float y, float z)
     {
-        var motor = actor.GetComponent<CombatEnemyPhysicsMotor>();
+        EnemyController motor = actor.GetComponent<EnemyController>();
         var target = new GameObject("Rush target");
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        var type = typeof(CombatEnemyPhysicsMotor);
+        var type = typeof(EnemyController);
         var profile = new EnemyActionMotionProfile { enableHomingRush = true,
             rushMaximumSpeed = 15f, rushImpulseDuration = .1f, rushStoppingDistance = 1f };
         try
         {
-            type.GetField("activeMotionProfile", flags).SetValue(motor, profile);
-            type.GetField("bodyCollider", flags).SetValue(motor, null);
-            type.GetField("body", flags).SetValue(motor, null);
+            type.GetField("PhysicsActiveMotionProfile", flags).SetValue(motor, profile);
+            type.GetField("PhysicsBodyCollider", flags).SetValue(motor, null);
+            type.GetField("PhysicsBody", flags).SetValue(motor, null);
             type.GetField("<State>k__BackingField", flags).SetValue(motor, CombatEnemyPhysicsState.AirborneAction);
             actor.transform.position = Vector3.zero;
             var direction = new Vector3(x, y, z);
             target.transform.position = direction;
-            motor.BeginEnemyRush(target.transform);
-            var resolve = type.GetMethod("ResolveRushDelta", flags);
+            motor.PhysicsBeginEnemyRush(target.transform);
+            var resolve = type.GetMethod("PhysicsResolveRushDelta", flags);
             var delta = (Vector3)resolve.Invoke(motor, new object[] { Vector3.zero });
             Assert.That(delta.magnitude, Is.GreaterThan(0f));
             Assert.That(Vector3.Angle(delta, direction), Is.LessThan(.01f));
@@ -225,7 +225,7 @@ public sealed class EnemyAggroRegressionTests
             delta = (Vector3)resolve.Invoke(motor, new object[] { Vector3.zero });
             Assert.That(Vector3.Angle(delta, direction), Is.LessThan(.01f));
             for (int i = 0; i < 100; i++) resolve.Invoke(motor, new object[] { Vector3.zero });
-            Assert.That(type.GetField("rushActive", flags).GetValue(motor), Is.False,
+            Assert.That(type.GetField("PhysicsRushActive", flags).GetValue(motor), Is.False,
                 "L'impulsion doit se terminer sans EndEnemyRush dans le clip.");
             Assert.That((Vector3)resolve.Invoke(motor, new object[] { Vector3.zero }), Is.EqualTo(Vector3.zero));
         }
@@ -246,12 +246,12 @@ public sealed class EnemyAggroRegressionTests
             info.SetCharacterData(data);
             profile.preferMeleeApproach = true;
             profile.airborneAlternativeChance = 0f;
-            Set("profile", profile);
-            Set("skills", actor.GetComponent<EnemySkills>());
+            Set("BrainProfile", profile);
+            Set("BrainSkills", actor.GetComponent<EnemyController>());
             var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-            var approach = typeof(EnemyCombatBrain).GetMethod("TryResolveApproach", flags);
-            var prefer = typeof(EnemyCombatBrain).GetMethod("ShouldPreferMelee", flags);
-            var available = typeof(EnemyCombatBrain).GetMethod("IsPatternAvailable", flags);
+            var approach = typeof(EnemyController).GetMethod("BrainTryResolveApproach", flags);
+            var prefer = typeof(EnemyController).GetMethod("BrainShouldPreferMelee", flags);
+            var available = typeof(EnemyController).GetMethod("BrainIsPatternAvailable", flags);
             Assert.That(prefer.Invoke(brain, null), Is.False);
             object[] args = { 15f, false, 0f };
             Assert.That(approach.Invoke(brain, args), Is.True);
@@ -264,10 +264,10 @@ public sealed class EnemyAggroRegressionTests
             approach.Invoke(brain, args);
             Assert.That(args[1], Is.False, "Respecter aussi la portee minimale du pattern.");
             var pattern = profile.patterns.Find(p => p.skills[0] == jump);
-            Set("previousPattern", pattern);
-            Set("consecutiveUses", 20);
+            Set("BrainPreviousPattern", pattern);
+            Set("BrainConsecutiveUses", 20);
             Assert.That(available.Invoke(brain, new object[] { pattern }), Is.True);
-            var cooldowns = Get<System.Collections.Generic.Dictionary<EnemyCombatPattern, float>>("cooldowns");
+            var cooldowns = Get<System.Collections.Generic.Dictionary<EnemyCombatPattern, float>>("BrainCooldowns");
             cooldowns[pattern] = float.MaxValue;
             Assert.That(available.Invoke(brain, new object[] { pattern }), Is.False);
             cooldowns.Clear();
@@ -321,12 +321,12 @@ public sealed class EnemyAggroRegressionTests
     public void PendingThresholdDoesNotSuspendCommittedAttack()
     {
         var thresholds = container.AddComponent<CombatHealthThresholdController>();
-        var enemy = actor.GetComponent<RealTimeCombatEnemy>();
+        EnemyController enemy = actor.GetComponent<EnemyController>();
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
         typeof(CombatHealthThresholdController).GetField("activeEnemy", flags).SetValue(thresholds, enemy);
         var state = typeof(CombatHealthThresholdController).GetField("state", flags);
         state.SetValue(thresholds, System.Enum.Parse(state.FieldType, "Pending"));
-        var skillField = typeof(RealTimeCombatEnemy).GetField("activeSkill", flags);
+        var skillField = typeof(EnemyController).GetField("ActorActiveSkill", flags);
         var skill = ScriptableObject.CreateInstance<SkillSO>();
         try
         {
@@ -344,8 +344,8 @@ public sealed class EnemyAggroRegressionTests
     [Test]
     public void ReturnFacingIsClearedOnStopAndCombatRetarget()
     {
-        var locomotion = actor.GetComponent<CombatEnemyLocomotionController>();
-        var flag = typeof(CombatEnemyLocomotionController).GetField("returnFacingActive", BindingFlags.Instance | BindingFlags.NonPublic);
+        EnemyController locomotion = actor.GetComponent<EnemyController>();
+        var flag = typeof(EnemyController).GetField("LocomotionReturnFacingActive", BindingFlags.Instance | BindingFlags.NonPublic);
         locomotion.SetReturnFacing(Vector3.forward * 10f);
         Assert.That((bool)flag.GetValue(locomotion), Is.True);
         Assert.That(actor.GetComponent<UnityEngine.AI.NavMeshAgent>().updateRotation, Is.False);
@@ -379,19 +379,19 @@ public sealed class EnemyAggroRegressionTests
     [TestCase(1f, 0f, 1.8f, 0f)]
     public void CadenceCompensatesLocalTimeOnlyOnce(float speed, float scale, float reference, float expected)
     {
-        Assert.That(CombatEnemyLocomotionController.ResolvePlaybackRate(speed, scale, reference), Is.EqualTo(expected).Within(.0001f));
+        Assert.That(EnemyController.ResolvePlaybackRate(speed, scale, reference), Is.EqualTo(expected).Within(.0001f));
     }
 
     [Test]
     public void LocomotionActivityHasHysteresis()
     {
-        Assert.That(CombatEnemyLocomotionController.ShouldPresentLocomotion(.05f, false), Is.False);
-        Assert.That(CombatEnemyLocomotionController.ShouldPresentLocomotion(.05f, true), Is.True);
-        Assert.That(CombatEnemyLocomotionController.ShouldPresentLocomotion(.02f, true), Is.False);
+        Assert.That(EnemyController.ShouldPresentLocomotion(.05f, false), Is.False);
+        Assert.That(EnemyController.ShouldPresentLocomotion(.05f, true), Is.True);
+        Assert.That(EnemyController.ShouldPresentLocomotion(.02f, true), Is.False);
     }
     private GameObject container;
     private GameObject actor;
-    private EnemyCombatBrain brain;
+    private EnemyController brain;
 
     [SetUp]
     public void SetUp()
@@ -401,10 +401,10 @@ public sealed class EnemyAggroRegressionTests
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab");
         actor = Object.Instantiate(prefab, container.transform);
-        brain = actor.GetComponent<EnemyCombatBrain>();
-        Set("home", actor.transform.position);
-        Set("homeRotation", actor.transform.rotation);
-        Set("locomotion", actor.GetComponent<CombatEnemyLocomotionController>());
+        brain = actor.GetComponent<EnemyController>();
+        Set("BrainHome", actor.transform.position);
+        Set("BrainHomeRotation", actor.transform.rotation);
+        Set("BrainLocomotion", actor.GetComponent<EnemyController>());
     }
 
     [TearDown]
@@ -415,30 +415,30 @@ public sealed class EnemyAggroRegressionTests
     {
         TickReturn();
         TickReturn();
-        Assert.That(Get<bool>("returning"), Is.False);
-        Assert.That(brain.Phase, Is.EqualTo(EnemyCombatBrain.CombatPhase.Idle));
+        Assert.That(Get<bool>("BrainReturning"), Is.False);
+        Assert.That(brain.Phase, Is.EqualTo(EnemyController.CombatPhase.Idle));
     }
 
     [Test]
     public void CompletedReturnRearmsVisionAndClearsObservation()
     {
-        Set("returning", true);
-        Set("observeUntil", 10f);
+        Set("BrainReturning", true);
+        Set("BrainObserveUntil", 10f);
         TickReturn();
-        Assert.That(Get<bool>("returning"), Is.False);
-        Assert.That(Get<float>("observeUntil"), Is.Zero);
+        Assert.That(Get<bool>("BrainReturning"), Is.False);
+        Assert.That(Get<float>("BrainObserveUntil"), Is.Zero);
     }
 
     [Test]
     public void DisengagementDoesNotRequireNavigationOrEnemyDeath()
     {
-        var enemy = actor.GetComponent<RealTimeCombatEnemy>();
-        Set("enemy", enemy);
-        Set("profile", actor.GetComponent<CharacterInfo>().CharacterData.enemyCombatProfile);
-        Set("navigation", null);
-        Set("home", actor.transform.position + Vector3.forward * 10f);
+        EnemyController enemy = actor.GetComponent<EnemyController>();
+        Set("BrainEnemy", enemy);
+        Set("BrainProfile", actor.GetComponent<CharacterInfo>().CharacterData.enemyCombatProfile);
+        Set("BrainNavigation", null);
+        Set("BrainHome", actor.transform.position + Vector3.forward * 10f);
         TickReturn();
-        Assert.That(Get<bool>("returning"), Is.True);
+        Assert.That(Get<bool>("BrainReturning"), Is.True);
         Assert.That(brain.Target, Is.Null);
         Assert.That(enemy.Health == null || !enemy.Health.IsDead, Is.True);
     }
@@ -446,14 +446,14 @@ public sealed class EnemyAggroRegressionTests
     [Test]
     public void SkillsResolveFromCharacterDataBeforeFirstReservation()
     {
-        var skills = actor.GetComponent<EnemySkills>();
+        EnemyController skills = actor.GetComponent<EnemyController>();
         var data = actor.GetComponent<CharacterInfo>().CharacterData;
         Assert.That(skills.Skills.Count, Is.EqualTo(data.combatSkills.Count));
         Assert.That(skills.SetActiveSkill(data.combatSkills[0]), Is.True);
     }
 
-    private void TickReturn() => typeof(EnemyCombatBrain)
-        .GetMethod("TickReturn", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(brain, null);
+    private void TickReturn() => typeof(EnemyController)
+        .GetMethod("BrainTickReturn", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(brain, null);
 
     [TestCase(0f, 3f, 2.8f)]
     [TestCase(2.5f, 6f, 5.8f)]
@@ -461,19 +461,19 @@ public sealed class EnemyAggroRegressionTests
     [TestCase(2f, 2f, 2f)]
     public void ApproachStaysInsideAuthoredRange(float minimum, float maximum, float expected)
     {
-        Assert.That(EnemyCombatBrain.ResolveApproachDistance(minimum, maximum),
+        Assert.That(EnemyController.ResolveApproachDistance(minimum, maximum),
             Is.EqualTo(expected).Within(.0001f));
     }
 
     [Test]
     public void RunningUsesHysteresisBetweenSixAndEightMeters()
     {
-        var locomotion = actor.GetComponent<CombatEnemyLocomotionController>();
-        var type = typeof(CombatEnemyLocomotionController);
+        EnemyController locomotion = actor.GetComponent<EnemyController>();
+        var type = typeof(EnemyController);
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        type.GetField("navigationAgent", flags).SetValue(locomotion, actor.GetComponent<UnityEngine.AI.NavMeshAgent>());
-        var pace = type.GetMethod("SetMovementPace", flags);
-        var running = type.GetField("runPhase", flags);
+        type.GetField("LocomotionNavigationAgent", flags).SetValue(locomotion, actor.GetComponent<UnityEngine.AI.NavMeshAgent>());
+        var pace = type.GetMethod("LocomotionSetMovementPace", flags);
+        var running = type.GetField("LocomotionRunPhase", flags);
         pace.Invoke(locomotion, new object[] { 15f });
         Assert.That(running.GetValue(locomotion), Is.True);
         pace.Invoke(locomotion, new object[] { 7f });
@@ -484,9 +484,9 @@ public sealed class EnemyAggroRegressionTests
         Assert.That(running.GetValue(locomotion), Is.False);
     }
 
-    private void Set(string name, object value) => typeof(EnemyCombatBrain)
+    private void Set(string name, object value) => typeof(EnemyController)
         .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(brain, value);
 
-    private T Get<T>(string name) => (T)typeof(EnemyCombatBrain)
+    private T Get<T>(string name) => (T)typeof(EnemyController)
         .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(brain);
 }

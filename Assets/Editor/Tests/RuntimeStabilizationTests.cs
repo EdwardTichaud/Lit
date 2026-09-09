@@ -27,7 +27,7 @@ public sealed class RuntimeStabilizationTests
             var encounter = root.AddComponent<ScientistEncounterController>();
             Assert.That(encounter, Is.Not.Null);
             Type stateType = typeof(ScientistEncounterController).GetNestedType("EncounterState", BindingFlags.NonPublic);
-            MethodInfo set = typeof(ScientistEncounterController).GetMethod("SetState", Private);
+            MethodInfo set = typeof(ScientistEncounterController).GetMethod("PhysicsSetState", Private);
             foreach (string next in new[] { "Dialogue", "Active" })
             {
                 set.Invoke(encounter, new[] { Enum.Parse(stateType, next) });
@@ -95,14 +95,14 @@ public sealed class RuntimeStabilizationTests
         try
         {
             var agent = root.AddComponent<NavMeshAgent>();
-            var navigation = root.AddComponent<EnemyNavigationController>();
+            EnemyController navigation = root.AddComponent<EnemyController>();
             var world = worldRoot.AddComponent<NavMeshWorldService>();
-            typeof(EnemyNavigationController).GetField("navigationAgent", Private).SetValue(navigation, agent);
-            typeof(EnemyNavigationController).GetMethod("BindWorld", Private).Invoke(navigation, new object[] { world });
-            typeof(NavMeshWorldService).GetMethod("SetState", Private).Invoke(world, new object[] { NavMeshWorldState.Invalidating });
+            typeof(EnemyController).GetField("NavigationNavigationAgent", Private).SetValue(navigation, agent);
+            typeof(EnemyController).GetMethod("NavigationBindWorld", Private).Invoke(navigation, new object[] { world });
+            typeof(NavMeshWorldService).GetMethod("PhysicsSetState", Private).Invoke(world, new object[] { NavMeshWorldState.Invalidating });
             Assert.That(agent.enabled, Is.False);
-            Assert.That(navigation.Status, Is.EqualTo(EnemyNavigationController.ReadinessStatus.WaitingForWorld));
-            typeof(EnemyNavigationController).GetMethod("BindWorld", Private).Invoke(navigation, new object[] { null });
+            Assert.That(navigation.Status, Is.EqualTo(EnemyController.ReadinessStatus.WaitingForWorld));
+            typeof(EnemyController).GetMethod("NavigationBindWorld", Private).Invoke(navigation, new object[] { null });
         }
         finally { Object.DestroyImmediate(root); Object.DestroyImmediate(worldRoot); }
     }
@@ -116,12 +116,12 @@ public sealed class RuntimeStabilizationTests
         other.SetActive(false);
         try
         {
-            var motor = root.AddComponent<CombatEnemyPhysicsMotor>();
+            EnemyController motor = root.AddComponent<EnemyController>();
             other.AddComponent<CharacterInfo>();
             var bone = new GameObject("foot_l");
             bone.transform.SetParent(other.transform);
             var collider = bone.AddComponent<BoxCollider>();
-            var accepts = typeof(CombatEnemyPhysicsMotor).GetMethod("IsGroundCollider", Private);
+            var accepts = typeof(EnemyController).GetMethod("PhysicsIsGroundCollider", Private);
             Assert.That(accepts.Invoke(motor, new object[] { collider }), Is.False);
         }
         finally { Object.DestroyImmediate(root); Object.DestroyImmediate(other); }
@@ -142,11 +142,11 @@ public sealed class RuntimeStabilizationTests
             capsule.radius = 0.5f;
             capsule.height = 2f;
             capsule.center = Vector3.up;
-            var motor = root.AddComponent<CombatEnemyPhysicsMotor>();
-            typeof(CombatEnemyPhysicsMotor).GetField("bodyCollider", Private).SetValue(motor, capsule);
+            EnemyController motor = root.AddComponent<EnemyController>();
+            typeof(EnemyController).GetField("PhysicsBodyCollider", Private).SetValue(motor, capsule);
             Physics.SyncTransforms();
             object[] args = { root.transform.position, 0f };
-            bool found = (bool)typeof(CombatEnemyPhysicsMotor).GetMethod("TryGetGroundY", Private).Invoke(motor, args);
+            bool found = (bool)typeof(EnemyController).GetMethod("PhysicsTryGetGroundY", Private).Invoke(motor, args);
             Assert.That(found, Is.True);
             Assert.That((float)args[1], Is.EqualTo(-97.97f).Within(0.01f));
         }

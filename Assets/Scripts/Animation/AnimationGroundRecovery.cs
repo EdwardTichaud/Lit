@@ -139,7 +139,7 @@ public sealed class AnimationGroundRecovery : MonoBehaviour
         Transform root = collider.transform.root;
         return root.GetComponentInChildren<LitOpsiveLocomotionBridge>(true) != null ||
                root.GetComponentInChildren<SquadCharacterController>(true) != null ||
-               root.GetComponentInChildren<RealTimeCombatEnemy>(true) != null;
+               root.GetComponentInChildren<EnemyController>(true) != null;
     }
 
     private Animator ResolveRootMotionAnimator()

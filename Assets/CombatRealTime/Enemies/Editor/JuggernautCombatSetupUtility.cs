@@ -31,10 +31,10 @@ public static class JuggernautCombatSetupUtility
             capsule.isTrigger = false;
             if (root.GetComponent<UnityEngine.AI.NavMeshAgent>() == null)
                 root.AddComponent<UnityEngine.AI.NavMeshAgent>();
-            if (root.GetComponent<EnemyAttackRecoverySafety>() == null)
-                root.AddComponent<EnemyAttackRecoverySafety>();
-            if (root.GetComponent<CombatEnemyRuntimeContract>() == null)
-                root.AddComponent<CombatEnemyRuntimeContract>();
+            if (root.GetComponent<EnemyController>() == null)
+                root.AddComponent<EnemyController>();
+            if (root.GetComponent<EnemyController>() == null)
+                root.AddComponent<EnemyController>();
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         }
         finally { PrefabUtility.UnloadPrefabContents(root); }

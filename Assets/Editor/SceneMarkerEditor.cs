@@ -194,7 +194,7 @@ public sealed class SceneMarkerEditor : Editor
             {
                 Transform child = root.transform.GetChild(i);
                 CharacterInfo info = child.GetComponent<CharacterInfo>();
-                if (info != null && info.CharacterData == characterData)
+                if (info != null && info.SourceData == characterData)
                 {
                     previousInstance = child.gameObject;
                     break;

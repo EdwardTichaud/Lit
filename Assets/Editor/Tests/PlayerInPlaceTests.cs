@@ -21,7 +21,7 @@ public sealed class PlayerInPlaceTests
         try
         {
             var bridge = root.GetComponent<LitOpsiveLocomotionBridge>();
-            var actor = root.GetComponent<CombatActorAnimationRoot>();
+            var actor = root.GetComponent<CharacterAnimationController>();
             var motor = root.GetComponent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>();
             motor.UseRootMotionPosition = true;
             motor.UseRootMotionRotation = true;

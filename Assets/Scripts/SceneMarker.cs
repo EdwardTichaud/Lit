@@ -145,7 +145,7 @@ public sealed class SceneMarker : MonoBehaviour
         {
             Transform child = transform.GetChild(i);
             CharacterInfo info = child.GetComponent<CharacterInfo>();
-            if (info != null && info.CharacterData == characterData)
+            if (info != null && info.SourceData == characterData)
             {
                 return child.gameObject;
             }
@@ -162,7 +162,7 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         CharacterInfo info = instance.GetComponent<CharacterInfo>();
-        return info != null && info.CharacterData == characterData;
+        return info != null && info.SourceData == characterData;
     }
 
     public static bool TryGetRegisteredMarker(string id, out SceneMarker marker)
@@ -188,22 +188,22 @@ public sealed class SceneMarker : MonoBehaviour
 
         if (data.isEnemy)
         {
-            CombatHealth health = instance.GetComponent<CombatHealth>();
+            CharacterInfo health = instance.GetComponent<CharacterInfo>();
             if (health == null)
             {
-                health = instance.AddComponent<CombatHealth>();
+                health = instance.AddComponent<CharacterInfo>();
             }
             int maxHp = data.ResolveMaxHp();
             health.SetHealth(maxHp, maxHp);
 
-            CombatEnemyRuntimeContract contract = instance.GetComponent<CombatEnemyRuntimeContract>();
+            EnemyController contract = instance.GetComponent<EnemyController>();
             // A baked scene instance may predate the validator component while
             // still containing the complete combat setup. The contract itself
             // is only a validation/coordination component: adding it here does
             // not alter the authored physics, skills or Animator.
-            if (contract == null && CombatEnemyRuntimeContract.HasRequiredComponents(instance))
+            if (contract == null && EnemyController.HasRequiredComponents(instance))
             {
-                contract = instance.AddComponent<CombatEnemyRuntimeContract>();
+                contract = instance.AddComponent<EnemyController>();
             }
             string contractReport;
             bool cloneValid;
@@ -216,8 +216,8 @@ public sealed class SceneMarker : MonoBehaviour
             {
                 cloneValid = contract.ValidateContract(out contractReport);
             }
-            bool sourceValid = sourcePrefab == null || CombatEnemyRuntimeContract.HasRequiredComponents(sourcePrefab);
-            string sourceReport = CombatEnemyRuntimeContract.DescribeRequiredComponents(sourcePrefab);
+            bool sourceValid = sourcePrefab == null || EnemyController.HasRequiredComponents(sourcePrefab);
+            string sourceReport = EnemyController.DescribeRequiredComponents(sourcePrefab);
             // A freshly spawned NavMeshAgent can be disabled until the dynamic
             // surface is built. Its enabled state is not a prefab-structure
             // mismatch and must not turn off the enemy's whole combat stack.
@@ -247,13 +247,13 @@ public sealed class SceneMarker : MonoBehaviour
 
     private static void DisableIncompleteEnemyCombat(GameObject instance)
     {
-        EnemySkills skills = instance.GetComponent<EnemySkills>();
+        EnemyController skills = instance.GetComponent<EnemyController>();
         if (skills != null) skills.enabled = false;
-        CombatEnemyPhysicsMotor physics = instance.GetComponent<CombatEnemyPhysicsMotor>();
+        EnemyController physics = instance.GetComponent<EnemyController>();
         if (physics != null) physics.enabled = false;
-        RealTimeCombatEnemyBehaviour behaviour = instance.GetComponent<RealTimeCombatEnemyBehaviour>();
+        EnemyController behaviour = instance.GetComponent<EnemyController>();
         if (behaviour != null) behaviour.enabled = false;
-        CombatEnemyLocomotionController locomotion = instance.GetComponent<CombatEnemyLocomotionController>();
+        EnemyController locomotion = instance.GetComponent<EnemyController>();
         if (locomotion != null) locomotion.enabled = false;
     }
 
@@ -278,7 +278,7 @@ public sealed class SceneMarker : MonoBehaviour
             runtimeInstance.transform.localScale = scale;
             AuditEnemyRuntimePose("etat persistant applique");
         }
-        CombatHealth health = runtimeInstance.GetComponent<CombatHealth>();
+        CharacterInfo health = runtimeInstance.GetComponent<CharacterInfo>();
         if (health != null && maxHp > 0)
         {
             health.SetHealth(currentHp, maxHp);

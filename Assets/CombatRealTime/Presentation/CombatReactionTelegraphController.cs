@@ -10,7 +10,7 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
     [SerializeField] private RealTimeCombatReactionPrompt prompt;
     [SerializeField] private CombatImpactFeedbackController impactFeedback;
 
-    private RealTimeCombatEnemy activeEnemy;
+    private EnemyController activeEnemy;
     private SkillSO activeSkill;
     private readonly List<GameObject> activeAlerts = new List<GameObject>();
 
@@ -55,7 +55,7 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    public void BeginTelegraph(RealTimeCombatEnemy enemy)
+    public void BeginTelegraph(EnemyController enemy)
     {
         if (enemy == null || enemy.ActiveSkill == null) return;
         Clear();
@@ -92,7 +92,7 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
         }
 
         if (window.Enemy == null || window.Skill == null) return;
-        activeEnemy = window.Enemy.GetComponent<RealTimeCombatEnemy>();
+        activeEnemy = window.Enemy.GetComponent<EnemyController>();
         activeSkill = window.Skill;
         CombatReactionTelegraphProfile profile = activeSkill.ReactionTelegraph;
         if (!profile.enabled) return;
@@ -128,7 +128,7 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
         if (!active) Clear();
     }
 
-    private void OnLockChanged(RealTimeCombatEnemy enemy)
+    private void OnLockChanged(EnemyController enemy)
     {
         if (enemy == null || enemy != activeEnemy) Clear();
     }

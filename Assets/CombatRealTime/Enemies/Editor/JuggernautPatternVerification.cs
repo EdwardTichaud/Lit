@@ -11,7 +11,7 @@ public static class JuggernautPatternVerification
 {
     private const string Folder = "Assets/Characters/3_Enemy/Juggernaut/";
     private static GameObject fixture;
-    private static RealTimeCombatEnemy enemy;
+    private static EnemyController enemy;
     private static int starts, landings;
     private static float began, peak, nextSnapshot;
     private static bool wasAirborne;
@@ -35,12 +35,12 @@ public static class JuggernautPatternVerification
             EditorApplication.isPlaying = true;
         }
         if (enemy == null || !EditorApplication.isPlaying) return;
-        var motor = enemy.GetComponent<CombatEnemyPhysicsMotor>();
+        EnemyController motor = enemy.GetComponent<EnemyController>();
         if (Time.realtimeSinceStartup >= nextSnapshot)
         {
             nextSnapshot = Time.realtimeSinceStartup + 5f;
             var agent = enemy.GetComponent<NavMeshAgent>();
-            var brain = enemy.GetComponent<EnemyCombatBrain>();
+            EnemyController brain = enemy.GetComponent<EnemyController>();
             var target = brain.Target;
             File.WriteAllText("Library/Juggernaut.playtest.snapshot", "phase=" + brain.Phase +
                 " physics=" + motor.State + " pos=" + enemy.transform.position + " time=" + Time.timeScale +
@@ -52,7 +52,7 @@ public static class JuggernautPatternVerification
         if (wasAirborne && !motor.IsAirborne) landings++;
         wasAirborne = motor.IsAirborne;
         if (landings >= 10) Finish("PASS runtime: " + starts + " attaques, " + landings + " atterrissages; sommet=" + peak);
-        else if (Time.realtimeSinceStartup - began > 120f) Finish("FAIL timeout: starts=" + starts + " landings=" + landings + " phase=" + enemy.GetComponent<EnemyCombatBrain>().Phase + " physics=" + motor.State + " position=" + enemy.transform.position);
+        else if (Time.realtimeSinceStartup - began > 120f) Finish("FAIL timeout: starts=" + starts + " landings=" + landings + " phase=" + enemy.GetComponent<EnemyController>().Phase + " physics=" + motor.State + " position=" + enemy.transform.position);
     }
     private static void OnPlay(PlayModeStateChange state)
     {
@@ -103,7 +103,7 @@ public static class JuggernautPatternVerification
         var character = player.AddComponent<SquadCharacterController>();
         foreach (var component in player.GetComponents<MonoBehaviour>()) component.enabled = false;
         fixture.SetActive(true);
-        enemy = actor.GetComponent<RealTimeCombatEnemy>();
+        enemy = actor.GetComponent<EnemyController>();
         enemy.RetaliationStarted += (_, __) => starts++;
         began = Time.realtimeSinceStartup;
         enemy.ReceiveLightDamage(1, character);
@@ -131,12 +131,11 @@ public static class JuggernautPatternVerification
             if (!skill.AnimationClip.humanMotion || !machine.states.Any(s => s.state.name == skill.AnimatorState && s.state.motion == skill.AnimationClip)) throw new Exception("binding incorrect: " + skill.name);
             JuggernautEssentialEvents.Validate(skill);
         }
-        RealTimeCombatEnemyBehaviour legacyBehaviour = prefab.GetComponent<RealTimeCombatEnemyBehaviour>();
-        if (prefab.GetComponent<EnemyTacticalResponseController>() != null ||
-            legacyBehaviour != null) throw new Exception("Composant IA legacy present, meme desactive");
-        if (!prefab.GetComponent<CombatEnemyPhysicsMotor>().ScriptedOnly || prefab.GetComponent<Animator>().applyRootMotion)
+
+        if (prefab.GetComponent<EnemyTacticalResponseController>() != null) throw new Exception("Composant IA legacy present, meme desactive");
+        if (!prefab.GetComponent<EnemyController>().ScriptedOnly || prefab.GetComponent<Animator>().applyRootMotion)
             throw new Exception("Juggernaut doit utiliser ScriptedOnly sans root motion Animator");
-        if (!CombatEnemyRuntimeContract.HasRequiredComponents(prefab)) throw new Exception("contrat physique invalide");
+        if (!EnemyController.HasRequiredComponents(prefab)) throw new Exception("contrat physique invalide");
         Debug.Log("[JuggernautPatterns] Validation assets reussie.");
     }
 }

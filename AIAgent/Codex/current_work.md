@@ -1,5 +1,30 @@
 # Travail en cours
 
+## Cycle Nina : mort du scientifique et pose Dead
+
+Le cycle reference directement EnemyController lorsque la rencontre n'a plus de
+SceneMarker. Les rencontres avec marker suivent en priorite RuntimeInstance.
+La pose Nina pilote le booleen isDead et utilise le chemin complet de l'etat
+Animator. Les deux connaissances restent requises; aucune dependance a la
+cinematique n'est ajoutee. Regression couverte par des tests de liaison, mort,
+rechargement et presentation. Compilation C# runtime/editeur et YAML verifies;
+execution des tests Unity et parcours en jeu encore a valider.
+
+## Unification des ennemis — validation Unity restante
+
+CharacterInfo reprend la sante de CombatHealth et copie les donnees CharacterData
+par instance. EnemyController partial regroupe le combat, les decisions, la
+navigation, la physique et les animations ennemies. Les anciens composants et
+l’executeur historique sont supprimes. Les fonctions d’animation du joueur sont
+separees. Les reglages sont dans CharacterData/EnemySettings et le profil existant,
+avec inspecteurs par categories et tooltips. Prefabs et references de scenes
+migres; GiantJuggernaut a une fiche distincte pour ses reglages differents.
+
+Compilation C# runtime/editeur reussie avec Unity 6000.4.9f1; tests compiles et
+controles YAML/references effectues. Import Unity/ILPP, execution des tests et
+parcours solo/hote/client restent a valider : ne pas considerer le lot clos.
+Voir enemy_method_migration.md et Assets/CombatRealTime/Enemies/Controller/README.md.
+
 ## Scientifique : fantome puis ennemi
 
 Le prefab utilise GhostController/GhostData_Scientist pour la proximite et

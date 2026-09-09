@@ -9,7 +9,7 @@ using UnityEngine.AI;
 /// </summary>
 [DefaultExecutionOrder(500)]
 [DisallowMultipleComponent]
-[RequireComponent(typeof(RealTimeCombatEnemy))]
+[RequireComponent(typeof(EnemyController))]
 public sealed class EnemyTacticalResponseController : MonoBehaviour
 {
     [Serializable]
@@ -35,12 +35,12 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
 
     private enum TacticalState { None, Guarding, Dodging }
 
-    [SerializeField] private RealTimeCombatEnemy enemy;
-    [SerializeField] private CombatEnemyPhysicsMotor physicsMotor;
-    [SerializeField] private CombatEnemyLocomotionController locomotion;
+    [SerializeField] private EnemyController enemy;
+    [SerializeField] private EnemyController physicsMotor;
+    [SerializeField] private EnemyController locomotion;
     [SerializeField] private NavMeshAgent navigationAgent;
-    [SerializeField] private CombatActorAnimationRoot animationContract;
-    [SerializeField] private RealTimeCombatEnemyBehaviour combatBehaviour;
+    [SerializeField] private CharacterAnimationController animationContract;
+    [SerializeField] private EnemyController combatBehaviour;
     [SerializeField] private CombatTimeDomain timeDomain;
     [SerializeField] private TacticalProfile profile = new TacticalProfile();
     [SerializeField] private bool logDiagnostics;
@@ -62,11 +62,11 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
 
     private void Reset()
     {
-        enemy = GetComponent<RealTimeCombatEnemy>();
-        physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
-        locomotion = GetComponent<CombatEnemyLocomotionController>();
+        enemy = GetComponent<EnemyController>();
+        physicsMotor = GetComponent<EnemyController>();
+        locomotion = GetComponent<EnemyController>();
         navigationAgent = GetComponent<NavMeshAgent>();
-        animationContract = GetComponent<CombatActorAnimationRoot>();
+        animationContract = GetComponent<CharacterAnimationController>();
     }
 
     private void Awake()
@@ -140,7 +140,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         return requestedDamage;
     }
 
-    private void OnPlayerSkillStarted(SkillSO skill, RealTimeCombatEnemy target)
+    private void OnPlayerSkillStarted(SkillSO skill, EnemyController target)
     {
         if (target != enemy || skill == null || !CanReact())
         {
@@ -309,12 +309,12 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
 
     private void ResolveReferences()
     {
-        enemy ??= GetComponent<RealTimeCombatEnemy>();
-        physicsMotor ??= GetComponent<CombatEnemyPhysicsMotor>();
-        locomotion ??= GetComponent<CombatEnemyLocomotionController>();
+        enemy ??= GetComponent<EnemyController>();
+        physicsMotor ??= GetComponent<EnemyController>();
+        locomotion ??= GetComponent<EnemyController>();
         navigationAgent ??= GetComponent<NavMeshAgent>();
-        animationContract ??= GetComponent<CombatActorAnimationRoot>();
-        combatBehaviour ??= GetComponent<RealTimeCombatEnemyBehaviour>();
+        animationContract ??= GetComponent<CharacterAnimationController>();
+        combatBehaviour ??= GetComponent<EnemyController>();
         timeDomain ??= GetComponent<CombatTimeDomain>();
     }
 

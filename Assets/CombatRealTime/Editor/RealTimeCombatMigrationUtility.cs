@@ -195,9 +195,7 @@ public static class RealTimeCombatMigrationUtility
         GameObject root = PrefabUtility.LoadPrefabContents(path);
         try
         {
-            if (FindComponentByName(root, "RealTimeCombatEnemy") == null ||
-                FindComponentByName(root, "RealTimeCombatEnemyBehaviour") == null ||
-                FindComponentByName(root, "EnemySkills") == null ||
+            if (FindComponentByName(root, "EnemyController") == null ||
                 FindComponentByName(root, "VisionField") == null)
             {
                 throw new InvalidOperationException("Prefab temps reel incomplet, migration annulee : " + path);
@@ -234,7 +232,6 @@ public static class RealTimeCombatMigrationUtility
 
     private static void MoveSharedAssets()
     {
-        MoveAssetIfNeeded("Assets/Combat/Scripts/CombatHealth.cs", "Assets/CombatRealTime/Core/CombatHealth.cs");
         MoveAssetIfNeeded("Assets/Combat/Prefabs/AttackLightAlert.prefab", "Assets/CombatRealTime/Presentation/AttackLightAlert.prefab");
     }
 

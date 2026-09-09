@@ -247,7 +247,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
     public bool IsFlightActive => IsFlightModeActive;
     public bool Grounded => locomotion != null && locomotion.Grounded;
-    public bool IsCinematicMotionSessionActive => GetComponent<CombatActorAnimationRoot>()?.IsCinematicMotionActive == true;
+    public bool IsCinematicMotionSessionActive => GetComponent<CharacterAnimationController>()?.IsCinematicMotionActive == true;
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
     public float VerticalVelocity => Vector3.Dot(Velocity, transform.up);
@@ -2016,7 +2016,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (animator == null)
         {
-            CombatActorAnimationRoot animationContract = GetComponent<CombatActorAnimationRoot>();
+            CharacterAnimationController animationContract = GetComponent<CharacterAnimationController>();
             animator = animationContract != null && animationContract.ValidateContract(out _)
                 ? animationContract.Animator
                 : GetComponent<Animator>();
@@ -2613,7 +2613,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (locomotion == null) locomotion = GetComponent<UltimateCharacterLocomotion>();
         if (animator == null)
         {
-            var contract = GetComponent<CombatActorAnimationRoot>();
+            var contract = GetComponent<CharacterAnimationController>();
             animator = contract != null ? contract.Animator : GetComponent<Animator>();
         }
         if (locomotion != null)

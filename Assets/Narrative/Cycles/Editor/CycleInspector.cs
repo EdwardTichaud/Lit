@@ -16,6 +16,8 @@ public sealed class CycleInspector : Editor
         }
         foreach (string issue in cycle.definition.ValidateConfiguration())
             EditorGUILayout.HelpBox(issue, MessageType.Warning);
+        if (cycle.definition.enemyDefeatedFlags != 0 && cycle.encounterMarker == null && cycle.encounterEnemy == null)
+            EditorGUILayout.HelpBox("La mort de l'ennemi ne peut pas etre suivie : assigner le marker ou l'EnemyController de la rencontre.", MessageType.Warning);
         if (cycle.definition.playCinematicAfterDefeat && (cycle.director == null || cycle.director.playableAsset == null || cycle.bindingProfile == null))
             EditorGUILayout.HelpBox("Cinematique activee : Timeline et profil de bindings requis.", MessageType.Warning);
         if (cycle.interactions != null) foreach (var binding in cycle.interactions)

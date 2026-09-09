@@ -220,7 +220,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     private void Awake()
     {
-        CombatActorAnimationRoot animationContract = GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController animationContract = GetComponent<CharacterAnimationController>();
         if (animationContract != null && animationContract.ValidateContract(out _))
         {
             animator = animationContract.Animator;
@@ -237,7 +237,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     /// Starts an optional, entirely UCC-driven approach/rebound for a player
     /// Skill. It is deliberately independent from Animator root motion.
     /// </summary>
-    public void BeginTargetLunge(SkillSO skill, RealTimeCombatEnemy target)
+    public void BeginTargetLunge(SkillSO skill, EnemyController target)
     {
         PlayerTargetLungeProfile profile = skill != null ? skill.TargetLunge : null;
         if (profile == null || !profile.enabled || target == null || locomotionBridge == null || !locomotionBridge.IsDriving)
@@ -269,7 +269,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
     }
 
-    private IEnumerator RunTargetLunge(PlayerTargetLungeProfile profile, RealTimeCombatEnemy target, int lungeToken, int actionToken)
+    private IEnumerator RunTargetLunge(PlayerTargetLungeProfile profile, EnemyController target, int lungeToken, int actionToken)
     {
         if (!locomotionBridge.BeginScriptedPlanarMotion())
         {

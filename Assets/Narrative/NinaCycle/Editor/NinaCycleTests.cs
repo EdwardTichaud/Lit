@@ -14,10 +14,10 @@ public sealed class NinaCycleTests
         Assert.NotNull(ghost);
         Assert.NotNull(ghost.Data);
         Assert.IsInstanceOf<IGhostInteractionHandler>(prefab.GetComponent<ScientistEncounterController>());
-        Assert.AreEqual(1, prefab.GetComponents<CombatHealth>().Length);
-        Assert.AreEqual(1, prefab.GetComponents<RealTimeCombatEnemy>().Length);
-        Assert.IsFalse(prefab.GetComponent<RealTimeCombatEnemy>().enabled);
-        Assert.IsFalse(prefab.GetComponent<EnemyCombatBrain>().enabled);
+        Assert.AreEqual(1, prefab.GetComponents<CharacterInfo>().Length);
+        Assert.AreEqual(1, prefab.GetComponents<EnemyController>().Length);
+        Assert.IsTrue(prefab.GetComponent<EnemyController>().enabled);
+        Assert.IsFalse(prefab.GetComponent<EnemyController>().CombatEnabled);
     }
 
     [Test]

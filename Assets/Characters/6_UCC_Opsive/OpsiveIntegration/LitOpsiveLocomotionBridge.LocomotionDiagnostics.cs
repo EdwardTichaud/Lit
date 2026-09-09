@@ -94,7 +94,7 @@ public partial class LitOpsiveLocomotionBridge
         float legacySpeed = ReadAnimatorFloat("Speed");
         float forward = ReadAnimatorFloat(forwardMovementParam);
         bool moving = ReadAnimatorBool(isMovingParam);
-        CombatActorAnimationRoot combatActor = GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController combatActor = GetComponent<CharacterAnimationController>();
         bool cinematicMotion = combatActor != null && combatActor.IsCinematicMotionActive;
 
         Debug.Log(

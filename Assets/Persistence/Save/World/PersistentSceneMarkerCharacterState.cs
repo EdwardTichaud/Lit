@@ -50,7 +50,7 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
             return PersistentStateJson.ToBytes(new StateData { HasRuntimeInstance = false });
         }
 
-        CombatHealth health = instance.GetComponent<CombatHealth>();
+        CharacterInfo health = instance.GetComponent<CharacterInfo>();
         return PersistentStateJson.ToBytes(new StateData
         {
             HasRuntimeInstance = true,

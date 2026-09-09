@@ -32,7 +32,7 @@ public static class CombatAnimationLabRootAnimatorEditor
         GameObject juggernaut = PrefabUtility.LoadPrefabContents(JuggernautPrefabPath);
         try
         {
-            Animator sourceAnimator = juggernaut.GetComponent<CombatActorAnimationRoot>()?.Animator;
+            Animator sourceAnimator = juggernaut.GetComponent<CharacterAnimationController>()?.Animator;
             if (sourceAnimator == null || sourceAnimator.runtimeAnimatorController == null)
             {
                 EditorUtility.DisplayDialog("Update AnimationLab", "Juggernaut_Combat ne possede pas d'Animator racine valide.", "OK");
@@ -160,16 +160,16 @@ public static class CombatAnimationLabRootAnimatorEditor
 
     private static void EnsureActorContract(Transform actorRoot, Animator animator)
     {
-        CombatActorAnimationRoot contract = actorRoot.GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController contract = actorRoot.GetComponent<CharacterAnimationController>();
         if (contract == null)
         {
-            contract = actorRoot.gameObject.AddComponent<CombatActorAnimationRoot>();
+            contract = actorRoot.gameObject.AddComponent<PlayerAnimationController>();
         }
 
         contract.Configure(actorRoot, animator, actorRoot.Find("EnemyLockPoint"));
-        if (actorRoot.GetComponent<CombatActorRootMotionRelay>() == null)
+        if (contract is PlayerAnimationController && actorRoot.GetComponent<PlayerRootMotionRelay>() == null)
         {
-            actorRoot.gameObject.AddComponent<CombatActorRootMotionRelay>();
+            actorRoot.gameObject.AddComponent<PlayerRootMotionRelay>();
         }
     }
 

@@ -27,9 +27,9 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private RealTimeCombatInput combatInput;
     private QTEPanelController qtePanel;
 
-    private readonly Dictionary<RealTimeCombatEnemy, HashSet<CombatHealthThresholdStage>> resolvedStages =
-        new Dictionary<RealTimeCombatEnemy, HashSet<CombatHealthThresholdStage>>();
-    private readonly List<RealTimeCombatEnemyBehaviour> suspendedEnemies = new List<RealTimeCombatEnemyBehaviour>();
+    private readonly Dictionary<EnemyController, HashSet<CombatHealthThresholdStage>> resolvedStages =
+        new Dictionary<EnemyController, HashSet<CombatHealthThresholdStage>>();
+    private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
     private readonly HashSet<CharacterData> invalidDataReported = new HashSet<CharacterData>();
 
     private const bool LogDiagnostics = true;
@@ -41,7 +41,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private InputAction qteBAction;
     private InputAction qteAAction;
     private InputAction qteXAction;
-    private RealTimeCombatEnemy activeEnemy;
+    private EnemyController activeEnemy;
     private CombatHealthThresholdStage activeStage;
     private ThresholdSequence activeSequence;
     private SequenceState state;
@@ -76,15 +76,15 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
                                     state == SequenceState.SuccessPresentation;
 
     /// <summary>Prevents a second hit or a new retaliation from racing an armed stage.</summary>
-    public bool BlocksEnemyActions(RealTimeCombatEnemy enemy)
+    public bool BlocksEnemyActions(EnemyController enemy)
     {
         return enemy != null && enemy == activeEnemy &&
                (state == SequenceState.Pending || state == SequenceState.PlayingSequence ||
                 state == SequenceState.SuccessPresentation);
     }
 
-    public bool HasPendingStage(RealTimeCombatEnemy enemy) => enemy != null && enemy == activeEnemy && state == SequenceState.Pending;
-    public bool ShouldSuspendEnemy(RealTimeCombatEnemy enemy) => BlocksEnemyActions(enemy) &&
+    public bool HasPendingStage(EnemyController enemy) => enemy != null && enemy == activeEnemy && state == SequenceState.Pending;
+    public bool ShouldSuspendEnemy(EnemyController enemy) => BlocksEnemyActions(enemy) &&
         (!HasPendingStage(enemy) || !enemy.IsAttackCommitted);
 
     private void Awake()
@@ -116,10 +116,10 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     }
 
     /// <summary>
-    /// Called before CombatHealth receives damage. Returns the amount that may
+    /// Called before CharacterInfo receives damage. Returns the amount that may
     /// pass through; an armed stage clamps exactly to its threshold.
     /// </summary>
-    public bool TryPrepareDamage(RealTimeCombatEnemy enemy, int requestedDamage, out int allowedDamage)
+    public bool TryPrepareDamage(EnemyController enemy, int requestedDamage, out int allowedDamage)
     {
         allowedDamage = Mathf.Max(0, requestedDamage);
         if (enemy == null || requestedDamage <= 0 || state != SequenceState.Idle)
@@ -127,7 +127,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        CombatHealth health = enemy.Health;
+        CharacterInfo health = enemy.Health;
         CharacterData data = ResolveCharacterData(enemy);
         if (health == null || data == null || !data.isEnemy || !data.enableCombatHealthThresholds || health.IsDead)
         {
@@ -156,7 +156,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     }
 
     /// <summary>Called only after the clamped health change has been committed.</summary>
-    public void NotifyThresholdDamageApplied(RealTimeCombatEnemy enemy)
+    public void NotifyThresholdDamageApplied(EnemyController enemy)
     {
         if (state != SequenceState.Pending || enemy == null || enemy != activeEnemy || activeStage == null)
         {
@@ -170,7 +170,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     /// <summary>Animation Event placed on the configured failure-retaliation skill.</summary>
     private bool failureImpactResolved;
 
-    public void NotifyFailureRetaliationImpact(RealTimeCombatEnemy enemy, SkillSO skill, int applied)
+    public void NotifyFailureRetaliationImpact(EnemyController enemy, SkillSO skill, int applied)
     {
         if (state != SequenceState.FailureRetaliation || enemy == null || enemy != activeEnemy ||
             activeStage == null || failureImpactResolved || GetCurrentStep()?.failureRetaliationSkill != skill) return;
@@ -180,7 +180,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     }
 
     /// <summary>Allows the existing EndEnemyAttack event to finish a failed QTE attack.</summary>
-    public bool TryCompleteFailureRetaliation(RealTimeCombatEnemy enemy)
+    public bool TryCompleteFailureRetaliation(EnemyController enemy)
     {
         if (state != SequenceState.FailureRetaliation || enemy == null || enemy != activeEnemy)
         {
@@ -462,7 +462,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
     }
 
-    private void RequestFailureRetaliationCompletion(RealTimeCombatEnemy enemy)
+    private void RequestFailureRetaliationCompletion(EnemyController enemy)
     {
         if (failureCompletionRequested || enemy == null)
         {
@@ -474,7 +474,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         {
             combatManager?.CompleteEnemyAttack(enemy);
             enemy.ReturnToIdleAnimation();
-            enemy.GetComponent<RealTimeCombatEnemyBehaviour>()?.NotifyAttackCompleted();
+            enemy.GetComponent<EnemyController>()?.NotifyAttackCompleted();
             FinishFailureRetaliation();
         });
     }
@@ -635,7 +635,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
-        RealTimeCombatEnemy enemy = activeEnemy;
+        EnemyController enemy = activeEnemy;
         thresholdKillApplied = enemy != null && combatManager != null &&
                               combatManager.CompleteThresholdKill(enemy, endCombatImmediately: false);
         if (!thresholdKillApplied)
@@ -662,7 +662,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         CombatHealthThresholdSuccessResult result = finalStep != null
             ? finalStep.successResult
             : CombatHealthThresholdSuccessResult.ResumeCombat;
-        RealTimeCombatEnemy enemy = activeEnemy;
+        EnemyController enemy = activeEnemy;
         bool killApplied = thresholdKillApplied;
         ClearPlayerThresholdVisualState();
         RestoreCombatOwnership();
@@ -695,7 +695,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private void SuspendEncounter()
     {
         suspendedEnemies.Clear();
-        RealTimeCombatEnemyBehaviour[] behaviours = FindObjectsByType<RealTimeCombatEnemyBehaviour>(FindObjectsInactive.Exclude);
+        EnemyController[] behaviours = FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < behaviours.Length; i++)
         {
             if (behaviours[i] == null) continue;
@@ -713,7 +713,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         suspendedEnemies.Clear();
     }
 
-    private CombatHealthThresholdStage GetNextValidStage(RealTimeCombatEnemy enemy, CharacterData data)
+    private CombatHealthThresholdStage GetNextValidStage(EnemyController enemy, CharacterData data)
     {
         if (data.combatHealthThresholdStages == null || data.combatHealthThresholdStages.Count == 0) return null;
         HashSet<CombatHealthThresholdStage> resolved = GetResolvedStages(enemy);
@@ -741,7 +741,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         return candidate;
     }
 
-    private HashSet<CombatHealthThresholdStage> GetResolvedStages(RealTimeCombatEnemy enemy)
+    private HashSet<CombatHealthThresholdStage> GetResolvedStages(EnemyController enemy)
     {
         if (!resolvedStages.TryGetValue(enemy, out HashSet<CombatHealthThresholdStage> resolved))
         {
@@ -756,7 +756,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         if (activeEnemy != null && activeStage != null) GetResolvedStages(activeEnemy).Add(activeStage);
     }
 
-    private static CharacterData ResolveCharacterData(RealTimeCombatEnemy enemy)
+    private static CharacterData ResolveCharacterData(EnemyController enemy)
     {
         CharacterInfo info = enemy != null
             ? enemy.GetComponent<CharacterInfo>() ?? enemy.GetComponentInChildren<CharacterInfo>(true)
@@ -1028,7 +1028,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        CombatActorAnimationRoot playerContract = playerRoot.GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController playerContract = playerRoot.GetComponent<CharacterAnimationController>();
         bool playerPlaced = playerContract != null
             ? playerContract.SetActorPose(playerPosition, playerRotation)
             : playerRoot.TryGetComponent(out LitOpsiveLocomotionBridge bridge) && bridge.SetCinematicPositionAndRotation(playerPosition, playerRotation, true, false);
@@ -1038,10 +1038,10 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        CombatActorAnimationRoot enemyContract = activeEnemy.GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController enemyContract = activeEnemy.GetComponent<CharacterAnimationController>();
         bool enemyPlaced = enemyContract != null
             ? enemyContract.SetActorPose(activeEnemy.transform.position, enemyRotation)
-            : activeEnemy.TryGetComponent(out RealTimeCombatEnemyBehaviour behaviour) && behaviour.PlaceForCinematic(activeEnemy.transform.position, enemyRotation);
+            : activeEnemy.TryGetComponent(out EnemyController behaviour) && behaviour.PlaceForCinematic(activeEnemy.transform.position, enemyRotation);
         if (!enemyPlaced)
         {
             error = "rotation cinematographique de l'ennemi refusee";

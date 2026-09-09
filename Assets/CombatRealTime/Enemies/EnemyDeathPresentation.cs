@@ -8,13 +8,13 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float minimumDeathDelay = 3f;
     [SerializeField, Min(0.1f)] private float dissolveSeconds = 2.8f;
-    private RealTimeCombatEnemy enemy;
+    private EnemyController enemy;
     private Coroutine routine;
     private GhostDissolveController dissolve;
     private readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
     private readonly List<Material> temporaryMaterials = new List<Material>();
 
-    private void Awake() => enemy = GetComponent<RealTimeCombatEnemy>();
+    private void Awake() => enemy = GetComponent<EnemyController>();
 
     private void Update()
     {
@@ -24,7 +24,7 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 
     private IEnumerator Disappear()
     {
-        GetComponent<CombatEnemyLocomotionController>()?.StopNavigation();
+        GetComponent<EnemyController>()?.StopNavigation();
         enemy.PlayDeathAnimation();
         float started = Time.unscaledTime;
         // Give grounding and the death state time to take ownership of the Animator.

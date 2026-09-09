@@ -52,3 +52,58 @@ MonoBehaviour:
     stageClearance: 0.03
   voiceLines: []
   maisonWaitingPoint: 0
+  enemySettings:
+    ActorHitAnimatorState: Hit
+    ActorHitAnimationTransitionSeconds: 0.06
+    ActorIdleAnimatorState: CombatIdle
+    ActorHitRecoveryNormalizedTime: 0.9
+    ActorHitRecoveryTransitionSeconds: 0.1
+    ActorDeathAnimatorState: Death
+    ActorDeathAnimationTransitionSeconds: 0.08
+    ActorRetaliationDelaySeconds: 1
+    PhysicsGroundSkin: 0.03
+    PhysicsGroundProbeStartHeight: 0.35
+    PhysicsGroundProbeDistance: 4
+    PhysicsMaximumGroundSnapDistance: 0.75
+    PhysicsEmergencyLandingDelay: 0.45
+    PhysicsMinimumGroundNormal: 0.45
+    PhysicsGroundMask:
+      serializedVersion: 2
+      m_Bits: 134228617
+    PhysicsLogStateChanges: 0
+    PhysicsLogPoseAudit: 1
+    PhysicsPoseJumpDiagnosticDistance: 0.5
+    PhysicsMaximumRootMotionDeltaPerFrame: 0.5
+    PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75
+    PhysicsActionRepositionDiagnosticDistance: 1
+    PhysicsAnimationMovementMode: 1
+    LocomotionPositioning:
+      preferredDistance: 2.6
+      minimumRetreatDistance: 1.2
+      strafeRadius: 1.1
+      strafeSideHoldSeconds: 1.35
+      walkSpeed: 1.8
+      runSpeed: 3.6
+      runDistance: 8
+      walkResumeDistance: 6
+      pursuitRefreshSeconds: 0.15
+      pursuitTargetMoveDistance: 0.5
+      walkSpeedThreshold: 1.2
+      runSpeedThreshold: 3.4
+    LocomotionFacingSpeedDegreesPerSecond: 540
+    LocomotionAnimatorDampTime: 0.08
+    LocomotionWalkCycleSpeed: 1.8
+    LocomotionRunCycleSpeed: 3.6
+    LocomotionNavMeshEdgeClearance: 0.45
+    LocomotionClearanceSearchRadius: 2
+    LocomotionClearanceSearchSamples: 12
+    LocomotionLogDiagnostics: 0
+    RecoveryExtraRecoverySeconds: 1
+    RecoveryLogDiagnostics: 0
+    ContractLogDiagnostics: 1
+    BrainLogDecisions: 1
+    NavigationSampleDistance: 1.5
+    NavigationReattachTolerance: 0.15
+    NavigationRetryInterval: 0.25
+    NavigationRebuildRequestInterval: 1
+    NavigationLogDiagnostics: 1

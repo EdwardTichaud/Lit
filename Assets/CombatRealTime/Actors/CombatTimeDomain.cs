@@ -63,7 +63,7 @@ public sealed class CombatTimeDomain : MonoBehaviour
     {
         if (animator == null)
         {
-            CombatActorAnimationRoot contract = GetComponent<CombatActorAnimationRoot>();
+            CharacterAnimationController contract = GetComponent<CharacterAnimationController>();
             animator = contract != null ? contract.Animator : GetComponentInChildren<Animator>(true);
         }
 

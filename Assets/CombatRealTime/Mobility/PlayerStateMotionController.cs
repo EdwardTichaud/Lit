@@ -6,7 +6,7 @@ public sealed class PlayerStateMotionController : MonoBehaviour
 {
     [SerializeField] private PlayerStateMotionLibrary library;
     private LitOpsiveLocomotionBridge bridge;
-    private CombatActorAnimationRoot actor;
+    private CharacterAnimationController actor;
     private Animator animator;
     private CombatTimeDomain timeDomain;
     private PlayerStateMotionLibrary.Profile active;
@@ -56,7 +56,7 @@ public sealed class PlayerStateMotionController : MonoBehaviour
     private void Awake()
     {
         bridge = GetComponent<LitOpsiveLocomotionBridge>();
-        actor = GetComponent<CombatActorAnimationRoot>();
+        actor = GetComponent<CharacterAnimationController>();
         animator = actor != null ? actor.Animator : GetComponentInChildren<Animator>();
         timeDomain = GetComponent<CombatTimeDomain>();
     }

@@ -628,10 +628,10 @@ public class SquadAIManager : MonoBehaviour
         // frame after the navigation rebuild request. Runtime enemies are a
         // valid fallback anchor in that window and prevent the volume from
         // being centered on unrelated persistent colliders.
-        RealTimeCombatEnemy[] enemies = UnityEngine.Object.FindObjectsByType<RealTimeCombatEnemy>(FindObjectsInactive.Exclude);
+        EnemyController[] enemies = UnityEngine.Object.FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < enemies.Length; i++)
         {
-            RealTimeCombatEnemy enemy = enemies[i];
+            EnemyController enemy = enemies[i];
             if (enemy == null || !enemy.gameObject.scene.IsValid() || !enemy.gameObject.scene.isLoaded ||
                 enemy.gameObject.scene.name == "DontDestroyOnLoad" ||
                 enemy.gameObject.scene.name == "Bootstrap" ||
@@ -900,10 +900,10 @@ public class SquadAIManager : MonoBehaviour
 
         if (!foundAnchor)
         {
-            RealTimeCombatEnemy[] enemies = UnityEngine.Object.FindObjectsByType<RealTimeCombatEnemy>(FindObjectsInactive.Exclude);
+            EnemyController[] enemies = UnityEngine.Object.FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
             for (int i = 0; i < enemies.Length; i++)
             {
-                RealTimeCombatEnemy enemy = enemies[i];
+                EnemyController enemy = enemies[i];
                 if (enemy == null || !IsLoadedGameplayScene(enemy.gameObject.scene)) continue;
                 if (!foundAnchor) firstAnchor = enemy.transform.position;
                 foundAnchor = true;

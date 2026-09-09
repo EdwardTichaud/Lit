@@ -9,7 +9,7 @@ public sealed class CharacterDataThresholdEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        DrawDefaultInspector();
+        EnemyAuthoringLayout.DrawData(serializedObject);
 
         CharacterData data = (CharacterData)target;
         if (!data.enableCombatHealthThresholds) return;
@@ -93,8 +93,8 @@ public sealed class CharacterDataThresholdEditor : Editor
         {
             ThresholdSequenceStep step = sequence.steps[stepIndex];
             if (step.failureResult != ThresholdSequenceFailureResult.EnemySkill) continue;
-            EnemySkills enemySkills = data.worldPrefab != null
-                ? data.worldPrefab.GetComponent<EnemySkills>() ?? data.worldPrefab.GetComponentInChildren<EnemySkills>(true)
+            EnemyController enemySkills = data.worldPrefab != null
+                ? data.worldPrefab.GetComponent<EnemyController>() ?? data.worldPrefab.GetComponentInChildren<EnemyController>(true)
                 : null;
             if (enemySkills == null || !enemySkills.Skills.Contains(step.failureRetaliationSkill))
             {

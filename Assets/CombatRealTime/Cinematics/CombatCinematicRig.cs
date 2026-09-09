@@ -48,12 +48,12 @@ public sealed class CombatCinematicContext
     public UnityEngine.Object Definition { get; }
     public Transform PlayerRoot { get; }
     public Animator PlayerAnimator { get; }
-    public RealTimeCombatEnemy TargetEnemy { get; }
+    public EnemyController TargetEnemy { get; }
     public Animator TargetAnimator { get; }
     public Transform TargetLockPoint { get; }
     public Action ResolveImpact { get; }
     public CombatCinematicCasterRole CasterRole { get; }
-    public RealTimeCombatEnemy CasterEnemy { get; }
+    public EnemyController CasterEnemy { get; }
     public bool AllowGameplayCameraFallback { get; }
     public bool TransferTimelineRootMotion { get; }
     public bool AllowMissingTimelineBindings { get; }
@@ -64,7 +64,7 @@ public sealed class CombatCinematicContext
         UnityEngine.Object definition,
         Action resolveImpact = null,
         CombatCinematicCasterRole casterRole = CombatCinematicCasterRole.Player,
-        RealTimeCombatEnemy casterEnemy = null,
+        EnemyController casterEnemy = null,
         bool allowGameplayCameraFallback = false,
         bool transferTimelineRootMotion = true,
         bool allowMissingTimelineBindings = false,
@@ -848,7 +848,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
                        " EnemyStageAnchor=" + enemyStageAnchor.localPosition +
                        " | playerRoot=" + playerRootPosition + " | enemyRoot=" + enemyRootPosition + ".");
 
-        CombatActorAnimationRoot playerContract = context.PlayerRoot.GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController playerContract = context.PlayerRoot.GetComponent<CharacterAnimationController>();
         if (playerContract != null && playerContract.ValidateContract(out _))
         {
             if (!playerContract.SetActorPose(playerRootPosition, playerRootRotation))
@@ -872,7 +872,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
         }
 
-        CombatActorAnimationRoot enemyContract = context.TargetEnemy.GetComponent<CombatActorAnimationRoot>();
+        CharacterAnimationController enemyContract = context.TargetEnemy.GetComponent<CharacterAnimationController>();
         if (enemyContract != null && enemyContract.ValidateContract(out _))
         {
             if (!enemyContract.SetActorPose(enemyRootPosition, enemyRootRotation))
@@ -884,7 +884,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
         else
         {
-            RealTimeCombatEnemyBehaviour enemyBehaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+            EnemyController enemyBehaviour = context.TargetEnemy.GetComponent<EnemyController>();
             if (enemyBehaviour != null && !enemyBehaviour.PlaceForCinematic(
                     enemyRootPosition,
                     enemyRootRotation))
@@ -962,7 +962,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return;
         }
 
-        RealTimeCombatEnemyBehaviour behaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+        EnemyController behaviour = context.TargetEnemy.GetComponent<EnemyController>();
         if (behaviour != null)
         {
             behaviour.ApplyCinematicRootMotion(deltaPosition, deltaRotation);
@@ -987,20 +987,20 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void BeginContractCinematicMotion()
     {
-        context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.BeginCinematicMotion(sessionToken);
-        context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.BeginCinematicMotion(sessionToken);
+        context?.PlayerRoot?.GetComponent<CharacterAnimationController>()?.BeginCinematicMotion(sessionToken);
+        context?.TargetEnemy?.GetComponent<CharacterAnimationController>()?.BeginCinematicMotion(sessionToken);
     }
 
     private void EndContractCinematicMotion()
     {
-        context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
-        context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
+        context?.PlayerRoot?.GetComponent<CharacterAnimationController>()?.EndCinematicMotion(sessionToken);
+        context?.TargetEnemy?.GetComponent<CharacterAnimationController>()?.EndCinematicMotion(sessionToken);
     }
 
     private void SetContractRootMotionRelayEnabled(bool enabled)
     {
-        context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.SetCinematicRootMotionRelayEnabled(enabled);
-        context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.SetCinematicRootMotionRelayEnabled(enabled);
+        context?.PlayerRoot?.GetComponent<CharacterAnimationController>()?.SetCinematicRootMotionRelayEnabled(enabled);
+        context?.TargetEnemy?.GetComponent<CharacterAnimationController>()?.SetCinematicRootMotionRelayEnabled(enabled);
         TracePlacement("Relais root motion cinematographique=" + enabled + ".");
     }
 

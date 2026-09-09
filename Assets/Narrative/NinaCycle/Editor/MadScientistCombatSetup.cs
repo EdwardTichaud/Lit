@@ -168,7 +168,7 @@ public static class MadScientistCombatSetup
         state.motion = attackClip;
         state.writeDefaultValues = true;
 
-        // CombatActorAnimationRoot requires the canonical root-level Hit
+        // CharacterAnimationController requires the canonical root-level Hit
         // state. The source controller calls its clip differently, so create
         // a stable alias instead of weakening the shared combat contract.
         AnimatorStateMachine rootMachine = controller.layers[0].stateMachine;
@@ -305,24 +305,24 @@ public static class MadScientistCombatSetup
             lockPoint.localPosition = new Vector3(0f, 1.2f, 0f);
         }
 
-        CombatHealth health = Ensure<CombatHealth>(root);
+        CharacterInfo health = Ensure<CharacterInfo>(root);
         CharacterInfo info = Ensure<CharacterInfo>(root);
         info.SetCharacterData(AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath));
         VisionField vision = Ensure<VisionField>(root);
-        RealTimeCombatEnemy enemy = Ensure<RealTimeCombatEnemy>(root);
-        CombatActorAnimationRoot animationRoot = Ensure<CombatActorAnimationRoot>(root);
-        Ensure<CombatActorRootMotionRelay>(root);
-        EnemySkills skills = Ensure<EnemySkills>(root);
+        EnemyController enemy = Ensure<EnemyController>(root);
+        CharacterAnimationController animationRoot = Ensure<EnemyController>(root);
+
+        EnemyController skills = Ensure<EnemyController>(root);
         Rigidbody body = null;
         CapsuleCollider capsule = null;
         NavMeshAgent agent = null;
-        CombatEnemyPhysicsMotor motor = Ensure<CombatEnemyPhysicsMotor>(root);
-        Ensure<CombatEnemyLocomotionController>(root);
-        Ensure<EnemyAttackRecoverySafety>(root);
-        EnemyNavigationController navigation = Ensure<EnemyNavigationController>(root);
-        Ensure<EnemyCinematicState>(root);
-        Ensure<CombatEnemyRuntimeContract>(root);
-        EnemyCombatBrain brain = Ensure<EnemyCombatBrain>(root);
+        EnemyController motor = Ensure<EnemyController>(root);
+        Ensure<EnemyController>(root);
+        Ensure<EnemyController>(root);
+        EnemyController navigation = Ensure<EnemyController>(root);
+        Ensure<EnemyController>(root);
+        Ensure<EnemyController>(root);
+        EnemyController brain = Ensure<EnemyController>(root);
         ScientistEncounterController encounter = Ensure<ScientistEncounterController>(root);
         GhostController ghost = Ensure<GhostController>(root);
         ghost.SetGhostData(AssetDatabase.LoadAssetAtPath<GhostData>("Assets/Narrative/NinaCycle/Data/GhostData_Scientist.asset"));
@@ -333,7 +333,7 @@ public static class MadScientistCombatSetup
         ghostSettings.FindProperty("interactionMaxDistance").floatValue = 2.5f;
         ghostSettings.FindProperty("interactionPriority").intValue = 95;
         ghostSettings.ApplyModifiedPropertiesWithoutUndo();
-        Ensure<RealTimeCombatAnimationEvents>(root);
+        Ensure<EnemyController>(root);
         Ensure<NetworkObject>(root);
         Ensure<NetworkTransform>(root);
 
@@ -373,23 +373,23 @@ public static class MadScientistCombatSetup
         capsule.center = Vector3.up * (capsule.height * 0.5f);
 
         animationRoot.Configure(root.transform, animator, lockPoint);
-        SetReference(enemy, "health", health);
-        SetReference(enemy, "animationContract", animationRoot);
-        SetReference(enemy, "animator", animator);
-        SetReference(enemy, "visionField", vision);
-        SetReference(enemy, "enemySkills", skills);
-        SetReference(enemy, "physicsMotor", motor);
-        SetReference(enemy, "enemyLockPoint", lockPoint);
-        SetString(enemy, "idleAnimatorState", "CombatIdle");
-        SetString(enemy, "hitAnimatorState", "Hit");
-        SetString(enemy, "deathAnimatorState", "Death");
-        SetReference(skills, "enemy", enemy);
-        SetReference(skills, "animationContract", animationRoot);
-        SetReference(skills, "animator", animator);
-        SetReference(motor, "enemy", enemy);
-        SetReference(motor, "navigationAgent", agent);
-        SetReference(motor, "body", body);
-        SetReference(motor, "bodyCollider", capsule);
+        SetReference(enemy, "ActorHealth", health);
+        SetReference(enemy, "ActorAnimationContract", animationRoot);
+        SetReference(enemy, "ActorAnimator", animator);
+        SetReference(enemy, "ActorVisionField", vision);
+        SetReference(enemy, "ActorEnemySkills", skills);
+        SetReference(enemy, "ActorPhysicsMotor", motor);
+        SetReference(enemy, "ActorEnemyLockPoint", lockPoint);
+        info.SourceData.enemySettings.ActorIdleAnimatorState = "CombatIdle";
+        info.SourceData.enemySettings.ActorHitAnimatorState = "Hit";
+        info.SourceData.enemySettings.ActorDeathAnimatorState = "Death";
+        SetReference(skills, "SkillsEnemy", enemy);
+        SetReference(skills, "SkillsAnimationContract", animationRoot);
+        SetReference(skills, "SkillsAnimator", animator);
+        SetReference(motor, "PhysicsEnemy", enemy);
+        SetReference(motor, "PhysicsNavigationAgent", agent);
+        SetReference(motor, "PhysicsBody", body);
+        SetReference(motor, "PhysicsBodyCollider", capsule);
         SetEnum(motor, "animationMovementMode", 1); // ScriptedOnly: NavMesh owns normal movement.
         SetReference(vision, "origin", lockPoint);
         SetFloat(vision, "maximumDistance", 18f);
@@ -399,9 +399,9 @@ public static class MadScientistCombatSetup
 
         // The dialogue gate owns activation. Combat systems stay dormant until
         // the server completes the shared introduction.
-        enemy.enabled = false;
-        brain.enabled = false;
-        navigation.enabled = false;
+        enemy.CombatEnabled = false;
+
+
         EditorUtility.SetDirty(encounter);
 
         health.SetHealth(Mathf.Max(60, info.CharacterData.ResolveMaxHp()), Mathf.Max(60, info.CharacterData.ResolveMaxHp()));

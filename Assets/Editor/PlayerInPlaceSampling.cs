@@ -32,7 +32,7 @@ public sealed class PlayerInPlaceSampling : IDisposable
     public PlayerInPlaceSampling()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath);
-        var source = prefab.GetComponent<CombatActorAnimationRoot>().Animator;
+        var source = prefab.GetComponent<CharacterAnimationController>().Animator;
         if (source == null || !source.isHuman || source.avatar == null)
             throw new InvalidOperationException("Lucian's humanoid Animator is required for motion sampling.");
         root = CopyHierarchy(source.transform);

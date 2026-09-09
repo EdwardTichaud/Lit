@@ -154,9 +154,9 @@ public static class CombatLocomotionSetupUtility
         GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
         try
         {
-            if (root.GetComponent<CombatEnemyLocomotionController>() == null)
+            if (root.GetComponent<EnemyController>() == null)
             {
-                root.AddComponent<CombatEnemyLocomotionController>();
+                root.AddComponent<EnemyController>();
             }
             PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
         }

@@ -338,7 +338,7 @@ public static class PlayerInPlaceMigration
         {
             var bridge = root.GetComponent<LitOpsiveLocomotionBridge>();
             if (bridge == null) throw new InvalidOperationException("UCC bridge absent: " + path);
-            var actor = root.GetComponent<CombatActorAnimationRoot>();
+            var actor = root.GetComponent<CharacterAnimationController>();
             var animator = actor != null ? actor.Animator : root.GetComponent<Animator>();
             if (animator == null) throw new InvalidOperationException("Gameplay Animator absent: " + path);
             var motion = root.GetComponent<PlayerStateMotionController>() ?? root.AddComponent<PlayerStateMotionController>();
@@ -467,7 +467,7 @@ public static class PlayerInPlaceMigration
     public static void ValidatePlayer(GameObject root, List<string> issues)
     {
         if (root == null) { issues.Add("Missing player prefab"); return; }
-        var actor = root.GetComponent<CombatActorAnimationRoot>();
+        var actor = root.GetComponent<CharacterAnimationController>();
         var ucc = root.GetComponent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>();
         var motion = root.GetComponent<PlayerStateMotionController>();
         var animator = actor != null ? actor.Animator : root.GetComponent<Animator>();

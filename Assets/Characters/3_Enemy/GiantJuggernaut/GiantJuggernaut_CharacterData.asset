@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
+  m_Name: GiantJuggernaut_CharacterData
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  uniqueId: c54e94b14c7826c4482529b6d4d739ec
+  characterId: juggernaut
+  characterName: Juggernaut
+  portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
+  worldPrefab: {fileID: 4712010629109728797, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
+  skills: []
+  combatSkills:
+  - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+  enemyCombatProfile: {fileID: 11400000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d05, type: 2}
+  groundBasicSkills: []
+  airBasicSkills: []
+  stats:
+    strength: 10
+    dexterity: 10
+    constitution: 10
+    intelligence: 10
+    wisdom: 10
+    charisma: 10
+  starterItemsWithQuantity: []
+  hp: 300
+  isEnemy: 1
+  enableCombatHealthThresholds: 1
+  combatHealthThresholdStages:
+  - healthPercent: 20
+    sequence: {fileID: 11400000, guid: a1ce4c1dd5f9423299b45f3f2a44d0f1, type: 2}
+    legacyCinematicRig: {fileID: 0}
+    legacySuccessResult: 0
+    legacyFailureRetaliationSkill: {fileID: 0}
+  combatHealthThresholdStageSettings:
+    stageDistance: 2
+    stageGroundMask:
+      serializedVersion: 2
+      m_Bits: 2080440315
+    stageBlockingMask:
+      serializedVersion: 2
+      m_Bits: 2080440315
+    stageRetrySeconds: 0.15
+    stageClearance: 0.03
+  voiceLines: []
+  maisonWaitingPoint: 0
+  enemySettings:
+    ActorHitAnimatorState: Hit
+    ActorHitAnimationTransitionSeconds: 0.06
+    ActorIdleAnimatorState: Idle
+    ActorHitRecoveryNormalizedTime: 0.9
+    ActorHitRecoveryTransitionSeconds: 0.1
+    ActorDeathAnimatorState: Death
+    ActorDeathAnimationTransitionSeconds: 0.08
+    ActorRetaliationDelaySeconds: 1
+    PhysicsGroundSkin: 0.03
+    PhysicsGroundProbeStartHeight: 0.35
+    PhysicsGroundProbeDistance: 8
+    PhysicsMaximumGroundSnapDistance: 0.75
+    PhysicsEmergencyLandingDelay: 0.45
+    PhysicsMinimumGroundNormal: 0.45
+    PhysicsGroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    PhysicsLogStateChanges: 0
+    PhysicsLogPoseAudit: 1
+    PhysicsPoseJumpDiagnosticDistance: 0.5
+    PhysicsMaximumRootMotionDeltaPerFrame: 0.5
+    PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75
+    PhysicsActionRepositionDiagnosticDistance: 1
+    LocomotionPositioning:
+      preferredDistance: 2.6
+      minimumRetreatDistance: 1.2
+      strafeRadius: 1.1
+      strafeSideHoldSeconds: 1.35
+      walkSpeedThreshold: 1.2
+      runSpeedThreshold: 3.4
+    LocomotionFacingSpeedDegreesPerSecond: 540
+    LocomotionAnimatorDampTime: 0.08
+    LocomotionNavMeshEdgeClearance: 0.45
+    LocomotionClearanceSearchRadius: 2
+    LocomotionClearanceSearchSamples: 12
+    LocomotionLogDiagnostics: 0

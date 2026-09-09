@@ -44,7 +44,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private bool usingPooledRig;
     private bool abortingPooledRig;
     private TimeManager.TimeRequestHandle counterPauseHandle;
-    private readonly List<EnemyCinematicState> suspendedForCounter = new List<EnemyCinematicState>();
+    private readonly List<EnemyController> suspendedForCounter = new List<EnemyController>();
 
     public bool IsCinematicPlaying => cinematicPlaying;
     public bool IsGuardHeld => guardHeld;
@@ -109,7 +109,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         guardHeld = true;
     }
 
-    public bool TryStartFromSuccessfulQte(RealTimeCombatEnemy attacker, SkillSO attack)
+    public bool TryStartFromSuccessfulQte(EnemyController attacker, SkillSO attack)
     {
         ResolveReferences();
         CounterSkillSO skill = ResolveDefaultCounterSkill();
@@ -127,7 +127,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
         TimeManager manager = TimeManager.EnsureInstance();
         counterPauseHandle = manager != null ? manager.AcquireGlobalPause(this) : default;
-        foreach (var state in FindObjectsByType<EnemyCinematicState>(FindObjectsInactive.Exclude))
+        foreach (EnemyController state in FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude))
         {
             if (state.IsSuspended) continue;
             suspendedForCounter.Add(state);
@@ -142,7 +142,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
             return false;
         }
         guardHeld = false;
-        EnemySkills.PlayOutcomeFeedback(attack, combatManager.PlayerRoot, EnemyAttackOutcome.Countered);
+        EnemyController.PlayOutcomeFeedback(attack, combatManager.PlayerRoot, EnemyAttackOutcome.Countered);
         return true;
     }
 
@@ -300,7 +300,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     private void RestoreCounterEnemies()
     {
-        foreach (var state in suspendedForCounter)
+        foreach (EnemyController state in suspendedForCounter)
             if (state != null) state.SetSuspended(false);
         suspendedForCounter.Clear();
     }

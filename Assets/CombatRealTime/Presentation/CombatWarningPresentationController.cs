@@ -22,7 +22,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
     [SerializeField] private string customPassName = "Combat Warning";
 
     private FullScreenCustomPass customPass;
-    private RealTimeCombatEnemy activeEnemy;
+    private EnemyController activeEnemy;
     private CombatWarningProfile activeProfile;
     private bool requested;
     private float blend;
@@ -88,7 +88,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         }
     }
 
-    public void BeginWarning(RealTimeCombatEnemy enemy)
+    public void BeginWarning(EnemyController enemy)
     {
         if (enemy == null || enemy.ActiveSkill == null || combatManager == null ||
             !combatManager.IsCombatActive || combatManager.EngagedEnemy != enemy)
@@ -123,7 +123,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         }
     }
 
-    public void EndWarning(RealTimeCombatEnemy enemy)
+    public void EndWarning(EnemyController enemy)
     {
         if (enemy != null && activeEnemy != null && enemy != activeEnemy)
         {
@@ -151,7 +151,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         if (!active) ClearImmediate();
     }
 
-    private void OnLockChanged(RealTimeCombatEnemy enemy)
+    private void OnLockChanged(EnemyController enemy)
     {
         if (activeEnemy != null && enemy != activeEnemy) ClearImmediate();
     }

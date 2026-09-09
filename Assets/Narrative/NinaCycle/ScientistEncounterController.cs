@@ -28,9 +28,9 @@ public sealed class ScientistEncounterController : NetworkBehaviour, IGhostInter
 
     private readonly NetworkVariable<EncounterState> state = new NetworkVariable<EncounterState>();
     private GhostController ghost;
-    private EnemyCombatBrain brain;
-    private RealTimeCombatEnemy enemy;
-    private EnemyNavigationController navigation;
+    private EnemyController brain;
+    private EnemyController enemy;
+    private EnemyController navigation;
     private Coroutine activationRoutine;
     private bool stateBound;
     private EncounterState localState;
@@ -43,9 +43,9 @@ public sealed class ScientistEncounterController : NetworkBehaviour, IGhostInter
     private void Awake()
     {
         ghost = GetComponent<GhostController>();
-        brain = GetComponent<EnemyCombatBrain>();
-        enemy = GetComponent<RealTimeCombatEnemy>();
-        navigation = GetComponent<EnemyNavigationController>();
+        brain = GetComponent<EnemyController>();
+        enemy = GetComponent<EnemyController>();
+        navigation = GetComponent<EnemyController>();
         if (interactionCollider == null) interactionCollider = GetComponent<Collider>();
         ApplyState(CurrentState);
     }
@@ -208,9 +208,7 @@ public sealed class ScientistEncounterController : NetworkBehaviour, IGhostInter
         bool active = next == EncounterState.Active;
         if (ghost == null) ghost = GetComponent<GhostController>();
         if (ghost != null) ghost.SetGhostMode(next == EncounterState.Dormant);
-        if (brain != null) brain.enabled = active;
-        if (navigation != null) navigation.enabled = active;
-        if (enemy != null) enemy.enabled = active;
+        if (enemy != null) enemy.CombatEnabled = active;
     }
 
     private bool IsPlayerInRange(Transform player)

@@ -131,7 +131,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             enemyLookHeight);
     }
 
-    private void OnLockChanged(RealTimeCombatEnemy enemy)
+    private void OnLockChanged(EnemyController enemy)
     {
         if (enemy != null)
         {

@@ -43,7 +43,7 @@ public sealed class RealTimeCombatHud : MonoBehaviour
         manager = null;
     }
 
-    private void OnLockChanged(RealTimeCombatEnemy enemy)
+    private void OnLockChanged(EnemyController enemy)
     {
         if (lockIndicator != null) lockIndicator.SetActive(enemy != null);
         if (lockedEnemyText != null) lockedEnemyText.text = enemy != null ? enemy.name : string.Empty;

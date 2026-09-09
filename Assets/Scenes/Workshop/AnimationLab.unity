@@ -1455,12 +1455,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1264755830849200618}
-  - component: {fileID: 900000000000001001}
   - component: {fileID: 5613916083260983364}
   - component: {fileID: 2715851560192584771}
-  - component: {fileID: 900000000000001002}
   - component: {fileID: 5122093895041281714}
-  - component: {fileID: 5613916083260983365}
   m_Layer: 0
   m_Name: Enemy_Preview
   m_TagString: Untagged
@@ -2113,34 +2110,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1971143683857173659}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &900000000000001001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 524747760095229228}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
-  animationRoot: {fileID: 1264755830849200618}
-  animator: {fileID: 5122093895041281714}
-  lockPoint: {fileID: 0}
---- !u!114 &900000000000001002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 524747760095229228}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
-  actor: {fileID: 900000000000001001}
 --- !u!4 &904943625097795199
 Transform:
   m_ObjectHideFlags: 0
@@ -25703,53 +25672,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 524747760095229228}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 42b973aefe274ecf804a743102815ad4, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemy
-  health: {fileID: 0}
-  animationContract: {fileID: 900000000000001001}
-  animator: {fileID: 5122093895041281714}
-  visionField: {fileID: 0}
-  enemySkills: {fileID: 0}
-  physicsMotor: {fileID: 0}
-  lockOutline: {fileID: 0}
-  lockIndicator: {fileID: 0}
-  hitAnimatorState: Hit
-  hitAnimationTransitionSeconds: 0.06
-  idleAnimatorState: Idle
-  hitRecoveryNormalizedTime: 0.9
-  hitRecoveryTransitionSeconds: 0.1
-  deathAnimatorState: Death
-  deathAnimationTransitionSeconds: 0.08
-  enemyLockPoint: {fileID: 0}
-  retaliationDelaySeconds: 1
---- !u!114 &5613916083260983365
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 524747760095229228}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
-  enemy: {fileID: 5613916083260983364}
-  enemySkills: {fileID: 0}
-  skillsManager: {fileID: 0}
-  combatInput: {fileID: 0}
-  playerBow: {fileID: 0}
-  playerSword: {fileID: 0}
+  m_EditorClassIdentifier:
+  combatEnabled: 1
+  AnimationAnimationRoot: {fileID: 1264755830849200618}
+  AnimationAnimator: {fileID: 5122093895041281714}
+  AnimationLockPoint: {fileID: 0}
+  ActorAnimationContract: {fileID: 5613916083260983364}
+  ActorAnimator: {fileID: 5122093895041281714}
+  ActorVisionField: {fileID: 0}
+  ActorEnemySkills: {fileID: 0}
+  ActorPhysicsMotor: {fileID: 0}
+  ActorLockOutline: {fileID: 0}
+  ActorLockIndicator: {fileID: 0}
+  ActorEnemyLockPoint: {fileID: 0}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  dashOvershootDistance: 1.25
-  dashImpulsePerMeter: 8
-  minimumDashImpulse: 14
-  maximumDashImpulse: 32
-  dashInputLockSeconds: 0.1
-  stopDashDuration: 0.18
-  stopDashDeceleration: 65
 --- !u!1 &5618477076568356456
 GameObject:
   m_ObjectHideFlags: 0

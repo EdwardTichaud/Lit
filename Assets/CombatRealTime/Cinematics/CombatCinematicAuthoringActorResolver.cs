@@ -15,8 +15,8 @@ public static class CombatCinematicAuthoringActorResolver
             return explicitRoot;
         }
 
-        CombatActorAnimationRoot contract = fallbackAnimator != null
-            ? fallbackAnimator.GetComponentInParent<CombatActorAnimationRoot>()
+        CharacterAnimationController contract = fallbackAnimator != null
+            ? fallbackAnimator.GetComponentInParent<CharacterAnimationController>()
             : null;
         if (contract != null)
         {
@@ -46,7 +46,7 @@ public static class CombatCinematicAuthoringActorResolver
     {
         if (actorRoot != null)
         {
-            CombatActorAnimationRoot contract = actorRoot.GetComponent<CombatActorAnimationRoot>();
+            CharacterAnimationController contract = actorRoot.GetComponent<CharacterAnimationController>();
             if (contract != null && contract.Animator != null)
             {
                 return contract.Animator;

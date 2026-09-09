@@ -12,6 +12,8 @@ public sealed class CycleController : NetworkBehaviour
 {
     public CycleDefinition definition;
     public SceneMarker encounterMarker;
+    [Tooltip("Ennemi de la rencontre lorsque la scene utilise directement un EnemyController sans SceneMarker.")]
+    public EnemyController encounterEnemy;
     public CycleInteraction[] interactions = Array.Empty<CycleInteraction>();
     public CycleActivationBinding[] activations = Array.Empty<CycleActivationBinding>();
     public CyclePoseBinding[] poses = Array.Empty<CyclePoseBinding>();
@@ -19,7 +21,7 @@ public sealed class CycleController : NetworkBehaviour
     public TimelineBindingProfile bindingProfile;
     private readonly NetworkVariable<int> replicatedState = new NetworkVariable<int>();
     private WorldRulesStateManager rules;
-    private CombatHealth health;
+    private CharacterInfo health;
     private TimelinePlaybackHandle playback;
     private SquadCharacterController lockedPlayer;
     private bool ownsLock, attemptedCinematic, cinematicRunning, localDialogue;
@@ -30,7 +32,7 @@ public sealed class CycleController : NetworkBehaviour
     private int completedViewers;
     private bool ownsCinematicPriority;
     private readonly HashSet<ulong> viewers = new HashSet<ulong>();
-    private readonly List<EnemyCinematicState> suspendedEnemies = new List<EnemyCinematicState>();
+    private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
     private bool Online => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     private bool Authority => !Online || IsSpawned && IsServer;
     private int State => rules != null && definition != null && rules.TryGetInt(definition.StateKey, out int value) ? value : 0;
@@ -84,20 +86,12 @@ public sealed class CycleController : NetworkBehaviour
         if (poses != null) foreach (var binding in poses)
         {
             if (binding == null || binding.animator == null || !binding.animator.isActiveAndEnabled) continue;
-            bool matched = Evaluate(binding.condition);
-            string pose = matched ? binding.matchedState : binding.defaultState;
-            if (binding.previousState == pose || string.IsNullOrWhiteSpace(pose)) continue;
-            if (binding.animator.HasState(binding.layer, Animator.StringToHash(pose)))
-            {
-                binding.animator.CrossFade(pose, binding.crossFade, binding.layer);
-                binding.previousState = pose;
-            }
+            binding.Apply(Evaluate(binding.condition));
         }
     }
     private void BindEncounter()
     {
-        var actor = encounterMarker != null ? encounterMarker.BakedCharacterInstance : null;
-        var next = actor != null ? actor.GetComponentInChildren<CombatHealth>(true) : null;
+        var next = ResolveEncounterHealth();
         if (next != health)
         {
             if (health != null) health.HealthChanged -= OnHealthChanged;
@@ -111,7 +105,16 @@ public sealed class CycleController : NetworkBehaviour
         }
         else if (health.IsDead) Commit(definition.enemyDefeatedFlags);
     }
-    private void OnHealthChanged(CombatHealth changed)
+    private CharacterInfo ResolveEncounterHealth()
+    {
+        // A spawned/replaced instance is authoritative, not the hidden baked copy.
+        var actor = encounterMarker != null
+            ? encounterMarker.RuntimeInstance != null ? encounterMarker.RuntimeInstance : encounterMarker.BakedCharacterInstance
+            : null;
+        if (actor != null) return actor.GetComponentInChildren<CharacterInfo>(true);
+        return encounterEnemy != null ? encounterEnemy.Health : null;
+    }
+    private void OnHealthChanged(CharacterInfo changed)
     {
         if (Authority && definition != null && changed.IsDead) Commit(definition.enemyDefeatedFlags);
     }
@@ -151,7 +154,7 @@ public sealed class CycleController : NetworkBehaviour
             yield break;
         }
         cinematicRunning = true;
-        foreach (var enemyState in FindObjectsByType<EnemyCinematicState>())
+        foreach (EnemyController enemyState in FindObjectsByType<EnemyController>())
             if (!enemyState.IsSuspended)
             {
                 suspendedEnemies.Add(enemyState);
@@ -368,7 +371,7 @@ public sealed class CycleController : NetworkBehaviour
 
     private void ReleaseEnemies()
     {
-        foreach (var enemyState in suspendedEnemies) if (enemyState != null) enemyState.SetSuspended(false);
+        foreach (EnemyController enemyState in suspendedEnemies) if (enemyState != null) enemyState.SetSuspended(false);
         suspendedEnemies.Clear();
     }
 
@@ -392,7 +395,33 @@ public sealed class CyclePoseBinding
     public Animator animator;
     public CycleCondition condition = new CycleCondition();
     public string defaultState = "Idle", matchedState = "Dead";
+    [Tooltip("Booleen Animator optionnel qui suit la condition, par exemple isDead. Laisser vide pour un changement d'etat uniquement.")]
+    public string conditionBoolParameter;
     [Min(0)] public int layer;
     [Min(0)] public float crossFade = .15f;
     [NonSerialized] public string previousState;
+
+    public void Apply(bool matched)
+    {
+        if (animator == null || !animator.isActiveAndEnabled) return;
+        if (!string.IsNullOrWhiteSpace(conditionBoolParameter))
+            foreach (var parameter in animator.parameters)
+                if (parameter.name == conditionBoolParameter && parameter.type == AnimatorControllerParameterType.Bool)
+                {
+                    // Reassert after a Ghost appearance or an Animator rebind.
+                    if (animator.GetBool(parameter.nameHash) != matched) animator.SetBool(parameter.nameHash, matched);
+                    break;
+                }
+        string pose = matched ? matchedState : defaultState;
+        if (previousState == pose || string.IsNullOrWhiteSpace(pose) || layer < 0 || layer >= animator.layerCount) return;
+        string path = pose.Contains(".") ? pose : animator.GetLayerName(layer) + "." + pose;
+        int hash = Animator.StringToHash(path);
+        if (!animator.HasState(layer, hash))
+        {
+            hash = Animator.StringToHash(pose);
+            if (!animator.HasState(layer, hash)) return;
+        }
+        animator.CrossFade(hash, crossFade, layer);
+        previousState = pose;
+    }
 }

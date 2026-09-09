@@ -8,6 +8,101 @@ using Object = UnityEngine.Object;
 
 public sealed class CycleTests
 {
+    [TestCase(false)]
+    [TestCase(true)]
+    public void DirectEnemyDefeatIsRecordedWithoutSceneMarker(bool alreadyDefeated)
+    {
+        var root = new GameObject("Direct cycle encounter");
+        root.SetActive(false);
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        try
+        {
+            definition.cycleId = "test.direct-encounter";
+            var rules = root.AddComponent<WorldRulesStateManager>();
+            var enemy = root.AddComponent<EnemyController>();
+            enemy.Health.SetHealth(alreadyDefeated ? 0 : 10, 10);
+            var cycle = root.AddComponent<CycleController>();
+            cycle.definition = definition;
+            cycle.encounterEnemy = enemy;
+            typeof(CycleController).GetField("rules", Private).SetValue(cycle, rules);
+            typeof(CycleController).GetMethod("BindEncounter", Private).Invoke(cycle, null);
+            if (!alreadyDefeated) enemy.Health.ForceDefeat();
+            Assert.That(rules.TryGetInt(definition.StateKey, out int state), Is.True);
+            Assert.That(state & definition.enemyDefeatedFlags, Is.EqualTo(definition.enemyDefeatedFlags));
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(definition); }
+    }
+
+    [Test]
+    public void EncounterUsesRuntimeInstanceInsteadOfBakedCopy()
+    {
+        var root = new GameObject("Cycle marker fixture");
+        root.SetActive(false);
+        var baked = new GameObject("Baked copy");
+        var spawned = new GameObject("Spawned encounter");
+        baked.transform.SetParent(root.transform);
+        spawned.transform.SetParent(root.transform);
+        try
+        {
+            baked.AddComponent<CharacterInfo>();
+            var runtimeHealth = spawned.AddComponent<CharacterInfo>();
+            var marker = root.AddComponent<SceneMarker>();
+            marker.SetBakedCharacterInstance(baked);
+            typeof(SceneMarker).GetField("runtimeInstance", Private).SetValue(marker, spawned);
+            var cycle = root.AddComponent<CycleController>();
+            cycle.encounterMarker = marker;
+            Assert.That(typeof(CycleController).GetMethod("ResolveEncounterHealth", Private).Invoke(cycle, null), Is.SameAs(runtimeHealth));
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void NinaPoseSetsDeadParameterAndRestoresItAfterAnimatorReset()
+    {
+        var root = new GameObject("Nina animator fixture");
+        root.SetActive(false);
+        try
+        {
+            var animator = root.AddComponent<Animator>();
+            animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Sci-Fi Dog/Nina_Controller.controller");
+            root.SetActive(true);
+            animator.Rebind();
+            animator.Update(0f);
+            var binding = new CyclePoseBinding { animator = animator, conditionBoolParameter = "isDead", crossFade = 0f };
+            binding.Apply(false);
+            Assert.That(animator.GetBool("isDead"), Is.False);
+            binding.Apply(true);
+            animator.Update(0f);
+            Assert.That(animator.GetBool("isDead"), Is.True);
+            Assert.That(binding.previousState, Is.EqualTo("Dead"));
+            Assert.That(animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Dead"), Is.True);
+            animator.Rebind();
+            binding.Apply(true);
+            Assert.That(animator.GetBool("isDead"), Is.True);
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void NinaSceneBindsItsScientistAndDeathParameter()
+    {
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenPreviewScene(NinaCycleSetup.ScenePath);
+        try
+        {
+            CycleController cycle = null;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                cycle = root.GetComponentInChildren<CycleController>(true);
+                if (cycle != null) break;
+            }
+            Assert.That(cycle, Is.Not.Null);
+            Assert.That(cycle.encounterEnemy, Is.Not.Null);
+            Assert.That(cycle.encounterEnemy.GetComponent<ScientistEncounterController>(), Is.Not.Null);
+            Assert.That(cycle.poses[0].conditionBoolParameter, Is.EqualTo("isDead"));
+            Assert.That(cycle.poses[0].condition.knowledge.Length, Is.EqualTo(2));
+        }
+        finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene); }
+    }
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [Test]

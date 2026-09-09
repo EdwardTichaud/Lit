@@ -14,9 +14,9 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     [SerializeField] private CombatCinematicPlaybackService cinematicPlayback;
     [SerializeField, Min(0.25f)] private float completionGraceSeconds = 1.5f;
 
-    private readonly List<RealTimeCombatEnemyBehaviour> suspendedEnemies = new List<RealTimeCombatEnemyBehaviour>();
+    private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
     private SkillSO activeSkill;
-    private RealTimeCombatEnemy activeEnemyCaster;
+    private EnemyController activeEnemyCaster;
     private CombatCinematicCasterRole activeCasterRole;
     private bool active;
     private bool playbackStarted;
@@ -44,7 +44,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         return TryPlay(skill, CombatCinematicCasterRole.Player, null);
     }
 
-    public bool TryPlayEnemySkill(RealTimeCombatEnemy caster, SkillSO skill)
+    public bool TryPlayEnemySkill(EnemyController caster, SkillSO skill)
     {
         return TryPlay(skill, CombatCinematicCasterRole.Enemy, caster);
     }
@@ -71,7 +71,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
     }
 
-    private bool TryPlay(SkillSO skill, CombatCinematicCasterRole casterRole, RealTimeCombatEnemy caster)
+    private bool TryPlay(SkillSO skill, CombatCinematicCasterRole casterRole, EnemyController caster)
     {
         ResolveReferences();
         if (active || cinematicPlayback == null || cinematicPlayback.IsPlaying || combatManager == null ||
@@ -162,7 +162,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
 
         if (playbackStarted && activeCasterRole == CombatCinematicCasterRole.Enemy && activeEnemyCaster != null)
         {
-            RealTimeCombatEnemy caster = activeEnemyCaster;
+            EnemyController caster = activeEnemyCaster;
             bool keepConfiguredEnemyExitState = completed && activeSkill != null && activeSkill.Cinematic != null &&
                                                 activeSkill.Cinematic.PostTimelineEnemyState != null &&
                                                 activeSkill.Cinematic.PostTimelineEnemyState.IsConfigured;
@@ -214,7 +214,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     private void SuspendEncounter()
     {
         suspendedEnemies.Clear();
-        RealTimeCombatEnemyBehaviour[] behaviours = FindObjectsByType<RealTimeCombatEnemyBehaviour>(FindObjectsInactive.Exclude);
+        EnemyController[] behaviours = FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < behaviours.Length; i++)
         {
             if (behaviours[i] == null) continue;

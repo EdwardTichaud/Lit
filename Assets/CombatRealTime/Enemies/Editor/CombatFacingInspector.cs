@@ -18,7 +18,7 @@ public static class CombatFacingInspector
     private static void Draw(SceneView view)
     {
         if (!enabled || Selection.activeGameObject == null) return;
-        var contract = Selection.activeGameObject.GetComponentInParent<CombatActorAnimationRoot>();
+        var contract = Selection.activeGameObject.GetComponentInParent<CharacterAnimationController>();
         if (contract == null) return;
         var root = contract.transform;
         Axis(root.position, root.forward, Color.blue, "ActorRoot +Z");
@@ -28,7 +28,7 @@ public static class CombatFacingInspector
             Bone(animator.GetBoneTransform(HumanBodyBones.Hips), "Bassin +Z", Color.yellow);
             Bone(animator.GetBoneTransform(HumanBodyBones.Chest), "Torse +Z", Color.green);
         }
-        var target = root.GetComponent<EnemyCombatBrain>()?.Target;
+        var target = root.GetComponent<EnemyController>()?.Target;
         if (target != null) Axis(root.position, target.transform.position - root.position, Color.red, "Cible");
         // Selecting the target alongside Lucian gives a shared, explicit reference in edit mode.
         else foreach (var selected in Selection.transforms)

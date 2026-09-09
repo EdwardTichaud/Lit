@@ -1,5 +1,21 @@
 # Combat
 
+## Controleur ennemi unifie
+
+EnemyController est l’unique composant de comportement ennemi, reparti en fichiers
+partial. CharacterInfo contient les donnees runtime et remplace CombatHealth.
+Les reglages viennent de CharacterData/EnemySettings et du profil de patterns;
+les copies runtime ne modifient pas les assets sources. La sante de squad reste
+independante. CharacterAnimationController est le contrat abstrait des animations;
+le joueur a PlayerAnimationController/PlayerRootMotionRelay/PlayerCombatAnimationEvents.
+
+L’horloge locale est commune aux decisions, mouvements et securites d’attaque.
+CompleteAction protege les fins d’action contre les doublons et callbacks anciens.
+Le mode Ghost du scientifique bascule CombatEnabled sans desactiver le composant.
+Les anciens noms cites dans les sections historiques ci-dessous designent les
+responsabilites desormais internes a EnemyController. Guide et bilan de validation :
+Assets/CombatRealTime/Enemies/Controller/README.md.
+
 ## Mort et disparition des ennemis
 
 CombatEnemyLocomotionController refuse mouvement, orientation et presentation Idle

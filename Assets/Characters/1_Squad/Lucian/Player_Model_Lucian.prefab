@@ -7600,6 +7600,7 @@ GameObject:
   - component: {fileID: 900000000000000102}
   - component: {fileID: 900000000000000103}
   - component: {fileID: 901000000000000203}
+  - component: {fileID: -5594194581994094055}
   - component: {fileID: 7709963485712969020}
   - component: {fileID: 1542732129525685219}
   - component: {fileID: 5233370284238801096}
@@ -7672,6 +7673,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   characterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+  maxHp: 8
+  currentHp: 0
+  initializeEmptyHealthToMax: 1
 --- !u!114 &6731850666202294345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9008,6 +9012,31 @@ MonoBehaviour:
   meltCameraProfile: {fileID: 11400000, guid: 032149e9c0c141a5bdbe21863e6aeeea, type: 2}
   spineAnimationPrefab: {fileID: 7736070195497459570, guid: 86a96f2fa2dcfdd40b90118ec14b93f5, type: 3}
   spineBone: {fileID: 8645191530104281420}
+--- !u!114 &-5594194581994094055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3181282661
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &7709963485712969020
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9020,6 +9049,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
+  ShowTopMostFoldoutHeaderGroup: 1
   animationRoot: {fileID: 2233782780378164146}
   animator: {fileID: 963045829911085934}
   lockPoint: {fileID: 0}

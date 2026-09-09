@@ -61,7 +61,7 @@ public sealed class CombatThreatPanelController : MonoBehaviour
         }
     }
 
-    private void OnEnemyAggroStarted(RealTimeCombatEnemy enemy)
+    private void OnEnemyAggroStarted(EnemyController enemy)
     {
         if (enemy != null)
         {

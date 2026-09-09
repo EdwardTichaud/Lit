@@ -12,7 +12,7 @@ public sealed partial class CombatHealthThresholdController
     [SerializeField] private bool logEnemyReactions;
     private bool attackQteActive, attackDodgeProtected;
     private bool dodgeAwaitingRelease, counterAwaitingRelease;
-    private RealTimeCombatEnemy attackQteEnemy;
+    private EnemyController attackQteEnemy;
     private Transform attackReactionVictim;
     private SkillSO attackQteSkill;
     private int attackQteActionId;
@@ -29,7 +29,7 @@ public sealed partial class CombatHealthThresholdController
         reactionTimeScale = Mathf.Clamp(reactionTimeScale, .01f, 1f);
     }
 
-    public void OpenAttackQte(RealTimeCombatEnemy enemy, string input)
+    public void OpenAttackQte(EnemyController enemy, string input)
     {
         AnimationClip clip = enemy != null ? enemy.ActiveSkill?.AnimationClip : null;
         if (clip != null && legacyReactionClips.Add(clip))
@@ -37,7 +37,7 @@ public sealed partial class CombatHealthThresholdController
         OpenEnemyReactionOpportunity(enemy);
     }
 
-    public void OpenEnemyReactionOpportunity(RealTimeCombatEnemy enemy)
+    public void OpenEnemyReactionOpportunity(EnemyController enemy)
     {
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
@@ -97,7 +97,7 @@ public sealed partial class CombatHealthThresholdController
     public bool TryHandleEnemyReaction(EnemyAttackReaction reaction)
     {
         if (!IsReactionPressEligible(reaction, Time.unscaledTimeAsDouble)) return false;
-        var enemy = attackQteEnemy;
+        EnemyController enemy = attackQteEnemy;
         var skill = attackQteSkill;
         if (reaction == EnemyAttackReaction.Dodge)
         {
@@ -123,7 +123,7 @@ public sealed partial class CombatHealthThresholdController
         now < (reaction == EnemyAttackReaction.Dodge ? dodgeDeadline : counterDeadline) &&
         !(reaction == EnemyAttackReaction.Dodge ? dodgeAwaitingRelease : counterAwaitingRelease);
 
-    public bool IsAttackDodged(RealTimeCombatEnemy enemy, Transform victim, SkillSO skill)
+    public bool IsAttackDodged(EnemyController enemy, Transform victim, SkillSO skill)
     {
         return attackDodgeProtected && AttackReactionStillValid() && enemy == attackQteEnemy &&
             skill == attackQteSkill && victim != null &&
@@ -131,12 +131,12 @@ public sealed partial class CombatHealthThresholdController
     }
 
     // Impact closes eligibility, but protection survives all windows of this action.
-    public void CancelAttackQte(RealTimeCombatEnemy enemy)
+    public void CancelAttackQte(EnemyController enemy)
     {
         if (enemy == attackQteEnemy) CloseAttackQte();
     }
 
-    public void EndEnemyReactionAction(RealTimeCombatEnemy enemy)
+    public void EndEnemyReactionAction(EnemyController enemy)
     {
         if (enemy != attackQteEnemy) return;
         CloseAttackQte();

@@ -159,17 +159,16 @@ public static class JuggernautPatternSetup
             animator.runtimeAnimatorController = controller;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             animator.applyRootMotion = false;
-            var motorData = new SerializedObject(root.GetComponent<CombatEnemyPhysicsMotor>());
-            motorData.FindProperty("animationMovementMode").enumValueIndex = 1;
+            var motorData = new SerializedObject(root.GetComponent<EnemyController>());
+            data.enemySettings.PhysicsAnimationMovementMode = EnemyController.AnimationMovementMode.ScriptedOnly;
             motorData.ApplyModifiedPropertiesWithoutUndo();
             root.GetComponent<CharacterInfo>().SetCharacterData(data);
-            if (root.GetComponent<EnemyCinematicState>() == null) root.AddComponent<EnemyCinematicState>();
-            var legacy = root.GetComponent<RealTimeCombatEnemyBehaviour>();
-            if (legacy != null) UnityEngine.Object.DestroyImmediate(legacy);
+            if (root.GetComponent<EnemyController>() == null) root.AddComponent<EnemyController>();
+
             var tactical = root.GetComponent<EnemyTacticalResponseController>();
             if (tactical != null) UnityEngine.Object.DestroyImmediate(tactical);
-            var enemyData = new SerializedObject(root.GetComponent<RealTimeCombatEnemy>());
-            enemyData.FindProperty("idleAnimatorState").stringValue = "CombatIdle";
+            var enemyData = new SerializedObject(root.GetComponent<EnemyController>());
+            data.enemySettings.ActorIdleAnimatorState = "CombatIdle";
             enemyData.ApplyModifiedPropertiesWithoutUndo();
             PrefabUtility.SaveAsPrefabAsset(root, Folder + "Juggernaut_Combat.prefab");
         }

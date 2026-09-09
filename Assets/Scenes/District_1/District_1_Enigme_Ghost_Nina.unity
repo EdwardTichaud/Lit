@@ -2897,12 +2897,12 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1482067150}
     m_Modifications:
-    - target: {fileID: 789614906458039094, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemy
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: RecoveryEnemy
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 789614906458039094, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemySkills
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: RecoveryEnemySkills
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 819693776246483267, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
@@ -2981,27 +2981,27 @@ PrefabInstance:
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.z
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 2722337685086245760, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemy
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: LocomotionEnemy
       value: 
       objectReference: {fileID: 1127182593}
-    - target: {fileID: 3812608514145608465, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemy
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: PhysicsEnemy
       value: 
       objectReference: {fileID: 1127182593}
-    - target: {fileID: 5658577188080480298, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemy
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ContractEnemy
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 5658577188080480298, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemySkills
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ContractEnemySkills
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_Name
       value: Enemy_Model_MadScientist
       objectReference: {fileID: 0}
-    - target: {fileID: 7037574825154043715, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: enemy
       value: 
       objectReference: {fileID: 0}
@@ -3069,15 +3069,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1127182593 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5463761288425547554, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+  m_CorrespondingSourceObject: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
   m_PrefabInstance: {fileID: 1127182587}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 42b973aefe274ecf804a743102815ad4, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemy
+  m_EditorClassIdentifier:
 --- !u!1 &1141546268
 GameObject:
   m_ObjectHideFlags: 0
@@ -4823,6 +4823,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   definition: {fileID: 11400000, guid: db3b01997ab4dae40b9843a98bba1c5e, type: 2}
   encounterMarker: {fileID: 0}
+  encounterEnemy: {fileID: 1127182593}
   interactions:
   - {fileID: 317574094}
   - {fileID: 1670984218}
@@ -4851,6 +4852,7 @@ MonoBehaviour:
       - {fileID: 11400000, guid: e45994b22ba98e948830e4f460222de7, type: 2}
     defaultState: Idle
     matchedState: Dead
+    conditionBoolParameter: isDead
     layer: 0
     crossFade: 0.15
   director: {fileID: 319334202}

@@ -54,7 +54,7 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
         }
     }
 
-    public void PlayImpact(SkillSO skill, RealTimeCombatEnemy target)
+    public void PlayImpact(SkillSO skill, EnemyController target)
     {
         CombatImpactFeedbackProfile profile = skill != null ? skill.ImpactFeedback : null;
         if (profile == null || !profile.enabled || target == null)

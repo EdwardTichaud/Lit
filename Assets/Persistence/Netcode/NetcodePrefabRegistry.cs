@@ -535,7 +535,7 @@ public static class NetcodePrefabRegistry
 
         ValidateEnemyRuntimeSource(info, instance, "clone");
         SceneMarker.ConfigureSpawnedCharacter(instance, info.character, info.markerId, sourcePrefab);
-        instance.GetComponent<CombatEnemyPhysicsMotor>()?.AuditPose("SceneMarker:spawn configure");
+        instance.GetComponent<EnemyController>()?.AuditPose("SceneMarker:spawn configure");
         if (isNetworkSession)
         {
             NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
@@ -564,8 +564,8 @@ public static class NetcodePrefabRegistry
             return true;
         }
 
-        bool valid = CombatEnemyRuntimeContract.HasRequiredComponents(actor);
-        string report = CombatEnemyRuntimeContract.DescribeRequiredComponents(actor);
+        bool valid = EnemyController.HasRequiredComponents(actor);
+        string report = EnemyController.DescribeRequiredComponents(actor);
         if (!valid)
         {
             Debug.LogError("[SceneMarker] Contrat ennemi invalide (" + stage + ") | CharacterData='" +
