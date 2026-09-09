@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 
 using System;
 using System.Collections.Generic;
@@ -795,39 +795,37 @@ public class HologramFxHdrpAdapter : EditorWindow
             return snapshot;
 
         int count =
-            ShaderUtil.GetPropertyCount(shader);
+            shader.GetPropertyCount();
 
         for (int i = 0; i < count; i++)
         {
             string name =
-                ShaderUtil.GetPropertyName(shader, i);
+                shader.GetPropertyName(i);
 
-            ShaderUtil.ShaderPropertyType type =
-                ShaderUtil.GetPropertyType(
-                    shader,
-                    i);
+            UnityEngine.Rendering.ShaderPropertyType type =
+                shader.GetPropertyType(i);
 
             try
             {
                 switch (type)
                 {
-                    case ShaderUtil.ShaderPropertyType.Color:
+                    case UnityEngine.Rendering.ShaderPropertyType.Color:
                         snapshot.colors[name] =
                             material.GetColor(name);
                         break;
 
-                    case ShaderUtil.ShaderPropertyType.Vector:
+                    case UnityEngine.Rendering.ShaderPropertyType.Vector:
                         snapshot.vectors[name] =
                             material.GetVector(name);
                         break;
 
-                    case ShaderUtil.ShaderPropertyType.Float:
-                    case ShaderUtil.ShaderPropertyType.Range:
+                    case UnityEngine.Rendering.ShaderPropertyType.Float:
+                    case UnityEngine.Rendering.ShaderPropertyType.Range:
                         snapshot.floats[name] =
                             material.GetFloat(name);
                         break;
 
-                    case ShaderUtil.ShaderPropertyType.TexEnv:
+                    case UnityEngine.Rendering.ShaderPropertyType.Texture:
                         snapshot.textures[name] =
                             material.GetTexture(name);
 

@@ -258,7 +258,7 @@ public static class NetcodePlayerUtils
         string message =
             $"[NetcodeControl] system='{system}' path='{DescribeTransform(character.transform)}' characterId='{state.CharacterId}' ownerClientId={FormatClientId(state.HasNetworkObject, state.OwnerClientId)} localClientId={FormatClientId(state.HasLocalClientId, state.LocalClientId)} assignedClientId={FormatClientId(state.HasAssignedClientId, state.AssignedClientId)} isOwner={state.IsOwner} isLocalPlayer={state.IsLocalPlayerFlag} isControlledLocally={state.IsControlledLocally} isPlayerControlled={state.IsPlayerControlled} isAssignedPlayer={state.IsAssignedPlayerCharacter} followerAiEnabled={followerAiEnabled} waitingPointEnabled={waitingPointEnabled} followerAgentEnabled={state.FollowerAgentEnabled} playerInputEnabled={state.PlayerInputEnabled} movementMode='{resolvedMovementMode}' authoritySource='{state.AuthoritySource}' reason='{reason}'";
 
-        string key = $"{system}:{character.GetInstanceID()}";
+        string key = $"{system}:{character.GetEntityId()}";
         if (loggedControlStates.TryGetValue(key, out string previous) && previous == message)
         {
             return;

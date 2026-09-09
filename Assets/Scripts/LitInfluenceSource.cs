@@ -23,7 +23,7 @@ public struct LitInfluenceInfo
         Center = center;
         Radius = radius;
         TransitionDuration = Mathf.Max(0f, transitionDuration);
-        SourceId = source != null ? source.GetInstanceID() : 0;
+        SourceId = source != null ? source.GetEntityId() : EntityId.None;
     }
 
     public MonoBehaviour Source { get; }
@@ -31,7 +31,7 @@ public struct LitInfluenceInfo
     public Vector3 Center { get; }
     public float Radius { get; }
     public float TransitionDuration { get; }
-    public int SourceId { get; }
+    public EntityId SourceId { get; }
     public GameObject SourceObject => Source != null ? Source.gameObject : null;
 }
 
@@ -346,7 +346,7 @@ public class LitInfluenceSource
 
     private void UpdateMaterialInfluence(LitInfluenceInfo info)
     {
-        if (info.SourceId == 0)
+        if (info.SourceId == EntityId.None)
         {
             return;
         }
@@ -384,7 +384,7 @@ public class LitInfluenceSource
 
     private void ClearMaterialInfluence(LitInfluenceInfo info)
     {
-        if (info.SourceId == 0)
+        if (info.SourceId == EntityId.None)
         {
             activeMaterialRenderers.Clear();
             scannedMaterialRenderers.Clear();
@@ -441,7 +441,7 @@ internal static class FlameInfluenceMaterialRuntime
 
     private struct SourceInfluence
     {
-        public int SourceId;
+        public EntityId SourceId;
         public LitInfluenceSourceKind SourceKind;
         public Vector3 Center;
         public float Radius;
@@ -503,8 +503,8 @@ internal static class FlameInfluenceMaterialRuntime
 
     public static void RegisterOrUpdate(LitInfluenceInfo info, Renderer renderer)
     {
-        int sourceId = info.SourceId;
-        if (sourceId == 0 || renderer == null)
+        EntityId sourceId = info.SourceId;
+        if (sourceId == EntityId.None || renderer == null)
         {
             return;
         }
@@ -558,9 +558,9 @@ internal static class FlameInfluenceMaterialRuntime
         ApplyBestInfluence(renderer, influences, info.SourceKind == LitInfluenceSourceKind.AncientFlame);
     }
 
-    public static void Unregister(int sourceId, Renderer renderer)
+    public static void Unregister(EntityId sourceId, Renderer renderer)
     {
-        if (sourceId == 0 || renderer == null)
+        if (sourceId == EntityId.None || renderer == null)
         {
             return;
         }

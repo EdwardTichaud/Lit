@@ -111,7 +111,7 @@ public sealed class LitIcePhase2BInfluenceStress : MonoBehaviour
             if (source == null)
                 continue;
 
-            int sourceId = source.GetInstanceID();
+            EntityId sourceId = source.GetEntityId();
             for (int rendererIndex = 0; rendererIndex < targets.Length; rendererIndex++)
                 FlameInfluenceMaterialRuntime.Unregister(sourceId, targets[rendererIndex]);
         }

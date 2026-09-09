@@ -19,7 +19,7 @@ public class TriggerPairTeleporter : MonoBehaviour
 
     private sealed class EndpointRuntimeState
     {
-        public readonly Dictionary<Transform, HashSet<int>> overlapColliderIdsByTraveler = new Dictionary<Transform, HashSet<int>>();
+        public readonly Dictionary<Transform, HashSet<EntityId>> overlapColliderIdsByTraveler = new Dictionary<Transform, HashSet<EntityId>>();
     }
 
     [Header("Triggers")]
@@ -244,24 +244,24 @@ public class TriggerPairTeleporter : MonoBehaviour
     private void RegisterOverlap(int endpointIndex, Transform travelerRoot, Collider other)
     {
         EndpointRuntimeState state = endpointStates[endpointIndex];
-        if (!state.overlapColliderIdsByTraveler.TryGetValue(travelerRoot, out HashSet<int> overlapColliderIds))
+        if (!state.overlapColliderIdsByTraveler.TryGetValue(travelerRoot, out HashSet<EntityId> overlapColliderIds))
         {
-            overlapColliderIds = new HashSet<int>();
+            overlapColliderIds = new HashSet<EntityId>();
             state.overlapColliderIdsByTraveler.Add(travelerRoot, overlapColliderIds);
         }
 
-        overlapColliderIds.Add(other.GetInstanceID());
+        overlapColliderIds.Add(other.GetEntityId());
     }
 
     private void UnregisterOverlap(int endpointIndex, Transform travelerRoot, Collider other)
     {
         EndpointRuntimeState state = endpointStates[endpointIndex];
-        if (!state.overlapColliderIdsByTraveler.TryGetValue(travelerRoot, out HashSet<int> overlapColliderIds))
+        if (!state.overlapColliderIdsByTraveler.TryGetValue(travelerRoot, out HashSet<EntityId> overlapColliderIds))
         {
             return;
         }
 
-        overlapColliderIds.Remove(other.GetInstanceID());
+        overlapColliderIds.Remove(other.GetEntityId());
         if (overlapColliderIds.Count > 0)
         {
             return;

@@ -114,3 +114,11 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   en conserve et retire une unite de l'inventaire s'il casse. L'inventaire
   regroupe ces items par PV restants identiques et affiche leurs PV actuels/max
   sur le slot et dans la description.
+
+## References des panneaux monde
+
+InventoryUISettings porte explicitement les prefabs d'information item et
+batiment (Bootstrap/Arena). BuildingInfoInteractable les reutilise aussi en build,
+et reprend la resolution si l'UI arrive apres l'objet. Les chemins AssetDatabase
+restent un secours editeur. Les identifiants runtime d'influence utilisent EntityId
+dans les collections ; les identifiants persistants des objets sont inchanges.

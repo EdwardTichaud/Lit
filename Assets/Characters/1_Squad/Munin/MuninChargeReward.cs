@@ -75,7 +75,7 @@ public class MuninChargeReward : MonoBehaviour, ICharacterDetectedInteractable, 
     [Header("Runtime")]
     [SerializeField] private bool consumed;
 
-    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
+    private readonly HashSet<EntityId> activeLitInfluenceSourceIds = new HashSet<EntityId>();
     private GameObject detectedCharacter;
     private KnowledgeManager boundKnowledgeManager;
     private GhostController boundGhost;
@@ -265,7 +265,7 @@ public class MuninChargeReward : MonoBehaviour, ICharacterDetectedInteractable, 
 
     public void OnLitInfluenceEnter(LitInfluenceInfo info)
     {
-        if (ShouldReactToLitInfluence(info) && info.SourceId != 0)
+        if (ShouldReactToLitInfluence(info) && info.SourceId != EntityId.None)
         {
             activeLitInfluenceSourceIds.Add(info.SourceId);
         }
@@ -278,7 +278,7 @@ public class MuninChargeReward : MonoBehaviour, ICharacterDetectedInteractable, 
 
     public void OnLitInfluenceExit(LitInfluenceInfo info)
     {
-        if (info.SourceId != 0)
+        if (info.SourceId != EntityId.None)
         {
             activeLitInfluenceSourceIds.Remove(info.SourceId);
         }

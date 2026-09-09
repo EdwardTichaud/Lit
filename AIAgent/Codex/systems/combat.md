@@ -1,5 +1,24 @@
 # Combat
 
+## Mort et disparition des ennemis
+
+CombatEnemyLocomotionController refuse mouvement, orientation et presentation Idle
+quand CombatHealth est mort. EnemyDeathPresentation est assure automatiquement
+par RealTimeCombatEnemy : il attend la mort animee (minimum 3 s), ainsi que les
+derniers mots du scientifique, puis dissout le corps sur 2.8 s reelles via
+GhostDissolveController et desactive la racine. Les objets et identites persistantes
+ne sont pas detruits. Les materiaux sans dissolution utilisent temporairement
+Resources/EnemyDeathDissolve, derive du shader Ghost; les originaux sont restaures
+a la desactivation. La disparition ne depend pas de la fermeture de la victoire.
+
+## Victoire du scientifique
+
+RealTimeCombatSceneUiController differe uniquement le panneau de victoire d'un
+ennemi portant ScientistEncounterController : animation Death, dialogue et voix,
+puis fermeture du dialogue avant le resultat. Le combat se termine normalement;
+le mode UI/Dialogue garde la main pendant cette presentation locale. Une nouvelle
+entree en combat ou la desactivation de l'UI annule la sequence et nettoie sa voix.
+
 ## EnemyAttack : contrat auteur instantane
 
 Dans un clip ennemi, ajouter EnemyAttack et assigner le SkillSO dans le parametre

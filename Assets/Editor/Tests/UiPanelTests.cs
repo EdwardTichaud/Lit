@@ -11,6 +11,9 @@ public sealed class UiPanelTests
         {
             UiPanel panel = panelObject.GetComponent<UiPanel>();
             CanvasGroup group = panelObject.GetComponent<CanvasGroup>();
+            // EditMode does not run the MonoBehaviour lifecycle automatically.
+            typeof(UiPanel).GetMethod("Awake", System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic).Invoke(panel, null);
 
             panel.Show(true);
             Assert.That(panel.IsVisible, Is.True);

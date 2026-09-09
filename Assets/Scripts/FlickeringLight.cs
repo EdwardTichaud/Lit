@@ -189,7 +189,7 @@ public class FlickeringLight : MonoBehaviour
 
     private void InitializeNoiseSeeds()
     {
-        int seed = Mathf.Abs(GetInstanceID()) + 1;
+        int seed = Mathf.Abs(GetEntityId().GetHashCode()) + 1;
         noiseSeedA = (seed * 0.173f) + 3.1f;
         noiseSeedB = (seed * 0.317f) + 11.7f;
         noiseSeedC = (seed * 0.521f) + 19.4f;

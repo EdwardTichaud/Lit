@@ -33,7 +33,7 @@ public class EchoPassiveEffect : Effect, IItemPassiveEffect
     [Tooltip("Utilise Time.unscaledTime.")]
     public bool useUnscaledTime = false;
 
-    private readonly Dictionary<int, float> nextPlayTimeBySource = new Dictionary<int, float>();
+    private readonly Dictionary<(EntityId source, EntityId item), float> nextPlayTimeBySource = new Dictionary<(EntityId source, EntityId item), float>();
 
     /// <summary>
     /// Plays the echo immediately at the controller position.
@@ -70,7 +70,7 @@ public class EchoPassiveEffect : Effect, IItemPassiveEffect
         }
 
         float time = useUnscaledTime ? Time.unscaledTime : Time.time;
-        int key = BuildKey(context);
+        var key = BuildKey(context);
         // Cooldown is tracked per source/item pair so identical items do not silence each other globally.
         if (nextPlayTimeBySource.TryGetValue(key, out float nextTime) && time < nextTime)
         {
@@ -159,13 +159,9 @@ public class EchoPassiveEffect : Effect, IItemPassiveEffect
         }
     }
 
-    private int BuildKey(ItemPassiveContext context)
+    private (EntityId source, EntityId item) BuildKey(ItemPassiveContext context)
     {
-        int sourceId = context.Source != null ? context.Source.GetInstanceID() : 0;
-        int itemId = context.Item != null ? context.Item.GetInstanceID() : 0;
-        unchecked
-        {
-            return (sourceId * 397) ^ itemId;
-        }
+        return (context.Source != null ? context.Source.GetEntityId() : EntityId.None,
+                context.Item != null ? context.Item.GetEntityId() : EntityId.None);
     }
 }

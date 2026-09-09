@@ -1,20 +1,98 @@
 # Travail en cours
 
+## Scientifique : fantome puis ennemi
+
+Le prefab utilise GhostController/GhostData_Scientist pour la proximite et
+l'interaction initiales. ScientistEncounterController implemente le handler
+commun IGhostInteractionHandler et ne lit plus lui-meme les inputs. L'interaction
+lance la replique puis active l'ennemi ; GhostController libere son affichage et
+reste desactive pendant le combat. Les quatre copies de composants ajoutees
+sur l'instance Nina sont remplacees par les composants herites du prefab.
+Compilation C# runtime/editeur et controle YAML/references valides. Tests ajoutes,
+execution Unity et parcours solo/hote/client a verifier dans l'editeur.
+
+## Standardisation des cycles
+
+CycleController, CycleDefinition, CycleInteraction et CycleSharedSkills remplacent
+les scripts runtime Nina sous Assets/Narrative/Cycles. Dialogues, conditions,
+recompenses, activations et poses sont configurables pour d'autres cycles.
+GhostController absorbe la revelation/outline auparavant deleguee a l'adaptateur
+Nina. Scene, definition Nina, generateur et tests migres en conservant GUID,
+cle de sauvegarde et jalons. Cicatrice reste accordee a la fermeture du dialogue.
+Guide d'auteur et inspecteurs generiques ajoutes ; tests de cycles independants,
+conditions et validation des fermetures reseau ajoutes. Compilation C# runtime
+et editeur reussie avec Unity 6000.4.9f1 ; YAML de la scene/definition valide et
+references verifiees. L'editeur ouvert n'a pas repris l'import durant cette passe :
+import Unity/ILPP, execution des tests et parcours solo/reseau restent a valider.
+
+## Physique de Scar
+
+Ghost_Scar recoit un Rigidbody dynamique avec gravite, rotation bloquee et
+collision continue. Sa capsule corporelle porte le personnage; les colliders
+de squelette/accessoires et le root motion du prefab Scar sont desactives.
+Le modele et l'interaction suivent la meme racine physique. Test de chute sur
+sol ajoute; compilation editeur verifiee. Execution Unity du test et validation
+en jeu (apparition, sol/pente, interaction, solo et hote/client) restent a faire.
+
+## Apprentissage Cicatrice et SkillUnlockPanel
+
+Parler a Scar accorde Cicatrice a la fermeture naturelle du dialogue, apres le
+fondu, une seule fois pour le groupe. Une annulation ne donne pas la competence.
+Le SkillUnlockPanel cree dans Bootstrap affiche les nouveaux
+apprentissages avec la presentation des connaissances. Nom de Cicatrice corrige;
+skill retire de la liste et de l'equipement initiaux de Lucian. Etat sauvegarde
+et autorite serveur conserves. Tests de regression ajoutes (recompense unique,
+snapshot, interaction invalide, donnees initiales et texte du panneau).
+Compilation C# runtime/editeur avec Unity 6000.4.9f1 verifiee. Execution des tests
+Unity, rendu du panneau et parcours solo/hote/client restent a valider dans
+l'editeur deja ouvert sur le projet.
+
+## Ennemis morts
+
+La locomotion ignore toute poursuite/rotation et ne remplace plus la pose de mort.
+EnemyDeathPresentation, ajoute automatiquement aux RealTimeCombatEnemy, attend
+l'animation (minimum 3 s) et le dialogue de mort du scientifique avant la
+dissolution Ghost sur 2.8 s et la desactivation de la racine. Un materiau Ghost
+temporaire couvre les shaders sans dissolution, sans modifier les assets source.
+Compilation runtime/editeur validee. Test de regression cible/orientation ajoute;
+execution Unity et rendu sur scientifique/Juggernaut, sauvegarde et host/client
+restent a verifier.
+
+## Stabilisation des erreurs Unity
+
+Les huit lots ont recu les corrections de code/assets detaillees dans
+[stabilization_report.md](stabilization_report.md). Import Unity/ILPP reussi et
+96 tests EditMode distincts passes. Le marker scientifique a -98,16 m est valide sur le
+NavMesh a 8 mm pres ; correction de la sonde de sol et de la capsule, sans teleport.
+Etat solo scientifique separe du reseau, references UI explicites, doublon de
+flamme corrige, API migrees. Sept champs de compatibilite restent signales.
+Validation visuelle/GPU, sauvegarde en jeu et host/client/late join restantes.
+
 ## Nettoyage Netcode et Animator Nina
 
 NetworkObject.OnDestroy tolere un SpawnManager sans collections runtime;
 le retrait du suivi de scene ne dereference plus NetworkConfig au nettoyage.
-Trois cas de regression editeur ajoutes. Compilation NGO/runtime et tests editeur
-validee avec le compilateur Unity; execution des tests et cycles Play/Stop
-avec/sans Domain Reload restent a verifier dans Unity.
+Trois cas de regression editeur ajoutes et passes dans Unity en batch EditMode.
+Compilation NGO/runtime et editeur validee. Les cycles Play/Stop avec/sans
+Domain Reload restent a verifier dans Unity.
 La transition Idle -> Dead de Nina_Controller utilise maintenant le bool isDead
 existant au lieu d'une condition numerique avec un parametre vide.
 
 ## Cycle Nina
 
+La victoire du scientifique joue Death, sa replique "Qu'est ce que... j'ai fait..."
+et deathVoiceLine (Forgive me). Le panneau de victoire attend la fermeture du
+dialogue; la suite du cycle attend la fermeture du panneau. Voix et dialogue
+sont nettoyes en cas d'interruption. AudioClipSO cree et assigne au prefab.
+Compilation runtime/editeur validee; test des references ajoute. Enchainement
+visuel/audio et verification host/client restent a effectuer dans Unity.
+
 Scene District_1_Enigme_Ghost_Nina et donnees creees, ajoutees au manifest District_1.
-Mort scientifique -> Timeline groupe -> Existence des chimeres; lecture Item_Edward
--> Dilemme Edouard. Toutes les connaissances du cycle (Existence + Dilemme)
+Mort scientifique -> Existence des chimeres immediatement; lecture Item_Edward
+-> Dilemme Edouard.
+La revelation d'Existence ne depend plus de la Timeline. Une sauvegarde avec le
+scientifique deja mort recupere aussi ce savoir s'il manque.
+Toutes les connaissances du cycle (Existence + Dilemme)
 sont l'unique condition de Nina Dead. Parler a Nina Dead active ensemble sang et
 Scar (bits NinaDeadSpoken=16 et NinaVisited=4). Scar conserve la revelation Ghost
 standard : invisible au loin, apparition progressive a proximite. Son dialogue

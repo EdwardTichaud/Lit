@@ -13,7 +13,6 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     private PlayerInputs playerInputs;
     private bool combatInputActive;
-    private bool inputMapsConfigured;
     private Coroutine locomotionReconciliationRoutine;
     private int locomotionReconciliationToken;
 
@@ -459,7 +458,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         // while this persistent input host still remembers the previous combat
         // flag. Always re-apply the requested base profile so RealTimeCombat
         // cannot remain disabled after a valid manual lock.
-        inputMapsConfigured = true;
+
         combatInputActive = active;
         InputModeCoordinator.SetBaseMode(active ? InputMode.Combat : InputMode.Exploration);
     }

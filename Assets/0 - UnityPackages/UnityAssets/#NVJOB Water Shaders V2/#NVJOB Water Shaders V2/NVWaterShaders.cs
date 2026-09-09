@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Unity Technologies. MIT license - license_unity.txt
+// Copyright (c) 2016 Unity Technologies. MIT license - license_unity.txt
 // #NVJOB Water Shaders. MIT license - license_nvjob.txt
 // #NVJOB Water Shaders v2.0 - https://nvjob.github.io/unity/nvjob-water-shaders-v2
 // #NVJOB Nicholas Veselov - https://nvjob.github.io
@@ -193,12 +193,12 @@ public class NVWaterShaders : MonoBehaviour
         if (!reflectionTexture || oldReflectionTextureSize != textureSize)
         {
             if (reflectionTexture) DestroyImmediate(reflectionTexture);
-            reflectionTexture = new RenderTexture(textureSize, textureSize, 16) { name = "__MirrorReflection" + GetInstanceID(), isPowerOfTwo = true, hideFlags = HideFlags.DontSave };
+            reflectionTexture = new RenderTexture(textureSize, textureSize, 16) { name = "__MirrorReflection" + GetEntityId(), isPowerOfTwo = true, hideFlags = HideFlags.DontSave };
             oldReflectionTextureSize = textureSize;
         }
 
         reflectionCamera = reflectionCameras[currentCamera] as Camera;
-        GameObject go = new GameObject("Mirror Refl Camera id" + GetInstanceID() + " for " + currentCamera.GetInstanceID(), typeof(Camera), typeof(Skybox));
+        GameObject go = new GameObject("Mirror Refl Camera id" + GetEntityId() + " for " + currentCamera.GetEntityId(), typeof(Camera), typeof(Skybox));
         reflectionCamera = go.GetComponent<Camera>();
         reflectionCamera.enabled = false;
         reflectionCamera.transform.SetPositionAndRotation(thisTransform.position, thisTransform.rotation);

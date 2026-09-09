@@ -4,7 +4,7 @@ using UnityEngine;
 public static class GameplayRuntimeReset
 {
     private const string ResetLogPrefix = "[GameplayRuntimeReset]";
-    private const bool LogRuntimeResets = false;
+    private static readonly bool LogRuntimeResets = false;
 
     public static void ResetForMenuScene(string reason)
     {

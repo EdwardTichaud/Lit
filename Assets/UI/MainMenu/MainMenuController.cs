@@ -37,7 +37,6 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private CanvasGroup optionsGroup;
     [SerializeField] private CanvasGroup loadMenuGroup;
     [SerializeField] private CanvasGroup mainMenuGroup;
-    [SerializeField] private bool hideTitleCardOnProceed = true;
     [SerializeField] private bool waitForAnyInput = true;
     [SerializeField] private float panelFadeDuration = 1.5f;
     [SerializeField] private float panelHideDuration = 1f;
@@ -129,10 +128,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private bool autoFocusJoinInput = true;
     [SerializeField, Range(0.1f, 1f)] private float joinConfirmDisabledAlpha = 0.4f;
     [SerializeField] private string joinInvalidMessage = "Code invalide.";
-    [SerializeField] private string joinNoSessionMessage = "Aucune session pour ce code.";
-    [SerializeField] private float joinTimeoutSeconds = 6f;
     [SerializeField] private TMP_Text joinStatusText;
-    [SerializeField] private string joinConnectingMessage = "Connexion...";
 
     [Header("Virtual Keyboard")]
     [SerializeField] private CanvasGroup virtualKeyboardGroup;
@@ -168,7 +164,6 @@ public class MainMenuController : MonoBehaviour
     private MenuState currentMenu = MenuState.TitleCard;
     private Coroutine cursorSnapRoutine;
     private RectTransform currentCursorRoot;
-    private bool hasInitializedState;
     private bool titleCardProceedTriggered;
     private readonly Dictionary<CanvasGroup, Coroutine> fadeRoutines = new Dictionary<CanvasGroup, Coroutine>();
     private bool newGamePromptOpen;
@@ -194,7 +189,6 @@ public class MainMenuController : MonoBehaviour
     private Coroutine joinSceneSyncRoutine;
     private Coroutine titleCardIntroRoutine;
     private Coroutine titleCardPointerCursorUnlockRoutine;
-    private NetcodeSessionEndpoint activeJoinEndpoint;
     private bool titleCardIntroPlayed;
     private bool titleCardIntroInputLocked;
     private Transform titleCardParticleRuntimeRoot;
@@ -513,7 +507,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         SetMenuState(MenuState.Join);
-        activeJoinEndpoint = default;
+
 
         if (joinPanelGroup != null)
         {
@@ -728,7 +722,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         UpdateCursorTarget();
-        hasInitializedState = true;
+
     }
 
     private void SetSharedCursorChildrenActive(bool active)
@@ -3095,7 +3089,7 @@ public class MainMenuController : MonoBehaviour
         {
             joinStatusText.text = string.Empty;
         }
-        activeJoinEndpoint = default;
+
         ShowMultiOptionsMenu();
     }
 

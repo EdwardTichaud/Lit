@@ -94,7 +94,6 @@ public partial class LitOpsiveLocomotionBridge
     private Vector2 desiredGroundedWorldMoveInput;
     private Vector2 smoothedGroundedWorldMoveInput;
     private bool groundedMoveIntent;
-    private bool previousGroundedMoveIntent;
     private float groundedMoveIntentAge;
     private bool wasGroundedMoveIntentForAge;
     private float groundedPresentationSpeed;
@@ -1010,7 +1009,7 @@ public partial class LitOpsiveLocomotionBridge
         desiredGroundedWorldMoveInput = Vector2.zero;
         smoothedGroundedWorldMoveInput = Vector2.zero;
         groundedMoveIntent = false;
-        previousGroundedMoveIntent = false;
+
         ResetGroundedMoveIntentAge();
         groundedPresentationSpeed = 0f;
         groundedPresentationTurn = 0f;
@@ -1029,7 +1028,7 @@ public partial class LitOpsiveLocomotionBridge
         desiredGroundedWorldMoveInput = Vector2.zero;
         smoothedGroundedWorldMoveInput = Vector2.zero;
         groundedMoveIntent = false;
-        previousGroundedMoveIntent = false;
+
         groundedPresentationState = LocomotionPresentationState.Idle;
         groundedPresentationStateAge = 0f;
         groundedStopRequestTimer = 0f;

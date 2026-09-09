@@ -45,6 +45,9 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
     private RealTimeCombatManager manager;
     private Coroutine entryRoutine;
     private bool resultVisible;
+    private Coroutine victoryRoutine;
+    private ScientistEncounterController victoryScientist;
+    public bool IsResultVisible => resultVisible;
 
     private void Awake()
     {
@@ -175,6 +178,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
 
     private void BeginCombatUi()
     {
+        CancelVictoryPresentation();
         resultVisible = false;
         SetVisible(victoryPanel, false, false);
         SetVisible(defeatPanel, false, false);
@@ -199,8 +203,11 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         SetVisible(combatEngagedPanel, true, false);
         if (combatEngagedAnimator != null && !string.IsNullOrWhiteSpace(combatEngagedTrigger))
         {
-            combatEngagedAnimator.ResetTrigger(combatEngagedTrigger);
-            combatEngagedAnimator.SetTrigger(combatEngagedTrigger);
+            int entryState = Animator.StringToHash("Base Layer." + combatEngagedTrigger);
+            if (combatEngagedAnimator.HasState(0, entryState))
+                combatEngagedAnimator.Play(entryState, 0, 0f);
+            else
+                Debug.LogWarning("RealTimeCombatSceneUiController: etat d'entree introuvable: " + combatEngagedTrigger, this);
         }
 
         yield return null;
@@ -296,16 +303,44 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
 
     private void OnCombatResolved(bool playerVictory)
     {
-        if (!playerVictory)
+        if (!playerVictory || resultVisible)
         {
             return;
         }
 
         CloseCombatPanels();
         resultVisible = true;
-        SetVisible(victoryPanel, true, true);
         InputModeCoordinator.Enter(this, InputMode.UserInterface);
+        victoryScientist = manager != null && manager.EngagedEnemy != null
+            ? manager.EngagedEnemy.GetComponent<ScientistEncounterController>() : null;
+        if (victoryScientist != null)
+        {
+            victoryRoutine = StartCoroutine(ShowVictoryAfterScientistDialogue());
+            return;
+        }
+        ShowVictoryPanel();
+    }
+
+    private IEnumerator ShowVictoryAfterScientistDialogue()
+    {
+        yield return victoryScientist.PlayDeathPresentation();
+        victoryRoutine = null;
+        victoryScientist = null;
+        ShowVictoryPanel();
+    }
+
+    private void ShowVictoryPanel()
+    {
+        SetVisible(victoryPanel, true, true);
         victoryContinueButton?.Select();
+    }
+
+    private void CancelVictoryPresentation()
+    {
+        if (victoryRoutine != null) StopCoroutine(victoryRoutine);
+        victoryRoutine = null;
+        if (victoryScientist != null) victoryScientist.CancelDeathPresentation();
+        victoryScientist = null;
     }
 
     private void RefreshHud()
@@ -409,6 +444,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
 
     private void CloseResultPanels()
     {
+        CancelVictoryPresentation();
         SetVisible(victoryPanel, false, false);
         SetVisible(defeatPanel, false, false);
         resultVisible = false;
@@ -424,6 +460,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
 
     private void OnDisable()
     {
+        CancelVictoryPresentation();
         if (victoryContinueButton != null) victoryContinueButton.onClick.RemoveListener(OnVictoryContinue);
         if (defeatReviveButton != null) defeatReviveButton.onClick.RemoveListener(OnDefeatRevive);
         if (defeatQuitButton != null) defeatQuitButton.onClick.RemoveListener(OnDefeatQuit);

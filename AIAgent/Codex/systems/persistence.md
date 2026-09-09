@@ -96,3 +96,10 @@ métadonnées sont invalides restent supprimables mais ne sont pas chargeables.
 JoinSyncSystem borne à deux les nouvelles tentatives après un premier transfert
 échoué ; PrivateSessionService assure le délai global d'entrée réseau et le
 retour au menu. Le salon ne déclenche pas de demande de snapshot de gameplay.
+
+## Identite des flammes du corridor
+
+La flamme historique garde scene-flame:Maison:0DE640398. Sa copie distincte
+dans District_1_Corridor_Flammes utilise desormais
+scene-flame:District_1_Corridor_Flammes:4389905704937368489. Le format de sauvegarde
+est inchange ; un ancien etat partage ne permettait pas de distinguer les deux.

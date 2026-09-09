@@ -691,8 +691,8 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestUseItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestUseItemServerRpc(string itemId, RpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
         {
@@ -723,8 +723,8 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestBreakItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestBreakItemServerRpc(string itemId, RpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
         {
@@ -755,8 +755,8 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestToggleEnabledCombatItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestToggleEnabledCombatItemServerRpc(string itemId, RpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
         {
@@ -787,8 +787,8 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestDropItemServerRpc(string itemId, int quantity, Vector3 position, Quaternion rotation, bool allowDropWithoutPrefab, bool destroyWhenEmpty, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestDropItemServerRpc(string itemId, int quantity, Vector3 position, Quaternion rotation, bool allowDropWithoutPrefab, bool destroyWhenEmpty, RpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
         {
@@ -819,7 +819,7 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestPlaceItemServerRpc(
         string itemId,
         Vector3 position,
@@ -829,7 +829,7 @@ public class NetworkInventory : NetworkBehaviour
         bool allowDropWithoutPrefab,
         uint placementColorPacked,
         bool usePlacementColor,
-        ServerRpcParams rpcParams = default)
+        RpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
         {
@@ -911,7 +911,7 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    private static ClientRpcParams BuildClientRpcParams(RpcParams rpcParams)
     {
         return new ClientRpcParams
         {
@@ -922,7 +922,7 @@ public class NetworkInventory : NetworkBehaviour
         };
     }
 
-    private bool IsRequestFromOwner(ServerRpcParams rpcParams)
+    private bool IsRequestFromOwner(RpcParams rpcParams)
     {
         return rpcParams.Receive.SenderClientId == OwnerClientId;
     }

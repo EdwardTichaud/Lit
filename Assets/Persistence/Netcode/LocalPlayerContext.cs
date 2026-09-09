@@ -5,7 +5,7 @@ using UnityEngine;
 // Context local au client pour referencer le personnage controle.
 public static class LocalPlayerContext
 {
-    private const bool LogContextWrites = false;
+    private static readonly bool LogContextWrites = false;
 
     public enum Authority
     {

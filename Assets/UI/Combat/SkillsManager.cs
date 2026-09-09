@@ -26,7 +26,7 @@ public sealed class SkillsManager : MonoBehaviour
             knownSkillsView.Clear();
             if (playerController != null && playerController.CharacterData != null && playerController.CharacterData.combatSkills != null)
                 knownSkillsView.AddRange(playerController.CharacterData.combatSkills);
-            NinaSharedSkills.AppendTo(knownSkillsView);
+            CycleSharedSkills.AppendTo(knownSkillsView);
             return knownSkillsView;
         }
     }

@@ -253,7 +253,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
         text.fontSizeMin = 18f;
         text.fontSizeMax = 24f;
         text.alignment = TextAlignmentOptions.Center;
-        text.enableWordWrapping = true;
+        text.textWrappingMode = TMPro.TextWrappingModes.Normal;
         text.margin = new Vector4(20f, 0f, 20f, 0f);
     }
 

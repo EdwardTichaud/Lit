@@ -237,7 +237,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             return true;
         }
 
-        id = $"runtime-flame:{name}:{GetInstanceID()}";
+        id = $"runtime-flame:{name}:{GetEntityId()}";
         return true;
     }
 
@@ -1070,8 +1070,8 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestInteractServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestInteractServerRpc(RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))

@@ -195,7 +195,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private Coroutine actionBoxFadeRoutine;
     private bool actionBoxVisible;
     private readonly List<ActionBoxEntry> actionBoxEntries = new List<ActionBoxEntry>();
-    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
+    private readonly HashSet<EntityId> activeLitInfluenceSourceIds = new HashSet<EntityId>();
 
     private readonly NetworkList<NetItemStack> netLootItems = new NetworkList<NetItemStack>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -310,7 +310,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public void OnLitInfluenceEnter(LitInfluenceInfo info)
     {
-        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == EntityId.None)
         {
             return;
         }
@@ -321,7 +321,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public void OnLitInfluenceStay(LitInfluenceInfo info)
     {
-        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == EntityId.None)
         {
             return;
         }
@@ -332,7 +332,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public void OnLitInfluenceExit(LitInfluenceInfo info)
     {
-        if (info.SourceId == 0 || !activeLitInfluenceSourceIds.Remove(info.SourceId))
+        if (info.SourceId == EntityId.None || !activeLitInfluenceSourceIds.Remove(info.SourceId))
         {
             return;
         }
@@ -2968,7 +2968,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         Transform playerRoot,
         SquadCharacterController controller,
         NetworkInventory inventory,
-        ServerRpcParams rpcParams)
+        RpcParams rpcParams)
     {
         if (controller == null || inventory == null)
         {
@@ -4058,8 +4058,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         return first == second || first.IsChildOf(second) || second.IsChildOf(first);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestUnlockAndOpenServerRpc(bool confirmedLockpick, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestUnlockAndOpenServerRpc(bool confirmedLockpick, RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))
@@ -4177,8 +4177,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestTakeServerRpc(string itemId, int quantity, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestTakeServerRpc(string itemId, int quantity, RpcParams rpcParams = default)
     {
         if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0)
         {
@@ -4265,8 +4265,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             BuildClientRpcParams(rpcParams));
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestTakeAllServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestTakeAllServerRpc(RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))
@@ -4302,8 +4302,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestDepositServerRpc(string itemId, int quantity, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestDepositServerRpc(string itemId, int quantity, RpcParams rpcParams = default)
     {
         if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0)
         {
@@ -4395,8 +4395,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             BuildClientRpcParams(rpcParams));
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestBreakServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestBreakServerRpc(string itemId, RpcParams rpcParams = default)
     {
         if (string.IsNullOrWhiteSpace(itemId))
         {
@@ -4555,7 +4555,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
     }
 
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    private static ClientRpcParams BuildClientRpcParams(RpcParams rpcParams)
     {
         return new ClientRpcParams
         {

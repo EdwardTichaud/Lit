@@ -15,7 +15,6 @@ public class NetcodeBootstrap : MonoBehaviour
     [SerializeField] private bool autoCreateNetworkManager = true;
     [SerializeField] private bool autoCreateLauncher = true;
     [SerializeField] private bool autoCreateSpawner = true;
-    [SerializeField] private bool autoCreateLobbyUI = true;
     [SerializeField] private bool autoCreateConnectionApproval = true;
     [SerializeField] private bool autoCreatePersistentWorldSystems = true;
     [SerializeField] private bool enableSceneManagement = true;

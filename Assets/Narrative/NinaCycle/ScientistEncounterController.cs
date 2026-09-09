@@ -1,31 +1,37 @@
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Network-authoritative narrative gate for the Mad Scientist. Before the
-/// encounter he is an ordinary world interaction; after his line completes he
+/// encounter GhostController owns appearance and interaction; after his line completes he
 /// becomes a normal combat actor.
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(NetworkObject), typeof(Collider))]
-public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterDetectedInteractable
+[RequireComponent(typeof(NetworkObject), typeof(Collider), typeof(GhostController))]
+public sealed class ScientistEncounterController : NetworkBehaviour, IGhostInteractionHandler, ICycleCinematicBlocker
 {
     private enum EncounterState : byte { Dormant, Dialogue, Active }
 
     [SerializeField, TextArea] private string introductionLine = "Vous n'auriez jamais dû venir ici...";
     [SerializeField, Min(0.5f)] private float introductionSeconds = 2.5f;
     [SerializeField, Min(0.5f)] private float interactionDistance = 2.5f;
-    [SerializeField] private int interactionPriority = 95;
     [SerializeField] private Collider interactionCollider;
 
+    [Header("Defeat")]
+    [SerializeField, TextArea] private string deathLine = "Qu'est ce que... j'ai fait...";
+    [SerializeField, Min(0.5f)] private float deathDialogueSeconds = 4f;
+    [SerializeField] private AudioClipSO deathVoiceLine;
+    private AudioSource deathVoiceSource;
+    public bool IsDeathPresentationPlaying { get; private set; }
+    public bool IsCyclePresentationBlocking => IsDeathPresentationPlaying;
+
     private readonly NetworkVariable<EncounterState> state = new NetworkVariable<EncounterState>();
+    private GhostController ghost;
     private EnemyCombatBrain brain;
     private RealTimeCombatEnemy enemy;
     private EnemyNavigationController navigation;
     private Coroutine activationRoutine;
-    private bool inputBound;
     private bool stateBound;
     private EncounterState localState;
 
@@ -36,6 +42,7 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
 
     private void Awake()
     {
+        ghost = GetComponent<GhostController>();
         brain = GetComponent<EnemyCombatBrain>();
         enemy = GetComponent<RealTimeCombatEnemy>();
         navigation = GetComponent<EnemyNavigationController>();
@@ -45,17 +52,13 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
 
     private void OnEnable()
     {
-        LocalInputRouter.EnsureInitialized();
-        LocalInputRouter.Interact += OnInteract;
-        inputBound = true;
         if (IsSpawned) BindState();
         ApplyState(CurrentState);
     }
 
     private void OnDisable()
     {
-        if (inputBound) LocalInputRouter.Interact -= OnInteract;
-        inputBound = false;
+        CancelDeathPresentation();
         if (activationRoutine != null) StopCoroutine(activationRoutine);
         activationRoutine = null;
         UnbindState();
@@ -72,40 +75,27 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
 
     public override void OnNetworkDespawn()
     {
+        CancelDeathPresentation();
         state.OnValueChanged -= OnStateChanged;
         stateBound = false;
         if (activationRoutine != null) StopCoroutine(activationRoutine);
         activationRoutine = null;
-        if (inputBound) LocalInputRouter.Interact -= OnInteract;
-        inputBound = false;
         localState = EncounterState.Dormant;
     }
 
-    public bool CanBeDetectedBy(SquadCharacterController controller) =>
-        IsDormant && controller != null && controller.CurrentHp > 0 && isActiveAndEnabled;
-
-    public Collider GetInteractionDetectionCollider() => interactionCollider;
-    public Transform GetInteractionAnchor() => transform;
-    public float GetInteractionMaxDistance(SquadCharacterController controller) => interactionDistance;
-    public int GetInteractionPriority(SquadCharacterController controller) => interactionPriority;
-    public void SetDetectedCharacter(GameObject character) { }
-
-    private void OnInteract(InputAction.CallbackContext context)
+    public bool Interact(GhostController source)
     {
-        if (!isActiveAndEnabled || (Online && !IsSpawned) || !IsDormant || LocalInputRouter.IsInteractConsumed || InputFocusStack.HasAnyFocus() ||
-            !RuntimeOutlineSelectionManager.IsActiveInteractable(this))
-        {
-            return;
-        }
-
-        if (!LocalInputRouter.TryConsumeInteract()) return;
-        if (Online && IsSpawned) StartEncounterServerRpc();
-        else StartEncounter(LocalPlayerUtils.GetControlledCharacter() != null
-            ? LocalPlayerUtils.GetControlledCharacter().transform : null);
+        if (!isActiveAndEnabled || source == null || source != ghost || !source.isActiveAndEnabled ||
+            (Online && !IsSpawned) || !IsDormant) return false;
+        var player = LocalPlayerUtils.GetControlledCharacter();
+        if (player == null || !IsPlayerInRange(player.transform)) return false;
+        if (Online) StartEncounterServerRpc();
+        else StartEncounter(player.transform);
+        return true;
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void StartEncounterServerRpc(ServerRpcParams rpc = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void StartEncounterServerRpc(RpcParams rpc = default)
     {
         StartEncounter(NetcodePlayerUtils.GetPlayerTransform(rpc.Receive.SenderClientId));
     }
@@ -113,6 +103,9 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
     private void StartEncounter(Transform player)
     {
         if (!Authority || !IsDormant || !IsPlayerInRange(player)) return;
+        var controller = player != null ? player.GetComponentInParent<SquadCharacterController>() : null;
+        if (controller == null && player != null) controller = player.GetComponentInChildren<SquadCharacterController>();
+        if (controller == null || controller.CurrentHp <= 0 || ghost == null || !ghost.CanBeDetectedBy(controller)) return;
         SetState(EncounterState.Dialogue);
         if (Online && IsSpawned) ShowIntroductionClientRpc();
         else ShowIntroduction();
@@ -137,6 +130,48 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
         DialoguePanelUI.TryShowTimedConversation(introductionLine, introductionSeconds, null, this);
     }
 
+    // Each local combat UI plays this presentation before showing its result.
+    // Combat outcome/health authority remains with the existing combat system.
+    public IEnumerator PlayDeathPresentation()
+    {
+        if (IsDeathPresentationPlaying) yield break;
+        IsDeathPresentationPlaying = true;
+        try
+        {
+            enemy?.PlayDeathAnimation();
+            float duration = Mathf.Max(0.5f, deathDialogueSeconds);
+            if (deathVoiceLine != null && deathVoiceLine.audioClip != null)
+            {
+                duration = Mathf.Max(duration, deathVoiceLine.audioClip.length);
+                deathVoiceSource = AudioManager.Instance?.PlayUiOneShotClip(deathVoiceLine);
+            }
+            bool closed = false;
+            bool shown = DialoguePanelUI.TryShowTimedConversation(deathLine, duration, _ => closed = true, this);
+            if (shown)
+            {
+                while (this != null && isActiveAndEnabled && !closed) yield return null;
+            }
+            else
+            {
+                // Missing UI must not suppress the death animation/voice or block victory.
+                yield return new WaitForSecondsRealtime(duration);
+            }
+        }
+        finally
+        {
+            CancelDeathPresentation();
+        }
+    }
+
+    public void CancelDeathPresentation()
+    {
+        if (!IsDeathPresentationPlaying) return;
+        IsDeathPresentationPlaying = false;
+        DialoguePanelUI.CancelTimedConversation(this);
+        if (deathVoiceSource != null) deathVoiceSource.Stop();
+        deathVoiceSource = null;
+    }
+
     private void BeginLocalCombat()
     {
         Transform player = LocalPlayerUtils.GetControlledCharacter() != null
@@ -151,11 +186,6 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
         if (stateBound) return;
         state.OnValueChanged += OnStateChanged;
         stateBound = true;
-        if (!inputBound)
-        {
-            LocalInputRouter.Interact += OnInteract;
-            inputBound = true;
-        }
     }
 
     private void UnbindState()
@@ -176,11 +206,11 @@ public sealed class ScientistEncounterController : NetworkBehaviour, ICharacterD
     private void ApplyState(EncounterState next)
     {
         bool active = next == EncounterState.Active;
+        if (ghost == null) ghost = GetComponent<GhostController>();
+        if (ghost != null) ghost.SetGhostMode(next == EncounterState.Dormant);
         if (brain != null) brain.enabled = active;
         if (navigation != null) navigation.enabled = active;
         if (enemy != null) enemy.enabled = active;
-        if (!active && RuntimeOutlineSelectionManager.IsActiveInteractable(this))
-            RuntimeOutlineSelectionManager.Clear();
     }
 
     private bool IsPlayerInRange(Transform player)

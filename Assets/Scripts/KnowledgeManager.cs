@@ -525,7 +525,7 @@ public class KnowledgeManager : MonoBehaviour
             instance = new GameObject("KnowledgeUnlockText");
             TextMeshPro tmp = instance.AddComponent<TextMeshPro>();
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.enableWordWrapping = true;
+            tmp.textWrappingMode = TMPro.TextWrappingModes.Normal;
             tmp.fontSize = 2f;
             textTarget = tmp;
         }

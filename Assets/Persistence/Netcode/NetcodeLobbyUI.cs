@@ -23,7 +23,6 @@ public class NetcodeLobbyUI : MonoBehaviour
 
     [Header("Address")]
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
-    [SerializeField] private string listenAddress = "0.0.0.0";
     [SerializeField] private bool fetchPublicIp = true;
     [SerializeField] private string publicIpServiceUrl = "https://api.ipify.org";
     [SerializeField] private string publicIpLabelFormat = "IP publique: {0}";

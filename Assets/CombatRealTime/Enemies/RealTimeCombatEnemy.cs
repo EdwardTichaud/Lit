@@ -103,6 +103,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         animator = ResolveCombatAnimator();
 
         ResolveLockPoint();
+        if (!TryGetComponent<EnemyDeathPresentation>(out _)) gameObject.AddComponent<EnemyDeathPresentation>();
     }
 
     private void OnDisable()

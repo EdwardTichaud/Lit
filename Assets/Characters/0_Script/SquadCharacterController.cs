@@ -744,12 +744,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void ResetFlameToMax(int maxSeconds, bool ensureFlameItem = true)
     {
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            return;
-        }
-
         int target = maxSeconds > 0 ? maxSeconds : startingFlameSeconds;
         if (target <= 0)
         {
@@ -838,15 +832,6 @@ public partial class SquadCharacterController : MonoBehaviour
         else
         {
             SanitizeCombatDefenseItemHitPoints();
-        }
-
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            SyncInteractionEquipmentToCharacterData();
-            SyncCombatEquipmentToCharacterData();
-            SyncCombatDefenseItemHitPointsToCharacterData();
-            return;
         }
 
         flameSecondsRemaining = Mathf.Max(0, flameSeconds);
@@ -1355,6 +1340,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         characterData.AddSkill(skill);
+        SkillUnlockPanel.TryShow(skill);
         return true;
     }
 
@@ -2290,12 +2276,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void ToggleFlame()
     {
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            return;
-        }
-
         if (!allowFlameToggle)
         {
             return;
@@ -2328,12 +2308,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void ApplyFlameState(int flameSeconds, bool equipFlame)
     {
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            return;
-        }
-
         flameSecondsRemaining = Mathf.Max(0, flameSeconds);
 
         if (HasFlameItem && flameSecondsRemaining > 0)
@@ -2569,12 +2543,6 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureFlameCached();
         ClearPendingFlameVisualTransition();
 
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            return;
-        }
-
         if (flameTransform == null)
         {
             return;
@@ -2615,22 +2583,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void TickFlameLifetimeForExternalLocomotion(float deltaTime)
     {
-        if (!CharacterFlameSystemEnabled)
-        {
-            return;
-        }
-
         UpdateFlameLifetime(deltaTime);
     }
 
     private void UpdateFlameLifetime(float deltaTime)
     {
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            return;
-        }
-
         int prevSeconds = flameSecondsRemaining;
         bool prevEquipped = flameEquipped;
 
@@ -2674,12 +2631,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void AddFlameSeconds(int seconds)
     {
-        if (!CharacterFlameSystemEnabled)
-        {
-            DisableCharacterFlameState();
-            return;
-        }
-
         if (seconds <= 0)
         {
             return;

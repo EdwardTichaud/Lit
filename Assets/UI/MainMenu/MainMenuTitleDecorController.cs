@@ -20,7 +20,6 @@ public class MainMenuTitleDecorController : MonoBehaviour
     [SerializeField] private string savesRootFolder = "Saves";
     [SerializeField] private string saveMetaFileName = "meta.json";
     [SerializeField] private string characterStateFileName = "CharacterState.json";
-    [SerializeField, Min(0.25f)] private float runtimeRefreshInterval = 2f;
 
     [Header("Decor States")]
     [SerializeField] private GameObject noSaveRoot;

@@ -65,7 +65,6 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private bool searchingLastKnownPosition;
     private bool searchCompletedForCurrentAlert;
     private bool hasLastKnownPlayerPosition;
-    private bool returnedToPatrolWhilePlayerVisible;
     private bool cinematicSuspended;
     private bool navigationSuppressedForCinematic;
     private PursuitDisengageState pursuitDisengageState;
@@ -248,7 +247,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
         else
         {
-            returnedToPatrolWhilePlayerVisible = false;
+
             UpdateAlertness();
         }
 
@@ -538,7 +537,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
 
         ExitAlert();
-        returnedToPatrolWhilePlayerVisible = false;
+
         SetAttackMode(false);
     }
 

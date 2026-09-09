@@ -25,6 +25,7 @@ public class Maison : MonoBehaviour
         }
 
         Instance = this;
+        EnsureHomeContainers(ResolveMaisonLootContainers(null));
     }
 
     public List<InteractableItem> ResolveMaisonLootContainers(InteractableItem preferred)

@@ -279,10 +279,8 @@ public static class MadScientistCombatSetup
         if (marker == null || marker.BakedCharacterInstance == null)
             throw new System.InvalidOperationException("Marker ou copie bakee du Scientifique fou introuvable.");
 
-        // This is the nearest validated NavMesh position reported by the world
-        // bake. Fix the authored marker rather than relaxing world tolerance or
-        // allowing runtime teleportation to another floor.
-        marker.transform.position = new Vector3(45.33f, -98.16f, 118.97f);
+        // Configuration must preserve the authored pose. A coordinate copied
+        // from an earlier bake can belong to another world/zone transform.
         ConfigureActor(marker.BakedCharacterInstance, skill);
         ConfigureSceneInteractions(scene);
         EditorSceneManager.MarkSceneDirty(scene);
@@ -326,6 +324,15 @@ public static class MadScientistCombatSetup
         Ensure<CombatEnemyRuntimeContract>(root);
         EnemyCombatBrain brain = Ensure<EnemyCombatBrain>(root);
         ScientistEncounterController encounter = Ensure<ScientistEncounterController>(root);
+        GhostController ghost = Ensure<GhostController>(root);
+        ghost.SetGhostData(AssetDatabase.LoadAssetAtPath<GhostData>("Assets/Narrative/NinaCycle/Data/GhostData_Scientist.asset"));
+        var ghostSettings = new SerializedObject(ghost);
+        ghostSettings.FindProperty("playOnce").boolValue = false;
+        ghostSettings.FindProperty("unlockKnowledgeOnListen").boolValue = false;
+        ghostSettings.FindProperty("enableProximityDissolve").boolValue = true;
+        ghostSettings.FindProperty("interactionMaxDistance").floatValue = 2.5f;
+        ghostSettings.FindProperty("interactionPriority").intValue = 95;
+        ghostSettings.ApplyModifiedPropertiesWithoutUndo();
         Ensure<RealTimeCombatAnimationEvents>(root);
         Ensure<NetworkObject>(root);
         Ensure<NetworkTransform>(root);
@@ -336,6 +343,7 @@ public static class MadScientistCombatSetup
         body = Ensure<Rigidbody>(root);
         capsule = Ensure<CapsuleCollider>(root);
         agent = Ensure<NavMeshAgent>(root);
+        if (agent != null) agent.enabled = false;
         if (body == null || capsule == null || agent == null)
         {
             throw new System.InvalidOperationException(
@@ -358,6 +366,11 @@ public static class MadScientistCombatSetup
         agent.stoppingDistance = 1.65f;
         agent.radius = Mathf.Max(.3f, agent.radius);
         agent.height = Mathf.Max(1.6f, agent.height);
+        // ActorRoot is the NavMesh foot position, not the capsule center.
+        capsule.direction = 1;
+        capsule.radius = agent.radius;
+        capsule.height = Mathf.Max(agent.height, capsule.radius * 2f);
+        capsule.center = Vector3.up * (capsule.height * 0.5f);
 
         animationRoot.Configure(root.transform, animator, lockPoint);
         SetReference(enemy, "health", health);

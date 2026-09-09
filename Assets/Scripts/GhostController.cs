@@ -226,19 +226,13 @@ public sealed class GhostResolutionSpawnMarker : MonoBehaviour
 }
 
 /// <summary>
-/// Optional story-specific availability policy. It lets a narrative adapter
-/// keep a ghost visible and interactable without weakening the reveal rules of
-/// ordinary ghosts.
+/// Handles an interaction after GhostController has selected the character.
 /// </summary>
-public interface IGhostInteractionAvailability
+public interface IGhostInteractionHandler
 {
-    bool TryEvaluateGhostReveal(GhostController ghost, SquadCharacterController controller, out float distance01);
-    bool AllowsGhostRuntimeOutline(GhostController ghost);
+    bool Interact(GhostController ghost);
 }
 
-/// <summary>
-/// Assigns a GhostData asset to a scene ghost and resolves reactions from unlocked knowledge.
-/// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Narrative/Ghost Controller")]
 public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver, IRuntimeOutlineVisibilityGate, IInputModeHandler
@@ -294,10 +288,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private string ghostResponsePrefix = "";
 
     [Header("Reaction Choices")]
-    [SerializeField, Tooltip("Affiche une liste d'options si plusieurs reactions de connaissance sont disponibles.")]
-    private bool showReactionChoiceUi = true;
-    [SerializeField, Tooltip("Si une seule reaction est disponible, elle est jouee directement.")]
-    private bool autoUseSingleAvailableReaction = true;
     [SerializeField, Tooltip("Compatibilite d'anciens prefabs. Les reactions utilisent le panneau GhostReactionChoicePanel de UI_Overlay.")]
     private Transform reactionChoiceParent;
     [SerializeField, Tooltip("Compatibilite d'anciens prefabs. La largeur est desormais authorisee dans GhostReactionChoicePanel.")]
@@ -414,7 +404,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     // Unity can restore a component without running field initializers after a domain reload.
     // Keep this lazily-created instead of assuming the initializer is always available.
     private MaterialPropertyBlock proximityPresentationPropertyBlock;
-    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
+    private readonly HashSet<EntityId> activeLitInfluenceSourceIds = new HashSet<EntityId>();
     private static readonly Collider[] ProximitySpherecastHits = new Collider[32];
     private static readonly int FresnelTexturePowerId = Shader.PropertyToID("_Frensel_Texture_Power");
     private static readonly int DissolveAmountId = Shader.PropertyToID("_DissolveAmount");
@@ -485,19 +475,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
                                                CanAppearAtAll() &&
                                                IsControlledPlayerWithinGhostOutlineRange();
 
-    public bool AllowsRuntimeOutline
-    {
-        get
-        {
-            IGhostInteractionAvailability availability = GetInteractionAvailability();
-            if (availability != null)
-            {
-                return availability.AllowsGhostRuntimeOutline(this);
-            }
-
-            return AllowsDefaultRuntimeOutline;
-        }
-    }
+    public bool AllowsRuntimeOutline => AllowsDefaultRuntimeOutline;
     public event System.Action<GhostController> Understood;
 
     private void Reset()
@@ -557,6 +535,22 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         {
             RuntimeOutlineSelectionManager.Clear();
         }
+    }
+
+    /// <summary>Hands the visible body to another gameplay mode without retaining ghost input or delayed hiding.</summary>
+    public void SetGhostMode(bool active)
+    {
+        if (active)
+        {
+            enabled = true;
+            return;
+        }
+        StopAllCoroutines();
+        enabled = false;
+        // OnDisable hides a normal ghost. An enemy handoff must explicitly reveal
+        // its body after that cleanup, before enemy animation takes ownership.
+        ApplyProximityDissolveAmount(proximityVisibleDissolveAmount, true);
+        SetGhostRenderersVisible(true);
     }
 
     private void LateUpdate()
@@ -632,16 +626,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         onGhostDataChanged.Invoke();
     }
 
-    public bool CanBeDetectedBy(SquadCharacterController controller)
-    {
-        IGhostInteractionAvailability availability = GetInteractionAvailability();
-        if (availability != null)
-        {
-            return availability.TryEvaluateGhostReveal(this, controller, out _);
-        }
-
-        return TryEvaluateRevealForController(controller, out _);
-    }
+    public bool CanBeDetectedBy(SquadCharacterController controller) => TryEvaluateRevealForController(controller, out _);
 
     public Collider GetInteractionDetectionCollider()
     {
@@ -767,8 +752,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public bool InteractWithGhost()
     {
-        if (TryGetComponent<NinaGhostInteraction>(out var cycleInteraction))
-            return cycleInteraction.Interact(this);
+        if (!isActiveAndEnabled) return false;
+        foreach (var behaviour in GetComponents<MonoBehaviour>())
+            if (behaviour != null && behaviour.isActiveAndEnabled && behaviour is IGhostInteractionHandler handler)
+                return handler.Interact(this);
 
         if (ghostData == null)
         {
@@ -1018,12 +1005,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private bool TryEvaluateRevealForController(SquadCharacterController controller, out float distance01)
     {
-        IGhostInteractionAvailability availability = GetInteractionAvailability();
-        if (availability != null)
-        {
-            return availability.TryEvaluateGhostReveal(this, controller, out distance01);
-        }
-
         return TryEvaluateDefaultRevealForController(controller, out distance01);
     }
 
@@ -1044,23 +1025,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         return TryResolveProximityDistance01(controller, out distance01);
     }
 
-    private IGhostInteractionAvailability GetInteractionAvailability()
-    {
-        MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
-        for (int i = 0; i < behaviours.Length; i++)
-        {
-            if (behaviours[i] is IGhostInteractionAvailability availability && behaviours[i].isActiveAndEnabled)
-            {
-                return availability;
-            }
-        }
-
-        return null;
-    }
-
     private bool CanAttemptRevealForController(SquadCharacterController controller)
     {
-        return controller != null && CanAppearAtAll() && HasRequiredLitInfluence();
+        return controller != null && controller.CurrentHp > 0 && CanAppearAtAll() && HasRequiredLitInfluence();
     }
 
     private bool CanAppearAtAll()
@@ -1681,7 +1648,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public void OnLitInfluenceEnter(LitInfluenceInfo info)
     {
-        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == EntityId.None)
         {
             return;
         }
@@ -1692,7 +1659,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public void OnLitInfluenceStay(LitInfluenceInfo info)
     {
-        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == EntityId.None)
         {
             return;
         }
@@ -1703,7 +1670,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public void OnLitInfluenceExit(LitInfluenceInfo info)
     {
-        if (info.SourceId == 0)
+        if (info.SourceId == EntityId.None)
         {
             return;
         }

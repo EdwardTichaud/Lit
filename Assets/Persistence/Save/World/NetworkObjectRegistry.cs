@@ -11,7 +11,7 @@ public class NetworkObjectRegistry : MonoBehaviour
     private readonly Dictionary<string, PersistentNetworkObject> sceneObjectsById = new Dictionary<string, PersistentNetworkObject>();
     private readonly Dictionary<string, PersistentNetworkObject> runtimeObjectsById = new Dictionary<string, PersistentNetworkObject>();
     private readonly HashSet<string> loggedCollisions = new HashSet<string>();
-    private readonly HashSet<int> loggedMissingIdInstances = new HashSet<int>();
+    private readonly HashSet<EntityId> loggedMissingIdInstances = new HashSet<EntityId>();
 
     private void Awake()
     {
@@ -51,7 +51,7 @@ public class NetworkObjectRegistry : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(persistentObject.PersistentId))
         {
-            int instanceId = persistentObject.GetInstanceID();
+            EntityId instanceId = persistentObject.GetEntityId();
             if (loggedMissingIdInstances.Add(instanceId))
             {
                 PersistentWorldDebug.Warn(
@@ -62,7 +62,7 @@ public class NetworkObjectRegistry : MonoBehaviour
             return;
         }
 
-        loggedMissingIdInstances.Remove(persistentObject.GetInstanceID());
+        loggedMissingIdInstances.Remove(persistentObject.GetEntityId());
 
         if (objectsById.TryGetValue(persistentObject.PersistentId, out PersistentNetworkObject existing) &&
             existing != null &&
@@ -362,7 +362,7 @@ public class NetworkObjectRegistry : MonoBehaviour
             builder.Append($" prefab='{persistentObject.RuntimePrefabId}'");
         }
 
-        builder.Append($" path='{PersistentWorldDebug.DescribeTransform(persistentObject.transform)}' instance={persistentObject.GetInstanceID()}");
+        builder.Append($" path='{PersistentWorldDebug.DescribeTransform(persistentObject.transform)}' instance={persistentObject.GetEntityId()}");
         return builder.ToString();
     }
 }

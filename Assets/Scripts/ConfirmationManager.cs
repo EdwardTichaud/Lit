@@ -721,7 +721,7 @@ public class ConfirmationManager : MonoBehaviour
         background.raycastTarget = false;
 
         TextMeshProUGUI question = CreateFallbackText("Question", boxRect, new Vector2(0.5f, 0.76f), new Vector2(820f, 180f), 48f);
-        question.enableWordWrapping = true;
+        question.textWrappingMode = TMPro.TextWrappingModes.Normal;
         question.alignment = TextAlignmentOptions.Center;
 
         GameObject choicesObject = new GameObject("Choix", typeof(RectTransform), typeof(GridLayoutGroup));

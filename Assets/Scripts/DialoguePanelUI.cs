@@ -489,7 +489,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         text.font = TMP_Settings.defaultFontAsset;
         text.fontSize = 30f;
         text.alignment = TextAlignmentOptions.MidlineLeft;
-        text.enableWordWrapping = true;
+        text.textWrappingMode = TMPro.TextWrappingModes.Normal;
         dialoguePanelRoot = panel;
         dialogueText = text;
         panel.SetActive(false);

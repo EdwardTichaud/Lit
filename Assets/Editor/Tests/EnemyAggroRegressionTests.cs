@@ -77,7 +77,8 @@ public sealed class EnemyAggroRegressionTests
     [TestCase(EnemyAttackReaction.Dodge, .45, true)]
     [TestCase(EnemyAttackReaction.Dodge, .5, false)]
     [TestCase(EnemyAttackReaction.Counter, .15, true)]
-    [TestCase(EnemyAttackReaction.Counter, .2, false)]
+    // Match the serialized float duration exactly when testing its boundary.
+    [TestCase(EnemyAttackReaction.Counter, .2f, false)]
     [TestCase(EnemyAttackReaction.Counter, .45, false)]
     public void InvisibleReactionUsesIndependentRealtimeWindows(EnemyAttackReaction reaction, double elapsed, bool expected)
     {

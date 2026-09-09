@@ -67,8 +67,8 @@ public sealed class KnowledgeSynchronizationService : NetworkBehaviour
         return true;
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestRevealServerRpc(FixedString128Bytes knowledgeId, FixedString64Bytes claimedRevealer, FixedString128Bytes origin, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestRevealServerRpc(FixedString128Bytes knowledgeId, FixedString64Bytes claimedRevealer, FixedString128Bytes origin, RpcParams rpcParams = default)
     {
         // L'identite affichee vient de l'attribution serveur, jamais d'un texte client forge.
         string revealer = ResolveRevealerName(rpcParams.Receive.SenderClientId, claimedRevealer.ToString());

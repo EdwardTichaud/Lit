@@ -2211,8 +2211,8 @@ public class BuilderController : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestBuildServerRpc(string buildingId, Vector3 position, Quaternion rotation, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestBuildServerRpc(string buildingId, Vector3 position, Quaternion rotation, RpcParams rpcParams = default)
     {
         if (!LegacyBuildingSystem.Enabled)
         {
@@ -2265,8 +2265,8 @@ public class BuilderController : NetworkBehaviour
         SendFeedback(building.GetPlaceSuccessMessage(), rpcParams, ActionAudioCue.BuildComplete);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestUpgradeServerRpc(ulong buildingNetworkId, string buildingItemId, int targetLevel, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestUpgradeServerRpc(ulong buildingNetworkId, string buildingItemId, int targetLevel, RpcParams rpcParams = default)
     {
         if (!LegacyBuildingSystem.Enabled)
         {
@@ -2333,8 +2333,8 @@ public class BuilderController : NetworkBehaviour
         SendFeedback("Amelioration terminee.", rpcParams, ActionAudioCue.BuildUpgrade);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestCraftServerRpc(ulong buildingNetworkId, string buildingItemId, string craftItemId, string successMessage, string failedMessage, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestCraftServerRpc(ulong buildingNetworkId, string buildingItemId, string craftItemId, string successMessage, string failedMessage, RpcParams rpcParams = default)
     {
         if (!LegacyBuildingSystem.Enabled)
         {
@@ -2403,8 +2403,8 @@ public class BuilderController : NetworkBehaviour
             ActionAudioCue.CraftSuccess);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestCatalyseurCraftServerRpc(ulong buildingNetworkId, string buildingItemId, int effectIndex, string successMessage, string failedMessage, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestCatalyseurCraftServerRpc(ulong buildingNetworkId, string buildingItemId, int effectIndex, string successMessage, string failedMessage, RpcParams rpcParams = default)
     {
         if (!LegacyBuildingSystem.Enabled)
         {
@@ -2614,7 +2614,7 @@ public class BuilderController : NetworkBehaviour
         return true;
     }
 
-    private bool TryResolveSender(ServerRpcParams rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory)
+    private bool TryResolveSender(RpcParams rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory)
     {
         playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         controller = null;
@@ -3219,7 +3219,7 @@ public class BuilderController : NetworkBehaviour
         InfoBoxUI.TryShow(message);
     }
 
-    private void SendFeedback(string message, ServerRpcParams rpcParams, ActionAudioCue audioCue = ActionAudioCue.None)
+    private void SendFeedback(string message, RpcParams rpcParams, ActionAudioCue audioCue = ActionAudioCue.None)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -3249,7 +3249,7 @@ public class BuilderController : NetworkBehaviour
         }
     }
 
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    private static ClientRpcParams BuildClientRpcParams(RpcParams rpcParams)
     {
         return new ClientRpcParams
         {

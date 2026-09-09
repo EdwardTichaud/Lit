@@ -1,0 +1,176 @@
+using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using NUnit.Framework;
+using Unity.Netcode;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.AI;
+using Object = UnityEngine.Object;
+
+public sealed class RuntimeStabilizationTests
+{
+    private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [Test]
+    public void SoloEncounterTransitionsDoNotWriteNetworkVariable()
+    {
+        var root = new GameObject("Solo scientist test");
+        root.SetActive(false);
+        try
+        {
+            root.AddComponent<BoxCollider>();
+            var encounter = root.AddComponent<ScientistEncounterController>();
+            Assert.That(encounter, Is.Not.Null);
+            Type stateType = typeof(ScientistEncounterController).GetNestedType("EncounterState", BindingFlags.NonPublic);
+            MethodInfo set = typeof(ScientistEncounterController).GetMethod("SetState", Private);
+            foreach (string next in new[] { "Dialogue", "Active" })
+            {
+                set.Invoke(encounter, new[] { Enum.Parse(stateType, next) });
+                Assert.That(typeof(ScientistEncounterController).GetProperty("CurrentState", Private).GetValue(encounter).ToString(), Is.EqualTo(next));
+                object variable = typeof(ScientistEncounterController).GetField("state", Private).GetValue(encounter);
+                Assert.That(variable.GetType().GetProperty("Value").GetValue(variable).ToString(), Is.EqualTo("Dormant"));
+            }
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void MarkerWaitsWhenWorldServiceHasNotAwakened()
+    {
+        Assert.That(NavMeshWorldService.Instance, Is.Null, "Run in an empty EditMode fixture.");
+        var root = new GameObject("Marker waiting test");
+        root.SetActive(false);
+        try
+        {
+            var marker = root.AddComponent<SceneMarker>();
+            var routine = (IEnumerator)typeof(SceneMarker).GetMethod("ValidateEnemyNavigationAfterWorldBake", Private).Invoke(marker, null);
+            Assert.That(routine.MoveNext(), Is.True);
+            Assert.That(routine.MoveNext(), Is.True, "Absence of the service must not end validation permanently.");
+            (routine as IDisposable)?.Dispose();
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [TestCase("Luc/Ghost_Model_Luc")]
+    [TestCase("Scar/Ghost_Model_Scar")]
+    [TestCase("Luc/Enemy_Model_MadScientist")]
+    public void NonUccPrefabsHaveNoOrphanColliderPositioner(string relativePath)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/9_Ghosts/" + relativePath + ".prefab");
+        Assert.That(prefab, Is.Not.Null);
+        Assert.That(prefab.GetComponentsInChildren<Opsive.UltimateCharacterController.Character.CapsuleColliderPositioner>(true), Is.Empty);
+        foreach (var agent in prefab.GetComponentsInChildren<NavMeshAgent>(true))
+            Assert.That(agent.enabled, Is.False, "Agent activation belongs to the ready world service.");
+    }
+
+    [Test]
+    public void CorridorFlamesHaveDistinctAuthoredIdsAndKeepOriginalIdentity()
+    {
+        string scene = File.ReadAllText("Assets/Scenes/District_1/District_1_Corridor_Flammes.unity");
+        string[] ids = Regex.Matches(scene, @"(?m)^  flameId: (\S+)").Cast<Match>().Select(m => m.Groups[1].Value).ToArray();
+        Assert.That(ids, Does.Contain("scene-flame:Maison:0DE640398"));
+        Assert.That(ids.Distinct().Count(), Is.EqualTo(ids.Length));
+    }
+
+    [Test]
+    public void LocomotionSpeedIsNotDrivenByCrouchClip()
+    {
+        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Idle_Crouch_7ac9514a_Inplace.anim");
+        Assert.That(clip, Is.Not.Null);
+        Assert.That(AnimationUtility.GetCurveBindings(clip).Any(b => b.type == typeof(Animator) && b.propertyName == "Speed"), Is.False);
+    }
+
+    [Test]
+    public void WorldInvalidationDisablesRegisteredEnemyAgent()
+    {
+        var root = new GameObject("Inactive navigation fixture");
+        var worldRoot = new GameObject("Inactive world fixture");
+        root.SetActive(false);
+        worldRoot.SetActive(false);
+        try
+        {
+            var agent = root.AddComponent<NavMeshAgent>();
+            var navigation = root.AddComponent<EnemyNavigationController>();
+            var world = worldRoot.AddComponent<NavMeshWorldService>();
+            typeof(EnemyNavigationController).GetField("navigationAgent", Private).SetValue(navigation, agent);
+            typeof(EnemyNavigationController).GetMethod("BindWorld", Private).Invoke(navigation, new object[] { world });
+            typeof(NavMeshWorldService).GetMethod("SetState", Private).Invoke(world, new object[] { NavMeshWorldState.Invalidating });
+            Assert.That(agent.enabled, Is.False);
+            Assert.That(navigation.Status, Is.EqualTo(EnemyNavigationController.ReadinessStatus.WaitingForWorld));
+            typeof(EnemyNavigationController).GetMethod("BindWorld", Private).Invoke(navigation, new object[] { null });
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(worldRoot); }
+    }
+
+    [Test]
+    public void OtherCharacterBonesOnDefaultLayerAreNotGround()
+    {
+        var root = new GameObject("Ground filtering fixture");
+        var other = new GameObject("Other character");
+        root.SetActive(false);
+        other.SetActive(false);
+        try
+        {
+            var motor = root.AddComponent<CombatEnemyPhysicsMotor>();
+            other.AddComponent<CharacterInfo>();
+            var bone = new GameObject("foot_l");
+            bone.transform.SetParent(other.transform);
+            var collider = bone.AddComponent<BoxCollider>();
+            var accepts = typeof(CombatEnemyPhysicsMotor).GetMethod("IsGroundCollider", Private);
+            Assert.That(accepts.Invoke(motor, new object[] { collider }), Is.False);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(other); }
+    }
+
+    [Test]
+    public void GroundProbeFindsNegativeAltitudeFloorWithoutInitialOverlap()
+    {
+        var root = new GameObject("Negative altitude actor");
+        root.SetActive(false);
+        var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        try
+        {
+            root.transform.position = new Vector3(500f, -98f, 500f);
+            floor.transform.position = new Vector3(500f, -98.5f, 500f);
+            floor.transform.localScale = new Vector3(10f, 1f, 10f);
+            var capsule = root.AddComponent<CapsuleCollider>();
+            capsule.radius = 0.5f;
+            capsule.height = 2f;
+            capsule.center = Vector3.up;
+            var motor = root.AddComponent<CombatEnemyPhysicsMotor>();
+            typeof(CombatEnemyPhysicsMotor).GetField("bodyCollider", Private).SetValue(motor, capsule);
+            Physics.SyncTransforms();
+            object[] args = { root.transform.position, 0f };
+            bool found = (bool)typeof(CombatEnemyPhysicsMotor).GetMethod("TryGetGroundY", Private).Invoke(motor, args);
+            Assert.That(found, Is.True);
+            Assert.That((float)args[1], Is.EqualTo(-97.97f).Within(0.01f));
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(floor); }
+    }
+
+    [Test]
+    public void ScientistAuthoredPoseHasLocalBakedNavigation()
+    {
+        var data = AssetDatabase.LoadAssetAtPath<NavMeshData>("Assets/Navigation/NavMeshData/District_1_Core_NavMeshData.asset");
+        Assert.That(data, Is.Not.Null);
+        var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/District_1/District_1_Enigme_Ghost_Nina.unity");
+        var instance = NavMesh.AddNavMeshData(data, Vector3.zero, Quaternion.identity);
+        try
+        {
+            var marker = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<SceneMarker>(true))
+                .Single(m => m.name == "SceneMarker_ScientifiqueFou");
+            Vector3 position = marker.transform.position;
+            bool found = NavMesh.SamplePosition(position, out NavMeshHit hit, 1.5f, NavMesh.AllAreas);
+            Directory.CreateDirectory("Library/Stabilization");
+            File.WriteAllText("Library/Stabilization/scientist-navmesh.txt", $"Authored marker: {position}; local sample: {found}; hit: {hit.position}; delta: {Vector3.Distance(position, hit.position)}");
+            Assert.That(found, Is.True, "Authored scientist marker has no local baked navigation.");
+            Assert.That(Vector3.Distance(position, hit.position), Is.LessThanOrEqualTo(0.15f));
+        }
+        finally { instance.Remove(); EditorSceneManager.ClosePreviewScene(scene); }
+    }
+}

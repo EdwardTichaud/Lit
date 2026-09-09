@@ -916,7 +916,7 @@ public class LocalVoiceLineController : MonoBehaviour
             instance.transform.SetParent(parent, false);
             TextMeshPro tmp = instance.AddComponent<TextMeshPro>();
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.enableWordWrapping = true;
+            tmp.textWrappingMode = TMPro.TextWrappingModes.Normal;
             tmp.fontSize = 2f;
             tmp.text = string.Empty;
             textTarget = tmp;

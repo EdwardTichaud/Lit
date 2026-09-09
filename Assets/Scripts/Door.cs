@@ -119,7 +119,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
     private float currentOpenAmount;
     private bool wasInteractedOnce;
     private bool initialized;
-    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
+    private readonly HashSet<EntityId> activeLitInfluenceSourceIds = new HashSet<EntityId>();
 
     public bool IsOpen => isOpen;
     public bool IsLocked => locked;
@@ -596,7 +596,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
     public void OnLitInfluenceEnter(LitInfluenceInfo info)
     {
-        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == EntityId.None)
         {
             return;
         }
@@ -606,7 +606,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
     public void OnLitInfluenceStay(LitInfluenceInfo info)
     {
-        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == EntityId.None)
         {
             return;
         }
@@ -616,7 +616,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
     public void OnLitInfluenceExit(LitInfluenceInfo info)
     {
-        if (info.SourceId == 0)
+        if (info.SourceId == EntityId.None)
         {
             return;
         }
@@ -770,8 +770,8 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsSpawned;
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestInteractServerRpc(bool nextOpen, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestInteractServerRpc(bool nextOpen, RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         GameObject character = playerRoot != null ? playerRoot.gameObject : null;
@@ -788,8 +788,8 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         netIsOpen.Value = isOpen;
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestSetOpenServerRpc(bool open, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestSetOpenServerRpc(bool open, RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         GameObject character = playerRoot != null ? playerRoot.gameObject : null;

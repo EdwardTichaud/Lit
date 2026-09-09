@@ -520,8 +520,8 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
             interactionMaxDistance);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestDestroyServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestDestroyServerRpc(RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))
@@ -585,7 +585,7 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
         }
     }
 
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    private static ClientRpcParams BuildClientRpcParams(RpcParams rpcParams)
     {
         return new ClientRpcParams
         {

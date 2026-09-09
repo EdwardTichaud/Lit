@@ -210,8 +210,8 @@ public class WorldInteractionService : NetworkBehaviour
         activeSceneName.Value = new FixedString128Bytes(resolvedName);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestReturnHomeServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestReturnHomeServerRpc(uint triggerId, RpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetReturnHome(triggerId, out ReturnHomeTrigger trigger))
         {
@@ -241,8 +241,8 @@ public class WorldInteractionService : NetworkBehaviour
         trigger.HandleReturnHomeResult((SquadManager.SendHomeResult)resultValue);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestHubSwapServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestHubSwapServerRpc(uint triggerId, RpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetHubSwap(triggerId, out HubCompanionSwapTrigger trigger))
         {
@@ -266,8 +266,8 @@ public class WorldInteractionService : NetworkBehaviour
         trigger.HandleSwapResult(success);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestLabyrinthStartServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestLabyrinthStartServerRpc(uint triggerId, RpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetLabyrinth(triggerId, out LabyrinthStartTrigger trigger))
         {
@@ -295,8 +295,8 @@ public class WorldInteractionService : NetworkBehaviour
         trigger.ClientHandleLabyrinthStarted();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestPortalUseServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestPortalUseServerRpc(uint triggerId, RpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetPortal(triggerId, out PortalController portal))
         {
@@ -341,8 +341,8 @@ public class WorldInteractionService : NetworkBehaviour
         portal.HandlePortalUseResult(success, destinationPosition, destinationRotation, sceneTransition);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestLadderPassageServerRpc(uint ladderId, int sourceEndpoint, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestLadderPassageServerRpc(uint ladderId, int sourceEndpoint, RpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetLadder(ladderId, out LadderController ladder))
         {
@@ -362,8 +362,8 @@ public class WorldInteractionService : NetworkBehaviour
             ladder.HandlePassageResult(success, sourceEndpoint, destination, rotation);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestCharacterSwitchServerRpc(string characterId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestCharacterSwitchServerRpc(string characterId, RpcParams rpcParams = default)
     {
         NetcodePlayerSpawner spawner = NetcodePlayerSpawner.Instance;
         if (spawner == null)
@@ -392,13 +392,13 @@ public class WorldInteractionService : NetworkBehaviour
         InfoBoxUI.TryShow(reason);
     }
 
-    private static GameObject ResolvePlayerCharacter(ServerRpcParams rpcParams)
+    private static GameObject ResolvePlayerCharacter(RpcParams rpcParams)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         return playerRoot != null ? playerRoot.gameObject : null;
     }
 
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    private static ClientRpcParams BuildClientRpcParams(RpcParams rpcParams)
     {
         return new ClientRpcParams
         {

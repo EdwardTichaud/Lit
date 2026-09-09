@@ -99,8 +99,8 @@ public sealed class SceneMarkerEditor : Editor
     [MenuItem("Lit/Scene Marker/Migrate Selected Legacy Item Marker", false, 30)]
     private static void MigrateSelectedLegacyItemMarker()
     {
-        ItemSceneMarker legacy = Selection.activeGameObject != null
-            ? Selection.activeGameObject.GetComponent<ItemSceneMarker>()
+        Component legacy = Selection.activeGameObject != null
+            ? Selection.activeGameObject.GetComponent("ItemSceneMarker")
             : null;
         if (legacy == null)
         {
@@ -108,18 +108,21 @@ public sealed class SceneMarkerEditor : Editor
         }
 
         GameObject root = legacy.gameObject;
-        SceneMarker marker = Undo.AddComponent<SceneMarker>(root);
-        if (legacy.UsesGhost)
+        var data = new SerializedObject(legacy);
+        int legacyType = data.FindProperty("assetType").enumValueIndex;
+        SceneMarker marker = root.GetComponent<SceneMarker>() ?? Undo.AddComponent<SceneMarker>(root);
+        Undo.RecordObject(marker, "Migrate Scene Marker");
+        if (legacyType == 2)
         {
-            marker.SetGhost(legacy.Ghost);
+            marker.SetGhost(data.FindProperty("ghost").objectReferenceValue as GhostData);
         }
-        else if (legacy.UsesEnemy)
+        else if (legacyType == 1)
         {
-            marker.SetCharacterData(legacy.Enemy);
+            marker.SetCharacterData(data.FindProperty("enemy").objectReferenceValue as CharacterData);
         }
         else
         {
-            marker.SetItem(legacy.Item);
+            marker.SetItem(data.FindProperty("item").objectReferenceValue as Item);
         }
 
         Undo.DestroyObjectImmediate(legacy);
@@ -131,7 +134,7 @@ public sealed class SceneMarkerEditor : Editor
     [MenuItem("Lit/Scene Marker/Migrate Selected Legacy Item Marker", true)]
     private static bool CanMigrateSelectedLegacyItemMarker()
     {
-        return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<ItemSceneMarker>() != null;
+        return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent("ItemSceneMarker") != null;
     }
 
     private static void DrawBakeButton(SceneMarker marker)

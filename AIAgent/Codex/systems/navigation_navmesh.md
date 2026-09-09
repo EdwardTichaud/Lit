@@ -26,3 +26,14 @@ il ne peut plus reapparaitre sous le sol par translation du root persistant.
 ## Regles d'action
 
 Pendant une attaque, une cinematique, un QTE ou une action physique, l'agent est suspendu mais le NavMesh n'est pas reconstruit. Il ne reprend qu'apres restitution complete et validation locale du sol.
+
+## Validation et sonde de sol
+
+SceneMarker reprend son attente lorsque le service de monde apparait apres lui,
+et annule cette attente a la desactivation. EnemyNavigationController suspend
+son agent des que le monde quitte Ready. Le prefab scientifique demarre avec
+l'agent desactive. Son marker auteur a -98,16 m correspond au NavMesh pre-bake
+a environ 8 mm pres ; le configurateur ne reecrit plus sa position en dur.
+La capsule scientifique a ses pieds sur ActorRoot. La sphere de recherche du
+sol demarre avec son bord inferieur au-dessus des pieds ; les contacts initiaux
+sans surface valide et les colliders de personnages sont exclus.

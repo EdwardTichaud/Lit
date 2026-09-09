@@ -119,8 +119,8 @@ public sealed class LodAuditWindow : EditorWindow
     private void AnalyzeOpenScenes()
     {
         records.Clear();
-        Dictionary<int, Record> byMeshId = new Dictionary<int, Record>();
-        HashSet<int> lodRendererIds = CollectLodRenderers();
+        Dictionary<EntityId, Record> byMeshId = new Dictionary<EntityId, Record>();
+        HashSet<EntityId> lodRendererIds = CollectLodRenderers();
         List<string> analyzedScenes = new List<string>();
 
         for (int sceneIndex = 0; sceneIndex < SceneManager.sceneCount; sceneIndex++)
@@ -142,7 +142,7 @@ public sealed class LodAuditWindow : EditorWindow
                         continue;
                     }
 
-                    int meshId = mesh.GetInstanceID();
+                    EntityId meshId = mesh.GetEntityId();
                     if (!byMeshId.TryGetValue(meshId, out Record record))
                     {
                         record = new Record
@@ -156,7 +156,7 @@ public sealed class LodAuditWindow : EditorWindow
                     }
 
                     record.instanceCount++;
-                    if (lodRendererIds.Contains(renderer.GetInstanceID()))
+                    if (lodRendererIds.Contains(renderer.GetEntityId()))
                     {
                         record.lodCoveredInstances++;
                     }
@@ -177,9 +177,9 @@ public sealed class LodAuditWindow : EditorWindow
         Repaint();
     }
 
-    private static HashSet<int> CollectLodRenderers()
+    private static HashSet<EntityId> CollectLodRenderers()
     {
-        HashSet<int> result = new HashSet<int>();
+        HashSet<EntityId> result = new HashSet<EntityId>();
         foreach (LODGroup group in Resources.FindObjectsOfTypeAll<LODGroup>())
         {
             if (group == null || !group.gameObject.scene.isLoaded)
@@ -193,7 +193,7 @@ public sealed class LodAuditWindow : EditorWindow
                 {
                     if (renderer != null)
                     {
-                        result.Add(renderer.GetInstanceID());
+                        result.Add(renderer.GetEntityId());
                     }
                 }
             }

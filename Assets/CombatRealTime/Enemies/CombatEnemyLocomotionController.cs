@@ -133,12 +133,19 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     private void Update()
     {
+        if (enemy != null && enemy.Health != null && enemy.Health.IsDead)
+        {
+            combatTarget = null;
+            StopNavigation();
+            return;
+        }
         ApplyLocalNavigationScale();
         UpdateAnimatorPresentation();
     }
 
     private void LateUpdate()
     {
+        if (enemy != null && enemy.Health != null && enemy.Health.IsDead) return;
         // Le root motion peut ecrire la rotation apres l'IA. On conserve donc
         // l'ennemi face a sa cible a la fin de l'image, sauf si une Timeline
         // cinematographique est explicitement proprietaire de sa pose.
@@ -281,6 +288,11 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     public void NavigateTo(Vector3 destination, float stoppingDistance)
     {
         ResolveReferences();
+        if (enemy != null && enemy.Health != null && enemy.Health.IsDead)
+        {
+            StopNavigation();
+            return;
+        }
         if (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion)
         {
             StopNavigation();
@@ -377,6 +389,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     public void FaceTarget(Vector3 worldPosition)
     {
+        if (enemy != null && enemy.Health != null && enemy.Health.IsDead) return;
         if (attackFacingLocked || GetComponent<EnemyCinematicState>()?.IsSuspended == true) return;
         Vector3 direction = worldPosition - transform.position;
         direction.y = 0f;
@@ -391,6 +404,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     private void UpdateAnimatorPresentation()
     {
+        if (enemy != null && enemy.Health != null && enemy.Health.IsDead) return;
         Animator animator = animationContract != null ? animationContract.Animator : null;
         if (animator == null || animator.runtimeAnimatorController == null)
         {
@@ -507,6 +521,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     private void ForceIdlePresentation()
     {
+        if (enemy != null && enemy.Health != null && enemy.Health.IsDead) return;
         if (GetComponent<EnemyCombatBrain>()?.OwnsPresentation == true || enemy != null && enemy.IsHitRecovering) return;
         if (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion)
         {

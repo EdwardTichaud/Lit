@@ -83,8 +83,6 @@ public class CameraController : MonoBehaviour
     [SerializeField] private FallSpeedCameraEffect fallSpeedEffect = new FallSpeedCameraEffect();
 
     [Header("Combat Camera")]
-    [SerializeField, Tooltip("Active le cadrage special pendant les combats tour par tour.")]
-    private bool combatCameraEnabled = true;
     [SerializeField, Tooltip("Offset lateral applique quand c'est le tour du joueur. Negatif = epaule gauche.")]
     private float combatPlayerTurnSideOffset = -1.1f;
     [SerializeField, Tooltip("Offset lateral applique quand c'est le tour de l'ennemi.")]
@@ -115,7 +113,6 @@ public class CameraController : MonoBehaviour
     private float currentZoomNormalized;
     private float currentDistance;
     private Vector3 currentAnchorPosition;
-    private bool combatCameraRuntimeInitialized;
     private bool combatCameraWasActive;
     private Vector3 currentCombatCameraPosition;
     private Quaternion currentCombatCameraRotation;
@@ -177,7 +174,7 @@ public class CameraController : MonoBehaviour
         mainCamCurrentTarget = null;
         followOverrideTarget = null;
         runtimeInitialized = false;
-        combatCameraRuntimeInitialized = false;
+
         combatCameraWasActive = false;
     }
 
@@ -510,7 +507,7 @@ public class CameraController : MonoBehaviour
         }
 
         combatCameraWasActive = false;
-        combatCameraRuntimeInitialized = false;
+
         runtimeInitialized = false;
     }
 

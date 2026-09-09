@@ -50,3 +50,11 @@ faire respecter l’autorité serveur.
   `Assets/Persistence/Save/World/`; `NetcodeBootstrap` les crée toujours au
   runtime quand l’option dédiée est active.
 - Tester les changements en host et client distant, pas seulement en host local.
+
+## Rencontre scientifique et migration RPC
+
+ScientistEncounterController conserve un etat local en solo sans ecriture de
+NetworkVariable. En ligne, seul le serveur apres spawn effectue les transitions.
+La desactivation/despawn annule l'attente et retire les abonnements. Les RPC
+migres utilisent Rpc(SendTo.Server) avec InvokePermission explicite ; les controles
+metier du serveur sont conserves. Host et clients doivent utiliser le meme build.

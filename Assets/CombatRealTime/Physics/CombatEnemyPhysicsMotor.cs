@@ -738,10 +738,13 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         float scaledRadius = Mathf.Max(0.05f, bodyCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z));
         float bottomLocalY = (bodyCollider.center.y - bodyCollider.height * 0.5f) * transform.lossyScale.y;
-        Vector3 origin = actorPosition + Vector3.up * (bottomLocalY + groundProbeStartHeight);
+        float probeRadius = scaledRadius * 0.9f;
+        // Start with the bottom of the probe above the feet, not its center.
+        // Otherwise a radius larger than startHeight overlaps the floor.
+        Vector3 origin = actorPosition + Vector3.up * (bottomLocalY + groundProbeStartHeight + probeRadius);
         int hitCount = Physics.SphereCastNonAlloc(
             origin,
-            scaledRadius * 0.9f,
+            probeRadius,
             Vector3.down,
             groundHits,
             groundProbeStartHeight + groundProbeDistance,
@@ -753,7 +756,9 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             RaycastHit hit = groundHits[i];
-            if (hit.collider == null || hit.normal.y < minimumGroundNormal || !IsGroundCollider(hit.collider))
+            // Initial-overlap sphere casts have no usable surface contact.
+            // Their zero point must not be interpreted as world ground Y=0.
+            if (hit.collider == null || hit.distance <= 0f || hit.normal.y < minimumGroundNormal || !IsGroundCollider(hit.collider))
             {
                 continue;
             }
@@ -803,9 +808,9 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private bool IsGroundCollider(Collider collider)
     {
         if (collider == null || IsOwnCollider(collider) ||
-            collider.GetComponentInParent<CharacterInfo>() != null ||
-            collider.GetComponentInParent<CombatEnemyPhysicsMotor>() != null ||
-            collider.GetComponentInParent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>() != null)
+            collider.GetComponentInParent<CharacterInfo>(true) != null ||
+            collider.GetComponentInParent<CombatEnemyPhysicsMotor>(true) != null ||
+            collider.GetComponentInParent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>(true) != null)
         {
             return false;
         }
