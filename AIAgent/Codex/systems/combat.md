@@ -1,5 +1,21 @@
 # Combat
 
+## Presentation du joueur modulaire
+
+PlayerCombatAnimationEvents est un routeur sur l Animator. Les handlers sont dans PlayerActionPresentationController.SkillEvents, avec des noms distincts pour ne pas recevoir deux fois les memes evenements. Le dash et son freinage sont dans CombatMobilityController.AnimationDash, avec capture du personnage et annulation propre. PlayerAnimationController ne contient plus de branche physique ennemie; PlayerRootMotionRelay ne consomme que les deltas cinematographiques autorises.
+
+## References internes EnemyController
+
+Les references aux scripts (sante, contrats, controleur, temps local, contour et indicateur) sont privees et non serialisees. Elles sont resolues automatiquement. Les references Unity configurables restent visibles; les categories sans champs sont masquees. Compilation C# runtime/editeur verifiee; affichage Unity et parcours combat restent a valider.
+
+## Vision et perception
+
+VisionField est supprime. CharacterData.vision centralise portee, angle, hauteurs et masque d obstacles. EnemyController porte l origine du regard et les methodes de detection; la surcharge temporaire de portee reste locale a l instance. Le verrouillage joueur reutilise CharacterData.TryEvaluateVision. Les quatre prefabs et leurs fiches conservent leurs valeurs distinctes. Compilation C# runtime/editeur et ressources verifiees; tests de portee, angle, obstacles, triggers et copies runtime prepares. Execution Unity et parcours de detection/verrouillage restent a valider.
+
+## Options de mort dans CharacterData
+
+enemyDeathOptions configure l activation, les derniers mots, leur duree reelle et la voix. EnemyController observe la sante et execute une seule presentation locale par mort, attendue par la victoire et EnemyDeathPresentation. La desactivation annule dialogue, audio et coroutine. Les autres ennemis ont cette option desactivee par defaut. La mort animee et la dissolution gardent leurs services existants.
+
 ## Controleur ennemi unifie
 
 EnemyController est l’unique composant de comportement ennemi, reparti en fichiers

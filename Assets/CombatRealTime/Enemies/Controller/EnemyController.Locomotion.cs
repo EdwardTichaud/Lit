@@ -51,15 +51,11 @@ public sealed partial class EnemyController
     private static readonly int LocomotionCombatLocomotion = Animator.StringToHash("Base Layer.CombatLocomotion");
     private static readonly int LocomotionCombatIdle = Animator.StringToHash("Base Layer.CombatIdle");
     private static readonly int LocomotionIdle = Animator.StringToHash("Base Layer.Idle");
-    [SerializeField]
     private EnemyController LocomotionEnemy;
     [SerializeField]
     private NavMeshAgent LocomotionNavigationAgent;
-    [SerializeField]
     private CharacterAnimationController LocomotionAnimationContract;
-    [SerializeField]
     private EnemyController LocomotionPhysicsMotor;
-    [SerializeField]
     private CombatTimeDomain LocomotionTimeDomain;
     private CombatPositioningProfile LocomotionPositioning { get => Configuration.LocomotionPositioning; set => Configuration.LocomotionPositioning = value; }
     private float LocomotionFacingSpeedDegreesPerSecond { get => Configuration.LocomotionFacingSpeedDegreesPerSecond; set => Configuration.LocomotionFacingSpeedDegreesPerSecond = value; }

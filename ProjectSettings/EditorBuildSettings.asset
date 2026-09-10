@@ -45,7 +45,7 @@ EditorBuildSettings:
     path: Assets/Scenes/District_1/District_1_Interactives.unity
     guid: d053c1550a1973a44b3198c10a3c5768
   - enabled: 1
-    path: Assets/Scenes/District_1_OldBarn_Environment.unity
+    path: Assets/Scenes/District_1/District_1_Environment_OldBarn.unity
     guid: eba58dff6e2cb774e91c7ac388c42d96
   - enabled: 1
     path: Assets/Scenes/District_1/District_1_Enemies.unity

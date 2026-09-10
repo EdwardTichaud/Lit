@@ -5,10 +5,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class RealTimeCombatLoadout : MonoBehaviour
 {
+    private readonly PlayerModuleConfiguration<PlayerEquipmentSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerEquipmentSettings>();
+    private PlayerEquipmentSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.equipment);
+
     public const int SlotCount = 8;
 
-    [SerializeField] private List<CombatAttackDefinition> equippedAttacks = new List<CombatAttackDefinition>(SlotCount);
-    [SerializeField] private LightSkillSO equippedLightSkill;
+    private List<CombatAttackDefinition> equippedAttacks { get => ModuleSettings.equippedAttacks; set => ModuleSettings.equippedAttacks = value; }
+    private LightSkillSO equippedLightSkill { get => ModuleSettings.equippedLightSkill; set => ModuleSettings.equippedLightSkill = value; }
 
     public event Action LoadoutChanged;
     public IReadOnlyList<CombatAttackDefinition> EquippedAttacks => equippedAttacks;

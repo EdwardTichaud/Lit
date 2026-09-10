@@ -107,3 +107,12 @@ MonoBehaviour:
     NavigationRetryInterval: 0.25
     NavigationRebuildRequestInterval: 1
     NavigationLogDiagnostics: 1
+
+  vision:
+    maximumDistance: 30
+    fieldOfViewDegrees: 100
+    eyeHeight: 1.5
+    targetHeight: 1
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295

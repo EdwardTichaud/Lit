@@ -346,20 +346,23 @@ public static class PlayerInPlaceMigration
             foreach (var recovery in root.GetComponents<AnimationGroundRecovery>()) Object.DestroyImmediate(recovery);
             animator.applyRootMotion = false;
             var so = new SerializedObject(bridge);
+            var authoredPlayerData = PlayerSettingsAuthoring.ResolveData(bridge);
+            var authoredSettings = new SerializedObject(authoredPlayerData != null ? authoredPlayerData : throw new InvalidOperationException("CharacterData du joueur introuvable."));
             var legacyLocomotion = so.FindProperty("useRootMotionLocomotion");
             bool wasRoot = legacyLocomotion?.boolValue == true;
             if (legacyLocomotion != null && !wasRoot)
-                so.FindProperty("adaptMovingGroundRelief").boolValue = false;
+                authoredSettings.FindProperty("playerSettings.locomotion.adaptMovingGroundRelief").boolValue = false;
             if (wasRoot)
             {
                 // Keep the same physical tuning and animator speed conversion when removing the old branch.
                 var blend = so.FindProperty("groundedRootMotionSpeedToBlend");
-                if (blend != null) so.FindProperty("groundedAnimationSpeedToBlend").floatValue = blend.floatValue;
-                so.FindProperty("tuneGroundedUccPhysics").boolValue = false;
+                if (blend != null) authoredSettings.FindProperty("playerSettings.locomotion.groundedAnimationSpeedToBlend").floatValue = blend.floatValue;
+                authoredSettings.FindProperty("playerSettings.locomotion.tuneGroundedUccPhysics").boolValue = false;
             }
             foreach (string field in new[] { "useRootMotionLocomotion", "preserveAnimatorRootMotion", "restoreRootMotionSettingsOnDisable" })
             { var p = so.FindProperty(field); if (p != null) p.boolValue = false; }
             so.ApplyModifiedPropertiesWithoutUndo();
+            authoredSettings?.ApplyModifiedPropertiesWithoutUndo();
             var ucc = root.GetComponent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>();
             ucc.UseRootMotionPosition = false;
             ucc.UseRootMotionRotation = false;
@@ -534,8 +537,11 @@ public static class PlayerInPlaceMigration
             try
             {
                 var so = new SerializedObject(root.GetComponent<LitOpsiveLocomotionBridge>());
-                so.FindProperty("adaptMovingGroundRelief").boolValue = false;
+                var data = PlayerSettingsAuthoring.ResolveData(root.GetComponent<LitOpsiveLocomotionBridge>());
+                var authoredSettings = new SerializedObject(data != null ? data : throw new InvalidOperationException("CharacterData du joueur introuvable."));
+                authoredSettings.FindProperty("playerSettings.locomotion.adaptMovingGroundRelief").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
+            authoredSettings?.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }

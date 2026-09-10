@@ -9,11 +9,11 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class LitUccDamageBridge : MonoBehaviour
 {
-    [SerializeField] private UltimateCharacterLocomotion locomotion;
-    [SerializeField] private SquadCharacterController squadController;
-    [SerializeField] private CharacterInfo combatHealth;
-    [SerializeField] private CharacterAttributeManager attributeManager;
-    [SerializeField] private CharacterHealth characterHealth;
+    private UltimateCharacterLocomotion locomotion;
+    private SquadCharacterController squadController;
+    private CharacterInfo combatHealth;
+    private CharacterAttributeManager attributeManager;
+    private CharacterHealth characterHealth;
     [SerializeField] private string healthAttributeName = "Health";
     [SerializeField, Tooltip("Use UCC CharacterHealth/AttributeManager as the authoritative runtime health source.")]
     private bool characterHealthIsAuthority = true;
@@ -63,6 +63,7 @@ public class LitUccDamageBridge : MonoBehaviour
         if (combatHealth != null)
         {
             CacheCombatHealth();
+            combatHealth.HealthChanged -= OnCombatHealthChanged;
             combatHealth.HealthChanged += OnCombatHealthChanged;
         }
     }

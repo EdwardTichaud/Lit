@@ -3,13 +3,9 @@ using UnityEngine.AI;
 
 public sealed partial class EnemyController
 {
-    [SerializeField]
     private EnemyController ContractEnemy;
-    [SerializeField]
     private EnemyController ContractEnemySkills;
-    [SerializeField]
     private EnemyController ContractPhysicsMotor;
-    [SerializeField]
     private CharacterAnimationController ContractAnimationRoot;
     [SerializeField]
     private Rigidbody ContractRigidbodyComponent;
@@ -17,7 +13,6 @@ public sealed partial class EnemyController
     private CapsuleCollider ContractCapsuleCollider;
     [SerializeField]
     private NavMeshAgent ContractNavigationAgent;
-    [SerializeField]
     private EnemyController ContractNavigation;
     [SerializeField]
     private Animator ContractAnimator;

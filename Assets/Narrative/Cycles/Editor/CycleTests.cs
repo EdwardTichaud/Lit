@@ -97,7 +97,8 @@ public sealed class CycleTests
             }
             Assert.That(cycle, Is.Not.Null);
             Assert.That(cycle.encounterEnemy, Is.Not.Null);
-            Assert.That(cycle.encounterEnemy.GetComponent<ScientistEncounterController>(), Is.Not.Null);
+            Assert.That(cycle.encounterEnemy.StartsAsGhost, Is.True);
+            Assert.That(cycle.encounterEnemy, Is.InstanceOf<ICycleCinematicBlocker>());
             Assert.That(cycle.poses[0].conditionBoolParameter, Is.EqualTo("isDead"));
             Assert.That(cycle.poses[0].condition.knowledge.Length, Is.EqualTo(2));
         }

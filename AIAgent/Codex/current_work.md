@@ -1,5 +1,21 @@
 # Travail en cours
 
+## Modules joueur : migration appliquee, validation Unity restante
+
+Reglages centralises dans CharacterData.playerSettings, copies runtime par module, reservations de mouvement avec proprietaire, evenements de clips routes vers presentation et mobilite, branches ennemies retirees de PlayerAnimationController. Debugger facial remplace par commandes editeur. Quatre fiches/prefabs joueurs et AnimationLab migres; outils adaptes. Compilation C# runtime/editeur reussie; tests compiles et references/YAML controles. Execution Unity, reseau et Domain Reload restent requis. Le prefab Lucian deja ouvert dans Unity doit etre recharge apres import (ancienne instance signalant un script manquant lors de l auto-enregistrement). Guide : Assets/Characters/PlayerModules/README.md; arbitrages : AIAgent/Codex/player_method_migration.md.
+
+## References internes EnemyController
+
+Les references aux scripts (sante, contrats, controleur, temps local, contour et indicateur) sont privees et non serialisees. Elles sont resolues automatiquement. Les references Unity configurables restent visibles; les categories sans champs sont masquees. Compilation C# runtime/editeur verifiee; affichage Unity et parcours combat restent a valider.
+
+## Vision et perception
+
+VisionField est supprime. CharacterData.vision centralise portee, angle, hauteurs et masque d obstacles. EnemyController porte l origine du regard et les methodes de detection; la surcharge temporaire de portee reste locale a l instance. Le verrouillage joueur reutilise CharacterData.TryEvaluateVision. Les quatre prefabs et leurs fiches conservent leurs valeurs distinctes. Compilation C# runtime/editeur et ressources verifiees; tests de portee, angle, obstacles, triggers et copies runtime prepares. Execution Unity et parcours de detection/verrouillage restent a valider.
+
+## Options de mort des ennemis
+
+ScientistEncounterController supprime; EnemyController gere l interaction Ghost et la presentation de mort. Les options sont dans CharacterData; prefab scientifique, interface, disparition et tests migres. Compilation C# runtime/editeur verifiee; import Unity/ILPP et tests en jeu restent a executer.
+
 ## Cycle Nina : mort du scientifique et pose Dead
 
 Le cycle reference directement EnemyController lorsque la rencontre n'a plus de

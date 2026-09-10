@@ -10,41 +10,29 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PlayerScriptedJumpController : MonoBehaviour
 {
+    private readonly PlayerModuleConfiguration<PlayerJumpSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerJumpSettings>();
+    private PlayerJumpSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.jump);
+
     private const string GroundedEvent = "OnCharacterGrounded";
     private const string LandEvent = "OnCharacterLand";
 
     private enum Phase { Grounded, Takeoff, Ascending, Falling, Landing }
 
     [Header("References")]
-    [SerializeField] private UltimateCharacterLocomotion locomotion;
-    [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
+    private UltimateCharacterLocomotion locomotion;
+    private LitOpsiveLocomotionBridge locomotionBridge;
     [SerializeField] private Animator animator;
 
-    [Header("Arc")]
-    [SerializeField, Min(0.1f), Tooltip("Physical apex height in world units. The takeoff impulse is derived from this value and the airborne gravity profile.")]
-    private float jumpHeight = 5f;
-    [Range(0f, 1f), Tooltip("Normalized time in Jump_Start at which the physical takeoff impulse is applied.")]
-    public float jumpStartTakeoffNormalizedTime = 0.13f;
-    [Range(0f, 1f), Tooltip("Optional fraction of inherited planar speed removed exactly at takeoff. 0 preserves the validated jump feel; 1 removes all planar inertia.")]
-    public float jumpStartPlanarSlowdown = 0f;
-    [SerializeField, Min(0f)] private float apexGravityEntryVelocity = 2.4f;
-    [SerializeField, Range(0.05f, 1f)] private float apexGravityMultiplier = 0.28f;
-    [SerializeField, Range(0.05f, 1f)] private float descentGravityMultiplier = 0.72f;
-    [SerializeField] private float fallingAnimationEntryVelocity = -0.1f;
-    [SerializeField, Min(0f)] private float hardLandingHeight = 3f;
+    private float jumpHeight { get => ModuleSettings.jumpHeight; set => ModuleSettings.jumpHeight = value; }
+    public float jumpStartTakeoffNormalizedTime { get => ModuleSettings.jumpStartTakeoffNormalizedTime; set => ModuleSettings.jumpStartTakeoffNormalizedTime = value; }
+    public float jumpStartPlanarSlowdown { get => ModuleSettings.jumpStartPlanarSlowdown; set => ModuleSettings.jumpStartPlanarSlowdown = value; }
+    private float apexGravityEntryVelocity { get => ModuleSettings.apexGravityEntryVelocity; set => ModuleSettings.apexGravityEntryVelocity = value; }
+    private float apexGravityMultiplier { get => ModuleSettings.apexGravityMultiplier; set => ModuleSettings.apexGravityMultiplier = value; }
+    private float descentGravityMultiplier { get => ModuleSettings.descentGravityMultiplier; set => ModuleSettings.descentGravityMultiplier = value; }
+    private float fallingAnimationEntryVelocity { get => ModuleSettings.fallingAnimationEntryVelocity; set => ModuleSettings.fallingAnimationEntryVelocity = value; }
+    private float hardLandingHeight { get => ModuleSettings.hardLandingHeight; set => ModuleSettings.hardLandingHeight = value; }
 
-    [Header("Landing")]
-    [SerializeField] private MotionHandoffProfile landingHandoff = new MotionHandoffProfile {
-        minimumContactSeconds = 0.15f,
-        animationExitNormalizedTime = 0.82f,
-        planarSettledSpeed = 0.12f,
-        verticalSettledSpeed = 0.2f,
-        planarDampingPerSecond = 7f,
-        maximumSettleSeconds = 0.55f,
-        locomotionBlendSeconds = 0.12f,
-        preLandingProbeDistance = 1.2f,
-        preLandingLeadSeconds = 0.14f
-    };
+    private MotionHandoffProfile landingHandoff { get => ModuleSettings.landingHandoff; set => ModuleSettings.landingHandoff = value; }
 
     private bool jumpActive;
     private bool leftGround;
@@ -87,7 +75,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     public bool TryStartJump(Vector2 worldInput, bool hasWorldInput)
     {
         ResolveReferences();
-        if (jumpActive || locomotion == null || !locomotion.Grounded || locomotionBridge == null ||
+        if (!isActiveAndEnabled || jumpActive || locomotion == null || !locomotion.Grounded || locomotionBridge == null ||
             !locomotionBridge.IsDriving || locomotionBridge.IsInputSuppressedByUcc ||
             locomotionBridge.IsFlightActive || locomotionBridge.IsScriptedTraversalActive)
         {

@@ -47,7 +47,7 @@ public sealed class CombatMobilityActionSettings
 }
 
 [DisallowMultipleComponent]
-public sealed class CombatMobilityController : MonoBehaviour
+public sealed partial class CombatMobilityController : MonoBehaviour
 {
     private enum MobilityCommand
     {
@@ -117,6 +117,7 @@ public sealed class CombatMobilityController : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelAnimationDash();
         bufferedCommand = MobilityCommand.None;
         damageInvulnerableUntil = 0f;
         if (dodgeInvulnerabilityRoutine != null)

@@ -4239,12 +4239,10 @@ GameObject:
   - component: {fileID: 8100414059305065397}
   - component: {fileID: 327572561411875199}
   - component: {fileID: 7420103376065025934}
-  - component: {fileID: 5611853282600674636}
+  - component: {fileID: 8170008773839381799}
   - component: {fileID: 819693776246483267}
   - component: {fileID: 5473851072604555695}
-  - component: {fileID: 8571929066554856017}
   - component: {fileID: 1677265370121901268}
-  - component: {fileID: 8170008773839381799}
   m_Layer: 6
   m_Name: Enemy_Model_MadScientist
   m_TagString: Player
@@ -4396,171 +4394,6 @@ MonoBehaviour:
   maxHp: 60
   currentHp: 60
   initializeEmptyHealthToMax: 1
---- !u!114 &5611853282600674636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 318b3f6b3ded45e58a293a2f8b979d24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VisionField
-  origin: {fileID: 2663386024477595524}
-  maximumDistance: 18
-  fieldOfViewDegrees: 120
-  eyeHeight: 0
-  targetHeight: 1
-  obstructionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
---- !u!114 &819693776246483267
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1077096534
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
---- !u!114 &5473851072604555695
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier:
-  combatEnabled: 1
-  ActorAnimationContract: {fileID: 5473851072604555695}
-  ActorAnimator: {fileID: 327572561411875199}
-  ActorVisionField: {fileID: 5611853282600674636}
-  ActorEnemySkills: {fileID: 5473851072604555695}
-  ActorPhysicsMotor: {fileID: 5473851072604555695}
-  ActorLockOutline: {fileID: 0}
-  ActorLockIndicator: {fileID: 0}
-  ActorEnemyLockPoint: {fileID: 2663386024477595524}
-  AnimationAnimationRoot: {fileID: 1702866972060765472}
-  AnimationAnimator: {fileID: 327572561411875199}
-  AnimationLockPoint: {fileID: 2663386024477595524}
-  SkillsEnemy: {fileID: 5473851072604555695}
-  SkillsAnimationContract: {fileID: 5473851072604555695}
-  SkillsAnimator: {fileID: 327572561411875199}
-  SkillsTimeDomain: {fileID: 0}
-  SkillsCasterVfxPoint: {fileID: 0}
-  PhysicsEnemy: {fileID: 5473851072604555695}
-  PhysicsNavigationAgent: {fileID: 8100414059305065397}
-  PhysicsBody: {fileID: 3634362987184117151}
-  PhysicsBodyCollider: {fileID: 8170008773839381790}
-  PhysicsTimeDomain: {fileID: 0}
-  LocomotionEnemy: {fileID: 5473851072604555695}
-  LocomotionNavigationAgent: {fileID: 8100414059305065397}
-  LocomotionAnimationContract: {fileID: 5473851072604555695}
-  LocomotionPhysicsMotor: {fileID: 5473851072604555695}
-  LocomotionTimeDomain: {fileID: 0}
-  RecoveryEnemy: {fileID: 5473851072604555695}
-  RecoveryPhysicsMotor: {fileID: 5473851072604555695}
-  RecoveryEnemySkills: {fileID: 5473851072604555695}
-  NavigationNavigationAgent: {fileID: 8100414059305065397}
-  ContractEnemy: {fileID: 5473851072604555695}
-  ContractEnemySkills: {fileID: 5473851072604555695}
-  ContractPhysicsMotor: {fileID: 5473851072604555695}
-  ContractAnimationRoot: {fileID: 5473851072604555695}
-  ContractRigidbodyComponent: {fileID: 3634362987184117151}
-  ContractCapsuleCollider: {fileID: 8170008773839381790}
-  ContractNavigationAgent: {fileID: 8100414059305065397}
-  ContractNavigation: {fileID: 5473851072604555695}
-  ContractAnimator: {fileID: 327572561411875199}
-  inputPromptAnchor: {fileID: 0}
-  inputPromptOffset: {x: 0, y: 1.25, z: 0}
---- !u!114 &8571929066554856017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c3fb88800e64a44caaa7cd13dd90aea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScientistEncounterController
-  ShowTopMostFoldoutHeaderGroup: 1
-  introductionLine: "Vous n'auriez jamais d\xFB venir ici..."
-  introductionSeconds: 2.5
-  interactionDistance: 2.5
-  interactionCollider: {fileID: 0}
-  deathLine: Qu'est ce que... j'ai fait...
-  deathDialogueSeconds: 4
-  deathVoiceLine: {fileID: 11400000, guid: 864a5a50e6434e2b9bfdd9ca65167285, type: 2}
---- !u!114 &1677265370121901268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
-  PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
-  RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
-  ScaleLerpSmoothing: 1
-  ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!114 &8170008773839381799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4657,6 +4490,110 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   resolutionActionBindings: []
+--- !u!114 &819693776246483267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7005787142804927576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3039305646
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &5473851072604555695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7005787142804927576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  ActorAnimator: {fileID: 327572561411875199}
+  ActorEnemyLockPoint: {fileID: 2663386024477595524}
+  AnimationAnimationRoot: {fileID: 1702866972060765472}
+  AnimationAnimator: {fileID: 327572561411875199}
+  AnimationLockPoint: {fileID: 2663386024477595524}
+  inputPromptAnchor: {fileID: 0}
+  inputPromptOffset: {x: 0, y: 1.25, z: 0}
+  ContractRigidbodyComponent: {fileID: 3634362987184117151}
+  ContractCapsuleCollider: {fileID: 8170008773839381790}
+  ContractNavigationAgent: {fileID: 8100414059305065397}
+  ContractAnimator: {fileID: 327572561411875199}
+  LocomotionNavigationAgent: {fileID: 8100414059305065397}
+  NavigationNavigationAgent: {fileID: 8100414059305065397}
+  PhysicsNavigationAgent: {fileID: 8100414059305065397}
+  PhysicsBody: {fileID: 3634362987184117151}
+  PhysicsBodyCollider: {fileID: 8170008773839381790}
+  SkillsAnimator: {fileID: 327572561411875199}
+  SkillsCasterVfxPoint: {fileID: 0}
+  visionOrigin: {fileID: 2663386024477595524}
+  combatEnabled: 1
+--- !u!114 &1677265370121901268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7005787142804927576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
 --- !u!1 &7135570160911076575
 GameObject:
   m_ObjectHideFlags: 0
@@ -6759,15 +6696,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8355955760264200279, guid: 7ddc8116811148241a46f8540070b187, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
-      value: 45.33
+      value: 3.087
       objectReference: {fileID: 0}
     - target: {fileID: 8355955760264200279, guid: 7ddc8116811148241a46f8540070b187, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
-      value: -98.16
+      value: -0.011
       objectReference: {fileID: 0}
     - target: {fileID: 8355955760264200279, guid: 7ddc8116811148241a46f8540070b187, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
-      value: 118.97
+      value: 1.62
       objectReference: {fileID: 0}
     - target: {fileID: 8355955760264200279, guid: 7ddc8116811148241a46f8540070b187, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.x
@@ -6830,15 +6767,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4622831796770884289, guid: 50c32640667c82c46b7d9cda78511a8d, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
-      value: 45.33
+      value: 3.087
       objectReference: {fileID: 0}
     - target: {fileID: 4622831796770884289, guid: 50c32640667c82c46b7d9cda78511a8d, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
-      value: -98.16
+      value: -0.011
       objectReference: {fileID: 0}
     - target: {fileID: 4622831796770884289, guid: 50c32640667c82c46b7d9cda78511a8d, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
-      value: 118.97
+      value: 1.62
       objectReference: {fileID: 0}
     - target: {fileID: 4622831796770884289, guid: 50c32640667c82c46b7d9cda78511a8d, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.x
@@ -6953,15 +6890,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3970437857813849763, guid: 080dd6921453dfb4291ceb9aa58f214a, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
-      value: 45.33
+      value: 3.087
       objectReference: {fileID: 0}
     - target: {fileID: 3970437857813849763, guid: 080dd6921453dfb4291ceb9aa58f214a, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
-      value: -98.16
+      value: -0.011
       objectReference: {fileID: 0}
     - target: {fileID: 3970437857813849763, guid: 080dd6921453dfb4291ceb9aa58f214a, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
-      value: 118.97
+      value: 1.62
       objectReference: {fileID: 0}
     - target: {fileID: 3970437857813849763, guid: 080dd6921453dfb4291ceb9aa58f214a, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.x

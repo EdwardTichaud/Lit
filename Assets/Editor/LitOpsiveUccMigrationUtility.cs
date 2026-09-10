@@ -598,7 +598,6 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "groundedAnimatorSpeedRiseRate", LucianGroundedAnimatorSpeedRiseRate);
         SetSerializedFloat(serializedObject, "groundedAnimatorSpeedFallRate", LucianGroundedAnimatorSpeedFallRate);
         SetSerializedFloat(serializedObject, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate);
-        SetSerializedFloat(serializedObject, "groundedStopTriggerMinSpeed", LucianGroundedStopTriggerMinSpeed);
 
         SetSerializedFloat(
             serializedObject,
@@ -615,19 +614,9 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedBool(serializedObject, "enableScriptedPivotTurns", useLucianPresentation);
         SetSerializedFloat(serializedObject, "groundedPivotMinAngle", LucianGroundedPivotMinAngle);
         SetSerializedFloat(serializedObject, "groundedPivot180Angle", LucianGroundedPivot180Angle);
-        SetSerializedBool(serializedObject, "groundedSnapStationaryTurn", LucianGroundedSnapStationaryTurn);
-        SetSerializedFloat(
-            serializedObject,
-            "groundedSnapStationaryTurnMinAngle",
-            LucianGroundedSnapStationaryTurnMinAngle);
-        SetSerializedFloat(
-            serializedObject,
-            "groundedSnapStationaryTurnMaxSpeed",
-            LucianGroundedSnapStationaryTurnMaxSpeed);
-        SetSerializedFloat(
-            serializedObject,
-            "groundedSnapStationaryTurnMaxSmoothedInput",
-            LucianGroundedSnapStationaryTurnMaxSmoothedInput);
+
+
+
         SetSerializedFloat(serializedObject, "groundedPivotMaxSpeed", LucianGroundedPivotMaxSpeed);
         SetSerializedFloat(serializedObject, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput);
         SetSerializedFloat(serializedObject, "groundedPivotHoldTime", LucianGroundedPivotHoldTime);
@@ -954,37 +943,45 @@ public static class LitOpsiveUccMigrationUtility
 
     private static void SetSerializedBool(SerializedObject serializedObject, string propertyName, bool value)
     {
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property != null)
         {
             property.boolValue = value;
+            if (property.serializedObject.targetObject != serializedObject.targetObject)
+                property.serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 
     private static void SetSerializedFloat(SerializedObject serializedObject, string propertyName, float value)
     {
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property != null)
         {
             property.floatValue = value;
+            if (property.serializedObject.targetObject != serializedObject.targetObject)
+                property.serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 
     private static void SetSerializedString(SerializedObject serializedObject, string propertyName, string value)
     {
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property != null)
         {
             property.stringValue = value;
+            if (property.serializedObject.targetObject != serializedObject.targetObject)
+                property.serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 
     private static void SetSerializedObjectReference(SerializedObject serializedObject, string propertyName, UnityEngine.Object value)
     {
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property != null)
         {
             property.objectReferenceValue = value;
+            if (property.serializedObject.targetObject != serializedObject.targetObject)
+                property.serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 
@@ -1233,7 +1230,7 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         SerializedObject serializedObject = new SerializedObject(target);
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property == null)
         {
             return false;
@@ -1417,7 +1414,6 @@ public static class LitOpsiveUccMigrationUtility
                 LucianGroundedAnimatorSpeedFallRate,
                 errors);
             ValidateSerializedFloat(bridge, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate, errors);
-            ValidateSerializedFloat(bridge, "groundedStopTriggerMinSpeed", LucianGroundedStopTriggerMinSpeed, errors);
             ValidateSerializedFloat(
                 bridge,
                 "groundedMoveTransitionDirectionHoldTime",
@@ -1436,27 +1432,10 @@ public static class LitOpsiveUccMigrationUtility
                 errors);
             ValidateSerializedFloat(bridge, "groundedPivotMinAngle", LucianGroundedPivotMinAngle, errors);
             ValidateSerializedFloat(bridge, "groundedPivot180Angle", LucianGroundedPivot180Angle, errors);
-            ValidateBridgeBoolean(
-                bridge,
-                label,
-                "groundedSnapStationaryTurn",
-                LucianGroundedSnapStationaryTurn,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "groundedSnapStationaryTurnMinAngle",
-                LucianGroundedSnapStationaryTurnMinAngle,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "groundedSnapStationaryTurnMaxSpeed",
-                LucianGroundedSnapStationaryTurnMaxSpeed,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "groundedSnapStationaryTurnMaxSmoothedInput",
-                LucianGroundedSnapStationaryTurnMaxSmoothedInput,
-                errors);
+
+
+
+
             ValidateSerializedFloat(bridge, "groundedPivotMaxSpeed", LucianGroundedPivotMaxSpeed, errors);
             ValidateSerializedFloat(bridge, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput, errors);
             ValidateSerializedFloat(bridge, "groundedPivotHoldTime", LucianGroundedPivotHoldTime, errors);
@@ -1729,7 +1708,7 @@ public static class LitOpsiveUccMigrationUtility
     private static void ValidateSerializedFloat(UnityEngine.Object target, string propertyName, float expected, List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property == null)
         {
             errors.Add($"{target.GetType().Name} serialized property missing: {propertyName}.");
@@ -1745,7 +1724,7 @@ public static class LitOpsiveUccMigrationUtility
     private static void ValidateSerializedBool(UnityEngine.Object target, string propertyName, bool expected, List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property == null)
         {
             errors.Add($"{target.GetType().Name} serialized property missing: {propertyName}.");
@@ -1876,7 +1855,7 @@ public static class LitOpsiveUccMigrationUtility
     private static void ValidateBridgeBoolean(UnityEngine.Object target, string label, string propertyName, bool expected, List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property == null)
         {
             errors.Add($"{label} bridge serialized property missing: {propertyName}.");
@@ -1892,7 +1871,7 @@ public static class LitOpsiveUccMigrationUtility
     private static void ValidateBridgeString(UnityEngine.Object target, string label, string propertyName, string expected, List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property == null)
         {
             errors.Add($"{label} bridge serialized property missing: {propertyName}.");
@@ -1913,9 +1892,16 @@ public static class LitOpsiveUccMigrationUtility
         List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
-        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        SerializedProperty property = PlayerSettingsAuthoring.FindProperty(serializedObject, propertyName);
         if (property == null)
         {
+            if (target is Component owner && expected is Component dependency &&
+                dependency.transform.root == owner.transform.root)
+            {
+                var field = target.GetType().GetField(propertyName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (field != null && field.FieldType.IsInstanceOfType(dependency) &&
+                    !System.Attribute.IsDefined(field, typeof(SerializeField))) return;
+            }
             errors.Add($"{label} bridge serialized property missing: {propertyName}.");
             return;
         }

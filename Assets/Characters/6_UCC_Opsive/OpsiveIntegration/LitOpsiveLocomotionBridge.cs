@@ -20,122 +20,89 @@ public enum LocomotionPresentationState
 [RequireComponent(typeof(LitOpsivePlayerInput))]
 public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 {
+    private readonly PlayerModuleConfiguration<PlayerLocomotionSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerLocomotionSettings>();
+    private PlayerLocomotionSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.locomotion);
     private const string SpeedChangeInputName = "Change Speeds";
     private const string CrouchInputName = "Crouch";
     private const string CombatMovementTypeFullName = "LitCombatLockMovementType";
 
-    [SerializeField] private SquadCharacterController squadController;
-    [SerializeField] private UltimateCharacterLocomotion locomotion;
-    [SerializeField] private UltimateCharacterLocomotionHandler locomotionHandler;
-    [SerializeField] private LitOpsivePlayerInput playerInput;
-    [SerializeField] private LitOpsiveLookSource lookSource;
+    private SquadCharacterController squadController;
+    private UltimateCharacterLocomotion locomotion;
+    private UltimateCharacterLocomotionHandler locomotionHandler;
+    private LitOpsivePlayerInput playerInput;
+    private LitOpsiveLookSource lookSource;
     [SerializeField] private Animator animator;
-    [SerializeField] private AnimatorMonitor animatorMonitor;
-    [SerializeField] private PlayerScriptedJumpController scriptedJumpController;
-    [SerializeField] private CombatTimeDomain timeDomain;
+    private AnimatorMonitor animatorMonitor;
+    private PlayerScriptedJumpController scriptedJumpController;
+    private CombatTimeDomain timeDomain;
 
-    [Header("Scripted Traversal Diagnostics")]
-    [SerializeField, Tooltip("Logs the requested and observed UCC pose while a scripted traversal is active. Development aid only.")]
-    private bool logScriptedTraversalDiagnostics;
-    [SerializeField, Min(1), Tooltip("Number of physics ticks between two traversal diagnostic samples.")]
-    private int scriptedTraversalDiagnosticTickInterval = 8;
-    [SerializeField, Min(0f), Tooltip("Warn when another system has moved the actor farther than this from the last requested traversal pose.")]
-    private float scriptedTraversalExternalCorrectionDistance = 0.02f;
-    [SerializeField, Range(0f, 45f), Tooltip("Warn when another system has rotated the actor farther than this from the last requested traversal pose.")]
-    private float scriptedTraversalExternalCorrectionDegrees = 1f;
+    private bool logScriptedTraversalDiagnostics { get => ModuleSettings.logScriptedTraversalDiagnostics; set => ModuleSettings.logScriptedTraversalDiagnostics = value; }
+    private int scriptedTraversalDiagnosticTickInterval { get => ModuleSettings.scriptedTraversalDiagnosticTickInterval; set => ModuleSettings.scriptedTraversalDiagnosticTickInterval = value; }
+    private float scriptedTraversalExternalCorrectionDistance { get => ModuleSettings.scriptedTraversalExternalCorrectionDistance; set => ModuleSettings.scriptedTraversalExternalCorrectionDistance = value; }
+    private float scriptedTraversalExternalCorrectionDegrees { get => ModuleSettings.scriptedTraversalExternalCorrectionDegrees; set => ModuleSettings.scriptedTraversalExternalCorrectionDegrees = value; }
 
-    [Header("Bridge")]
-    [SerializeField, Tooltip("When enabled, SquadCharacterController forwards locomotion commands to UCC and keeps Lit simulation disabled.")]
-    private bool driveFromSquadFacade = true;
-    [SerializeField, Tooltip("Feed movement directly into UltimateCharacterLocomotionHandler.OverrideInput.")]
-    private bool overrideOpsiveHandlerInput = true;
-    [SerializeField, Tooltip("Rotate the local look source toward world-space movement. Does not modify the project camera.")]
-    private bool orientLookSourceFromMovement = true;
-    [SerializeField, Tooltip("Configure the Rigidbody as kinematic/no-gravity while UCC is active.")]
-    private bool configureRigidbodyForOpsive = true;
-    [Header("Run Start Response")]
-    [SerializeField, Tooltip("Applies a short, collision-respecting UCC impulse when a held sprint starts or resumes after an action.")]
-    private bool enableRunStartResponse = true;
-    [SerializeField, Min(0f), Tooltip("Maximum planar velocity added by the first run step.")]
-    private float runStartVelocityBonus = 0.55f;
-    [SerializeField, Min(0f), Tooltip("Prevents repeated input reconciliation from stacking several run-start impulses.")]
-    private float runStartResponseCooldown = 0.25f;
-    [SerializeField, Min(0f), Tooltip("No run-start impulse is applied once this planar speed is already reached.")]
-    private float runStartResponseMaximumPlanarSpeed = 4.25f;
-    [SerializeField, Tooltip("Logs run-start and external-lock handoffs when troubleshooting locomotion.")]
-    private bool logLocomotionResponseDiagnostics;
+    private bool driveFromSquadFacade { get => ModuleSettings.driveFromSquadFacade; set => ModuleSettings.driveFromSquadFacade = value; }
+    private bool overrideOpsiveHandlerInput { get => ModuleSettings.overrideOpsiveHandlerInput; set => ModuleSettings.overrideOpsiveHandlerInput = value; }
+    private bool orientLookSourceFromMovement { get => ModuleSettings.orientLookSourceFromMovement; set => ModuleSettings.orientLookSourceFromMovement = value; }
+    private bool configureRigidbodyForOpsive { get => ModuleSettings.configureRigidbodyForOpsive; set => ModuleSettings.configureRigidbodyForOpsive = value; }
+    private bool enableRunStartResponse { get => ModuleSettings.enableRunStartResponse; set => ModuleSettings.enableRunStartResponse = value; }
+    private float runStartVelocityBonus { get => ModuleSettings.runStartVelocityBonus; set => ModuleSettings.runStartVelocityBonus = value; }
+    private float runStartResponseCooldown { get => ModuleSettings.runStartResponseCooldown; set => ModuleSettings.runStartResponseCooldown = value; }
+    private float runStartResponseMaximumPlanarSpeed { get => ModuleSettings.runStartResponseMaximumPlanarSpeed; set => ModuleSettings.runStartResponseMaximumPlanarSpeed = value; }
+    private bool logLocomotionResponseDiagnostics { get => ModuleSettings.logLocomotionResponseDiagnostics; set => ModuleSettings.logLocomotionResponseDiagnostics = value; }
 
-    [SerializeField, Tooltip("Add Lit/UCC companion bridges at runtime so interaction, damage and follower systems can respect UCC state without prefab edits.")]
-    private bool autoInstallCompanionBridges = true;
-    [SerializeField, Range(0f, 0.5f)] private float movementDeadZone = 0.08f;
+    private bool autoInstallCompanionBridges { get => ModuleSettings.autoInstallCompanionBridges; set => ModuleSettings.autoInstallCompanionBridges = value; }
+    private float movementDeadZone { get => ModuleSettings.movementDeadZone; set => ModuleSettings.movementDeadZone = value; }
 
-    [Header("Ground Relief")]
-    [SerializeField, Tooltip("Raises selected UCC ground settings at runtime so mesh floor reliefs and thresholds do not behave like hard walls.")]
-    private bool relaxGroundReliefTolerance = true;
-    [SerializeField, Min(0f), Tooltip("Minimum UCC step height used while this bridge drives locomotion.")]
-    private float groundReliefMinStepHeight = 0.6f;
-    [SerializeField, Range(0f, 89f), Tooltip("Minimum UCC traversable slope angle used while this bridge drives locomotion.")]
-    private float groundReliefMinSlopeLimit = 58f;
-    [SerializeField, Min(0f), Tooltip("Minimum UCC stick-to-ground distance used while this bridge drives locomotion.")]
-    private float groundReliefMinStickToGroundDistance = 0.55f;
-    [SerializeField, Tooltip("Blends stronger relief tolerance while scripted locomotion is moving across uneven surfaces.")]
-    [UnityEngine.Serialization.FormerlySerializedAs("adaptRootMotionGroundRelief")]
-    private bool adaptMovingGroundRelief = true;
-    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionMovingStepHeight")]
-    [SerializeField, Min(0f)] private float movingStepHeight = 0.58f;
-    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionMovingSlopeLimit")]
-    [SerializeField, Range(0f, 89f)] private float movingSlopeLimit = 62f;
-    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionMovingStickToGroundDistance")]
-    [SerializeField, Min(0f)] private float movingStickToGroundDistance = 0.86f;
-    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionIdleStickToGroundDistance")]
-    [SerializeField, Min(0f)] private float idleStickToGroundDistance = 0.64f;
-    [UnityEngine.Serialization.FormerlySerializedAs("rootMotionGroundReliefAdaptationSpeed")]
-    [SerializeField, Min(0f)] private float groundReliefAdaptationSpeed = 7.5f;
+    private bool relaxGroundReliefTolerance { get => ModuleSettings.relaxGroundReliefTolerance; set => ModuleSettings.relaxGroundReliefTolerance = value; }
+    private float groundReliefMinStepHeight { get => ModuleSettings.groundReliefMinStepHeight; set => ModuleSettings.groundReliefMinStepHeight = value; }
+    private float groundReliefMinSlopeLimit { get => ModuleSettings.groundReliefMinSlopeLimit; set => ModuleSettings.groundReliefMinSlopeLimit = value; }
+    private float groundReliefMinStickToGroundDistance { get => ModuleSettings.groundReliefMinStickToGroundDistance; set => ModuleSettings.groundReliefMinStickToGroundDistance = value; }
+    private bool adaptMovingGroundRelief { get => ModuleSettings.adaptMovingGroundRelief; set => ModuleSettings.adaptMovingGroundRelief = value; }
+    private float movingStepHeight { get => ModuleSettings.movingStepHeight; set => ModuleSettings.movingStepHeight = value; }
+    private float movingSlopeLimit { get => ModuleSettings.movingSlopeLimit; set => ModuleSettings.movingSlopeLimit = value; }
+    private float movingStickToGroundDistance { get => ModuleSettings.movingStickToGroundDistance; set => ModuleSettings.movingStickToGroundDistance = value; }
+    private float idleStickToGroundDistance { get => ModuleSettings.idleStickToGroundDistance; set => ModuleSettings.idleStickToGroundDistance = value; }
+    private float groundReliefAdaptationSpeed { get => ModuleSettings.groundReliefAdaptationSpeed; set => ModuleSettings.groundReliefAdaptationSpeed = value; }
 
-    [Header("Flight")]
-    [SerializeField, Tooltip("Restores the pre-UCC LocomotionMode flight toggle through a lightweight UCC ability.")]
-    private bool enableUccFlight = true;
-    [SerializeField, Min(0f)] private float flightTakeoffVerticalSpeed = 6.5f;
-    [SerializeField, Min(0f)] private float flightTakeoffDuration = 0.45f;
-    [SerializeField, Min(0f)] private float flightTakeoffDamping = 16f;
-    [SerializeField, Min(0f)] private float flightCruiseSpeed = 33f;
-    [SerializeField, Min(0f)] private float flightBoostSpeed = 81f;
-    [SerializeField, Min(0f)] private float flightAcceleration = 54f;
-    [SerializeField, Min(0f)] private float flightBoostAcceleration = 126f;
-    [SerializeField, Min(0f)] private float flightDeceleration = 36f;
-    [SerializeField, Min(0f)] private float flightVerticalSpeed = 24f;
-    [SerializeField, Min(0f)] private float flightVerticalAcceleration = 66f;
-    [SerializeField, Min(0f)] private float flightVerticalDeceleration = 54f;
-    [SerializeField, Range(0f, 0.4f)] private float flightVerticalDeadZone = 0.05f;
-    [SerializeField, Min(0f)] private float flightIdleSpeedThreshold = 0.08f;
-    [SerializeField, Min(0f)] private float flightTurnRate = 760f;
-    [SerializeField, Min(0f)] private float flightBoostTurnRate = 460f;
-    [SerializeField, Min(0f)] private float flightLandingSpeed = 12f;
-    [SerializeField, Min(0f)] private float flightLandingAcceleration = 36f;
-    [SerializeField, Min(0f), Tooltip("Vitesse descendante minimale appliquee lorsqu'un BasicSkill aerien demande un atterrissage.")]
-    private float combatSkillLandingSpeed = 14f;
-    [SerializeField, Tooltip("Utilise un pilote autonome si la capacite de vol UCC est absente ou refuse de demarrer.")]
-    private bool allowStandaloneFlightFallback = true;
-    [SerializeField, Min(0f)] private float fallbackFlightCollisionSkin = 0.03f;
-    [SerializeField, Min(0f)] private float fallbackFlightGroundProbeDistance = 0.2f;
+    private bool enableUccFlight { get => ModuleSettings.enableUccFlight; set => ModuleSettings.enableUccFlight = value; }
+    private float flightTakeoffVerticalSpeed { get => ModuleSettings.flightTakeoffVerticalSpeed; set => ModuleSettings.flightTakeoffVerticalSpeed = value; }
+    private float flightTakeoffDuration { get => ModuleSettings.flightTakeoffDuration; set => ModuleSettings.flightTakeoffDuration = value; }
+    private float flightTakeoffDamping { get => ModuleSettings.flightTakeoffDamping; set => ModuleSettings.flightTakeoffDamping = value; }
+    private float flightCruiseSpeed { get => ModuleSettings.flightCruiseSpeed; set => ModuleSettings.flightCruiseSpeed = value; }
+    private float flightBoostSpeed { get => ModuleSettings.flightBoostSpeed; set => ModuleSettings.flightBoostSpeed = value; }
+    private float flightAcceleration { get => ModuleSettings.flightAcceleration; set => ModuleSettings.flightAcceleration = value; }
+    private float flightBoostAcceleration { get => ModuleSettings.flightBoostAcceleration; set => ModuleSettings.flightBoostAcceleration = value; }
+    private float flightDeceleration { get => ModuleSettings.flightDeceleration; set => ModuleSettings.flightDeceleration = value; }
+    private float flightVerticalSpeed { get => ModuleSettings.flightVerticalSpeed; set => ModuleSettings.flightVerticalSpeed = value; }
+    private float flightVerticalAcceleration { get => ModuleSettings.flightVerticalAcceleration; set => ModuleSettings.flightVerticalAcceleration = value; }
+    private float flightVerticalDeceleration { get => ModuleSettings.flightVerticalDeceleration; set => ModuleSettings.flightVerticalDeceleration = value; }
+    private float flightVerticalDeadZone { get => ModuleSettings.flightVerticalDeadZone; set => ModuleSettings.flightVerticalDeadZone = value; }
+    private float flightIdleSpeedThreshold { get => ModuleSettings.flightIdleSpeedThreshold; set => ModuleSettings.flightIdleSpeedThreshold = value; }
+    private float flightTurnRate { get => ModuleSettings.flightTurnRate; set => ModuleSettings.flightTurnRate = value; }
+    private float flightBoostTurnRate { get => ModuleSettings.flightBoostTurnRate; set => ModuleSettings.flightBoostTurnRate = value; }
+    private float flightLandingSpeed { get => ModuleSettings.flightLandingSpeed; set => ModuleSettings.flightLandingSpeed = value; }
+    private float flightLandingAcceleration { get => ModuleSettings.flightLandingAcceleration; set => ModuleSettings.flightLandingAcceleration = value; }
+    private float combatSkillLandingSpeed { get => ModuleSettings.combatSkillLandingSpeed; set => ModuleSettings.combatSkillLandingSpeed = value; }
+    private bool allowStandaloneFlightFallback { get => ModuleSettings.allowStandaloneFlightFallback; set => ModuleSettings.allowStandaloneFlightFallback = value; }
+    private float fallbackFlightCollisionSkin { get => ModuleSettings.fallbackFlightCollisionSkin; set => ModuleSettings.fallbackFlightCollisionSkin = value; }
+    private float fallbackFlightGroundProbeDistance { get => ModuleSettings.fallbackFlightGroundProbeDistance; set => ModuleSettings.fallbackFlightGroundProbeDistance = value; }
 
-    [Header("Animator Compatibility")]
-    [SerializeField, Tooltip("Only enable for legacy Lit animator controllers. UCC animator controllers should be driven by AnimatorMonitor parameters.")]
-    private bool driveLitLocomotionAnimatorParameters = false;
-    [SerializeField] private string speedParam = "Speed";
-    [SerializeField] private string horizontalMovementParam = "HorizontalMovement";
-    [SerializeField] private string forwardMovementParam = "ForwardMovement";
-    [SerializeField] private string isMovingParam = "IsMoving";
-    [SerializeField] private string locomotionTierParam = "LocomotionTier";
-    [SerializeField] private string combatMoveMagnitudeParam = "CombatMoveMagnitude";
-    [SerializeField] private string turnParam = "Turn";
-    [SerializeField] private string flightStateParam = "FlightState";
-    [SerializeField] private string flightSpeedParam = "FlightSpeed";
-    [SerializeField] private string flightVerticalParam = "FlightVertical";
-    [SerializeField] private string flightBoostParam = "FlightBoost";
-    [SerializeField] private string flightStartTriggerParam = "FlightStartTrigger";
-    [SerializeField] private float walkPresentationSpeed = 1.35f;
-    [SerializeField] private float runPresentationSpeed = 3.25f;
+    private bool driveLitLocomotionAnimatorParameters { get => ModuleSettings.driveLitLocomotionAnimatorParameters; set => ModuleSettings.driveLitLocomotionAnimatorParameters = value; }
+    private string speedParam { get => ModuleSettings.speedParam; set => ModuleSettings.speedParam = value; }
+    private string horizontalMovementParam { get => ModuleSettings.horizontalMovementParam; set => ModuleSettings.horizontalMovementParam = value; }
+    private string forwardMovementParam { get => ModuleSettings.forwardMovementParam; set => ModuleSettings.forwardMovementParam = value; }
+    private string isMovingParam { get => ModuleSettings.isMovingParam; set => ModuleSettings.isMovingParam = value; }
+    private string locomotionTierParam { get => ModuleSettings.locomotionTierParam; set => ModuleSettings.locomotionTierParam = value; }
+    private string combatMoveMagnitudeParam { get => ModuleSettings.combatMoveMagnitudeParam; set => ModuleSettings.combatMoveMagnitudeParam = value; }
+    private string turnParam { get => ModuleSettings.turnParam; set => ModuleSettings.turnParam = value; }
+    private string flightStateParam { get => ModuleSettings.flightStateParam; set => ModuleSettings.flightStateParam = value; }
+    private string flightSpeedParam { get => ModuleSettings.flightSpeedParam; set => ModuleSettings.flightSpeedParam = value; }
+    private string flightVerticalParam { get => ModuleSettings.flightVerticalParam; set => ModuleSettings.flightVerticalParam = value; }
+    private string flightBoostParam { get => ModuleSettings.flightBoostParam; set => ModuleSettings.flightBoostParam = value; }
+    private string flightStartTriggerParam { get => ModuleSettings.flightStartTriggerParam; set => ModuleSettings.flightStartTriggerParam = value; }
+    private float walkPresentationSpeed { get => ModuleSettings.walkPresentationSpeed; set => ModuleSettings.walkPresentationSpeed = value; }
+    private float runPresentationSpeed { get => ModuleSettings.runPresentationSpeed; set => ModuleSettings.runPresentationSpeed = value; }
 
     private Rigidbody rb;
     private bool externalDriverRegistered;
@@ -197,19 +164,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool combatMovementTypeApplied;
     private bool warnedMissingCombatMovementType;
     private string movementTypeBeforeCombatLock;
-    [Header("Combat Lock Motion")]
-    [SerializeField, Min(1f), Tooltip("Vitesse maximale du face-a-face. Les actions et evasions restent immediates.")]
-    private float combatFacingSpeedDegreesPerSecond = 900f;
-    [SerializeField, Range(0.01f, 0.5f), Tooltip("Une composante avant/arriere superieure a ce seuil transforme le strafe en deplacement diagonal et libere le rayon d'orbite.")]
-    private float combatOrbitPureLateralThreshold = 0.12f;
-    [SerializeField, Min(0f), Tooltip("Ecart de rayon ignore pour eviter que de tres petites variations de simulation ne corrigent continuellement le strafe.")]
-    private float combatOrbitRadiusDeadZone = 0.035f;
-    [SerializeField, Min(0f), Tooltip("Intensite de la correction UCC qui maintient le rayon memorise pendant un strafe strict.")]
-    private float combatOrbitRadiusCorrectionGain = 2.25f;
-    [SerializeField, Range(0f, 1f), Tooltip("Part maximale de l'intention deplacement reservee a la correction radiale. Les collisions UCC gardent toujours la priorite.")]
-    private float combatOrbitMaximumCorrection = 0.35f;
-    [SerializeField, Tooltip("Active les traces de repere lock pour diagnostiquer une animation ou une direction incorrecte.")]
-    private bool logCombatLockMotionDiagnostics;
+    private float combatFacingSpeedDegreesPerSecond { get => ModuleSettings.combatFacingSpeedDegreesPerSecond; set => ModuleSettings.combatFacingSpeedDegreesPerSecond = value; }
+    private float combatOrbitPureLateralThreshold { get => ModuleSettings.combatOrbitPureLateralThreshold; set => ModuleSettings.combatOrbitPureLateralThreshold = value; }
+    private float combatOrbitRadiusDeadZone { get => ModuleSettings.combatOrbitRadiusDeadZone; set => ModuleSettings.combatOrbitRadiusDeadZone = value; }
+    private float combatOrbitRadiusCorrectionGain { get => ModuleSettings.combatOrbitRadiusCorrectionGain; set => ModuleSettings.combatOrbitRadiusCorrectionGain = value; }
+    private float combatOrbitMaximumCorrection { get => ModuleSettings.combatOrbitMaximumCorrection; set => ModuleSettings.combatOrbitMaximumCorrection = value; }
+    private bool logCombatLockMotionDiagnostics { get => ModuleSettings.logCombatLockMotionDiagnostics; set => ModuleSettings.logCombatLockMotionDiagnostics = value; }
     private Vector3 smoothedCombatFacingDirection;
     private bool hasSmoothedCombatFacingDirection;
     private bool combatIdlePresentationActive;
@@ -866,6 +826,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
         externalLockCount = 0;
         scriptedPlanarMotionLockCount = 0;
+        scriptedPlanarMotionOwner = null;
         scriptedTraversalLockCount = 0;
         scriptedTraversalPoseActive = false;
         // Le portail peut avoir decharge l'objet qui possedait le verrou avant
@@ -1035,22 +996,26 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// Acquires a UCC-only planar motion slot. It is used by in-place combat
     /// mobility: input is neutralized, but gravity and collision remain UCC's.
     /// </summary>
-    public bool BeginScriptedPlanarMotion()
+    private object scriptedPlanarMotionOwner;
+
+    public bool BeginScriptedPlanarMotion(object owner)
     {
+        if (owner == null || scriptedPlanarMotionOwner != null) return false;
         if (!BeginExternalLock(disableGameplayInput: false, stopActiveAbilities: false))
         {
             return false;
         }
 
+        scriptedPlanarMotionOwner = owner;
         scriptedPlanarMotionLockCount++;
         return true;
     }
 
     /// <summary>Sets the desired horizontal velocity without ever writing the Transform directly.</summary>
-    public bool DriveScriptedPlanarMotion(Vector3 desiredWorldVelocity)
+    public bool DriveScriptedPlanarMotion(object owner, Vector3 desiredWorldVelocity)
     {
         ResolveReferences();
-        if (!IsDriving || locomotion == null || scriptedPlanarMotionLockCount <= 0)
+        if (!ReferenceEquals(scriptedPlanarMotionOwner, owner) || owner == null || !IsDriving || locomotion == null || scriptedPlanarMotionLockCount <= 0)
         {
             return false;
         }
@@ -1062,10 +1027,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>Applies one horizontal velocity-change while the scripted motion slot owns input.</summary>
-    public bool ApplyScriptedPlanarImpulse(Vector3 worldImpulse)
+    public bool ApplyScriptedPlanarImpulse(object owner, Vector3 worldImpulse)
     {
         ResolveReferences();
-        if (!IsDriving || locomotion == null || scriptedPlanarMotionLockCount <= 0)
+        if (!ReferenceEquals(scriptedPlanarMotionOwner, owner) || owner == null || !IsDriving || locomotion == null || scriptedPlanarMotionLockCount <= 0)
         {
             return false;
         }
@@ -1081,11 +1046,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>Releases a planar motion slot and restores ordinary UCC input on the next frame.</summary>
-    public void EndScriptedPlanarMotion()
+    public void EndScriptedPlanarMotion(object owner)
     {
+        if (owner == null || !ReferenceEquals(scriptedPlanarMotionOwner, owner)) return;
+        scriptedPlanarMotionOwner = null;
         if (scriptedPlanarMotionLockCount <= 0)
         {
             scriptedPlanarMotionLockCount = 0;
+        scriptedPlanarMotionOwner = null;
             return;
         }
 
@@ -1247,6 +1215,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         externalLockCount = 0;
         scriptedPlanarMotionLockCount = 0;
+        scriptedPlanarMotionOwner = null;
         scriptedTraversalLockCount = 0;
         scriptedTraversalPoseActive = false;
         StopBridgeInput();

@@ -9,6 +9,24 @@ using UnityEngine.TestTools;
 public sealed class EnemyUnificationTests
 {
     [Test]
+    public void OrdinaryEnemiesHaveNoImplicitGhostGateOrDeathDialogue()
+    {
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        var root = new GameObject("Default enemy options");
+        root.SetActive(false);
+        try
+        {
+            var enemy = root.AddComponent<EnemyController>();
+            enemy.Health.SetCharacterData(data);
+            Assert.That(enemy.StartsAsGhost, Is.False);
+            Assert.That(enemy.HasDeathPresentation, Is.False);
+            Assert.That(enemy.CombatEnabled, Is.True);
+            Assert.That(enemy.PlayDeathPresentation().MoveNext(), Is.False);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(data); }
+    }
+
+    [Test]
     public void RestoredZeroHealthSurvivesInitializationAndReactivation()
     {
         var root = new GameObject("Restored character");
@@ -104,11 +122,17 @@ public sealed class EnemyUnificationTests
             a.CharacterData.stats.strength = 99;
             a.CharacterData.enemySettings.PhysicsGroundSkin = .2f;
             a.CharacterData.enemyCombatProfile.pursuitRadius = 99;
+            a.CharacterData.enemyDeathOptions.dialogueSeconds = 99;
+            a.CharacterData.enemyEncounterOptions.startAsGhost = true;
+            a.CharacterData.vision.maximumDistance = 99;
             a.ApplyDamage(5);
             Assert.That(b.CharacterData.stats.strength, Is.EqualTo(data.stats.strength));
             Assert.That(b.CharacterData.enemySettings.PhysicsGroundSkin, Is.EqualTo(data.enemySettings.PhysicsGroundSkin));
             Assert.That(b.CharacterData.enemyCombatProfile.pursuitRadius, Is.EqualTo(data.enemyCombatProfile.pursuitRadius));
             Assert.That(b.CurrentHp, Is.EqualTo(20));
+            Assert.That(b.CharacterData.enemyDeathOptions.dialogueSeconds, Is.EqualTo(data.enemyDeathOptions.dialogueSeconds));
+            Assert.That(b.CharacterData.enemyEncounterOptions.startAsGhost, Is.False);
+            Assert.That(b.CharacterData.vision.maximumDistance, Is.EqualTo(data.vision.maximumDistance));
             Assert.That(a.CharacterData.UniqueId, Is.EqualTo(data.UniqueId));
             Assert.That(a.SourceData, Is.SameAs(b.SourceData));
         }

@@ -16,7 +16,9 @@ Ses objets sont des emplacements à placer, pas des ressources artistiques tempo
   proximite, contour et interaction communs aux fantomes). Lors de la rencontre,
   le corps reste visible et le comportement fantome est desactive : `Interact` joue sa réplique
   pour le groupe, puis active son combat serveur. La réplique et sa durée sont
-  éditables sur `ScientistEncounterController`.
+  éditables dans `CharacterData > Détection et engagement > Enemy Encounter Options`.
+  `EnemyController` porte cette interaction. Ses derniers mots, leur durée et la
+  voix se règlent dans `CharacterData > À la mort de l'ennemi`.
 - Ajouter le modèle animal sous Ghost_Nina et assigner son Animator au contrôleur du cycle.
   Fournir les états Idle/Dead et leurs vrais clips. Le contrôleur ne crée aucune animation.
 - Placer le prefab de sang sous `Nina's blood_A_ASSIGNER`, qui sert de root d'activation.

@@ -114,7 +114,7 @@ public sealed partial class EnemyController
         {
             BrainVisibilitySampled = true;
             BrainPreviousVisibility = BrainEnemy.CanSeePlayer;
-            Debug.Log("[EnemyCombatBrain] " + name + " | vision=" + BrainEnemy.CanSeePlayer + " | distance=" + BrainEnemy.PlayerVisibilityDistance.ToString("F2") + " | angle=" + BrainEnemy.PlayerVisibilityAngle.ToString("F1") + " | range=" + (BrainEnemy.VisionField != null ? BrainEnemy.VisionField.MaximumDistance.ToString("F1") : "n/a") + " | reason=" + BrainEnemy.PlayerVisibilityReason, this);
+            Debug.Log("[EnemyCombatBrain] " + name + " | vision=" + BrainEnemy.CanSeePlayer + " | distance=" + BrainEnemy.PlayerVisibilityDistance.ToString("F2") + " | angle=" + BrainEnemy.PlayerVisibilityAngle.ToString("F1") + " | range=" + BrainEnemy.MaximumDistance.ToString("F1") + " | reason=" + BrainEnemy.PlayerVisibilityReason, this);
         }
 
         if (BrainEnemy.Health != null && BrainEnemy.Health.IsDead)
@@ -164,7 +164,7 @@ public sealed partial class EnemyController
             }
 
             SquadCharacterController visiblePlayer = BrainResolvePlayerController(visiblePlayerRoot);
-            bool canDetect = visiblePlayer != null && (BrainEnemy.CanSeePlayer || BrainReturning && BrainEnemy.VisionField != null && BrainEnemy.VisionField.CanSenseNearby(visiblePlayer.transform, BrainProfile.returnReengageDistance));
+            bool canDetect = visiblePlayer != null && (BrainEnemy.CanSeePlayer || BrainReturning && BrainEnemy.CanSenseNearby(visiblePlayer.transform, BrainProfile.returnReengageDistance));
             float entryRadius = BrainReturning ? Mathf.Max(0f, BrainProfile.pursuitRadius - .5f) : BrainProfile.pursuitRadius;
             if (canDetect && visiblePlayer.CurrentHp > 0 && BrainDistance(BrainHome, visiblePlayer.transform.position) <= entryRadius)
             {

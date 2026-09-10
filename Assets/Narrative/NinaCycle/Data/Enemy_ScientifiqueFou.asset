@@ -102,3 +102,23 @@ MonoBehaviour:
     NavigationLogDiagnostics: 0
     ContractLogDiagnostics: 1
     BrainLogDecisions: 0
+
+  enemyEncounterOptions:
+    startAsGhost: 1
+    introductionLine: "Vous n'auriez jamais d\xFB venir ici..."
+    introductionSeconds: 2.5
+    interactionDistance: 2.5
+  enemyDeathOptions:
+    enabled: 1
+    dialogueLine: Qu'est ce que... j'ai fait...
+    dialogueSeconds: 4
+    voiceLine: {fileID: 11400000, guid: 864a5a50e6434e2b9bfdd9ca65167285, type: 2}
+
+  vision:
+    maximumDistance: 18
+    fieldOfViewDegrees: 120
+    eyeHeight: 0
+    targetHeight: 1
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295

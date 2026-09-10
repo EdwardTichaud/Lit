@@ -1,5 +1,9 @@
 # Input, UCC et caméra
 
+## Reservations planaires et modules joueur
+
+BeginScriptedPlanarMotion, DriveScriptedPlanarMotion, ApplyScriptedPlanarImpulse et EndScriptedPlanarMotion exigent un proprietaire. Un module etranger est refuse avant de modifier le verrou UCC. Les consommateurs utilisent leur instance; la desactivation et les changements de zone effacent la reservation. Le saut, l esquive et les trajectoires conservent leurs modules et la physique UCC. Reglages dans CharacterData.playerSettings; references de scripts retrouvees automatiquement.
+
 ## Fenetres de reaction ennemies
 
 EnemyAttack ferme l'eligibilite B/Y au contact sans supprimer la protection

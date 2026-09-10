@@ -4,92 +4,62 @@ using System.Text;
 
 public partial class LitOpsiveLocomotionBridge
 {
-    [Header("Grounded Feel")]
-    [SerializeField, Tooltip("Adds a heavier, cinematic movement filter for grounded third-person locomotion.")]
-    private bool enableCinematicGroundedFeel = true;
-    [SerializeField, Tooltip("Temporarily tunes UCC ground physics while this bridge is active.")]
-    private bool tuneGroundedUccPhysics = true;
-    [SerializeField] private Vector3 groundedMotorAcceleration = new Vector3(4.6f, 0f, 4.6f);
-    [SerializeField, Min(0f)] private float groundedMotorDamping = 5.7f;
-    [SerializeField, Range(0f, 1f)] private float groundedPreviousAccelerationInfluence = 0.88f;
-    [SerializeField, Range(0f, 1f)] private float groundedBackwardsMultiplier = 0.6f;
-    [SerializeField, Min(0f)] private float groundedGravityAmount = 0.65f;
-    [SerializeField, Min(0f)] private float groundedStickToGroundDistance = 0.72f;
-    [SerializeField, Range(0f, 89f)] private float groundedSlopeLimit = 60f;
-    [SerializeField, Min(0f)] private float groundedMaxStepHeight = 0.5f;
-    [SerializeField, Min(0f)] private float groundedMovingPlatformSeparationVelocity = 7f;
-    [SerializeField, Range(0f, 1f)] private float groundedMovingPlatformDisconnectMultiplier = 0.65f;
-    [SerializeField, Min(0f)] private float groundedMovingPlatformForceDamping = 0.18f;
+    private bool enableCinematicGroundedFeel { get => ModuleSettings.enableCinematicGroundedFeel; set => ModuleSettings.enableCinematicGroundedFeel = value; }
+    private bool tuneGroundedUccPhysics { get => ModuleSettings.tuneGroundedUccPhysics; set => ModuleSettings.tuneGroundedUccPhysics = value; }
+    private Vector3 groundedMotorAcceleration { get => ModuleSettings.groundedMotorAcceleration; set => ModuleSettings.groundedMotorAcceleration = value; }
+    private float groundedMotorDamping { get => ModuleSettings.groundedMotorDamping; set => ModuleSettings.groundedMotorDamping = value; }
+    private float groundedPreviousAccelerationInfluence { get => ModuleSettings.groundedPreviousAccelerationInfluence; set => ModuleSettings.groundedPreviousAccelerationInfluence = value; }
+    private float groundedBackwardsMultiplier { get => ModuleSettings.groundedBackwardsMultiplier; set => ModuleSettings.groundedBackwardsMultiplier = value; }
+    private float groundedGravityAmount { get => ModuleSettings.groundedGravityAmount; set => ModuleSettings.groundedGravityAmount = value; }
+    private float groundedStickToGroundDistance { get => ModuleSettings.groundedStickToGroundDistance; set => ModuleSettings.groundedStickToGroundDistance = value; }
+    private float groundedSlopeLimit { get => ModuleSettings.groundedSlopeLimit; set => ModuleSettings.groundedSlopeLimit = value; }
+    private float groundedMaxStepHeight { get => ModuleSettings.groundedMaxStepHeight; set => ModuleSettings.groundedMaxStepHeight = value; }
+    private float groundedMovingPlatformSeparationVelocity { get => ModuleSettings.groundedMovingPlatformSeparationVelocity; set => ModuleSettings.groundedMovingPlatformSeparationVelocity = value; }
+    private float groundedMovingPlatformDisconnectMultiplier { get => ModuleSettings.groundedMovingPlatformDisconnectMultiplier; set => ModuleSettings.groundedMovingPlatformDisconnectMultiplier = value; }
+    private float groundedMovingPlatformForceDamping { get => ModuleSettings.groundedMovingPlatformForceDamping; set => ModuleSettings.groundedMovingPlatformForceDamping = value; }
 
-    [Header("Grounded Input Feel")]
-    [SerializeField, Min(0f)] private float groundedInputAcceleration = 6.2f;
-    [SerializeField, Min(0f)] private float groundedSprintInputAcceleration = 5f;
-    [SerializeField, Min(0f)] private float groundedInputDeceleration = 6.2f;
-    [SerializeField, Min(0f)] private float groundedDirectionChangeAcceleration = 11.2f;
-    [SerializeField, Range(-1f, 1f)] private float groundedDirectionChangeDot = 0.2f;
+    private float groundedInputAcceleration { get => ModuleSettings.groundedInputAcceleration; set => ModuleSettings.groundedInputAcceleration = value; }
+    private float groundedSprintInputAcceleration { get => ModuleSettings.groundedSprintInputAcceleration; set => ModuleSettings.groundedSprintInputAcceleration = value; }
+    private float groundedInputDeceleration { get => ModuleSettings.groundedInputDeceleration; set => ModuleSettings.groundedInputDeceleration = value; }
+    private float groundedDirectionChangeAcceleration { get => ModuleSettings.groundedDirectionChangeAcceleration; set => ModuleSettings.groundedDirectionChangeAcceleration = value; }
+    private float groundedDirectionChangeDot { get => ModuleSettings.groundedDirectionChangeDot; set => ModuleSettings.groundedDirectionChangeDot = value; }
 
-    [Header("Grounded Sprint Feel")]
-    [SerializeField, Tooltip("Reduces the binary UCC SpeedChange kick into a more measured exploration sprint.")]
-    private bool tuneGroundedSprintSpeedChange = true;
-    [SerializeField, Range(1f, 2.4f)] private float groundedSprintSpeedMultiplier = 1.65f;
-    [SerializeField, Min(0f)] private float groundedSprintSpeedParameterValue = 2.6f;
-    [SerializeField, Tooltip("Prevents UCC SpeedChange from writing the legacy Animator Speed parameter. The Lit bridge owns locomotion presentation.")]
-    private bool suppressSpeedChangeAnimatorParameter = true;
+    private bool tuneGroundedSprintSpeedChange { get => ModuleSettings.tuneGroundedSprintSpeedChange; set => ModuleSettings.tuneGroundedSprintSpeedChange = value; }
+    private float groundedSprintSpeedMultiplier { get => ModuleSettings.groundedSprintSpeedMultiplier; set => ModuleSettings.groundedSprintSpeedMultiplier = value; }
+    private float groundedSprintSpeedParameterValue { get => ModuleSettings.groundedSprintSpeedParameterValue; set => ModuleSettings.groundedSprintSpeedParameterValue = value; }
+    private bool suppressSpeedChangeAnimatorParameter { get => ModuleSettings.suppressSpeedChangeAnimatorParameter; set => ModuleSettings.suppressSpeedChangeAnimatorParameter = value; }
 
-    [Header("Grounded Animation Feel")]
-    [SerializeField] private string moveStartTriggerParam = "MoveStartTrigger";
-    [SerializeField] private string moveStopTriggerParam = "MoveStopTrigger";
-    [SerializeField] private string turnInPlaceParam = "TurnInPlace";
-    [SerializeField, Min(0.01f)] private float groundedAnimationSpeedToBlend = 0.48f;
-    [SerializeField, Min(0f)] private float groundedAnimatorSpeedRiseRate = 13.5f;
-    [SerializeField, Min(0f)] private float groundedAnimatorSpeedFallRate = 5.4f;
-    [SerializeField, Min(0f)] private float groundedAnimatorTurnRate = 5.4f;
-    [SerializeField, Range(0f, 1f)] private float groundedTurnInPlaceThreshold = 0.55f;
-    [SerializeField, Min(0f)] private float groundedTurnInPlaceMaxSpeed = 0.35f;
-    [SerializeField, Tooltip("Plays authored stationary turn clips. Keep disabled for exploration: direction changes stay in the locomotion loop and the body turns progressively with movement.")]
-    private bool enableGroundedTurnInPlaceClips = false;
-    [SerializeField, Min(0f)] private float groundedStopTriggerMinSpeed = 0.48f;
-    [SerializeField, Min(0f), Tooltip("Input-release stability required before requesting the authored stop clip.")]
-    private float groundedStopRequestDelay = 0.06f;
-    [SerializeField, Min(0f), Tooltip("Physical speed required before the stop presentation may be considered settled.")]
-    private float groundedStopSettledSpeed = 0.06f;
-    [SerializeField, Min(0f), Tooltip("Stable settled time required after the stop clip reaches its exit pose.")]
-    private float groundedStopSettledDuration = 0.05f;
-    [SerializeField, Range(0f, 1f)] private float groundedStopExitNormalizedTime = 0.9f;
-    [SerializeField, Min(0f), Tooltip("Keeps start/stop blend trees aimed after input or physical velocity drops to zero.")]
-    private float groundedMoveTransitionDirectionHoldTime = 0.18f;
-    [SerializeField, Min(0f), Tooltip("Minimum parameter radius used by directional start/stop blend trees while their direction is latched.")]
-    private float groundedMoveTransitionParameterSpeed = 1.22f;
-    [SerializeField, Tooltip("Keeps grounded locomotion on forward clips only; rotation turns the character instead of blending strafe/backward clips.")]
-    private bool useForwardOnlyGroundedLocomotion = true;
-    [SerializeField, Tooltip("Uses root-motion turn clips when movement starts from a sharp angle change. Disabled by default because exploration direction changes must keep moving instead of pivoting on the spot.")]
-    [UnityEngine.Serialization.FormerlySerializedAs("enableRootMotionPivotTurns")]
-    private bool enableScriptedPivotTurns = false;
-    [SerializeField, Range(45f, 180f)] private float groundedPivotMinAngle = 85f;
-    [SerializeField, Range(90f, 180f)] private float groundedPivot180Angle = 135f;
-    [SerializeField, Tooltip("Snaps starts from rest toward the requested direction instead of playing turn-in-place clips.")]
-    private bool groundedSnapStationaryTurn = false;
-    [SerializeField, Range(0f, 180f)] private float groundedSnapStationaryTurnMinAngle = 25f;
-    [SerializeField, Min(0f)] private float groundedSnapStationaryTurnMaxSpeed = 0.22f;
-    [SerializeField, Range(0f, 1f)] private float groundedSnapStationaryTurnMaxSmoothedInput = 0.08f;
-    [SerializeField, Min(0f)] private float groundedPivotMaxSpeed = 0.45f;
-    [SerializeField, Range(0f, 1f)] private float groundedPivotMaxSmoothedInput = 0.14f;
-    [SerializeField, Min(0.05f)] private float groundedPivotHoldTime = 0.32f;
-    [SerializeField, Min(0f)] private float groundedPivotCooldown = 0.34f;
-    [SerializeField, Min(0f), Tooltip("Lets the first input frames settle before a moderate turn can trigger a root-motion pivot.")]
-    private float groundedPivotStartGraceTime = 0.12f;
-    [SerializeField, Range(45f, 180f), Tooltip("During the start grace window, only very decisive turns may enter a pivot clip.")]
-    private float groundedPivotStartGraceMinAngle = 128f;
-    [SerializeField, Range(0f, 1f), Tooltip("Normalized pivot progress before movement can blend back in.")]
-    private float groundedPivotMovementReleaseStart = 0.38f;
-    [SerializeField, Range(0f, 180f), Tooltip("Remaining angle under which movement can blend back in during a pivot.")]
-    private float groundedPivotMovementReleaseMaxAngle = 72f;
-    [SerializeField, Range(0f, 1f), Tooltip("Maximum movement input scale allowed while a pivot is finishing.")]
-    private float groundedPivotMovementReleaseScale = 0.58f;
-    [SerializeField, Tooltip("Commits the gameplay root rotation toward the authored turn target so turn clips cannot visually rotate and then snap back.")]
-    [UnityEngine.Serialization.FormerlySerializedAs("commitRootRotationDuringPivot")]
-    private bool commitBodyRotationDuringPivot = true;
-    [SerializeField, Min(1f)] private float groundedPivotRotationCommitRate = 960f;
+    private string moveStartTriggerParam { get => ModuleSettings.moveStartTriggerParam; set => ModuleSettings.moveStartTriggerParam = value; }
+    private string moveStopTriggerParam { get => ModuleSettings.moveStopTriggerParam; set => ModuleSettings.moveStopTriggerParam = value; }
+    private string turnInPlaceParam { get => ModuleSettings.turnInPlaceParam; set => ModuleSettings.turnInPlaceParam = value; }
+    private float groundedAnimationSpeedToBlend { get => ModuleSettings.groundedAnimationSpeedToBlend; set => ModuleSettings.groundedAnimationSpeedToBlend = value; }
+    private float groundedAnimatorSpeedRiseRate { get => ModuleSettings.groundedAnimatorSpeedRiseRate; set => ModuleSettings.groundedAnimatorSpeedRiseRate = value; }
+    private float groundedAnimatorSpeedFallRate { get => ModuleSettings.groundedAnimatorSpeedFallRate; set => ModuleSettings.groundedAnimatorSpeedFallRate = value; }
+    private float groundedAnimatorTurnRate { get => ModuleSettings.groundedAnimatorTurnRate; set => ModuleSettings.groundedAnimatorTurnRate = value; }
+    private float groundedTurnInPlaceThreshold { get => ModuleSettings.groundedTurnInPlaceThreshold; set => ModuleSettings.groundedTurnInPlaceThreshold = value; }
+    private float groundedTurnInPlaceMaxSpeed { get => ModuleSettings.groundedTurnInPlaceMaxSpeed; set => ModuleSettings.groundedTurnInPlaceMaxSpeed = value; }
+    private bool enableGroundedTurnInPlaceClips { get => ModuleSettings.enableGroundedTurnInPlaceClips; set => ModuleSettings.enableGroundedTurnInPlaceClips = value; }
+    private float groundedStopRequestDelay { get => ModuleSettings.groundedStopRequestDelay; set => ModuleSettings.groundedStopRequestDelay = value; }
+    private float groundedStopSettledSpeed { get => ModuleSettings.groundedStopSettledSpeed; set => ModuleSettings.groundedStopSettledSpeed = value; }
+    private float groundedStopSettledDuration { get => ModuleSettings.groundedStopSettledDuration; set => ModuleSettings.groundedStopSettledDuration = value; }
+    private float groundedStopExitNormalizedTime { get => ModuleSettings.groundedStopExitNormalizedTime; set => ModuleSettings.groundedStopExitNormalizedTime = value; }
+    private float groundedMoveTransitionDirectionHoldTime { get => ModuleSettings.groundedMoveTransitionDirectionHoldTime; set => ModuleSettings.groundedMoveTransitionDirectionHoldTime = value; }
+    private float groundedMoveTransitionParameterSpeed { get => ModuleSettings.groundedMoveTransitionParameterSpeed; set => ModuleSettings.groundedMoveTransitionParameterSpeed = value; }
+    private bool useForwardOnlyGroundedLocomotion { get => ModuleSettings.useForwardOnlyGroundedLocomotion; set => ModuleSettings.useForwardOnlyGroundedLocomotion = value; }
+    private bool enableScriptedPivotTurns { get => ModuleSettings.enableScriptedPivotTurns; set => ModuleSettings.enableScriptedPivotTurns = value; }
+    private float groundedPivotMinAngle { get => ModuleSettings.groundedPivotMinAngle; set => ModuleSettings.groundedPivotMinAngle = value; }
+    private float groundedPivot180Angle { get => ModuleSettings.groundedPivot180Angle; set => ModuleSettings.groundedPivot180Angle = value; }
+    private float groundedPivotMaxSpeed { get => ModuleSettings.groundedPivotMaxSpeed; set => ModuleSettings.groundedPivotMaxSpeed = value; }
+    private float groundedPivotMaxSmoothedInput { get => ModuleSettings.groundedPivotMaxSmoothedInput; set => ModuleSettings.groundedPivotMaxSmoothedInput = value; }
+    private float groundedPivotHoldTime { get => ModuleSettings.groundedPivotHoldTime; set => ModuleSettings.groundedPivotHoldTime = value; }
+    private float groundedPivotCooldown { get => ModuleSettings.groundedPivotCooldown; set => ModuleSettings.groundedPivotCooldown = value; }
+    private float groundedPivotStartGraceTime { get => ModuleSettings.groundedPivotStartGraceTime; set => ModuleSettings.groundedPivotStartGraceTime = value; }
+    private float groundedPivotStartGraceMinAngle { get => ModuleSettings.groundedPivotStartGraceMinAngle; set => ModuleSettings.groundedPivotStartGraceMinAngle = value; }
+    private float groundedPivotMovementReleaseStart { get => ModuleSettings.groundedPivotMovementReleaseStart; set => ModuleSettings.groundedPivotMovementReleaseStart = value; }
+    private float groundedPivotMovementReleaseMaxAngle { get => ModuleSettings.groundedPivotMovementReleaseMaxAngle; set => ModuleSettings.groundedPivotMovementReleaseMaxAngle = value; }
+    private float groundedPivotMovementReleaseScale { get => ModuleSettings.groundedPivotMovementReleaseScale; set => ModuleSettings.groundedPivotMovementReleaseScale = value; }
+    private bool commitBodyRotationDuringPivot { get => ModuleSettings.commitBodyRotationDuringPivot; set => ModuleSettings.commitBodyRotationDuringPivot = value; }
+    private float groundedPivotRotationCommitRate { get => ModuleSettings.groundedPivotRotationCommitRate; set => ModuleSettings.groundedPivotRotationCommitRate = value; }
 
     private Vector2 desiredGroundedWorldMoveInput;
     private Vector2 smoothedGroundedWorldMoveInput;
@@ -116,9 +86,7 @@ public partial class LitOpsiveLocomotionBridge
     private float groundedStopSettledTimer;
     private bool groundedStopReachedExit;
 
-    [Header("Development Diagnostics")]
-    [SerializeField, Tooltip("Stores a fixed locomotion history for debugging jitter and state cuts. No per-frame allocations are made.")]
-    private bool recordLocomotionDiagnostics;
+    private bool recordLocomotionDiagnostics { get => ModuleSettings.recordLocomotionDiagnostics; set => ModuleSettings.recordLocomotionDiagnostics = value; }
     private const int LocomotionHistoryCapacity = 120;
     private readonly LocomotionSample[] locomotionHistory = new LocomotionSample[LocomotionHistoryCapacity];
     private int locomotionHistoryNext;

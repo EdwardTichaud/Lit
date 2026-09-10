@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerActionPresentationController : MonoBehaviour
+public sealed partial class PlayerActionPresentationController : MonoBehaviour
 {
     private const string LocomotionState = "Base Layer.Locomotion";
     private const string CombatLocomotionState = "Base Layer.CombatLocomotion";
@@ -12,7 +12,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private const string RunStartState = "Base Layer.Run_Start";
 
     [SerializeField] private Animator animator;
-    [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
+    private LitOpsiveLocomotionBridge locomotionBridge;
     [SerializeField] private bool debugTransitions;
 
     private Coroutine actionRoutine;
@@ -220,6 +220,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     private void Awake()
     {
+        SkillEventsAwake();
         CharacterAnimationController animationContract = GetComponent<CharacterAnimationController>();
         if (animationContract != null && animationContract.ValidateContract(out _))
         {
@@ -230,6 +231,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     private void OnDisable()
     {
+        SkillEventsOnDisable();
         CancelAction();
     }
 
@@ -263,15 +265,15 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         if (targetLungeOwnsPlanarMotion)
         {
-            locomotionBridge?.DriveScriptedPlanarMotion(Vector3.zero);
-            locomotionBridge?.EndScriptedPlanarMotion();
+            locomotionBridge?.DriveScriptedPlanarMotion(this, Vector3.zero);
+            locomotionBridge?.EndScriptedPlanarMotion(this);
             targetLungeOwnsPlanarMotion = false;
         }
     }
 
     private IEnumerator RunTargetLunge(PlayerTargetLungeProfile profile, EnemyController target, int lungeToken, int actionToken)
     {
-        if (!locomotionBridge.BeginScriptedPlanarMotion())
+        if (!locomotionBridge.BeginScriptedPlanarMotion(this))
         {
             yield break;
         }
@@ -306,7 +308,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
                 // target velocity, rather than a direct Transform interpolation.
                 float speed = Mathf.Min(profile.maximumApproachSpeed, distance / remaining);
                 Vector3 before = transform.position;
-                if (!locomotionBridge.DriveScriptedPlanarMotion(direction * speed))
+                if (!locomotionBridge.DriveScriptedPlanarMotion(this, direction * speed))
                 {
                     break;
                 }
@@ -322,8 +324,8 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         {
             if (targetLungeOwnsPlanarMotion)
             {
-                locomotionBridge.DriveScriptedPlanarMotion(Vector3.zero);
-                locomotionBridge.EndScriptedPlanarMotion();
+                locomotionBridge.DriveScriptedPlanarMotion(this, Vector3.zero);
+                locomotionBridge.EndScriptedPlanarMotion(this);
                 targetLungeOwnsPlanarMotion = false;
             }
             targetLungeRoutine = null;

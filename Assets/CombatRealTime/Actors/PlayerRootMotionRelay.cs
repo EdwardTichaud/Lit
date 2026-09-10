@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public sealed class PlayerRootMotionRelay : MonoBehaviour
 {
-    [SerializeField] private PlayerAnimationController actor;
+    private PlayerAnimationController actor;
 
     private Animator animator;
     private CombatTimeDomain timeDomain;

@@ -13,7 +13,7 @@ public sealed class NinaCycleTests
         var ghost = prefab.GetComponent<GhostController>();
         Assert.NotNull(ghost);
         Assert.NotNull(ghost.Data);
-        Assert.IsInstanceOf<IGhostInteractionHandler>(prefab.GetComponent<ScientistEncounterController>());
+        Assert.IsInstanceOf<IGhostInteractionHandler>(prefab.GetComponent<EnemyController>());
         Assert.AreEqual(1, prefab.GetComponents<CharacterInfo>().Length);
         Assert.AreEqual(1, prefab.GetComponents<EnemyController>().Length);
         Assert.IsTrue(prefab.GetComponent<EnemyController>().enabled);
@@ -192,11 +192,13 @@ public sealed class NinaCycleTests
         var prefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(
             "Assets/Characters/9_Ghosts/Luc/Enemy_Model_MadScientist.prefab");
         Assert.NotNull(prefab);
-        var encounter = prefab.GetComponent<ScientistEncounterController>();
+        var encounter = prefab.GetComponent<EnemyController>();
         Assert.NotNull(encounter);
-        var settings = new SerializedObject(encounter);
-        Assert.AreEqual(voice, settings.FindProperty("deathVoiceLine").objectReferenceValue);
-        Assert.AreEqual("Qu'est ce que... j'ai fait...", settings.FindProperty("deathLine").stringValue);
+        Assert.IsTrue(encounter.StartsAsGhost);
+        Assert.IsTrue(encounter.HasDeathPresentation);
+        var settings = new SerializedObject(encounter.GetComponent<CharacterInfo>().SourceData);
+        Assert.AreEqual(voice, settings.FindProperty("enemyDeathOptions.voiceLine").objectReferenceValue);
+        Assert.AreEqual("Qu'est ce que... j'ai fait...", settings.FindProperty("enemyDeathOptions.dialogueLine").stringValue);
     }
 
     [TestCase(0, false, false, false)]

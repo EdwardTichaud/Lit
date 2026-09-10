@@ -4,7 +4,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PlayerStateMotionController : MonoBehaviour
 {
-    [SerializeField] private PlayerStateMotionLibrary library;
+    private readonly PlayerModuleConfiguration<PlayerTrajectorySettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerTrajectorySettings>();
+    private PlayerTrajectorySettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.trajectories);
+
+    private PlayerStateMotionLibrary library { get => ModuleSettings.library; set => ModuleSettings.library = value; }
     private LitOpsiveLocomotionBridge bridge;
     private CharacterAnimationController actor;
     private Animator animator;
@@ -37,7 +40,7 @@ public sealed class PlayerStateMotionController : MonoBehaviour
         if (!ownsLandingLock)
         {
             Cancel();
-            ownsMotion = bridge.BeginScriptedPlanarMotion();
+            ownsMotion = bridge.BeginScriptedPlanarMotion(this);
             ownsLandingLock = ownsMotion;
         }
         return ownsLandingLock;
@@ -67,7 +70,7 @@ public sealed class PlayerStateMotionController : MonoBehaviour
         // Hold through the outgoing blend as long as the landing remains visible.
         // Contact is required: anticipating the animation must not shorten the jump arc.
         if (RefreshLandingLock()) return true;
-        if (bridge == null || !bridge.IsDriving || animator == null || library == null ||
+        if (!isActiveAndEnabled || bridge == null || !bridge.IsDriving || animator == null || library == null ||
             actor != null && actor.IsCinematicMotionActive || bridge.IsScriptedTraversalActive)
         {
             Cancel();
@@ -85,7 +88,7 @@ public sealed class PlayerStateMotionController : MonoBehaviour
             // An existing dodge, lunge, knockback or traversal always keeps its slot.
             if (profile != null && (policyState != observedState || policy == PlayerActionMovementPolicy.StateTrajectory) &&
                 !bridge.IsExternalLockActive &&
-                (bridge.Grounded || profile.allowAirborne) && bridge.BeginScriptedPlanarMotion())
+                (bridge.Grounded || profile.allowAirborne) && bridge.BeginScriptedPlanarMotion(this))
             {
                 active = profile;
                 ownsMotion = true;
@@ -121,7 +124,7 @@ public sealed class PlayerStateMotionController : MonoBehaviour
     {
         if (ownsMotion && bridge != null && bridge.IsScriptedPlanarMotionActive)
         {
-            bridge.EndScriptedPlanarMotion();
+            bridge.EndScriptedPlanarMotion(this);
         }
         ownsMotion = false;
         ownsLandingLock = false;

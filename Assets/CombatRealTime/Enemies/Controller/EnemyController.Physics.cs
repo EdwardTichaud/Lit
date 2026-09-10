@@ -17,7 +17,6 @@ public sealed partial class EnemyController
 {
     private const int PhysicsGroundHitCapacity = 16;
     private const int PhysicsObstacleHitCapacity = 16;
-    [SerializeField]
     private EnemyController PhysicsEnemy;
     [SerializeField]
     private NavMeshAgent PhysicsNavigationAgent;
@@ -25,7 +24,6 @@ public sealed partial class EnemyController
     private Rigidbody PhysicsBody;
     [SerializeField]
     private CapsuleCollider PhysicsBodyCollider;
-    [SerializeField]
     private CombatTimeDomain PhysicsTimeDomain;
     private float PhysicsGroundSkin { get => Configuration.PhysicsGroundSkin; set => Configuration.PhysicsGroundSkin = value; }
     private float PhysicsGroundProbeStartHeight { get => Configuration.PhysicsGroundProbeStartHeight; set => Configuration.PhysicsGroundProbeStartHeight = value; }

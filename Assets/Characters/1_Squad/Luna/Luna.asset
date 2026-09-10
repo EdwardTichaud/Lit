@@ -42,3 +42,218 @@ MonoBehaviour:
   isEnemy: 0
   voiceLines: []
   maisonWaitingPoint: 3
+
+  playerSettings:
+    jump:
+      jumpHeight: 5
+      jumpStartTakeoffNormalizedTime: 0.13
+      jumpStartPlanarSlowdown: 0
+      apexGravityEntryVelocity: 2.4
+      apexGravityMultiplier: 0.28
+      descentGravityMultiplier: 0.72
+      fallingAnimationEntryVelocity: -0.1
+      hardLandingHeight: 3
+      landingHandoff:
+        minimumContactSeconds: 0.15
+        animationExitNormalizedTime: 0.82
+        planarSettledSpeed: 0.12
+        verticalSettledSpeed: 0.2
+        planarDampingPerSecond: 7
+        maximumSettleSeconds: 0.55
+        locomotionBlendSeconds: 0.12
+        preLandingProbeDistance: 1.2
+        preLandingLeadSeconds: 0.14
+    interactions:
+      requireGroundedForLitInteractions: 1
+      allowWhileHeightChange: 1
+      allowWhileSpeedChange: 1
+      allowWhileFall: 0
+      allowWhileJump: 0
+      blockWhileItemAbilityActive: 1
+    footsteps:
+      defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
+      groundMask:
+        serializedVersion: 2
+        m_Bits: 4294967295
+      raycastHeight: 0.4
+      raycastDistance: 1.6
+      autoResolveHumanoidFeet: 1
+      footRaycastHeight: 0.35
+      footRaycastDistance: 0.8
+      minimumFootstepInterval: 0.05
+      minimumAnimationEventWeight: 0.5
+    face:
+      preferredRendererName: CC_Base_Body
+      autoResolveFaceRenderer: 1
+      jawRootName: CC_Base_JawRoot
+      autoResolveJawRoot: 1
+      enforceNeutralJawPoseInLateUpdate: 1
+      presets:
+      - {fileID: 11400000, guid: 4db3cf2b981d4a33b6a6961081b53f02, type: 2}
+      - {fileID: 11400000, guid: 12ec51937b20453d9a7f55dcd602bf68, type: 2}
+      - {fileID: 11400000, guid: 9270b55d96764a5c85f825e9a04a37c0, type: 2}
+      - {fileID: 11400000, guid: 3eecc2f68ea24d8db3b7bdce3475bc78, type: 2}
+      - {fileID: 11400000, guid: d72ef8a340b44147bbb935248cd44a28, type: 2}
+      - {fileID: 11400000, guid: 82ddaff56f9d4cc7a7f2adf4fef29576, type: 2}
+      - {fileID: 11400000, guid: 01e233163d61491ca251762e87e98387, type: 2}
+      - {fileID: 11400000, guid: f11cbd6c13934632b849a0cbef76be13, type: 2}
+      initialPassiveEmotion: 0
+      playInitialPassiveOnStart: 1
+      useUnscaledTime: 0
+      enforceControlledWeightsInLateUpdate: 1
+    trajectories:
+      library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
+    locomotion:
+      logScriptedTraversalDiagnostics: 0
+      scriptedTraversalDiagnosticTickInterval: 8
+      scriptedTraversalExternalCorrectionDistance: 0.02
+      scriptedTraversalExternalCorrectionDegrees: 1
+      driveFromSquadFacade: 1
+      overrideOpsiveHandlerInput: 1
+      orientLookSourceFromMovement: 1
+      configureRigidbodyForOpsive: 1
+      enableRunStartResponse: 1
+      runStartVelocityBonus: 0.55
+      runStartResponseCooldown: 0.25
+      runStartResponseMaximumPlanarSpeed: 4.25
+      logLocomotionResponseDiagnostics: 0
+      autoInstallCompanionBridges: 0
+      movementDeadZone: 0.08
+      relaxGroundReliefTolerance: 1
+      groundReliefMinStepHeight: 0.6
+      groundReliefMinSlopeLimit: 58
+      groundReliefMinStickToGroundDistance: 0.55
+      adaptMovingGroundRelief: 0
+      movingStepHeight: 0.58
+      movingSlopeLimit: 62
+      movingStickToGroundDistance: 0.86
+      idleStickToGroundDistance: 0.64
+      groundReliefAdaptationSpeed: 7.5
+      enableUccFlight: 1
+      flightTakeoffVerticalSpeed: 6.5
+      flightTakeoffDuration: 0.45
+      flightTakeoffDamping: 16
+      flightCruiseSpeed: 33
+      flightBoostSpeed: 81
+      flightAcceleration: 54
+      flightBoostAcceleration: 126
+      flightDeceleration: 36
+      flightVerticalSpeed: 24
+      flightVerticalAcceleration: 66
+      flightVerticalDeceleration: 54
+      flightVerticalDeadZone: 0.05
+      flightIdleSpeedThreshold: 0.08
+      flightTurnRate: 760
+      flightBoostTurnRate: 460
+      flightLandingSpeed: 12
+      flightLandingAcceleration: 36
+      combatSkillLandingSpeed: 14
+      allowStandaloneFlightFallback: 1
+      fallbackFlightCollisionSkin: 0.03
+      fallbackFlightGroundProbeDistance: 0.2
+      driveLitLocomotionAnimatorParameters: 1
+      speedParam: Speed
+      horizontalMovementParam: HorizontalMovement
+      forwardMovementParam: ForwardMovement
+      isMovingParam: IsMoving
+      locomotionTierParam: LocomotionTier
+      combatMoveMagnitudeParam: CombatMoveMagnitude
+      turnParam: Turn
+      flightStateParam: FlightState
+      flightSpeedParam: FlightSpeed
+      flightVerticalParam: FlightVertical
+      flightBoostParam: FlightBoost
+      flightStartTriggerParam: FlightStartTrigger
+      walkPresentationSpeed: 1.35
+      runPresentationSpeed: 3.25
+      combatFacingSpeedDegreesPerSecond: 900
+      combatOrbitPureLateralThreshold: 0.12
+      combatOrbitRadiusDeadZone: 0.035
+      combatOrbitRadiusCorrectionGain: 2.25
+      combatOrbitMaximumCorrection: 0.35
+      logCombatLockMotionDiagnostics: 0
+      debugGroundBlockDiagnostics: 0
+      groundBlockDiagnosticInterval: 0.75
+      groundBlockDiagnosticMinProgress: 0.04
+      enableCinematicGroundedFeel: 1
+      tuneGroundedUccPhysics: 1
+      groundedMotorAcceleration: {x: 4.6, y: 0, z: 4.6}
+      groundedMotorDamping: 5.7
+      groundedPreviousAccelerationInfluence: 0.88
+      groundedBackwardsMultiplier: 0.6
+      groundedGravityAmount: 0.65
+      groundedStickToGroundDistance: 0.72
+      groundedSlopeLimit: 60
+      groundedMaxStepHeight: 0.5
+      groundedMovingPlatformSeparationVelocity: 7
+      groundedMovingPlatformDisconnectMultiplier: 0.65
+      groundedMovingPlatformForceDamping: 0.18
+      groundedInputAcceleration: 6.2
+      groundedSprintInputAcceleration: 5
+      groundedInputDeceleration: 6.2
+      groundedDirectionChangeAcceleration: 11.2
+      groundedDirectionChangeDot: 0.2
+      tuneGroundedSprintSpeedChange: 1
+      groundedSprintSpeedMultiplier: 1.65
+      groundedSprintSpeedParameterValue: 2.6
+      suppressSpeedChangeAnimatorParameter: 1
+      moveStartTriggerParam: MoveStartTrigger
+      moveStopTriggerParam: MoveStopTrigger
+      turnInPlaceParam: TurnInPlace
+      groundedAnimationSpeedToBlend: 0.48
+      groundedAnimatorSpeedRiseRate: 13.5
+      groundedAnimatorSpeedFallRate: 5.4
+      groundedAnimatorTurnRate: 5.4
+      groundedTurnInPlaceThreshold: 0.55
+      groundedTurnInPlaceMaxSpeed: 0.35
+      enableGroundedTurnInPlaceClips: 0
+      groundedStopRequestDelay: 0.06
+      groundedStopSettledSpeed: 0.06
+      groundedStopSettledDuration: 0.05
+      groundedStopExitNormalizedTime: 0.9
+      groundedMoveTransitionDirectionHoldTime: 0.18
+      groundedMoveTransitionParameterSpeed: 1.22
+      useForwardOnlyGroundedLocomotion: 1
+      enableScriptedPivotTurns: 0
+      groundedPivotMinAngle: 85
+      groundedPivot180Angle: 135
+      groundedPivotMaxSpeed: 0.45
+      groundedPivotMaxSmoothedInput: 0.14
+      groundedPivotHoldTime: 0.32
+      groundedPivotCooldown: 0.34
+      groundedPivotStartGraceTime: 0.12
+      groundedPivotStartGraceMinAngle: 128
+      groundedPivotMovementReleaseStart: 0.38
+      groundedPivotMovementReleaseMaxAngle: 72
+      groundedPivotMovementReleaseScale: 0.58
+      commitBodyRotationDuringPivot: 1
+      groundedPivotRotationCommitRate: 960
+      recordLocomotionDiagnostics: 0
+      debugLocomotionDiagnostics: 0
+      locomotionDiagnosticInterval: 0.1
+      enableObstacleTraversal: 1
+      ignoredObstacleMaxHeight: 0.18
+      traversableObstacleMaxHeight: 0.9
+      obstacleProbeDistance: 0.75
+      obstacleProbeRadius: 0.22
+      obstacleProbeBaseHeight: 0.25
+      obstacleTraversalMaxSurfaceUpDot: 0.35
+      obstacleLandingDistance: 0.55
+      obstacleTraversalDuration: 0.42
+      obstacleTraversalArcHeight: 0.25
+      obstacleTraversalTopClearance: 0.16
+      obstacleTraversalHeightArcMultiplier: 0.38
+      obstacleTraversalRotationLead: 0.68
+      obstacleTraversalMinInputMagnitude: 0.34
+      obstacleTraversalCooldown: 0.28
+      obstacleTraversalMask:
+        serializedVersion: 2
+        m_Bits: 4294967295
+      obstacleTraversalTriggerParam: ObstacleTraversal
+      enableCinematicOrientationFeel: 1
+      orientationInputDeadZone: 0.14
+      orientationWalkTurnRate: 360
+      orientationSprintTurnRate: 300
+      orientationSharpTurnRate: 300
+      orientationSharpTurnAngle: 92
+      orientationVelocityBlend: 0.1

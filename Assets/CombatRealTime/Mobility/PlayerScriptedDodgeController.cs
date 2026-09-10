@@ -9,15 +9,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PlayerScriptedDodgeController : MonoBehaviour
 {
-    [Header("Dodge Tuning")]
-    [Min(0.01f), Tooltip("Initial planar UCC velocity-change applied when the dodge starts. Higher values make the dodge more forceful.")]
-    public float impulseSpeed = 16f;
-    [Min(0.1f), Tooltip("Multiplies each dodge animation's authored action duration without changing its locked direction.")]
-    public float durationMultiplier = 1f;
-    [Tooltip("Outside lock-on, align every roll with its travel direction.")]
-    public bool alignUnlockedDodgeToTravel = true;
-    [Tooltip("During lock-on, only forward rolls turn toward their travel direction. Back and side rolls keep facing the enemy.")]
-    public bool alignLockedForwardDodgeToTravel = true;
+    private readonly PlayerModuleConfiguration<PlayerDodgeSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerDodgeSettings>();
+    private PlayerDodgeSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.dodge);
+
+    public float impulseSpeed { get => ModuleSettings.impulseSpeed; set => ModuleSettings.impulseSpeed = value; }
+    public float durationMultiplier { get => ModuleSettings.durationMultiplier; set => ModuleSettings.durationMultiplier = value; }
+    public bool alignUnlockedDodgeToTravel { get => ModuleSettings.alignUnlockedDodgeToTravel; set => ModuleSettings.alignUnlockedDodgeToTravel = value; }
+    public bool alignLockedForwardDodgeToTravel { get => ModuleSettings.alignLockedForwardDodgeToTravel; set => ModuleSettings.alignLockedForwardDodgeToTravel = value; }
 
     private Coroutine activeDodgeRoutine;
     private LitOpsiveLocomotionBridge activeBridge;
@@ -31,7 +29,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         Vector3 worldDirection,
         CombatDodgeDashProfile profile)
     {
-        if (bridge == null || actionPresentation == null || profile == null ||
+        if (!isActiveAndEnabled || bridge == null || actionPresentation == null || profile == null ||
             profile.durationSeconds <= 0f || impulseSpeed <= 0f)
         {
             return false;
@@ -45,18 +43,19 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         activeBridge = bridge;
         activeTimeDomain = bridge.GetComponent<CombatTimeDomain>();
         bool alignToTravel = ShouldAlignToTravel(bridge, profile.statePath);
-        bridge.BeginDodgeDirectionFacing(direction, alignToTravel);
-        if (!bridge.BeginScriptedPlanarMotion())
+        if (!bridge.BeginScriptedPlanarMotion(this))
         {
-            EndDodge();
+            activeBridge = null;
+            activeTimeDomain = null;
             return false;
         }
+        bridge.BeginDodgeDirectionFacing(direction, alignToTravel);
 
         // This is intentionally a single velocity-change. The captured
         // direction cannot be steered afterwards; UCC owns collision, gravity
         // and the resulting inertial deceleration.
         float localScale = activeTimeDomain != null ? activeTimeDomain.Scale : 1f;
-        if (!bridge.ApplyScriptedPlanarImpulse(direction * impulseSpeed * localScale))
+        if (!bridge.ApplyScriptedPlanarImpulse(this, direction * impulseSpeed * localScale))
         {
             EndDodge();
             return false;
@@ -101,8 +100,8 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
 
         if (activeBridge.IsScriptedPlanarMotionActive)
         {
-            activeBridge.DriveScriptedPlanarMotion(Vector3.zero);
-            activeBridge.EndScriptedPlanarMotion();
+            activeBridge.DriveScriptedPlanarMotion(this, Vector3.zero);
+            activeBridge.EndScriptedPlanarMotion(this);
         }
 
         activeBridge.EndDodgeDirectionFacing();

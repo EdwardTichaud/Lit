@@ -1,5 +1,9 @@
 # Squad et personnages
 
+## Configuration des modules joueur
+
+CharacterData.playerSettings contient les blocs de locomotion, saut, esquive/dash, equipement, interactions, visage, pas et trajectoires. Chaque module copie uniquement son bloc via PlayerModuleConfiguration; les references aux ressources restent partagees. Les quatre prefabs ont leur fiche assignee avant activation. CharacterHealth/LitUccDamageBridge gardent l autorite actuelle des PV; les abonnes ne changent pas de modele de sauvegarde.
+
 ## Rôle
 
 Maintenir le roster, les instances de personnages, le personnage contrôlé, les

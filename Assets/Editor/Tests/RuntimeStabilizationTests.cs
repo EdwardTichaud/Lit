@@ -24,15 +24,15 @@ public sealed class RuntimeStabilizationTests
         try
         {
             root.AddComponent<BoxCollider>();
-            var encounter = root.AddComponent<ScientistEncounterController>();
+            var encounter = root.AddComponent<EnemyController>();
             Assert.That(encounter, Is.Not.Null);
-            Type stateType = typeof(ScientistEncounterController).GetNestedType("EncounterState", BindingFlags.NonPublic);
-            MethodInfo set = typeof(ScientistEncounterController).GetMethod("PhysicsSetState", Private);
+            Type stateType = typeof(EnemyController).GetNestedType("EncounterState", BindingFlags.NonPublic);
+            MethodInfo set = typeof(EnemyController).GetMethod("SetState", Private);
             foreach (string next in new[] { "Dialogue", "Active" })
             {
                 set.Invoke(encounter, new[] { Enum.Parse(stateType, next) });
-                Assert.That(typeof(ScientistEncounterController).GetProperty("CurrentState", Private).GetValue(encounter).ToString(), Is.EqualTo(next));
-                object variable = typeof(ScientistEncounterController).GetField("state", Private).GetValue(encounter);
+                Assert.That(typeof(EnemyController).GetProperty("CurrentState", Private).GetValue(encounter).ToString(), Is.EqualTo(next));
+                object variable = typeof(EnemyController).GetField("state", Private).GetValue(encounter);
                 Assert.That(variable.GetType().GetProperty("Value").GetValue(variable).ToString(), Is.EqualTo("Dormant"));
             }
         }
@@ -99,7 +99,7 @@ public sealed class RuntimeStabilizationTests
             var world = worldRoot.AddComponent<NavMeshWorldService>();
             typeof(EnemyController).GetField("NavigationNavigationAgent", Private).SetValue(navigation, agent);
             typeof(EnemyController).GetMethod("NavigationBindWorld", Private).Invoke(navigation, new object[] { world });
-            typeof(NavMeshWorldService).GetMethod("PhysicsSetState", Private).Invoke(world, new object[] { NavMeshWorldState.Invalidating });
+            typeof(NavMeshWorldService).GetMethod("SetState", Private).Invoke(world, new object[] { NavMeshWorldState.Invalidating });
             Assert.That(agent.enabled, Is.False);
             Assert.That(navigation.Status, Is.EqualTo(EnemyController.ReadinessStatus.WaitingForWorld));
             typeof(EnemyController).GetMethod("NavigationBindWorld", Private).Invoke(navigation, new object[] { null });

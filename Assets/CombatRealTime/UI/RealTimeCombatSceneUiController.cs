@@ -46,7 +46,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
     private Coroutine entryRoutine;
     private bool resultVisible;
     private Coroutine victoryRoutine;
-    private ScientistEncounterController victoryScientist;
+    private EnemyController victoryEnemy;
     public bool IsResultVisible => resultVisible;
 
     private void Awake()
@@ -311,21 +311,21 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         CloseCombatPanels();
         resultVisible = true;
         InputModeCoordinator.Enter(this, InputMode.UserInterface);
-        victoryScientist = manager != null && manager.EngagedEnemy != null
-            ? manager.EngagedEnemy.GetComponent<ScientistEncounterController>() : null;
-        if (victoryScientist != null)
+        victoryEnemy = manager != null && manager.EngagedEnemy != null
+            ? manager.EngagedEnemy.GetComponent<EnemyController>() : null;
+        if (victoryEnemy != null && victoryEnemy.HasDeathPresentation)
         {
-            victoryRoutine = StartCoroutine(ShowVictoryAfterScientistDialogue());
+            victoryRoutine = StartCoroutine(ShowVictoryAfterDeathPresentation());
             return;
         }
         ShowVictoryPanel();
     }
 
-    private IEnumerator ShowVictoryAfterScientistDialogue()
+    private IEnumerator ShowVictoryAfterDeathPresentation()
     {
-        yield return victoryScientist.PlayDeathPresentation();
+        yield return victoryEnemy.PlayDeathPresentation();
         victoryRoutine = null;
-        victoryScientist = null;
+        victoryEnemy = null;
         ShowVictoryPanel();
     }
 
@@ -339,8 +339,8 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
     {
         if (victoryRoutine != null) StopCoroutine(victoryRoutine);
         victoryRoutine = null;
-        if (victoryScientist != null) victoryScientist.CancelDeathPresentation();
-        victoryScientist = null;
+        if (victoryEnemy != null) victoryEnemy.CancelDeathPresentation();
+        victoryEnemy = null;
     }
 
     private void RefreshHud()

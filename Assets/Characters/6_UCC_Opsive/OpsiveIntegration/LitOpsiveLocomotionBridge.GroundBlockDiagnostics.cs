@@ -7,13 +7,9 @@ public partial class LitOpsiveLocomotionBridge
     private const int GroundBlockDiagnosticOverlapCapacity = 8;
     private const float GroundBlockDiagnosticInputAngleReset = 35f;
 
-    [Header("Obstacle Traversal Debug")]
-    [SerializeField, Tooltip("Editor-only: logs the collider in front of the grounded character when movement input is applied but UCC barely moves.")]
-    private bool debugGroundBlockDiagnostics;
-    [SerializeField, Min(0.1f), Tooltip("Minimum time between grounded block diagnostic samples.")]
-    private float groundBlockDiagnosticInterval = 0.75f;
-    [SerializeField, Min(0.001f), Tooltip("Minimum forward progress over the sample window before the character is considered unblocked.")]
-    private float groundBlockDiagnosticMinProgress = 0.04f;
+    private bool debugGroundBlockDiagnostics { get => ModuleSettings.debugGroundBlockDiagnostics; set => ModuleSettings.debugGroundBlockDiagnostics = value; }
+    private float groundBlockDiagnosticInterval { get => ModuleSettings.groundBlockDiagnosticInterval; set => ModuleSettings.groundBlockDiagnosticInterval = value; }
+    private float groundBlockDiagnosticMinProgress { get => ModuleSettings.groundBlockDiagnosticMinProgress; set => ModuleSettings.groundBlockDiagnosticMinProgress = value; }
 
     private readonly RaycastHit[] groundBlockDiagnosticHits = new RaycastHit[GroundBlockDiagnosticHitCapacity];
     private readonly Collider[] groundBlockDiagnosticOverlaps = new Collider[GroundBlockDiagnosticOverlapCapacity];

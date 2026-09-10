@@ -54,6 +54,7 @@ public sealed partial class EnemyController : CharacterAnimationController
         BrainAwake();
         ContractAwake();
         RecoveryAwake();
+        EncounterAwake();
         initialized = true;
     }
     private void OnAnimatorMove()
@@ -64,6 +65,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     private void OnEnable()
     {
         if (!initialized) return;
+        EncounterOnEnable();
         if (combatEnabled) NavigationOnEnable();
         RecoveryOnEnable();
     }
@@ -84,6 +86,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     private void OnDisable()
     {
         if (!initialized) return;
+        EncounterOnDisable();
         HideInput();
         RecoveryOnDisable();
         BrainOnDisable();
@@ -97,11 +100,13 @@ public sealed partial class EnemyController : CharacterAnimationController
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        EncounterOnNetworkSpawn();
         if (initialized && isActiveAndEnabled) OnEnable();
     }
     public override void OnNetworkDespawn()
     {
         OnDisable();
+        EncounterOnNetworkDespawn();
         base.OnNetworkDespawn();
     }
     public void SetCinematicSuspended(bool value) => SetSuspended(value);

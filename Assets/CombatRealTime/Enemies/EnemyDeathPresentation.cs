@@ -31,8 +31,7 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
         yield return null;
         while (enemy.Health.IsDead)
         {
-            var scientist = GetComponent<ScientistEncounterController>();
-            bool speaking = scientist != null && scientist.IsDeathPresentationPlaying;
+            bool speaking = enemy.IsDeathPresentationPlaying;
             Animator animator = enemy.Animator;
             bool animationPlaying = animator != null && animator.runtimeAnimatorController != null && animator.isActiveAndEnabled &&
                 (animator.IsInTransition(0) || animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f);

@@ -364,13 +364,42 @@ public sealed class EnemyAggroRegressionTests
         {
             observer.transform.position = new Vector3(10000f, 10000f, 10000f);
             player.transform.position = observer.transform.position - Vector3.forward * 3f;
-            var vision = observer.AddComponent<VisionField>();
+            observer.SetActive(false);
+            var vision = observer.AddComponent<EnemyController>();
             Assert.That(vision.CanSee(player.transform), Is.False);
             Assert.That(vision.CanSenseNearby(player.transform, 6f), Is.True);
             Assert.That(vision.CanSenseNearby(player.transform, 2f), Is.False);
             Assert.That(vision.CanSenseNearby(player.transform, 0f), Is.False);
         }
         finally { Object.DestroyImmediate(player); Object.DestroyImmediate(observer); }
+    }
+
+    [Test]
+    public void VisionHonorsObstaclesAndIgnoresTriggers()
+    {
+        var source = new GameObject("Vision source");
+        var target = new GameObject("Vision target");
+        var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        try
+        {
+            source.transform.position = new Vector3(10000, 10000, 10000);
+            target.transform.position = source.transform.position + Vector3.forward * 4;
+            wall.transform.position = source.transform.position + Vector3.forward * 2;
+            data.vision.eyeHeight = data.vision.targetHeight = 0;
+            Physics.SyncTransforms();
+            Assert.That(data.TryEvaluateVision(source.transform, target.transform, out _, out _, out _), Is.False);
+            wall.GetComponent<Collider>().isTrigger = true;
+            Physics.SyncTransforms();
+            Assert.That(data.TryEvaluateVision(source.transform, target.transform, out _, out _, out _), Is.True);
+            target.SetActive(false);
+            Assert.That(data.TryEvaluateVision(source.transform, target.transform, out _, out _, out _), Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(source); Object.DestroyImmediate(target);
+            Object.DestroyImmediate(wall); Object.DestroyImmediate(data);
+        }
     }
     [TestCase(1.8f, 1f, 1.8f, 1f)]
     [TestCase(.9f, .5f, 1.8f, 1f)]

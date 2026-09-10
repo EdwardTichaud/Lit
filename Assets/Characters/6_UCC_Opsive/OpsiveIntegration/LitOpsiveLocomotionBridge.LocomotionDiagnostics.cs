@@ -4,11 +4,8 @@ using UnityEngine;
 public partial class LitOpsiveLocomotionBridge
 {
 #if UNITY_EDITOR
-    [Header("Locomotion Diagnostics")]
-    [SerializeField, Tooltip("Editor-only: logs the complete locomotion ownership chain at a fixed sampling rate.")]
-    private bool debugLocomotionDiagnostics;
-    [SerializeField, Min(0.1f), Tooltip("Minimum time between locomotion diagnostic samples.")]
-    private float locomotionDiagnosticInterval = 0.1f;
+    private bool debugLocomotionDiagnostics { get => ModuleSettings.debugLocomotionDiagnostics; set => ModuleSettings.debugLocomotionDiagnostics = value; }
+    private float locomotionDiagnosticInterval { get => ModuleSettings.locomotionDiagnosticInterval; set => ModuleSettings.locomotionDiagnosticInterval = value; }
 
     private float nextLocomotionDiagnosticTime;
     private AnimationPhase lastDiagnosticAnimationPhase = AnimationPhase.Other;

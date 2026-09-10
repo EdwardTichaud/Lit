@@ -9760,6 +9760,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 9170976481589790414}
   - component: {fileID: 2613521703194658627}
   - component: {fileID: 4028338658118971295}
   - component: {fileID: 1671757344265352189}
@@ -25679,13 +25680,7 @@ MonoBehaviour:
   AnimationAnimationRoot: {fileID: 1264755830849200618}
   AnimationAnimator: {fileID: 5122093895041281714}
   AnimationLockPoint: {fileID: 0}
-  ActorAnimationContract: {fileID: 5613916083260983364}
   ActorAnimator: {fileID: 5122093895041281714}
-  ActorVisionField: {fileID: 0}
-  ActorEnemySkills: {fileID: 0}
-  ActorPhysicsMotor: {fileID: 0}
-  ActorLockOutline: {fileID: 0}
-  ActorLockIndicator: {fileID: 0}
   ActorEnemyLockPoint: {fileID: 0}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
@@ -64976,21 +64971,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
-  enemy: {fileID: 0}
-  enemySkills: {fileID: 0}
-  skillsManager: {fileID: 0}
-  combatInput: {fileID: 0}
-  playerBow: {fileID: 0}
-  playerSword: {fileID: 0}
-  inputPromptAnchor: {fileID: 0}
-  inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  dashOvershootDistance: 1.25
-  dashImpulsePerMeter: 8
-  minimumDashImpulse: 14
-  maximumDashImpulse: 32
-  dashInputLockSeconds: 0.1
-  stopDashDuration: 0.18
-  stopDashDeceleration: 65
 --- !u!1 &9178405851540983563
 GameObject:
   m_ObjectHideFlags: 0
@@ -65181,3 +65161,23 @@ SceneRoots:
   m_Roots:
   - {fileID: 2539553842076603401}
   - {fileID: 1866418319}
+--- !u!114 &9170976481589790414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2026250944136047784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cd31f3b843d45bb9daec8af39775df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerActionPresentationController
+  enemy: {fileID: 0}
+  enemySkills: {fileID: 0}
+  skillsManager: {fileID: 0}
+  combatInput: {fileID: 0}
+  playerBow: {fileID: 0}
+  playerSword: {fileID: 0}
+  inputPromptAnchor: {fileID: 0}
+  inputPromptOffset: {x: 0, y: 1.25, z: 0}

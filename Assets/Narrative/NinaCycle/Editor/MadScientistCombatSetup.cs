@@ -308,7 +308,6 @@ public static class MadScientistCombatSetup
         CharacterInfo health = Ensure<CharacterInfo>(root);
         CharacterInfo info = Ensure<CharacterInfo>(root);
         info.SetCharacterData(AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath));
-        VisionField vision = Ensure<VisionField>(root);
         EnemyController enemy = Ensure<EnemyController>(root);
         CharacterAnimationController animationRoot = Ensure<EnemyController>(root);
 
@@ -323,7 +322,15 @@ public static class MadScientistCombatSetup
         Ensure<EnemyController>(root);
         Ensure<EnemyController>(root);
         EnemyController brain = Ensure<EnemyController>(root);
-        ScientistEncounterController encounter = Ensure<ScientistEncounterController>(root);
+        var data = info.SourceData;
+        data.enemyEncounterOptions.startAsGhost = true;
+        if (string.IsNullOrEmpty(data.enemyEncounterOptions.introductionLine))
+            data.enemyEncounterOptions.introductionLine = "Vous n'auriez jamais dû venir ici...";
+        data.enemyDeathOptions.enabled = true;
+        if (string.IsNullOrEmpty(data.enemyDeathOptions.dialogueLine))
+            data.enemyDeathOptions.dialogueLine = "Qu'est ce que... j'ai fait...";
+        if (data.enemyDeathOptions.voiceLine == null)
+            data.enemyDeathOptions.voiceLine = AssetDatabase.LoadAssetAtPath<AudioClipSO>("Assets/Narrative/NinaCycle/Data/deathVoiceLine.asset");
         GhostController ghost = Ensure<GhostController>(root);
         ghost.SetGhostData(AssetDatabase.LoadAssetAtPath<GhostData>("Assets/Narrative/NinaCycle/Data/GhostData_Scientist.asset"));
         var ghostSettings = new SerializedObject(ghost);
@@ -373,36 +380,32 @@ public static class MadScientistCombatSetup
         capsule.center = Vector3.up * (capsule.height * 0.5f);
 
         animationRoot.Configure(root.transform, animator, lockPoint);
-        SetReference(enemy, "ActorHealth", health);
-        SetReference(enemy, "ActorAnimationContract", animationRoot);
+
         SetReference(enemy, "ActorAnimator", animator);
-        SetReference(enemy, "ActorVisionField", vision);
-        SetReference(enemy, "ActorEnemySkills", skills);
-        SetReference(enemy, "ActorPhysicsMotor", motor);
+
         SetReference(enemy, "ActorEnemyLockPoint", lockPoint);
         info.SourceData.enemySettings.ActorIdleAnimatorState = "CombatIdle";
         info.SourceData.enemySettings.ActorHitAnimatorState = "Hit";
         info.SourceData.enemySettings.ActorDeathAnimatorState = "Death";
-        SetReference(skills, "SkillsEnemy", enemy);
-        SetReference(skills, "SkillsAnimationContract", animationRoot);
+
         SetReference(skills, "SkillsAnimator", animator);
-        SetReference(motor, "PhysicsEnemy", enemy);
+
         SetReference(motor, "PhysicsNavigationAgent", agent);
         SetReference(motor, "PhysicsBody", body);
         SetReference(motor, "PhysicsBodyCollider", capsule);
         SetEnum(motor, "animationMovementMode", 1); // ScriptedOnly: NavMesh owns normal movement.
-        SetReference(vision, "origin", lockPoint);
-        SetFloat(vision, "maximumDistance", 18f);
-        SetFloat(vision, "fieldOfViewDegrees", 120f);
-        SetFloat(vision, "eyeHeight", 0f);
-        SetFloat(vision, "targetHeight", 1f);
+        SetReference(enemy, "visionOrigin", lockPoint);
+        data.vision.maximumDistance = 18f;
+        data.vision.fieldOfViewDegrees = 120f;
+        data.vision.eyeHeight = 0f;
+        data.vision.targetHeight = 1f;
 
         // The dialogue gate owns activation. Combat systems stay dormant until
         // the server completes the shared introduction.
         enemy.CombatEnabled = false;
 
 
-        EditorUtility.SetDirty(encounter);
+        EditorUtility.SetDirty(data);
 
         health.SetHealth(Mathf.Max(60, info.CharacterData.ResolveMaxHp()), Mathf.Max(60, info.CharacterData.ResolveMaxHp()));
         EditorUtility.SetDirty(root);

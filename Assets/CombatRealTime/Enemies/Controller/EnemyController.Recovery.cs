@@ -3,11 +3,8 @@ using UnityEngine;
 
 public sealed partial class EnemyController
 {
-    [SerializeField]
     private EnemyController RecoveryEnemy;
-    [SerializeField]
     private EnemyController RecoveryPhysicsMotor;
-    [SerializeField]
     private EnemyController RecoveryEnemySkills;
     private float RecoveryExtraRecoverySeconds { get => Configuration.RecoveryExtraRecoverySeconds; set => Configuration.RecoveryExtraRecoverySeconds = value; }
     private bool RecoveryLogDiagnostics { get => Configuration.RecoveryLogDiagnostics; set => Configuration.RecoveryLogDiagnostics = value; }

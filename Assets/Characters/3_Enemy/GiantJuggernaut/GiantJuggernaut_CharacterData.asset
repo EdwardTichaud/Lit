@@ -89,3 +89,12 @@ MonoBehaviour:
     LocomotionClearanceSearchRadius: 2
     LocomotionClearanceSearchSamples: 12
     LocomotionLogDiagnostics: 0
+
+  vision:
+    maximumDistance: 10
+    fieldOfViewDegrees: 100
+    eyeHeight: 1.5
+    targetHeight: 1
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295

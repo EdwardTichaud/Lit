@@ -195,8 +195,7 @@ public static class RealTimeCombatMigrationUtility
         GameObject root = PrefabUtility.LoadPrefabContents(path);
         try
         {
-            if (FindComponentByName(root, "EnemyController") == null ||
-                FindComponentByName(root, "VisionField") == null)
+            if (FindComponentByName(root, "EnemyController") == null)
             {
                 throw new InvalidOperationException("Prefab temps reel incomplet, migration annulee : " + path);
             }

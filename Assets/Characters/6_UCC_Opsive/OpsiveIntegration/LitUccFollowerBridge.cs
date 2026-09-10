@@ -4,7 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class LitUccFollowerBridge : MonoBehaviour
 {
-    [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
+    private LitOpsiveLocomotionBridge locomotionBridge;
 
     public bool TryTeleport(Vector3 destination)
     {

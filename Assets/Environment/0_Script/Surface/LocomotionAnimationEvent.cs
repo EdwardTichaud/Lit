@@ -3,6 +3,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class LocomotionAnimationEvent : MonoBehaviour
 {
+    private readonly PlayerModuleConfiguration<PlayerFootstepSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerFootstepSettings>();
+    private PlayerFootstepSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.footsteps);
+
     private enum FootSide
     {
         Any,
@@ -10,24 +13,22 @@ public class LocomotionAnimationEvent : MonoBehaviour
         Right
     }
 
-    [Header("Surface")]
-    [SerializeField] private SurfaceDefinition defaultSurface;
-    [SerializeField] private LayerMask groundMask = ~0;
+    private SurfaceDefinition defaultSurface { get => ModuleSettings.defaultSurface; set => ModuleSettings.defaultSurface = value; }
+    private LayerMask groundMask { get => ModuleSettings.groundMask; set => ModuleSettings.groundMask = value; }
     [SerializeField] private Transform raycastOrigin;
-    [SerializeField, Min(0f)] private float raycastHeight = 0.4f;
-    [SerializeField, Min(0.05f)] private float raycastDistance = 1.6f;
+    private float raycastHeight { get => ModuleSettings.raycastHeight; set => ModuleSettings.raycastHeight = value; }
+    private float raycastDistance { get => ModuleSettings.raycastDistance; set => ModuleSettings.raycastDistance = value; }
 
     [Header("Feet")]
     [SerializeField] private Animator animator;
     [SerializeField] private Transform leftFoot;
     [SerializeField] private Transform rightFoot;
-    [SerializeField] private bool autoResolveHumanoidFeet = true;
-    [SerializeField, Min(0f)] private float footRaycastHeight = 0.35f;
-    [SerializeField, Min(0.05f)] private float footRaycastDistance = 0.8f;
+    private bool autoResolveHumanoidFeet { get => ModuleSettings.autoResolveHumanoidFeet; set => ModuleSettings.autoResolveHumanoidFeet = value; }
+    private float footRaycastHeight { get => ModuleSettings.footRaycastHeight; set => ModuleSettings.footRaycastHeight = value; }
+    private float footRaycastDistance { get => ModuleSettings.footRaycastDistance; set => ModuleSettings.footRaycastDistance = value; }
 
-    [Header("Audio")]
-    [SerializeField, Min(0f)] private float minimumFootstepInterval = 0.05f;
-    [SerializeField, Range(0f, 1f)] private float minimumAnimationEventWeight = 0.5f;
+    private float minimumFootstepInterval { get => ModuleSettings.minimumFootstepInterval; set => ModuleSettings.minimumFootstepInterval = value; }
+    private float minimumAnimationEventWeight { get => ModuleSettings.minimumAnimationEventWeight; set => ModuleSettings.minimumAnimationEventWeight = value; }
 
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
     private AudioClipSO lastFootstepClip;

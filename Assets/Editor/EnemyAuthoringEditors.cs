@@ -4,7 +4,7 @@ using UnityEngine;
 
 internal static class EnemyAuthoringLayout
 {
-    private static readonly string[] Titles = { "Identité et présentation", "Statistiques et santé", "Compétences et attaques", "Détection et engagement", "Déplacement et physique", "Récupération et interruptions", "Animation et cinématiques", "Récompenses et données narratives" };
+    private static readonly string[] Titles = { "Identité et présentation", "Statistiques et santé", "Compétences et attaques", "Détection et engagement", "Déplacement et physique", "Récupération et interruptions", "Animation et cinématiques", "Récompenses et données narratives", "À la mort de l’ennemi", "Vision et perception", "Modules du joueur" };
     private static readonly string[] Help = {
         "Identifie le personnage et choisit son portrait et son prefab.",
         "Définit ses caractéristiques et ses points de vie initiaux.",
@@ -13,7 +13,10 @@ internal static class EnemyAuthoringLayout
         "Règle le positionnement, les collisions et les mouvements des actions.",
         "Règle la garde, les interruptions et la reprise après une attaque.",
         "Associe les états d'animation et les séquences de paliers de santé.",
-        "Configure les objets initiaux, les voix et les données narratives existantes." };
+        "Configure les objets initiaux, les voix et les données narratives existantes.",
+        "Déclenche les derniers mots et la voix à la mort, avant la victoire et la disparition.",
+        "Règle la portée, le champ de vision, les hauteurs et les obstacles qui bloquent la détection.",
+        "Configuration des modules independants du joueur, copiee par personnage." };
     internal static void DrawData(SerializedObject data)
     {
         data.Update();
@@ -42,7 +45,11 @@ internal static class EnemyAuthoringLayout
                         if (Category(child.name) == category) Draw(child, Help[category]);
                     }
                 }
-                else if (Category(property.name) == category) Draw(property, Help[category]);
+                else if (Category(property.name) == category)
+                {
+                    if (property.name == "playerSettings") PlayerSettingsAuthoring.Draw(property);
+                    else Draw(property, Help[category]);
+                }
             }
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(3);
@@ -58,6 +65,10 @@ internal static class EnemyAuthoringLayout
     }
     private static int Category(string name)
     {
+        if (name == "playerSettings") return 10;
+        if (name == "vision") return 9;
+        if (name == "enemyDeathOptions") return 8;
+        if (name == "enemyEncounterOptions") return 3;
         if (name == "stats" || name == "hp") return 1;
         if (name == "skills" || name.Contains("BasicSkills") || name == "combatSkills" || name == "enemyCombatProfile" || name.StartsWith("Skills")) return 2;
         if (name.StartsWith("Navigation") || name.StartsWith("Brain")) return 3;
@@ -91,14 +102,55 @@ public sealed class CharacterInfoEditor : Editor
 [CustomEditor(typeof(EnemyController))]
 public sealed class EnemyControllerEditor : Editor
 {
+    private static readonly string[] ReferenceGroups = {
+        "Activation et références générales", "Combat", "Animation", "Compétences et effets",
+        "Déplacement", "Navigation", "Physique", "Récupération", "Validation des composants", "Vision"
+    };
+
+    private static int ReferenceGroup(string name)
+    {
+        if (name.StartsWith("Actor", StringComparison.Ordinal)) return 1;
+        if (name.StartsWith("Animation", StringComparison.Ordinal) || name.StartsWith("inputPrompt", StringComparison.Ordinal)) return 2;
+        if (name.StartsWith("Skills", StringComparison.Ordinal)) return 3;
+        if (name.StartsWith("Locomotion", StringComparison.Ordinal)) return 4;
+        if (name.StartsWith("Navigation", StringComparison.Ordinal)) return 5;
+        if (name.StartsWith("Physics", StringComparison.Ordinal)) return 6;
+        if (name.StartsWith("Recovery", StringComparison.Ordinal)) return 7;
+        if (name.StartsWith("Contract", StringComparison.Ordinal)) return 8;
+        if (name == "visionOrigin") return 9;
+        return 0;
+    }
+
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
         EditorGUILayout.HelpBox("Les réglages du comportement sont dans la fiche CharacterData. Ce composant coordonne l'ennemi et ses références de scène.", MessageType.Info);
-        foreach (string field in new[] { "combatEnabled", "ActorAnimator", "ActorVisionField", "ActorEnemyLockPoint", "inputPromptAnchor" })
+        for (int group = 0; group < ReferenceGroups.Length; group++)
         {
-            var property = serializedObject.FindProperty(field);
-            if (property != null) EnemyAuthoringLayout.Draw(property, "Référence utilisée par le contrôleur ennemi.");
+            var visible = serializedObject.GetIterator();
+            bool hasFields = false;
+            bool first = true;
+            while (visible.NextVisible(first))
+            {
+                first = false;
+                if (visible.name != "m_Script" && ReferenceGroup(visible.name) == group) { hasFields = true; break; }
+            }
+            if (!hasFields) continue;
+            string key = "Lit.EnemyReferences." + group;
+            bool open = EditorGUILayout.Foldout(SessionState.GetBool(key, true),
+                new GUIContent(ReferenceGroups[group], "Champs privés sérialisés utilisés par cette responsabilité du contrôleur."), true);
+            SessionState.SetBool(key, open);
+            if (!open) continue;
+            EditorGUI.indentLevel++;
+            var property = serializedObject.GetIterator();
+            bool enterChildren = true;
+            while (property.NextVisible(enterChildren))
+            {
+                enterChildren = false;
+                if (property.name == "m_Script" || ReferenceGroup(property.name) != group) continue;
+                EnemyAuthoringLayout.Draw(property, "Référence utilisée par le contrôleur ennemi.");
+            }
+            EditorGUI.indentLevel--;
         }
         serializedObject.ApplyModifiedProperties();
         var enemy = (EnemyController)target;

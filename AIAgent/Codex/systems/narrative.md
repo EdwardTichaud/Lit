@@ -1,5 +1,9 @@
 # Narration et connaissances
 
+## Rencontre Ghost dans EnemyController
+
+ScientistEncounterController est supprime. CharacterData.enemyEncounterOptions active la phase Ghost, la replique d introduction, sa duree et la distance d interaction. EnemyController implemente IGhostInteractionHandler et ICycleCinematicBlocker. Les controles serveur, la visibilite Ghost et la progression Nina sont conserves. Les dernieres paroles sont configurees dans enemyDeathOptions et bloquent la presentation de cycle pendant leur lecture.
+
 ## Liaison des rencontres et poses de cycle
 
 CycleController accepte un encounterEnemy explicite pour les ennemis places en

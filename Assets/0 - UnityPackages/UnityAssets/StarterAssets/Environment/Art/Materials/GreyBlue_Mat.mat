@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 10
 --- !u!114 &-5076125249047415242
 MonoBehaviour:
   m_ObjectHideFlags: 11
@@ -50,24 +50,22 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: GreyBlue_Mat
-  m_Shader: {fileID: -6465566751694194690, guid: ed9d2c7cebcf9be4e9fa52a4b0479222,
-    type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: ed9d2c7cebcf9be4e9fa52a4b0479222, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DISABLE_SSR_TRANSPARENT
+  m_InvalidKeywords:
   - _BUILTIN_ALPHATEST_ON
   - _BUILTIN_AlphaClip
-  m_InvalidKeywords:
-  - _DISABLE_SSR_TRANSPARENT
   - _EMISSION
   - _GLOSSYREFLECTIONS_OFF
-  m_LightmapFlags: 0
+  m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2450
+  m_CustomRenderQueue: 2225
   stringTagMap:
     MotionVector: User
-    RenderType: TransparentCutout
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
@@ -188,6 +186,8 @@ Material:
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
     - _DstBlend: 0
+    - _DstBlend2: 0
+    - _DstBlendAlpha: 0
     - _Ember_Offset: 0.2
     - _Ember_Smoothness: 0.55
     - _Ember_Width: 0.55
@@ -195,6 +195,7 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnvironmentReflections: 0
+    - _ExcludeFromTUAndAA: 0
     - _FlipbookMode: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.477
@@ -204,11 +205,14 @@ Material:
     - _INVERT: 0
     - _Length: 0
     - _LightingEnabled: 1
+    - _MaterialID: 1
+    - _MaterialTypeMask: 2
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _OpaqueCullMode: 2
     - _Parallax: 0.02
+    - _PerPixelSorting: 0
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Radius1: 0
@@ -227,19 +231,21 @@ Material:
     - _SoftParticlesNearFadeDistance: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4
     - _StencilRefGBuffer: 10
     - _StencilRefMV: 40
     - _StencilWriteMask: 6
-    - _StencilWriteMaskDepth: 8
+    - _StencilWriteMaskDepth: 9
     - _StencilWriteMaskDistortionVec: 4
-    - _StencilWriteMaskGBuffer: 14
-    - _StencilWriteMaskMV: 40
+    - _StencilWriteMaskGBuffer: 15
+    - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _Surface: 0
     - _SurfaceType: 0
+    - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 2
     - _TransparentDepthPostpassEnable: 0
@@ -264,7 +270,7 @@ Material:
     - _BaseColor: {r: 0.3147311, g: 0.3207547, b: 0.31016374, a: 1}
     - _Burn_Color: {r: 0, g: 0, b: 0, a: 0}
     - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
-    - _Color: {r: 0.50206596, g: 0.8584906, b: 0.23217028, a: 1}
+    - _Color: {r: 0.31473106, g: 0.32075468, b: 0.3101637, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _Ember_Color: {r: 8, g: 1.160784, b: 0, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
@@ -280,3 +286,4 @@ Material:
     - _Up: {r: 0, g: 0, b: 0, a: 0}
     - _WorldSpacePos: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

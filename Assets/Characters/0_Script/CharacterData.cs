@@ -62,6 +62,8 @@ public sealed class CombatHealthThresholdStageSettings
 [CreateAssetMenu(fileName = "CharacterData", menuName = "Scriptable Objects/CharacterData")]
 public class CharacterData : ScriptableObject
 {
+    [Tooltip("Configuration des modules independants du joueur. Copiee par instance au lancement.")]
+    public PlayerSettings playerSettings = new PlayerSettings();
     /// <summary>
     /// Stack d'item donne au personnage au demarrage.
     /// </summary>
@@ -98,6 +100,18 @@ public class CharacterData : ScriptableObject
     public EnemyCombatProfileSO enemyCombatProfile;
     [Tooltip("Reglages communs du controleur ennemi. Chaque instance recoit sa propre copie au lancement.")]
     public EnemySettings enemySettings = new EnemySettings();
+    [Tooltip("Portee, cone de detection et obstacles communs a la vision du personnage.")]
+    public CharacterVisionSettings vision = new CharacterVisionSettings();
+
+    public bool TryEvaluateVision(Transform source, Transform target, out float distance, out float angle, out string reason)
+    {
+        return vision.TryEvaluate(source, target, vision.maximumDistance, vision.fieldOfViewDegrees, out distance, out angle, out reason);
+    }
+
+    [Tooltip("Interaction Ghost optionnelle avant de devenir hostile.")]
+    public EnemyEncounterOptions enemyEncounterOptions = new EnemyEncounterOptions();
+    [Tooltip("Dialogue et voix joues a la mort, avant le resultat du combat et la disparition.")]
+    public EnemyDeathOptions enemyDeathOptions = new EnemyDeathOptions();
 
     [Header("Basic Skills")]
     [Tooltip("Combo d'attaques basiques disponible au sol. L'ordre definit l'enchainement.")]
@@ -358,4 +372,30 @@ public class CharacterStats
     public int wisdom = 10;
     /// <summary>Presence sociale.</summary>
     public int charisma = 10;
+}
+
+[System.Serializable]
+public sealed class EnemyDeathOptions
+{
+    [Tooltip("Jouer cette presentation lors de la mort de l'ennemi.")]
+    public bool enabled;
+    [TextArea, Tooltip("Derniers mots affiches dans le panneau de dialogue.")]
+    public string dialogueLine;
+    [Min(0.5f), Tooltip("Duree minimale du dialogue en secondes reelles. Prolongee si la voix est plus longue.")]
+    public float dialogueSeconds = 4f;
+    [Tooltip("Voix optionnelle jouee pendant les derniers mots.")]
+    public AudioClipSO voiceLine;
+}
+
+[System.Serializable]
+public sealed class EnemyEncounterOptions
+{
+    [Tooltip("Rester un Ghost jusqu'a l'interaction du joueur, puis devenir un ennemi apres l'introduction.")]
+    public bool startAsGhost;
+    [TextArea, Tooltip("Replique prononcee avant le debut du combat.")]
+    public string introductionLine;
+    [Min(0.5f), Tooltip("Duree de l'introduction avant activation du combat, en secondes reelles.")]
+    public float introductionSeconds = 2.5f;
+    [Min(0.5f), Tooltip("Distance maximale autorisee pour declencher la rencontre.")]
+    public float interactionDistance = 2.5f;
 }

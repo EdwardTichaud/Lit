@@ -20,7 +20,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private CombatSkillCinematicController combatSkillCinematicController;
     [SerializeField] private CombatHealthThresholdController combatHealthThresholdController;
-    [SerializeField] private VisionField playerVision;
+    private readonly CharacterVisionSettings fallbackPlayerVision = new CharacterVisionSettings();
     [SerializeField] private EnemyController lockedEnemy;
     [SerializeField, Tooltip("Ennemi qui porte l'agression active. Il reste engage quand la camera est deverrouillee.")]
     private EnemyController engagedEnemy;
@@ -559,6 +559,16 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         return closest;
     }
 
+    private bool CanPlayerSee(Transform target)
+    {
+        var player = playerRoot != null ? playerRoot.GetComponentInChildren<SquadCharacterController>(true) : null;
+        if (player == null) return false;
+        var data = player.CharacterData;
+        if (data != null) return data.TryEvaluateVision(player.transform, target, out _, out _, out _);
+        return fallbackPlayerVision.TryEvaluate(player.transform, target, fallbackPlayerVision.maximumDistance,
+            fallbackPlayerVision.fieldOfViewDegrees, out _, out _, out _);
+    }
+
     private List<EnemyController> FindLockableEnemies(bool requireVision)
     {
         List<EnemyController> candidates = new List<EnemyController>();
@@ -581,7 +591,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
                 continue;
             }
 
-            if (requireVision && !playerVision.CanSee(candidate.transform))
+            if (requireVision && !CanPlayerSee(candidate.transform))
             {
                 continue;
             }
@@ -1096,7 +1106,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private System.Collections.IEnumerator ApplyThresholdFailureKnockbackRoutine(Transform source, float distance)
     {
         if (source == null || playerRoot == null || playerLocomotionBridge == null ||
-            !playerLocomotionBridge.BeginScriptedPlanarMotion())
+            !playerLocomotionBridge.BeginScriptedPlanarMotion(this))
         {
             yield break;
         }
@@ -1118,7 +1128,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             while (traveled < distance && stalledFor < 0.12f)
             {
-                playerLocomotionBridge.DriveScriptedPlanarMotion(direction * speed);
+                playerLocomotionBridge.DriveScriptedPlanarMotion(this, direction * speed);
                 yield return new WaitForFixedUpdate();
 
                 if (playerRoot == null)
@@ -1135,8 +1145,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
         finally
         {
-            playerLocomotionBridge?.DriveScriptedPlanarMotion(Vector3.zero);
-            playerLocomotionBridge?.EndScriptedPlanarMotion();
+            playerLocomotionBridge?.DriveScriptedPlanarMotion(this, Vector3.zero);
+            playerLocomotionBridge?.EndScriptedPlanarMotion(this);
         }
     }
 
@@ -1503,7 +1513,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         playerActionPresentation.ResolveReferences(playerAnimator, playerLocomotionBridge);
         if (playerMobility == null) playerMobility = GetComponent<CombatMobilityController>();
-        if (playerVision == null) playerVision = playerRoot.GetComponentInChildren<VisionField>(true);
         if (combatInput == null) combatInput = FindAnyObjectByType<RealTimeCombatInput>();
     }
 

@@ -5,20 +5,13 @@ public sealed partial class EnemyController
 {
     private const string ActorLegacyHitAnimatorState = "Countered";
     private const string ActorDefaultHitAnimatorState = "Hit";
-    [SerializeField] private CharacterInfo ActorHealth;
-    [SerializeField]
+    private CharacterInfo ActorHealth;
     private CharacterAnimationController ActorAnimationContract;
     [SerializeField]
     private Animator ActorAnimator;
-    [SerializeField]
-    private VisionField ActorVisionField;
-    [SerializeField]
     private EnemyController ActorEnemySkills;
-    [SerializeField]
     private EnemyController ActorPhysicsMotor;
-    [SerializeField]
     private CombatLockOutline ActorLockOutline;
-    [SerializeField]
     private CombatLockIndicator ActorLockIndicator;
     private string ActorHitAnimatorState { get => Configuration.ActorHitAnimatorState; set => Configuration.ActorHitAnimatorState = value; }
     private float ActorHitAnimationTransitionSeconds { get => Configuration.ActorHitAnimationTransitionSeconds; set => Configuration.ActorHitAnimationTransitionSeconds = value; }
@@ -46,19 +39,6 @@ public sealed partial class EnemyController
     public event Action<SkillSO, int> RetaliationStarted;
     public CharacterInfo Health => ActorHealth != null ? ActorHealth : GetComponent<CharacterInfo>();
     public override Animator Animator => ActorAnimator != null ? ActorAnimator : GetComponent<Animator>();
-    public VisionField VisionField
-    {
-        get
-        {
-            if (ActorVisionField == null)
-            {
-                ActorVisionField = GetComponent<VisionField>();
-            }
-
-            return ActorVisionField;
-        }
-    }
-
     public override Transform LockPoint => ActorResolveLockPoint();
     public bool CanSeePlayer { get; private set; }
 
@@ -83,6 +63,8 @@ public sealed partial class EnemyController
     private void ActorAwake()
     {
         ActorMigrateLegacyHitState();
+        ActorAnimationContract = this;
+        ActorLockIndicator = GetComponent<CombatLockIndicator>();
         if (ActorHealth == null)
         {
             ActorHealth = GetComponent<CharacterInfo>();
@@ -123,27 +105,13 @@ public sealed partial class EnemyController
     /// </summary>
     public bool RefreshPlayerVisibility()
     {
-        if (ActorVisionField == null)
-        {
-            ActorVisionField = GetComponent<VisionField>();
-        }
-
         Transform player = LocalPlayerContext.LocalCharacterRoot;
         if (player == null)
         {
             player = RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.PlayerRoot : null;
         }
 
-        if (ActorVisionField == null)
-        {
-            CanSeePlayer = false;
-            PlayerVisibilityReason = "VisionField absent";
-            PlayerVisibilityDistance = 0f;
-            PlayerVisibilityAngle = 0f;
-            return false;
-        }
-
-        CanSeePlayer = ActorVisionField.TryEvaluate(player, out float distance, out float angle, out string reason);
+        CanSeePlayer = TryEvaluate(player, out float distance, out float angle, out string reason);
         PlayerVisibilityDistance = distance;
         PlayerVisibilityAngle = angle;
         PlayerVisibilityReason = player == null ? "joueur absent" : reason;

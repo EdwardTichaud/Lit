@@ -10,7 +10,6 @@ public sealed class PlayerAnimationController : CharacterAnimationController
     [SerializeField] private Transform lockPoint;
 
     private PlayerRootMotionRelay rootMotionRelay;
-    private EnemyController enemyPhysicsMotor;
     private CombatTimeDomain timeDomain;
     private int cinematicSessionToken = -1;
 
@@ -24,8 +23,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         : CombatActorAnimatorContractMode.LegacyChildAnimator;
     public override bool UsesRootAnimator => animator != null && animator.transform == transform;
     public override bool IsCinematicMotionActive => cinematicSessionToken >= 0;
-    public override bool ShouldConsumeAnimatorRootMotion => IsCinematicMotionActive ||
-                                                   (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion);
+    public override bool ShouldConsumeAnimatorRootMotion => IsCinematicMotionActive;
 
     private void OnDisable()
     {
@@ -138,11 +136,6 @@ public sealed class PlayerAnimationController : CharacterAnimationController
             return bridge.SetCinematicPositionAndRotation(position, rotation, true, false);
         }
 
-        if (TryGetComponent(out EnemyController enemyBehaviour))
-        {
-            return enemyBehaviour.PlaceForCinematic(position, rotation);
-        }
-
         transform.SetPositionAndRotation(position, rotation);
         Physics.SyncTransforms();
         return true;
@@ -209,13 +202,6 @@ public sealed class PlayerAnimationController : CharacterAnimationController
 
     public override void ApplyAnimationDelta(Vector3 worldDeltaPosition, Quaternion deltaRotation)
     {
-        if (!IsCinematicMotionActive && enemyPhysicsMotor != null && enemyPhysicsMotor.ScriptedOnly) return;
-        if (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion)
-        {
-            enemyPhysicsMotor.ApplyActionRootMotion(worldDeltaPosition, deltaRotation);
-            return;
-        }
-
         if (!IsCinematicMotionActive)
         {
             return;
@@ -224,12 +210,6 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         if (TryGetComponent(out LitOpsiveLocomotionBridge bridge))
         {
             bridge.ApplyCinematicRootMotion(worldDeltaPosition, deltaRotation);
-            return;
-        }
-
-        if (TryGetComponent(out EnemyController enemyBehaviour))
-        {
-            enemyBehaviour.ApplyCinematicRootMotion(worldDeltaPosition, deltaRotation);
             return;
         }
 
@@ -278,7 +258,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
 
         timeDomain ??= GetComponent<CombatTimeDomain>();
 
-        enemyPhysicsMotor ??= GetComponent<EnemyController>();
+
     }
 
     private void LogDevelopmentContractDiagnostic()
@@ -295,61 +275,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
             : "<aucun>";
         Debug.Log("[CombatAnimatorContract] actor='" + name + "' mode='" + AnimatorContractMode + "' animator='" + animator.name + "' controller='" + controllerName + "'.", this);
 
-        if (GetComponent<EnemyController>() != null)
-        {
-            ValidateRequiredEnemyStates();
-        }
 #endif
     }
 
-    private void ValidateRequiredEnemyStates()
-    {
-        // The unified combat controller uses CombatIdle. Keep Idle as a
-        // fallback for older enemy controllers, but do not report a false
-        // contract failure when the new explicit combat state is present.
-        string idleState = animator.HasState(0, Animator.StringToHash("Base Layer.CombatIdle"))
-            ? "CombatIdle"
-            : "Idle";
-        ValidateAnimatorState(idleState);
-        ValidateAnimatorState("Hit");
-        ValidateAnimatorState("Death");
-
-        // A state is required only when this enemy can actually play the
-        // corresponding SkillSO. GiantJuggernaut has its own skill set and
-        // controller, so requiring Juggernaut's "Assomoir" state on every
-        // enemy was a false contract failure.
-        EnemyController enemySkills = GetComponent<EnemyController>();
-        if (enemySkills == null)
-        {
-            return;
-        }
-
-        foreach (SkillSO skill in enemySkills.Skills)
-        {
-            if (skill == null)
-            {
-                continue;
-            }
-
-            string stateName = string.IsNullOrWhiteSpace(skill.AnimatorState)
-                ? (skill.AnimationClip != null ? skill.AnimationClip.name : null)
-                : skill.AnimatorState;
-            if (!string.IsNullOrWhiteSpace(stateName))
-            {
-                ValidateAnimatorState(stateName);
-            }
-        }
-    }
-
-    private void ValidateAnimatorState(string stateName)
-    {
-        int shortHash = Animator.StringToHash(stateName);
-        int fullPathHash = Animator.StringToHash("Base Layer." + stateName);
-        if (animator.HasState(0, shortHash) || animator.HasState(0, fullPathHash))
-        {
-            return;
-        }
-
-        Debug.LogError("[CombatAnimatorContract] actor='" + name + "' controller='" + animator.runtimeAnimatorController.name + "' missing required state='" + stateName + "'.", this);
-    }
 }

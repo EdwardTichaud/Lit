@@ -7482,7 +7482,6 @@ GameObject:
   - component: {fileID: 707000000000000001}
   - component: {fileID: 900000000000000015}
   - component: {fileID: 3932083906522621779}
-  - component: {fileID: 900000000000000003}
   - component: {fileID: 7685876646123518452}
   - component: {fileID: 5010101010101010101}
   m_Layer: 0
@@ -7640,26 +7639,6 @@ MonoBehaviour:
   maxHp: 300
   currentHp: 300
   initializeEmptyHealthToMax: 1
---- !u!114 &900000000000000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6700739663857040827}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 318b3f6b3ded45e58a293a2f8b979d24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VisionField
-  origin: {fileID: 0}
-  maximumDistance: 30
-  fieldOfViewDegrees: 100
-  eyeHeight: 1.5
-  targetHeight: 1
-  obstructionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!114 &7685876646123518452
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7700,45 +7679,23 @@ MonoBehaviour:
   combatEnabled: 1
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  ActorAnimationContract: {fileID: 5010101010101010101}
   ActorAnimator: {fileID: 4280753887478595955}
-  ActorVisionField: {fileID: 0}
-  ActorEnemySkills: {fileID: 0}
-  ActorPhysicsMotor: {fileID: 0}
-  ActorLockOutline: {fileID: 0}
-  ActorLockIndicator: {fileID: 0}
   ActorEnemyLockPoint: {fileID: 0}
   AnimationAnimationRoot: {fileID: 158977838910440850}
   AnimationAnimator: {fileID: 4280753887478595955}
   AnimationLockPoint: {fileID: 0}
-  SkillsEnemy: {fileID: 5010101010101010101}
-  SkillsAnimationContract: {fileID: 5010101010101010101}
   SkillsAnimator: {fileID: 4280753887478595955}
-  SkillsTimeDomain: {fileID: 0}
   SkillsCasterVfxPoint: {fileID: 0}
-  PhysicsEnemy: {fileID: 0}
   PhysicsNavigationAgent: {fileID: 0}
   PhysicsBody: {fileID: 0}
   PhysicsBodyCollider: {fileID: 0}
-  PhysicsTimeDomain: {fileID: 0}
-  LocomotionEnemy: {fileID: 5010101010101010101}
   LocomotionNavigationAgent: {fileID: 900000000000000015}
-  LocomotionAnimationContract: {fileID: 5010101010101010101}
-  LocomotionPhysicsMotor: {fileID: 5010101010101010101}
-  LocomotionTimeDomain: {fileID: 0}
-  RecoveryEnemy: {fileID: 5010101010101010101}
-  RecoveryPhysicsMotor: {fileID: 5010101010101010101}
-  RecoveryEnemySkills: {fileID: 5010101010101010101}
-  ContractEnemy: {fileID: 5010101010101010101}
-  ContractEnemySkills: {fileID: 5010101010101010101}
-  ContractPhysicsMotor: {fileID: 5010101010101010101}
-  ContractAnimationRoot: {fileID: 5010101010101010101}
   ContractRigidbodyComponent: {fileID: 707000000000000001}
   ContractCapsuleCollider: {fileID: 707000000000000002}
   ContractNavigationAgent: {fileID: 900000000000000015}
-  ContractNavigation: {fileID: 0}
   ContractAnimator: {fileID: 4280753887478595955}
   NavigationNavigationAgent: {fileID: 900000000000000015}
+  visionOrigin: {fileID: 0}
 --- !u!1 &6708470238108833500
 GameObject:
   m_ObjectHideFlags: 0

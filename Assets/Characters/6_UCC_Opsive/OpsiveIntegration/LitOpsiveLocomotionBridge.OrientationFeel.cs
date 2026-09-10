@@ -2,17 +2,13 @@ using UnityEngine;
 
 public partial class LitOpsiveLocomotionBridge
 {
-    [Header("Orientation Feel")]
-    [SerializeField, Tooltip("Smooths the fallback look source so the body turns with weight instead of snapping to movement input.")]
-    private bool enableCinematicOrientationFeel = true;
-    [SerializeField, Range(0f, 1f)] private float orientationInputDeadZone = 0.14f;
-    [SerializeField, Min(1f)] private float orientationWalkTurnRate = 360f;
-    [SerializeField, Min(1f)] private float orientationSprintTurnRate = 300f;
-    [SerializeField, Min(1f), Tooltip("Maximum exploration body turn speed. It intentionally matches sprint turning so a 180-degree reversal follows a visible curve instead of becoming a spin in place.")]
-    private float orientationSharpTurnRate = 300f;
-    [SerializeField, Range(0f, 180f)] private float orientationSharpTurnAngle = 92f;
-    [SerializeField, Range(0f, 1f), Tooltip("Blends a little current planar velocity into the facing target for smoother diagonals and recoveries.")]
-    private float orientationVelocityBlend = 0.1f;
+    private bool enableCinematicOrientationFeel { get => ModuleSettings.enableCinematicOrientationFeel; set => ModuleSettings.enableCinematicOrientationFeel = value; }
+    private float orientationInputDeadZone { get => ModuleSettings.orientationInputDeadZone; set => ModuleSettings.orientationInputDeadZone = value; }
+    private float orientationWalkTurnRate { get => ModuleSettings.orientationWalkTurnRate; set => ModuleSettings.orientationWalkTurnRate = value; }
+    private float orientationSprintTurnRate { get => ModuleSettings.orientationSprintTurnRate; set => ModuleSettings.orientationSprintTurnRate = value; }
+    private float orientationSharpTurnRate { get => ModuleSettings.orientationSharpTurnRate; set => ModuleSettings.orientationSharpTurnRate = value; }
+    private float orientationSharpTurnAngle { get => ModuleSettings.orientationSharpTurnAngle; set => ModuleSettings.orientationSharpTurnAngle = value; }
+    private float orientationVelocityBlend { get => ModuleSettings.orientationVelocityBlend; set => ModuleSettings.orientationVelocityBlend = value; }
 
     private Vector3 smoothedPlanarLookDirection;
     private bool hasSmoothedPlanarLookDirection;

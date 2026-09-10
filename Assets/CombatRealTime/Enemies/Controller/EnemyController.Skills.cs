@@ -4,13 +4,10 @@ using UnityEngine;
 
 public sealed partial class EnemyController
 {
-    [SerializeField]
     private EnemyController SkillsEnemy;
-    [SerializeField]
     private CharacterAnimationController SkillsAnimationContract;
     [SerializeField]
     private Animator SkillsAnimator;
-    [SerializeField]
     private CombatTimeDomain SkillsTimeDomain;
     [SerializeField, Tooltip("Point de depart des VFX ennemi. La racine est utilisee si vide.")]
     private Transform SkillsCasterVfxPoint;

@@ -9,41 +9,23 @@ public partial class LitOpsiveLocomotionBridge
     private const float ObstacleTraversalTopNormalMinUpDot = 0.5f;
     private const float ObstacleTraversalStepHeightTolerance = 0.02f;
 
-    [Header("Obstacle Traversal")]
-    [SerializeField, Tooltip("Active le franchissement automatique des obstacles bas pendant la locomotion UCC.")]
-    private bool enableObstacleTraversal = true;
-    [SerializeField, Min(0f), Tooltip("Les obstacles plus bas que cette hauteur sont ignores par le franchissement.")]
-    private float ignoredObstacleMaxHeight = 0.18f;
-    [SerializeField, Min(0f), Tooltip("Hauteur maximale d'un obstacle franchissable avec animation.")]
-    private float traversableObstacleMaxHeight = 0.9f;
-    [SerializeField, Min(0.05f), Tooltip("Distance de detection devant le personnage.")]
-    private float obstacleProbeDistance = 0.75f;
-    [SerializeField, Min(0.01f), Tooltip("Rayon du probe horizontal utilise pour detecter l'obstacle.")]
-    private float obstacleProbeRadius = 0.22f;
-    [SerializeField, Min(0f), Tooltip("Hauteur du probe horizontal au-dessus des pieds du personnage.")]
-    private float obstacleProbeBaseHeight = 0.25f;
-    [SerializeField, Range(0f, 1f), Tooltip("Ignore les surfaces progressives dont la normale pointe trop vers le haut. 0 accepte seulement les faces verticales, 1 accepte aussi les rampes.")]
-    private float obstacleTraversalMaxSurfaceUpDot = 0.35f;
-    [SerializeField, Min(0f), Tooltip("Distance horizontale ajoutee derriere l'obstacle pour poser le personnage.")]
-    private float obstacleLandingDistance = 0.55f;
-    [SerializeField, Min(0.01f), Tooltip("Duree du franchissement scripte.")]
-    private float obstacleTraversalDuration = 0.42f;
-    [SerializeField, Min(0f), Tooltip("Arc vertical ajoute pendant le franchissement.")]
-    private float obstacleTraversalArcHeight = 0.25f;
-    [SerializeField, Min(0f), Tooltip("Marge ajoutee au-dessus de l'obstacle pour eviter un franchissement trop plat.")]
-    private float obstacleTraversalTopClearance = 0.16f;
-    [SerializeField, Range(0f, 1f), Tooltip("Ajoute une part de la hauteur de l'obstacle a l'arc de franchissement.")]
-    private float obstacleTraversalHeightArcMultiplier = 0.38f;
-    [SerializeField, Range(0.1f, 1f), Tooltip("Fraction du franchissement utilisee pour terminer la rotation vers la direction cible.")]
-    private float obstacleTraversalRotationLead = 0.68f;
-    [SerializeField, Range(0f, 1f), Tooltip("Magnitude d'input minimale avant de declencher un franchissement automatique.")]
-    private float obstacleTraversalMinInputMagnitude = 0.34f;
-    [SerializeField, Min(0f), Tooltip("Delai anti-redeclenchement apres un franchissement.")]
-    private float obstacleTraversalCooldown = 0.28f;
-    [SerializeField, Tooltip("Layers consideres comme obstacles franchissables.")]
-    private LayerMask obstacleTraversalMask = ~0;
-    [SerializeField, Tooltip("Trigger Animator optionnel lance au debut du franchissement.")]
-    private string obstacleTraversalTriggerParam = "ObstacleTraversal";
+    private bool enableObstacleTraversal { get => ModuleSettings.enableObstacleTraversal; set => ModuleSettings.enableObstacleTraversal = value; }
+    private float ignoredObstacleMaxHeight { get => ModuleSettings.ignoredObstacleMaxHeight; set => ModuleSettings.ignoredObstacleMaxHeight = value; }
+    private float traversableObstacleMaxHeight { get => ModuleSettings.traversableObstacleMaxHeight; set => ModuleSettings.traversableObstacleMaxHeight = value; }
+    private float obstacleProbeDistance { get => ModuleSettings.obstacleProbeDistance; set => ModuleSettings.obstacleProbeDistance = value; }
+    private float obstacleProbeRadius { get => ModuleSettings.obstacleProbeRadius; set => ModuleSettings.obstacleProbeRadius = value; }
+    private float obstacleProbeBaseHeight { get => ModuleSettings.obstacleProbeBaseHeight; set => ModuleSettings.obstacleProbeBaseHeight = value; }
+    private float obstacleTraversalMaxSurfaceUpDot { get => ModuleSettings.obstacleTraversalMaxSurfaceUpDot; set => ModuleSettings.obstacleTraversalMaxSurfaceUpDot = value; }
+    private float obstacleLandingDistance { get => ModuleSettings.obstacleLandingDistance; set => ModuleSettings.obstacleLandingDistance = value; }
+    private float obstacleTraversalDuration { get => ModuleSettings.obstacleTraversalDuration; set => ModuleSettings.obstacleTraversalDuration = value; }
+    private float obstacleTraversalArcHeight { get => ModuleSettings.obstacleTraversalArcHeight; set => ModuleSettings.obstacleTraversalArcHeight = value; }
+    private float obstacleTraversalTopClearance { get => ModuleSettings.obstacleTraversalTopClearance; set => ModuleSettings.obstacleTraversalTopClearance = value; }
+    private float obstacleTraversalHeightArcMultiplier { get => ModuleSettings.obstacleTraversalHeightArcMultiplier; set => ModuleSettings.obstacleTraversalHeightArcMultiplier = value; }
+    private float obstacleTraversalRotationLead { get => ModuleSettings.obstacleTraversalRotationLead; set => ModuleSettings.obstacleTraversalRotationLead = value; }
+    private float obstacleTraversalMinInputMagnitude { get => ModuleSettings.obstacleTraversalMinInputMagnitude; set => ModuleSettings.obstacleTraversalMinInputMagnitude = value; }
+    private float obstacleTraversalCooldown { get => ModuleSettings.obstacleTraversalCooldown; set => ModuleSettings.obstacleTraversalCooldown = value; }
+    private LayerMask obstacleTraversalMask { get => ModuleSettings.obstacleTraversalMask; set => ModuleSettings.obstacleTraversalMask = value; }
+    private string obstacleTraversalTriggerParam { get => ModuleSettings.obstacleTraversalTriggerParam; set => ModuleSettings.obstacleTraversalTriggerParam = value; }
 
     private readonly RaycastHit[] obstacleTraversalHits = new RaycastHit[ObstacleTraversalHitCapacity];
     private readonly Collider[] obstacleTraversalOverlaps = new Collider[ObstacleTraversalOverlapCapacity];

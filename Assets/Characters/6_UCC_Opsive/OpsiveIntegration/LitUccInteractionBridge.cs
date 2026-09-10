@@ -6,20 +6,17 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class LitUccInteractionBridge : MonoBehaviour
 {
-    [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
-    [SerializeField] private UltimateCharacterLocomotion locomotion;
-    [SerializeField, Tooltip("Prevent Lit interactions while UCC reports the character as airborne.")]
-    private bool requireGroundedForLitInteractions = true;
-    [SerializeField, Tooltip("Allow Lit interactions while UCC crouch/HeightChange is active.")]
-    private bool allowWhileHeightChange = true;
-    [SerializeField, Tooltip("Allow Lit interactions while UCC SpeedChange is active.")]
-    private bool allowWhileSpeedChange = true;
-    [SerializeField, Tooltip("Allow Lit interactions while UCC Fall is active.")]
-    private bool allowWhileFall;
-    [SerializeField, Tooltip("Allow Lit interactions while UCC Jump is active.")]
-    private bool allowWhileJump;
-    [SerializeField, Tooltip("Block Lit interactions while any UCC item ability is active.")]
-    private bool blockWhileItemAbilityActive = true;
+    private readonly PlayerModuleConfiguration<PlayerInteractionSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerInteractionSettings>();
+    private PlayerInteractionSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.interactions);
+
+    private LitOpsiveLocomotionBridge locomotionBridge;
+    private UltimateCharacterLocomotion locomotion;
+    private bool requireGroundedForLitInteractions { get => ModuleSettings.requireGroundedForLitInteractions; set => ModuleSettings.requireGroundedForLitInteractions = value; }
+    private bool allowWhileHeightChange { get => ModuleSettings.allowWhileHeightChange; set => ModuleSettings.allowWhileHeightChange = value; }
+    private bool allowWhileSpeedChange { get => ModuleSettings.allowWhileSpeedChange; set => ModuleSettings.allowWhileSpeedChange = value; }
+    private bool allowWhileFall { get => ModuleSettings.allowWhileFall; set => ModuleSettings.allowWhileFall = value; }
+    private bool allowWhileJump { get => ModuleSettings.allowWhileJump; set => ModuleSettings.allowWhileJump = value; }
+    private bool blockWhileItemAbilityActive { get => ModuleSettings.blockWhileItemAbilityActive; set => ModuleSettings.blockWhileItemAbilityActive = value; }
 
     public bool CanEvaluateLitInteractions
     {

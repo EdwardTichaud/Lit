@@ -9,28 +9,26 @@ using UnityEngine;
 [DefaultExecutionOrder(10000)]
 public class FacialExpressionController : MonoBehaviour
 {
+    private readonly PlayerModuleConfiguration<PlayerFaceSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerFaceSettings>();
+    private PlayerFaceSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.face);
+
     [Header("Renderer")]
     [SerializeField, Tooltip("SkinnedMeshRenderer that owns the facial BlendShapes, usually CC_Base_Body.")]
     private SkinnedMeshRenderer faceRenderer;
 
-    [SerializeField, Tooltip("If no renderer is assigned, searches children for this renderer name.")]
-    private string preferredRendererName = "CC_Base_Body";
+    private string preferredRendererName { get => ModuleSettings.preferredRendererName; set => ModuleSettings.preferredRendererName = value; }
 
-    [SerializeField, Tooltip("Automatically resolves the face renderer during Awake if missing.")]
-    private bool autoResolveFaceRenderer = true;
+    private bool autoResolveFaceRenderer { get => ModuleSettings.autoResolveFaceRenderer; set => ModuleSettings.autoResolveFaceRenderer = value; }
 
     [Header("Jaw Neutralization")]
     [SerializeField, Tooltip("Lower jaw bone. For Character Creator this is usually CC_Base_JawRoot.")]
     private Transform jawRoot;
 
-    [SerializeField, Tooltip("Bone name used when the jaw root is not assigned.")]
-    private string jawRootName = "CC_Base_JawRoot";
+    private string jawRootName { get => ModuleSettings.jawRootName; set => ModuleSettings.jawRootName = value; }
 
-    [SerializeField, Tooltip("Automatically resolves the jaw root during Awake if missing.")]
-    private bool autoResolveJawRoot = true;
+    private bool autoResolveJawRoot { get => ModuleSettings.autoResolveJawRoot; set => ModuleSettings.autoResolveJawRoot = value; }
 
-    [SerializeField, Tooltip("Reapplies the neutral jaw pose in LateUpdate so body animation clips cannot leave the mouth open.")]
-    private bool enforceNeutralJawPoseInLateUpdate = true;
+    private bool enforceNeutralJawPoseInLateUpdate { get => ModuleSettings.enforceNeutralJawPoseInLateUpdate; set => ModuleSettings.enforceNeutralJawPoseInLateUpdate = value; }
 
     [SerializeField, Tooltip("Stored closed-mouth local jaw position.")]
     private Vector3 neutralJawLocalPosition;
@@ -38,25 +36,18 @@ public class FacialExpressionController : MonoBehaviour
     [SerializeField, Tooltip("Stored closed-mouth local jaw rotation.")]
     private Quaternion neutralJawLocalRotation = Quaternion.identity;
 
-    [SerializeField, Tooltip("True when a neutral jaw pose has been captured or authored.")]
+    [SerializeField, Tooltip("Une pose neutre de machoire est capturee pour cette instance.")]
     private bool neutralJawPoseCaptured;
 
-    [Header("Presets")]
-    [SerializeField, Tooltip("All expression presets available to this controller.")]
-    private List<FacialExpressionPreset> presets = new List<FacialExpressionPreset>();
+    private List<FacialExpressionPreset> presets { get => ModuleSettings.presets; set => ModuleSettings.presets = value; }
 
-    [SerializeField, Tooltip("Passive expression applied on Start.")]
-    private FacialEmotion initialPassiveEmotion = FacialEmotion.Idle;
+    private FacialEmotion initialPassiveEmotion { get => ModuleSettings.initialPassiveEmotion; set => ModuleSettings.initialPassiveEmotion = value; }
 
-    [SerializeField, Tooltip("Apply the initial passive expression on Start.")]
-    private bool playInitialPassiveOnStart = true;
+    private bool playInitialPassiveOnStart { get => ModuleSettings.playInitialPassiveOnStart; set => ModuleSettings.playInitialPassiveOnStart = value; }
 
-    [Header("Runtime")]
-    [SerializeField, Tooltip("Use unscaled time for facial transitions.")]
-    private bool useUnscaledTime;
+    private bool useUnscaledTime { get => ModuleSettings.useUnscaledTime; set => ModuleSettings.useUnscaledTime = value; }
 
-    [SerializeField, Tooltip("Reapplies controlled BlendShapes in LateUpdate so body animation clips cannot overwrite the face.")]
-    private bool enforceControlledWeightsInLateUpdate = true;
+    private bool enforceControlledWeightsInLateUpdate { get => ModuleSettings.enforceControlledWeightsInLateUpdate; set => ModuleSettings.enforceControlledWeightsInLateUpdate = value; }
 
     [SerializeField, Tooltip("Logs important state changes and validation details.")]
     private bool verboseLogging;

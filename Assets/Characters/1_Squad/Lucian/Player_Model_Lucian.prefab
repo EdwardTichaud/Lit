@@ -7581,7 +7581,6 @@ GameObject:
   - component: {fileID: 2272791694640596917}
   - component: {fileID: 3281333903003229964}
   - component: {fileID: 8659240772369093202}
-  - component: {fileID: 5409310138993578963}
   - component: {fileID: 9146667740977371504}
   - component: {fileID: 7759127105878328136}
   - component: {fileID: 5043819634457583213}
@@ -7597,7 +7596,6 @@ GameObject:
   - component: {fileID: -2401253528140462390}
   - component: {fileID: 4886044154287277720}
   - component: {fileID: 900000000000000101}
-  - component: {fileID: 900000000000000102}
   - component: {fileID: 900000000000000103}
   - component: {fileID: 901000000000000203}
   - component: {fileID: -5594194581994094055}
@@ -7860,42 +7858,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionController
   faceRenderer: {fileID: 2772251632162136425}
-  preferredRendererName: CC_Base_Body
-  autoResolveFaceRenderer: 1
   jawRoot: {fileID: 4635364422325627696}
-  jawRootName: CC_Base_JawRoot
-  autoResolveJawRoot: 1
-  enforceNeutralJawPoseInLateUpdate: 1
   neutralJawLocalPosition: {x: 0.024634244, y: 0.013118182, z: 0.000011867353}
   neutralJawLocalRotation: {x: 0.0000033841322, y: -0.0000681144, z: 1, w: -0.000017177159}
-  neutralJawPoseCaptured: 1
-  presets:
-  - {fileID: 11400000, guid: 4db3cf2b981d4a33b6a6961081b53f02, type: 2}
-  - {fileID: 11400000, guid: 12ec51937b20453d9a7f55dcd602bf68, type: 2}
-  - {fileID: 11400000, guid: 9270b55d96764a5c85f825e9a04a37c0, type: 2}
-  - {fileID: 11400000, guid: 3eecc2f68ea24d8db3b7bdce3475bc78, type: 2}
-  - {fileID: 11400000, guid: d72ef8a340b44147bbb935248cd44a28, type: 2}
-  - {fileID: 11400000, guid: 82ddaff56f9d4cc7a7f2adf4fef29576, type: 2}
-  - {fileID: 11400000, guid: 01e233163d61491ca251762e87e98387, type: 2}
-  - {fileID: 11400000, guid: f11cbd6c13934632b849a0cbef76be13, type: 2}
-  initialPassiveEmotion: 0
-  playInitialPassiveOnStart: 1
-  useUnscaledTime: 0
-  enforceControlledWeightsInLateUpdate: 1
+  neutralJawPoseCaptured: 0
   verboseLogging: 0
---- !u!114 &5409310138993578963
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a455d33385e24ba283d9021fc6aff2c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionDebugger
-  controller: {fileID: 8659240772369093202}
 --- !u!114 &9146667740977371504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7929,7 +7896,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f7d1f5b9e5460c4996ae3369dcfa65f, type: 3}
   m_Name: 
@@ -8467,173 +8434,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 113a12078d144b4c86b6e74a3c94edab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLocomotionBridge
-  debugGroundBlockDiagnostics: 0
-  groundBlockDiagnosticInterval: 0.75
-  groundBlockDiagnosticMinProgress: 0.04
-  enableCinematicGroundedFeel: 1
-  tuneGroundedUccPhysics: 0
-  groundedMotorAcceleration: {x: 4.6, y: 0, z: 4.6}
-  groundedMotorDamping: 5.7
-  groundedPreviousAccelerationInfluence: 0.88
-  groundedBackwardsMultiplier: 0.6
-  groundedGravityAmount: 0.65
-  groundedStickToGroundDistance: 0.72
-  groundedSlopeLimit: 60
-  groundedMaxStepHeight: 0.5
-  groundedMovingPlatformSeparationVelocity: 7
-  groundedMovingPlatformDisconnectMultiplier: 0.65
-  groundedMovingPlatformForceDamping: 0.18
-  groundedInputAcceleration: 6.2
-  groundedSprintInputAcceleration: 5
-  groundedInputDeceleration: 6.2
-  groundedDirectionChangeAcceleration: 11.2
-  groundedDirectionChangeDot: 0.2
-  tuneGroundedSprintSpeedChange: 0
-  groundedSprintSpeedMultiplier: 1.65
-  groundedSprintSpeedParameterValue: 2.6
-  suppressSpeedChangeAnimatorParameter: 1
-  moveStartTriggerParam: MoveStartTrigger
-  moveStopTriggerParam: MoveStopTrigger
-  turnInPlaceParam: TurnInPlace
-  groundedAnimationSpeedToBlend: 0.22
-  groundedAnimatorSpeedRiseRate: 13.5
-  groundedAnimatorSpeedFallRate: 5.4
-  groundedAnimatorTurnRate: 5.4
-  groundedTurnInPlaceThreshold: 0.55
-  groundedTurnInPlaceMaxSpeed: 0.35
-  enableGroundedTurnInPlaceClips: 0
-  groundedStopTriggerMinSpeed: 0.48
-  groundedStopRequestDelay: 0.06
-  groundedStopSettledSpeed: 0.06
-  groundedStopSettledDuration: 0.05
-  groundedStopExitNormalizedTime: 0.82
-  groundedMoveTransitionDirectionHoldTime: 0.18
-  groundedMoveTransitionParameterSpeed: 1.22
-  useForwardOnlyGroundedLocomotion: 1
-  enableScriptedPivotTurns: 0
-  groundedPivotMinAngle: 85
-  groundedPivot180Angle: 135
-  groundedSnapStationaryTurn: 0
-  groundedSnapStationaryTurnMinAngle: 25
-  groundedSnapStationaryTurnMaxSpeed: 0.22
-  groundedSnapStationaryTurnMaxSmoothedInput: 0.08
-  groundedPivotMaxSpeed: 0.45
-  groundedPivotMaxSmoothedInput: 0.14
-  groundedPivotHoldTime: 0.32
-  groundedPivotCooldown: 0.34
-  groundedPivotStartGraceTime: 0.12
-  groundedPivotStartGraceMinAngle: 128
-  groundedPivotMovementReleaseStart: 0.38
-  groundedPivotMovementReleaseMaxAngle: 72
-  groundedPivotMovementReleaseScale: 0.58
-  commitBodyRotationDuringPivot: 1
-  groundedPivotRotationCommitRate: 960
-  recordLocomotionDiagnostics: 0
-  debugLocomotionDiagnostics: 0
-  locomotionDiagnosticInterval: 0.1
-  enableObstacleTraversal: 1
-  ignoredObstacleMaxHeight: 0.22
-  traversableObstacleMaxHeight: 1.05
-  obstacleProbeDistance: 0.75
-  obstacleProbeRadius: 0.22
-  obstacleProbeBaseHeight: 0.25
-  obstacleTraversalMaxSurfaceUpDot: 0.35
-  obstacleLandingDistance: 0.55
-  obstacleTraversalDuration: 0.46
-  obstacleTraversalArcHeight: 0.22
-  obstacleTraversalTopClearance: 0.16
-  obstacleTraversalHeightArcMultiplier: 0.38
-  obstacleTraversalRotationLead: 0.68
-  obstacleTraversalMinInputMagnitude: 0.34
-  obstacleTraversalCooldown: 0.28
-  obstacleTraversalMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  obstacleTraversalTriggerParam: ObstacleTraversal
-  enableCinematicOrientationFeel: 1
-  orientationInputDeadZone: 0.14
-  orientationWalkTurnRate: 360
-  orientationSprintTurnRate: 300
-  orientationSharpTurnRate: 300
-  orientationSharpTurnAngle: 92
-  orientationVelocityBlend: 0.1
-  squadController: {fileID: 0}
-  locomotion: {fileID: 0}
-  locomotionHandler: {fileID: 0}
-  playerInput: {fileID: 0}
-  lookSource: {fileID: 0}
   animator: {fileID: 963045829911085934}
-  animatorMonitor: {fileID: 0}
-  scriptedJumpController: {fileID: 0}
-  timeDomain: {fileID: 0}
-  logScriptedTraversalDiagnostics: 0
-  scriptedTraversalDiagnosticTickInterval: 8
-  scriptedTraversalExternalCorrectionDistance: 0.02
-  scriptedTraversalExternalCorrectionDegrees: 1
-  driveFromSquadFacade: 1
-  overrideOpsiveHandlerInput: 1
-  orientLookSourceFromMovement: 1
-  configureRigidbodyForOpsive: 1
-  enableRunStartResponse: 0
-  runStartVelocityBonus: 0.55
-  runStartResponseCooldown: 0.25
-  runStartResponseMaximumPlanarSpeed: 4.25
-  logLocomotionResponseDiagnostics: 0
-  autoInstallCompanionBridges: 0
-  movementDeadZone: 0.08
-  relaxGroundReliefTolerance: 1
-  groundReliefMinStepHeight: 0.5
-  groundReliefMinSlopeLimit: 60
-  groundReliefMinStickToGroundDistance: 0.72
-  adaptMovingGroundRelief: 1
-  movingStepHeight: 0.58
-  movingSlopeLimit: 62
-  movingStickToGroundDistance: 0.86
-  idleStickToGroundDistance: 0.64
-  groundReliefAdaptationSpeed: 7.5
-  enableUccFlight: 1
-  flightTakeoffVerticalSpeed: 6.5
-  flightTakeoffDuration: 0.45
-  flightTakeoffDamping: 16
-  flightCruiseSpeed: 33
-  flightBoostSpeed: 81
-  flightAcceleration: 54
-  flightBoostAcceleration: 126
-  flightDeceleration: 36
-  flightVerticalSpeed: 24
-  flightVerticalAcceleration: 66
-  flightVerticalDeceleration: 54
-  flightVerticalDeadZone: 0.05
-  flightIdleSpeedThreshold: 0.08
-  flightTurnRate: 760
-  flightBoostTurnRate: 460
-  flightLandingSpeed: 12
-  flightLandingAcceleration: 36
-  combatSkillLandingSpeed: 14
-  allowStandaloneFlightFallback: 1
-  fallbackFlightCollisionSkin: 0.03
-  fallbackFlightGroundProbeDistance: 0.2
-  driveLitLocomotionAnimatorParameters: 1
-  speedParam: LitSpeed
-  horizontalMovementParam: HorizontalMovement
-  forwardMovementParam: ForwardMovement
-  isMovingParam: IsMoving
-  locomotionTierParam: LocomotionTier
-  combatMoveMagnitudeParam: CombatMoveMagnitude
-  turnParam: Turn
-  flightStateParam: FlightState
-  flightSpeedParam: FlightSpeed
-  flightVerticalParam: FlightVertical
-  flightBoostParam: FlightBoost
-  flightStartTriggerParam: FlightStartTrigger
-  walkPresentationSpeed: 1.35
-  runPresentationSpeed: 3.25
-  combatFacingSpeedDegreesPerSecond: 1080
-  combatOrbitPureLateralThreshold: 0.12
-  combatOrbitRadiusDeadZone: 0.035
-  combatOrbitRadiusCorrectionGain: 2.25
-  combatOrbitMaximumCorrection: 0.35
-  logCombatLockMotionDiagnostics: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8646,14 +8447,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b8e1e24bb3b92b08901633a8a939431, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitUccInteractionBridge
-  locomotionBridge: {fileID: 0}
-  locomotion: {fileID: 0}
-  requireGroundedForLitInteractions: 1
-  allowWhileHeightChange: 1
-  allowWhileSpeedChange: 1
-  allowWhileFall: 0
-  allowWhileJump: 0
-  blockWhileItemAbilityActive: 1
 --- !u!114 &7388209704611396571
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8666,11 +8459,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c67821cbfd0dde1b7548992f43e658a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitUccDamageBridge
-  locomotion: {fileID: 0}
-  squadController: {fileID: 6731850666202294345}
-  combatHealth: {fileID: 0}
-  attributeManager: {fileID: 9095812728330429394}
-  characterHealth: {fileID: 6800918242508772571}
   healthAttributeName: Health
   characterHealthIsAuthority: 1
   syncSquadHealthFromCharacterHealth: 1
@@ -8692,7 +8480,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a444ed75bc114f6a7513720fd094a58b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitUccFollowerBridge
-  locomotionBridge: {fileID: 0}
 --- !u!114 &4817604968123456789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8912,21 +8699,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1b0e5c2a7f94f4aa5d23224fe72b48c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocomotionAnimationEvent
-  defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
   raycastOrigin: {fileID: 0}
-  raycastHeight: 0.4
-  raycastDistance: 1.6
   animator: {fileID: 963045829911085934}
   leftFoot: {fileID: 5826101239439711920}
   rightFoot: {fileID: 3004153059774259606}
-  autoResolveHumanoidFeet: 1
-  footRaycastHeight: 0.35
-  footRaycastDistance: 0.8
-  minimumFootstepInterval: 0.05
-  minimumAnimationEventWeight: 0.5
 --- !u!114 &900000000000000101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8939,36 +8715,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 281b132d2c8e4cf98f9d6ddbd146ff37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatLoadout
-  equippedAttacks:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  equippedLightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
---- !u!114 &900000000000000102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 318b3f6b3ded45e58a293a2f8b979d24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VisionField
-  origin: {fileID: 2233782780378164146}
-  maximumDistance: 6
-  fieldOfViewDegrees: 110
-  eyeHeight: 1.35
-  targetHeight: 1
-  obstructionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!114 &900000000000000103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8981,21 +8727,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
-  enemy: {fileID: 0}
-  enemySkills: {fileID: 0}
-  skillsManager: {fileID: 0}
-  combatInput: {fileID: 0}
-  playerBow: {fileID: 625305882505611059}
-  playerSword: {fileID: 8349673734219276021}
-  inputPromptAnchor: {fileID: 0}
-  inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  dashOvershootDistance: 1.25
-  dashImpulsePerMeter: 8
-  minimumDashImpulse: 14
-  maximumDashImpulse: 32
-  dashInputLockSeconds: 0.1
-  stopDashDuration: 0.18
-  stopDashDeceleration: 65
 --- !u!114 &901000000000000203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9065,7 +8796,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
-  actor: {fileID: 7709963485712969020}
 --- !u!114 &5233370284238801096
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9078,27 +8808,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d5984f9578c411db57334064b498ade, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScriptedJumpController
-  locomotion: {fileID: 0}
-  locomotionBridge: {fileID: 0}
   animator: {fileID: 0}
-  jumpHeight: 100
-  jumpStartTakeoffNormalizedTime: 0.5
-  jumpStartPlanarSlowdown: 0
-  apexGravityEntryVelocity: 25
-  apexGravityMultiplier: 0.25
-  descentGravityMultiplier: 0.6
-  fallingAnimationEntryVelocity: -0.1
-  hardLandingHeight: 3
-  landingHandoff:
-    minimumContactSeconds: 0.15
-    animationExitNormalizedTime: 0.82
-    planarSettledSpeed: 0.12
-    verticalSettledSpeed: 0.2
-    planarDampingPerSecond: 7
-    maximumSettleSeconds: 0.55
-    locomotionBlendSeconds: 0.12
-    preLandingProbeDistance: 1.2
-    preLandingLeadSeconds: 0.14
 --- !u!114 &810000000000000009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9111,10 +8821,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f0dabe3d09448a3b13da4af8b32c86f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScriptedDodgeController
-  impulseSpeed: 16
-  durationMultiplier: 1
-  alignUnlockedDodgeToTravel: 1
-  alignLockedForwardDodgeToTravel: 1
 --- !u!114 &8402552925745160276
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9127,7 +8833,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05ed3c85e90cf6f45bfb977d1a5051c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMotionController
-  library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0
