@@ -20,8 +20,8 @@ MonoBehaviour:
   targetId: 
   targetDisplayName: 
   expectedAnswerType: 1
-  apparitionLine: 
-  question: Vous ne devriez pas etre ici.
+  apparitionLine: La science est si... vertigineuse.
+  question: "Vous n'auriez pas du vous m\xEAler de \xE7a."
   knowledgeUnlockedOnListen: []
   reactions: []
   missingKnowledgeLine: "Il manque encore un \xE9l\xE9ment pour comprendre ce souvenir."

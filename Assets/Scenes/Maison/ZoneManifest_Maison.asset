@@ -42,3 +42,6 @@ MonoBehaviour:
   - Maison_Environment_Far
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
+  bakedNavMeshData: {fileID: 0}
+  bakedNavMeshVersion: 
+  bakedNavMeshAgentTypeId: -1

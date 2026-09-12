@@ -124,7 +124,7 @@ Material:
     - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
-    - _Metallic: 0.8
+    - _Metallic: 0.995
     - _MicroScale: 3
     - _NormalStrength: 0.1
     - _OpaqueCullMode: 2

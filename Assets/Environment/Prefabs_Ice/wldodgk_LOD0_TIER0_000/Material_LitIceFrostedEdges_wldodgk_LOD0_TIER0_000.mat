@@ -108,7 +108,7 @@ Material:
     - _DstBlend: 0
     - _DstBlend2: 0
     - _EdgeBakedBoost: 1
-    - _EdgeSensitivity: 30
+    - _EdgeSensitivity: 2
     - _EmissionIntensity: 1
     - _EnableBlendModePreserveSpecularLighting: 0
     - _EnableEmission: 0
@@ -124,7 +124,7 @@ Material:
     - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
-    - _Metallic: 0.8
+    - _Metallic: 0.995
     - _MicroScale: 3
     - _NormalStrength: 0.1
     - _OpaqueCullMode: 2
@@ -179,7 +179,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.88438344, g: 0.88438344, b: 0.88438344, a: 1}
-    - _CrackColor: {r: 0.2728729, g: 0.6336938, b: 0.7924528, a: 1}
+    - _CrackColor: {r: 0.43284976, g: 0.5980048, b: 0.6698113, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
