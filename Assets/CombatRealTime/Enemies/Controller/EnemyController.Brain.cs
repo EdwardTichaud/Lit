@@ -104,7 +104,7 @@ public sealed partial class EnemyController
             BrainResolveProfile();
         }
 
-        if (!BrainAuthority || BrainProfile == null || BrainEnemy == null)
+        if (!CombatEnabled || !BrainAuthority || BrainProfile == null || BrainEnemy == null)
             return;
         // Do not rely on RealTimeCombatEnemy.Update having run first. The
         // player can enter the cone between two AI ticks, and the decision
@@ -300,7 +300,7 @@ public sealed partial class EnemyController
 
     public void RegisterThreat(SquadCharacterController source, float amount)
     {
-        if (!BrainAuthority || amount <= 0 || BrainProfile == null)
+        if (!CombatEnabled || !BrainAuthority || amount <= 0 || BrainProfile == null)
             return;
         if (source == null)
         {

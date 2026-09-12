@@ -17,6 +17,83 @@ public sealed class RuntimeStabilizationTests
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [Test]
+    public void ScientistEncounterRequiresTheChimeraKnowledge()
+    {
+        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset");
+        var knowledge = AssetDatabase.LoadAssetAtPath<KnowledgeSO>("Assets/Narrative/NinaCycle/Data/Knowledge_ExistenceDesChimeres.asset");
+        Assert.That(knowledge, Is.Not.Null);
+        Assert.That(data.enemyEncounterOptions.requiredKnowledge, Is.SameAs(knowledge));
+    }
+
+    [Test]
+    public void EncounterKnowledgeGateTracksTheCurrentSessionKnowledge()
+    {
+        var root = new GameObject("Encounter knowledge test");
+        root.SetActive(false);
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        var required = ScriptableObject.CreateInstance<KnowledgeSO>();
+        var unrelated = ScriptableObject.CreateInstance<KnowledgeSO>();
+        required.knowledgeId = "test.required";
+        unrelated.knowledgeId = "test.unrelated";
+        var instance = typeof(KnowledgeManager).GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
+        var previous = KnowledgeManager.Instance;
+        try
+        {
+            var enemy = root.AddComponent<EnemyController>();
+            enemy.Health.SetCharacterData(data);
+            var gate = typeof(EnemyController).GetProperty("HasEncounterKnowledge", Private);
+            instance.SetValue(null, null);
+            Assert.That(gate.GetValue(enemy), Is.True, "Ordinary encounters have no prerequisite.");
+            data.enemyEncounterOptions.requiredKnowledge = required;
+            Assert.That(gate.GetValue(enemy), Is.False, "A missing service must not bypass the requirement.");
+            var manager = root.AddComponent<KnowledgeManager>();
+            instance.SetValue(null, manager);
+            var list = typeof(KnowledgeManager).GetField("unlockedKnowledge", Private);
+            var ready = typeof(KnowledgeManager).GetField("lookupReady", Private);
+            foreach (bool known in new[] { false, true, false })
+            {
+                list.SetValue(manager, new System.Collections.Generic.List<KnowledgeSO> { known ? required : unrelated });
+                ready.SetValue(manager, false);
+                Assert.That(gate.GetValue(enemy), Is.EqualTo(known));
+            }
+        }
+        finally
+        {
+            instance.SetValue(null, previous);
+            Object.DestroyImmediate(root); Object.DestroyImmediate(data);
+            Object.DestroyImmediate(required); Object.DestroyImmediate(unrelated);
+        }
+    }
+
+    [Test]
+    public void LateAssignedGhostDataBlocksCombatEvenWithSerializedCombatEnabled()
+    {
+        var root = new GameObject("Late assigned scientist");
+        root.SetActive(false);
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        try
+        {
+            var enemy = root.AddComponent<EnemyController>();
+            var ghost = root.AddComponent<GhostController>();
+            Assert.That(enemy.CombatEnabled, Is.True);
+            data.enemyEncounterOptions.startAsGhost = true;
+            enemy.Health.SetCharacterData(data);
+            enemy.CombatEnabled = true;
+            Assert.That(enemy.CombatEnabled, Is.False);
+            Assert.That(enemy.ReceiveLightDamage(10), Is.Zero);
+            Assert.That(enemy.TryStartRetaliation(), Is.False);
+            ghost.SetGameplayMode(GhostController.GameplayMode.Introduction);
+            Assert.That(enemy.CombatEnabled, Is.False);
+            ghost.SetGameplayMode(GhostController.GameplayMode.Enemy);
+            Assert.That(enemy.CombatEnabled, Is.True);
+            ghost.SetGameplayMode(GhostController.GameplayMode.Ghost);
+            Assert.That(enemy.CombatEnabled, Is.False);
+            Assert.That(ghost.enabled, Is.True);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(data); }
+    }
+
+    [Test]
     public void SoloEncounterTransitionsDoNotWriteNetworkVariable()
     {
         var root = new GameObject("Solo scientist test");

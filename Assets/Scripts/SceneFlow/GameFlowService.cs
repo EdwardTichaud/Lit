@@ -554,9 +554,10 @@ public sealed class GameFlowService : MonoBehaviour
         int expected = manifest.LoadingSceneNames.Count;
         int loaded = 0;
         List<string> missing = new List<string>();
-        for (int i = 0; i < expected; i++)
+        for (int i = 0; i < manifest.LoadingSceneNames.Count; i++)
         {
             string sceneName = manifest.LoadingSceneNames[i];
+            if (CycleProgressionService.ShouldSkipScene(sceneName)) { expected--; continue; }
             Scene scene = string.IsNullOrWhiteSpace(sceneName) ? default : SceneManager.GetSceneByName(sceneName);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -671,6 +672,7 @@ public sealed class GameFlowService : MonoBehaviour
         for (int i = 0; i < destination.PostLoadingSceneNames.Count; i++)
         {
             string sceneName = destination.PostLoadingSceneNames[i];
+            if (CycleProgressionService.ShouldSkipScene(sceneName)) continue;
             if (string.IsNullOrWhiteSpace(sceneName) || !CanLoad(sceneName))
             {
                 continue;
@@ -1030,6 +1032,7 @@ public sealed class GameFlowService : MonoBehaviour
         for (int i = 0; i < manifest.LoadingSceneNames.Count; i++)
         {
             string additionalScene = manifest.LoadingSceneNames[i];
+            if (CycleProgressionService.ShouldSkipScene(additionalScene)) continue;
             if (string.IsNullOrWhiteSpace(additionalScene))
             {
                 continue;
@@ -1267,5 +1270,33 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         return SceneManager.UnloadSceneAsync(scene);
+    }
+
+    /// <summary>Only a completed cycle's dedicated additive scene may leave the loaded world.</summary>
+    private float nextCycleUnloadAttempt;
+    public bool TryUnloadCompletedCycleScene(CycleDefinition cycle, Scene scene)
+    {
+        var progression = CycleProgressionService.Instance;
+        if (IsTransitioning || cycle == null || progression == null || !progression.Authority || !progression.IsCompleted(cycle) ||
+            !scene.IsValid() || !scene.isLoaded || scene.name != cycle.cycleSceneName ||
+            scene == SceneManager.GetActiveScene() || scene.name == activeGameplaySceneName ||
+            scene.name == BootstrapSceneName || SceneManager.sceneCount <= 1) return false;
+        if (Time.unscaledTime < nextCycleUnloadAttempt) return false;
+        nextCycleUnloadAttempt = Time.unscaledTime + .5f;
+        // A badly authored cycle must not take a player or a session service with it.
+        foreach (var root in scene.GetRootGameObjects())
+            if (root.GetComponentInChildren<SquadCharacterController>(true) != null ||
+                root.GetComponentInChildren<WorldRulesStateManager>(true) != null ||
+                root.GetComponentInChildren<GameplaySessionRoot>(true) != null) return false;
+        var manager = NetworkManager.Singleton;
+        bool started;
+        if (manager != null && manager.IsListening)
+        {
+            if (!manager.IsServer || manager.SceneManager == null || !manager.NetworkConfig.EnableSceneManagement) return false;
+            started = manager.SceneManager.UnloadScene(scene) == SceneEventProgressStatus.Started;
+        }
+        else started = SceneManager.UnloadSceneAsync(scene) != null;
+        if (started) loadedZoneSceneNames.Remove(scene.name);
+        return started;
     }
 }

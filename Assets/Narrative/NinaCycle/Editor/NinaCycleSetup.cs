@@ -24,13 +24,15 @@ public static class NinaCycleSetup
     public static void Create()
     {
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null)
-            throw new InvalidOperationException("La scène Nina existe déjà. Elle ne sera pas écrasée.");
+            throw new InvalidOperationException("La scÃ¨ne Nina existe dÃ©jÃ . Elle ne sera pas Ã©crasÃ©e.");
         EnsureFolder(DataPath);
         EnsureFolder("Assets/Resources/Narrative");
         var definition = Asset<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
-        var existence = Knowledge("ExistenceDesChimeres", "Existence des chimères", "Des êtres vivants ont été fusionnés artificiellement par le Scientifique fou.");
-        var dilemma = Knowledge("DilemmeEdouard", "Dilemme Édouard", "Édouard a découvert que Nina était issue de la fusion d'une enfant et d'un chien. Comment lui venir en aide sans lui infliger davantage de souffrance ?");
+        var existence = Knowledge("ExistenceDesChimeres", "Existence des chimÃ¨res", "Des Ãªtres vivants ont Ã©tÃ© fusionnÃ©s artificiellement par le Scientifique fou.");
+        var dilemma = Knowledge("DilemmeEdouard", "Dilemme Ã‰douard", "Ã‰douard a dÃ©couvert que Nina Ã©tait issue de la fusion d'une enfant et d'un chien. Comment lui venir en aide sans lui infliger davantage de souffrance ?");
         definition.cycleId = "district1.nina";
+        definition.completionFlags = 8;
+        definition.cycleSceneName = "District_1_Enigme_Ghost_Nina";
         definition.knowledgeOnEnemyDefeat = new[] { existence };
         definition.playCinematicAfterDefeat = true;
         definition.dialogues = new[]
@@ -39,13 +41,15 @@ public static class NinaCycleSetup
                 line = "Nina ne bouge plus.", unavailableLine = "Edouard ? Tu reviendras ?", openedFlags = 20 },
             new CycleDialogue { id = "scar", condition = new CycleCondition { anyFlags = 20, knowledge = new[] { existence, dilemma } },
                 line = "Prends cette force, et souviens-toi d'elle.", repeatLine = "Souviens-toi de Nina.", rewardFlag = 8,
+                durationSeconds = 2f, disappearAfterCompletion = true, disappearanceDelay = 0f,
                 rewardSkill = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/CombatRealTime/Skills/Skill_3_Cicatrice.asset") }
         };
+        CycleMigration.ConfigureNina(definition);
         var letter = Asset<Item>(DataPath + "/Item_Edward.asset");
         letter.itemId = "item_edward";
-        letter.itemName = "Lettre manuscrite d'Édouard";
+        letter.itemName = "Lettre manuscrite d'Ã‰douard";
         letter.readableKind = Item.ReadableKind.Parchment;
-        letter.parchmentText = "Je croyais avoir trouvé un animal égaré. Nina comprenait mes mots. Puis elle m'a répondu.\n\nJ'ai retrouvé les notes du scientifique. Il avait fusionné sa petite-fille et son chien. Il avait écrit : « Pour la science. »\n\nSous cette forme, Nina est encore là. Je l'entends chercher une voix familière. Je voudrais lui promettre que tout peut être réparé, mais je n'en sais rien. La laisser ainsi me paraît cruel. Décider pour elle me terrifie tout autant.\n\nJe ne sais pas comment la sauver. Je sais seulement que je ne veux plus qu'elle soit seule.\n\nÉdouard";
+        letter.parchmentText = "Je croyais avoir trouvÃ© un animal Ã©garÃ©. Nina comprenait mes mots. Puis elle m'a rÃ©pondu.\n\nJ'ai retrouvÃ© les notes du scientifique. Il avait fusionnÃ© sa petite-fille et son chien. Il avait Ã©crit : Â« Pour la science. Â»\n\nSous cette forme, Nina est encore lÃ . Je l'entends chercher une voix familiÃ¨re. Je voudrais lui promettre que tout peut Ãªtre rÃ©parÃ©, mais je n'en sais rien. La laisser ainsi me paraÃ®t cruel. DÃ©cider pour elle me terrifie tout autant.\n\nJe ne sais pas comment la sauver. Je sais seulement que je ne veux plus qu'elle soit seule.\n\nÃ‰douard";
         letter.knowledgeUnlockedOnRead.Add(dilemma);
         dilemma.readableItem = letter;
         var ninaData = Asset<GhostData>(DataPath + "/GhostData_Nina.asset");
@@ -107,7 +111,7 @@ public static class NinaCycleSetup
         if (!EditorBuildSettings.scenes.Any(s => s.path == ScenePath))
             EditorBuildSettings.scenes = EditorBuildSettings.scenes.Concat(new[] { new EditorBuildSettingsScene(ScenePath, true) }).ToArray();
         AssetDatabase.SaveAssets();
-        Debug.Log("[NinaCycle] Scène créée. Sélectionner NinaCycle_A_CONFIGURER pour voir les ressources manquantes.");
+        Debug.Log("[NinaCycle] ScÃ¨ne crÃ©Ã©e. SÃ©lectionner NinaCycle_A_CONFIGURER pour voir les ressources manquantes.");
     }
     private static GhostController Ghost(GameObject root, string name, GhostData data, CycleController cycle, bool scar)
     {

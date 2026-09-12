@@ -20,7 +20,7 @@ public sealed partial class EnemyController
     private bool ContractLoggedFailure;
     public bool IsValid { get; private set; }
 
-    public bool CanRunCombat => IsValid && ContractPhysicsMotor != null && ContractPhysicsMotor.IsOperational;
+    public bool CanRunCombat => CombatEnabled && IsValid && ContractPhysicsMotor != null && ContractPhysicsMotor.IsOperational;
     public EnemyController PhysicsMotor => ContractPhysicsMotor;
     public static bool HasRequiredComponents(GameObject actor)
     {

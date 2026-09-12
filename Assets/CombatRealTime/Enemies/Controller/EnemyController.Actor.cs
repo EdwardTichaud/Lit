@@ -125,6 +125,7 @@ public sealed partial class EnemyController
 
     public int ReceiveDamage(int amount, bool canPrepareRetaliation = false, SquadCharacterController source = null)
     {
+        if (!CombatEnabled) return 0;
         EnemyController brain = GetComponent<EnemyController>();
         if (brain != null && brain.HasProfile)
             amount = brain.ResolveGuardDamage(amount);
@@ -205,6 +206,7 @@ public sealed partial class EnemyController
 
     public bool TryStartRetaliation(float meleePreference = 0.5f)
     {
+        if (!CombatEnabled || !BrainAuthority) return false;
         if (CombatHealthThresholdController.Instance != null && CombatHealthThresholdController.Instance.BlocksEnemyActions(this))
         {
             return false;

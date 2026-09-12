@@ -12,6 +12,228 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
   m_Name: Enemy_ScientifiqueFou
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  playerSettings:
+    locomotion:
+      logScriptedTraversalDiagnostics: 0
+      scriptedTraversalDiagnosticTickInterval: 8
+      scriptedTraversalExternalCorrectionDistance: 0.02
+      scriptedTraversalExternalCorrectionDegrees: 1
+      driveFromSquadFacade: 1
+      overrideOpsiveHandlerInput: 1
+      orientLookSourceFromMovement: 1
+      configureRigidbodyForOpsive: 1
+      enableRunStartResponse: 1
+      runStartVelocityBonus: 0.55
+      runStartResponseCooldown: 0.25
+      runStartResponseMaximumPlanarSpeed: 4.25
+      logLocomotionResponseDiagnostics: 0
+      autoInstallCompanionBridges: 1
+      movementDeadZone: 0.08
+      relaxGroundReliefTolerance: 1
+      groundReliefMinStepHeight: 0.6
+      groundReliefMinSlopeLimit: 58
+      groundReliefMinStickToGroundDistance: 0.55
+      adaptMovingGroundRelief: 1
+      movingStepHeight: 0.58
+      movingSlopeLimit: 62
+      movingStickToGroundDistance: 0.86
+      idleStickToGroundDistance: 0.64
+      groundReliefAdaptationSpeed: 7.5
+      enableUccFlight: 1
+      flightTakeoffVerticalSpeed: 6.5
+      flightTakeoffDuration: 0.45
+      flightTakeoffDamping: 16
+      flightCruiseSpeed: 33
+      flightBoostSpeed: 81
+      flightAcceleration: 54
+      flightBoostAcceleration: 126
+      flightDeceleration: 36
+      flightVerticalSpeed: 24
+      flightVerticalAcceleration: 66
+      flightVerticalDeceleration: 54
+      flightVerticalDeadZone: 0.05
+      flightIdleSpeedThreshold: 0.08
+      flightTurnRate: 760
+      flightBoostTurnRate: 460
+      flightLandingSpeed: 12
+      flightLandingAcceleration: 36
+      combatSkillLandingSpeed: 14
+      allowStandaloneFlightFallback: 1
+      fallbackFlightCollisionSkin: 0.03
+      fallbackFlightGroundProbeDistance: 0.2
+      driveLitLocomotionAnimatorParameters: 0
+      speedParam: Speed
+      horizontalMovementParam: HorizontalMovement
+      forwardMovementParam: ForwardMovement
+      isMovingParam: IsMoving
+      locomotionTierParam: LocomotionTier
+      combatMoveMagnitudeParam: CombatMoveMagnitude
+      turnParam: Turn
+      flightStateParam: FlightState
+      flightSpeedParam: FlightSpeed
+      flightVerticalParam: FlightVertical
+      flightBoostParam: FlightBoost
+      flightStartTriggerParam: FlightStartTrigger
+      walkPresentationSpeed: 1.35
+      runPresentationSpeed: 3.25
+      combatFacingSpeedDegreesPerSecond: 900
+      combatOrbitPureLateralThreshold: 0.12
+      combatOrbitRadiusDeadZone: 0.035
+      combatOrbitRadiusCorrectionGain: 2.25
+      combatOrbitMaximumCorrection: 0.35
+      logCombatLockMotionDiagnostics: 0
+      debugGroundBlockDiagnostics: 0
+      groundBlockDiagnosticInterval: 0.75
+      groundBlockDiagnosticMinProgress: 0.04
+      enableCinematicGroundedFeel: 1
+      tuneGroundedUccPhysics: 1
+      groundedMotorAcceleration: {x: 4.6, y: 0, z: 4.6}
+      groundedMotorDamping: 5.7
+      groundedPreviousAccelerationInfluence: 0.88
+      groundedBackwardsMultiplier: 0.6
+      groundedGravityAmount: 0.65
+      groundedStickToGroundDistance: 0.72
+      groundedSlopeLimit: 60
+      groundedMaxStepHeight: 0.5
+      groundedMovingPlatformSeparationVelocity: 7
+      groundedMovingPlatformDisconnectMultiplier: 0.65
+      groundedMovingPlatformForceDamping: 0.18
+      groundedInputAcceleration: 6.2
+      groundedSprintInputAcceleration: 5
+      groundedInputDeceleration: 6.2
+      groundedDirectionChangeAcceleration: 11.2
+      groundedDirectionChangeDot: 0.2
+      tuneGroundedSprintSpeedChange: 1
+      groundedSprintSpeedMultiplier: 1.65
+      groundedSprintSpeedParameterValue: 2.6
+      suppressSpeedChangeAnimatorParameter: 1
+      moveStartTriggerParam: MoveStartTrigger
+      moveStopTriggerParam: MoveStopTrigger
+      turnInPlaceParam: TurnInPlace
+      groundedAnimationSpeedToBlend: 0.48
+      groundedAnimatorSpeedRiseRate: 13.5
+      groundedAnimatorSpeedFallRate: 5.4
+      groundedAnimatorTurnRate: 5.4
+      groundedTurnInPlaceThreshold: 0.55
+      groundedTurnInPlaceMaxSpeed: 0.35
+      enableGroundedTurnInPlaceClips: 0
+      groundedStopRequestDelay: 0.06
+      groundedStopSettledSpeed: 0.06
+      groundedStopSettledDuration: 0.05
+      groundedStopExitNormalizedTime: 0.9
+      groundedMoveTransitionDirectionHoldTime: 0.18
+      groundedMoveTransitionParameterSpeed: 1.22
+      useForwardOnlyGroundedLocomotion: 1
+      enableScriptedPivotTurns: 0
+      groundedPivotMinAngle: 85
+      groundedPivot180Angle: 135
+      groundedPivotMaxSpeed: 0.45
+      groundedPivotMaxSmoothedInput: 0.14
+      groundedPivotHoldTime: 0.32
+      groundedPivotCooldown: 0.34
+      groundedPivotStartGraceTime: 0.12
+      groundedPivotStartGraceMinAngle: 128
+      groundedPivotMovementReleaseStart: 0.38
+      groundedPivotMovementReleaseMaxAngle: 72
+      groundedPivotMovementReleaseScale: 0.58
+      commitBodyRotationDuringPivot: 1
+      groundedPivotRotationCommitRate: 960
+      recordLocomotionDiagnostics: 0
+      debugLocomotionDiagnostics: 0
+      locomotionDiagnosticInterval: 0.1
+      enableObstacleTraversal: 1
+      ignoredObstacleMaxHeight: 0.18
+      traversableObstacleMaxHeight: 0.9
+      obstacleProbeDistance: 0.75
+      obstacleProbeRadius: 0.22
+      obstacleProbeBaseHeight: 0.25
+      obstacleTraversalMaxSurfaceUpDot: 0.35
+      obstacleLandingDistance: 0.55
+      obstacleTraversalDuration: 0.42
+      obstacleTraversalArcHeight: 0.25
+      obstacleTraversalTopClearance: 0.16
+      obstacleTraversalHeightArcMultiplier: 0.38
+      obstacleTraversalRotationLead: 0.68
+      obstacleTraversalMinInputMagnitude: 0.34
+      obstacleTraversalCooldown: 0.28
+      obstacleTraversalMask:
+        serializedVersion: 2
+        m_Bits: 4294967295
+      obstacleTraversalTriggerParam: ObstacleTraversal
+      enableCinematicOrientationFeel: 1
+      orientationInputDeadZone: 0.14
+      orientationWalkTurnRate: 360
+      orientationSprintTurnRate: 300
+      orientationSharpTurnRate: 300
+      orientationSharpTurnAngle: 92
+      orientationVelocityBlend: 0.1
+    interactions:
+      requireGroundedForLitInteractions: 1
+      allowWhileHeightChange: 1
+      allowWhileSpeedChange: 1
+      allowWhileFall: 0
+      allowWhileJump: 0
+      blockWhileItemAbilityActive: 1
+    equipment:
+      equippedAttacks: []
+      equippedLightSkill: {fileID: 0}
+    footsteps:
+      defaultSurface: {fileID: 0}
+      groundMask:
+        serializedVersion: 2
+        m_Bits: 4294967295
+      raycastHeight: 0.4
+      raycastDistance: 1.6
+      autoResolveHumanoidFeet: 1
+      footRaycastHeight: 0.35
+      footRaycastDistance: 0.8
+      minimumFootstepInterval: 0.05
+      minimumAnimationEventWeight: 0.5
+    face:
+      preferredRendererName: CC_Base_Body
+      autoResolveFaceRenderer: 1
+      jawRootName: CC_Base_JawRoot
+      autoResolveJawRoot: 1
+      enforceNeutralJawPoseInLateUpdate: 1
+      presets: []
+      initialPassiveEmotion: 0
+      playInitialPassiveOnStart: 1
+      useUnscaledTime: 0
+      enforceControlledWeightsInLateUpdate: 1
+    trajectories:
+      library: {fileID: 0}
+    dash:
+      dashOvershootDistance: 1.25
+      dashImpulsePerMeter: 8
+      minimumDashImpulse: 14
+      maximumDashImpulse: 32
+      dashInputLockSeconds: 0.1
+      stopDashDuration: 0.18
+      stopDashDeceleration: 65
+    jump:
+      jumpHeight: 5
+      jumpStartTakeoffNormalizedTime: 0.13
+      jumpStartPlanarSlowdown: 0
+      apexGravityEntryVelocity: 2.4
+      apexGravityMultiplier: 0.28
+      descentGravityMultiplier: 0.72
+      fallingAnimationEntryVelocity: -0.1
+      hardLandingHeight: 3
+      landingHandoff:
+        minimumContactSeconds: 0.15
+        animationExitNormalizedTime: 0.82
+        planarSettledSpeed: 0.12
+        verticalSettledSpeed: 0.2
+        planarDampingPerSecond: 7
+        maximumSettleSeconds: 0.55
+        locomotionBlendSeconds: 0.12
+        preLandingProbeDistance: 1.2
+        preLandingLeadSeconds: 0.14
+    dodge:
+      impulseSpeed: 16
+      durationMultiplier: 1
+      alignUnlockedDodgeToTravel: 1
+      alignLockedForwardDodgeToTravel: 1
   uniqueId: 030c09c97c1b1714a912dbf5e4f2d27e
   characterId: 
   characterName: Scientifique fou
@@ -21,6 +243,80 @@ MonoBehaviour:
   combatSkills:
   - {fileID: 11400000, guid: 7a006ffc54983974bb8741dc6e2fd909, type: 2}
   enemyCombatProfile: {fileID: 11400000, guid: 9c02bcb39a360484db5992e599e4ad89, type: 2}
+  enemySettings:
+    LocomotionPositioning:
+      preferredDistance: 2.6
+      minimumRetreatDistance: 1.2
+      strafeRadius: 1.1
+      strafeSideHoldSeconds: 1.35
+      walkSpeed: 1.8
+      runSpeed: 3.6
+      runDistance: 8
+      walkResumeDistance: 6
+      pursuitRefreshSeconds: 0.15
+      pursuitTargetMoveDistance: 0.5
+      walkSpeedThreshold: 1.2
+      runSpeedThreshold: 3.4
+    LocomotionFacingSpeedDegreesPerSecond: 540
+    LocomotionAnimatorDampTime: 0.08
+    LocomotionWalkCycleSpeed: 1.8
+    LocomotionRunCycleSpeed: 3.6
+    LocomotionNavMeshEdgeClearance: 0.45
+    LocomotionClearanceSearchRadius: 2
+    LocomotionClearanceSearchSamples: 12
+    LocomotionLogDiagnostics: 0
+    ContractLogDiagnostics: 1
+    RecoveryExtraRecoverySeconds: 1
+    RecoveryLogDiagnostics: 0
+    BrainLogDecisions: 0
+    NavigationSampleDistance: 1.5
+    NavigationReattachTolerance: 0.15
+    NavigationRetryInterval: 0.25
+    NavigationRebuildRequestInterval: 1
+    NavigationLogDiagnostics: 0
+    ActorHitAnimatorState: Hit
+    ActorHitAnimationTransitionSeconds: 0.06
+    ActorIdleAnimatorState: CombatIdle
+    ActorHitRecoveryNormalizedTime: 0.9
+    ActorHitRecoveryTransitionSeconds: 0.1
+    ActorDeathAnimatorState: Death
+    ActorDeathAnimationTransitionSeconds: 0.08
+    ActorRetaliationDelaySeconds: 0.15
+    PhysicsGroundSkin: 0.03
+    PhysicsGroundProbeStartHeight: 0.35
+    PhysicsGroundProbeDistance: 4
+    PhysicsMaximumGroundSnapDistance: 0.75
+    PhysicsEmergencyLandingDelay: 0.45
+    PhysicsMinimumGroundNormal: 0.45
+    PhysicsGroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    PhysicsLogStateChanges: 0
+    PhysicsLogPoseAudit: 1
+    PhysicsPoseJumpDiagnosticDistance: 0.5
+    PhysicsMaximumRootMotionDeltaPerFrame: 0.5
+    PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75
+    PhysicsActionRepositionDiagnosticDistance: 1
+    PhysicsAnimationMovementMode: 1
+  vision:
+    maximumDistance: 18
+    fieldOfViewDegrees: 120
+    eyeHeight: 0
+    targetHeight: 1
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  enemyEncounterOptions:
+    startAsGhost: 1
+    introductionLine: "Vous n'auriez jamais d\xFB venir ici..."
+    introductionSeconds: 2.5
+    interactionDistance: 2.5
+    requiredKnowledge: {fileID: 11400000, guid: c5df294c93ed1724692a1b16d61f311d, type: 2}
+  enemyDeathOptions:
+    enabled: 1
+    dialogueLine: Qu'est ce que... j'ai fait...
+    dialogueSeconds: 4
+    voiceLine: {fileID: 11400000, guid: 864a5a50e6434e2b9bfdd9ca65167285, type: 2}
   groundBasicSkills: []
   airBasicSkills: []
   stats:
@@ -47,78 +343,3 @@ MonoBehaviour:
     stageClearance: 0.03
   voiceLines: []
   maisonWaitingPoint: 0
-  enemySettings:
-    ActorHitAnimatorState: Hit
-    ActorHitAnimationTransitionSeconds: 0.06
-    ActorIdleAnimatorState: CombatIdle
-    ActorHitRecoveryNormalizedTime: 0.9
-    ActorHitRecoveryTransitionSeconds: 0.1
-    ActorDeathAnimatorState: Death
-    ActorDeathAnimationTransitionSeconds: 0.08
-    ActorRetaliationDelaySeconds: 0.15
-    PhysicsGroundSkin: 0.03
-    PhysicsGroundProbeStartHeight: 0.35
-    PhysicsGroundProbeDistance: 4
-    PhysicsMaximumGroundSnapDistance: 0.75
-    PhysicsEmergencyLandingDelay: 0.45
-    PhysicsMinimumGroundNormal: 0.45
-    PhysicsGroundMask:
-      serializedVersion: 2
-      m_Bits: 4294967295
-    PhysicsLogStateChanges: 0
-    PhysicsLogPoseAudit: 1
-    PhysicsPoseJumpDiagnosticDistance: 0.5
-    PhysicsMaximumRootMotionDeltaPerFrame: 0.5
-    PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75
-    PhysicsActionRepositionDiagnosticDistance: 1
-    PhysicsAnimationMovementMode: 1
-    LocomotionPositioning:
-      preferredDistance: 2.6
-      minimumRetreatDistance: 1.2
-      strafeRadius: 1.1
-      strafeSideHoldSeconds: 1.35
-      walkSpeed: 1.8
-      runSpeed: 3.6
-      runDistance: 8
-      walkResumeDistance: 6
-      pursuitRefreshSeconds: 0.15
-      pursuitTargetMoveDistance: 0.5
-      walkSpeedThreshold: 1.2
-      runSpeedThreshold: 3.4
-    LocomotionFacingSpeedDegreesPerSecond: 540
-    LocomotionAnimatorDampTime: 0.08
-    LocomotionWalkCycleSpeed: 1.8
-    LocomotionRunCycleSpeed: 3.6
-    LocomotionNavMeshEdgeClearance: 0.45
-    LocomotionClearanceSearchRadius: 2
-    LocomotionClearanceSearchSamples: 12
-    LocomotionLogDiagnostics: 0
-    RecoveryExtraRecoverySeconds: 1
-    RecoveryLogDiagnostics: 0
-    NavigationSampleDistance: 1.5
-    NavigationReattachTolerance: 0.15
-    NavigationRetryInterval: 0.25
-    NavigationRebuildRequestInterval: 1
-    NavigationLogDiagnostics: 0
-    ContractLogDiagnostics: 1
-    BrainLogDecisions: 0
-
-  enemyEncounterOptions:
-    startAsGhost: 1
-    introductionLine: "Vous n'auriez jamais d\xFB venir ici..."
-    introductionSeconds: 2.5
-    interactionDistance: 2.5
-  enemyDeathOptions:
-    enabled: 1
-    dialogueLine: Qu'est ce que... j'ai fait...
-    dialogueSeconds: 4
-    voiceLine: {fileID: 11400000, guid: 864a5a50e6434e2b9bfdd9ca65167285, type: 2}
-
-  vision:
-    maximumDistance: 18
-    fieldOfViewDegrees: 120
-    eyeHeight: 0
-    targetHeight: 1
-    obstructionMask:
-      serializedVersion: 2
-      m_Bits: 4294967295

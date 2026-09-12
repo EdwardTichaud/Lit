@@ -25,14 +25,14 @@ public sealed partial class EnemyController : CharacterAnimationController
     private bool combatEnabled = true;
     public bool CombatEnabled
     {
-        get => combatEnabled;
+        get => combatEnabled && (!StartsAsGhost || CurrentState == EncounterState.Active);
         set
         {
             if (combatEnabled == value) return;
             combatEnabled = value;
             if (!initialized) return;
-            if (!value) { CancelAction("desengagement"); StopNavigation(); NavigationOnDisable(); }
-            else if (isActiveAndEnabled) NavigationOnEnable();
+            if (!value) { BrainOnDisable(); StopNavigation(); NavigationOnDisable(); }
+            else if (CombatEnabled && isActiveAndEnabled) NavigationOnEnable();
         }
     }
     public bool IsRuntimeReady => CanRunCombat && IsReady;
@@ -59,19 +59,22 @@ public sealed partial class EnemyController : CharacterAnimationController
     }
     private void OnAnimatorMove()
     {
-        if (BrainAuthority && animationRelayEnabled && Animator != null && ShouldConsumeAnimatorRootMotion) ApplyAnimationDelta(Animator.deltaPosition, Animator.deltaRotation);
+        if (CombatEnabled && BrainAuthority && animationRelayEnabled && Animator != null && ShouldConsumeAnimatorRootMotion) ApplyAnimationDelta(Animator.deltaPosition, Animator.deltaRotation);
     }
     private void Start() => BrainStart();
     private void OnEnable()
     {
         if (!initialized) return;
         EncounterOnEnable();
-        if (combatEnabled) NavigationOnEnable();
+        if (CombatEnabled) NavigationOnEnable();
         RecoveryOnEnable();
     }
     private void Update()
     {
-        if (!initialized || !combatEnabled || !BrainAuthority) return;
+        if (Authority && CurrentState == EncounterState.Dialogue &&
+            (Health.IsDead || Online && !NetworkManager.Singleton.ConnectedClients.ContainsKey(introductionClient)))
+            CompleteIntroduction(introductionToken, introductionClient, false);
+        if (!initialized || !CombatEnabled || !BrainAuthority) return;
         BrainUpdate();
         LocomotionUpdate();
     }
@@ -79,7 +82,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     private void LateUpdate()
     {
         if (!initialized) return;
-        if (combatEnabled && BrainAuthority) LocomotionLateUpdate();
+        if (CombatEnabled && BrainAuthority) LocomotionLateUpdate();
         PhysicsLateUpdate();
         AnimationLateUpdate();
     }

@@ -406,6 +406,7 @@ public class NetcodeBootstrap : MonoBehaviour
         NetcodeRuntimeUtilities.GetOrAdd<NetworkObjectRegistry>(gameObject);
         NetcodeRuntimeUtilities.GetOrAdd<SpawnManager>(gameObject);
         NetcodeRuntimeUtilities.GetOrAdd<WorldRulesStateManager>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<CycleProgressionService>(gameObject);
         NetcodeRuntimeUtilities.GetOrAdd<WorldStateManager>(gameObject);
         NetcodeRuntimeUtilities.GetOrAdd<PersistentWorldSyncOverlay>(gameObject);
         NetcodeRuntimeUtilities.GetOrAdd<JoinSyncSystem>(gameObject);

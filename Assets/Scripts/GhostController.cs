@@ -503,6 +503,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void OnEnable()
     {
+        if (IsDialogueDisappearanceComplete) { gameObject.SetActive(false); return; }
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
@@ -520,6 +521,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void OnDisable()
     {
+        if (dialogueDisappearanceRequested)
+        {
+            if (dialogueDisappearanceRoutine != null) StopCoroutine(dialogueDisappearanceRoutine);
+            dialogueDisappearanceRoutine = null;
+            IsDialogueDisappearanceComplete = true;
+        }
         StopGhostRendererVisibilityTransition();
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
@@ -537,10 +544,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
     }
 
-    /// <summary>Hands the visible body to another gameplay mode without retaining ghost input or delayed hiding.</summary>
-    public void SetGhostMode(bool active)
+    public enum GameplayMode { Ghost, Introduction, Enemy }
+
+    /// <summary>Applies presentation and combat gates. The encounter owns authority and replicated state.</summary>
+    public void SetGameplayMode(GameplayMode mode)
     {
-        if (active)
+        var enemy = GetComponent<EnemyController>();
+        if (enemy != null && !enemy.TrySetGhostGameplayMode(mode)) return;
+        if (enemy != null) enemy.CombatEnabled = mode == GameplayMode.Enemy;
+        if (mode == GameplayMode.Ghost)
         {
             enabled = true;
             return;
@@ -551,6 +563,58 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         // its body after that cleanup, before enemy animation takes ownership.
         ApplyProximityDissolveAmount(proximityVisibleDissolveAmount, true);
         SetGhostRenderersVisible(true);
+    }
+
+    public void SetGhostMode(bool active) => SetGameplayMode(active ? GameplayMode.Ghost : GameplayMode.Enemy);
+
+    private bool dialogueDisappearanceRequested;
+    private Coroutine dialogueDisappearanceRoutine;
+    public bool IsDialogueDisappearanceComplete { get; private set; }
+
+    /// <summary>The cycle owns persistence; the Ghost owns its delayed visual cleanup.</summary>
+    public void SetDialogueCompletion(bool completed, float delaySeconds, bool restoreImmediately = false)
+    {
+        if (!completed)
+        {
+            if (!dialogueDisappearanceRequested) return;
+            if (dialogueDisappearanceRoutine != null) StopCoroutine(dialogueDisappearanceRoutine);
+            dialogueDisappearanceRoutine = null;
+            dialogueDisappearanceRequested = false;
+            IsDialogueDisappearanceComplete = false;
+            finalResolvedGhostCleanupInProgress = false;
+            return;
+        }
+        if (dialogueDisappearanceRequested) return;
+        dialogueDisappearanceRequested = true;
+        finalResolvedGhostCleanupInProgress = true;
+        StopGhostRendererVisibilityTransition();
+        ShowInteraction(false);
+        if (RuntimeOutlineSelectionManager.IsActiveInteractable(this)) RuntimeOutlineSelectionManager.Clear();
+        if (restoreImmediately || !isActiveAndEnabled)
+        {
+            IsDialogueDisappearanceComplete = true;
+            SetGhostRenderersVisible(false);
+            gameObject.SetActive(false);
+            return;
+        }
+        dialogueDisappearanceRoutine = StartCoroutine(DisappearAfterDialogue(delaySeconds));
+    }
+
+    private IEnumerator DisappearAfterDialogue(float delaySeconds)
+    {
+        if (delaySeconds > 0f) yield return new WaitForSecondsRealtime(delaySeconds);
+        float duration = enableProximityDissolve ? Mathf.Max(0f, ghostDisappearanceRendererDelay) : 0f;
+        float initial = float.IsNaN(currentProximityDissolveAmount) ? proximityVisibleDissolveAmount : currentProximityDissolveAmount;
+        for (float elapsed = 0f; elapsed < duration; elapsed += Time.unscaledDeltaTime)
+        {
+            ApplyProximityDissolveAmount(Mathf.Lerp(initial, proximityHiddenDissolveAmount, elapsed / duration), true);
+            yield return null;
+        }
+        ApplyProximityDissolveAmount(proximityHiddenDissolveAmount, true);
+        SetGhostRenderersVisible(false);
+        SetProximityCharacterEffectsPlaying(false);
+        yield return FinalResolvedGhostCleanupRoutine();
+        dialogueDisappearanceRoutine = null;
     }
 
     private void LateUpdate()
@@ -626,7 +690,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         onGhostDataChanged.Invoke();
     }
 
-    public bool CanBeDetectedBy(SquadCharacterController controller) => TryEvaluateRevealForController(controller, out _);
+    public bool CanBeDetectedBy(SquadCharacterController controller) => !finalResolvedGhostCleanupInProgress && TryEvaluateRevealForController(controller, out _);
 
     public Collider GetInteractionDetectionCollider()
     {
@@ -1743,6 +1807,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        if (finalResolvedGhostCleanupInProgress) return;
         if (IsReactionChoiceOpen())
         {
             if (!reactionChoiceAwaitingFreshInteract &&

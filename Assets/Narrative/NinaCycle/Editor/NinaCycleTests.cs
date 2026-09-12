@@ -43,8 +43,7 @@ public sealed class NinaCycleTests
     [Test]
     public void ScarBodyFallsOntoWorldAndKeepsUpright()
     {
-        var scene = UnityEngine.SceneManagement.SceneManager.CreateScene("Scar physics test",
-            new UnityEngine.SceneManagement.CreateSceneParameters(UnityEngine.SceneManagement.LocalPhysicsMode.Physics3D));
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
         var root = new UnityEngine.GameObject("Scar physics root");
         var floor = new UnityEngine.GameObject("World floor");
         try
@@ -76,6 +75,7 @@ public sealed class NinaCycleTests
             Assert.IsInstanceOf<UnityEngine.CapsuleCollider>(solid);
             UnityEngine.Physics.SyncTransforms();
             var physics = UnityEngine.PhysicsSceneExtensions.GetPhysicsScene(scene);
+            Assert.That(physics, Is.Not.EqualTo(UnityEngine.Physics.defaultPhysicsScene), "Physics test must remain isolated from the open authoring scenes.");
             for (int i = 0; i < 150; i++) physics.Simulate(.02f);
             Assert.That(root.transform.position.y, Is.InRange(-.06f, .06f));
             Assert.That(solid.bounds.min.y, Is.InRange(-.03f, .03f));
@@ -86,7 +86,7 @@ public sealed class NinaCycleTests
         {
             UnityEngine.Object.DestroyImmediate(root);
             UnityEngine.Object.DestroyImmediate(floor);
-            UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
+            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene);
         }
     }
 
@@ -163,8 +163,8 @@ public sealed class NinaCycleTests
         }
     }
 
-    [TestCase("  Une blessure persistante.  ", "COMPÉTENCE APPRISE\n<size=140%>Cicatrice</size>\n\nUne blessure persistante.")]
-    [TestCase(" ", "COMPÉTENCE APPRISE\n<size=140%>Cicatrice</size>")]
+    [TestCase("  Une blessure persistante.  ", "COMPÃ‰TENCE APPRISE\n<size=140%>Cicatrice</size>\n\nUne blessure persistante.")]
+    [TestCase(" ", "COMPÃ‰TENCE APPRISE\n<size=140%>Cicatrice</size>")]
     public void SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription(string description, string expected)
     {
         var root = new UnityEngine.GameObject("Skill notification test");

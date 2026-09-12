@@ -5,6 +5,7 @@ using Lit.Timeline;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.SceneManagement;
 
 /// <summary>Server commits milestones; world variables own save/load, NGO owns live replication.</summary>
 [RequireComponent(typeof(NetworkObject))]
@@ -19,7 +20,21 @@ public sealed class CycleController : NetworkBehaviour
     public CyclePoseBinding[] poses = Array.Empty<CyclePoseBinding>();
     public PlayableDirector director;
     public TimelineBindingProfile bindingProfile;
-    private readonly NetworkVariable<int> replicatedState = new NetworkVariable<int>();
+    private CycleProgressionService progression;
+    private bool presentationDirty = true;
+    private bool sequencePending;
+    private float nextBindingCheck;
+    [Tooltip("Ennemis de cette scene a suspendre pendant ses sequences ; vide utilise seulement la rencontre liee.")]
+    public EnemyController[] cinematicParticipants = Array.Empty<EnemyController>();
+    public CycleEncounterBinding[] encounters = Array.Empty<CycleEncounterBinding>();
+    public CycleSequenceBinding[] sequences = Array.Empty<CycleSequenceBinding>();
+    private readonly HashSet<string> attemptedSequences = new HashSet<string>();
+    private CycleSequenceBinding activeSequence;
+    private string activeSequenceId = "cinematic";
+    private PlayableDirector ActiveDirector => activeSequence != null ? activeSequence.director : director;
+    private TimelineBindingProfile ActiveProfile => activeSequence != null ? activeSequence.profile : bindingProfile;
+    public CycleStatus Status => progression != null ? progression.GetStatus(definition) : CycleStatus.Unavailable;
+    private bool Completed => progression != null ? progression.IsCompleted(definition) : definition != null && definition.IsCompleted(State);
     private WorldRulesStateManager rules;
     private CharacterInfo health;
     private TimelinePlaybackHandle playback;
@@ -30,57 +45,199 @@ public sealed class CycleController : NetworkBehaviour
     private struct PendingDialogue { public string id; public int token; public double earliest; }
     private double cinematicEarliestFinish;
     private int completedViewers;
-    private bool ownsCinematicPriority;
+    private int localPlaybackGeneration;
+    private readonly HashSet<ulong> completionReadyClients = new HashSet<ulong>();
+    private bool completionReadySent, unloadStarted;
+    private double completionStartedAt = -1;
+    private bool completionCancelled;
     private readonly HashSet<ulong> viewers = new HashSet<ulong>();
     private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
+    private readonly HashSet<CycleInteraction> presentedInteractions = new HashSet<CycleInteraction>();
     private bool Online => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     private bool Authority => !Online || IsSpawned && IsServer;
     private int State => rules != null && definition != null && rules.TryGetInt(definition.StateKey, out int value) ? value : 0;
     private bool Knows(KnowledgeSO knowledge) => knowledge != null && KnowledgeManager.Instance != null && KnowledgeManager.Instance.HasKnowledge(knowledge);
-    public bool Evaluate(CycleCondition condition) => condition != null && condition.Matches(State, Knows);
+    public bool Evaluate(CycleCondition condition) => condition != null && condition.Matches(State, Knows) &&
+        (progression == null || progression.Matches(definition, condition.requirements));
     private bool HasFlags(int flags) => flags != 0 && (State & flags) == flags;
 
-    public override void OnNetworkSpawn()
-    {
-        replicatedState.OnValueChanged += OnStateChanged;
-        ResolveRules();
-        if (IsServer) replicatedState.Value = State;
-        else ApplyState(replicatedState.Value);
-    }
-    public override void OnNetworkDespawn()
-    {
-        replicatedState.OnValueChanged -= OnStateChanged;
-        OnDisable();
-    }
+    private void OnEnable() { presentationDirty = true; ResolveRules(); }
+    public override void OnNetworkSpawn() { ResolveRules(); presentationDirty = true; }
+    public override void OnNetworkDespawn() => OnDisable();
     private void ResolveRules()
     {
         if (rules == null) rules = FindAnyObjectByType<WorldRulesStateManager>();
+        if (progression == null && rules != null && Application.isPlaying)
+        {
+            progression = CycleProgressionService.Ensure(rules);
+            progression.Register(this);
+            progression.Changed += OnProgressionChanged;
+            presentationDirty = true;
+        }
     }
+    private void OnProgressionChanged() => presentationDirty = true;
     private void Update()
     {
-        ResolveRules();
-        if (rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
-        if (Online && !IsSpawned) return;
-        if (!Authority && State != replicatedState.Value) ApplyState(replicatedState.Value);
-        if (Authority)
+        if (Time.unscaledTime >= nextBindingCheck)
         {
-            if (IsSpawned && replicatedState.Value != State) replicatedState.Value = State;
-            BindEncounter();
-            RevealKnowledgeAfterDefeat();
-            if (definition.playCinematicAfterDefeat && HasFlags(definition.enemyDefeatedFlags) && !HasFlags(definition.cinematicCompletedFlags) && !attemptedCinematic)
+            nextBindingCheck = Time.unscaledTime + .5f;
+            ResolveRules();
+            if (Authority && definition != null) { BindEncounter(); BindAdditionalEncounters(); }
+        }
+        if (rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
+        if (Online && (!IsSpawned || !Authority && (progression == null || !progression.IsReady))) return;
+        if (presentationDirty)
+        {
+            presentationDirty = false;
+            if (Authority)
             {
-                attemptedCinematic = true;
+                RevealKnowledgeAfterDefeat();
+                TryStartSequence();
+            }
+            ApplyPresentation();
+        }
+        UpdateCompletedScene();
+    }
+
+    private void BindAdditionalEncounters()
+    {
+        foreach (var binding in encounters ?? Array.Empty<CycleEncounterBinding>())
+        {
+            if (binding == null) continue;
+            var next = binding.ResolveHealth();
+            if (next != binding.health)
+            {
+                if (binding.health != null && binding.callback != null) binding.health.HealthChanged -= binding.callback;
+                binding.health = next;
+                binding.callback = changed => { if (Authority && changed.IsDead) Report(CycleStepKind.EnemyDefeated, binding.id); };
+                if (next != null) next.HealthChanged += binding.callback;
+            }
+            if (next != null && !next.IsDead && progression != null && progression.HasDefeatFact(definition, binding.id)) next.ForceDefeat();
+            if (next != null && next.IsDead) Report(CycleStepKind.EnemyDefeated, binding.id);
+        }
+    }
+    private void Report(CycleStepKind kind, string id)
+    {
+        if (definition != null && definition.HasSteps && progression != null) progression.Report(this, kind, id);
+        presentationDirty = true;
+    }
+    private void TryStartSequence()
+    {
+        if (Completed || cinematicRunning || sequencePending) return;
+        if (definition.HasSteps)
+        {
+            foreach (var step in definition.steps)
+            {
+                if (step == null || step.kind != CycleStepKind.SequenceCompleted || progression == null ||
+                    !progression.IsStepActive(definition, step) || attemptedSequences.Contains(step.sourceId)) continue;
+                activeSequence = Array.Find(sequences, item => item != null && item.id == step.sourceId);
+                activeSequenceId = step.sourceId;
+                if (activeSequence == null && step.sourceId != "cinematic")
+                { Debug.LogWarning("[Cycle] Liaison de sequence absente : " + step.sourceId, this); attemptedSequences.Add(step.sourceId); continue; }
+                attemptedSequences.Add(step.sourceId);
+                sequencePending = true;
                 StartCoroutine(DeathSequence());
+                return;
             }
         }
-        ApplyPresentation();
+        else if (definition.playCinematicAfterDefeat && HasFlags(definition.enemyDefeatedFlags) &&
+                 !HasFlags(definition.cinematicCompletedFlags) && !attemptedCinematic)
+        {
+            attemptedCinematic = true;
+            sequencePending = true;
+            StartCoroutine(DeathSequence());
+        }
+    }
+
+    private bool CompletionPresentationReady()
+    {
+        if (localDialogue || cinematicRunning || (playback != null && !playback.IsDone) || EncounterPresentationIsBlocking()) return false;
+        if (interactions != null) foreach (var interaction in interactions)
+        {
+            if (interaction == null || interaction.cycle != this || interaction.Ghost == null) continue;
+            var dialogue = definition.FindDialogue(interaction.dialogueId);
+            if (dialogue != null && dialogue.disappearAfterCompletion && IsDialogueCompleted(dialogue) &&
+                !interaction.Ghost.IsDialogueDisappearanceComplete) return false;
+        }
+        return true;
+    }
+
+    private void UpdateCompletedScene()
+    {
+        if (!Completed)
+        {
+            completionReadyClients.Clear(); completionReadySent = false;
+            completionStartedAt = -1; completionCancelled = false;
+            return;
+        }
+        if (completionStartedAt < 0) completionStartedAt = Time.realtimeSinceStartupAsDouble;
+        if (unloadStarted) return;
+        bool ready = CompletionPresentationReady();
+        if (Online && !IsServer)
+        {
+            if (ready && !completionReadySent) { completionReadySent = true; CompletionReadyServerRpc(); }
+            return;
+        }
+        if (Online) foreach (ulong client in NetworkManager.ConnectedClientsIds)
+            if (client != NetworkManager.LocalClientId && !completionReadyClients.Contains(client)) ready = false;
+        bool timedOut = Time.realtimeSinceStartupAsDouble - completionStartedAt >= Math.Max(1f, definition.completionPresentationTimeout);
+        if (!ready && !timedOut) return;
+        if (!ready && !completionCancelled)
+        {
+            completionCancelled = true;
+            Debug.LogWarning("[Cycle] Delai de presentation depasse : annulation des presentations de " + definition.cycleId, this);
+            if (Online) CancelCompletionClientRpc();
+            CancelOwnedPresentation();
+            return; // Send cancellation before the scene unload request.
+        }
+        if (GameFlowService.Instance != null)
+            unloadStarted = GameFlowService.Instance.TryUnloadCompletedCycleScene(definition, gameObject.scene);
+    }
+    private void CancelOwnedPresentation()
+    {
+        cinematicRunning = false;
+        pendingDialogues.Clear();
+        DialoguePanelUI.CancelTimedConversation(this);
+        CancelPlayback();
+        ReleaseEnemies();
+        StopAllCoroutines();
+        localDialogue = false;
+    }
+    [ClientRpc] private void CancelCompletionClientRpc() => CancelOwnedPresentation();
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void CompletionReadyServerRpc(RpcParams rpc = default)
+    {
+        if (Authority && definition != null && Completed)
+            completionReadyClients.Add(rpc.Receive.SenderClientId);
+    }
+    private bool IsDialogueCompleted(CycleDialogue dialogue)
+    {
+        if (dialogue.HasCompleted(State)) return true;
+        if (progression == null || definition == null || !definition.HasSteps) return false;
+        foreach (var step in definition.steps)
+            if (step != null && step.kind == CycleStepKind.DialogueCompleted && step.sourceId == dialogue.id &&
+                progression.IsStepCompleted(definition, step.id)) return true;
+        return false;
     }
     private void ApplyPresentation()
     {
+        if (interactions != null) foreach (var interaction in interactions)
+        {
+            if (interaction == null || interaction.cycle != this) continue;
+            var dialogue = definition != null ? definition.FindDialogue(interaction.dialogueId) : null;
+            if (dialogue == null || !dialogue.disappearAfterCompletion || interaction.Ghost == null) continue;
+            bool firstPresentation = presentedInteractions.Add(interaction);
+            // Loaded/late-join milestones hide immediately; a live completion plays its delay once.
+            interaction.Ghost.SetDialogueCompletion(IsDialogueCompleted(dialogue), dialogue.disappearanceDelay, restoreImmediately: firstPresentation);
+        }
         if (activations != null) foreach (var binding in activations)
         {
             if (binding == null || binding.target == null || binding.target == gameObject) continue;
             bool visible = Evaluate(binding.condition);
+            if (visible && interactions != null) foreach (var interaction in interactions)
+                if (interaction != null && interaction.gameObject == binding.target && interaction.Ghost != null &&
+                    interaction.Ghost.IsDialogueDisappearanceComplete) { visible = false; break; }
             if (binding.target.activeSelf != visible) binding.target.SetActive(visible);
         }
         if (poses != null) foreach (var binding in poses)
@@ -99,11 +256,15 @@ public sealed class CycleController : NetworkBehaviour
             if (health != null) health.HealthChanged += OnHealthChanged;
         }
         if (health == null) return;
-        if (HasFlags(definition.enemyDefeatedFlags))
+        if (definition.HasSteps && progression != null ? progression.HasDefeatFact(definition, "encounter") : HasFlags(definition.enemyDefeatedFlags))
         {
             if (!health.IsDead) health.ForceDefeat();
         }
-        else if (health.IsDead) Commit(definition.enemyDefeatedFlags);
+        else if (health.IsDead)
+        {
+            if (definition.HasSteps) Report(CycleStepKind.EnemyDefeated, "encounter");
+            else Commit(definition.enemyDefeatedFlags);
+        }
     }
     private CharacterInfo ResolveEncounterHealth()
     {
@@ -116,7 +277,11 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void OnHealthChanged(CharacterInfo changed)
     {
-        if (Authority && definition != null && changed.IsDead) Commit(definition.enemyDefeatedFlags);
+        if (Authority && definition != null && changed.IsDead)
+        {
+            if (definition.HasSteps) Report(CycleStepKind.EnemyDefeated, "encounter");
+            else Commit(definition.enemyDefeatedFlags);
+        }
     }
     private void Commit(int flag)
     {
@@ -124,7 +289,7 @@ public sealed class CycleController : NetworkBehaviour
         if (!Authority || rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
         if (flag == 0 || (State & flag) == flag) return;
         ApplyState(State | flag);
-        if (IsSpawned) replicatedState.Value = State;
+        presentationDirty = true;
         RevealKnowledgeAfterDefeat();
     }
     private void RevealKnowledgeAfterDefeat()
@@ -133,7 +298,6 @@ public sealed class CycleController : NetworkBehaviour
         foreach (var knowledge in definition.knowledgeOnEnemyDefeat)
             if (knowledge != null && !Knows(knowledge)) KnowledgeReveal.Reveal(knowledge, "Le groupe", definition.cycleId);
     }
-    private void OnStateChanged(int before, int after) => ApplyState(after);
     private void ApplyState(int state)
     {
         ResolveRules();
@@ -148,29 +312,33 @@ public sealed class CycleController : NetworkBehaviour
                (DialoguePanelUI.Instance != null && DialoguePanelUI.Instance.IsShowing) ||
                (RealTimeCombatSceneUiController.Instance != null && RealTimeCombatSceneUiController.Instance.IsResultVisible))
             yield return null;
+        sequencePending = false;
+        if (Completed) yield break;
         if (!HasCinematic())
         {
-            Debug.LogWarning("[Cycle] Cinématique à assigner : progression conservée en attente.", this);
+            Debug.LogWarning("[Cycle] CinÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©matique ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  assigner : progression conservÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e en attente.", this);
             yield break;
         }
         cinematicRunning = true;
-        foreach (EnemyController enemyState in FindObjectsByType<EnemyController>())
-            if (!enemyState.IsSuspended)
+        var participants = cinematicParticipants != null && cinematicParticipants.Length > 0
+            ? cinematicParticipants : new[] { encounterEnemy };
+        foreach (EnemyController enemyState in participants)
+            if (enemyState != null && !enemyState.IsSuspended)
             {
                 suspendedEnemies.Add(enemyState);
                 enemyState.SetSuspended(true);
             }
-        cinematicEarliestFinish = Time.realtimeSinceStartupAsDouble + director.playableAsset.duration;
+        cinematicEarliestFinish = Time.realtimeSinceStartupAsDouble + ActiveDirector.playableAsset.duration;
         completedViewers = 0;
         int token = ++cinematicToken;
         viewers.Clear();
         if (Online)
         {
             foreach (ulong id in NetworkManager.Singleton.ConnectedClientsIds) viewers.Add(id);
-            PlayCinematicClientRpc(token);
+            PlayCinematicClientRpc(token, activeSequenceId);
         }
         else StartCoroutine(LocalCinematic(token));
-        double timeout = Time.realtimeSinceStartupAsDouble + director.playableAsset.duration + 30d;
+        double timeout = Time.realtimeSinceStartupAsDouble + ActiveDirector.playableAsset.duration + 30d;
         while (cinematicRunning && Time.realtimeSinceStartupAsDouble < timeout)
         {
             if (Online)
@@ -182,35 +350,34 @@ public sealed class CycleController : NetworkBehaviour
         }
         if (cinematicRunning) FinishCinematic(false);
     }
-    private bool HasCinematic() => director != null && director.playableAsset != null &&
-        director.playableAsset.duration > 0 && !double.IsInfinity(director.playableAsset.duration) &&
-        bindingProfile != null && bindingProfile.Matches(director.playableAsset);
+    private bool HasCinematic() => ActiveDirector != null && ActiveDirector.playableAsset != null &&
+        ActiveDirector.playableAsset.duration > 0 && !double.IsInfinity(ActiveDirector.playableAsset.duration) &&
+        ActiveProfile != null && ActiveProfile.Matches(ActiveDirector.playableAsset);
 
-    [ClientRpc] private void PlayCinematicClientRpc(int token) => StartCoroutine(LocalCinematic(token));
+    [ClientRpc] private void PlayCinematicClientRpc(int token, string id)
+    {
+        activeSequenceId = id;
+        activeSequence = Array.Find(sequences, item => item != null && item.id == id);
+        StartCoroutine(LocalCinematic(token));
+    }
     private IEnumerator LocalCinematic(int token)
     {
         bool success = false;
+        int generation = ++localPlaybackGeneration;
         try
         {
             var root = LocalPlayerUtils.GetControlledCharacter();
             lockedPlayer = root != null ? root.GetComponent<SquadCharacterController>() : null;
             if (lockedPlayer != null) ownsLock = lockedPlayer.TryBeginUccExternalLock();
             if (!HasCinematic() || TimelineManager.Instance == null || lockedPlayer != null && !ownsLock) yield break;
-            director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
-            var combat = RealTimeCombatManager.Instance;
-            if (combat != null && !combat.IsCinematicSequenceActive)
-            {
-                combat.SetCinematicSequenceActive(true);
-                ownsCinematicPriority = true;
-            }
-            playback = TimelineManager.Instance.Play(director, bindingProfile);
+            ActiveDirector.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
+            playback = TimelineManager.Instance.Play(ActiveDirector, ActiveProfile);
             while (!playback.IsDone) yield return null;
             success = playback.State == TimelinePlaybackState.Completed;
         }
         finally
         {
-            ReleaseLock();
-            playback = null;
+            if (generation == localPlaybackGeneration) { ReleaseLock(); playback = null; }
             if (Online && IsSpawned) CinematicResultServerRpc(token, success);
             else if (Authority) FinishCinematic(success);
         }
@@ -231,20 +398,22 @@ public sealed class CycleController : NetworkBehaviour
         if (Online && IsSpawned) StopCinematicClientRpc();
         else CancelPlayback();
         if (!success) return;
-        Commit(definition.cinematicCompletedFlags);
+        if (definition.HasSteps) Report(CycleStepKind.SequenceCompleted, activeSequenceId);
+        else Commit(definition.cinematicCompletedFlags);
+        presentationDirty = true;
     }
     [ClientRpc] private void StopCinematicClientRpc() => CancelPlayback();
     private void ReleaseLock()
     {
-        if (ownsCinematicPriority && RealTimeCombatManager.Instance != null) RealTimeCombatManager.Instance.SetCinematicSequenceActive(false);
-        ownsCinematicPriority = false;
         if (ownsLock && lockedPlayer != null) lockedPlayer.EndUccExternalLock();
         ownsLock = false;
         lockedPlayer = null;
     }
     private void CancelPlayback()
     {
+        localPlaybackGeneration++;
         if (playback != null && !playback.IsDone) playback.Stop();
+        playback = null;
         ReleaseLock();
     }
     public bool Interact(CycleInteraction interaction)
@@ -254,7 +423,14 @@ public sealed class CycleController : NetworkBehaviour
             interaction == null || FindInteraction(interaction.dialogueId) != interaction) return false;
         string id = interaction.dialogueId;
         var dialogue = definition.FindDialogue(id);
-        if (dialogue == null) return false;
+        if (dialogue == null)
+        {
+            if (Completed || !interaction.IsWithinRange(LocalPlayerUtils.GetControlledCharacter())) return false;
+            if (Online) { if (!IsSpawned) return false; InteractionServerRpc(id); }
+            else Report(CycleStepKind.Interaction, id);
+            return true;
+        }
+        if (Completed || dialogue.disappearAfterCompletion && IsDialogueCompleted(dialogue)) return false;
         bool available = Evaluate(dialogue.condition);
         string text = !available ? dialogue.unavailableLine : dialogue.HasReward(State) && !string.IsNullOrWhiteSpace(dialogue.repeatLine) ? dialogue.repeatLine : dialogue.line;
         if (string.IsNullOrWhiteSpace(text)) return false;
@@ -263,7 +439,7 @@ public sealed class CycleController : NetworkBehaviour
         if (startedOnline && !IsSpawned) return false;
         int token = ++dialogueToken;
         localDialogue = true;
-        bool shown = DialoguePanelUI.TryShowTimedConversation(text, definition.dialogueSeconds, completed =>
+        bool shown = DialoguePanelUI.TryShowTimedConversation(text, definition.ResolveDialogueSeconds(dialogue), completed =>
         {
             localDialogue = false;
             if (this == null || !isActiveAndEnabled || startedOnline != Online || manager != NetworkManager.Singleton) return;
@@ -293,22 +469,19 @@ public sealed class CycleController : NetworkBehaviour
     {
         var interaction = FindInteraction(id);
         var dialogue = definition != null ? definition.FindDialogue(id) : null;
-        var ghost = interaction != null ? interaction.Ghost : null;
-        var controller = player != null ? player.GetComponentInParent<SquadCharacterController>() : null;
-        if (controller == null && player != null) controller = player.GetComponentInChildren<SquadCharacterController>();
-        return interaction != null && interaction.isActiveAndEnabled && dialogue != null && Evaluate(dialogue.condition) &&
-            ghost != null && ghost.isActiveAndEnabled && controller != null && controller.CurrentHp > 0 &&
-            CharacterInteractionDetection.IsCharacterWithinRange(controller.transform,
-                ghost.GetInteractionDetectionCollider(), ghost.GetInteractionAnchor(), ghost.GetInteractionMaxDistance(controller) + .5f);
+        return interaction != null && interaction.isActiveAndEnabled && dialogue != null &&
+            !Completed && !(dialogue.disappearAfterCompletion && IsDialogueCompleted(dialogue)) && Evaluate(dialogue.condition) &&
+            interaction.IsWithinRange(player);
     }
     private void BeginDialogue(ulong client, string id, int token, GameObject player)
     {
         ResolveRules();
         pendingDialogues.Remove(client);
         if (!Authority || rules == null || definition == null || !Eligible(id, player)) return;
+        var dialogue = definition.FindDialogue(id);
         pendingDialogues[client] = new PendingDialogue { id = id, token = token,
-            earliest = Time.realtimeSinceStartupAsDouble + Math.Max(0f, definition.dialogueSeconds) - .1d };
-        ApplyDialogueEffects(definition.FindDialogue(id), false);
+            earliest = Time.realtimeSinceStartupAsDouble + definition.ResolveDialogueSeconds(dialogue) - .1d };
+        ApplyDialogueEffects(dialogue, false);
         ApplyPresentation();
     }
     private void CompleteDialogue(ulong client, string id, int token, bool completed, GameObject player)
@@ -323,12 +496,26 @@ public sealed class CycleController : NetworkBehaviour
     {
         ResolveRules();
         if (!Authority || rules == null || definition == null || dialogue == null) return;
+        if (definition.HasSteps && progression != null)
+        {
+            Report(completed ? CycleStepKind.DialogueCompleted : CycleStepKind.Interaction, dialogue.id);
+            return;
+        }
         if (!completed) { Commit(dialogue.openedFlags); return; }
         bool newReward = dialogue.rewardSkill != null && dialogue.rewardFlag > 0 && !dialogue.HasReward(State);
         Commit(dialogue.completedFlags | (newReward ? dialogue.rewardFlag : 0));
         if (!newReward || !dialogue.HasReward(State)) return;
         if (Online) RewardClientRpc(dialogue.id);
         else SkillUnlockPanel.TryShow(dialogue.rewardSkill);
+    }
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void InteractionServerRpc(string id, RpcParams rpc = default)
+    {
+        var interaction = FindInteraction(id);
+        var player = NetcodePlayerUtils.GetPlayerTransform(rpc.Receive.SenderClientId);
+        if (!Authority || Completed || interaction == null || definition.FindDialogue(id) != null ||
+            !interaction.IsWithinRange(player != null ? player.gameObject : null)) return;
+        Report(CycleStepKind.Interaction, id);
     }
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void BeginDialogueServerRpc(string id, int token, RpcParams rpc = default)
@@ -358,7 +545,22 @@ public sealed class CycleController : NetworkBehaviour
     {
         cinematicRunning = false;
         attemptedCinematic = false;
+        sequencePending = false;
         pendingDialogues.Clear();
+        completionReadyClients.Clear();
+        completionReadySent = unloadStarted = false;
+        completionStartedAt = -1;
+        completionCancelled = false;
+        attemptedSequences.Clear();
+        if (progression != null) { progression.Changed -= OnProgressionChanged; progression.Unregister(this); }
+        progression = null;
+        foreach (var binding in encounters ?? Array.Empty<CycleEncounterBinding>())
+            if (binding != null)
+            {
+                if (binding.health != null && binding.callback != null) binding.health.HealthChanged -= binding.callback;
+                binding.health = null;
+            }
+        presentedInteractions.Clear();
         if (poses != null) foreach (var binding in poses) if (binding != null) binding.previousState = null;
         DialoguePanelUI.CancelTimedConversation(this);
         ReleaseEnemies();

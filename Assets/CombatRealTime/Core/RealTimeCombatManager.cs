@@ -267,7 +267,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public void SetEnemyAttackMode(EnemyController enemy, bool active)
     {
-        if (enemy == null)
+        if (enemy == null || (active && !enemy.CombatEnabled))
         {
             return;
         }
@@ -291,7 +291,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool BeginEnemyAggro(Transform player, EnemyController enemy)
     {
-        if (player == null || enemy == null ||
+        if (player == null || enemy == null || !enemy.CombatEnabled ||
             (enemy.Health != null && enemy.Health.IsDead))
         {
             return false;
@@ -329,7 +329,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public bool BeginCombat(Transform player, EnemyController enemy)
     {
-        if (player == null || enemy == null)
+        if (player == null || enemy == null || !enemy.CombatEnabled)
         {
             return false;
         }
@@ -462,7 +462,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public bool TryLockEnemy(EnemyController enemy)
     {
         ResolvePlayerReferences();
-        if (playerRoot == null || enemy == null || !enemy.gameObject.activeInHierarchy ||
+        if (playerRoot == null || enemy == null || !enemy.CombatEnabled || !enemy.gameObject.activeInHierarchy ||
             (enemy.Health != null && enemy.Health.IsDead) ||
             Vector3.Distance(playerRoot.position, enemy.transform.position) > GetLockRange(enemy))
         {
@@ -622,7 +622,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         for (int i = 0; i < enemies.Length; i++)
         {
             EnemyController candidate = enemies[i];
-            if (candidate == null || !candidate.gameObject.activeInHierarchy ||
+            if (candidate == null || !candidate.CombatEnabled || !candidate.gameObject.activeInHierarchy ||
                 (candidate.Health != null && candidate.Health.IsDead))
             {
                 continue;
@@ -665,6 +665,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void SetLockedEnemy(EnemyController enemy)
     {
+        if (enemy != null && !enemy.CombatEnabled) return;
         if (lockedEnemy == enemy)
         {
             return;

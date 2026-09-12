@@ -80,3 +80,14 @@ hôte. Pour plusieurs exécutables sur un PC, utiliser des profils distincts
 Unity). Ces identités sont des identifiants de continuité, pas une preuve
 cryptographique d'identité. Les connexions exigent la même version du jeu et le
 protocole `lit-private-1`.
+
+## Scenes de cycles termines
+
+GameFlowService.TryUnloadCompletedCycleScene recoit les demandes apres attente
+ou annulation des presentations finales du cycle. Il verifie l'autorite, le
+jalon de fin, le nom de la scene dediee, l'absence de transition et de joueurs/
+services dans la scene. Les operations Netcode occupees sont retentees, et la
+scene retiree quitte loadedZoneSceneNames. Les chargements de manifeste ignorent
+les cycles deja termines via CycleProgressionService.ShouldSkipScene, y compris
+pour la validation des scenes necessaires au NavMesh. La scene principale n'est
+jamais retiree par ce chemin. La progression reste dans le service de session.

@@ -12,128 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
   m_Name: Lucian
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
-  uniqueId: 0f3452bd8cf87c440ab2208e8ebc72ce
-  characterId: lucian
-  characterName: Lucian
-  portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
-  worldPrefab: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
-  skills:
-  - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
-  - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
-  combatSkills:
-  - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
-  - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
-  - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
-  groundBasicSkills:
-  - {fileID: 11400000, guid: 1ddf0c3cda96bc1418077fee3b0f4d9d, type: 2}
-  - {fileID: 11400000, guid: c43a7367eab25894d943ab01335bd6de, type: 2}
-  - {fileID: 11400000, guid: 33c43d8aa19cfa74bb2947ab1f8e6def, type: 2}
-  airBasicSkills:
-  - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
-  starterItemsWithQuantity:
-  - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
-    quantity: 300
-  - item: {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
-    quantity: 300
-  - item: {fileID: 11400000, guid: 1c025a0b39ccf564b8d5fe22b4ea5109, type: 2}
-    quantity: 1
-  hp: 1000
-  isEnemy: 0
-  voiceLines: []
-  maisonWaitingPoint: 2
-
-  vision:
-    maximumDistance: 6
-    fieldOfViewDegrees: 110
-    eyeHeight: 1.35
-    targetHeight: 1
-    obstructionMask:
-      serializedVersion: 2
-      m_Bits: 4294967295
-
   playerSettings:
-    jump:
-      jumpHeight: 100
-      jumpStartTakeoffNormalizedTime: 0.5
-      jumpStartPlanarSlowdown: 0
-      apexGravityEntryVelocity: 25
-      apexGravityMultiplier: 0.25
-      descentGravityMultiplier: 0.6
-      fallingAnimationEntryVelocity: -0.1
-      hardLandingHeight: 3
-      landingHandoff:
-        minimumContactSeconds: 0.15
-        animationExitNormalizedTime: 0.82
-        planarSettledSpeed: 0.12
-        verticalSettledSpeed: 0.2
-        planarDampingPerSecond: 7
-        maximumSettleSeconds: 0.55
-        locomotionBlendSeconds: 0.12
-        preLandingProbeDistance: 1.2
-        preLandingLeadSeconds: 0.14
-    dodge:
-      impulseSpeed: 16
-      durationMultiplier: 1
-      alignUnlockedDodgeToTravel: 1
-      alignLockedForwardDodgeToTravel: 1
-    interactions:
-      requireGroundedForLitInteractions: 1
-      allowWhileHeightChange: 1
-      allowWhileSpeedChange: 1
-      allowWhileFall: 0
-      allowWhileJump: 0
-      blockWhileItemAbilityActive: 1
-    equipment:
-      equippedAttacks:
-      - {fileID: 0}
-      - {fileID: 0}
-      - {fileID: 0}
-      - {fileID: 0}
-      - {fileID: 0}
-      - {fileID: 0}
-      - {fileID: 0}
-      - {fileID: 0}
-      equippedLightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
-    footsteps:
-      defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
-      groundMask:
-        serializedVersion: 2
-        m_Bits: 4294967295
-      raycastHeight: 0.4
-      raycastDistance: 1.6
-      autoResolveHumanoidFeet: 1
-      footRaycastHeight: 0.35
-      footRaycastDistance: 0.8
-      minimumFootstepInterval: 0.05
-      minimumAnimationEventWeight: 0.5
-    face:
-      preferredRendererName: CC_Base_Body
-      autoResolveFaceRenderer: 1
-      jawRootName: CC_Base_JawRoot
-      autoResolveJawRoot: 1
-      enforceNeutralJawPoseInLateUpdate: 1
-      presets:
-      - {fileID: 11400000, guid: 4db3cf2b981d4a33b6a6961081b53f02, type: 2}
-      - {fileID: 11400000, guid: 12ec51937b20453d9a7f55dcd602bf68, type: 2}
-      - {fileID: 11400000, guid: 9270b55d96764a5c85f825e9a04a37c0, type: 2}
-      - {fileID: 11400000, guid: 3eecc2f68ea24d8db3b7bdce3475bc78, type: 2}
-      - {fileID: 11400000, guid: d72ef8a340b44147bbb935248cd44a28, type: 2}
-      - {fileID: 11400000, guid: 82ddaff56f9d4cc7a7f2adf4fef29576, type: 2}
-      - {fileID: 11400000, guid: 01e233163d61491ca251762e87e98387, type: 2}
-      - {fileID: 11400000, guid: f11cbd6c13934632b849a0cbef76be13, type: 2}
-      initialPassiveEmotion: 0
-      playInitialPassiveOnStart: 1
-      useUnscaledTime: 0
-      enforceControlledWeightsInLateUpdate: 1
-    trajectories:
-      library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
     locomotion:
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
@@ -288,3 +167,208 @@ MonoBehaviour:
       orientationSharpTurnRate: 300
       orientationSharpTurnAngle: 92
       orientationVelocityBlend: 0.1
+    interactions:
+      requireGroundedForLitInteractions: 1
+      allowWhileHeightChange: 1
+      allowWhileSpeedChange: 1
+      allowWhileFall: 0
+      allowWhileJump: 0
+      blockWhileItemAbilityActive: 1
+    equipment:
+      equippedAttacks:
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      equippedLightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
+    footsteps:
+      defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
+      groundMask:
+        serializedVersion: 2
+        m_Bits: 4294967295
+      raycastHeight: 0.4
+      raycastDistance: 1.6
+      autoResolveHumanoidFeet: 1
+      footRaycastHeight: 0.35
+      footRaycastDistance: 0.8
+      minimumFootstepInterval: 0.05
+      minimumAnimationEventWeight: 0.5
+    face:
+      preferredRendererName: CC_Base_Body
+      autoResolveFaceRenderer: 1
+      jawRootName: CC_Base_JawRoot
+      autoResolveJawRoot: 1
+      enforceNeutralJawPoseInLateUpdate: 1
+      presets:
+      - {fileID: 11400000, guid: 4db3cf2b981d4a33b6a6961081b53f02, type: 2}
+      - {fileID: 11400000, guid: 12ec51937b20453d9a7f55dcd602bf68, type: 2}
+      - {fileID: 11400000, guid: 9270b55d96764a5c85f825e9a04a37c0, type: 2}
+      - {fileID: 11400000, guid: 3eecc2f68ea24d8db3b7bdce3475bc78, type: 2}
+      - {fileID: 11400000, guid: d72ef8a340b44147bbb935248cd44a28, type: 2}
+      - {fileID: 11400000, guid: 82ddaff56f9d4cc7a7f2adf4fef29576, type: 2}
+      - {fileID: 11400000, guid: 01e233163d61491ca251762e87e98387, type: 2}
+      - {fileID: 11400000, guid: f11cbd6c13934632b849a0cbef76be13, type: 2}
+      initialPassiveEmotion: 0
+      playInitialPassiveOnStart: 1
+      useUnscaledTime: 0
+      enforceControlledWeightsInLateUpdate: 1
+    trajectories:
+      library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
+    dash:
+      dashOvershootDistance: 1.25
+      dashImpulsePerMeter: 8
+      minimumDashImpulse: 14
+      maximumDashImpulse: 32
+      dashInputLockSeconds: 0.1
+      stopDashDuration: 0.18
+      stopDashDeceleration: 65
+    jump:
+      jumpHeight: 100
+      jumpStartTakeoffNormalizedTime: 0.5
+      jumpStartPlanarSlowdown: 0
+      apexGravityEntryVelocity: 25
+      apexGravityMultiplier: 0.25
+      descentGravityMultiplier: 0.6
+      fallingAnimationEntryVelocity: -0.1
+      hardLandingHeight: 3
+      landingHandoff:
+        minimumContactSeconds: 0.15
+        animationExitNormalizedTime: 0.82
+        planarSettledSpeed: 0.12
+        verticalSettledSpeed: 0.2
+        planarDampingPerSecond: 7
+        maximumSettleSeconds: 0.55
+        locomotionBlendSeconds: 0.12
+        preLandingProbeDistance: 1.2
+        preLandingLeadSeconds: 0.14
+    dodge:
+      impulseSpeed: 16
+      durationMultiplier: 1
+      alignUnlockedDodgeToTravel: 1
+      alignLockedForwardDodgeToTravel: 1
+  uniqueId: 0f3452bd8cf87c440ab2208e8ebc72ce
+  characterId: lucian
+  characterName: Lucian
+  portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
+  worldPrefab: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
+  skills:
+  - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
+  - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
+  combatSkills:
+  - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
+  - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
+  - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
+  enemyCombatProfile: {fileID: 0}
+  enemySettings:
+    LocomotionPositioning:
+      preferredDistance: 2.6
+      minimumRetreatDistance: 1.2
+      strafeRadius: 1.1
+      strafeSideHoldSeconds: 1.35
+      walkSpeed: 1.8
+      runSpeed: 3.6
+      runDistance: 8
+      walkResumeDistance: 6
+      pursuitRefreshSeconds: 0.15
+      pursuitTargetMoveDistance: 0.5
+      walkSpeedThreshold: 1.2
+      runSpeedThreshold: 3.4
+    LocomotionFacingSpeedDegreesPerSecond: 540
+    LocomotionAnimatorDampTime: 0.08
+    LocomotionWalkCycleSpeed: 1.8
+    LocomotionRunCycleSpeed: 3.6
+    LocomotionNavMeshEdgeClearance: 0.45
+    LocomotionClearanceSearchRadius: 2
+    LocomotionClearanceSearchSamples: 12
+    LocomotionLogDiagnostics: 0
+    ContractLogDiagnostics: 1
+    RecoveryExtraRecoverySeconds: 1
+    RecoveryLogDiagnostics: 0
+    BrainLogDecisions: 0
+    NavigationSampleDistance: 1.5
+    NavigationReattachTolerance: 0.15
+    NavigationRetryInterval: 0.25
+    NavigationRebuildRequestInterval: 1
+    NavigationLogDiagnostics: 0
+    ActorHitAnimatorState: Hit
+    ActorHitAnimationTransitionSeconds: 0.06
+    ActorIdleAnimatorState: Idle
+    ActorHitRecoveryNormalizedTime: 0.9
+    ActorHitRecoveryTransitionSeconds: 0.1
+    ActorDeathAnimatorState: Death
+    ActorDeathAnimationTransitionSeconds: 0.08
+    ActorRetaliationDelaySeconds: 0.15
+    PhysicsGroundSkin: 0.03
+    PhysicsGroundProbeStartHeight: 0.35
+    PhysicsGroundProbeDistance: 4
+    PhysicsMaximumGroundSnapDistance: 0.75
+    PhysicsEmergencyLandingDelay: 0.45
+    PhysicsMinimumGroundNormal: 0.45
+    PhysicsGroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    PhysicsLogStateChanges: 0
+    PhysicsLogPoseAudit: 1
+    PhysicsPoseJumpDiagnosticDistance: 0.5
+    PhysicsMaximumRootMotionDeltaPerFrame: 0.5
+    PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75
+    PhysicsActionRepositionDiagnosticDistance: 1
+    PhysicsAnimationMovementMode: 0
+  vision:
+    maximumDistance: 6
+    fieldOfViewDegrees: 110
+    eyeHeight: 1.35
+    targetHeight: 1
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  enemyEncounterOptions:
+    startAsGhost: 0
+    introductionLine: 
+    introductionSeconds: 2.5
+    interactionDistance: 2.5
+  enemyDeathOptions:
+    enabled: 0
+    dialogueLine: 
+    dialogueSeconds: 4
+    voiceLine: {fileID: 0}
+  groundBasicSkills:
+  - {fileID: 11400000, guid: 1ddf0c3cda96bc1418077fee3b0f4d9d, type: 2}
+  - {fileID: 11400000, guid: c43a7367eab25894d943ab01335bd6de, type: 2}
+  - {fileID: 11400000, guid: 33c43d8aa19cfa74bb2947ab1f8e6def, type: 2}
+  airBasicSkills:
+  - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
+  stats:
+    strength: 10
+    dexterity: 10
+    constitution: 10
+    intelligence: 10
+    wisdom: 10
+    charisma: 10
+  starterItemsWithQuantity:
+  - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
+    quantity: 300
+  - item: {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
+    quantity: 300
+  - item: {fileID: 11400000, guid: 1c025a0b39ccf564b8d5fe22b4ea5109, type: 2}
+    quantity: 1
+  hp: 1000
+  isEnemy: 0
+  enableCombatHealthThresholds: 0
+  combatHealthThresholdStages: []
+  combatHealthThresholdStageSettings:
+    stageDistance: 2
+    stageGroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+    stageBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+    stageRetrySeconds: 0.15
+    stageClearance: 0.03
+  voiceLines: []
+  maisonWaitingPoint: 2

@@ -1,5 +1,20 @@
 # Input, UCC et caméra
 
+## Reglages de locomotion avant affectation Squad
+
+Les blocs playerSettings des quatre fiches ont ete reserialises avec Unity :
+la migration textuelle etait presente sur disque mais les donnees importees
+conservaient des valeurs par defaut, dont le pilotage Animator desactive et
+le saut reduit. Verifier les donnees chargees et leurs clones apres toute
+migration, pas seulement le YAML. Les tests couvrent les parametres importes
+et la premiere marche/course sur le vrai prefab avec CharacterInfo conserve.
+
+PlayerModuleConfiguration utilise la fiche CharacterInfo tant que le composant
+Squad present n'a pas encore de CharacterData. L'affectation ulterieure d'une
+fiche Squad renouvelle la copie locale du module. Les quatre fiches joueurs
+utilisant Player_Model pilotent LitSpeed (float); Speed reste distinct du
+parametre du blend tree Lit. La physique reste geree par Opsive.
+
 ## Reservations planaires et modules joueur
 
 BeginScriptedPlanarMotion, DriveScriptedPlanarMotion, ApplyScriptedPlanarImpulse et EndScriptedPlanarMotion exigent un proprietaire. Un module etranger est refuse avant de modifier le verrou UCC. Les consommateurs utilisent leur instance; la desactivation et les changements de zone effacent la reservation. Le saut, l esquive et les trajectoires conservent leurs modules et la physique UCC. Reglages dans CharacterData.playerSettings; references de scripts retrouvees automatiquement.

@@ -6,6 +6,50 @@ using UnityEngine;
 public sealed class PlayerModuleTests
 {
     [Test]
+    public void EarlyLookupDoesNotPermanentlyCacheMissingCharacterComponents()
+    {
+        var root = new GameObject("Character assembled after module validation");
+        root.SetActive(false);
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        try
+        {
+            var configuration = new PlayerModuleConfiguration<PlayerLocomotionSettings>();
+            Assert.That(configuration.Resolve(root.transform, settings => settings.locomotion).driveLitLocomotionAnimatorParameters, Is.False);
+            data.playerSettings.locomotion.driveLitLocomotionAnimatorParameters = true;
+            data.playerSettings.locomotion.speedParam = "LitSpeed";
+            root.AddComponent<CharacterInfo>().SetCharacterData(data);
+            var resolved = configuration.Resolve(root.transform, settings => settings.locomotion);
+            Assert.That(resolved.driveLitLocomotionAnimatorParameters, Is.True, "An early lookup must not retain defaults after the character is assembled.");
+            Assert.That(resolved.speedParam, Is.EqualTo("LitSpeed"));
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(data); }
+    }
+    [Test]
+    public void UnboundSquadUsesCharacterInfoUntilItsOwnDataArrives()
+    {
+        var root = new GameObject("Unbound squad settings");
+        root.SetActive(false);
+        var source = ScriptableObject.CreateInstance<CharacterData>();
+        var replacement = ScriptableObject.CreateInstance<CharacterData>();
+        try
+        {
+            var squad = root.AddComponent<SquadCharacterController>();
+            root.AddComponent<CharacterInfo>().SetCharacterData(source);
+            source.playerSettings.locomotion.driveLitLocomotionAnimatorParameters = true;
+            source.playerSettings.locomotion.speedParam = "LitSpeed";
+            replacement.playerSettings.locomotion.speedParam = "OtherSpeed";
+            var configuration = new PlayerModuleConfiguration<PlayerLocomotionSettings>();
+            var first = configuration.Resolve(root.transform, data => data.locomotion);
+            Assert.That(first.driveLitLocomotionAnimatorParameters, Is.True);
+            Assert.That(first.speedParam, Is.EqualTo("LitSpeed"));
+            typeof(SquadCharacterController).GetField("characterData", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(squad, replacement);
+            Assert.That(configuration.Resolve(root.transform, data => data.locomotion).speedParam, Is.EqualTo("OtherSpeed"));
+            Assert.That(source.playerSettings.locomotion.speedParam, Is.EqualTo("LitSpeed"));
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(source); Object.DestroyImmediate(replacement); }
+    }
+
+    [Test]
     public void ModuleCopiesDoNotChangeTheSourceOrAnotherActor()
     {
         var source = ScriptableObject.CreateInstance<CharacterData>();
@@ -60,6 +104,12 @@ public sealed class PlayerModuleTests
         Assert.That(data, Is.Not.Null);
         Assert.That(data.playerSettings.jump, Is.Not.Null);
         Assert.That(data.playerSettings.locomotion, Is.Not.Null);
+        Assert.That(data.playerSettings.locomotion.driveLitLocomotionAnimatorParameters, Is.True);
+        Assert.That(data.playerSettings.locomotion.speedParam, Is.EqualTo("LitSpeed"));
+        var controller = prefab.GetComponent<Animator>().runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
+        Assert.That(controller, Is.Not.Null);
+        Assert.That(System.Array.Exists(controller.parameters, p => p.name == data.playerSettings.locomotion.speedParam &&
+            p.type == AnimatorControllerParameterType.Float), Is.True);
         foreach (var component in prefab.GetComponentsInChildren<MonoBehaviour>(true)) Assert.That(component, Is.Not.Null);
         if (character == "Lucian")
         {

@@ -1,5 +1,57 @@
 # Travail en cours
 
+## Fin des cycles partagee par la partie
+
+CycleDefinition configure completionFlags et cycleSceneName. Nina termine au
+bit 8 (Cicatrice). Le serveur attend dialogues et dissolutions des clients
+connectes avant de decharger la scene via Netcode. En solo, meme attente locale.
+GameFlow ignore les scenes terminees lors des prochains chargements et de la
+validation NavMesh. Jalons, skills et snapshot d'arrivee tardive conserves.
+Tests ajoutes pour les jalons et l'attente des presentations. Compilation C#
+runtime/editeur avec Unity 6000.4.9f1 reussie ; tests Unity non executes.
+A verifier en Play Mode : disparition Scar puis dechargement, hote/client,
+arrivee tardive, deconnexion pendant attente, sauvegarde/rechargement et retour
+de zone. Scene active principale protegee contre le dechargement.
+
+## Scar : dialogue de deux secondes puis dissolution
+
+Le dialogue de Scar reste affiche deux secondes hors fondus, puis sa fermeture
+naturelle accorde Cicatrice et lance la dissolution sans attente supplementaire.
+Scar se desactive apres ses effets. La duree propre au dialogue est partagee
+par UI et validation serveur; les autres dialogues gardent la duree du cycle.
+Les conditions narratives et le jalon sauvegarde restent inchanges.
+Definition, generateur et tests adaptes. Compilation C# runtime/editeur avec
+les references Unity 6000.4.9f1 reussie; tests Unity non executes, sequence
+visuelle et reseau a confirmer en Play Mode.
+
+## Scientifique : connaissance requise avant combat
+
+La rencontre exige Knowledge_ExistenceDesChimeres via
+CharacterData.enemyEncounterOptions.requiredKnowledge. Controle local et
+autoritaire avant introduction, puis a sa fermeture. Sans connaissance, le
+scientifique reste Ghost; l'obtention seule ne declenche pas le combat.
+Generateur et tests adaptes. Compilation C# runtime/editeur verifiee; parcours
+avec/sans connaissance et reseau a valider dans Unity.
+
+L'utilisateur confirme que le probleme de locomotion joueur est regle apres
+reserialisation des fiches.
+
+## Locomotion/saut : fiches joueur reserialisees avec Unity
+
+Cause constatee : la fiche Lucian importee par Unity contenait les valeurs par
+defaut (driveLitLocomotionAnimatorParameters=false, speedParam=Speed), malgre
+les bonnes valeurs dans le YAML. Le cache seul ne corrigeait donc pas la panne.
+Les blocs playerSettings complets des quatre fiches ont ete reinjectes via
+SerializedObject, sauvegardes et reimportes avec Unity. Reglages et references
+auteur verifies (830 entrees), autres champs existants preserves. Lucian :
+LitSpeed, pilotage actif, jumpHeight=100. Copies Unity controlees apres reimport.
+
+Trois verifications de cache executees dans Unity : succes. Compilation C#
+runtime/editeur reussie; test FirstWalkAndRunDriveGameplayAnimator ajoute mais
+non execute. Retour visuel utilisateur marche/course/saut encore attendu;
+reseau et Domain Reload restent a verifier. Probes temporaires retires apres
+reparation. Resultats de diagnostic dans Library/PlayerSettingsProbe.
+
 ## Modules joueur : migration appliquee, validation Unity restante
 
 Reglages centralises dans CharacterData.playerSettings, copies runtime par module, reservations de mouvement avec proprietaire, evenements de clips routes vers presentation et mobilite, branches ennemies retirees de PlayerAnimationController. Debugger facial remplace par commandes editeur. Quatre fiches/prefabs joueurs et AnimationLab migres; outils adaptes. Compilation C# runtime/editeur reussie; tests compiles et references/YAML controles. Execution Unity, reseau et Domain Reload restent requis. Le prefab Lucian deja ouvert dans Unity doit etre recharge apres import (ancienne instance signalant un script manquant lors de l auto-enregistrement). Guide : Assets/Characters/PlayerModules/README.md; arbitrages : AIAgent/Codex/player_method_migration.md.

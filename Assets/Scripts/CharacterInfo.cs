@@ -22,6 +22,7 @@ public class CharacterInfo : MonoBehaviour
     public int CurrentHp { get { EnsureHealth(); return currentHp; } }
     public bool IsDead => CurrentHp <= 0;
     public event Action<CharacterInfo> HealthChanged;
+    public event Action<CharacterInfo> DataChanged;
 
     private void Awake() { EnsureData(); EnsureHealth(); }
 
@@ -62,6 +63,7 @@ public class CharacterInfo : MonoBehaviour
             currentHp = 0;
             EnsureHealth();
         }
+        DataChanged?.Invoke(this);
     }
 
     public void SetEnemy(CharacterData data) => SetCharacterData(data);

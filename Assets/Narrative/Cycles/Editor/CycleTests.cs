@@ -8,6 +8,115 @@ using Object = UnityEngine.Object;
 
 public sealed class CycleTests
 {
+    [TestCase(0, 0, false)]
+    [TestCase(8, 7, false)]
+    [TestCase(8, 8, true)]
+    [TestCase(8, 31, true)]
+    [TestCase(12, 8, false)]
+    [TestCase(12, 12, true)]
+    public void CompletionRequiresAllConfiguredSharedMilestones(int flags, int state, bool expected)
+    {
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        try
+        {
+            definition.completionFlags = flags;
+            Assert.That(definition.IsCompleted(state), Is.EqualTo(expected));
+        }
+        finally { Object.DestroyImmediate(definition); }
+    }
+
+    [Test]
+    public void ScarDisappearanceUsesItsExistingRewardMilestone()
+    {
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var dialogue = definition.FindDialogue("scar");
+        Assert.That(dialogue.disappearAfterCompletion, Is.True);
+        Assert.That(dialogue.disappearanceDelay, Is.Zero);
+        Assert.That(definition.ResolveDialogueSeconds(dialogue), Is.EqualTo(2f));
+        Assert.That(definition.ResolveDialogueSeconds(definition.FindDialogue("nina")), Is.EqualTo(4f));
+        Assert.That(dialogue.HasCompleted(7), Is.False);
+        Assert.That(dialogue.HasCompleted(8), Is.True);
+        Assert.That(definition.IsCompleted(8), Is.True);
+        Assert.That(definition.IsCompleted(7), Is.False);
+        Assert.That(definition.cycleSceneName, Is.EqualTo("District_1_Enigme_Ghost_Nina"));
+        Assert.That(definition.FindDialogue("nina").disappearAfterCompletion, Is.False);
+    }
+
+    [Test]
+    public void DialogueDurationOverrideDoesNotChangeCycleDefault()
+    {
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        try
+        {
+            definition.dialogueSeconds = 5f;
+            Assert.That(definition.ResolveDialogueSeconds(new CycleDialogue()), Is.EqualTo(5f));
+            Assert.That(definition.ResolveDialogueSeconds(new CycleDialogue { durationSeconds = 2f }), Is.EqualTo(2f));
+            Assert.That(definition.dialogueSeconds, Is.EqualTo(5f));
+        }
+        finally { Object.DestroyImmediate(definition); }
+    }
+
+    [Test]
+    public void ZeroDialogueDelayStartsTheFadeWithoutSkippingItsFrames()
+    {
+        var root = new GameObject("Ghost dialogue fade");
+        root.SetActive(false);
+        try
+        {
+            var ghost = root.AddComponent<GhostController>();
+            typeof(GhostController).GetField("enableProximityDissolve", Private).SetValue(ghost, true);
+            typeof(GhostController).GetField("ghostDisappearanceRendererDelay", Private).SetValue(ghost, 1f);
+            var fade = (IEnumerator)typeof(GhostController).GetMethod("DisappearAfterDialogue", Private).Invoke(ghost, new object[] { 0f });
+            Assert.That(fade.MoveNext(), Is.True, "Zero waiting time must still play the visual fade.");
+            Assert.That(fade.Current, Is.Null, "The first step must be a fade frame, not an additional delay or final cleanup.");
+            Assert.That(ghost.IsDialogueDisappearanceComplete, Is.False);
+            (fade as IDisposable)?.Dispose();
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void RestoredDialogueGhostStaysHiddenDespiteActivationBinding()
+    {
+        var root = new GameObject("Restored cycle");
+        root.SetActive(false);
+        var actor = new GameObject("Restored Ghost");
+        actor.transform.SetParent(root.transform);
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        try
+        {
+            definition.cycleId = "test.ghost-cleanup";
+            definition.dialogues = new[] { new CycleDialogue { id = "ghost", completedFlags = 8, disappearAfterCompletion = true } };
+            var cycle = root.AddComponent<CycleController>();
+            var rules = root.AddComponent<WorldRulesStateManager>();
+            cycle.definition = definition;
+            typeof(CycleController).GetField("rules", Private).SetValue(cycle, rules);
+            actor.AddComponent<GhostController>();
+            var interaction = actor.AddComponent<CycleInteraction>();
+            interaction.cycle = cycle;
+            interaction.dialogueId = "ghost";
+            cycle.interactions = new[] { interaction };
+            cycle.activations = new[] { new CycleActivationBinding { target = actor } };
+            rules.SetInt(definition.StateKey, 8);
+            var ready = typeof(CycleController).GetMethod("CompletionPresentationReady", Private);
+            Assert.That(ready.Invoke(cycle, null), Is.False, "Scene must remain until the Ghost has disappeared.");
+            var present = typeof(CycleController).GetMethod("ApplyPresentation", Private);
+            present.Invoke(cycle, null);
+            present.Invoke(cycle, null);
+            Assert.That(actor.activeSelf, Is.False);
+            Assert.That(interaction.Ghost.IsDialogueDisappearanceComplete, Is.True);
+            Assert.That(ready.Invoke(cycle, null), Is.True);
+            typeof(CycleController).GetField("localDialogue", Private).SetValue(cycle, true);
+            Assert.That(ready.Invoke(cycle, null), Is.False, "An open local dialogue must finish before unloading.");
+            typeof(CycleController).GetField("localDialogue", Private).SetValue(cycle, false);
+            rules.SetInt(definition.StateKey, 0);
+            present.Invoke(cycle, null);
+            Assert.That(actor.activeSelf, Is.True, "Loading an earlier milestone restores the author activation rule.");
+            Assert.That(interaction.Ghost.IsDialogueDisappearanceComplete, Is.False);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(definition); }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void DirectEnemyDefeatIsRecordedWithoutSceneMarker(bool alreadyDefeated)

@@ -1,6 +1,38 @@
 # Narration et connaissances
 
+## Transition Ghost/Enemy et disparition apres dialogue
+
+GhostController.SetGameplayMode applique Ghost, Introduction ou Enemy. Pour une
+rencontre startAsGhost, EnemyController conserve l'etat autoritaire (local en
+solo, NetworkVariable en reseau). CombatEnabled tient compte de cet etat :
+perception offensive, verrouillage, degats et riposte restent bloques avant
+Enemy. CharacterInfo.DataChanged reapplique le mode apres affectation tardive.
+La fermeture reussie de l'introduction, validee par token, client initiateur et
+duree minimale sur le serveur, ouvre le combat. Annulation/desactivation ou
+deconnexion de l'initiateur rend le Ghost disponible; les anciens callbacks
+sont ignores. Le dialogue reste diffuse aux clients de la session.
+
+CycleDialogue.disappearAfterCompletion utilise le rewardFlag existant ou les
+completedFlags; aucun nouveau format de sauvegarde. Le cycle transmet le jalon
+au Ghost, qui attend disappearanceDelay en temps reel puis dissout son corps et
+termine ses effets. Scar commence sa dissolution des la fermeture qui accorde
+Cicatrice (disappearanceDelay=0), puis se desactive apres les effets. Son dialogue
+reste affiche deux secondes hors fondus (durationSeconds=2). Zero conserve la
+duree du cycle pour les autres dialogues. UI et validation serveur utilisent
+la meme duree resolue. Le delai
+zero ne saute pas la dissolution; restoreImmediately distingue le chargement.
+Une premiere presentation avec jalon deja charge masque directement
+le Ghost. Les activations de cycle et la proximite ne peuvent pas le reapparaitre.
+Les dialogues Nina ne sont pas configures pour cette disparition.
+
 ## Rencontre Ghost dans EnemyController
+
+enemyEncounterOptions.requiredKnowledge est une condition facultative de la
+rencontre. Le scientifique exige Knowledge_ExistenceDesChimeres : verification
+a l'interaction locale, au lancement autoritaire et a la fermeture reussie de
+l'introduction. Sans connaissance (ou sans service de connaissances disponible),
+il reste Ghost; obtenir la connaissance seul ne lance pas le combat. Une nouvelle
+interaction est requise. La connaissance suit le partage de session existant.
 
 ScientistEncounterController est supprime. CharacterData.enemyEncounterOptions active la phase Ghost, la replique d introduction, sa duree et la distance d interaction. EnemyController implemente IGhostInteractionHandler et ICycleCinematicBlocker. Les controles serveur, la visibilite Ghost et la progression Nina sont conserves. Les dernieres paroles sont configurees dans enemyDeathOptions et bloquent la presentation de cycle pendant leur lecture.
 
@@ -58,22 +90,45 @@ connaissances et résoudre les interactions narratives.
   le spawn Netcode existant reste autoritaire. Les anciens
   `ItemSceneMarker` se migrent depuis le menu `Lit/Scene Marker`.
 
-## Cycles reutilisables
+## Cycles reutilisables et progression de partie
 
-CycleDefinition configure un ID persistant, plusieurs dialogues (conditions,
-textes, effets a l'ouverture/a la fermeture, skills) et un encounter/cinematique
-facultatif. CycleController lie les acteurs de scene, activations et poses Animator
-aux conditions, sans noms de personnages ni recompenses codes en dur.
-CycleInteraction porte seulement le cycle et l'ID du dialogue ; GhostController
-conserve le comportement visuel et l'interaction communs a tous les fantomes.
-Le serveur valide ouverture puis fermeture avec token, duree, portee et prerequis.
-Annulation/despawn nettoient les demandes en attente. CycleSharedSkills compose
-les recompenses persistees de toutes les definitions sous Resources/Narrative,
-sans modifier les personnages ni notifier a nouveau au chargement.
-Le schema de sauvegarde reste un entier par ID ; la migration Nina conserve tous
-les GUID et la cle narrative.district1.nina. Le guide d'auteur est dans
-`Assets/Narrative/Cycles/README.md`. Les inspecteurs signalent les IDs et bits en
-collision ainsi que les ressources requises manquantes.
+CycleDefinition contient metadonnees de journal (sans UI), prerequis et etapes
+nommees. CycleProgressionService est installe sur le WorldRulesStateManager de
+session par NetcodeBootstrap. Il possede les transitions autoritaires et les
+notifications ; CycleController garde les liaisons et presentations de scene.
+Les objectifs disponibles avancent en parallele ou selon des prerequis toutes/
+au moins une, incluant un autre cycle termine. Les sources couvrent connaissance,
+dialogue ferme, interaction, ennemi vaincu et sequence terminee. Un evenement
+precoce n'est pas memorise ; connaissances et defaites sont des faits persistants.
+Un evenement ne traverse pas deux etapes successives attendant la meme source.
+
+Les cles .step.<id>, .defeat.<sourceId> et .completed reutilisent les variables
+monde et snapshots existants. Le service diffuse les etats uniquement depuis le
+serveur et actualise aussi les clients apres ClientMarkedReady. La progression
+et les skills restent donc accessibles apres destruction du controleur de scene.
+Les recompenses sont composees par CycleSharedSkills et ne modifient pas les
+fiches source. La migration des anciens bits Nina est idempotente et silencieuse.
+
+CycleInteraction fonctionne aussi sans Ghost via les interfaces de detection
+et d'input locales existantes. Les rencontres et sequences sont des liaisons
+multiples avec ID. Une sequence ne suspend que les ennemis explicitement lies,
+sans parcourir ou interrompre les autres cycles du monde. Les callbacks tardifs
+de playback ne peuvent pas liberer les references d'une nouvelle presentation.
+
+Les etapes terminales definissent la fin partagee. Le serveur attend les effets
+finaux et les clients connectes au plus completionPresentationTimeout (15 s),
+puis annule les presentations restantes du cycle avant de solliciter GameFlow.
+GameFlow protege la scene principale, joueurs et services de session, et ignore
+les scenes terminees aux chargements suivants et dans sa validation NavMesh.
+Nina conserve sa fin au bit 8 et les bits historiques 1/2/4/16. Ses six etapes
+nommees sont dans la fiche ; aftermath_seen est facultative. La Timeline et le
+profil du Director de la scene Nina sont encore absents : aucune completion
+fictive n'est attribuee a cette sequence.
+
+L'Inspecteur expose des categories repliables, des conditions selectionnees par
+nom, un etat runtime lisible et les diagnostics de references/dependances.
+Le modele vide et la migration Nina sont sous Lit/Narrative et Assets/Create.
+Guide d'auteur et verification : Assets/Narrative/Cycles/README.md.
 
 ## Pièges observés
 

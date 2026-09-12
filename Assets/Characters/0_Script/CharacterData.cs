@@ -398,4 +398,6 @@ public sealed class EnemyEncounterOptions
     public float introductionSeconds = 2.5f;
     [Min(0.5f), Tooltip("Distance maximale autorisee pour declencher la rencontre.")]
     public float interactionDistance = 2.5f;
+    [Tooltip("Connaissance requise pour lancer l'introduction et devenir ennemi. Vide : aucune connaissance requise. Les connaissances sont partagees par la session.")]
+    public KnowledgeSO requiredKnowledge;
 }

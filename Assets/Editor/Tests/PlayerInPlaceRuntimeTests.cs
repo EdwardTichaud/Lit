@@ -11,6 +11,59 @@ public sealed class PlayerInPlaceRuntimeTests
     private GameObject container;
 
     [UnityTest]
+    public IEnumerator FirstWalkAndRunDriveGameplayAnimator()
+    {
+        yield return new EnterPlayMode();
+        container = new GameObject("First locomotion regression");
+        container.SetActive(false);
+        var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath), container.transform);
+        var keep = new HashSet<string> { "CharacterInfo", "UltimateCharacterLocomotion", "UltimateCharacterLocomotionHandler",
+            "LitOpsivePlayerInput", "LitOpsiveLocomotionBridge", "LitOpsiveLookSource", "AnimatorMonitor", "CharacterLayerManager",
+            "PlayerAnimationController", "PlayerRootMotionRelay", "PlayerStateMotionController", "PlayerScriptedJumpController",
+            "CombatTimeDomain", "CharacterAttributeManager", "CharacterHealth" };
+        foreach (var component in root.GetComponentsInChildren<MonoBehaviour>(true))
+            if (component != null && !keep.Contains(component.GetType().Name)) Object.DestroyImmediate(component);
+        var animator = root.GetComponent<CharacterAnimationController>().Animator;
+        foreach (var other in root.GetComponentsInChildren<Animator>(true)) other.enabled = other == animator;
+        animator.fireEvents = false;
+        var origin = new Vector3(10000, 0, 10000);
+        root.transform.position = origin + Vector3.up * .02f;
+        var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        floor.transform.SetParent(container.transform);
+        floor.transform.position = origin - Vector3.up * .5f;
+        floor.transform.localScale = new Vector3(100, 1, 100);
+        container.SetActive(true);
+        var bridge = root.GetComponent<LitOpsiveLocomotionBridge>();
+        float timeout = Time.realtimeSinceStartup + 4f;
+        while (!bridge.Grounded && Time.realtimeSinceStartup < timeout) yield return null;
+        Assert.That(bridge.IsDriving && bridge.Grounded, Is.True);
+        var start = root.transform.position;
+        foreach (bool sprint in new[] { false, true })
+        {
+            timeout = Time.realtimeSinceStartup + 2f;
+            while (Time.realtimeSinceStartup < timeout)
+            {
+                bridge.SetSprintModifier(sprint);
+                bridge.SetMoveInput(Vector2.up, true);
+                yield return null;
+            }
+            Assert.That(animator.GetFloat("LitSpeed"), Is.GreaterThan(sprint ? 2f : .5f), "The real gameplay Animator must receive the requested gait.");
+            var expected = sprint ? "Run_Loop" : "Walk_Loop";
+            Assert.That(System.Array.Exists(animator.GetCurrentAnimatorClipInfo(0), clip =>
+                clip.weight > .1f && clip.clip != null && clip.clip.name.Contains(expected)), Is.True, expected + " must actually play.");
+        }
+        Assert.That(Vector3.Distance(start, root.transform.position), Is.GreaterThan(.1f), "UCC must also move the actor.");
+        timeout = Time.realtimeSinceStartup + 3f;
+        while (Time.realtimeSinceStartup < timeout)
+        {
+            bridge.SetSprintModifier(false);
+            bridge.SetMoveInput(Vector2.zero, true);
+            yield return null;
+        }
+        Assert.That(animator.GetFloat("LitSpeed"), Is.LessThan(.1f));
+    }
+
+    [UnityTest]
     public IEnumerator StateTrajectoryMovesThroughUccAndStopsAtWall()
     {
         bool reload = SessionState.GetBool("PlayerInPlace.Test.Reload", false);
