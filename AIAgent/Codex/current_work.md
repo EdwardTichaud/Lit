@@ -1,5 +1,40 @@
 # Travail en cours
 
+## MainMenu_Load : sessions puis sauvegardes (2026-09-13)
+
+Choix explicite de session, navigation limitee a sa liste de sauvegardes puis
+Retour aux sessions en conservant la selection. Survol sans reconstruction,
+focus souris/clavier/manette synchronise. Scene : deux listes defilantes a gauche,
+apercu et district a droite, textes lisibles et references RawImage explicites.
+Compilation C# runtime/editeur reussie avec Unity 6000.4.9f1 ; cinq tests ajoutes,
+non executes. A valider en Play : navigation clavier/manette/souris, listes longues,
+annulation du chargement, suppression et sessions vides, apercu absent, 16:9/21:9.
+Les changements MainMenu preexistants ont ete conserves.
+
+## Brasero de Maelle et interactions (2026-09-13)
+
+InteractableItem verifie directement la portee effective des flammes, comme Door,
+en secours des notifications physiques. La portee accepte les MeshColliders non
+convexes via les bounds. Les flammes desactivees ne fournissent plus cette
+influence directe ; les ennemis desactives ou sans combat ne la bloquent plus.
+Compilation C# runtime et editeur reussie avec Unity 6000.4.9f1.
+FlameInteractionReachTests ajoute (non execute). A retester en Play : allumer le
+brasero de Maelle avec Munin, recuperer Necklace, ouvrir la porte ; verifier aussi
+la perte d'influence et le blocage bleu par un ennemi hostile vivant a moins de 8 m.
+Le symptome initial n'a pas ete reproduit en Play pendant cette correction.
+
+## Fermeture inventaire et champs obsoletes (2026-09-13)
+
+SetReadableActionInputsVisible(false) utilise uniquement la reference deja
+resolue a l'ouverture : aucune recherche GameObject.Find pendant OnDisable ou
+apres destruction des inputs. Une desactivation ne reparent plus ces objets.
+GlobalAgeZone.useAgeManager et GhostController.reactionChoiceWidth supprimes,
+sans consommateurs C# ; AgeManager et le panneau de choix restent responsables.
+Compilation C# runtime/editeur avec Unity 6000.4.9f1 reussie, avertissements
+cibles absents. Trois tests InventoryReadableLifecycleTests ajoutes, non executes.
+A valider dans Unity : ouvrir/fermer livre et parchemin, changement de scene et
+Play/Stop, notamment avec panneau jamais ouvert ou deja detruit.
+
 ## Fin des cycles partagee par la partie
 
 CycleDefinition configure completionFlags et cycleSceneName. Nina termine au

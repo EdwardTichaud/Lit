@@ -202,7 +202,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     public bool ProvidesLitInfluenceTo(Collider targetCollider, Vector3 fallbackPoint)
     {
         EnsureLitInfluence();
-        return IsEffectivelyLit
+        return isActiveAndEnabled && IsEffectivelyLit
             && litInfluence != null
             && litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
     }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Lit.Performance;
 using Opsive.UltimateCharacterController;
+using Opsive.UltimateCharacterController.Character;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -27,6 +28,9 @@ public sealed class GameFlowService : MonoBehaviour
     [SerializeField] private string hubSceneName = DefaultHubSceneName;
     [Tooltip("Manifeste du hub : Maison_Core et ses sous-scenes semantiques.")]
     [SerializeField] private ZoneManifest hubManifest;
+    [Header("Zone registry")]
+    [Tooltip("Tous les manifestes de zones rechargeables. Le hub est gere separement par Hub Manifest.")]
+    [SerializeField] private List<ZoneManifest> zoneManifests = new List<ZoneManifest>();
     [SerializeField] private bool loadMenuAfterBootstrap = true;
     [Header("Loading messages")]
     [Tooltip("Texte affiche pendant le retour au menu principal.")]
@@ -65,8 +69,10 @@ public sealed class GameFlowService : MonoBehaviour
     private ZoneRuntimeContext activeZoneRuntimeContext;
     private int postLoadingGeneration;
     private string activeGameplaySceneName;
+    private string initialGameplaySceneName;
     private bool postLoadingPriorityApplied;
     private ThreadPriority previousBackgroundLoadingPriority;
+    private bool returnToMenuShouldSave;
 
     public bool IsTransitioning => transitionRoutine != null;
     public bool HasGameplaySession => gameplaySessionRoot != null;
@@ -74,12 +80,18 @@ public sealed class GameFlowService : MonoBehaviour
         ? hubManifest.PrimarySceneName
         : hubSceneName;
     /// <summary>
-    /// Scene primaire du hub resolue par le manifeste. Les appelants externes
-    /// (menu et synchronisation reseau) ne doivent plus coder "Maison".
+    /// Scene primaire attendue au demarrage de la session. Les appelants externes
+    /// (menu et synchronisation reseau) ne doivent pas coder une zone en dur.
     /// </summary>
     public static string InitialGameplaySceneName => Instance != null
-        ? Instance.HubSceneName
+        ? Instance.InitialGameplaySceneNameInternal
         : DefaultHubSceneName;
+
+    private string InitialGameplaySceneNameInternal => !string.IsNullOrWhiteSpace(activeGameplaySceneName)
+        ? activeGameplaySceneName
+        : !string.IsNullOrWhiteSpace(initialGameplaySceneName)
+            ? initialGameplaySceneName
+            : HubSceneName;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateApplicationRoot()
@@ -142,6 +154,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        EnforceSingleAudioListener();
         TryOpenMenuFromBootstrap(scene);
     }
 
@@ -197,7 +210,8 @@ public sealed class GameFlowService : MonoBehaviour
             return false;
         }
 
-        return Instance.BeginGameplay(string.IsNullOrWhiteSpace(initialSceneName) ? Instance.HubSceneName : initialSceneName);
+        string sceneToLoad = Instance.ResolveInitialGameplayScene(initialSceneName);
+        return Instance.BeginGameplay(sceneToLoad);
     }
 
     public static bool TravelToZone(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)
@@ -228,7 +242,12 @@ public sealed class GameFlowService : MonoBehaviour
 
     public static bool OpenMainMenu()
     {
-        return Instance != null && Instance.BeginReturnToMenu();
+        return Instance != null && Instance.BeginReturnToMenu(false);
+    }
+
+    public static bool QuitToMainMenu()
+    {
+        return Instance != null && Instance.BeginReturnToMenu(true);
     }
 
     private bool BeginGameplay(string initialSceneName, string initialSpawnId = null, ZoneManifest forcedManifest = null, bool usePrimarySceneSpawnFallback = false)
@@ -241,6 +260,8 @@ public sealed class GameFlowService : MonoBehaviour
         {
             return false;
         }
+
+        initialGameplaySceneName = sceneToLoad;
 
         // Le menu a deja prepare le runtime avant StartHost. Le refaire apres
         // l'initialisation NGO effacerait les assignations du spawner pendant
@@ -286,7 +307,7 @@ public sealed class GameFlowService : MonoBehaviour
         return true;
     }
 
-    private bool BeginReturnToMenu()
+    private bool BeginReturnToMenu(bool saveBeforeLeaving)
     {
         if (IsTransitioning || !CanLoad(menuSceneName))
         {
@@ -294,6 +315,7 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         StopPostLoadingRoutine();
+        returnToMenuShouldSave = saveBeforeLeaving;
         transitionRoutine = StartCoroutine(ReturnToMenuRoutine());
         return true;
     }
@@ -314,6 +336,8 @@ public sealed class GameFlowService : MonoBehaviour
             yield return LoadManifestLoadingScenes(manifest, loadingMessage);
         }
 
+        RestoreActiveSaveAfterSceneLoad(sceneName);
+
         yield return RebuildNavigationForLoadedWorldRoutine("demarrage " + sceneName, manifest);
 
         activeGameplaySceneName = sceneName;
@@ -327,6 +351,7 @@ public sealed class GameFlowService : MonoBehaviour
         AdoptGameplayManagers();
         SceneTransitionProfiler.Mark("Managers prets");
         yield return PlaceSquadAtSpawnRoutine(spawnId, sceneName, usePrimarySceneSpawnFallback);
+        EnforceSingleAudioListener();
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(sceneName);
 #if UNITY_EDITOR
@@ -395,6 +420,7 @@ public sealed class GameFlowService : MonoBehaviour
         // du personnage et la camera, alors que l'Animator peut encore voir
         // l'input brut et jouer une animation de marche sur place.
         yield return PlaceSquadAtPortalDestinationRoutine(destinationPoints);
+        EnforceSingleAudioListener();
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(destination.PrimarySceneName);
 #if UNITY_EDITOR
@@ -450,6 +476,7 @@ public sealed class GameFlowService : MonoBehaviour
 
         activeGameplaySceneName = hubScene;
         yield return PlaceSquadAtSpawnRoutine(spawnId);
+        EnforceSingleAudioListener();
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(hubScene);
 #if UNITY_EDITOR
@@ -465,30 +492,159 @@ public sealed class GameFlowService : MonoBehaviour
     private IEnumerator ReturnToMenuRoutine()
     {
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
-        yield return LoadingScreenService.ShowAndWaitForPresentation(returnToMenuLoadingMessage);
-        yield return StopProximityStreaming();
-        ReleaseZonePresentation();
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        try
         {
-            NetcodeBootstrap.ShutdownActiveNetworkManager();
-        }
+            yield return LoadingScreenService.ShowAndWaitForPresentation(returnToMenuLoadingMessage);
 
-        DestroyGameplaySession();
-        loadedZoneSceneNames.Clear();
-        activeGameplaySceneName = null;
-        yield return LoadSingleRoutine(menuSceneName, returnToMenuLoadingMessage);
-        SceneTransitionProfiler.Mark("Menu active");
+            PausePanelController pausePanel = PausePanelController.Instance;
+            pausePanel?.CloseForSceneTransition();
+            while (pausePanel != null && pausePanel.IsTransitioning)
+            {
+                yield return null;
+            }
+
+            if (returnToMenuShouldSave)
+            {
+                yield return SaveBeforeReturningToMenuRoutine(pausePanel);
+            }
+
+            yield return StopProximityStreaming();
+            ReleaseZonePresentation();
+            SquadAIManager.Instance?.InvalidateNavMeshForSceneTransition();
+            yield return PrepareUccCharactersForShutdownRoutine();
+
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                NetcodeBootstrap.ShutdownActiveNetworkManager();
+                yield return null;
+            }
+
+            DestroyGameplaySession();
+            yield return null;
+            yield return new WaitForEndOfFrame();
+
+            List<string> scenesToUnload = new List<string>(loadedZoneSceneNames);
+            for (int i = scenesToUnload.Count - 1; i >= 0; i--)
+            {
+                string sceneName = scenesToUnload[i];
+                if (string.IsNullOrWhiteSpace(sceneName) ||
+                    string.Equals(sceneName, BootstrapSceneName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                yield return UnloadSceneIfLoaded(sceneName);
+            }
+
+            loadedZoneSceneNames.Clear();
+            activeGameplaySceneName = null;
+            initialGameplaySceneName = null;
+            yield return LoadSingleRoutine(menuSceneName, returnToMenuLoadingMessage);
+            SceneTransitionProfiler.Mark("Menu active");
         // Le Volume du decor du menu est enregistre lors de l'activation de
         // MainMenu. On le laisse affecter une image complete derriere
         // l'overlay opaque afin d'eviter un changement brutal d'exposition
         // pendant le fondu de sortie.
-        LoadingScreenService.PrepareSceneReveal();
+            LoadingScreenService.PrepareSceneReveal();
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            SceneTransitionProfiler.Mark("Menu rendu sous overlay");
+            LoadingScreenService.HideWhenSceneIsReady();
+            SceneTransitionProfiler.End("Ecran pret a disparaitre");
+        }
+        finally
+        {
+            returnToMenuShouldSave = false;
+            transitionRoutine = null;
+            IsPreparingGameplayScene = false;
+        }
+    }
+
+    private IEnumerator SaveBeforeReturningToMenuRoutine(PausePanelController pausePanel)
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
+        {
+            yield break;
+        }
+
+        if (pausePanel != null && !pausePanel.PrepareSaveForSceneTransition())
+        {
+            Debug.LogWarning("[GameFlow] Sauvegarde de sortie impossible : aucun slot actif.");
+            yield break;
+        }
+
+        CharacterStateStore store = CharacterStateStore.Instance;
+        if (store == null)
+        {
+            Debug.LogWarning("[GameFlow] Sauvegarde de sortie impossible : CharacterStateStore absent.");
+            yield break;
+        }
+
+        store.Save();
+        while (store.IsSaving)
+        {
+            yield return null;
+        }
+
+        if (!store.LastSaveSucceeded)
+        {
+            Debug.LogWarning("[GameFlow] La sauvegarde de sortie a echoue ; retour au menu poursuivi.");
+        }
+    }
+
+    private IEnumerator PrepareUccCharactersForShutdownRoutine()
+    {
+        CharacterLocomotion[] characters = FindObjectsByType<CharacterLocomotion>(FindObjectsInactive.Include);
+        for (int i = 0; i < characters.Length; i++)
+        {
+            CharacterLocomotion locomotion = characters[i];
+            if (locomotion == null || !IsGameplayOwnedObject(locomotion.transform))
+            {
+                continue;
+            }
+
+            locomotion.enabled = false;
+        }
+
+        Physics.SyncTransforms();
+        yield return new WaitForFixedUpdate();
         yield return null;
-        yield return new WaitForEndOfFrame();
-        SceneTransitionProfiler.Mark("Menu rendu sous overlay");
-        LoadingScreenService.HideWhenSceneIsReady();
-        SceneTransitionProfiler.End("Ecran pret a disparaitre");
-        transitionRoutine = null;
+
+        // Le SimulationManager peut avoir conserve une entree ancienne si un
+        // personnage a ete detruit par le reseau avant son OnDisable. Le reset
+        // public d'Opsive vide sa reference statique avant destruction ; il se
+        // recreera automatiquement au prochain chargement gameplay.
+        SimulationManager simulationManager = FindAnyObjectByType<SimulationManager>(FindObjectsInactive.Include);
+        if (simulationManager != null)
+        {
+            SimulationManager.DomainReset();
+            Destroy(simulationManager.gameObject);
+            yield return null;
+        }
+    }
+
+    private bool IsGameplayOwnedObject(Transform candidate)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        if (gameplaySessionRoot != null && candidate.IsChildOf(gameplaySessionRoot.transform))
+        {
+            return true;
+        }
+
+        Scene scene = candidate.gameObject.scene;
+        for (int i = 0; i < loadedZoneSceneNames.Count; i++)
+        {
+            if (string.Equals(scene.name, loadedZoneSceneNames[i], System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -830,6 +986,7 @@ public sealed class GameFlowService : MonoBehaviour
         IsPreparingGameplayScene = false;
         if (gameplaySessionRoot != null)
         {
+            CharacterStateStore.Instance?.SuppressNextAutomaticSave("game_flow_return_to_menu");
             Destroy(gameplaySessionRoot.gameObject);
             gameplaySessionRoot = null;
         }
@@ -1010,16 +1167,128 @@ public sealed class GameFlowService : MonoBehaviour
 
     private ZoneManifest ResolveGameplayManifest(string sceneName)
     {
-        if (hubManifest == null || !hubManifest.IsValid)
+        if (string.IsNullOrWhiteSpace(sceneName))
         {
             return null;
         }
 
-        return string.IsNullOrWhiteSpace(sceneName) ||
-               string.Equals(sceneName, hubSceneName, StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(sceneName, hubManifest.PrimarySceneName, StringComparison.OrdinalIgnoreCase)
-            ? hubManifest
+        if (hubManifest != null && hubManifest.IsValid &&
+            (string.Equals(sceneName, hubSceneName, StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(sceneName, hubManifest.PrimarySceneName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return hubManifest;
+        }
+
+        if (zoneManifests == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < zoneManifests.Count; i++)
+        {
+            ZoneManifest manifest = zoneManifests[i];
+            if (manifest != null && manifest.IsValid &&
+                string.Equals(sceneName, manifest.PrimarySceneName, StringComparison.OrdinalIgnoreCase))
+            {
+                return manifest;
+            }
+        }
+
+        return null;
+    }
+
+    private string ResolveInitialGameplayScene(string requestedSceneName)
+    {
+        if (!string.IsNullOrWhiteSpace(requestedSceneName))
+        {
+            return requestedSceneName;
+        }
+
+        string metadataSceneName = SaveSessionManager.Instance?.GetActiveSaveSceneName();
+        string snapshotSceneName = WorldSaveAdapter.Instance != null
+            ? WorldSaveAdapter.Instance.GetSavedWorldSceneName()
             : null;
+
+        if (!string.IsNullOrWhiteSpace(snapshotSceneName))
+        {
+            if (!string.IsNullOrWhiteSpace(metadataSceneName) &&
+                !string.Equals(metadataSceneName, snapshotSceneName, StringComparison.OrdinalIgnoreCase))
+            {
+                Debug.LogWarning(
+                    $"[GameFlow] La metadata de sauvegarde cible '{metadataSceneName}', mais le snapshot monde cible " +
+                    $"'{snapshotSceneName}'. Le snapshot est prioritaire pour conserver un etat de monde coherent.", this);
+            }
+
+            return snapshotSceneName;
+        }
+
+        // A new save is created from the main menu, so its first metadata can
+        // legitimately contain the menu scene. That scene is never a gameplay
+        // destination; fall back to the configured hub instead.
+        if (string.IsNullOrWhiteSpace(metadataSceneName) ||
+            string.Equals(metadataSceneName, menuSceneName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(metadataSceneName, BootstrapSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return HubSceneName;
+        }
+
+        return metadataSceneName;
+    }
+
+    private static void RestoreActiveSaveAfterSceneLoad(string sceneName)
+    {
+        CharacterStateStore store = CharacterStateStore.Instance;
+        if (store == null || !store.HasSaveFile)
+        {
+            return;
+        }
+
+        if (!store.RestoreActiveSaveForLoadedScene(sceneName))
+        {
+            Debug.LogError($"[GameFlow] La restauration de sauvegarde a echoue pour la scene '{sceneName}'.", store);
+        }
+    }
+
+    private static void EnforceSingleAudioListener()
+    {
+        AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (listeners == null || listeners.Length <= 1)
+        {
+            return;
+        }
+
+        AudioListener keeper = null;
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            keeper = mainCamera.GetComponent<AudioListener>();
+        }
+
+        if (keeper == null || !keeper.isActiveAndEnabled)
+        {
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                if (listeners[i] != null && listeners[i].isActiveAndEnabled)
+                {
+                    keeper = listeners[i];
+                    break;
+                }
+            }
+        }
+
+        if (keeper == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < listeners.Length; i++)
+        {
+            AudioListener listener = listeners[i];
+            if (listener != null && listener != keeper && listener.enabled)
+            {
+                listener.enabled = false;
+            }
+        }
     }
 
     private IEnumerator LoadManifestLoadingScenes(ZoneManifest manifest, string loadingMessage)

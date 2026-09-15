@@ -1001,7 +1001,30 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private bool CanInteractInCurrentInfluence()
     {
-        return !requireLitInfluenceForInteraction || activeLitInfluenceSourceIds.Count > 0;
+        if (!requireLitInfluenceForInteraction || activeLitInfluenceSourceIds.Count > 0)
+        {
+            return true;
+        }
+
+        if (!reactToFlameInfluence)
+        {
+            return false;
+        }
+
+        // Comme les portes, verifier aussi la portee lorsque le collider vient
+        // d'etre cree ou que le prochain scan physique n'a pas encore eu lieu.
+        Collider targetCollider = GetInteractionDetectionCollider();
+        Vector3 probePoint = targetCollider != null ? targetCollider.bounds.center : transform.position;
+        Flame[] flames = UnityEngine.Object.FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < flames.Length; i++)
+        {
+            if (flames[i] != null && flames[i].ProvidesLitInfluenceTo(targetCollider, probePoint))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void UpdateInactiveFlameGatedItemVfx()

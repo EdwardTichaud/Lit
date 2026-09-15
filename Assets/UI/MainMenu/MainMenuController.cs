@@ -64,6 +64,10 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private MainMenuSessionEntryUI sessionEntryPrefab;
     [SerializeField] private MainMenuSaveEntryUI saveEntryPrefab;
     [SerializeField] private GameObject emptySessionsPlaceholder;
+    [SerializeField] private TMP_Text savesHeading;
+    [SerializeField] private TMP_Text loadBrowserHint;
+    private bool browsingSaves;
+    private MainMenuSessionEntryUI selectedSessionView;
 
     [Header("Details")]
     [SerializeField] private TMP_Text detailsTitle;
@@ -73,7 +77,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string screenshotFileName = "screenshot.png";
     [SerializeField] private Texture2D previewMissingTexture;
     [SerializeField] private TMP_Text previewMissingLabel;
-    [SerializeField] private string previewMissingLabelText = "Aucun aperÃÆ’Æ’§u";
+    [SerializeField] private string previewMissingLabelText = "Aucun aperçu disponible";
     [SerializeField] private Color previewMissingLabelColor = new Color(1f, 1f, 1f, 0.7f);
     [SerializeField] private int previewMissingLabelFontSize = 36;
 
@@ -147,9 +151,9 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string joinAddress = "127.0.0.1";
 
     [Header("Entry Colors")]
-    [SerializeField] private Color entryColor = new Color(1f, 1f, 1f, 0.08f);
-    [SerializeField] private Color entryHoverColor = new Color(0.6f, 0.8f, 1f, 0.18f);
-    [SerializeField] private Color entrySelectedColor = new Color(0.6f, 0.8f, 1f, 0.32f);
+    [SerializeField] private Color entryColor = new Color(.92f, .92f, .92f, 1f);
+    [SerializeField] private Color entryHoverColor = new Color(1f, .88f, .65f, 1f);
+    [SerializeField] private Color entrySelectedColor = new Color(1f, .78f, .4f, 1f);
 
     private MainMenuSessionEntryUI hoveredSessionEntry;
     private SaveSessionInfo selectedSession;
@@ -701,6 +705,10 @@ public class MainMenuController : MonoBehaviour
             if (state == MenuState.LoadMenu)
             {
                 ShowPanel(loadGroup);
+                // The save browser is nested below an authored MainMenu_Load
+                // object. Take ownership after the transition so an older
+                // hide cannot leave its content rendered with alpha zero.
+                EnsureLoadMenuVisibilityPriority();
             }
             else
             {
@@ -1372,7 +1380,7 @@ public class MainMenuController : MonoBehaviour
     {
         // Visibility animation never grants input to a screen covered by a modal/operation.
         foreach (CanvasGroup group in new[] { titleCardGroup, gameOptionsGroup, soloOptionsGroup, multiOptionsGroup,
-            optionsGroup, loadMenuGroup, newGamePanelGroup, joinPanelGroup, virtualKeyboardGroup })
+            optionsGroup, ResolveLoadMenuGroup(), newGamePanelGroup, joinPanelGroup, virtualKeyboardGroup })
         {
             if (group == null || !group.gameObject.activeInHierarchy) continue;
             bool allowed = !OperationBusy && !deleteConfirmOpen && !loadConfirmOpen &&
@@ -2483,6 +2491,8 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        string selectedSessionId = selectedSession != null ? selectedSession.sessionId : null;
+        bool restoreSavesFocus = browsingSaves;
         ClearSessionsUI();
 
         if (emptySessionsPlaceholder != null)
@@ -2496,9 +2506,10 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        EnsureSessionsListVisible();
+
         MainMenuSessionEntryUI firstEntry = null;
         MainMenuSessionEntryUI matchedEntry = null;
-        string selectedSessionId = selectedSession != null ? selectedSession.sessionId : null;
         for (int i = 0; i < sessions.Count; i++)
         {
             SaveSessionInfo session = sessions[i];
@@ -2508,6 +2519,7 @@ public class MainMenuController : MonoBehaviour
             }
 
             MainMenuSessionEntryUI sessionEntry = Instantiate(sessionEntryPrefab, sessionsRoot);
+            sessionEntry.gameObject.SetActive(true);
             sessionEntry.Initialize(this, session, false);
             if (firstEntry == null)
             {
@@ -2519,20 +2531,24 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
-        MainMenuSessionEntryUI entryToSelect = matchedEntry != null ? matchedEntry : firstEntry;
-        if (entryToSelect != null)
+        if (matchedEntry != null)
         {
-            SelectSession(entryToSelect, false);
+            SelectSession(matchedEntry, restoreSavesFocus);
         }
         else
         {
-            ClearSavesUI();
+            SelectSession(firstEntry, false);
+            FocusSessionsRoot();
         }
+
+        RefreshSessionsLayout();
     }
 
     private void ClearSessionsUI()
     {
         selectedSession = null;
+        selectedSessionView = null;
+        browsingSaves = false;
         selectedSave = null;
         selectedSaveView = null;
         pendingDelete = null;
@@ -2552,6 +2568,7 @@ public class MainMenuController : MonoBehaviour
 
         for (int i = sessionsRoot.childCount - 1; i >= 0; i--)
         {
+            sessionsRoot.GetChild(i).gameObject.SetActive(false);
             Destroy(sessionsRoot.GetChild(i).gameObject);
         }
     }
@@ -2559,14 +2576,10 @@ public class MainMenuController : MonoBehaviour
     internal void OnSessionHovered(MainMenuSessionEntryUI entry)
     {
         hoveredSessionEntry = entry;
-        if (loadConfirmOpen)
-        {
-            return;
-        }
-        if (entry != null && entry.Session != null)
-        {
-            RebuildSavesList(entry.Session, false);
-        }
+        if (loadConfirmOpen || deleteConfirmOpen) return;
+        browsingSaves = false;
+        SelectSession(entry, false);
+        EnsureSavesListVisible();
     }
 
     internal void OnSessionUnhovered(MainMenuSessionEntryUI entry)
@@ -2600,8 +2613,15 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (selectedSessionView != null) selectedSessionView.SetSelected(false);
+        bool changed = selectedSession == null || selectedSession.sessionId != session.sessionId;
         selectedSession = session;
-        RebuildSavesList(session, true);
+        selectedSessionView = entry;
+        entry.SetSelected(true);
+        if (changed || selectedSaveView == null) RebuildSavesList(session, true);
+        EnsureSavesListVisible();
+        RefreshSavesLayout();
+        UpdateLoadBrowserLabels();
         if (focusSaves)
         {
             FocusSavesRoot();
@@ -2610,102 +2630,111 @@ public class MainMenuController : MonoBehaviour
 
     private void FocusSavesRoot()
     {
-        if (sharedCursor == null || savesRoot == null)
-        {
-            return;
-        }
-
-        RectTransform targetRoot = savesRoot as RectTransform;
-        if (targetRoot == null)
-        {
-            return;
-        }
-
-        if (!HasDirectCursorChildren(targetRoot))
-        {
-            RectTransform fallback = FindFirstCursorItem(targetRoot);
-            if (fallback == null)
-            {
-                return;
-            }
-        }
-
-        currentCursorRoot = targetRoot;
-        sharedCursor.itemsParent = targetRoot;
-        sharedCursor.layoutGroup = targetRoot.GetComponent<LayoutGroup>();
-        sharedCursor.Refresh();
-        StartCursorSnap();
+        browsingSaves = selectedSession != null && selectedSaveView != null;
+        EnsureSavesListVisible();
+        UpdateLoadBrowserLabels();
+        FocusLoadList(browsingSaves ? savesRoot : sessionsRoot,
+            browsingSaves ? selectedSaveView.gameObject : selectedSessionView != null ? selectedSessionView.gameObject : null);
     }
 
     private void FocusSessionsRoot()
     {
-        if (sharedCursor == null || sessionsRoot == null)
+        browsingSaves = false;
+        EnsureSessionsListVisible();
+        RefreshSessionsLayout();
+        UpdateLoadBrowserLabels();
+        FocusLoadList(sessionsRoot, selectedSessionView != null ? selectedSessionView.gameObject : null);
+    }
+
+    private void EnsureSessionsListVisible()
+    {
+        if (sessionsRoot == null)
         {
             return;
         }
 
-        RectTransform targetRoot = sessionsRoot as RectTransform;
-        if (targetRoot == null)
+        EnsureLoadMenuVisibilityPriority();
+        Transform current = sessionsRoot;
+        ScrollRect scrollRect = null;
+        CanvasGroup loadGroup = ResolveLoadMenuGroup();
+        while (current != null)
         {
-            return;
-        }
-
-        if (!HasDirectCursorChildren(targetRoot))
-        {
-            RectTransform fallback = FindFirstCursorItem(targetRoot);
-            if (fallback == null)
+            if (!current.gameObject.activeSelf)
             {
-                return;
+                current.gameObject.SetActive(true);
             }
+
+            if (scrollRect == null)
+            {
+                scrollRect = current.GetComponent<ScrollRect>();
+            }
+
+            if (loadGroup != null && current == loadGroup.transform)
+            {
+                break;
+            }
+
+            current = current.parent;
         }
 
-        currentCursorRoot = targetRoot;
-        sharedCursor.itemsParent = targetRoot;
-        sharedCursor.layoutGroup = targetRoot.GetComponent<LayoutGroup>();
+        if (scrollRect != null)
+        {
+            if (scrollRect.content != sessionsRoot)
+            {
+                scrollRect.content = sessionsRoot as RectTransform;
+            }
+
+            scrollRect.transform.SetAsLastSibling();
+        }
+    }
+
+    private void RefreshSessionsLayout()
+    {
+        EnsureSessionsListVisible();
+        RectTransform content = sessionsRoot as RectTransform;
+        if (content == null)
+        {
+            return;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+    }
+
+    private void FocusLoadList(Transform root, GameObject preferred)
+    {
+        if (root == null) return;
+        Canvas.ForceUpdateCanvases();
+        currentCursorRoot = root as RectTransform;
+        if (preferred == null)
+        {
+            for (int i = 0; i < root.childCount; i++)
+                if (root.GetChild(i).gameObject.activeSelf) { preferred = root.GetChild(i).gameObject; break; }
+        }
+        MainMenuNavigation navigation = FindAnyObjectByType<MainMenuNavigation>();
+        if (navigation != null)
+        {
+            navigation.Focus(preferred);
+            return;
+        }
+        if (sharedCursor == null) return;
+        sharedCursor.itemsParent = currentCursorRoot;
+        sharedCursor.layoutGroup = root.GetComponent<LayoutGroup>();
         sharedCursor.Refresh();
         StartCursorSnap();
     }
 
-    private bool IsCursorOnSavesRoot()
+    private bool IsCursorOnSavesRoot() => browsingSaves;
+    private bool IsCursorOnSessionsRoot() => !browsingSaves;
+
+    private void UpdateLoadBrowserLabels()
     {
-        if (savesRoot == null)
-        {
-            return false;
-        }
-
-        if (currentCursorRoot == savesRoot)
-        {
-            return true;
-        }
-
-        RectTransform current = sharedCursor != null ? sharedCursor.itemsParent : null;
-        if (current == null)
-        {
-            return false;
-        }
-
-        return current == savesRoot;
-    }
-
-    private bool IsCursorOnSessionsRoot()
-    {
-        if (sessionsRoot == null)
-        {
-            return false;
-        }
-
-        if (currentCursorRoot == sessionsRoot)
-        {
-            return true;
-        }
-
-        RectTransform current = sharedCursor != null ? sharedCursor.itemsParent : null;
-        if (current == null)
-        {
-            return false;
-        }
-
-        return current == sessionsRoot;
+        if (savesHeading != null)
+            savesHeading.text = selectedSession == null ? "2. Sauvegardes" : "2. Sauvegardes — " + selectedSession.sessionName;
+        if (loadBrowserHint != null)
+            loadBrowserHint.text = browsingSaves
+                ? "Choisir une sauvegarde · Valider pour charger · Retour : sessions"
+                : "Choisir une session · Valider pour voir ses sauvegardes · Retour : menu";
     }
 
     private void RebuildSavesList(SaveSessionInfo session, bool autoSelectSave)
@@ -2718,6 +2747,8 @@ public class MainMenuController : MonoBehaviour
             SetStatus("References UI manquantes.");
             return;
         }
+
+        EnsureSavesListVisible();
 
         if (session == null || session.saves == null || session.saves.Count == 0)
         {
@@ -2737,6 +2768,7 @@ public class MainMenuController : MonoBehaviour
             }
 
             MainMenuSaveEntryUI saveEntry = Instantiate(saveEntryPrefab, savesRoot);
+            saveEntry.gameObject.SetActive(true);
             saveEntry.Initialize(this, save, entryColor, entryHoverColor, entrySelectedColor);
             if (firstEntry == null)
             {
@@ -2756,6 +2788,8 @@ public class MainMenuController : MonoBehaviour
         {
             OnSaveSelected(saveToSelect, entryToSelect, false);
         }
+
+        RefreshSavesLayout();
     }
 
     private void ClearSavesUI()
@@ -2766,13 +2800,18 @@ public class MainMenuController : MonoBehaviour
         hoveredSave = null;
 
         ClearPreviewTexture();
+        EnsurePreviewReferences();
+        ApplyMissingPreview();
+        UpdateLoadBrowserLabels();
         if (detailsTitle != null)
         {
             detailsTitle.text = "Details";
         }
         if (detailsBody != null)
         {
-            detailsBody.text = "Selectionne une sauvegarde.";
+            detailsBody.text = selectedSession == null
+                ? "Choisis une session, puis une sauvegarde."
+                : "Cette session ne contient aucune sauvegarde.";
         }
 
         if (savesRoot == null)
@@ -2782,18 +2821,186 @@ public class MainMenuController : MonoBehaviour
 
         for (int i = savesRoot.childCount - 1; i >= 0; i--)
         {
+            savesRoot.GetChild(i).gameObject.SetActive(false);
             Destroy(savesRoot.GetChild(i).gameObject);
         }
     }
 
+    private void EnsureSavesListVisible()
+    {
+        if (savesRoot == null)
+        {
+            return;
+        }
+
+        EnsureLoadMenuVisibilityPriority();
+
+        // The save content is nested below Viewport -> ScrollView. A menu
+        // transition can leave one of these authored objects disabled, which
+        // makes instantiated entries exist but remain completely invisible.
+        Transform current = savesRoot;
+        ScrollRect scrollRect = null;
+        while (current != null)
+        {
+            if (!current.gameObject.activeSelf)
+            {
+                current.gameObject.SetActive(true);
+            }
+
+            if (scrollRect == null)
+            {
+                scrollRect = current.GetComponent<ScrollRect>();
+            }
+
+            CanvasGroup loadGroup = ResolveLoadMenuGroup();
+            if (loadGroup != null && current == loadGroup.transform)
+            {
+                break;
+            }
+
+            current = current.parent;
+        }
+
+        if (scrollRect != null && scrollRect.content != savesRoot)
+        {
+            scrollRect.content = savesRoot as RectTransform;
+        }
+    }
+
+    private void EnsureLoadMenuVisibilityPriority()
+    {
+        if (currentMenu != MenuState.LoadMenu || savesRoot == null)
+        {
+            return;
+        }
+
+        CanvasGroup loadGroup = ResolveLoadMenuGroup();
+        if (loadGroup == null)
+        {
+            return;
+        }
+
+        bool canReceiveInput = !OperationBusy && !deleteConfirmOpen && !loadConfirmOpen;
+        // Keep the active browser above the other authored menu panels. This
+        // matters because MainMenu_Load contains another authored panel and
+        // the save ScrollRect is several levels below it.
+        loadGroup.transform.SetAsLastSibling();
+        Transform current = savesRoot;
+        ScrollRect scrollRect = null;
+        while (current != null)
+        {
+            if (scrollRect == null)
+            {
+                scrollRect = current.GetComponent<ScrollRect>();
+            }
+
+            CanvasGroup group = current.GetComponent<CanvasGroup>();
+            if (group != null)
+            {
+                UIManager.CancelCanvasGroupTransition(group);
+                if (!group.gameObject.activeSelf)
+                {
+                    group.gameObject.SetActive(true);
+                }
+
+                group.alpha = 1f;
+                group.interactable = canReceiveInput;
+                group.blocksRaycasts = canReceiveInput;
+            }
+
+            if (current == loadGroup.transform)
+            {
+                break;
+            }
+
+            current = current.parent;
+        }
+
+        if (scrollRect != null)
+        {
+            scrollRect.transform.SetAsLastSibling();
+        }
+    }
+
+    private void RefreshSavesLayout()
+    {
+        EnsureSavesListVisible();
+        RectTransform content = savesRoot as RectTransform;
+        if (content == null)
+        {
+            return;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        ApplySaveEntriesLayout(content);
+
+        ScrollRect scrollRect = content.GetComponentInParent<ScrollRect>();
+        if (scrollRect != null)
+        {
+            scrollRect.StopMovement();
+            scrollRect.verticalNormalizedPosition = 1f;
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+            ApplySaveEntriesLayout(content);
+        }
+    }
+
+    private static void ApplySaveEntriesLayout(RectTransform content)
+    {
+        if (content == null)
+        {
+            return;
+        }
+
+        VerticalLayoutGroup layout = content.GetComponent<VerticalLayoutGroup>();
+        float spacing = layout != null ? layout.spacing : 0f;
+        float y = 0f;
+        const float entryHeight = 144f;
+
+        for (int i = 0; i < content.childCount; i++)
+        {
+            RectTransform entry = content.GetChild(i) as RectTransform;
+            if (entry == null || !entry.gameObject.activeSelf)
+            {
+                continue;
+            }
+
+            // The save prefab has no LayoutElement and can be reduced to a
+            // zero-height child by a ContentSizeFitter after instantiation.
+            // Give every authored entry the same stable row geometry as the
+            // session entries while keeping it inside the ScrollRect.
+            entry.anchorMin = new Vector2(0f, 1f);
+            entry.anchorMax = new Vector2(1f, 1f);
+            entry.pivot = new Vector2(.5f, 1f);
+            entry.localScale = Vector3.one;
+            entry.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, entryHeight);
+            entry.anchoredPosition = new Vector2(0f, -y);
+            y += entryHeight + spacing;
+        }
+
+        float contentHeight = Mathf.Max(0f, y - spacing);
+        ScrollRect scrollRect = content.GetComponentInParent<ScrollRect>();
+        if (scrollRect != null && scrollRect.viewport != null)
+        {
+            contentHeight = Mathf.Max(contentHeight, scrollRect.viewport.rect.height);
+        }
+
+        content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentHeight);
+    }
+
     internal void OnSaveHovered(SaveSlotInfo save)
     {
+        if (save == null || selectedSession == null || save.sessionId != selectedSession.sessionId) return;
+        browsingSaves = true;
         hoveredSave = save;
+        UpdateLoadBrowserLabels();
         ShowSaveDetails(save);
     }
 
     internal void OnSaveSelected(SaveSlotInfo save, MainMenuSaveEntryUI view, bool requestLoad)
     {
+        if (save == null || selectedSession == null || save.sessionId != selectedSession.sessionId) return;
         if (selectedSaveView != null)
         {
             selectedSaveView.SetSelected(false);
@@ -2810,6 +3017,11 @@ public class MainMenuController : MonoBehaviour
 
         if (requestLoad)
         {
+            if (!save.validMetadata)
+            {
+                SetStatus("Cette sauvegarde est illisible et ne peut pas être chargée.");
+                return;
+            }
             RequestLoadConfirm(save);
         }
     }
@@ -2832,16 +3044,16 @@ public class MainMenuController : MonoBehaviour
 
         if (detailsTitle != null)
         {
-            detailsTitle.text = save.sessionName;
+            detailsTitle.text = MainMenuSaveCatalog.SceneLabel(save.sceneName);
         }
 
         if (detailsBody != null)
         {
             detailsBody.text =
-                $"Sauvegarde: {save.saveName}\n" +
+                $"<size=125%>{MainMenuSaveCatalog.SceneLabel(save.sceneName)}</size>\n\n" +
+                $"Sauvegarde : {save.saveName}\n" +
                 $"Date: {(savedAt == DateTime.MinValue ? "Inconnue" : savedAt.ToString("dd/MM/yyyy HH:mm"))}\n" +
-                $"Temps de jeu: {playtimeText}\n" +
-                $"Lieu : {MainMenuSaveCatalog.SceneLabel(save.sceneName)}";
+                $"Temps de jeu : {playtimeText}";
         }
 
         UpdatePreview(save);
@@ -2896,7 +3108,7 @@ public class MainMenuController : MonoBehaviour
                 Transform found = FindInHierarchy(root, "ScreenView");
                 if (found != null)
                 {
-                    previewImage = found.GetComponent<RawImage>();
+                    previewImage = found.GetComponentInChildren<RawImage>(true);
                 }
             }
         }
@@ -3232,7 +3444,12 @@ public class MainMenuController : MonoBehaviour
             preparedSessionName = name;
         }
         SaveSessionManager.Instance.SetActiveSave(preparedSave.sessionId, preparedSave.saveId);
-        StartGameFlow();
+        // Une nouvelle partie ne doit jamais reprendre la scene du menu
+        // enregistree dans la metadata initiale de la sauvegarde.
+        string newGameScene = GameFlowService.Instance != null
+            ? GameFlowService.Instance.HubSceneName
+            : null;
+        StartGameFlow(newGameScene);
     }
 
     private void RegisterNewGameNameListener(bool enabled)
@@ -3748,8 +3965,10 @@ public class MainMenuController : MonoBehaviour
 
     private void OnLoadMenuRequested()
     {
+        browsingSaves = false;
         ShowLoadMenu();
         RefreshSessions();
+        FocusSessionsRoot();
     }
 
     private void OnMultiplayerRequested()
@@ -4179,14 +4398,14 @@ public class MainMenuController : MonoBehaviour
 #endif
     }
 
-    private void StartOfflineFlow()
+    private void StartOfflineFlow(string initialSceneName = null)
     {
         BeginSessionOperation();
         try
         {
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
                 NetcodeBootstrap.ShutdownActiveNetworkManager();
-            if (!GameFlowService.StartOrLoadGame())
+            if (!GameFlowService.StartOrLoadGame(initialSceneName))
                 RestoreAfterOperation("Impossible de démarrer le chargement de la partie.");
         }
         catch (Exception ex)
@@ -4204,11 +4423,11 @@ public class MainMenuController : MonoBehaviour
         PrivateSessionService.Instance.Join(code);
     }
 
-    private void StartGameFlow()
+    private void StartGameFlow(string initialSceneName = null)
     {
         if (OperationBusy) return;
         SaveSessionManager.Instance?.SetCurrentSessionType(currentSessionType);
-        if (currentSessionType == SaveSessionType.Solo) { StartOfflineFlow(); return; }
+        if (currentSessionType == SaveSessionType.Solo) { StartOfflineFlow(initialSceneName); return; }
         BeginSessionOperation();
         if (PrivateSessionService.Instance == null) { RestoreAfterOperation("Service multijoueur indisponible."); return; }
         PrivateSessionService.Instance.StartHost();
@@ -4252,7 +4471,9 @@ public class MainMenuController : MonoBehaviour
         SetJoinStatus(message);
     }
 
-    public Transform NavigationModalRoot => IsVirtualKeyboardVisible() ? virtualKeyboardGroup.transform : null;
+    public Transform NavigationModalRoot => IsVirtualKeyboardVisible() ? virtualKeyboardGroup.transform
+        : currentMenu == MenuState.LoadMenu && !loadConfirmOpen && !deleteConfirmOpen
+            ? (browsingSaves ? savesRoot : sessionsRoot) : null;
     public void UI_Back() { if (!TryCancelVirtualKeyboard()) HandleBackAction(); }
     public void UI_OpenKeyboard() { if (newGamePromptOpen || currentMenu == MenuState.Join) ShowVirtualKeyboard(); }
     private void ShowLoadingScreen(string overrideMessage = null)

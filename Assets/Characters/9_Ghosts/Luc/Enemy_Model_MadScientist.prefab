@@ -4428,7 +4428,6 @@ MonoBehaviour:
   playerOptionPrefix: 'Vous : '
   ghostResponsePrefix: 
   reactionChoiceParent: {fileID: 0}
-  reactionChoiceWidth: 680
   closeChoiceText: Reculer
   reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules: []

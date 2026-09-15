@@ -7,6 +7,7 @@ public class AudioManager : MonoBehaviour
 {
     private const string MusicVolumePrefsKey = "settings.audio.music_volume";
     private const string SfxVolumePrefsKey = "settings.audio.sfx_volume";
+    private const string VoiceVolumePrefsKey = "settings.audio.voice_volume";
     private const float DefaultChannelVolume = 1f;
     private const string DefaultActionAudioLibraryResourcePath = "Audio/ActionAudioLibrary_Default";
 
@@ -16,13 +17,16 @@ public class AudioManager : MonoBehaviour
         public float clipVolume;
         public float basePitch;
         public bool affectedByTimeScale;
+        public bool isVoice;
 
-        public ManagedSfxSource(AudioSource audioSource, float baseClipVolume, float sourceBasePitch, bool sourceAffectedByTimeScale)
+        public ManagedSfxSource(AudioSource audioSource, float baseClipVolume, float sourceBasePitch,
+            bool sourceAffectedByTimeScale, bool voice)
         {
             source = audioSource;
             clipVolume = baseClipVolume;
             basePitch = sourceBasePitch;
             affectedByTimeScale = sourceAffectedByTimeScale;
+            isVoice = voice;
         }
     }
 
@@ -57,6 +61,8 @@ public class AudioManager : MonoBehaviour
     public float musicVolume = DefaultChannelVolume;
     [Range(0f, 1f), Tooltip("Volume dedie aux sons du jeu.")]
     public float sfxVolume = DefaultChannelVolume;
+    [Range(0f, 1f), Tooltip("Volume dedie aux voix.")]
+    public float voiceVolume = DefaultChannelVolume;
     [Tooltip("Duree du crossfade de musique.")]
     public float fadeDuration = 1f;
     [Tooltip("Ne pas detruire au changement de scene.")]
@@ -108,6 +114,7 @@ public class AudioManager : MonoBehaviour
 
     public float MusicVolume => Mathf.Clamp01(musicVolume);
     public float SfxVolume => Mathf.Clamp01(sfxVolume);
+    public float VoiceVolume => Mathf.Clamp01(voiceVolume);
 
     public static AudioManager EnsureInstance()
     {
@@ -186,6 +193,11 @@ public class AudioManager : MonoBehaviour
         return LoadSavedVolume(SfxVolumePrefsKey, DefaultChannelVolume);
     }
 
+    public static float GetSavedVoiceVolume()
+    {
+        return LoadSavedVolume(VoiceVolumePrefsKey, DefaultChannelVolume);
+    }
+
     public static void SaveMusicVolumePreference(float value)
     {
         SaveVolume(MusicVolumePrefsKey, value);
@@ -194,6 +206,11 @@ public class AudioManager : MonoBehaviour
     public static void SaveSfxVolumePreference(float value)
     {
         SaveVolume(SfxVolumePrefsKey, value);
+    }
+
+    public static void SaveVoiceVolumePreference(float value)
+    {
+        SaveVolume(VoiceVolumePrefsKey, value);
     }
 
     public void SetMusicVolume(float value, bool save = true)
@@ -220,6 +237,18 @@ public class AudioManager : MonoBehaviour
         RefreshSfxVolumes();
     }
 
+    public void SetVoiceVolume(float value, bool save = true)
+    {
+        float clamped = Mathf.Clamp01(value);
+        voiceVolume = clamped;
+        if (save)
+        {
+            SaveVoiceVolumePreference(clamped);
+        }
+
+        RefreshSfxVolumes();
+    }
+
     public void AdjustMusicVolume(float delta, bool save = true)
     {
         SetMusicVolume(MusicVolume + delta, save);
@@ -228,6 +257,36 @@ public class AudioManager : MonoBehaviour
     public void AdjustSfxVolume(float delta, bool save = true)
     {
         SetSfxVolume(SfxVolume + delta, save);
+    }
+
+    public void AdjustVoiceVolume(float delta, bool save = true)
+    {
+        SetVoiceVolume(VoiceVolume + delta, save);
+    }
+
+    public AudioSource PlayVoiceClip(AudioClipSO clip, Vector3 position)
+    {
+        if (clip == null || clip.audioClip == null)
+        {
+            return null;
+        }
+
+        AudioSource source = CreateSource("Voice_" + clip.name);
+        ConfigureOneShotSource(source);
+        source.transform.position = position;
+        source.clip = clip.audioClip;
+        source.loop = clip.loop;
+        ApplyClipPitch(source, clip);
+        source.volume = GetVoiceSourceVolume(clip);
+        source.Play();
+        RegisterSfxSource(source, clip, true);
+
+        if (!clip.loop)
+        {
+            StartCoroutine(DestroyAfterPlay(source));
+        }
+
+        return source;
     }
 
     public void RegisterZoneEnter(Zone zone)
@@ -963,6 +1022,7 @@ public class AudioManager : MonoBehaviour
     {
         musicVolume = GetSavedMusicVolume();
         sfxVolume = GetSavedSfxVolume();
+        voiceVolume = GetSavedVoiceVolume();
     }
 
     private void ClampMixSettings()
@@ -970,6 +1030,7 @@ public class AudioManager : MonoBehaviour
         masterVolume = Mathf.Clamp01(masterVolume);
         musicVolume = Mathf.Clamp01(musicVolume);
         sfxVolume = Mathf.Clamp01(sfxVolume);
+        voiceVolume = Mathf.Clamp01(voiceVolume);
         oneShotSpatialBlend = Mathf.Clamp01(oneShotSpatialBlend);
         oneShotMinDistance = Mathf.Max(0f, oneShotMinDistance);
         oneShotMaxDistance = Mathf.Max(oneShotMinDistance, oneShotMaxDistance);
@@ -1019,6 +1080,23 @@ public class AudioManager : MonoBehaviour
     private float GetSfxSourceVolume(float clipVolume)
     {
         return clipVolume * Mathf.Clamp01(masterVolume) * SfxVolume;
+    }
+
+    private float GetVoiceSourceVolume(AudioClipSO clip)
+    {
+        if (clip == null)
+        {
+            return 0f;
+        }
+
+        return Mathf.Clamp01(clip.volume) * Mathf.Clamp01(masterVolume) * VoiceVolume;
+    }
+
+    private float GetManagedSourceVolume(ManagedSfxSource source)
+    {
+        return source.isVoice
+            ? source.clipVolume * Mathf.Clamp01(masterVolume) * VoiceVolume
+            : GetSfxSourceVolume(source.clipVolume);
     }
 
     private float GetAmbienceSourceVolume(AudioClipSO clip)
@@ -1110,7 +1188,7 @@ public class AudioManager : MonoBehaviour
                 continue;
             }
 
-            entry.source.volume = GetSfxSourceVolume(entry.clipVolume);
+            entry.source.volume = GetManagedSourceVolume(entry);
         }
     }
 
@@ -1120,10 +1198,22 @@ public class AudioManager : MonoBehaviour
             source,
             clip != null ? Mathf.Clamp01(clip.volume) : 1f,
             1f,
-            clip != null && clip.affectedByTimeScale);
+            clip != null && clip.affectedByTimeScale,
+            false);
     }
 
-    private void RegisterSfxSource(AudioSource source, float clipVolume, float basePitch, bool affectedByTimeScale)
+    private void RegisterSfxSource(AudioSource source, AudioClipSO clip, bool voice)
+    {
+        RegisterSfxSource(
+            source,
+            clip != null ? Mathf.Clamp01(clip.volume) : 1f,
+            1f,
+            clip != null && clip.affectedByTimeScale,
+            voice);
+    }
+
+    private void RegisterSfxSource(AudioSource source, float clipVolume, float basePitch,
+        bool affectedByTimeScale, bool voice = false)
     {
         if (source == null)
         {
@@ -1138,12 +1228,12 @@ public class AudioManager : MonoBehaviour
         {
             if (activeSfxSources[i].source == source)
             {
-                activeSfxSources[i] = new ManagedSfxSource(source, clipVolume, basePitch, affectedByTimeScale);
+                activeSfxSources[i] = new ManagedSfxSource(source, clipVolume, basePitch, affectedByTimeScale, voice);
                 return;
             }
         }
 
-        activeSfxSources.Add(new ManagedSfxSource(source, clipVolume, basePitch, affectedByTimeScale));
+        activeSfxSources.Add(new ManagedSfxSource(source, clipVolume, basePitch, affectedByTimeScale, voice));
     }
 
     private void CleanupTrackedSfxSources()

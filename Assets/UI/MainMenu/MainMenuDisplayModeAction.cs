@@ -64,6 +64,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
 
     private void OnDisable()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         activeActions.Remove(this);
     }
 
@@ -76,6 +77,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
 
     public void OnCursorFocus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -84,6 +86,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
 
     public void OnCursorBlur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnCursorSubmit()
@@ -93,6 +96,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -101,6 +105,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnPointerClick(PointerEventData eventData)

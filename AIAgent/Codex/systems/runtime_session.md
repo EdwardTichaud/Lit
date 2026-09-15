@@ -33,6 +33,18 @@ Emplacement canonique des scripts de session de sauvegarde :
 
 ## MainMenu et salon privé
 
+MainMenu_Load presente les sessions en haut a gauche et les sauvegardes en bas.
+Le survol ne reconstruit pas les sauvegardes : seule la validation d'une session
+change leur contenu. MainMenuNavigation limite alors le focus aux sauvegardes ;
+Retour revient aux sessions en conservant le choix. La souris synchronise ce
+focus pour permettre l'alternance souris/clavier/manette. Chaque sauvegarde
+affiche son nom et sa date ; l'apercu et le district issu de sceneName sont a droite.
+Les deux listes utilisent ContentSizeFitter avec defilement vertical ; les
+anciennes entrees sont desactivees avant destruction pour eviter un focus obsolete.
+MainMenuLoadBrowserTests couvre le survol, le retour, l'isolation des sessions,
+le district et les references de scene. Compilation verifiee ; tests Unity et
+validation visuelle du parcours encore a executer.
+
 `PrivateSessionService`, installé par `NetcodeBootstrap`, possède les tentatives
 Relay et le salon indépendamment de la scène de menu. Le transport reste Relay,
 les commandes/états de salon passent par les messages NGO `lit.private.*.v1`.

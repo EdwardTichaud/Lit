@@ -24,9 +24,6 @@ public sealed class MainMenuNavigation : MonoBehaviour
     private float nextScaleCheck;
     private EventSystem navigationSystem;
     private bool previousNavigationEvents;
-    private GameObject focusHighlight;
-    private GameObject highlightedTarget;
-    private bool showSelectionHighlight;
     private int suppressSubmitFrame = -1;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -41,7 +38,6 @@ public sealed class MainMenuNavigation : MonoBehaviour
     public void Focus(GameObject target)
     {
         if (!Usable(target)) return;
-        showSelectionHighlight = true;
         // A physical press that closes the keyboard must not submit the form too.
         suppressSubmitFrame = Time.frameCount;
         CollectTargets(PrivateSessionService.Instance);
@@ -83,10 +79,10 @@ public sealed class MainMenuNavigation : MonoBehaviour
         if (pad != null && (pad.leftStick.ReadValue().sqrMagnitude > .2f || pad.dpad.ReadValue().sqrMagnitude > .2f ||
             pad.buttonSouth.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame || pad.buttonNorth.wasPressedThisFrame ||
             pad.buttonWest.wasPressedThisFrame || pad.startButton.wasPressedThisFrame))
-        { UsingGamepad = true; showSelectionHighlight = true; }
-        if (keyboard != null && keyboard.anyKey.wasPressedThisFrame) { UsingGamepad = false; showSelectionHighlight = true; }
+        { UsingGamepad = true; }
+        if (keyboard != null && keyboard.anyKey.wasPressedThisFrame) { UsingGamepad = false; }
         if (mouse != null && (mouse.delta.ReadValue().sqrMagnitude > 4f || mouse.leftButton.wasPressedThisFrame))
-        { UsingGamepad = false; showSelectionHighlight = false; }
+        { UsingGamepad = false; }
         if (UsingGamepad) Cursor.visible = false;
         if (Gamepad.current == null && Keyboard.current != null && !MainMenuInputSettings.AllowsKeyboardMouse())
             MainMenuInputSettings.SetMode(MainMenuInputSettings.InputMode.Automatic);
@@ -205,40 +201,9 @@ public sealed class MainMenuNavigation : MonoBehaviour
             scroll.content.anchoredPosition += new Vector2(0, shift); scroll.StopMovement();
         }
     }
-    private void LateUpdate()
-    {
-        GameObject target = selected;
-        if (ConfirmationManager.IsVisible) target = ConfirmationManager.CurrentSelection;
-        SetHighlight(Active && (UsingGamepad || showSelectionHighlight) && target != null && target.activeInHierarchy ? target : null);
-    }
-
-    private void SetHighlight(GameObject target)
-    {
-        if (target == highlightedTarget && (target == null || focusHighlight != null)) return;
-        if (focusHighlight != null) { focusHighlight.SetActive(false); Destroy(focusHighlight); }
-        highlightedTarget = target;
-        if (target == null || !(target.transform is RectTransform)) return;
-        // A separate UGUI rectangle also highlights TMP text buttons; TMP does not
-        // render a standard UI Outline mesh effect applied to the text itself.
-        focusHighlight = new GameObject("SelectionHighlight", typeof(RectTransform), typeof(CanvasRenderer),
-            typeof(Image), typeof(LayoutElement), typeof(UnityEngine.UI.Outline));
-        focusHighlight.transform.SetParent(target.transform, false);
-        focusHighlight.transform.SetAsFirstSibling();
-        RectTransform rect = (RectTransform)focusHighlight.transform;
-        rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(-4, -4); rect.offsetMax = new Vector2(4, 4);
-        focusHighlight.GetComponent<LayoutElement>().ignoreLayout = true;
-        Image fill = focusHighlight.GetComponent<Image>();
-        fill.color = new Color(1f, .72f, .22f, .16f); fill.raycastTarget = false;
-        UnityEngine.UI.Outline border = focusHighlight.GetComponent<UnityEngine.UI.Outline>();
-        border.effectColor = new Color(1f, .72f, .22f, 1f);
-        border.effectDistance = new Vector2(3, 3); border.useGraphicAlpha = false;
-    }
-
     private void ClearSelection()
     {
         if (selected != null) selected.GetComponents<MonoBehaviour>().OfType<IMenuCursorHandler>().FirstOrDefault()?.OnCursorBlur();
-        SetHighlight(null);
         selected = null;
     }
 }

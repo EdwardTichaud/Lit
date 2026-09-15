@@ -116,7 +116,8 @@ public class LitInfluenceSource
         float sqrRadius = radius * radius;
         if (targetCollider != null)
         {
-            Vector3 closestPoint = targetCollider.ClosestPoint(worldCenter);
+            Vector3 closestPoint = CharacterInteractionDetection.GetInteractionPoint(
+                targetCollider, targetCollider.transform, worldCenter);
             if ((closestPoint - worldCenter).sqrMagnitude <= sqrRadius)
             {
                 return true;

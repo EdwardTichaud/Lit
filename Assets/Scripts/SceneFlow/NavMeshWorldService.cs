@@ -48,6 +48,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
     private bool runtimeBuildInProgress;
     private NavMeshWorldReport lastReport;
     private GameObject runtimeSurfaceHost;
+    private readonly List<NavMeshAgent> suspendedAgents = new List<NavMeshAgent>();
 
     public NavMeshWorldState State { get; private set; } = NavMeshWorldState.Unloaded;
     public bool IsReady => State == NavMeshWorldState.Ready;
@@ -272,13 +273,22 @@ public sealed class NavMeshWorldService : MonoBehaviour
 
         runtimeBuildInProgress = true;
         SetState(NavMeshWorldState.Building);
+        SuspendAgentsForNavMeshSwap();
         // Remove every runtime dataset, not only the one currently referenced
         // by our surface. Scene NavMeshSettings or a previous additive zone can
         // otherwise leave a valid-looking polygon on another floor.
-        NavMesh.RemoveAllNavMeshData();
-        bool success = SquadAIManager.Instance != null &&
-                       SquadAIManager.Instance.RebuildNavMeshForLoadedWorld(reason);
-        runtimeBuildInProgress = false;
+        bool success = false;
+        try
+        {
+            NavMesh.RemoveAllNavMeshData();
+            success = SquadAIManager.Instance != null &&
+                      SquadAIManager.Instance.RebuildNavMeshForLoadedWorld(reason);
+        }
+        finally
+        {
+            runtimeBuildInProgress = false;
+            RestoreAgentsAfterNavMeshSwap();
+        }
         SetState(success ? NavMeshWorldState.Validating : NavMeshWorldState.Failed);
         bool worldValid = ValidateWorld("runtime colliders");
         if (!success || !worldValid)
@@ -302,18 +312,26 @@ public sealed class NavMeshWorldService : MonoBehaviour
              manifest.BakedNavMeshAgentTypeId == surface.agentTypeID))
         {
             SetState(NavMeshWorldState.Validating);
-            surface.RemoveData();
-            surface.navMeshData = manifest.BakedNavMeshData;
-            surface.AddData();
-            if (ValidateWorld("asset pre-bake"))
+            SuspendAgentsForNavMeshSwap();
+            try
             {
-                SetReady("asset pre-bake");
-                buildRoutine = null;
-                yield break;
-            }
+                surface.RemoveData();
+                surface.navMeshData = manifest.BakedNavMeshData;
+                surface.AddData();
+                if (ValidateWorld("asset pre-bake"))
+                {
+                    SetReady("asset pre-bake");
+                    buildRoutine = null;
+                    yield break;
+                }
 
-            surface.RemoveData();
-            surface.navMeshData = null;
+                surface.RemoveData();
+                surface.navMeshData = null;
+            }
+            finally
+            {
+                RestoreAgentsAfterNavMeshSwap();
+            }
             if (logDiagnostics)
             {
                 Debug.LogWarning("[NavMeshWorld] NavMeshData pre-bake refuse pour la zone " + currentZoneId + ". Fallback runtime.", this);
@@ -388,8 +406,11 @@ public sealed class NavMeshWorldService : MonoBehaviour
             bounds = hasBounds ? bounds : new Bounds(Vector3.zero, Vector3.zero)
         };
 
-        return triangulation.vertices != null && triangulation.vertices.Length > 0 &&
-               anchors > 0 && covered == anchors;
+        bool hasNavigationGeometry = triangulation.vertices != null && triangulation.vertices.Length > 0;
+        // Some hub variants deliberately contain no character SceneMarker.
+        // They are still valid navigation worlds when their baked geometry is
+        // present; agents will be validated when an actual spawn is registered.
+        return hasNavigationGeometry && (anchors == 0 || covered == anchors);
     }
 
     private void SetReady(string source)
@@ -450,6 +471,46 @@ public sealed class NavMeshWorldService : MonoBehaviour
             StopCoroutine(buildRoutine);
             buildRoutine = null;
         }
+    }
+
+    private void SuspendAgentsForNavMeshSwap()
+    {
+        suspendedAgents.Clear();
+        NavMeshAgent[] agents = FindObjectsByType<NavMeshAgent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        for (int i = 0; i < agents.Length; i++)
+        {
+            NavMeshAgent agent = agents[i];
+            if (agent != null && agent.enabled)
+            {
+                suspendedAgents.Add(agent);
+                agent.enabled = false;
+            }
+        }
+    }
+
+    private void RestoreAgentsAfterNavMeshSwap()
+    {
+        for (int i = 0; i < suspendedAgents.Count; i++)
+        {
+            NavMeshAgent agent = suspendedAgents[i];
+            if (agent == null || !agent.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            int areaMask = agent.areaMask == 0 ? NavMesh.AllAreas : agent.areaMask;
+            if (NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit, anchorSampleRadius, areaMask))
+            {
+                Vector3 delta = hit.position - agent.transform.position;
+                if (new Vector2(delta.x, delta.z).magnitude <= anchorPositionTolerance &&
+                    Mathf.Abs(delta.y) <= anchorPositionTolerance)
+                {
+                    agent.enabled = true;
+                }
+            }
+        }
+
+        suspendedAgents.Clear();
     }
 
     private void SetState(NavMeshWorldState state)

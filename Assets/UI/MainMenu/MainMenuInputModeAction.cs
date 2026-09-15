@@ -48,6 +48,7 @@ public class MainMenuInputModeAction : MonoBehaviour, IMenuCursorHandler, IPoint
 
     private void OnDisable()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         activeActions.Remove(this);
         MainMenuInputSettings.ModeChanged -= OnModeChanged;
     }
@@ -61,6 +62,7 @@ public class MainMenuInputModeAction : MonoBehaviour, IMenuCursorHandler, IPoint
 
     public void OnCursorFocus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -69,6 +71,7 @@ public class MainMenuInputModeAction : MonoBehaviour, IMenuCursorHandler, IPoint
 
     public void OnCursorBlur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnCursorSubmit()
@@ -78,6 +81,7 @@ public class MainMenuInputModeAction : MonoBehaviour, IMenuCursorHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -86,6 +90,7 @@ public class MainMenuInputModeAction : MonoBehaviour, IMenuCursorHandler, IPoint
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnPointerClick(PointerEventData eventData)

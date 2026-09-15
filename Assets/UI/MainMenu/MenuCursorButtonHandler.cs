@@ -18,6 +18,7 @@ public class MenuCursorButtonHandler : MonoBehaviour, IMenuCursorHandler
 
     public void OnCursorFocus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (selectButtonOnFocus && button != null && button.interactable)
         {
             button.Select();
@@ -26,6 +27,7 @@ public class MenuCursorButtonHandler : MonoBehaviour, IMenuCursorHandler
 
     public void OnCursorBlur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnCursorSubmit()

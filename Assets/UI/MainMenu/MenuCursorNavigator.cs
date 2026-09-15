@@ -187,7 +187,7 @@ public class MenuCursorNavigator : MonoBehaviour
         }
 
         currentCursorItem = currentItem.GetComponent<MenuCursorItem>();
-        currentHandler = currentItem.GetComponent<IMenuCursorHandler>();
+        currentHandler = FindActiveHandler(currentItem);
 
         if (currentHandler != null)
         {
@@ -213,6 +213,20 @@ public class MenuCursorNavigator : MonoBehaviour
         currentHandler = null;
         currentCursorItem = null;
         currentItem = null;
+    }
+
+    private static IMenuCursorHandler FindActiveHandler(RectTransform item)
+    {
+        MonoBehaviour[] behaviours = item.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] != null && behaviours[i].isActiveAndEnabled && behaviours[i] is IMenuCursorHandler handler)
+            {
+                return handler;
+            }
+        }
+
+        return null;
     }
 
     public void ConfigureRuntime(

@@ -11,6 +11,16 @@ using Unity.Netcode;
 [DisallowMultipleComponent]
 public class PausePanelController : MonoBehaviour
 {
+    private enum PanelState
+    {
+        Closed,
+        Opening,
+        Open,
+        Closing
+    }
+
+    public static PausePanelController Instance { get; private set; }
+
     [Header("Panel")]
     public GameObject pausePanel;
     public bool deactivatePanelOnClose = true;
@@ -41,8 +51,10 @@ public class PausePanelController : MonoBehaviour
     public bool toggleOnStart = true;
     public bool closeOnReturn = true;
     public bool lockGameplayInput = true;
+    public bool pauseTimeWhenOpen = true;
 
     [Header("Audio Options")]
+    [Tooltip("Utilise le sous-menu AudioOption configure dans la scene.")]
     public bool createAudioOptions = true;
     [Range(0.01f, 0.5f)] public float audioOptionStep = 0.1f;
     public int audioOptionsInsertIndex = 1;
@@ -50,12 +62,15 @@ public class PausePanelController : MonoBehaviour
     public string audioOptionsBackLabel = "Retour";
     public string musicOptionLabel = "Musique";
     public string sfxOptionLabel = "Sons";
+    public string voiceOptionLabel = "Voix";
+    [SerializeField] private RectTransform audioOptionsRoot;
 
     private CanvasGroup panelCanvasGroup;
-    private Coroutine fadeRoutine;
     private bool isOpen;
-    private bool hasInitialized;
+    private PanelState panelState = PanelState.Closed;
     private bool gameplayInputLocked;
+    private TimeManager timeManager;
+    private TimeManager.TimeRequestHandle pauseTimeHandle;
     private bool cachedMatchTargetSize;
     private bool cursorSizeCached;
     private RectTransform pauseOptionsRoot;
@@ -63,14 +78,33 @@ public class PausePanelController : MonoBehaviour
     private PauseCursorAction audioOptionsBackButton;
     private PauseAudioOption musicVolumeOption;
     private PauseAudioOption sfxVolumeOption;
+    private PauseAudioOption voiceAudioOption;
+    private CanvasGroup pauseOptionsCanvasGroup;
+    private CanvasGroup audioOptionsCanvasGroup;
     private readonly System.Collections.Generic.List<RectTransform> defaultPauseOptions = new System.Collections.Generic.List<RectTransform>();
     private bool defaultPauseOptionsCaptured;
     private bool audioOptionsOpen;
 
     public bool IsOpen => isOpen;
+    public bool IsTransitioning => panelState == PanelState.Opening || panelState == PanelState.Closing;
+
+    private float screenshotPreviousAlpha;
+    private bool screenshotPreviousInteractable;
+    private bool screenshotPreviousBlocksRaycasts;
+    private bool screenshotPreviousPanelActive;
+    private bool screenshotPreviousCursorEnabled;
+    private bool screenshotPreviousNavigatorEnabled;
+    private bool screenshotVisibilityCaptured;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            return;
+        }
+
+        Instance = this;
+
         if (pausePanel == null)
         {
             pausePanel = gameObject;
@@ -84,32 +118,36 @@ public class PausePanelController : MonoBehaviour
         panelCanvasGroup = pausePanel.GetComponent<CanvasGroup>();
         if (panelCanvasGroup == null)
         {
-            panelCanvasGroup = pausePanel.AddComponent<CanvasGroup>();
+            Debug.LogError("PausePanelController requires a CanvasGroup on its pause panel.", this);
+            enabled = false;
+            return;
         }
 
         ResolveButtons();
-        EnsureRuntimeAudioOptions();
+        EnsureCursorActions();
+        ResolveStaticAudioOptions();
         ResolveCursor();
         SetAudioOptionsOpen(false, false);
-        RefreshRuntimeAudioOptions();
+        RefreshStaticAudioOptions();
 
         if (startClosed)
         {
             ApplyPanelImmediate(0f, false);
             isOpen = false;
+            panelState = PanelState.Closed;
             SetCursorState(false);
         }
         else
         {
             ApplyPanelImmediate(1f, true);
             isOpen = true;
+            panelState = PanelState.Open;
             InputFocusStack.Push(this);
             LockGameplayInput(true);
             ApplyCursorSizing(true);
             SetCursorState(true);
         }
 
-        hasInitialized = true;
     }
 
     private void OnEnable()
@@ -120,15 +158,122 @@ public class PausePanelController : MonoBehaviour
         BindButtons(true);
     }
 
+    private void Update()
+    {
+        if (panelCanvasGroup == null)
+        {
+            return;
+        }
+
+        if (panelState == PanelState.Opening && panelCanvasGroup.alpha >= 0.999f)
+        {
+            panelState = PanelState.Open;
+        }
+        else if (panelState == PanelState.Closing && panelCanvasGroup.alpha <= 0.001f)
+        {
+            panelState = PanelState.Closed;
+        }
+    }
+
     private void OnDisable()
     {
+        RestoreAfterScreenshot(restorePanelActivation: false);
+        isOpen = false;
+        panelState = PanelState.Closed;
+        SetCursorState(false);
         LocalInputRouter.Start -= OnStartPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         BindButtons(false);
         InputFocusStack.Pop(this);
         LockGameplayInput(false);
+        ReleasePauseTime();
         ApplyCursorSizing(false);
         SetAudioOptionsOpen(false, false);
+    }
+
+    private void OnDestroy()
+    {
+        RestoreAfterScreenshot(restorePanelActivation: false);
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    public bool HideForScreenshot()
+    {
+        if (!isOpen || panelCanvasGroup == null || screenshotVisibilityCaptured)
+        {
+            return false;
+        }
+
+        // A fade started by OpenPanel/ClosePanel must not regain ownership
+        // while the screenshot temporarily owns this CanvasGroup.
+        UIManager.CancelCanvasGroupTransition(panelCanvasGroup);
+
+        screenshotPreviousAlpha = panelCanvasGroup.alpha;
+        screenshotPreviousInteractable = panelCanvasGroup.interactable;
+        screenshotPreviousBlocksRaycasts = panelCanvasGroup.blocksRaycasts;
+        screenshotPreviousPanelActive = pausePanel != null && pausePanel.activeSelf;
+        screenshotPreviousCursorEnabled = cursorController != null && cursorController.enabled;
+        screenshotPreviousNavigatorEnabled = cursorNavigator != null && cursorNavigator.enabled;
+        screenshotVisibilityCaptured = true;
+
+        panelCanvasGroup.alpha = 0f;
+        panelCanvasGroup.interactable = false;
+        panelCanvasGroup.blocksRaycasts = false;
+        return true;
+    }
+
+    public void RestoreAfterScreenshot()
+    {
+        RestoreAfterScreenshot(restorePanelActivation: true);
+    }
+
+    private void RestoreAfterScreenshot(bool restorePanelActivation)
+    {
+        if (!screenshotVisibilityCaptured)
+        {
+            return;
+        }
+
+        if (panelCanvasGroup != null)
+        {
+            UIManager.CancelCanvasGroupTransition(panelCanvasGroup);
+            panelCanvasGroup.alpha = screenshotPreviousAlpha;
+            panelCanvasGroup.interactable = screenshotPreviousInteractable;
+            panelCanvasGroup.blocksRaycasts = screenshotPreviousBlocksRaycasts;
+        }
+
+        if (restorePanelActivation && pausePanel != null && pausePanel.activeSelf != screenshotPreviousPanelActive)
+        {
+            pausePanel.SetActive(screenshotPreviousPanelActive);
+        }
+
+        if (cursorController != null)
+        {
+            cursorController.enabled = isOpen ? screenshotPreviousCursorEnabled : false;
+        }
+
+        if (cursorNavigator != null)
+        {
+            cursorNavigator.enabled = isOpen ? screenshotPreviousNavigatorEnabled : false;
+        }
+
+        screenshotVisibilityCaptured = false;
+
+        if (isOpen)
+        {
+            if (!InputFocusStack.HasFocus(this))
+            {
+                InputFocusStack.Push(this);
+            }
+
+            if (cursorController != null && cursorController.enabled)
+            {
+                cursorController.Refresh();
+            }
+        }
     }
 
     private void OnStartPerformed(InputAction.CallbackContext context)
@@ -196,20 +341,22 @@ public class PausePanelController : MonoBehaviour
 
     public void OpenPanel()
     {
-        if (isOpen)
+        if (isOpen && panelState != PanelState.Closing)
         {
             return;
         }
 
         isOpen = true;
+        panelState = PanelState.Opening;
         InputFocusStack.Push(this);
         LockGameplayInput(true);
+        AcquirePauseTime();
         ApplyCursorSizing(true);
 
         pausePanel.SetActive(true);
-        EnsureRuntimeAudioOptions();
+        ResolveStaticAudioOptions();
         SetAudioOptionsOpen(false, false);
-        RefreshRuntimeAudioOptions();
+        RefreshStaticAudioOptions();
         if (cursorController != null)
         {
             cursorController.Refresh();
@@ -234,6 +381,7 @@ public class PausePanelController : MonoBehaviour
         isOpen = false;
         InputFocusStack.Pop(this);
         LockGameplayInput(false);
+        ReleasePauseTime();
         ApplyCursorSizing(false);
         SetAudioOptionsOpen(false, false);
 
@@ -243,18 +391,9 @@ public class PausePanelController : MonoBehaviour
 
     private void StartFade(float targetAlpha, bool show)
     {
-        if (!hasInitialized)
-        {
-            ApplyPanelImmediate(targetAlpha, show);
-            return;
-        }
-
-        if (fadeRoutine != null)
-        {
-            StopCoroutine(fadeRoutine);
-        }
-
-        fadeRoutine = StartCoroutine(FadeRoutine(targetAlpha, show));
+        panelState = show ? PanelState.Opening : PanelState.Closing;
+        UIManager.CancelCanvasGroupTransition(panelCanvasGroup);
+        UIManager.TransitionCanvasGroup(this, panelCanvasGroup, targetAlpha > 0.001f, fadeDuration, CanDeactivatePanel());
     }
 
     private void ApplyPanelImmediate(float targetAlpha, bool show)
@@ -262,49 +401,6 @@ public class PausePanelController : MonoBehaviour
         if (pausePanel == null || panelCanvasGroup == null)
         {
             return;
-        }
-
-        if (show)
-        {
-            pausePanel.SetActive(true);
-        }
-
-        panelCanvasGroup.alpha = targetAlpha;
-        bool visible = targetAlpha > 0.001f;
-        panelCanvasGroup.interactable = visible;
-        panelCanvasGroup.blocksRaycasts = visible;
-
-        if (!visible && CanDeactivatePanel())
-        {
-            pausePanel.SetActive(false);
-        }
-    }
-
-    private IEnumerator FadeRoutine(float targetAlpha, bool show)
-    {
-        if (pausePanel == null || panelCanvasGroup == null)
-        {
-            yield break;
-        }
-
-        if (show)
-        {
-            pausePanel.SetActive(true);
-        }
-
-        panelCanvasGroup.interactable = false;
-        panelCanvasGroup.blocksRaycasts = false;
-
-        float duration = Mathf.Max(0.01f, fadeDuration);
-        float startAlpha = panelCanvasGroup.alpha;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            float t = Mathf.Clamp01(elapsed / duration);
-            panelCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            elapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-            yield return null;
         }
 
         panelCanvasGroup.alpha = targetAlpha;
@@ -343,7 +439,6 @@ public class PausePanelController : MonoBehaviour
     {
         if (!EnsureSaveSlot())
         {
-            InfoBoxUI.TryShowTopLeft("Sauvegarde impossible.");
             return;
         }
 
@@ -352,12 +447,10 @@ public class PausePanelController : MonoBehaviour
         if (store != null)
         {
             store.Save();
-            InfoBoxUI.TryShowTopLeft("Sauvegarde créée.");
         }
         else
         {
             Debug.LogWarning("PausePanelController: CharacterStateStore introuvable, sauvegarde impossible.");
-            InfoBoxUI.TryShowTopLeft("Sauvegarde impossible.");
         }
     }
 
@@ -411,6 +504,24 @@ public class PausePanelController : MonoBehaviour
         HandleSaveClicked();
     }
 
+    public bool PrepareSaveForSceneTransition()
+    {
+        return EnsureSaveSlot();
+    }
+
+    public void CloseForSceneTransition()
+    {
+        if (isOpen)
+        {
+            ClosePanel();
+        }
+        else
+        {
+            ReleasePauseTime();
+            SetCursorState(false);
+        }
+    }
+
     private void HandleQuitClicked()
     {
         if (onQuit != null)
@@ -418,30 +529,15 @@ public class PausePanelController : MonoBehaviour
             onQuit.Invoke();
         }
 
-        ReturnToMainMenu();
+        if (!GameFlowService.QuitToMainMenu())
+        {
+            ReleasePauseTime();
+        }
     }
 
     public void UI_Quit()
     {
         HandleQuitClicked();
-    }
-
-    private void ReturnToMainMenu()
-    {
-        if (shutdownNetworkOnQuit && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
-        {
-            NetcodeBootstrap.ShutdownActiveNetworkManager();
-        }
-
-        if (string.IsNullOrWhiteSpace(mainMenuSceneName))
-        {
-            mainMenuSceneName = MainMenuController.DefaultMenuSceneName;
-        }
-
-        if (!GameFlowService.OpenMainMenu())
-        {
-            LoadingScreenService.LoadScene(mainMenuSceneName, "Retour au menu principal...", LoadSceneMode.Single);
-        }
     }
 
     private bool EnsureSaveSlot()
@@ -550,6 +646,30 @@ public class PausePanelController : MonoBehaviour
         }
     }
 
+    private void EnsureCursorActions()
+    {
+        ConfigurePauseAction("ResumeButton", PauseCursorAction.PauseAction.Resume);
+        ConfigurePauseAction("SaveButton", PauseCursorAction.PauseAction.Save);
+        ConfigurePauseAction("QuitButton", PauseCursorAction.PauseAction.Quit);
+    }
+
+    private void ConfigurePauseAction(string objectName, PauseCursorAction.PauseAction action)
+    {
+        Transform target = FindInHierarchy(pausePanel != null ? pausePanel.transform : null, objectName);
+        if (target == null)
+        {
+            return;
+        }
+
+        PauseCursorAction cursorAction = target.GetComponent<PauseCursorAction>();
+        if (cursorAction == null)
+        {
+            cursorAction = target.gameObject.AddComponent<PauseCursorAction>();
+        }
+
+        cursorAction.Configure(this, action);
+    }
+
     private void EnsureRuntimeAudioOptions()
     {
         if (!createAudioOptions || pausePanel == null)
@@ -592,6 +712,13 @@ public class PausePanelController : MonoBehaviour
             "SfxVolumeOption_Text",
             PauseAudioOption.VolumeChannel.Sfx,
             sfxOptionLabel);
+        voiceAudioOption = EnsureAudioOption(
+            pauseOptionsRoot,
+            template,
+            "VoiceVolumeOption",
+            "VoiceVolumeOption_Text",
+            PauseAudioOption.VolumeChannel.Voice,
+            voiceOptionLabel);
         audioOptionsBackButton = EnsureActionOption(
             pauseOptionsRoot,
             template,
@@ -604,7 +731,8 @@ public class PausePanelController : MonoBehaviour
         SetOptionSibling(audioOptionsButton, pauseOptionsRoot, insertIndex);
         SetOptionSibling(musicVolumeOption, pauseOptionsRoot, insertIndex);
         SetOptionSibling(sfxVolumeOption, pauseOptionsRoot, insertIndex + 1);
-        SetOptionSibling(audioOptionsBackButton, pauseOptionsRoot, insertIndex + 2);
+        SetOptionSibling(voiceAudioOption, pauseOptionsRoot, insertIndex + 2);
+        SetOptionSibling(audioOptionsBackButton, pauseOptionsRoot, insertIndex + 3);
         ApplyAudioOptionsVisibility();
     }
 
@@ -621,6 +749,11 @@ public class PausePanelController : MonoBehaviour
         if (sfxVolumeOption != null)
         {
             sfxVolumeOption.RefreshLabel();
+        }
+
+        if (voiceAudioOption != null)
+        {
+            voiceAudioOption.RefreshLabel();
         }
 
         ApplyAudioOptionsVisibility();
@@ -643,7 +776,7 @@ public class PausePanelController : MonoBehaviour
             return;
         }
 
-        EnsureRuntimeAudioOptions();
+        ResolveStaticAudioOptions();
         if (musicVolumeOption == null && sfxVolumeOption == null)
         {
             return;
@@ -664,8 +797,9 @@ public class PausePanelController : MonoBehaviour
 
     private void SetAudioOptionsOpen(bool open, bool refreshCursorSelection)
     {
-        audioOptionsOpen = open && createAudioOptions;
-        ApplyAudioOptionsVisibility();
+        audioOptionsOpen = open && createAudioOptions && audioOptionsRoot != null;
+        ApplyStaticAudioOptionsVisibility();
+        ConfigureCursorForActivePauseMenu();
 
         if (!refreshCursorSelection || !isOpen || cursorController == null)
         {
@@ -691,6 +825,130 @@ public class PausePanelController : MonoBehaviour
         FocusPauseOption(preferred);
     }
 
+    private void ConfigureCursorForActivePauseMenu()
+    {
+        if (cursorController == null)
+        {
+            return;
+        }
+
+        RectTransform activeRoot = audioOptionsOpen ? audioOptionsRoot : pauseOptionsRoot;
+        if (activeRoot == null)
+        {
+            return;
+        }
+
+        cursorController.itemsParent = activeRoot;
+        cursorController.layoutGroup = activeRoot.GetComponent<LayoutGroup>();
+    }
+
+    /// <summary>
+    /// Le sous-menu audio est desormais compose dans Bootstrap. Cette methode
+    /// ne cree aucun element : elle raccorde seulement les actions a la hierarchie.
+    /// </summary>
+    private void ResolveStaticAudioOptions()
+    {
+        if (!createAudioOptions || pausePanel == null)
+        {
+            return;
+        }
+
+        pauseOptionsRoot = FindInHierarchy(pausePanel.transform, "PauseOptions") as RectTransform;
+        audioOptionsRoot = audioOptionsRoot != null
+            ? audioOptionsRoot
+            : FindInHierarchy(pausePanel.transform, "AudioOption") as RectTransform;
+        pauseOptionsCanvasGroup = pauseOptionsRoot != null
+            ? pauseOptionsRoot.GetComponent<CanvasGroup>()
+            : null;
+        audioOptionsCanvasGroup = audioOptionsRoot != null
+            ? audioOptionsRoot.GetComponent<CanvasGroup>()
+            : null;
+
+        audioOptionsButton = ConfigureStaticAction("Audio", PauseCursorAction.PauseAction.AudioOptions);
+        audioOptionsBackButton = ConfigureStaticAction("MusicAudioQuitButton", PauseCursorAction.PauseAction.AudioOptionsBack);
+        musicVolumeOption = ConfigureStaticAudioOption(
+            PauseAudioOption.VolumeChannel.Music, musicOptionLabel, "MusicAudioButton");
+        sfxVolumeOption = ConfigureStaticAudioOption(
+            PauseAudioOption.VolumeChannel.Sfx, sfxOptionLabel,
+            "SFXAudioButton", "SFxAudioButton", "SfxAudioButton");
+        voiceAudioOption = ConfigureStaticAudioOption(
+            PauseAudioOption.VolumeChannel.Voice, voiceOptionLabel,
+            "VoixAudioButton", "VoiceAudioButton");
+    }
+
+    private PauseCursorAction ConfigureStaticAction(string objectName, PauseCursorAction.PauseAction action)
+    {
+        Transform target = FindInHierarchy(pausePanel != null ? pausePanel.transform : null, objectName);
+        if (target == null)
+        {
+            return null;
+        }
+
+        PauseCursorAction cursorAction = target.GetComponent<PauseCursorAction>();
+        if (cursorAction == null)
+        {
+            cursorAction = target.gameObject.AddComponent<PauseCursorAction>();
+        }
+
+        cursorAction.Configure(this, action);
+        return cursorAction;
+    }
+
+    private PauseAudioOption ConfigureStaticAudioOption(
+        PauseAudioOption.VolumeChannel channel,
+        string label,
+        params string[] objectNames)
+    {
+        Transform target = FindFirstInHierarchy(audioOptionsRoot, objectNames);
+        if (target == null)
+        {
+            return null;
+        }
+
+        PauseCursorAction inheritedAction = target.GetComponent<PauseCursorAction>();
+        if (inheritedAction != null)
+        {
+            inheritedAction.enabled = false;
+            Destroy(inheritedAction);
+        }
+
+        PauseAudioOption option = target.GetComponent<PauseAudioOption>();
+        if (option == null)
+        {
+            option = target.gameObject.AddComponent<PauseAudioOption>();
+        }
+
+        option.Configure(this, channel, target.GetComponentInChildren<TMP_Text>(true), label, audioOptionStep);
+        return option;
+    }
+
+    private void RefreshStaticAudioOptions()
+    {
+        musicVolumeOption?.RefreshLabel();
+        sfxVolumeOption?.RefreshLabel();
+        voiceAudioOption?.RefreshLabel();
+        ApplyStaticAudioOptionsVisibility();
+    }
+
+    private void ApplyStaticAudioOptionsVisibility()
+    {
+        bool showAudioOptions = createAudioOptions && audioOptionsOpen && audioOptionsRoot != null;
+        SetCanvasGroupVisible(pauseOptionsCanvasGroup, !showAudioOptions);
+        SetCanvasGroupVisible(audioOptionsCanvasGroup, showAudioOptions);
+    }
+
+    private static void SetCanvasGroupVisible(CanvasGroup group, bool visible)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        group.alpha = visible ? 1f : 0f;
+        group.interactable = visible;
+        group.blocksRaycasts = visible;
+    }
+
     private PauseAudioOption EnsureAudioOption(
         RectTransform optionsRoot,
         RectTransform template,
@@ -708,6 +966,13 @@ public class PausePanelController : MonoBehaviour
         if (optionRoot == null)
         {
             return null;
+        }
+
+        PauseCursorAction clonedAction = optionRoot.GetComponent<PauseCursorAction>();
+        if (clonedAction != null)
+        {
+            clonedAction.enabled = false;
+            Destroy(clonedAction);
         }
 
         PauseAudioOption option = optionRoot.GetComponent<PauseAudioOption>();
@@ -786,23 +1051,14 @@ public class PausePanelController : MonoBehaviour
 
     private RectTransform CreateMenuOption(RectTransform optionsRoot, RectTransform template, string optionObjectName, string textObjectName)
     {
-        GameObject optionObject = new GameObject(
-            optionObjectName,
-            typeof(RectTransform),
-            typeof(CanvasRenderer));
-        optionObject.layer = template.gameObject.layer;
-
-        RectTransform optionRoot = optionObject.GetComponent<RectTransform>();
-        optionRoot.SetParent(optionsRoot, false);
-        CopyRectTransformLayout(template, optionRoot);
-
-        TMP_Text templateText = template.GetComponentInChildren<TMP_Text>(true);
-        if (templateText != null)
+        GameObject optionObject = Instantiate(template.gameObject, optionsRoot, false);
+        optionObject.name = optionObjectName;
+        RectTransform optionRoot = optionObject.transform as RectTransform;
+        TMP_Text text = optionRoot != null ? optionRoot.GetComponentInChildren<TMP_Text>(true) : null;
+        if (text != null)
         {
-            GameObject clonedText = Instantiate(templateText.gameObject, optionRoot, false);
-            clonedText.name = textObjectName;
+            text.gameObject.name = textObjectName;
         }
-
         return optionRoot;
     }
 
@@ -910,6 +1166,7 @@ public class PausePanelController : MonoBehaviour
         SetOptionActive(audioOptionsButton, !showAudioOptions && createAudioOptions);
         SetOptionActive(musicVolumeOption, showAudioOptions);
         SetOptionActive(sfxVolumeOption, showAudioOptions);
+        SetOptionActive(voiceAudioOption, showAudioOptions);
         SetOptionActive(audioOptionsBackButton, showAudioOptions);
     }
 
@@ -975,6 +1232,7 @@ public class PausePanelController : MonoBehaviour
         return optionName == "AudioOptionsButton"
             || optionName == "MusicVolumeOption"
             || optionName == "SfxVolumeOption"
+            || optionName == "VoiceVolumeOption"
             || optionName == "AudioOptionsBackButton";
     }
 
@@ -1071,6 +1329,31 @@ public class PausePanelController : MonoBehaviour
         }
     }
 
+    private void AcquirePauseTime()
+    {
+        if (!pauseTimeWhenOpen || pauseTimeHandle.IsValid)
+        {
+            return;
+        }
+
+        timeManager = TimeManager.EnsureInstance();
+        if (timeManager != null)
+        {
+            pauseTimeHandle = timeManager.AcquireGlobalPause(this);
+        }
+    }
+
+    private void ReleasePauseTime()
+    {
+        if (timeManager != null && pauseTimeHandle.IsValid)
+        {
+            timeManager.Release(pauseTimeHandle);
+        }
+
+        pauseTimeHandle = default;
+        timeManager = null;
+    }
+
     private void ApplyCursorSizing(bool opened)
     {
         if (!forceCursorFixedSize || cursorController == null)
@@ -1132,6 +1415,25 @@ public class PausePanelController : MonoBehaviour
         for (int i = 0; i < root.childCount; i++)
         {
             Transform match = FindInHierarchy(root.GetChild(i), name);
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    private static Transform FindFirstInHierarchy(Transform root, params string[] names)
+    {
+        if (names == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            Transform match = FindInHierarchy(root, names[i]);
             if (match != null)
             {
                 return match;

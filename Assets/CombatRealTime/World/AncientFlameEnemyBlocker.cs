@@ -57,7 +57,8 @@ public sealed class AncientFlameEnemyBlocker : MonoBehaviour
         for (int i = 0; i < enemies.Length; i++)
         {
             EnemyController enemy = enemies[i];
-            if (enemy == null || !enemy.gameObject.activeInHierarchy || (enemy.Health != null && enemy.Health.IsDead))
+            if (enemy == null || !enemy.isActiveAndEnabled || !enemy.CombatEnabled ||
+                (enemy.Health != null && enemy.Health.IsDead))
             {
                 continue;
             }

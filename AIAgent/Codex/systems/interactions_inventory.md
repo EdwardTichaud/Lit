@@ -77,6 +77,12 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   allumee mais devient bleue et inerte. Son etat est conserve pour la sauvegarde,
   tandis que sa revelation, son influence, ses activations et son effet temporel
   restent suspendus jusqu'a la disparition de l'ennemi.
+  Seuls les EnemyController actifs avec CombatEnabled peuvent la neutraliser ;
+  un fantome avant son combat ou un controleur desactive ne bloque pas le brasero.
+- Les objets et portes soumis a la flamme verifient aussi sa portee effective
+  directement si aucune notification physique n'a encore ete recue. Une flamme
+  eteinte, neutralisee ou desactivee ne satisfait pas cette verification. Les
+  MeshColliders non convexes utilisent leurs bounds pour le calcul de proximite.
 
 - Pendant le gel d'entree combat, `BattleTransition` suspend
   `RuntimeOutlineSelectionManager` pour masquer les outlines monde encore actifs
@@ -122,3 +128,10 @@ batiment (Bootstrap/Arena). BuildingInfoInteractable les reutilise aussi en buil
 et reprend la resolution si l'UI arrive apres l'objet. Les chemins AssetDatabase
 restent un secours editeur. Les identifiants runtime d'influence utilisent EntityId
 dans les collections ; les identifiants persistants des objets sont inchanges.
+
+## Nettoyage des commandes de lecture
+
+La fermeture du panneau de lecture ne cherche jamais ReadableActionInputs dans
+la scene. Elle masque uniquement sa reference memorisee a l'ouverture, si elle
+existe encore. Pendant OnDisable, elle ne change pas son parent. Cela evite les
+recherches globales et changements de hierarchie pendant le demontage de scene.

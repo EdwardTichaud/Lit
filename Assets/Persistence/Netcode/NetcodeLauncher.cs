@@ -176,7 +176,6 @@ public class NetcodeLauncher : MonoBehaviour
             cancellationToken.ThrowIfCancellationRequested();
             NetcodePrefabRegistry.EnsureInitialized();
             NetcodeSceneObjectInstaller.PrepareActiveScene();
-            TryRestoreHostWorldBeforeStart();
             ApplyConnectionPayload(manager);
             EnsureTransport(manager);
 
@@ -490,7 +489,6 @@ public class NetcodeLauncher : MonoBehaviour
 
         NetcodePrefabRegistry.EnsureInitialized();
         NetcodeSceneObjectInstaller.PrepareActiveScene();
-        TryRestoreHostWorldBeforeStart();
         ApplyConnectionPayload(manager);
         EnsureTransport(manager);
         ConfigureTransport(manager, attempt.Address, attempt.Port, attempt.ListenAddress);
@@ -587,24 +585,4 @@ public class NetcodeLauncher : MonoBehaviour
             this);
     }
 
-    private static void TryRestoreHostWorldBeforeStart()
-    {
-#if UNITY_2023_1_OR_NEWER
-        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
-#else
-        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
-#endif
-        if (adapter == null || !adapter.HasSavedWorldSnapshot())
-        {
-            return;
-        }
-
-        bool restored = adapter.EnsureHostWorldRestoredFromSave("netcode_launcher_start_host");
-        if (!restored)
-        {
-            PersistentWorldDebug.Error(
-                $"host start requested before world snapshot restore completed path='{adapter.LastRestoreSnapshotPath}' reason='{adapter.LastRestoreReason}'",
-                adapter);
-        }
-    }
 }

@@ -15,6 +15,7 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
     private bool hovered;
     private RectTransform rectTransform;
     private bool useLocalCursor = true;
+    private bool selected;
 
     public SaveSessionInfo Session => session;
 
@@ -40,12 +41,7 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
         owner = menu;
         session = sessionData;
 
-        if (titleText != null)
-        {
-            titleText.text = session != null && !string.IsNullOrWhiteSpace(session.sessionName)
-                ? session.sessionName
-                : "Session";
-        }
+        SetSelected(selectedByDefault);
 
         ResolveCursor();
         if (cursorLink == null)
@@ -69,7 +65,19 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (eventData.button != PointerEventData.InputButton.Left) return;
         HandleSubmit();
+    }
+
+    public void SetSelected(bool value)
+    {
+        // Keep the session selection state in sync with the save browser.
+        selected = value;
+        if (titleText == null) return;
+        string label = string.IsNullOrWhiteSpace(session?.sessionName) ? "Session" : session.sessionName;
+        int count = session?.saves?.Count ?? 0;
+        titleText.text = (selected ? "› " : "") + label + "  <size=70%>(" + count + ")</size>";
+        titleText.color = selected ? new Color(1f, .78f, .4f, 1f) : Color.white;
     }
 
     public void OnCursorFocus()
@@ -90,6 +98,7 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
     private void SetHovered(bool value)
     {
         hovered = value;
+        MainMenuFrameHighlight.SetFocused(this, value);
         SetCursorVisible(value);
         if (owner != null)
         {
@@ -114,6 +123,7 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
 
     private void OnDisable()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         if (hovered && owner != null)
         {
             owner.OnSessionUnhovered(this);
@@ -139,6 +149,7 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
 
     private void SyncSharedCursor()
     {
+        FindAnyObjectByType<MainMenuNavigation>()?.Focus(gameObject);
         CursorController sharedCursor = cursorLink != null ? cursorLink.Cursor : null;
         if (sharedCursor == null || rectTransform == null)
         {

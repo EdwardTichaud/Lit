@@ -825,7 +825,7 @@ public class LocalVoiceLineController : MonoBehaviour
         Vector3 position = GetAnchorPosition();
         if (useAudioManager && AudioManager.Instance != null)
         {
-            activeSource = AudioManager.Instance.PlayClip(clip, position);
+            activeSource = AudioManager.Instance.PlayVoiceClip(clip, position);
             return;
         }
 

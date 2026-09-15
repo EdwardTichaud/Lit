@@ -290,8 +290,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     [Header("Reaction Choices")]
     [SerializeField, Tooltip("Compatibilite d'anciens prefabs. Les reactions utilisent le panneau GhostReactionChoicePanel de UI_Overlay.")]
     private Transform reactionChoiceParent;
-    [SerializeField, Tooltip("Compatibilite d'anciens prefabs. La largeur est desormais authorisee dans GhostReactionChoicePanel.")]
-    private float reactionChoiceWidth = 680f;
     [SerializeField, Tooltip("Libelle du bouton de fermeture.")]
     private string closeChoiceText = "Reculer";
     [SerializeField, Min(0f), Tooltip("Court verrou apres l'ouverture des choix pour ne jamais reutiliser l'action qui a ouvert le dialogue.")]

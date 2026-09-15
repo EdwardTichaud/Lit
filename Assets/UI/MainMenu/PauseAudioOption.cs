@@ -9,7 +9,8 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
     public enum VolumeChannel
     {
         Music = 0,
-        Sfx = 1
+        Sfx = 1,
+        Voice = 2
     }
 
     [SerializeField] private PausePanelController controller;
@@ -38,14 +39,43 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     private void OnEnable()
     {
+        LocalInputRouter.Move += OnMoveInput;
         ResolveReferences();
         RefreshLabel();
     }
 
     private void OnDisable()
     {
+        LocalInputRouter.Move -= OnMoveInput;
         isFocused = false;
         ResetHoldState();
+    }
+
+    private void OnMoveInput(Vector2 move)
+    {
+        if (!isFocused || !CanProcessHorizontalInput())
+        {
+            return;
+        }
+
+        float deadzone = Mathf.Clamp(horizontalDeadzone, 0.1f, 0.95f);
+        if (Mathf.Abs(move.x) < deadzone || Mathf.Abs(move.x) <= Mathf.Abs(move.y))
+        {
+            ResetHoldState();
+            return;
+        }
+
+        int direction = move.x > 0f ? 1 : -1;
+        if (holdActive && holdDirection == direction)
+        {
+            return;
+        }
+
+        ApplyStep(direction);
+        holdActive = true;
+        holdDirection = direction;
+        float now = useUnscaledTime ? Time.unscaledTime : Time.time;
+        nextRepeatTime = now + Mathf.Max(0.01f, initialRepeatDelay);
     }
 
     private void Update()
@@ -78,7 +108,7 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
         int percentage = Mathf.RoundToInt(GetCurrentVolume() * 100f);
         string displayLabel = string.IsNullOrWhiteSpace(optionLabel)
-            ? channel == VolumeChannel.Music ? "Musique" : "Sons"
+            ? channel == VolumeChannel.Music ? "Musique" : channel == VolumeChannel.Voice ? "Voix" : "Sons"
             : optionLabel.Trim();
         labelText.text = $"{displayLabel}  < {percentage}% >";
     }
@@ -106,6 +136,7 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        isFocused = true;
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -114,6 +145,13 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (UnityEngine.EventSystems.EventSystem.current == null ||
+            UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == null ||
+            !UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.transform.IsChildOf(transform))
+        {
+            isFocused = false;
+            ResetHoldState();
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -217,6 +255,8 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         {
             case VolumeChannel.Sfx:
                 return manager != null ? manager.SfxVolume : AudioManager.GetSavedSfxVolume();
+            case VolumeChannel.Voice:
+                return manager != null ? manager.VoiceVolume : AudioManager.GetSavedVoiceVolume();
             case VolumeChannel.Music:
             default:
                 return manager != null ? manager.MusicVolume : AudioManager.GetSavedMusicVolume();
@@ -236,6 +276,16 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
                 else
                 {
                     AudioManager.SaveSfxVolumePreference(value);
+                }
+                break;
+            case VolumeChannel.Voice:
+                if (manager != null)
+                {
+                    manager.SetVoiceVolume(value);
+                }
+                else
+                {
+                    AudioManager.SaveVoiceVolumePreference(value);
                 }
                 break;
             case VolumeChannel.Music:

@@ -44,10 +44,12 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         {
             cursorLink = GetComponentInParent<MenuCursorLink>();
         }
+
     }
 
     public void OnCursorFocus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -56,6 +58,7 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     public void OnCursorBlur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnCursorSubmit()
@@ -65,6 +68,7 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -73,6 +77,12 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
+    }
+
+    private void OnDisable()
+    {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -100,11 +110,6 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         }
 
         if (TryHandleVirtualKeyboardAction())
-        {
-            return;
-        }
-
-        if (TryHandlePauseAction())
         {
             return;
         }
@@ -276,39 +281,6 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             || string.Equals(label, "Enter", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "OK", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "Confirm", System.StringComparison.OrdinalIgnoreCase);
-    }
-
-    private bool TryHandlePauseAction()
-    {
-        if (action != MenuAction.Save && action != MenuAction.Quit)
-        {
-            return false;
-        }
-
-        PausePanelController pausePanel = GetComponentInParent<PausePanelController>(true);
-        if (pausePanel == null)
-        {
-            pausePanel = FindAnyObjectByType<PausePanelController>(FindObjectsInactive.Include);
-        }
-
-        if (pausePanel == null)
-        {
-            return false;
-        }
-
-        if (action == MenuAction.Save)
-        {
-            pausePanel.UI_Save();
-            return true;
-        }
-
-        if (action == MenuAction.Quit)
-        {
-            pausePanel.UI_Quit();
-            return true;
-        }
-
-        return false;
     }
 
     private bool EnsureMainMenuController()

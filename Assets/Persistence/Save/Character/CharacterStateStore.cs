@@ -39,7 +39,7 @@ public class CharacterStateStore : MonoBehaviour
     public string saveFileName = "CharacterState.json";
     [Tooltip("Autorise un fichier global hors session active. Desactive pour isoler completement les parties runtime.")]
     public bool allowGlobalFallbackWithoutActiveSave = false;
-    [Tooltip("Charge automatiquement au Awake.")]
+    [Tooltip("Lit les donnees de sauvegarde au Awake. Leur application est coordonnee par GameFlow apres le chargement de la zone.")]
     public bool loadOnAwake = true;
     [Tooltip("Sauvegarde lors du OnDisable.")]
     public bool saveOnDisable = true;
@@ -52,11 +52,19 @@ public class CharacterStateStore : MonoBehaviour
     [Tooltip("Force la capture meme si captureScreenshotOnSave est desactive.")]
     public bool forceScreenshotOnSave = true;
 
+    [Header("Saving UI")]
+    [Tooltip("Panneau SavingPanel deja present dans ApplicationRoot/UI_Overlay.")]
+    [SerializeField] private SavingPanelController savingPanel;
+
     private CharacterSaveData loadedData;
     private readonly Dictionary<string, string> playerBindings = new Dictionary<string, string>();
     private Coroutine screenshotRoutine;
+    private bool saveInProgress;
     private bool suppressNextAutomaticSave;
     private string suppressNextAutomaticSaveReason;
+
+    public bool IsSaving => saveInProgress || screenshotRoutine != null;
+    public bool LastSaveSucceeded { get; private set; }
 
     public bool HasSaveFile
     {
@@ -89,12 +97,12 @@ public class CharacterStateStore : MonoBehaviour
         if (loadOnAwake)
         {
             Load();
-            ApplyLoadedData();
         }
     }
 
     private void OnDisable()
     {
+        StopScreenshotCapture();
         if (!Application.isPlaying)
         {
             return;
@@ -108,6 +116,15 @@ public class CharacterStateStore : MonoBehaviour
         if (saveOnDisable && !ConsumeAutomaticSaveSuppression("OnDisable"))
         {
             Save();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        StopScreenshotCapture();
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
@@ -205,6 +222,13 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
+        if (saveInProgress || screenshotRoutine != null)
+        {
+            return;
+        }
+
+        LastSaveSucceeded = false;
+
         if (IsNetworked() && !IsServer())
         {
             return;
@@ -229,6 +253,8 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
+        saveInProgress = true;
+        ResolveSavingPanel()?.BeginSave();
         try
         {
             File.WriteAllText(path, json);
@@ -237,11 +263,20 @@ public class CharacterStateStore : MonoBehaviour
             {
                 SaveSessionManager.Instance.RecordSaveMetadata(SceneManager.GetActiveScene().name);
             }
-            RequestScreenshotCapture();
+            LastSaveSucceeded = true;
+            if (!RequestScreenshotCapture())
+            {
+                ResolveSavingPanel()?.CompleteSave(true);
+            }
         }
-        catch (IOException ex)
+        catch (Exception ex)
         {
-            Debug.LogWarning($"CharacterStateStore: echec d'ecriture {path}. {ex.Message}");
+            Debug.LogWarning($"CharacterStateStore: echec de sauvegarde {path}. {ex.Message}");
+            ResolveSavingPanel()?.CompleteSave(false);
+        }
+        finally
+        {
+            saveInProgress = false;
         }
     }
 
@@ -292,13 +327,32 @@ public class CharacterStateStore : MonoBehaviour
         }
     }
 
-    private void ApplyLoadedData()
+    /// <summary>
+    /// Applique la sauvegarde une fois que GameFlow a charge la scene primaire
+    /// et toutes les sous-scenes obligatoires de la zone.
+    /// </summary>
+    public bool RestoreActiveSaveForLoadedScene(string expectedSceneName)
     {
-        ApplyLoadedData(
+        if (!Application.isPlaying || (IsNetworked() && !IsServer()))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(expectedSceneName) &&
+            !string.Equals(SceneManager.GetActiveScene().name, expectedSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            Debug.LogError(
+                $"CharacterStateStore: restauration annulee, scene active '{SceneManager.GetActiveScene().name}' " +
+                $"differente de la scene attendue '{expectedSceneName}'.", this);
+            return false;
+        }
+
+        Load();
+        return ApplyLoadedData(
             restoreWorldFromDisk: true,
             worldAlreadyRestored: false,
             applySquadNow: false,
-            restoreReason: "character_state_store_host_load");
+            restoreReason: "game_flow_after_zone_load");
     }
 
     private bool ApplyLoadedData(
@@ -361,51 +415,66 @@ public class CharacterStateStore : MonoBehaviour
         return true;
     }
 
-    private void RequestScreenshotCapture()
+    private bool RequestScreenshotCapture()
     {
         if ((!captureScreenshotOnSave && !forceScreenshotOnSave) || !Application.isPlaying || !isActiveAndEnabled)
         {
-            return;
+            return false;
         }
 
         if (screenshotRoutine != null)
         {
-            StopCoroutine(screenshotRoutine);
+            StopScreenshotCapture();
         }
 
         screenshotRoutine = StartCoroutine(CaptureScreenshotRoutine());
+        return true;
+    }
+
+    private void StopScreenshotCapture()
+    {
+        if (screenshotRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(screenshotRoutine);
+        screenshotRoutine = null;
+        PausePanelController.Instance?.RestoreAfterScreenshot();
+        ResolveSavingPanel()?.CompleteSave(false);
     }
 
     private System.Collections.IEnumerator CaptureScreenshotRoutine()
     {
+        // The pause overlay is excluded from the saved preview.
+        PausePanelController pausePanel = PausePanelController.Instance;
+        bool pauseHidden = pausePanel != null && pausePanel.HideForScreenshot();
+        Texture2D texture = null;
+        string screenshotPath = null;
+
         yield return new WaitForEndOfFrame();
-
-        string screenshotPath = GetScreenshotPath();
-        if (string.IsNullOrWhiteSpace(screenshotPath))
-        {
-            screenshotRoutine = null;
-            yield break;
-        }
-
-        Texture2D texture = ScreenCapture.CaptureScreenshotAsTexture();
-        if (texture == null)
-        {
-            screenshotRoutine = null;
-            yield break;
-        }
 
         try
         {
-            string directory = Path.GetDirectoryName(screenshotPath);
-            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+            screenshotPath = GetScreenshotPath();
+            if (!string.IsNullOrWhiteSpace(screenshotPath))
             {
-                Directory.CreateDirectory(directory);
-            }
+                texture = ScreenCapture.CaptureScreenshotAsTexture();
+                if (texture != null)
+                {
+                    string directory = Path.GetDirectoryName(screenshotPath);
+                    if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
 
-            byte[] png = texture.EncodeToPNG();
-            if (png != null && png.Length > 0)
-            {
-                File.WriteAllBytes(screenshotPath, png);
+                    byte[] png = texture.EncodeToPNG();
+                    if (png != null && png.Length > 0)
+                    {
+                        File.WriteAllBytes(screenshotPath, png);
+                    }
+
+                }
             }
         }
         catch (Exception ex)
@@ -414,9 +483,22 @@ public class CharacterStateStore : MonoBehaviour
         }
         finally
         {
-            Destroy(texture);
+            if (texture != null)
+            {
+                Destroy(texture);
+            }
+
+            if (pauseHidden || pausePanel != null) pausePanel?.RestoreAfterScreenshot();
             screenshotRoutine = null;
+            ResolveSavingPanel()?.CompleteSave(true);
         }
+    }
+
+    private SavingPanelController ResolveSavingPanel()
+    {
+        if (savingPanel != null) return savingPanel;
+        savingPanel = SavingPanelController.Instance;
+        return savingPanel;
     }
 
     private string GetScreenshotPath()

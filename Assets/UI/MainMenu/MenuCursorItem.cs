@@ -25,6 +25,7 @@ public class MenuCursorItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
     public void Focus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (onFocus != null)
         {
             onFocus.Invoke();
@@ -33,6 +34,7 @@ public class MenuCursorItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
     public void Blur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         if (onBlur != null)
         {
             onBlur.Invoke();
@@ -64,6 +66,11 @@ public class MenuCursorItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public void OnPointerClick(PointerEventData eventData)
     {
         Submit();
+    }
+
+    private void OnDisable()
+    {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     private void SyncCursor()

@@ -2027,7 +2027,9 @@ public class InventoryPanelController : MonoBehaviour
 
     private void SetReadableActionInputsVisible(bool visible)
     {
-        if (!ResolveReadableActionInputs())
+        // Closing can run during scene teardown. Never search for objects then:
+        // only inputs previously resolved while opening belong to this session.
+        if (visible ? !ResolveReadableActionInputs() : readableActionInputs == null)
         {
             return;
         }
@@ -2041,7 +2043,7 @@ public class InventoryPanelController : MonoBehaviour
             desiredParent = bookPanelCanvasGroup.transform;
         }
 
-        if (desiredParent != null && readableActionInputs.transform.parent != desiredParent)
+        if (isActiveAndEnabled && desiredParent != null && readableActionInputs.transform.parent != desiredParent)
         {
             readableActionInputs.transform.SetParent(desiredParent, false);
         }

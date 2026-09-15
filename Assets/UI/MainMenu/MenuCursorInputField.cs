@@ -29,6 +29,7 @@ public class MenuCursorInputField : MonoBehaviour, IMenuCursorHandler, IPointerE
 
     public void OnCursorFocus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -42,6 +43,7 @@ public class MenuCursorInputField : MonoBehaviour, IMenuCursorHandler, IPointerE
 
     public void OnCursorBlur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         if (blurOnExit)
         {
             BlurField();
@@ -58,6 +60,7 @@ public class MenuCursorInputField : MonoBehaviour, IMenuCursorHandler, IPointerE
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (syncCursorOnHover)
         {
             SyncSharedCursor();
@@ -71,6 +74,7 @@ public class MenuCursorInputField : MonoBehaviour, IMenuCursorHandler, IPointerE
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         if (blurOnExit)
         {
             BlurField();
@@ -83,6 +87,11 @@ public class MenuCursorInputField : MonoBehaviour, IMenuCursorHandler, IPointerE
         {
             FocusField();
         }
+    }
+
+    private void OnDisable()
+    {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 
     private void FocusField()

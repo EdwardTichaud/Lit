@@ -11,8 +11,6 @@ public class GlobalAgeZone : MonoBehaviour
 
     [SerializeField, Tooltip("Desactive par defaut: AgeManager pilote le gameplay temporel et _AgeAmount.")]
     private bool writeShaderGlobals;
-    [SerializeField, Tooltip("Conserve pour compatibilite scene; _AgeAmount n'est plus ecrit ici.")]
-    private bool useAgeManager = true;
 
     private void Update()
     {

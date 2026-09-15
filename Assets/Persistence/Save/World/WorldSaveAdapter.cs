@@ -6,6 +6,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class WorldSaveAdapter : MonoBehaviour
 {
+    public static WorldSaveAdapter Instance { get; private set; }
     [SerializeField] private WorldStateManager worldStateManager;
     [SerializeField] private NetworkObjectRegistry registry;
     [SerializeField] private string fileName = "WorldSnapshot.bin";
@@ -39,7 +40,16 @@ public class WorldSaveAdapter : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         ResolveReferences();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public void ResetSessionState(string reason = null)
@@ -60,6 +70,17 @@ public class WorldSaveAdapter : MonoBehaviour
     {
         string path = ResolveSavePath();
         return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+    }
+
+    /// <summary>
+    /// Lit uniquement la destination du snapshot, sans appliquer son contenu.
+    /// GameFlow l'utilise avant le chargement pour ouvrir la bonne zone.
+    /// </summary>
+    public string GetSavedWorldSceneName()
+    {
+        return TryLoadWorldSnapshot(out WorldSnapshot snapshot) && snapshot != null
+            ? snapshot.SceneName
+            : null;
     }
 
     public void SaveWorldSnapshot()

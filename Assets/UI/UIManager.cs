@@ -151,6 +151,31 @@ public class UIManager : MonoBehaviour
         Transitions[canvasGroup] = entry;
     }
 
+    /// <summary>
+    /// Stops the current transition without changing the CanvasGroup state.
+    /// Callers that temporarily take ownership of a CanvasGroup can then
+    /// restore all of its properties deterministically.
+    /// </summary>
+    public static void CancelCanvasGroupTransition(CanvasGroup canvasGroup)
+    {
+        if (canvasGroup == null)
+        {
+            return;
+        }
+
+        if (!Transitions.TryGetValue(canvasGroup, out TransitionEntry transition))
+        {
+            return;
+        }
+
+        if (transition.Owner != null && transition.Routine != null)
+        {
+            transition.Owner.StopCoroutine(transition.Routine);
+        }
+
+        Transitions.Remove(canvasGroup);
+    }
+
     public static bool HasAnyFocus()
     {
         PurgeDestroyedFocusOwners();
@@ -253,6 +278,7 @@ public class UIManager : MonoBehaviour
                panel.GetComponentInChildren<DialoguePanelUI>(true) != null ||
                panel.GetComponentInChildren<ConfirmationManager>(true) != null ||
                panel.GetComponentInChildren<QuantityBox>(true) != null ||
+               panel.GetComponentInChildren<SavingPanelController>(true) != null ||
                panel.GetComponent<MuninUI>() != null;
     }
 

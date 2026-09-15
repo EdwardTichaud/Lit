@@ -60,6 +60,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (eventData.button != PointerEventData.InputButton.Left) return;
         HandleSubmit();
     }
 
@@ -80,9 +81,11 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private void HandleFocus()
     {
+        MainMenuFrameHighlight.SetFocused(this, true);
         if (owner != null && save != null)
         {
             owner.OnSaveHovered(save);
+            owner.OnSaveSelected(save, this, false);
         }
 
         if (!isSelected)
@@ -93,6 +96,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private void HandleBlur()
     {
+        MainMenuFrameHighlight.SetFocused(this, false);
         if (!isSelected)
         {
             UpdateColor(normalColor);
@@ -115,7 +119,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
             return;
         }
 
-        string sessionName = string.IsNullOrWhiteSpace(save.sessionName) ? "Session" : save.sessionName;
+        string sessionName = string.IsNullOrWhiteSpace(save.saveName) ? "Sauvegarde" : save.saveName;
         string dateLabel = FormatDate(save.savedAtUtcTicks);
 
         if (sessionNameText != null)
@@ -135,7 +139,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private static string FormatDate(long utcTicks)
     {
-        if (utcTicks <= 0)
+        if (utcTicks <= 0 || utcTicks > DateTime.MaxValue.Ticks)
         {
             return "Date inconnue";
         }
@@ -167,6 +171,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private void SyncSharedCursor()
     {
+        FindAnyObjectByType<MainMenuNavigation>()?.Focus(gameObject);
         CursorController sharedCursor = cursorLink != null ? cursorLink.Cursor : null;
         if (sharedCursor == null || rectTransform == null)
         {
@@ -187,5 +192,10 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
         {
             dateText.color = color;
         }
+    }
+
+    private void OnDisable()
+    {
+        MainMenuFrameHighlight.SetFocused(this, false);
     }
 }

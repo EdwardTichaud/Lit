@@ -21,6 +21,7 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
     [SerializeField] private MenuCursorLink cursorLink;
 
     private RectTransform rectTransform;
+    private int lastExecutionFrame = -1;
 
     private void Awake()
     {
@@ -73,7 +74,7 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
 
     private void Execute()
     {
-        if (!isActiveAndEnabled)
+        if (!isActiveAndEnabled || lastExecutionFrame == Time.frameCount)
         {
             return;
         }
@@ -82,6 +83,8 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
         {
             return;
         }
+
+        lastExecutionFrame = Time.frameCount;
 
         switch (action)
         {
