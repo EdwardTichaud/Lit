@@ -5,6 +5,8 @@ using UnityEngine;
 public sealed class AncientFlameEnemyBlocker : MonoBehaviour
 {
     [SerializeField] private Flame flame;
+    [SerializeField, Tooltip("Laisse ce brasero narratif transmettre son influence, meme si un ennemi est a proximite.")]
+    private bool ignoreEnemySuppression;
     [SerializeField, Min(0.1f)] private float enemyProximityRange = 8f;
     [SerializeField, Min(0.05f)] private float refreshInterval = 0.2f;
     [SerializeField] private Color blockedFlameColor = new Color(0.2f, 0.65f, 1f, 1f);
@@ -47,7 +49,7 @@ public sealed class AncientFlameEnemyBlocker : MonoBehaviour
     private void EvaluateBlockState()
     {
         nextRefreshTime = Time.unscaledTime + refreshInterval;
-        ApplyBlockState(HasNearbyLivingEnemy());
+        ApplyBlockState(!ignoreEnemySuppression && HasNearbyLivingEnemy());
     }
 
     private bool HasNearbyLivingEnemy()

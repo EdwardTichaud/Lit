@@ -167,6 +167,29 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         }
     }
 
+    /// <summary>Ends combat ownership and exits its animation, preserving airborne traversal and death.</summary>
+    public void ReturnToExplorationAfterCombat()
+    {
+        bool hadAction = actionActive || hasBufferedAction;
+        ClearActionFacingTarget();
+        CancelAction();
+        if (deathAnimationLocked || animator == null || !animator.isActiveAndEnabled ||
+            animator.runtimeAnimatorController == null ||
+            (locomotionBridge != null && (!locomotionBridge.Grounded || locomotionBridge.IsFlightActive ||
+                locomotionBridge.IsInputSuppressedByUcc || locomotionBridge.IsCinematicMotionSessionActive))) return;
+
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        AnimatorStateInfo next = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
+        if (!hadAction && !IsCombatPresentation(current) && !IsCombatPresentation(next)) return;
+
+        int destination = Animator.StringToHash(LocomotionState);
+        if (animator.HasState(0, destination))
+            animator.CrossFade(destination, 0.12f, 0);
+    }
+
+    private static bool IsCombatPresentation(AnimatorStateInfo state) =>
+        state.IsName(CombatIdleState) || state.IsName(CombatLocomotionState) || state.IsTag("Combat");
+
     /// <summary>
     /// Death is a terminal presentation state for this actor instance. It can
     /// only be cleared by rebuilding the player on revive/reload.

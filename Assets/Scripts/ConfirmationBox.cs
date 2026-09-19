@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 // Facade minimale sur le prefab ConfirmationBox. Seul le texte "Question" est modifie ici.
 [DisallowMultipleComponent]
@@ -13,6 +14,13 @@ public class ConfirmationBox : MonoBehaviour
     private const string CursorObjectName = "Cursor";
     private const string DefaultConfirmLabel = "Oui";
     private const string DefaultCancelLabel = "Non";
+
+    [Header("Navigation")]
+    [SerializeField] private bool defaultToNo = true;
+    [SerializeField] private float stickThreshold = 0.5f;
+
+    private bool selectYes;
+    private bool horizontalInputLocked;
 
     [Header("References")]
     [SerializeField] private RectTransform boxRoot;
@@ -35,6 +43,140 @@ public class ConfirmationBox : MonoBehaviour
     public RectTransform CursorRoot => cursorRoot;
     public RectTransform ConfirmTarget => yesText != null ? yesText.rectTransform : null;
     public RectTransform CancelTarget => noText != null ? noText.rectTransform : null;
+
+    private void OnEnable()
+    {
+        ResolveReferences();
+
+        // Par défaut : Non
+        selectYes = !defaultToNo;
+        horizontalInputLocked = false;
+
+        UpdateCursorPosition();
+    }
+
+    private void Update()
+    {
+        if (!gameObject.activeInHierarchy)
+            return;
+
+        HandleNavigation();
+        HandleSubmit();
+    }
+
+    private void HandleNavigation()
+    {
+        float horizontal = 0f;
+
+        if (Gamepad.current != null)
+        {
+            horizontal = Gamepad.current.leftStick.x.ReadValue();
+
+            if (Gamepad.current.dpad.left.wasPressedThisFrame)
+            {
+                SelectYes();
+                return;
+            }
+
+            if (Gamepad.current.dpad.right.wasPressedThisFrame)
+            {
+                SelectNo();
+                return;
+            }
+        }
+
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
+            {
+                SelectYes();
+                return;
+            }
+
+            if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
+            {
+                SelectNo();
+                return;
+            }
+        }
+
+        // Gestion du stick analogique sans répétition permanente.
+        if (Mathf.Abs(horizontal) < 0.2f)
+        {
+            horizontalInputLocked = false;
+            return;
+        }
+
+        if (horizontalInputLocked)
+            return;
+
+        if (horizontal <= -stickThreshold)
+        {
+            SelectYes();
+            horizontalInputLocked = true;
+        }
+        else if (horizontal >= stickThreshold)
+        {
+            SelectNo();
+            horizontalInputLocked = true;
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        bool submit = false;
+
+        if (Gamepad.current != null &&
+            Gamepad.current.buttonSouth.wasPressedThisFrame)
+        {
+            submit = true;
+        }
+
+        // Pratique dans l'éditeur.
+        if (Keyboard.current != null &&
+            (Keyboard.current.enterKey.wasPressedThisFrame ||
+             Keyboard.current.spaceKey.wasPressedThisFrame))
+        {
+            submit = true;
+        }
+
+        if (!submit)
+            return;
+
+        if (selectYes)
+        {
+            confirmButton?.onClick.Invoke();
+        }
+        else
+        {
+            cancelButton?.onClick.Invoke();
+        }
+    }
+
+    private void SelectYes()
+    {
+        selectYes = true;
+        UpdateCursorPosition();
+    }
+
+    private void SelectNo()
+    {
+        selectYes = false;
+        UpdateCursorPosition();
+    }
+
+    private void UpdateCursorPosition()
+    {
+        if (cursorRoot == null)
+            return;
+
+        RectTransform target = selectYes ? ConfirmTarget : CancelTarget;
+
+        if (target == null)
+            return;
+
+        cursorRoot.position = target.position;
+    }
 
     public bool ResolveReferences()
     {

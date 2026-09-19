@@ -117,8 +117,19 @@ public sealed partial class CombatMobilityController : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelCombatState();
+    }
+
+    /// <summary>
+    /// Removes pending combat movement before exploration regains control.
+    /// A disengagement may happen in the middle of a dodge, whose UCC motion
+    /// lock would otherwise keep world interactions unavailable for a frame.
+    /// </summary>
+    public void CancelCombatState()
+    {
         CancelAnimationDash();
         bufferedCommand = MobilityCommand.None;
+        bufferedCommandExpiresAt = 0f;
         damageInvulnerableUntil = 0f;
         if (dodgeInvulnerabilityRoutine != null)
         {

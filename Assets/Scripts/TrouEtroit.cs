@@ -327,7 +327,7 @@ public class TrouEtroit : MonoBehaviour
 
         if (interactionBoxInstance == null)
         {
-            interactionBoxInstance = CreateInstance(interactionBox, boxesPanel);
+            interactionBoxInstance = WorldInteractionUiSettings.Create(boxesPanel, interactionBox);
             if (interactionBoxInstance != null)
             {
                 interactionCanvas = interactionBoxInstance.GetComponentInParent<Canvas>();
@@ -342,11 +342,6 @@ public class TrouEtroit : MonoBehaviour
 
     private bool CanShowInteraction()
     {
-        if (interactionBox == null)
-        {
-            return false;
-        }
-
         if (requireDetection && !detected)
         {
             return false;

@@ -375,12 +375,7 @@ public class StabReading : MonoBehaviour, ICharacterDetectedInteractable
 
         if (interactionBoxInstance == null)
         {
-            interactionBoxInstance = CreateInstance(interactionBox, boxesPanel);
-            if (interactionBoxInstance == null)
-            {
-                interactionBoxInstance = CreateFallbackInteractionBox(boxesPanel);
-            }
-
+            interactionBoxInstance = WorldInteractionUiSettings.Create(boxesPanel, interactionBox);
             if (interactionBoxInstance != null)
             {
                 interactionCanvas = interactionBoxInstance.GetComponentInParent<Canvas>();
@@ -485,32 +480,6 @@ public class StabReading : MonoBehaviour, ICharacterDetectedInteractable
         }
 
         return parent != null ? Instantiate(source, parent) : Instantiate(source);
-    }
-
-    private GameObject CreateFallbackInteractionBox(Transform parent)
-    {
-        GameObject instance = new GameObject("StabReadingInteractionBox", typeof(RectTransform), typeof(Canvas), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(GraphicRaycaster));
-        if (parent != null)
-        {
-            instance.transform.SetParent(parent, false);
-        }
-
-        RectTransform rect = instance.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(220f, 50f);
-        rect.localScale = Vector3.one * 0.03f;
-
-        Canvas canvas = instance.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.sortingOrder = 100;
-
-        TextMeshProUGUI label = instance.GetComponent<TextMeshProUGUI>();
-        label.text = interactionText;
-        label.fontSize = 18f;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
-        label.raycastTarget = false;
-
-        return instance;
     }
 
     private void PlayUiActionAudio(ActionAudioCue cue)

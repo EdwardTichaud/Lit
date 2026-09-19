@@ -565,6 +565,7 @@ GameObject:
   - component: {fileID: 756603043}
   - component: {fileID: 756603045}
   - component: {fileID: 756603044}
+  - component: {fileID: 756603046}
   m_Layer: 0
   m_Name: Leafs_2
   m_TagString: Untagged
@@ -5390,6 +5391,19 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &756603046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 756603042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!114 &833875486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5514,6 +5528,7 @@ GameObject:
   - component: {fileID: 844626086}
   - component: {fileID: 844626088}
   - component: {fileID: 844626087}
+  - component: {fileID: 844626089}
   m_Layer: 0
   m_Name: Leafs_2
   m_TagString: Untagged
@@ -10339,6 +10354,19 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &844626089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 844626085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!114 &947205146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10486,6 +10514,7 @@ GameObject:
   - component: {fileID: 1004749100}
   - component: {fileID: 1004749102}
   - component: {fileID: 1004749101}
+  - component: {fileID: 1004749103}
   m_Layer: 0
   m_Name: Leafs_1
   m_TagString: Untagged
@@ -15311,6 +15340,19 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &1004749103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004749099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &1080280860
 GameObject:
   m_ObjectHideFlags: 0
@@ -15758,6 +15800,7 @@ GameObject:
   - component: {fileID: 1182908992}
   - component: {fileID: 1182908994}
   - component: {fileID: 1182908993}
+  - component: {fileID: 1182908995}
   m_Layer: 0
   m_Name: Leafs_2
   m_TagString: Untagged
@@ -20583,6 +20626,19 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &1182908995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182908991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &1225579055
 GameObject:
   m_ObjectHideFlags: 0
@@ -26124,6 +26180,7 @@ GameObject:
   - component: {fileID: 1882835279}
   - component: {fileID: 1882835281}
   - component: {fileID: 1882835280}
+  - component: {fileID: 1882835282}
   m_Layer: 0
   m_Name: Leafs_1
   m_TagString: Untagged
@@ -30949,6 +31006,19 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &1882835282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1882835278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &1890447178
 GameObject:
   m_ObjectHideFlags: 0
@@ -36063,6 +36133,7 @@ GameObject:
   - component: {fileID: 2056911205}
   - component: {fileID: 2056911207}
   - component: {fileID: 2056911206}
+  - component: {fileID: 2056911208}
   m_Layer: 0
   m_Name: Leafs_1
   m_TagString: Untagged
@@ -40888,6 +40959,19 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &2056911208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2056911204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!114 &2057919370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46087,6 +46171,7 @@ GameObject:
   - component: {fileID: 725531567162743952}
   - component: {fileID: 3617757690438022685}
   - component: {fileID: 3617757690438022686}
+  - component: {fileID: 3617757690438022687}
   m_Layer: 0
   m_Name: Moon_Room_Door_Maelle
   m_TagString: Untagged
@@ -46222,6 +46307,19 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   isOpen: 0
+--- !u!114 &3617757690438022687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2969040950653966281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!4 &4180176604623241995
 Transform:
   m_ObjectHideFlags: 0

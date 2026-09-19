@@ -1,5 +1,60 @@
+## UI monde d'interaction commune (2026-09-19)
+
+Les sept producteurs de libelles monde utilisent UI_World_InteractionBox via
+WorldInteractionUiSettings (asset Resources). Style depuis le prefab, libelles et
+conditions geres par chaque interactif ; anciennes references conservees pour
+reprendre les textes. Fallbacks TMP proceduraux supprimes. Compilation C# runtime
+et editeur reussie ; WorldInteractionUiTests compile, non execute. Validation
+Play restante : ladders, ghosts, steles, triggers, disparition et changement de scene.
+## Outlines dans l'Inspector (2026-09-19)
+
+RuntimeOutlineInspector est configure sur GameplaySessionRoot/OutlineManager,
+persistant dans DontDestroyOnLoad. Reglages : affichage, couleur/opacite,
+epaisseur ; diagnostic lecture seule : cible, owner, contours et suspensions.
+Copie runtime du materiau pour ne pas modifier l'asset pendant le Play.
+Compilation C# runtime/editeur reussie. Validation Unity Play a effectuer :
+selection d'un interactif, changement couleur/epaisseur, suspension combat,
+changement de scene et retour au menu. Masque sensible a la transparence : seuil
+0.1 reglable, texture/UV/opacite transmis par cible, alpha particules, canal rouge
+pour GlitteringStars. RuntimeOutlineAlphaTests ajoute et compile, non execute.
+Rendu GPU et compilation shader a valider dans Unity sur les feuilles des ladders.
+## Continuite apres combat (2026-09-19)
+
+Suppression de StopResidualPlayerMovementAfterCombat : il repositionnait le joueur,
+arretait toutes les capacites puis coupait le vol au prochain relachement du stick.
+La sortie annule les actions de combat, restitue la locomotion animee au sol et
+reconcilie les commandes maintenues. Un resultat masque libere son mode UI.
+CombatExit journalise les blocages restants. Compilation C# runtime/editeur reussie ;
+tests CombatExplorationRecoveryTests compiles, non executes dans Unity.
+Validation Play encore necessaire : fuite en mouvement/esquive, victoire puis
+ladders, Ghost_Scientifique fou, inventaire, torche et Munin ; repeter deux combats.
+## Navigation du MainMenu : cibles UI uniquement (2026-09-19)
+
+MainMenuNavigation ignorait les objets decoratifs 3D porteurs de MenuCursorAction. Leur focus pouvait etre invisible et bloquer le parcours clavier/manette. Seuls les controles places sous un Canvas sont maintenant eligibles. MainMenuInputRecovery remet aussi la preference de controle en automatique lorsque le joueur agit avec l'autre peripherique, pour ne jamais bloquer clavier ou manette. Compilation C# runtime et editeur reussie ; test Unity MainMenuLoadBrowserTests a executer.
+
 # Travail en cours
 
+## VFX ecran du MainMenu : layer et taille (2026-09-19)
+
+Le layer historique `VisualEffect` n'existe plus : les VFX ecran utilisent
+`VisualEffect_ScreenSpace`. Le survol du menu selectionne ce layer par masque,
+le rend uniquement avec sa camera VFX et l'exclut de la camera de decor. La
+taille du VFX reste entierement definie par son Transform et son ParticleSystem
+dans l'Inspector. Compilation C# runtime reussie ; la scene MainMenu etait
+ouverte par Unity pendant la correction, donc sa reserialisation et le test Play
+restent a confirmer.
+## Brasero de Maelle : influence garantie (2026-09-19)
+
+Le brasero de Maelle ignore la neutralisation par ennemi : cette regle pouvait rendre une flamme allumee incapable d'activer Necklace et la porte. Les deux cibles sont dans son rayon effectif de 6 m. FlameInteractionReachTests couvre cette configuration. Compilation C# runtime/editeur a refaire, puis tester dans Unity : allumer avec Munin, s'approcher de Necklace et de la porte, avec un ennemi proche puis absent.
+
+## Porte de Maelle : contour et selection (2026-09-19)
+
+`Moon_Room_Door_Maelle` possede maintenant un `RuntimeOutlineTarget` sur son
+renderer. La selection locale respecte la priorite des interactables avant leur
+distance : Necklace reste donc la cible tant qu'il existe, puis la porte est
+detectee, affiche son contour et s'ouvre avec Interact. Compilation C# runtime
+et editeur reussie ; FlameInteractionReachTests couvre la presence du contour,
+mais le test Unity et la validation en Play restent a executer.
 ## MainMenu_Load : sessions puis sauvegardes (2026-09-13)
 
 Choix explicite de session, navigation limitee a sa liste de sauvegardes puis

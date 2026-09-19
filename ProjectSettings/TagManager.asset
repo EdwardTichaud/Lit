@@ -35,8 +35,8 @@ TagManager:
   - LoadingOrb
   - CombatOutline
   - 
-  - 
-  - 
+  - VisualEffect_ScreenSpace
+  - VisualEffect_World
   - 
   - 
   - 
@@ -46,10 +46,10 @@ TagManager:
   - 
   - Enemy
   - MovingPlatform
-  - VisualEffect
+  - 
   - Overlay
   - SubCharacter
-  - ""
+  - 
   m_SortingLayers:
   - name: Default
     uniqueID: 0

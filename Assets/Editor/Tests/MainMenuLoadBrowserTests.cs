@@ -102,8 +102,45 @@ public sealed class MainMenuLoadBrowserTests
                 Assert.That(scroll.content, Is.SameAs(content));
                 Assert.That(scroll.horizontal, Is.False);
             }
+
+            ConfirmationManager confirmationManager = null;
+            foreach (GameObject sceneRoot in scene.GetRootGameObjects())
+            {
+                confirmationManager = sceneRoot.GetComponentInChildren<ConfirmationManager>(true);
+                if (confirmationManager != null)
+                {
+                    break;
+                }
+            }
+
+            Assert.That(confirmationManager, Is.Not.Null);
+            var confirmation = new SerializedObject(confirmationManager);
+            Assert.That(confirmation.FindProperty("confirmationBox").objectReferenceValue, Is.Not.Null);
+            Assert.That(confirmation.FindProperty("createRuntimeFallback").boolValue, Is.False);
         }
         finally { EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+    [Test]
+    public void NavigationRejectsThreeDimensionalDecorations()
+    {
+        var navigation = root.AddComponent<MainMenuNavigation>();
+        var decoration = new GameObject("3D decoration");
+        var canvas = new GameObject("Canvas", typeof(Canvas));
+        var control = new GameObject("Menu control", typeof(RectTransform));
+        control.transform.SetParent(canvas.transform, false);
+        try
+        {
+            MethodInfo usable = typeof(MainMenuNavigation).GetMethod("Usable", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(usable.Invoke(null, new object[] { decoration }), Is.False);
+            Assert.That(usable.Invoke(null, new object[] { control }), Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(decoration);
+            Object.DestroyImmediate(canvas);
+            Object.DestroyImmediate(navigation);
+        }
     }
 
     private RectTransform Child(string name)

@@ -54,7 +54,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private bool reactionSucceeded;
     private int reactionWindowToken;
     private Coroutine reactionWindowRoutine;
-    private bool stopPlayerWhenMovementReleased;
     private float clarity;
     private int combatMusicOverrideToken;
     private Coroutine playerDefeatRoutine;
@@ -216,7 +215,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     {
         ResolvePlayerReferences();
         RefreshLockedEnemyStrafeBinding();
-        StopResidualPlayerMovementAfterCombat();
 
         // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
         // suspended then, so it must not be interpreted as a normal combat disengagement.
@@ -303,7 +301,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             playerRoot = player;
             ResolvePlayerReferences();
             combatActive = true;
-            stopPlayerWhenMovementReleased = false;
             clarity = 0f;
             cooldowns.Clear();
             playerController?.HideLocalInteractionPresentation();
@@ -337,7 +334,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         playerRoot = player;
         ResolvePlayerReferences();
         combatActive = true;
-        stopPlayerWhenMovementReleased = false;
         clarity = 0f;
         cooldowns.Clear();
         playerController?.HideLocalInteractionPresentation();
@@ -352,8 +348,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void EndCombat()
     {
-        combatHealthThresholdController?.AbortActiveSequence("fin de combat");
+        // A pursuit disengagement may end combat while Lucian still owns an
+        // action presentation. Leaving that action alive makes exploration
+        // interactables (ladders, ghosts, etc.) reject their next use.
+        ResolvePlayerReferences();
         combatActive = false;
+        combatHealthThresholdController?.AbortActiveSequence("fin de combat");
+        playerMobility?.CancelCombatState();
         enemyAggroAnnounced = false;
         IsCinematicSequenceActive = false;
         CloseReactionWindow(notify: false);
@@ -366,11 +367,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ReactionWindowChanged?.Invoke(default);
         SetEngagedEnemy(null);
         SetLockedEnemy(null);
-        playerLocomotionBridge?.ClearCombatLockTarget();
+        playerLocomotionBridge?.RestoreExplorationStateAfterCombat();
         combatInput?.SetInputActive(false);
         if (combatInput == null) LocalPlayerInput.SetCombatInputActive(false);
-        stopPlayerWhenMovementReleased = true;
+        playerActionPresentation?.ReturnToExplorationAfterCombat();
         CombatStateChanged?.Invoke(false);
+        LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat ended");
         ScheduleExplorationOutlineRecovery();
     }
 
@@ -380,6 +382,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     private void ScheduleExplorationOutlineRecovery()
     {
+        if (!Application.isPlaying || !isActiveAndEnabled) return;
         if (explorationOutlineRecoveryRoutine != null)
         {
             StopCoroutine(explorationOutlineRecoveryRoutine);
@@ -401,6 +404,18 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ResolvePlayerReferences();
         playerController?.RefreshLocalInteractionDetectionForExternalLocomotion();
         RuntimeOutlineSelectionManager.RestoreAfterCombat();
+        if (logCombatDisengageDiagnostics)
+        {
+            LitUccInteractionBridge interaction = playerController != null
+                ? playerController.GetComponent<LitUccInteractionBridge>() : null;
+            Debug.Log("[CombatExit] " + InputModeCoordinator.Diagnostics +
+                " | action=" + IsPlayerActionActive +
+                " | focus=" + InputFocusStack.HasAnyFocus() +
+                " | squadLocked=" + (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked()) +
+                " | movementSuppressed=" + (playerController != null && playerController.IsMovementInputSuppressed) +
+                " | interactionBlock=" + (interaction != null ? interaction.GetInteractionBlockReason() : "none") +
+                " | target=" + (RuntimeOutlineSelectionManager.ActiveInteractable as Component), this);
+        }
     }
 
     /// <summary>
@@ -1537,24 +1552,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             playerLocomotionBridge.ClearCombatLockTarget();
         }
-    }
-
-    private void StopResidualPlayerMovementAfterCombat()
-    {
-        if (!stopPlayerWhenMovementReleased || combatActive ||
-            LocalInputRouter.MoveValue.sqrMagnitude > 0.01f)
-        {
-            return;
-        }
-
-        if (playerRoot != null)
-        {
-            playerLocomotionBridge?.SetExternalPositionAndRotation(playerRoot.position, playerRoot.rotation, true);
-        }
-
-        playerController?.Stop();
-        playerLocomotionBridge?.StopBridgeInput();
-        stopPlayerWhenMovementReleased = false;
     }
 
     private bool IsInRange(CombatAttackDefinition attack, Transform enemy)

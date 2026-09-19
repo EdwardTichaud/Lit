@@ -25505,7 +25505,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 16.606447, y: 16.606447, z: 16.606447}
+  m_LocalScale: {x: 17.683453, y: 17.683453, z: 17.683453}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -38050,7 +38050,6 @@ Transform:
   - {fileID: 687163140}
   - {fileID: 2125460308269298513}
   - {fileID: 589779828}
-  - {fileID: 1990000001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1377649126
@@ -39472,7 +39471,7 @@ MonoBehaviour:
   postLoadingMaximumStableFrameSeconds: 0.05
   loadingSceneStableFrames: 12
   loadingSceneMaximumStableFrameSeconds: 0.05
-  editorStartGameplayDirectly: 0
+  editorStartGameplayDirectly: 1
   editorStartManifest: {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
   editorStartSceneName: 
   editorStartSpawnId: District_1
@@ -50898,6 +50897,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4909347393d54652a285d6636c10e5b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConfirmationBox
+  defaultToNo: 1
+  stickThreshold: 0.5
   boxRoot: {fileID: 0}
   questionText: {fileID: 645385667}
   yesText: {fileID: 1905558036}
@@ -55416,40 +55417,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1988485269}
   m_CullTransparentMesh: 1
---- !u!1001 &1990000000
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1377649125}
-    m_Modifications:
-    - target: {fileID: 1243154660904696669, guid: cc32abf91e464764ea351cd8fc89dc95, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1243154660904696669, guid: cc32abf91e464764ea351cd8fc89dc95, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1243154660904696669, guid: cc32abf91e464764ea351cd8fc89dc95, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3446680151560080823, guid: cc32abf91e464764ea351cd8fc89dc95, type: 3}
-      propertyPath: m_Name
-      value: UIWorldVFXCamera
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: cc32abf91e464764ea351cd8fc89dc95, type: 3}
---- !u!4 &1990000001 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1243154660904696669, guid: cc32abf91e464764ea351cd8fc89dc95, type: 3}
-  m_PrefabInstance: {fileID: 1990000000}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1992768015
 GameObject:
   m_ObjectHideFlags: 0
@@ -59390,7 +59357,7 @@ GameObject:
   - component: {fileID: 8428187916335263060}
   - component: {fileID: 4721434233508978509}
   m_Layer: 28
-  m_Name: VFX_UI_SavingPanel
+  m_Name: VFX_UI_BlueSmoke
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -59561,9 +59528,9 @@ Transform:
   m_GameObject: {fileID: 1078685057024896540}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 85.32471, y: 99.38782, z: 0.023757935}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.03, y: 2.03, z: 2.03}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1803586946}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

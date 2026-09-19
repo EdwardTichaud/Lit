@@ -52,6 +52,24 @@ public class LitUccInteractionBridge : MonoBehaviour
         return target != null && CanEvaluateLitInteractions;
     }
 
+    public string GetInteractionBlockReason()
+    {
+        if (!isActiveAndEnabled) return "none";
+        ResolveReferences();
+        if (locomotionBridge != null && locomotionBridge.IsInputSuppressedByUcc)
+            return "UCC lock: external=" + locomotionBridge.IsExternalLockActive +
+                   ", traversal=" + locomotionBridge.IsScriptedTraversalActive;
+        if (locomotion == null) return "none";
+        if (requireGroundedForLitInteractions && !locomotion.Grounded) return "not grounded";
+        if (locomotion.ActiveAbilities != null)
+            for (int i = 0; i < Mathf.Min(locomotion.ActiveAbilityCount, locomotion.ActiveAbilities.Length); i++)
+            {
+                Ability ability = locomotion.ActiveAbilities[i];
+                if (ability != null && !IsAllowedConcurrentAbility(ability)) return ability.GetType().Name;
+            }
+        return HasBlockingActiveItemAbility() ? "UCC item ability" : "none";
+    }
+
     private void Awake()
     {
         ResolveReferences();

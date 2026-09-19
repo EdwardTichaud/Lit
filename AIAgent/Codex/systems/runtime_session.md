@@ -65,7 +65,12 @@ avec les personnages du GameplaySessionRoot.
 `MainMenuNavigation` possède la navigation directionnelle en menu et le panneau
 réseau ; les clics souris restent gérés par UGUI. La navigation standard de
 l'EventSystem est suspendue puis restaurée pour éviter un double Submit. Les
-confirmations conservent leur propre contrôleur ; une suppression sélectionne
+objets 3D décoratifs, même s'ils portent une action de curseur, sont exclus :
+seuls les contrôles sous un Canvas peuvent recevoir le focus clavier/manette.
+Une préférence d'entrée mémorisée repasse en automatique dès qu'une action vient
+de l'autre périphérique, afin qu'une manette connectée ne bloque pas le clavier
+(ni l'inverse).
+Les confirmations conservent leur propre contrôleur ; une suppression sélectionne
 Annuler par défaut. Les transitions passent par UIManager. La manette navigue exclusivement de bouton en bouton avec un cadre lumineux
 et un fond de sélection, sans pointeur ni flamme mobile. La souris conserve
 son pointeur. Les confirmations affichent le même highlight ; le clavier virtuel

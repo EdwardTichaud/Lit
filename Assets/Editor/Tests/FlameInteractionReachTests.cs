@@ -1,5 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public sealed class FlameInteractionReachTests
@@ -60,6 +62,63 @@ public sealed class FlameInteractionReachTests
         {
             Object.DestroyImmediate(itemRoot);
             Object.DestroyImmediate(brazier);
+        }
+    }
+
+    [Test]
+    public void MaelleBrazierKeepsItsInfluenceWhenEnemiesAreNearby()
+    {
+        var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/District_1/District_1_Rooms_Flammes.unity");
+        try
+        {
+            AncientFlameEnemyBlocker blocker = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                foreach (AncientFlameEnemyBlocker candidate in root.GetComponentsInChildren<AncientFlameEnemyBlocker>(true))
+                {
+                    if (candidate.GetComponent<Flame>()?.FlameId == "scene-flame:Maison:E6C2F108")
+                    {
+                        blocker = candidate;
+                        break;
+                    }
+                }
+            }
+
+            Assert.That(blocker, Is.Not.Null);
+            Assert.That(new SerializedObject(blocker).FindProperty("ignoreEnemySuppression").boolValue, Is.True);
+        }
+        finally
+        {
+            EditorSceneManager.ClosePreviewScene(scene);
+        }
+    }
+
+    [Test]
+    public void MaelleDoorHasAnAuthoredOutlineTarget()
+    {
+        var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/District_1/District_1_Interactives.unity");
+        try
+        {
+            Door door = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                foreach (Door candidate in root.GetComponentsInChildren<Door>(true))
+                {
+                    if (candidate.name == "Moon_Room_Door_Maelle")
+                    {
+                        door = candidate;
+                        break;
+                    }
+                }
+            }
+
+            Assert.That(door, Is.Not.Null);
+            Assert.That(door.GetComponent<RuntimeOutlineTarget>(), Is.Not.Null);
+            Assert.That(door.GetComponent<Renderer>(), Is.Not.Null);
+        }
+        finally
+        {
+            EditorSceneManager.ClosePreviewScene(scene);
         }
     }
 }

@@ -153,7 +153,10 @@ public sealed class MainMenuNavigation : MonoBehaviour
     }
     private static bool Usable(GameObject go)
     {
-        if (go == null || !go.activeInHierarchy) return false;
+        // The MainMenu scene also contains interactive 3D decor. Some of those
+        // objects use MenuCursorAction, but they are not menu choices and must
+        // never receive the keyboard/gamepad focus.
+        if (go == null || !go.activeInHierarchy || !(go.transform is RectTransform) || go.GetComponentInParent<Canvas>() == null) return false;
         if (go.TryGetComponent(out Selectable selectable) && !selectable.IsInteractable()) return false;
         foreach (CanvasGroup group in go.GetComponentsInParent<CanvasGroup>())
         { if (!group.interactable || !group.blocksRaycasts || group.alpha < .01f) return false; if (group.ignoreParentGroups) break; }

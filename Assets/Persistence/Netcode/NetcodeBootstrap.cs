@@ -69,6 +69,7 @@ public class NetcodeBootstrap : MonoBehaviour
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeLauncher>(gameObject);
             NetcodeRuntimeUtilities.GetOrAdd<PrivateSessionService>(gameObject);
             NetcodeRuntimeUtilities.GetOrAdd<PrivateSessionPanel>(gameObject);
+            NetcodeRuntimeUtilities.GetOrAdd<MainMenuInputRecovery>(gameObject);
             NetcodeRuntimeUtilities.GetOrAdd<MainMenuNavigation>(gameObject);
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeRelaySessionOverlay>(gameObject);
         }

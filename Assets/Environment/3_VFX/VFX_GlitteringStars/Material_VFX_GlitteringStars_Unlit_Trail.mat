@@ -96,11 +96,11 @@ Material:
     - _TransparentDepthPrepassEnable: 0
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
-    - _TransparentZWrite: 0
+    - _TransparentZWrite: 1
     - _UseShadowThreshold: 0
     - _ZTestDepthEqualForOpaque: 4
     - _ZTestTransparent: 4
-    - _ZWrite: 0
+    - _ZWrite: 1
     m_Colors:
     - Color_8B11495: {r: 2.9960787, g: 2.9960787, b: 2.9960787, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}

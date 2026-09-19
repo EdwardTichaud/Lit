@@ -89,10 +89,7 @@ MonoBehaviour:
   alreadyUnderstoodMessage: "Ce souvenir a d\xE9j\xE0 \xE9t\xE9 compris."
   playerOptionPrefix: 'Vous : '
   ghostResponsePrefix: 
-  showReactionChoiceUi: 1
-  autoUseSingleAvailableReaction: 1
   reactionChoiceParent: {fileID: 0}
-  reactionChoiceWidth: 680
   closeChoiceText: Reculer
   reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules:

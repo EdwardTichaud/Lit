@@ -5848,6 +5848,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AncientFlameEnemyBlocker
   flame: {fileID: 8254344139057166514}
+  ignoreEnemySuppression: 1
   enemyProximityRange: 8
   refreshInterval: 0.2
   blockedFlameColor: {r: 0.2, g: 0.65, b: 1, a: 1}

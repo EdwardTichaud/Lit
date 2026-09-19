@@ -1342,6 +1342,19 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetCombatAnimatorInput(Vector2.zero);
     }
 
+    /// <summary>
+    /// Releases only state owned by combat when an encounter ends. This is
+    /// deliberately narrower than scene-transition recovery: ladders and
+    /// other world interactions can own their own external locks.
+    /// </summary>
+    public void RestoreExplorationStateAfterCombat()
+    {
+        ClearCombatAirborneHolds();
+        ClearCombatLockTarget();
+        EnforceGameplayMotionAuthority();
+        RequestRunStartResponse();
+    }
+
     private void ApplyCombatMovementType()
     {
         if (locomotion == null)

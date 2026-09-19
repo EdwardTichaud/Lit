@@ -153,6 +153,7 @@ public partial class SquadCharacterController
             : null;
 
         ICharacterDetectedInteractable bestTarget = null;
+        int bestPriority = int.MinValue;
         float bestDistanceSqr = float.PositiveInfinity;
 
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
@@ -169,12 +170,16 @@ public partial class SquadCharacterController
                 continue;
             }
 
+            int priority = candidate.GetInteractionPriority(this);
             if (bestTarget == null ||
-                distanceSqr < bestDistanceSqr ||
-                (distanceSqr == bestDistanceSqr &&
-                 GetInteractionCandidateTieBreaker(candidate) < GetInteractionCandidateTieBreaker(bestTarget)))
+                priority > bestPriority ||
+                (priority == bestPriority &&
+                 (distanceSqr < bestDistanceSqr ||
+                  (distanceSqr == bestDistanceSqr &&
+                   GetInteractionCandidateTieBreaker(candidate) < GetInteractionCandidateTieBreaker(bestTarget)))))
             {
                 bestTarget = candidate;
+                bestPriority = priority;
                 bestDistanceSqr = distanceSqr;
             }
         }

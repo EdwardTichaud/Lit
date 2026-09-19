@@ -10,6 +10,9 @@ public static class RuntimeOutlineSelectionManager
     private static ICharacterDetectedInteractable activeInteractable;
 
     public static ICharacterDetectedInteractable ActiveInteractable => activeInteractable;
+    public static Object ActiveOwner => activeOwner;
+    public static IReadOnlyList<RuntimeOutlineTarget> SelectedTargets => ActiveTargets;
+    public static IReadOnlyList<Object> CurrentSuspensionOwners => SuspensionOwners;
     public static bool IsSuspended => SuspensionOwners.Count > 0 || IsRealTimeCombatActive();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

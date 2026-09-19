@@ -3498,6 +3498,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8581103469629144558}
   - component: {fileID: 7221782476550939942}
+  - component: {fileID: 8310274956290150231}
   m_Layer: 0
   m_Name: OutlineManager
   m_TagString: Untagged
@@ -3505,6 +3506,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &8310274956290150231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7350801756007259132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49c8e4a268854df1b9268fb1b49e5c9a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  showOutlines: 1
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  thickness: 4
+  alphaThreshold: 0.1
 --- !u!4 &8581103469629144558
 Transform:
   m_ObjectHideFlags: 0

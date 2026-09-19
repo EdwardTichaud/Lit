@@ -42,6 +42,12 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private float panelHideDuration = 1f;
     [SerializeField] private bool fadeUseUnscaledTime = true;
 
+    [Header("Scene Audio")]
+    [SerializeField] private AudioClipSO mainMenuLoadAudio;
+    [SerializeField] private bool playMainMenuAudioOnInput = true;
+
+    private bool mainMenuAudioPlayed;
+
     [Header("Title Card FX")]
     [SerializeField] private AudioClipSO titleCardProceedSfx;
     [SerializeField] private float titleCardIntroDelay = 3f;
@@ -216,6 +222,10 @@ public class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
+        if (!playMainMenuAudioOnInput)
+        {
+            PlayMainMenuLoadAudio();
+        }
 
         MainMenuDisplaySettings.ApplySavedModeIfNeeded();
         MainMenuInputSettings.ApplySavedModeIfNeeded();
@@ -232,6 +242,7 @@ public class MainMenuController : MonoBehaviour
         PrepareTitleCardParticleRoots();
         InitializeState();
         InitializeOverlays();
+
     }
 
     private void OnEnable()
@@ -292,10 +303,9 @@ public class MainMenuController : MonoBehaviour
         }
         if (currentMenu == MenuState.TitleCard && AnyInputPressedThisFrame())
         {
-            titleSeen = true;
             CancelTitleCardIntro();
             SetTitleCardIntroInputLock(false);
-            ShowGameOptionsMenu();
+            HandleTitleCardProceed();
             return;
         }
         if (!waitForAnyInput || !waitingForInput || currentMenu != MenuState.TitleCard)
@@ -1496,6 +1506,11 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (playMainMenuAudioOnInput)
+        {
+            PlayMainMenuLoadAudio();
+        }
+
         titleCardProceedTriggered = true;
         PlayTitleCardSfx();
         ShowGameOptionsMenu();
@@ -1575,6 +1590,23 @@ public class MainMenuController : MonoBehaviour
                 SetMenuState(MenuState.TitleCard);
             }
             return;
+        }
+    }
+
+    private void PlayMainMenuLoadAudio()
+    {
+        if (mainMenuAudioPlayed || mainMenuLoadAudio == null)
+            return;
+
+        mainMenuAudioPlayed = true;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayClip(mainMenuLoadAudio, Vector3.zero);
+        }
+        else if (mainMenuLoadAudio.audioClip != null)
+        {
+            AudioManager.PlayClipAtPoint(mainMenuLoadAudio, Vector3.zero);
         }
     }
 

@@ -20,6 +20,7 @@ public sealed class MainMenuGameOptionsHoverVfx : MonoBehaviour
     [SerializeField] private Camera decorCamera;
     [SerializeField] private Transform uiWorldVfxCameraRoot;
     [SerializeField] private Transform uiWorldVfxRoot;
+    [SerializeField, Tooltip("Layer unique rendu par la camera des VFX ecran.")] private LayerMask uiWorldVfxLayer = 1 << 27;
     [SerializeField, Min(0.01f)] private float projectionDistance = 1.5f;
     [SerializeField] private ActionPlacement[] actionPlacements;
 
@@ -69,6 +70,11 @@ public sealed class MainMenuGameOptionsHoverVfx : MonoBehaviour
         {
             decorCamera.cullingMask = decorCameraCullingMask;
         }
+    }
+
+    private void OnValidate()
+    {
+        projectionDistance = Mathf.Max(0.01f, projectionDistance);
     }
 
     private void LateUpdate()
@@ -121,7 +127,9 @@ public sealed class MainMenuGameOptionsHoverVfx : MonoBehaviour
             return;
         }
 
-        SetLayerRecursively(activeEffectInstance, GetVisualEffectLayer());
+        int layer = GetVisualEffectLayer();
+        SetLayerRecursively(activeEffectInstance, layer);
+        uiWorldVfxCamera.cullingMask = 1 << layer;
         ExcludeVisualEffectsFromDecorCamera();
     }
 
@@ -204,13 +212,20 @@ public sealed class MainMenuGameOptionsHoverVfx : MonoBehaviour
             return visualEffectLayer;
         }
 
-        visualEffectLayer = LayerMask.NameToLayer("VisualEffect");
-        if (visualEffectLayer < 0)
+        int layerMask = uiWorldVfxLayer.value;
+        if (layerMask != 0 && (layerMask & (layerMask - 1)) == 0)
         {
-            Debug.LogError("The 'VisualEffect' layer is required for UI world VFX.", this);
-            visualEffectLayer = 0;
+            for (int layer = 0; layer < 32; layer++)
+            {
+                if (layerMask == (1 << layer))
+                {
+                    visualEffectLayer = layer;
+                    return visualEffectLayer;
+                }
+            }
         }
 
+        Debug.LogError("Select exactly one existing layer in 'UI World Vfx Layer'.", this);
         return visualEffectLayer;
     }
 

@@ -453,7 +453,7 @@ public class HubCompanionSwapTrigger : MonoBehaviour
 
         if (interactionBoxInstance == null)
         {
-            interactionBoxInstance = CreateInstance(interactionBox, boxesPanel);
+            interactionBoxInstance = WorldInteractionUiSettings.Create(boxesPanel, interactionBox);
             if (interactionBoxInstance != null)
             {
                 interactionCanvas = interactionBoxInstance.GetComponentInParent<Canvas>();

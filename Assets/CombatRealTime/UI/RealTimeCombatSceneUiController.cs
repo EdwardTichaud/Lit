@@ -84,6 +84,11 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
 
     private void LateUpdate()
     {
+        // A scene event may hide the result directly instead of pressing Continue.
+        // Its invisible panel must not keep the shared input maps in UI mode.
+        if (resultVisible && victoryRoutine == null &&
+            !IsVisible(victoryPanel) && !IsVisible(defeatPanel))
+            CloseResultPanels();
         if (manager == null && RealTimeCombatManager.Instance != null)
         {
             BindManager(RealTimeCombatManager.Instance);
@@ -178,6 +183,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
 
     private void BeginCombatUi()
     {
+        InputModeCoordinator.Exit(this);
         CancelVictoryPresentation();
         resultVisible = false;
         SetVisible(victoryPanel, false, false);
@@ -487,6 +493,9 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         group.interactable = visible && blocksRaycasts;
         group.blocksRaycasts = visible && blocksRaycasts;
     }
+
+    private static bool IsVisible(CanvasGroup group) =>
+        group != null && group.gameObject.activeInHierarchy && group.alpha > 0.001f;
 
     private static void SetText(TextMeshProUGUI text, string value)
     {

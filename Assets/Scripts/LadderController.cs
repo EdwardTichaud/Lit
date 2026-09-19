@@ -348,9 +348,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
 
         if (interactionBoxInstance == null)
         {
-            interactionBoxInstance = interactionBox != null
-                ? (interactionBoxParent != null ? Instantiate(interactionBox, interactionBoxParent) : Instantiate(interactionBox))
-                : CreateFallbackInteractionBox();
+            interactionBoxInstance = WorldInteractionUiSettings.Create(interactionBoxParent, interactionBox);
             if (interactionBoxInstance != null)
             {
                 interactionCanvas = interactionBoxInstance.GetComponentInParent<Canvas>();
@@ -444,29 +442,6 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         {
             interactionBoxInstance.transform.rotation = Quaternion.LookRotation(toCamera);
         }
-    }
-
-    private GameObject CreateFallbackInteractionBox()
-    {
-        GameObject instance = new GameObject("LadderInteractionBox", typeof(RectTransform), typeof(Canvas), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(GraphicRaycaster));
-        if (interactionBoxParent != null)
-        {
-            instance.transform.SetParent(interactionBoxParent, false);
-        }
-
-        RectTransform rect = instance.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(220f, 50f);
-        rect.localScale = Vector3.one * 0.03f;
-        Canvas canvas = instance.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.sortingOrder = 100;
-
-        TextMeshProUGUI label = instance.GetComponent<TextMeshProUGUI>();
-        label.fontSize = 18f;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
-        label.raycastTarget = false;
-        return instance;
     }
 
     private void DestroyInteractionInstance()

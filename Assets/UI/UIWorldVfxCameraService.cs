@@ -7,7 +7,7 @@ public sealed class UIWorldVfxCameraService : MonoBehaviour
 
     [SerializeField] private Camera vfxCamera;
     [SerializeField] private Transform vfxRoot;
-    [SerializeField] private string visualEffectLayer = "VisualEffect";
+    [SerializeField] private string visualEffectLayer = "VisualEffect_ScreenSpace";
 
     public Camera Camera => vfxCamera;
     public Transform VfxRoot => vfxRoot;
