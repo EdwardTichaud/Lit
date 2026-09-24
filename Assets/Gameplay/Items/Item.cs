@@ -29,6 +29,9 @@ public class Item : ScriptableObject
     private const string DefaultDepositSuccessMessage = ItemNamePlaceholder + " déposé";
     private const string DefaultTakeSuccessMessage = ItemNamePlaceholder + " pris";
     private const string DefaultBreakSuccessMessage = ItemNamePlaceholder + " cassé";
+    private const string PickupNotificationPrefix = "Objet récupéré";
+    private const string DropNotificationPrefix = "Objet jeté";
+    private const string DestroyNotificationPrefix = "Objet détruit";
 
     /// <summary>
     /// Types de surfaces acceptees quand l'item est place dans le monde.
@@ -1101,6 +1104,24 @@ public class Item : ScriptableObject
         return ResolveMessage(breakSuccessMessage, DefaultBreakSuccessMessage);
     }
 
+    /// <summary>Retourne le message standard affiché après récupération de l'item.</summary>
+    public string GetPickupNotification()
+    {
+        return FormatItemNotification(PickupNotificationPrefix);
+    }
+
+    /// <summary>Retourne le message standard affiché après avoir jeté l'item.</summary>
+    public string GetDropNotification()
+    {
+        return FormatItemNotification(DropNotificationPrefix);
+    }
+
+    /// <summary>Retourne le message standard affiché après destruction de l'item.</summary>
+    public string GetDestroyNotification()
+    {
+        return FormatItemNotification(DestroyNotificationPrefix);
+    }
+
     /// <summary>
     /// Indique si l'item accorde au moins une capacite d'interaction monde.
     /// </summary>
@@ -1369,7 +1390,9 @@ public class Item : ScriptableObject
         GameObject prefab = ResolveWorldPrefab();
         if (prefab != null)
         {
-            return Object.Instantiate(prefab, position, rotation);
+            GameObject instance = Object.Instantiate(prefab, position, rotation);
+            WorldPickupUtility.EnsureDefaultBoxCollider(instance);
+            return instance;
         }
 
         GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1409,6 +1432,12 @@ public class Item : ScriptableObject
 
         string display = !string.IsNullOrWhiteSpace(itemName) ? itemName : name;
         return message.Replace(ItemNamePlaceholder, display ?? string.Empty);
+    }
+
+    private string FormatItemNotification(string prefix)
+    {
+        string display = !string.IsNullOrWhiteSpace(itemName) ? itemName : name;
+        return $"{prefix} : {display ?? string.Empty}";
     }
 
     private void ConsumeAfterUse(SquadCharacterController controller)

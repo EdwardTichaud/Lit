@@ -863,6 +863,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         return true;
     }
 
+    /// <summary>
+    /// Lets a specialised ghost handler explain an intentional gameplay gate
+    /// without pretending that the interaction input was ignored.
+    /// </summary>
+    public bool ShowInteractionUnavailableFeedback(string message)
+    {
+        return ShowGhostFeedback(message);
+    }
+
     public bool UseKnowledgeReaction(GhostKnowledgeReaction reaction)
     {
         if (ghostData == null || reaction == null)
@@ -1825,6 +1834,14 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
         GameObject character = ResolveInteractionCharacter();
         if (character == null)
+        {
+            return;
+        }
+
+        // Several ghosts can be enabled in the same additive zone. Only the
+        // one which is genuinely reachable by the controlled character may
+        // consume the shared interaction event.
+        if (!CanUseCharacter(character, requireLocalControl: true))
         {
             return;
         }

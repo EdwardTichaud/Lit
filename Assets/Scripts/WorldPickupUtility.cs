@@ -109,6 +109,22 @@ public static class WorldPickupUtility
         return EnsureInteractionCollider(root) as BoxCollider;
     }
 
+    // Every world item needs a minimal physical target, even when its authored
+    // prefab has no collider or renderer from which bounds can be inferred.
+    public static BoxCollider EnsureDefaultBoxCollider(GameObject root)
+    {
+        if (root == null || root.GetComponentsInChildren<Collider>(true).Length > 0)
+        {
+            return null;
+        }
+
+        BoxCollider box = root.AddComponent<BoxCollider>();
+        box.center = Vector3.zero;
+        box.size = Vector3.one * 0.1f;
+        box.isTrigger = false;
+        return box;
+    }
+
     public static bool TryCalculateBounds(GameObject instance, out Bounds bounds)
     {
         bounds = new Bounds(Vector3.zero, Vector3.zero);
@@ -203,27 +219,7 @@ public static class WorldPickupUtility
 
     private static BoxCollider CreateFallbackBoxCollider(GameObject root)
     {
-        if (root == null || !TryCalculateBounds(root, out Bounds bounds))
-        {
-            return null;
-        }
-
-        BoxCollider box = root.GetComponent<BoxCollider>();
-        if (box == null)
-        {
-            box = root.AddComponent<BoxCollider>();
-        }
-
-        Transform rootTransform = root.transform;
-        Vector3 localCenter = rootTransform.InverseTransformPoint(bounds.center);
-        Vector3 localSize = rootTransform.InverseTransformVector(bounds.size);
-        box.center = localCenter;
-        box.size = new Vector3(
-            Mathf.Max(0.01f, Mathf.Abs(localSize.x)),
-            Mathf.Max(0.01f, Mathf.Abs(localSize.y)),
-            Mathf.Max(0.01f, Mathf.Abs(localSize.z)));
-        box.isTrigger = false;
-        return box;
+        return EnsureDefaultBoxCollider(root);
     }
 
     private static string ResolvePickupName(Item item, string fallback)

@@ -195,6 +195,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                              driveFromSquadFacade &&
                              locomotion != null && locomotion.isActiveAndEnabled &&
                              locomotionHandler != null && locomotionHandler.isActiveAndEnabled;
+    public string DriveDiagnostic =>
+        "bridge=" + isActiveAndEnabled +
+        " facade=" + driveFromSquadFacade +
+        " locomotion=" + (locomotion != null && locomotion.isActiveAndEnabled) +
+        " handler=" + (locomotionHandler != null && locomotionHandler.isActiveAndEnabled) +
+        " override=" + (locomotionHandler != null && locomotionHandler.OverrideInput) +
+        " velocity=" + Velocity.ToString("F3");
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0 || scriptedTraversalReleaseRoutine != null;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsScriptedPlanarMotionActive => scriptedPlanarMotionLockCount > 0;
@@ -395,67 +402,88 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return ApplyFlightInput(worldInput, boost, verticalInput);
     }
 
-    public bool BeginExternalLock(bool disableGameplayInput = true, bool stopActiveAbilities = false)
+    public sealed class ExternalLockHandle : System.IDisposable
     {
+        private LitOpsiveLocomotionBridge bridge;
+        public event System.Action Released;
+        internal readonly object Owner;
+        internal readonly bool SuppressesInput;
+        public bool IsReleased => bridge == null;
+
+        internal ExternalLockHandle(LitOpsiveLocomotionBridge bridge, object owner, bool suppressesInput)
+        {
+            this.bridge = bridge;
+            Owner = owner;
+            SuppressesInput = suppressesInput;
+        }
+
+        public void Dispose()
+        {
+            var previous = bridge;
+            bridge = null;
+            if (previous != null) previous.ReleaseExternalLock(this);
+            if (previous != null)
+            {
+                var callback = Released;
+                Released = null;
+                callback?.Invoke();
+            }
+        }
+
+        internal void Invalidate() { bridge = null; Released = null; }
+    }
+
+    private readonly System.Collections.Generic.List<ExternalLockHandle> externalLocks =
+        new System.Collections.Generic.List<ExternalLockHandle>();
+    private ExternalLockHandle planarMotionLock;
+    private ExternalLockHandle impulseLock;
+
+    public bool TryAcquireExternalLock(object owner, out ExternalLockHandle handle,
+        bool disableGameplayInput = true, bool stopActiveAbilities = false, bool progressiveStop = false)
+    {
+        handle = null;
         ResolveReferences();
-        if (!CanDriveScriptedTraversal)
-        {
-            return false;
-        }
+        if (owner == null || !CanDriveScriptedTraversal) return false;
 
-        externalLockCount = Mathf.Max(0, externalLockCount) + 1;
-        if (externalLockCount > 1)
-        {
-            ForceZeroInput();
-            return true;
-        }
-
-        if (stopActiveAbilities && locomotion != null)
-        {
-            locomotion.StopAllAbilities(false);
-        }
-
-        ForceZeroInput();
-        if (disableGameplayInput)
+        handle = new ExternalLockHandle(this, owner, disableGameplayInput);
+        externalLocks.Add(handle);
+        externalLockCount = externalLocks.Count;
+        if (stopActiveAbilities && locomotion != null) locomotion.StopAllAbilities(false);
+        if (disableGameplayInput && !externalLockInputDisabled)
         {
             EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", false);
             externalLockInputDisabled = true;
         }
-
+        if (progressiveStop && externalLockCount == 1)
+        {
+            progressiveExternalStopActive = true;
+            sprintPressed = false;
+            ApplyWorldMoveInput(Vector2.zero);
+        }
+        else ForceZeroInput();
         return true;
     }
 
-    /// <summary>Coupe les nouvelles entrees tout en laissant le filtre de deplacement freiner naturellement.</summary>
-    public bool BeginExternalLockWithProgressiveStop(bool disableGameplayInput = true, bool stopActiveAbilities = false)
+    private void InvalidateExternalLocks()
     {
-        ResolveReferences();
-        if (!CanDriveScriptedTraversal)
-        {
-            return false;
-        }
+        foreach (var handle in externalLocks) handle.Invalidate();
+        externalLocks.Clear();
+        externalLockCount = 0;
+        planarMotionLock = null;
+        impulseLock = null;
+    }
 
-        externalLockCount = Mathf.Max(0, externalLockCount) + 1;
-        TraceLocomotionResponse("External lock acquired | count=" + externalLockCount + ".");
-        if (externalLockCount > 1)
+    private void ReleaseDisabledLockOwners()
+    {
+        for (int i = externalLocks.Count - 1; i >= 0; i--)
         {
-            return true;
+            if (i >= externalLocks.Count) continue;
+            object owner = externalLocks[i].Owner;
+            if (owner is UnityEngine.Object obj && (obj == null ||
+                obj is Behaviour behaviour && !behaviour.isActiveAndEnabled ||
+                obj is GameObject go && !go.activeInHierarchy))
+                externalLocks[i].Dispose();
         }
-
-        if (stopActiveAbilities && locomotion != null)
-        {
-            locomotion.StopAllAbilities(false);
-        }
-
-        if (disableGameplayInput)
-        {
-            EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", false);
-            externalLockInputDisabled = true;
-        }
-
-        progressiveExternalStopActive = true;
-        sprintPressed = false;
-        ApplyWorldMoveInput(Vector2.zero);
-        return true;
     }
 
     /// <summary>
@@ -634,35 +662,22 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         ForceZeroInput();
     }
 
-    public void EndExternalLock()
+    private void ReleaseExternalLock(ExternalLockHandle handle)
     {
-        if (externalLockCount <= 0)
-        {
-            externalLockCount = 0;
-            return;
-        }
-
-        externalLockCount--;
-        if (externalLockCount > 0)
-        {
-            ForceZeroInput();
-            return;
-        }
-
-        progressiveExternalStopActive = false;
-
-        if (externalLockInputDisabled)
+        if (!externalLocks.Remove(handle)) return;
+        externalLockCount = externalLocks.Count;
+        bool suppressInput = externalLocks.Exists(entry => entry.SuppressesInput);
+        if (externalLockInputDisabled && !suppressInput)
         {
             if (!scriptedTraversalInputDisabled)
-            {
                 EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", true);
-            }
-
             externalLockInputDisabled = false;
         }
-
+        if (externalLockCount != 0) return;
+        progressiveExternalStopActive = false;
         ForceZeroInput();
         AttachLookSourceIfNeeded(true);
+        LocalPlayerInput.RequestHeldLocomotionReconciliation("Owned UCC lock released");
     }
 
     public bool BeginScriptedTraversal()
@@ -825,7 +840,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             StopCoroutine(scriptedTraversalReleaseRoutine);
             scriptedTraversalReleaseRoutine = null;
         }
-        externalLockCount = 0;
+        InvalidateExternalLocks();
         scriptedPlanarMotionLockCount = 0;
         scriptedPlanarMotionOwner = null;
         scriptedTraversalLockCount = 0;
@@ -999,16 +1014,28 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// </summary>
     private object scriptedPlanarMotionOwner;
 
+    public bool HasOnlyScriptedMotionLock(object owner) => owner != null &&
+        ReferenceEquals(scriptedPlanarMotionOwner, owner) && scriptedPlanarMotionLockCount == 1 &&
+        externalLockCount == 1 && !IsScriptedTraversalActive && !IsCinematicMotionSessionActive;
+
     public bool BeginScriptedPlanarMotion(object owner)
     {
         if (owner == null || scriptedPlanarMotionOwner != null) return false;
-        if (!BeginExternalLock(disableGameplayInput: false, stopActiveAbilities: false))
+        if (!TryAcquireExternalLock(owner, out planarMotionLock, disableGameplayInput: false, stopActiveAbilities: false))
         {
             return false;
         }
 
         scriptedPlanarMotionOwner = owner;
         scriptedPlanarMotionLockCount++;
+        var acquiredLock = planarMotionLock;
+        acquiredLock.Released += () =>
+        {
+            if (!ReferenceEquals(planarMotionLock, acquiredLock)) return;
+            scriptedPlanarMotionOwner = null;
+            scriptedPlanarMotionLockCount = 0;
+            planarMotionLock = null;
+        };
         return true;
     }
 
@@ -1059,7 +1086,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         scriptedPlanarMotionLockCount--;
-        EndExternalLock();
+        planarMotionLock?.Dispose();
+        planarMotionLock = null;
     }
 
     /// <summary>
@@ -1093,7 +1121,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return true;
     }
 
-    public bool AddExternalImpulse(Vector3 worldImpulse, ForceMode forceMode, float lockInputForSeconds)
+    public bool AddExternalImpulse(Vector3 worldImpulse, ForceMode forceMode, float lockInputForSeconds,
+        PlayerActionPresentationController actionOwner = null)
     {
         ResolveReferences();
         if (!IsDriving || locomotion == null || worldImpulse.sqrMagnitude <= 0f)
@@ -1106,14 +1135,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (lockInputForSeconds > 0f)
         {
-            BeginExternalLock(disableGameplayInput: false, stopActiveAbilities: false);
             if (externalImpulseLockRoutine != null)
             {
                 StopCoroutine(externalImpulseLockRoutine);
-                EndExternalLock();
+                impulseLock?.Dispose();
             }
 
-            externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockAfter(lockInputForSeconds));
+            impulseLock?.Dispose();
+            if (TryAcquireExternalLock(this, out impulseLock, disableGameplayInput: false))
+                externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockAfter(lockInputForSeconds, impulseLock));
+            AttachImpulseToAction(actionOwner, impulseLock);
         }
 
         return true;
@@ -1129,7 +1160,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         float minimumInputLockSeconds,
         float maximumInputLockSeconds,
         float airborneInertiaSeconds = 0f,
-        float airborneInertiaEndSpeedMultiplier = 0.3f)
+        float airborneInertiaEndSpeedMultiplier = 0.3f,
+        PlayerActionPresentationController actionOwner = null)
     {
         ResolveReferences();
         if (!IsDriving || locomotion == null || worldImpulse.sqrMagnitude <= 0f)
@@ -1144,21 +1176,39 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             StopCoroutine(externalImpulseLockRoutine);
             externalImpulseLockRoutine = null;
-            EndExternalLock();
+            impulseLock?.Dispose();
         }
 
-        if (!BeginExternalLock(disableGameplayInput: true, stopActiveAbilities: false))
+        if (!TryAcquireExternalLock(this, out impulseLock, disableGameplayInput: true, stopActiveAbilities: false))
         {
             return true;
         }
 
         externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockWhenGrounded(
+            impulseLock,
             Mathf.Max(0f, minimumInputLockSeconds),
             Mathf.Max(0.1f, maximumInputLockSeconds),
             Vector3.ProjectOnPlane(worldImpulse, transform.up),
             Mathf.Max(0f, airborneInertiaSeconds),
             Mathf.Clamp01(airborneInertiaEndSpeedMultiplier)));
+        AttachImpulseToAction(actionOwner, impulseLock);
         return true;
+    }
+
+    private void AttachImpulseToAction(PlayerActionPresentationController owner, ExternalLockHandle handle)
+    {
+        if (owner == null || handle == null) return;
+        owner.RegisterActionTermination(owner.ActionGeneration, reason =>
+        {
+            // A launched rebound keeps its legitimate flight on normal completion.
+            if (reason == PlayerActionPresentationController.ActionEndReason.Completed) return;
+            if (ReferenceEquals(impulseLock, handle))
+            {
+                if (externalImpulseLockRoutine != null) StopCoroutine(externalImpulseLockRoutine);
+                externalImpulseLockRoutine = null;
+            }
+            handle.Dispose();
+        });
     }
 
     private void Awake()
@@ -1214,7 +1264,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             externalImpulseLockRoutine = null;
         }
 
-        externalLockCount = 0;
+        InvalidateExternalLocks();
         scriptedPlanarMotionLockCount = 0;
         scriptedPlanarMotionOwner = null;
         scriptedTraversalLockCount = 0;
@@ -1232,6 +1282,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void Update()
     {
+        ReleaseDisabledLockOwners();
         EnforceGameplayMotionAuthority();
         RefreshGroundReliefTolerance(immediate: false);
         TickLocomotionDiagnostics();
@@ -1704,14 +1755,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
     }
 
-    private IEnumerator EndExternalImpulseLockAfter(float delay)
+    private IEnumerator EndExternalImpulseLockAfter(float delay, ExternalLockHandle handle)
     {
         yield return new WaitForSeconds(delay);
-        externalImpulseLockRoutine = null;
-        EndExternalLock();
+        if (ReferenceEquals(impulseLock, handle)) externalImpulseLockRoutine = null;
+        handle.Dispose();
     }
 
     private IEnumerator EndExternalImpulseLockWhenGrounded(
+        ExternalLockHandle handle,
         float minimumDelay,
         float maximumDelay,
         Vector3 planarImpulse,
@@ -1724,7 +1776,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Vector3 inertiaDirection = initialPlanarSpeed > 0.0001f
             ? planarImpulse / initialPlanarSpeed
             : Vector3.zero;
-        while (elapsed < maximumDelay)
+        while (!handle.IsReleased && elapsed < maximumDelay)
         {
             elapsed += Time.unscaledDeltaTime;
             leftGround |= !Grounded;
@@ -1747,8 +1799,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             yield return null;
         }
 
-        externalImpulseLockRoutine = null;
-        EndExternalLock();
+        if (ReferenceEquals(impulseLock, handle)) externalImpulseLockRoutine = null;
+        handle.Dispose();
     }
 
     private void MaintainAirborneImpulseInertia(

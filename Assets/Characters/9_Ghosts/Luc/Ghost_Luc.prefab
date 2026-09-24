@@ -302,6 +302,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!4 &7145762296775979735 stripped
 Transform:

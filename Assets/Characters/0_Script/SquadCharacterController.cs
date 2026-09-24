@@ -2559,7 +2559,9 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (initializeFlameFromHierarchy)
         {
-            flameEquipped = flameTransform.gameObject.activeSelf;
+            // La torche portee ne doit pas conserver une lumiere active depuis le prefab.
+            // Une sauvegarde ou ApplyFlameState applique ensuite explicitement son etat.
+            flameEquipped = !IsCarriedTorchTransform(flameTransform) && flameTransform.gameObject.activeSelf;
         }
         else
         {
@@ -2992,6 +2994,14 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
+    private static bool IsCarriedTorchTransform(Transform value)
+    {
+        return value != null &&
+            value.name == "torch" &&
+            value.parent != null &&
+            (value.parent.name == "hand_l_items" || value.parent.name == "hand_r_items");
+    }
+
     private void ConfigureFlamePhysics(Transform root)
     {
         if (root == null)
@@ -3025,6 +3035,19 @@ public partial class SquadCharacterController : MonoBehaviour
     private Transform FindFlameTransform()
     {
         Transform root = motionRoot != null ? motionRoot : transform;
+        Transform leftHandItems = FindChildByName(root, "hand_l_items");
+        Transform carriedTorch = leftHandItems != null ? leftHandItems.Find("torch") : null;
+        if (carriedTorch == null)
+        {
+            Transform rightHandItems = FindChildByName(root, "hand_r_items");
+            carriedTorch = rightHandItems != null ? rightHandItems.Find("torch") : null;
+        }
+
+        if (carriedTorch != null)
+        {
+            return carriedTorch;
+        }
+
         Transform parent = FindChildByName(root, flameParentName);
         if (parent == null)
         {

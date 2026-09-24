@@ -26,6 +26,9 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - `InteractableItem` : conteneurs, objets récupérables, serrures et pièges.
 - `InventoryPanelController` : UI, dépôt, lecture et placement.
 - `NetworkInventory` / `WorldInteractionService` : autorité réseau.
+- `Item` centralise les messages de confirmation d'objet : `Objet récupéré :
+  [nom]`, `Objet jeté : [nom]` et `Objet détruit : [nom]`. Les mêmes libellés
+  sont utilisés pour les actions locales et leurs RPC.
 - `SquadCharacterController` porte aussi les 3 items defensifs actives pour le
   combat, separes de l'inventaire complet.
 - `CharacterRuntimeState`, possédé par `SquadManager`, conserve cet état entre

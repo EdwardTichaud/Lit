@@ -2510,7 +2510,7 @@ MonoBehaviour:
   flameBoolParam: Flame
   flameStartsActive: 1
   initializeFlameFromHierarchy: 1
-  useFlameAnimationLayer: 0
+  useFlameAnimationLayer: 1
   flameUpperBodyIdleLayerWeight: 0.85
   flameUpperBodyMovingLayerWeight: 0.25
   flameUpperBodyLayerWeightResponsiveness: 12

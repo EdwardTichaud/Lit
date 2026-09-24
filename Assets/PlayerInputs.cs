@@ -383,6 +383,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""36cb2c00-539f-43df-90eb-003aed1e712c"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Inventory"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""183a41b0-ee92-4e8f-964f-1201c43aa30f"",
                     ""path"": ""<Gamepad>/select"",
                     ""interactions"": """",

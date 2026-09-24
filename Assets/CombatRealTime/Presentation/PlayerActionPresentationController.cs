@@ -15,6 +15,86 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private LitOpsiveLocomotionBridge locomotionBridge;
     [SerializeField] private bool debugTransitions;
 
+    public enum ActionEndReason { Completed, Interrupted, Failed, OwnerDisabled, Death }
+    private readonly System.Collections.Generic.List<Action<ActionEndReason>> sessionCleanup =
+        new System.Collections.Generic.List<Action<ActionEndReason>>();
+    private UnityEngine.Object sessionOwner;
+    private bool externallyDriven;
+    private string activeActionName;
+    public int ActionGeneration => activeToken;
+    public bool IsCurrentSession(int generation) => actionActive && generation == activeToken;
+    public ActionEndReason LastEndReason { get; private set; }
+
+    public bool RegisterActionCleanup(int generation, Action cleanup)
+    {
+        if (!IsCurrentSession(generation) || cleanup == null) return false;
+        sessionCleanup.Add(_ => cleanup());
+        return true;
+    }
+
+    public bool RegisterActionTermination(int generation, Action<ActionEndReason> cleanup)
+    {
+        if (!IsCurrentSession(generation) || cleanup == null) return false;
+        sessionCleanup.Add(cleanup);
+        return true;
+    }
+
+    public int BeginExternalPresentation(UnityEngine.Object owner, bool allowMobility = false)
+    {
+        if (deathAnimationLocked || owner == null) return 0;
+        TerminateAction(activeToken, ActionEndReason.Interrupted, false);
+        activeToken++;
+        actionActive = true;
+        externallyDriven = true;
+        activeAllowsMobilityCancel = allowMobility;
+        recoveryOpen = allowMobility;
+        sessionOwner = owner;
+        activeActionName = owner.name;
+        return activeToken;
+    }
+
+    public void EndExternalPresentation(int generation)
+    {
+        if (externallyDriven) TerminateAction(generation, ActionEndReason.Completed);
+    }
+
+    public bool CanPlayState(string stateName) => isActiveAndEnabled && !deathAnimationLocked &&
+        animator != null && animator.isActiveAndEnabled && animator.runtimeAnimatorController != null &&
+        !string.IsNullOrWhiteSpace(stateName) && animator.HasState(0, Animator.StringToHash(stateName));
+
+    public bool AcceptAnimationEvent(AnimationEvent source)
+    {
+        if (source == null || !source.isFiredByAnimator || !actionActive || deathAnimationLocked ||
+            animator == null || !animator.isActiveAndEnabled) return false;
+        if (externallyDriven)
+        {
+            if (source.functionName == "QTE")
+                return sessionOwner is CombatHealthThresholdController threshold && threshold.AcceptsQteEvent(source);
+            var manager = RealTimeCombatManager.Instance;
+            var playback = manager != null ? manager.GetComponent<CombatCinematicPlaybackService>() : null;
+            var director = playback != null && playback.ActiveRig != null ? playback.ActiveRig.Director :
+                (sessionOwner as Component)?.GetComponent<UnityEngine.Playables.PlayableDirector>();
+            if (!CombatCinematicPlaybackService.IsActivePlayerClip(director, animator, source.animatorClipInfo.clip)) return false;
+            if (source.functionName == "ResolveLightSkillImpact")
+                return sessionOwner is LightSkillCombatController light && light.IsCinematicPlaying;
+            if (source.functionName == "ResolveCounterSkillImpact")
+                return sessionOwner is CounterSkillCombatController counter && counter.IsCinematicPlaying;
+            if (source.functionName == "ResolveCinematicSkillImpact")
+                return sessionOwner is CombatSkillCinematicController skill && skill.IsPlaying;
+            return sessionOwner is LightSkillCombatController lightOwner && lightOwner.IsCinematicPlaying ||
+                sessionOwner is CounterSkillCombatController counterOwner && counterOwner.IsCinematicPlaying ||
+                sessionOwner is CombatSkillCinematicController skillOwner && skillOwner.IsPlaying;
+        }
+        if (!IsActiveState(source.animatorStateInfo) || !TryGetActiveAnimatorState(out _)) return false;
+        bool transitioning = animator.IsInTransition(0);
+        if (transitioning && IsActiveState(animator.GetCurrentAnimatorStateInfo(0)) &&
+            IsActiveState(animator.GetNextAnimatorStateInfo(0))) return false;
+        var clips = transitioning ? animator.GetNextAnimatorClipInfo(0) : animator.GetCurrentAnimatorClipInfo(0);
+        foreach (var clip in clips)
+            if (clip.weight > 0f && clip.clip == source.animatorClipInfo.clip) return true;
+        return false;
+    }
+
     private Coroutine actionRoutine;
     private Coroutine targetLungeRoutine;
     private int targetLungeToken;
@@ -23,6 +103,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private int activeToken;
     private PlayerActionFacingMode activeFacingMode;
     private bool actionActive;
+    private bool activeActionIsBasic;
+    private bool basicSkillInterruptedByDamage;
     private bool chainWindowOpen;
     private bool mobilityCancelOpen;
     private bool recoveryOpen;
@@ -61,6 +143,20 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     public bool CanCancelToMobility => !deathAnimationLocked &&
                                        (!actionActive || (activeAllowsMobilityCancel && (mobilityCancelOpen || recoveryOpen)));
     public bool IsDeathAnimationLocked => deathAnimationLocked;
+    public bool OwnsOnlyActionMotionLock(LitOpsiveLocomotionBridge bridge) =>
+        actionActive && bridge != null && (bridge.HasOnlyScriptedMotionLock(this) ||
+            bridge.HasOnlyScriptedMotionLock(bridge.GetComponent<PlayerStateMotionController>()));
+
+    public void ClearBufferedBasicAction()
+    {
+        if (!bufferedActionIsBasic) return;
+        hasBufferedAction = false;
+        bufferedBasicSkill = null;
+        bufferedProfile = null;
+        bufferedStateHash = 0;
+        bufferedActionName = null;
+        bufferedActionIsBasic = false;
+    }
     public event Action ActionEnded;
 
     [ContextMenu("Toggle Action Diagnostics")]
@@ -123,6 +219,15 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         return TryPlay(Animator.StringToHash(stateName), profile, debugName, false, null);
     }
 
+    public bool TryReplaceWithDamageReaction(string stateName, PlayerActionPresentationProfile profile)
+    {
+        if (!CanPlayState(stateName) || externallyDriven && !activeAllowsMobilityCancel ||
+            locomotionBridge != null && (locomotionBridge.IsScriptedTraversalActive ||
+            locomotionBridge.IsCinematicMotionSessionActive)) return false;
+        return StartAction(Animator.StringToHash(stateName), profile ?? PlayerActionPresentationProfile.CreateDefault(),
+            "Hurt", false, null);
+    }
+
     public IEnumerator WaitForChainWindow()
     {
         int token = activeToken;
@@ -132,39 +237,83 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         }
     }
 
-    public void CancelAction()
+    public void InterruptBasicSkillForDamage()
     {
-        bool hadAction = actionActive || hasBufferedAction;
-        activeToken++;
-        CancelTargetLunge();
-        if (actionRoutine != null)
+        if (actionActive && activeActionIsBasic)
         {
-            StopCoroutine(actionRoutine);
-            actionRoutine = null;
+            basicSkillInterruptedByDamage = true;
+            CancelAction();
+            return;
         }
-
-        actionActive = false;
-        chainWindowOpen = false;
-        mobilityCancelOpen = false;
-        recoveryOpen = false;
-        activeAllowsMobilityCancel = false;
+        if (!bufferedActionIsBasic) return;
         hasBufferedAction = false;
-        bufferedStateHash = 0;
+        bufferedBasicSkill = null;
         bufferedProfile = null;
+        bufferedStateHash = 0;
         bufferedActionName = null;
         bufferedActionIsBasic = false;
-        bufferedBasicSkill = null;
-        activeRequestsAirborneLanding = false;
+    }
+
+    public void CancelAction()
+    {
+        TerminateAction(activeToken, deathAnimationLocked ? ActionEndReason.Death : ActionEndReason.Interrupted);
+    }
+
+    private void TerminateAction(int generation, ActionEndReason reason, bool handoff = true)
+    {
+        if (generation != activeToken || (!actionActive && !hasBufferedAction)) return;
+        // Invalidate before cleanup: callbacks may be reentrant or belong to the outgoing clip.
+        activeToken++;
+        actionActive = false;
+        externallyDriven = false;
+        sessionOwner = null;
+        LastEndReason = reason;
+        var cleanups = sessionCleanup.ToArray();
+        sessionCleanup.Clear();
+        if (actionRoutine != null) StopCoroutine(actionRoutine);
+        actionRoutine = null;
+        CancelTargetLunge();
+        GetMobility()?.CancelAnimationDash(transform);
         ReleaseAirborneHold();
-        activeAirborneLandingHandoff = null;
-        activeLandingRequested = false;
-        activeHandoffStartedAt = 0f;
         locomotionBridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
-        if (hadAction)
+        chainWindowOpen = mobilityCancelOpen = recoveryOpen = false;
+        activeAllowsMobilityCancel = activeActionIsBasic = false;
+        hasBufferedAction = bufferedActionIsBasic = false;
+        bufferedStateHash = 0;
+        bufferedProfile = null;
+        bufferedBasicSkill = null;
+        bufferedActionName = null;
+        activeRequestsAirborneLanding = activeLandingRequested = false;
+        activeAirborneLandingHandoff = null;
+        activeHandoffStartedAt = 0f;
+        foreach (var cleanup in cleanups)
+        {
+            try { cleanup(reason); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+        }
+        if (handoff)
         {
             ActionEnded?.Invoke();
-            RequestLocomotionHandoff();
+            if (!actionActive) RequestLocomotionHandoff();
         }
+    }
+
+    private void RecoverAction(int generation, string reason, PlayerActionPresentationProfile profile = null)
+    {
+        if (!IsCurrentSession(generation)) return;
+        int current = animator != null && animator.isActiveAndEnabled ? animator.GetCurrentAnimatorStateInfo(0).fullPathHash : 0;
+        int next = animator != null && animator.isActiveAndEnabled && animator.IsInTransition(0)
+            ? animator.GetNextAnimatorStateInfo(0).fullPathHash : 0;
+        bool stillOwnsPose = animator != null && animator.isActiveAndEnabled &&
+            IsActiveState(animator.GetCurrentAnimatorStateInfo(0)) && next == 0;
+        Debug.LogWarning($"[PlayerAction] Recovery actor={name} session={generation} action={activeActionName} " +
+            $"reason={reason} current={current} next={next} resources={sessionCleanup.Count}", this);
+        RealTimeCombatManager.Instance?.GetComponent<RealTimeCombatInput>()?.CancelBufferedBasicSkills();
+        TerminateAction(generation, ActionEndReason.Failed);
+        if (actionActive || !stillOwnsPose || deathAnimationLocked || animator == null ||
+            locomotionBridge == null || !locomotionBridge.Grounded || locomotionBridge.IsInputSuppressedByUcc ||
+            locomotionBridge.IsCinematicMotionSessionActive) return;
+        animator.CrossFade(ResolveCurrentLocomotionDestination(), profile != null ? profile.exitBlendSeconds : 0.08f, 0);
     }
 
     /// <summary>Ends combat ownership and exits its animation, preserving airborne traversal and death.</summary>
@@ -255,7 +404,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private void OnDisable()
     {
         SkillEventsOnDisable();
-        CancelAction();
+        TerminateAction(activeToken, ActionEndReason.OwnerDisabled);
     }
 
     /// <summary>
@@ -369,7 +518,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             profile.minimumInputLockSeconds,
             profile.maximumInputLockSeconds,
             profile.airborneInertiaSeconds,
-            profile.airborneInertiaEndSpeedMultiplier);
+            profile.airborneInertiaEndSpeedMultiplier,
+            this);
     }
 
     private void LateUpdate()
@@ -380,10 +530,13 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             return;
         }
 
-        if (actionActive)
+        if (actionActive && (sessionOwner == null || sessionOwner is Behaviour owner && !owner.isActiveAndEnabled ||
+            sessionOwner is GameObject ownerObject && !ownerObject.activeInHierarchy))
         {
-            FaceActionTarget();
+            TerminateAction(activeToken, ActionEndReason.OwnerDisabled);
+            return;
         }
+        if (actionActive && !externallyDriven) FaceActionTarget();
     }
 
     private bool TryPlay(
@@ -436,18 +589,19 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         bool isBasicAction,
         BasicSkillsSO basicSkill)
     {
-        if (actionRoutine != null)
-        {
-            StopCoroutine(actionRoutine);
-            actionRoutine = null;
-        }
-
-        ReleaseAirborneHold();
+        if (!isActiveAndEnabled || deathAnimationLocked || animator == null ||
+            !animator.isActiveAndEnabled || !animator.HasState(0, stateHash)) return false;
+        TerminateAction(activeToken, ActionEndReason.Interrupted, false);
+        sessionOwner = this;
+        externallyDriven = false;
+        activeActionName = debugName;
 
         activeToken++;
         activeStateHash = stateHash;
         activeFacingMode = profile.facingMode;
         actionActive = true;
+        activeActionIsBasic = isBasicAction;
+        if (isBasicAction) basicSkillInterruptedByDamage = false;
         chainWindowOpen = false;
         mobilityCancelOpen = false;
         recoveryOpen = false;
@@ -470,9 +624,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private IEnumerator TrackAction(int token, PlayerActionPresentationProfile profile, string debugName, bool isBasicAction)
     {
+        yield return null;
         bool enteredState = false;
         float elapsed = 0f;
         const float stateEntryTimeout = 0.35f;
+        CombatTimeDomain domain = GetComponent<CombatTimeDomain>();
         float chainTime = Mathf.Clamp01(profile.chainNormalizedTime);
         float recoveryTime = Mathf.Max(chainTime, Mathf.Clamp01(profile.recoveryNormalizedTime));
         float completionTime = activeHoldsAirborne ? 1f : recoveryTime;
@@ -481,30 +637,49 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
         while (token == activeToken && elapsed < stateEntryTimeout)
         {
+            if (animator == null || !animator.isActiveAndEnabled) break;
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-            if (IsActiveState(state))
+            if (TryGetActiveAnimatorState(out state))
             {
                 enteredState = true;
                 break;
             }
 
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += domain != null ? domain.DeltaTime : Time.deltaTime;
             yield return null;
         }
 
         if (!enteredState || token != activeToken)
         {
-            FinishUnexpectedActionExit(token, isBasicAction);
+            RecoverAction(token, "Animator entry failed", profile);
             yield break;
         }
 
+        float previousNormalizedTime = float.NaN;
+        float stalledSeconds = 0f;
         while (token == activeToken)
         {
+            if (animator == null || !animator.isActiveAndEnabled)
+            {
+                RecoverAction(token, "Animator disabled", profile);
+                yield break;
+            }
             FaceActionTarget();
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-            if (!IsActiveState(state))
+            if (!TryGetActiveAnimatorState(out state))
             {
                 FinishUnexpectedActionExit(token, isBasicAction);
+                yield break;
+            }
+
+            bool cinematic = RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.IsCinematicSequenceActive;
+            float actionDelta = domain != null ? domain.DeltaTime : Time.deltaTime;
+            stalledSeconds = !cinematic && Mathf.Approximately(previousNormalizedTime, state.normalizedTime)
+                ? stalledSeconds + Mathf.Max(0f, actionDelta) : 0f;
+            previousNormalizedTime = state.normalizedTime;
+            if (stalledSeconds >= 1f)
+            {
+                RecoverAction(token, "No local animation progress for 1s", profile);
                 yield break;
             }
 
@@ -555,6 +730,19 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private bool TryGetActiveAnimatorState(out AnimatorStateInfo state)
+    {
+        state = animator.GetCurrentAnimatorStateInfo(0);
+        if (animator.IsInTransition(0))
+        {
+            var next = animator.GetNextAnimatorStateInfo(0);
+            // The destination owns presentation as soon as a transition starts.
+            if (!IsActiveState(next)) return false;
+            state = next;
+        }
+        return IsActiveState(state);
     }
 
     private bool IsActiveState(AnimatorStateInfo state)
@@ -656,21 +844,9 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private void FinishUnexpectedActionExit(int token, bool isBasicAction)
     {
-        if (!isBasicAction || deathAnimationLocked || token != activeToken || animator == null)
-        {
-            FinishWithoutTransition(token);
-            return;
-        }
-
-        locomotionBridge?.RefreshLocomotionPresentation();
-        if (locomotionBridge != null && !locomotionBridge.Grounded)
-        {
-            FinishWithoutTransition(token);
-            return;
-        }
-
-        animator.CrossFade(ResolveCurrentLocomotionDestination(), 0.08f, 0);
-        FinishWithoutTransition(token);
+        // Another state has taken ownership (guard, hurt, traversal...). Never
+        // overwrite it with Idle when releasing this action's bookkeeping.
+        RecoverAction(token, "Animator state replaced");
     }
 
     private bool StartBufferedAction(int token)
@@ -696,27 +872,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private void FinishWithoutTransition(int token)
     {
-        if (token != activeToken) return;
-        actionActive = false;
-        chainWindowOpen = false;
-        mobilityCancelOpen = false;
-        recoveryOpen = false;
-        activeAllowsMobilityCancel = false;
-        hasBufferedAction = false;
-        bufferedStateHash = 0;
-        bufferedProfile = null;
-        bufferedActionName = null;
-        bufferedActionIsBasic = false;
-        bufferedBasicSkill = null;
-        activeRequestsAirborneLanding = false;
-        ReleaseAirborneHold();
-        activeAirborneLandingHandoff = null;
-        activeLandingRequested = false;
-        activeHandoffStartedAt = 0f;
-        actionRoutine = null;
-        locomotionBridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
-        ActionEnded?.Invoke();
-        RequestLocomotionHandoff();
+        TerminateAction(token, ActionEndReason.Completed);
     }
 
     private void RequestLocomotionHandoff()

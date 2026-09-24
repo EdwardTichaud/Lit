@@ -9946,6 +9946,7 @@ GameObject:
   - component: {fileID: 2097075107444668843}
   - component: {fileID: 6835512952191122439}
   - component: {fileID: 1391136196061429212}
+  - component: {fileID: -710885228637489647}
   m_Layer: 19
   m_Name: VFX_Item_Orbe_White
   m_TagString: Untagged
@@ -14772,6 +14773,27 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
+--- !u!65 &-710885228637489647
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4214612296883433813}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5403711657699972227
 GameObject:
   m_ObjectHideFlags: 0

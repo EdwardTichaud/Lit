@@ -97,13 +97,6 @@ public sealed class TimeSlowMotionPresentationController : MonoBehaviour
 
     private void PlayEnterFeedback()
     {
-        if (settings.cameraEffectsEnabled)
-        {
-            ScreenWaveController wave = settings.screenWave != null
-                ? settings.screenWave
-                : ScreenWaveController.EnsureInstance();
-            wave?.PlayScreenWavePhase(settings.entryScreenWave);
-        }
         AudioManager.EnsureInstance()?.PlayUiOneShotClip(settings.enterSfx);
     }
 
@@ -178,13 +171,8 @@ public sealed class TimeSlowMotionPresentationController : MonoBehaviour
 public sealed class TimeSlowMotionPresentationSettings
 {
     public bool enabled = true;
-    [Tooltip("Desactive temporairement onde, vignette et aberration du ralenti sans couper ses SFX.")]
+    [Tooltip("Desactive temporairement vignette et aberration du ralenti sans couper ses SFX.")]
     public bool cameraEffectsEnabled;
-    [Tooltip("Optionnel : utilise le ScreenWaveController actif si vide.")]
-    public ScreenWaveController screenWave;
-    [Header("Slow Motion Distortion")]
-    [Tooltip("Deformation lente et large. Les impacts de combat gardent leurs ondes rapides et localisees.")]
-    public ScreenWaveController.ScreenWaveSettings entryScreenWave = SlowMotionDeformation;
     [Min(0.01f)] public float cameraEnterBlendSeconds = 0.08f;
     [Min(0.01f)] public float cameraExitBlendSeconds = 0.14f;
     [Range(0f, 1f)] public float vignetteIntensity = 0.2f;
@@ -195,20 +183,4 @@ public sealed class TimeSlowMotionPresentationSettings
     [Tooltip("SFX 2D joue une seule fois au retour a la vitesse normale.")]
     public AudioClipSO exitSfx;
 
-    private static ScreenWaveController.ScreenWaveSettings SlowMotionDeformation => new ScreenWaveController.ScreenWaveSettings
-    {
-        origin = new Vector2(0.5f, 0.5f),
-        direction = Vector2.zero,
-        reverse = false,
-        // One broad, image-warping swell rather than the tight ripples used by impacts.
-        frequency = 0.8f,
-        propagationSpeed = 0.3f,
-        amplitude = 0.25f,
-        duration = 1.35f,
-        falloff = 0.45f,
-        fadeOutDuration = 0.5f,
-        highlightIntensity = 0f,
-        edgeContrast = 1f,
-        highlightColor = Color.white
-    };
 }

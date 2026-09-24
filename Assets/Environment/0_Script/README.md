@@ -1,47 +1,18 @@
-# HDRP Environment System
+# HDRP Environment
 
-This system replaces stacked local Unity Volumes with one local `EnvironmentManager`
-that drives one or more Global HDRP Volumes.
+Les profils HDRP sont portés directement par les composants `Volume` des scènes
+Core et de leurs scènes additives. `ZoneManifest` ne modifie aucun profil
+visuel au runtime.
 
-## Setup
+## Configuration
 
-1. Create normal HDRP Volume Profile assets with the overrides you need.
-2. Add one `EnvironmentManager` in the scene or on the local player prefab.
-3. Leave `Use Controlled Character As Target` enabled. The manager resolves
-   `LocalPlayerContext.LocalCharacterRoot` / `LocalPlayerUtils.GetControlledCharacter()`
-   automatically and follows the character controlled by the local player.
-4. Assign one or more Global `Volume` components to `Global Volumes`.
-5. Assign a default HDRP Volume Profile.
-6. Add `EnvironmentZone` components to scene objects with trigger colliders.
-7. Assign a source HDRP Volume Profile, priority, optional weight, and `Blend Distance`
-   to each zone.
-
-The manager reads the source HDRP Volume Profiles but never writes into them.
-Only the runtime profile instance of the assigned Global Volume is modified.
-Every `VolumeComponent` and every overridden `VolumeParameter` in the source
-profiles is supported. Continuous parameters fade through Unity's own Volume
-interpolation; discrete parameters such as enums, booleans, textures, and object
-references switch according to their parameter type.
-
-## Multiplayer
-
-The manager is intentionally client-side only. Enable or instantiate it only for
-the local player/camera. Do not synchronize visual profile values over the
-network. Remote players should not drive the local camera environment.
-The target is rebound whenever `LocalPlayerContext.LocalCharacterChanged` fires,
-and is also checked every frame to handle late spawns or character swaps.
-
-## Zone Selection
-
-The manager samples the local target position every frame, so camera targets do
-not need colliders or rigidbodies. `Blend Distance` creates a soft band around
-each zone collider, so zone influence fades in before the boundary and reaches
-full strength after the target is deeper inside. The manager also smooths zone
-weights over time, then applies active zones from lowest priority to highest
-priority. Ties use the highest weight, then the most recently entered zone for
-debug/current-zone reporting.
-
-## Temporary Profiles
-
-Use `ForceProfile(profile, duration, intensity)` for cinematics, storms, or
-scripted moments. Use `ClearForcedProfile()` to return to normal zone selection.
+1. Placer les `Volume` HDRP et leurs colliders dans la scène Core ou la scène
+   additive concernée.
+2. Configurer leur profil, priorité, poids et `blendDistance` directement dans
+   l'Inspector Unity.
+3. Utiliser le composant `Zone` pour les comportements de zone gameplay et
+   audio, sans lui ajouter de gestionnaire de profils HDRP.
+4. Ajouter `LocalVolumeAnchor` à la scène Core lorsqu'une caméra à la troisième
+   personne doit évaluer les volumes depuis le personnage contrôlé.
+5. Ajouter `LocalVolumeSunController` sur un Volume local lorsqu'une lumière
+   directionnelle doit être active seulement dans ce volume.

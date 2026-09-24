@@ -239,6 +239,7 @@ public sealed class SceneMarkerEditor : Editor
         marker.SetBakedCharacterInstance(instance);
         SceneMarker.ConfigureSpawnedCharacter(instance, characterData, marker.MarkerId, characterData.worldPrefab);
         EditorUtility.SetDirty(marker);
+        PromptToAddOutlineTargetIfMissing(root);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
     }
@@ -277,6 +278,7 @@ public sealed class SceneMarkerEditor : Editor
         interactable.representedItem = marker.Item;
         interactable.allowTake = true;
         EditorUtility.SetDirty(interactable);
+        PromptToAddOutlineTargetIfMissing(root);
         Undo.DestroyObjectImmediate(marker);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
@@ -317,9 +319,86 @@ public sealed class SceneMarkerEditor : Editor
         EditorUtility.SetDirty(ghostController);
 
         root.name = string.IsNullOrWhiteSpace(ghostData.displayName) ? ghostData.name : ghostData.displayName;
+        PromptToAddOutlineTargetIfMissing(root);
         Undo.DestroyObjectImmediate(marker);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
+    }
+
+    private static void PromptToAddOutlineTargetIfMissing(GameObject bakedRoot)
+    {
+        if (bakedRoot == null || bakedRoot.GetComponentInChildren<RuntimeOutlineTarget>(true) != null)
+        {
+            return;
+        }
+
+        if (!EditorUtility.DisplayDialog(
+                "Runtime Outline Target",
+                "Le bake de « " + bakedRoot.name + " » ne contient aucun RuntimeOutlineTarget. Voulez-vous en ajouter un ?",
+                "Choisir un enfant",
+                "Ne rien ajouter"))
+        {
+            return;
+        }
+
+        Renderer[] renderers = bakedRoot.GetComponentsInChildren<Renderer>(true);
+        var candidateObjects = new System.Collections.Generic.List<GameObject>();
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer != null && !candidateObjects.Contains(renderer.gameObject))
+            {
+                candidateObjects.Add(renderer.gameObject);
+            }
+        }
+
+        if (candidateObjects.Count == 0)
+        {
+            EditorUtility.DisplayDialog(
+                "Runtime Outline Target",
+                "Aucun enfant avec Renderer n'est disponible pour recevoir un RuntimeOutlineTarget.",
+                "OK");
+            return;
+        }
+
+        GenericMenu menu = new GenericMenu();
+        for (int i = 0; i < candidateObjects.Count; i++)
+        {
+            GameObject candidate = candidateObjects[i];
+            string path = GetRelativeHierarchyPath(bakedRoot.transform, candidate.transform);
+            menu.AddItem(new GUIContent(path), false, () => AddOutlineTarget(candidate));
+        }
+
+        menu.ShowAsContext();
+    }
+
+    private static string GetRelativeHierarchyPath(Transform root, Transform target)
+    {
+        if (root == target)
+        {
+            return root.name + " (racine)";
+        }
+
+        var segments = new System.Collections.Generic.List<string>();
+        for (Transform current = target; current != null && current != root; current = current.parent)
+        {
+            segments.Insert(0, current.name);
+        }
+
+        return string.Join("/", segments);
+    }
+
+    private static void AddOutlineTarget(GameObject target)
+    {
+        if (target == null || target.GetComponent<RuntimeOutlineTarget>() != null)
+        {
+            return;
+        }
+
+        RuntimeOutlineTarget outlineTarget = Undo.AddComponent<RuntimeOutlineTarget>(target);
+        EditorUtility.SetDirty(outlineTarget);
+        EditorSceneManager.MarkSceneDirty(target.scene);
+        Selection.activeGameObject = target;
     }
 
     [MenuItem("Lit/Scene Marker/Convert Selected Character", false, 20)]

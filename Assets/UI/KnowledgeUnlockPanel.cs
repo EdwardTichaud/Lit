@@ -15,7 +15,6 @@ public sealed class KnowledgeUnlockPanel : MonoBehaviour
 
     [Header("Display")]
     [SerializeField, Min(0f)] private float displayDuration = 4.5f;
-    [SerializeField] private string heading = "CONNAISSANCE DEBLOQUEE";
 
     private readonly Queue<KnowledgeSO> pendingKnowledge = new Queue<KnowledgeSO>();
     private KnowledgeManager knowledgeManager;
@@ -107,16 +106,6 @@ public sealed class KnowledgeUnlockPanel : MonoBehaviour
         if (messageText == null) return;
 
         string title = !string.IsNullOrWhiteSpace(knowledge.title) ? knowledge.title : knowledge.name;
-        string description = knowledge.description != null ? knowledge.description.Trim() : string.Empty;
-        string category = knowledge.category != KnowledgeCategory.Unknown ? knowledge.category.ToString() : string.Empty;
-
-        messageText.text = string.IsNullOrWhiteSpace(description)
-            ? $"{heading}\n<size=140%>{title}</size>{FormatCategory(category)}"
-            : $"{heading}\n<size=140%>{title}</size>{FormatCategory(category)}\n\n{description}";
-    }
-
-    private static string FormatCategory(string category)
-    {
-        return string.IsNullOrWhiteSpace(category) ? string.Empty : $"\n<size=75%>{category}</size>";
+        messageText.text = title;
     }
 }

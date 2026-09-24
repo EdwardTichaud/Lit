@@ -39,6 +39,44 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private Coroutine basicComboRoutine;
     private float lastBasicAttackQueuedAt = float.NegativeInfinity;
     private BasicSkillContext? lastBasicSkillContext;
+    private bool basicAttackHeld;
+    private bool basicAttackRequiresRelease;
+
+    private void Update()
+    {
+        if (basicAttackRequiresRelease)
+        {
+            if (!IsBasicAttackPhysicallyHeld()) basicAttackRequiresRelease = false;
+            return;
+        }
+        if (!basicAttackHeld) return;
+        var manager = RealTimeCombatManager.Instance;
+        if (!IsInputActive || paletteOpen || IsCounterCinematicPlaying || manager == null ||
+            !manager.IsCombatActive || manager.LockedEnemy == null || manager.IsCinematicSequenceActive)
+        {
+            CancelBufferedBasicSkills();
+            return;
+        }
+        if (!IsBasicAttackPhysicallyHeld())
+        {
+            basicAttackHeld = false;
+            return;
+        }
+        if (basicSkillQueue.Count == 0 && basicComboRoutine == null &&
+            manager.CanAcceptBasicSkillInput && manager.CanChainBasicSkill)
+        {
+            if (!TryQueueBasicSkill(true)) CancelBufferedBasicSkills();
+        }
+    }
+
+    private bool IsBasicAttackPhysicallyHeld()
+    {
+        if (basicAttackAction == null) return false;
+        // Read controls even while the action map is disabled by a cinematic.
+        foreach (var control in basicAttackAction.controls)
+            if (control.EvaluateMagnitude() > .5f) return true;
+        return false;
+    }
 
     private readonly struct BasicSkillRequest
     {
@@ -123,6 +161,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     {
         if (suspended)
         {
+            CancelBufferedBasicSkills();
+            CounterSkillCombatController.Instance?.EndGuard();
             LocalPlayerInput.SetCombatInputActive(false);
             GamepadInputContextStack.Pop(this);
             ClosePalette();
@@ -236,7 +276,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             dodgeAction.performed += OnDodge;
             dodgeAction.canceled += OnDodgeCanceled;
         }
-        if (basicAttackAction != null) basicAttackAction.performed += OnBasicAttack;
+        if (basicAttackAction != null)
+        {
+            basicAttackAction.performed += OnBasicAttack;
+            basicAttackAction.canceled += OnBasicAttackCanceled;
+        }
         if (jumpAction != null) jumpAction.performed += OnJump;
         if (paletteAction != null)
         {
@@ -268,7 +312,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             dodgeAction.performed -= OnDodge;
             dodgeAction.canceled -= OnDodgeCanceled;
         }
-        if (basicAttackAction != null) basicAttackAction.performed -= OnBasicAttack;
+        if (basicAttackAction != null)
+        {
+            basicAttackAction.performed -= OnBasicAttack;
+            basicAttackAction.canceled -= OnBasicAttackCanceled;
+        }
         if (jumpAction != null) jumpAction.performed -= OnJump;
         if (paletteAction != null)
         {
@@ -288,7 +336,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (!paletteOpen && !IsCounterCinematicPlaying &&
             CombatHealthThresholdController.Instance != null &&
             CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Counter)) return;
-        if (!paletteOpen && !IsCounterCinematicPlaying) CounterSkillCombatController.Instance?.BeginGuard();
+        if (!paletteOpen && !IsCounterCinematicPlaying)
+        {
+            CancelBufferedBasicSkills();
+            CounterSkillCombatController.Instance?.BeginGuard();
+        }
     }
 
     private void OnCounterCanceled(InputAction.CallbackContext context)
@@ -323,30 +375,42 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnBasicAttack(InputAction.CallbackContext context)
     {
+        if (basicAttackRequiresRelease) return;
+        basicAttackHeld = TryQueueBasicSkill(false);
+    }
+
+    private void OnBasicAttackCanceled(InputAction.CallbackContext context)
+    {
+        basicAttackHeld = false;
+        if (!IsBasicAttackPhysicallyHeld()) basicAttackRequiresRelease = false;
+    }
+
+    private bool TryQueueBasicSkill(bool fromHold)
+    {
         if (paletteOpen || IsCounterCinematicPlaying)
         {
             Trace("BasicAttack ignoree: roue ouverte | " + InputDiagnostics + ".");
-            return;
+            return false;
         }
 
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         if (manager == null || !manager.IsCombatActive || manager.LockedEnemy == null)
         {
             Trace("BasicAttack ignoree: combat ou lock absent | " + InputDiagnostics + ".");
-            return;
+            return false;
         }
 
         if (!manager.CanAcceptBasicSkillInput)
         {
             Trace("BasicAttack ignoree: " + (manager.BasicSkillInputBlockReason ?? "presentation joueur indisponible") + ".");
-            return;
+            return false;
         }
 
         SkillsManager skillsManager = FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include);
         if (skillsManager == null)
         {
             Trace("BasicAttack ignoree: SkillsManager introuvable.");
-            return;
+            return false;
         }
 
         BasicSkillContext basicSkillContext = ResolveBasicSkillContext(manager);
@@ -355,7 +419,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             // A combo never crosses the ground/air boundary. The active clip
             // is left untouched; only a waiting follow-up is invalidated.
             BasicSkillContext previousContext = lastBasicSkillContext.Value;
-            ClearBasicSkillCombo();
+            ClearBasicSkillCombo(preserveHold: true);
             skillsManager.ResetBasicSkillCombo(previousContext);
             skillsManager.ResetBasicSkillCombo(basicSkillContext);
             Trace("BasicAttack contexte change: " + previousContext + " -> " + basicSkillContext + ".");
@@ -364,11 +428,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (basicSkillQueue.Count >= maximumBufferedBasicSkills)
         {
             Trace("BasicAttack ignoree: buffer deja plein.");
-            return;
+            return false;
         }
 
         float currentTime = Time.unscaledTime;
-        if (currentTime - lastBasicAttackQueuedAt > basicComboResetDelaySeconds)
+        if (!fromHold && currentTime - lastBasicAttackQueuedAt > basicComboResetDelaySeconds)
         {
             skillsManager.ResetBasicSkillCombo(basicSkillContext);
         }
@@ -376,7 +440,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (!skillsManager.TryReserveNextBasicSkill(basicSkillContext, out BasicSkillsSO skill))
         {
             Trace("BasicAttack ignoree: aucun BasicSkillsSO " + basicSkillContext + " configure.");
-            return;
+            return false;
         }
 
         lastBasicSkillContext = basicSkillContext;
@@ -394,13 +458,13 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             if (manager.TryUseSkill(skill))
             {
                 Trace("AirBasicAttack demarree immediatement: " + skill.SkillName + ".");
-                return;
+                return true;
             }
 
             skillsManager.ResetBasicSkillCombo(BasicSkillContext.Airborne);
             lastBasicSkillContext = null;
             Trace("AirBasicAttack refusee par RealTimeCombatManager: " + skill.SkillName + ".");
-            return;
+            return false;
         }
 
         basicSkillQueue.Enqueue(new BasicSkillRequest(skill, basicSkillContext));
@@ -408,6 +472,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         {
             basicComboRoutine = StartCoroutine(PlayBasicSkillCombo(skillsManager));
         }
+        return true;
     }
 
     private void OnJump(InputAction.CallbackContext context)
@@ -425,6 +490,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private void OnOpenPalette(InputAction.CallbackContext context)
     {
         if (IsCounterCinematicPlaying) return;
+        CancelBufferedBasicSkills();
         paletteOpen = true;
         ResolveSkillWheel();
 
@@ -523,6 +589,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private IEnumerator PlayBasicSkillCombo(SkillsManager skillsManager)
     {
+        // Ensure the coroutine handle is assigned before it can complete.
+        yield return null;
         while (basicSkillQueue.Count > 0)
         {
             RealTimeCombatManager manager = RealTimeCombatManager.Instance;
@@ -541,6 +609,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
             if (!manager.CanChainBasicSkill)
             {
+                yield return null;
                 continue;
             }
 
@@ -560,7 +629,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             skillsManager.SetAnimationEventSkill(skill);
             if (!manager.TryUseSkill(skill))
             {
-                continue;
+                basicAttackHeld = false;
+                basicAttackRequiresRelease = true;
+                basicSkillQueue.Clear();
+                skillsManager.ResetBasicSkillCombo(request.Context);
+                break;
             }
 
         }
@@ -568,8 +641,13 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         basicComboRoutine = null;
     }
 
-    private void ClearBasicSkillCombo()
+    private void ClearBasicSkillCombo(bool preserveHold = false)
     {
+        if (!preserveHold)
+        {
+            basicAttackHeld = false;
+            basicAttackRequiresRelease = true;
+        }
         basicSkillQueue.Clear();
         lastBasicAttackQueuedAt = float.NegativeInfinity;
         lastBasicSkillContext = null;
@@ -583,6 +661,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     public void CancelBufferedBasicSkills()
     {
         ClearBasicSkillCombo();
+        RealTimeCombatManager.Instance?.PlayerRoot?
+            .GetComponentInChildren<PlayerActionPresentationController>(true)?.ClearBufferedBasicAction();
     }
 
     private static BasicSkillContext ResolveBasicSkillContext(RealTimeCombatManager manager)

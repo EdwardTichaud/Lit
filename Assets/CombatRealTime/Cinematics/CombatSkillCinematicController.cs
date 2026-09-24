@@ -22,6 +22,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     private bool playbackStarted;
     private bool impactResolved;
     private bool playerLockHeld;
+    private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private int sessionToken;
     private Coroutine watchdog;
 
@@ -31,6 +32,11 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     private void Awake() => ResolveReferences();
 
     private void OnDisable()
+    {
+        AbortForActionTermination();
+    }
+
+    public void AbortForActionTermination()
     {
         if (active && cinematicPlayback != null && cinematicPlayback.IsPlaying)
         {
@@ -107,7 +113,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         combatManager.CancelPlayerActionForCinematic();
         SuspendEncounter();
         combatManager.SetCinematicSequenceActive(true);
-        playerLockHeld = combatManager.TryLockPlayerForCinematic();
+        playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock);
         InputModeCoordinator.Enter(this, InputMode.Cinematic);
         combatInput?.SetCinematicInputSuspended(true);
 
@@ -180,7 +186,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         combatManager?.SetCinematicSequenceActive(false);
         if (playerLockHeld)
         {
-            combatManager?.UnlockPlayerAfterCinematic();
+            playerLock?.Dispose();
             playerLockHeld = false;
         }
 

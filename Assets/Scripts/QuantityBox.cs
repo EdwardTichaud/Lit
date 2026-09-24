@@ -22,8 +22,8 @@ public class QuantityBox : MonoBehaviour
     public float fadeDuration = 0.15f;
     [Tooltip("Met l'alpha a 0 au demarrage.")]
     public bool setAlphaToZeroOnStart = true;
-    [Tooltip("Ajoute un CanvasGroup si manquant.")]
-    public bool addCanvasGroupIfMissing = true;
+    [Tooltip("Compatibilite scene. Un CanvasGroup doit etre configure dans la scene.")]
+    public bool addCanvasGroupIfMissing;
     [Tooltip("Desactive les raycasts quand cache.")]
     public bool disableRaycastsWhenHidden = true;
     [Tooltip("Format d'affichage (quantite/total).")]
@@ -62,51 +62,6 @@ public class QuantityBox : MonoBehaviour
 
     public static QuantityBox Resolve()
     {
-        if (Instance != null)
-        {
-            return Instance;
-        }
-
-        GameObject tagged = GameObject.FindWithTag("QuantityBox");
-        if (tagged != null)
-        {
-            QuantityBox box = tagged.GetComponent<QuantityBox>();
-            if (box == null)
-            {
-                box = tagged.AddComponent<QuantityBox>();
-            }
-            Instance = box;
-            return box;
-        }
-
-        Transform[] allTransforms = Resources.FindObjectsOfTypeAll<Transform>();
-        for (int i = 0; i < allTransforms.Length; i++)
-        {
-            Transform t = allTransforms[i];
-            if (t == null || !t.gameObject.scene.IsValid())
-            {
-                continue;
-            }
-
-            if (!t.CompareTag("QuantityBox"))
-            {
-                continue;
-            }
-
-            QuantityBox box = t.GetComponent<QuantityBox>();
-            if (box == null)
-            {
-                box = t.gameObject.AddComponent<QuantityBox>();
-            }
-            Instance = box;
-            return box;
-        }
-
-#if UNITY_2023_1_OR_NEWER
-        Instance = FindAnyObjectByType<QuantityBox>(FindObjectsInactive.Include);
-#else
-        Instance = FindAnyObjectByType<QuantityBox>();
-#endif
         return Instance;
     }
 
@@ -156,7 +111,6 @@ public class QuantityBox : MonoBehaviour
         lastDirection = 0;
         nextMoveTime = 0f;
         active = true;
-        gameObject.SetActive(true);
         UpdateText();
         PositionPanel();
         FadeTo(1f, fadeDuration);
@@ -430,13 +384,7 @@ public class QuantityBox : MonoBehaviour
 
     private CanvasGroup GetCanvasGroup()
     {
-        CanvasGroup group = GetComponent<CanvasGroup>();
-        if (group == null && addCanvasGroupIfMissing)
-        {
-            group = gameObject.AddComponent<CanvasGroup>();
-        }
-
-        return group;
+        return GetComponent<CanvasGroup>();
     }
 
     private void FadeTo(float targetAlpha, float duration)

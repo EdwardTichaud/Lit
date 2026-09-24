@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3093796872826920830}
   - component: {fileID: 4735474516287004041}
+  - component: {fileID: -5326366505993193622}
   m_Layer: 5
   m_Name: UI_Slot_InventorySlot_1
   m_TagString: Untagged
@@ -35,10 +36,10 @@ RectTransform:
   - {fileID: 1029088347644903316}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 200}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4735474516287004041
 CanvasRenderer:
@@ -48,6 +49,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3371615080175422078}
   m_CullTransparentMesh: 1
+--- !u!114 &-5326366505993193622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3371615080175422078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357db1abf0e04f0c81cdc585a1f44d83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
+  quantityText: {fileID: 5280300485413119058}
+  itemSpriteImage: {fileID: 3280965634746337223}
 --- !u!1 &3542886316923142188
 GameObject:
   m_ObjectHideFlags: 0
@@ -301,6 +316,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -399,7 +415,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4f033cdd2b09f9a43b139729d09d002c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5a523566e0a32ec448d773525f3bdb02, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

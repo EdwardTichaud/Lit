@@ -1,5 +1,4 @@
 using TMPro;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,7 +16,7 @@ public class LootUISettings : MonoBehaviour
     public Transform lootItemsParent;
     [Tooltip("Prefab d'un slot de loot.")]
     public GameObject lootItemPrefab;
-    [Tooltip("Curseur UI de selection.")]
+    [Tooltip("Ancien curseur global. Il reste masque : chaque slot utilise son propre Cursor.")]
     public RectTransform slotCursor;
     [Tooltip("Texte de description de l'item selectionne.")]
     public TextMeshProUGUI lootDescriptionText;
@@ -31,8 +30,8 @@ public class LootUISettings : MonoBehaviour
 
     [Tooltip("Padding ajoute autour du slot selectionne.")]
     public Vector2 cursorPadding = new Vector2(10f, 10f);
-    [Tooltip("Cree un curseur si aucun n'est assigne.")]
-    public bool createCursorIfMissing = true;
+    [Tooltip("Compatibilite scene. Aucun curseur runtime n'est cree.")]
+    public bool createCursorIfMissing;
     [Tooltip("Cache l'icone si aucune image n'est disponible.")]
     public bool hideIconWhenMissing = true;
     [Tooltip("Ferme le loot si le joueur quitte la zone.")]
@@ -55,12 +54,12 @@ public class LootUISettings : MonoBehaviour
     public float lootOpenFadeDuration = 0.5f;
     [Tooltip("Met l'alpha a 0 au demarrage.")]
     public bool setAlphaToZeroOnStart = true;
-    [Tooltip("Ajoute un CanvasGroup si manquant.")]
-    public bool addCanvasGroupIfMissing = true;
+    [Tooltip("Compatibilite scene. Un CanvasGroup doit etre configure dans la scene.")]
+    public bool addCanvasGroupIfMissing;
     [Tooltip("Desactive les raycasts quand cache.")]
     public bool disableRaycastsWhenHidden = true;
 
-    private Coroutine fadeRoutine;
+    [SerializeField] private CanvasGroup lootCanvasGroup;
 
     private Image cachedContainerIconImage;
     private TextMeshProUGUI cachedContainerNameText;
@@ -104,20 +103,8 @@ public class LootUISettings : MonoBehaviour
             return;
         }
 
-        lootPanel.SetActive(true);
         CacheContainerHeaderRefsIfNeeded();
         ConfigureSlotCursor();
-
-        CanvasGroup lootCanvasGroup = GetLootCanvasGroup();
-        if (lootCanvasGroup != null)
-        {
-            lootCanvasGroup.alpha = 0f;
-            if (disableRaycastsWhenHidden)
-            {
-                lootCanvasGroup.interactable = false;
-                lootCanvasGroup.blocksRaycasts = false;
-            }
-        }
 
         FadePanelTo(1f, lootOpenFadeDuration);
     }
@@ -129,12 +116,6 @@ public class LootUISettings : MonoBehaviour
             return;
         }
 
-        if (fadeRoutine != null)
-        {
-            StopCoroutine(fadeRoutine);
-            fadeRoutine = null;
-        }
-
         CanvasGroup lootCanvasGroup = GetLootCanvasGroup();
         if (lootCanvasGroup != null)
         {
@@ -146,7 +127,6 @@ public class LootUISettings : MonoBehaviour
             }
         }
 
-        lootPanel.SetActive(false);
     }
 
     public void UpdateDescription(Item item)
@@ -172,41 +152,12 @@ public class LootUISettings : MonoBehaviour
 
     public void HideCursor()
     {
-        if (slotCursor != null)
-        {
-            slotCursor.gameObject.SetActive(false);
-        }
+        if (slotCursor != null) slotCursor.gameObject.SetActive(false);
     }
 
     public RectTransform EnsureSlotCursor(Transform parent)
     {
-        if (slotCursor != null)
-        {
-            ConfigureSlotCursor();
-            return slotCursor;
-        }
-
-        if (!createCursorIfMissing || parent == null)
-        {
-            return null;
-        }
-
-        GameObject cursorObject = new GameObject("LootPanel_SlotCursor", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        RectTransform rect = cursorObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-
-        Image image = cursorObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.25f);
-        image.raycastTarget = false;
-        image.sprite = RuntimeUiSpriteUtility.SolidSprite;
-        image.type = Image.Type.Simple;
-
-        slotCursor = rect;
-        ConfigureSlotCursor();
-        return rect;
+        return null;
     }
 
     private void ConfigureSlotCursor()
@@ -217,6 +168,14 @@ public class LootUISettings : MonoBehaviour
         }
 
         UIManager.ConfigureDecorativeCursor(slotCursor, true);
+        CursorController controller = slotCursor.GetComponent<CursorController>();
+        if (controller != null)
+        {
+            controller.cursor = null;
+            controller.allowInput = false;
+            controller.enabled = false;
+        }
+        slotCursor.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -430,12 +389,7 @@ public class LootUISettings : MonoBehaviour
             return null;
         }
 
-        CanvasGroup lootCanvasGroup = lootPanel.GetComponent<CanvasGroup>();
-        if (lootCanvasGroup == null && addCanvasGroupIfMissing)
-        {
-            lootCanvasGroup = lootPanel.AddComponent<CanvasGroup>();
-        }
-
+        if (lootCanvasGroup == null) lootCanvasGroup = lootPanel.GetComponent<CanvasGroup>();
         return lootCanvasGroup;
     }
 

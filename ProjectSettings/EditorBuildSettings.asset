@@ -30,8 +30,11 @@ EditorBuildSettings:
     path: Assets/Scenes/District_1/District_1_Arena_Environment.unity
     guid: 39c4053b37c182f4e83878ce09cee085
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Global_Lights.unity
+    path: Assets/Scenes/District_1/District_1_Volume_Castle.unity
     guid: f4ce0086b8e1ae647aebbb22a40ef753
+  - enabled: 1
+    path: Assets/District_1_Indoor_Lights.unity
+    guid: 1131d151a2c066d4b9a6031f5ba56c91
   - enabled: 1
     path: Assets/Scenes/District_1/District_1_Enigme_Luc.unity
     guid: 007201eb6f185f94faeb3a7aa9e0ff3b

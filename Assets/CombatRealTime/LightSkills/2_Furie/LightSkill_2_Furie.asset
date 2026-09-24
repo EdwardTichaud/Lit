@@ -20,12 +20,12 @@ MonoBehaviour:
   playerAnimatorTrackName: Player.Animator
   enemyAnimatorTrackName: Enemy.Animator
   cinemachineTrackName: Cinemachine
+  minimumCinematicStartDistance: 0
   maximumCinematicStartDistance: 18
   startSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
   impulseSfx: {fileID: 11400000, guid: 9977cd45df87b62468ab9f70989662e6, type: 2}
   impactSfx: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
   damage: 50
-  clarityGain: 15
   resolveDamageWhenTimelineStops: 0
   postTimelinePlayerState:
     animatorStateName: 
@@ -35,11 +35,11 @@ MonoBehaviour:
     animatorStateName: 
     transitionSeconds: 0.08
     normalizedStartTime: 0
-  projectileVfxPrefab: {fileID: 8829451551789304542, guid: bf78c8ffb7154c8419503816f6e7a05d, type: 3}
+  projectileVfxPrefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
   projectileSpawnTransformPath: hand_l
   projectileSpawnLocalOffset: {x: 0, y: 0, z: 0}
   projectileSpeed: 18
-  impactVfxPrefab: {fileID: 3358576091916578458, guid: 2803216a64a073446a0b8501fcaece81, type: 3}
+  impactVfxPrefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
   impactVfxOffset: {x: 0, y: 0, z: 0}
   spawnProjectileSignal: {fileID: 11400000, guid: 11aa972834d94298a3dda618338e31c7, type: 2}
   launchProjectileSignal: {fileID: 11400000, guid: f50cea94a47a43e5adf2e8cae637345e, type: 2}

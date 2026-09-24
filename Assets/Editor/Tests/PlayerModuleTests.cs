@@ -1,6 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 public sealed class PlayerModuleTests
@@ -118,4 +119,85 @@ public sealed class PlayerModuleTests
             Assert.That(prefab.GetComponent<PlayerRootMotionRelay>(), Is.Not.Null);
         }
     }
+
+    [TestCase("Link")]
+    [TestCase("Lucian")]
+    [TestCase("Luna")]
+    [TestCase("Mia")]
+    public void PlayerPrefabEnablesTheTorchAnimationLayer(string character)
+    {
+        string folder = "Assets/Characters/1_Squad/" + character + "/";
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(folder + "Player_Model_" + character + ".prefab");
+        var squad = prefab.GetComponent<SquadCharacterController>();
+        var animator = prefab.GetComponent<Animator>();
+        var controller = animator.runtimeAnimatorController as AnimatorController;
+        var serializedSquad = new SerializedObject(squad);
+
+        Assert.That(serializedSquad.FindProperty("useFlameAnimationLayer").boolValue, Is.True);
+        Assert.That(controller, Is.Not.Null);
+        Assert.That(System.Array.Exists(controller.layers, layer => layer.name == "Upper Body Flame"), Is.True);
+        Assert.That(System.Array.Exists(controller.parameters, parameter =>
+            parameter.name == "Flame" && parameter.type == AnimatorControllerParameterType.Bool), Is.True);
+    }
+
+    [Test]
+    public void LucianTorchUsesTheCarriedLightAndAnUpperBodyOnlyMask()
+    {
+        var root = PrefabUtility.LoadPrefabContents("Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab");
+        try
+        {
+            var squad = root.GetComponent<SquadCharacterController>();
+            var controller = root.GetComponent<Animator>().runtimeAnimatorController as AnimatorController;
+            var findFlame = typeof(SquadCharacterController).GetMethod("FindFlameTransform", BindingFlags.Instance | BindingFlags.NonPublic);
+            Transform torch = (Transform)findFlame.Invoke(squad, null);
+
+            Assert.That(torch, Is.Not.Null);
+            Assert.That(torch.name, Is.EqualTo("torch"));
+            Assert.That(torch.parent.name, Is.EqualTo("hand_l_items"));
+            Assert.That(torch.GetComponentInChildren<PlayerTorchInfluence>(true), Is.Not.Null);
+
+            torch.gameObject.SetActive(true);
+            typeof(SquadCharacterController).GetMethod("InitializeFlameState", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(squad, null);
+            Assert.That(torch.gameObject.activeSelf, Is.False, "The carried torch must not start with a persistent light.");
+
+            AnimatorControllerLayer flameLayer = System.Array.Find(controller.layers, layer => layer.name == "Upper Body Flame");
+            Assert.That(flameLayer.avatarMask, Is.Not.Null);
+            Assert.That(flameLayer.avatarMask.GetHumanoidBodyPartActive(AvatarMaskBodyPart.Body), Is.False);
+            Assert.That(flameLayer.avatarMask.GetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftLeg), Is.False);
+            Assert.That(flameLayer.avatarMask.GetHumanoidBodyPartActive(AvatarMaskBodyPart.RightLeg), Is.False);
+            Assert.That(flameLayer.avatarMask.GetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftArm), Is.True);
+            Assert.That(flameLayer.avatarMask.GetHumanoidBodyPartActive(AvatarMaskBodyPart.RightArm), Is.True);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+    }
+
+    [TestCase("Mixamo_Idle_Flame_41f0ac36_UpperBody.anim")]
+    [TestCase("Mixamo_Walk_Flame_f1807c0d_UpperBody.anim")]
+    [TestCase("Mixamo_Flame_Equip_3c63a863_UpperBody.anim")]
+    public void LucianFlameClipsDoNotAnimateTheLowerBody(string clipName)
+    {
+        const string folder = "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/";
+        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(folder + clipName);
+        Assert.That(clip, Is.Not.Null);
+
+        foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))
+        {
+            Assert.That(IsLowerBodyFlameCurve(binding.propertyName), Is.False,
+                $"{clip.name} must not animate '{binding.propertyName}'.");
+        }
+    }
+
+    private static bool IsLowerBodyFlameCurve(string propertyName)
+    {
+        return propertyName.StartsWith("RootT.") || propertyName.StartsWith("RootQ.") ||
+            propertyName.StartsWith("LeftFoot") || propertyName.StartsWith("RightFoot") ||
+            propertyName.StartsWith("Left Foot ") || propertyName.StartsWith("Right Foot ") ||
+            propertyName.StartsWith("Left Toes ") || propertyName.StartsWith("Right Toes ") ||
+            propertyName.StartsWith("Left Lower Leg ") || propertyName.StartsWith("Right Lower Leg ") ||
+            propertyName.StartsWith("Left Upper Leg ") || propertyName.StartsWith("Right Upper Leg ");
+    }
+
 }

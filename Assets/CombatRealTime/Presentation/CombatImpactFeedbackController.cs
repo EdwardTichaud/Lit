@@ -11,7 +11,6 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
     public static CombatImpactFeedbackController Instance { get; private set; }
 
     [SerializeField] private CombatLockOnCameraController lockCamera;
-    [SerializeField] private ScreenWaveController screenWave;
 
     private readonly System.Collections.Generic.Stack<TimeManager.TimeRequestHandle> externalPauseHandles =
         new System.Collections.Generic.Stack<TimeManager.TimeRequestHandle>();
@@ -54,6 +53,13 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
         }
     }
 
+    public static Vector3 ResolvePlayerImpactPosition(Transform targetPoint, Transform playerRoot, Vector3 offset = default)
+    {
+        Vector3 position = targetPoint.position;
+        if (playerRoot != null) position.y = playerRoot.position.y + 1.5f;
+        return position + offset;
+    }
+
     public void PlayImpact(SkillSO skill, EnemyController target)
     {
         CombatImpactFeedbackProfile profile = skill != null ? skill.ImpactFeedback : null;
@@ -64,21 +70,15 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
         ResolveDependencies();
         Transform impactPoint = target.LockPoint != null ? target.LockPoint : target.transform;
+        Vector3 impactPosition = ResolvePlayerImpactPosition(impactPoint, RealTimeCombatManager.Instance?.PlayerRoot);
         if (profile.additionalImpactVfx != null)
         {
-            Instantiate(profile.additionalImpactVfx, impactPoint.position, impactPoint.rotation, impactPoint);
+            Instantiate(profile.additionalImpactVfx, impactPosition, impactPoint.rotation, impactPoint);
         }
 
         if (profile.additionalImpactAudio != null)
         {
-            AudioManager.PlayClipAtPoint(profile.additionalImpactAudio, impactPoint.position);
-        }
-
-        if (profile.screenWave != null && profile.screenWave.enabled)
-        {
-            (screenWave != null ? screenWave : ScreenWaveController.EnsureInstance())?.TryPlayScreenWavePhase(
-                impactPoint.position,
-                profile.screenWave.settings);
+            AudioManager.PlayClipAtPoint(profile.additionalImpactAudio, impactPosition);
         }
 
         lockCamera?.PlayImpact(profile.camera);
@@ -115,9 +115,5 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
             lockCamera = FindAnyObjectByType<CombatLockOnCameraController>(FindObjectsInactive.Include);
         }
 
-        if (screenWave == null)
-        {
-            screenWave = ScreenWaveController.EnsureInstance();
-        }
     }
 }

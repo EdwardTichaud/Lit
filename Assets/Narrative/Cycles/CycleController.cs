@@ -39,6 +39,7 @@ public sealed class CycleController : NetworkBehaviour
     private CharacterInfo health;
     private TimelinePlaybackHandle playback;
     private SquadCharacterController lockedPlayer;
+    private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private bool ownsLock, attemptedCinematic, cinematicRunning, localDialogue;
     private int cinematicToken, dialogueToken;
     private readonly Dictionary<ulong, PendingDialogue> pendingDialogues = new Dictionary<ulong, PendingDialogue>();
@@ -120,6 +121,7 @@ public sealed class CycleController : NetworkBehaviour
     {
         if (definition != null && definition.HasSteps && progression != null) progression.Report(this, kind, id);
         presentationDirty = true;
+        RevealKnowledgeAfterDefeat();
     }
     private void TryStartSequence()
     {
@@ -294,9 +296,15 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void RevealKnowledgeAfterDefeat()
     {
-        if (!Authority || definition == null || !HasFlags(definition.enemyDefeatedFlags) || definition.knowledgeOnEnemyDefeat == null) return;
+        if (!Authority || definition == null || !HasRecordedEncounterDefeat() || definition.knowledgeOnEnemyDefeat == null) return;
         foreach (var knowledge in definition.knowledgeOnEnemyDefeat)
             if (knowledge != null && !Knows(knowledge)) KnowledgeReveal.Reveal(knowledge, "Le groupe", definition.cycleId);
+    }
+
+    private bool HasRecordedEncounterDefeat()
+    {
+        return HasFlags(definition.enemyDefeatedFlags) ||
+            definition.HasSteps && progression != null && progression.HasDefeatFact(definition, "encounter");
     }
     private void ApplyState(int state)
     {
@@ -368,7 +376,7 @@ public sealed class CycleController : NetworkBehaviour
         {
             var root = LocalPlayerUtils.GetControlledCharacter();
             lockedPlayer = root != null ? root.GetComponent<SquadCharacterController>() : null;
-            if (lockedPlayer != null) ownsLock = lockedPlayer.TryBeginUccExternalLock();
+            if (lockedPlayer != null) ownsLock = lockedPlayer.TryBeginUccExternalLock(this, out playerLock);
             if (!HasCinematic() || TimelineManager.Instance == null || lockedPlayer != null && !ownsLock) yield break;
             ActiveDirector.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
             playback = TimelineManager.Instance.Play(ActiveDirector, ActiveProfile);
@@ -405,7 +413,7 @@ public sealed class CycleController : NetworkBehaviour
     [ClientRpc] private void StopCinematicClientRpc() => CancelPlayback();
     private void ReleaseLock()
     {
-        if (ownsLock && lockedPlayer != null) lockedPlayer.EndUccExternalLock();
+        playerLock?.Dispose();
         ownsLock = false;
         lockedPlayer = null;
     }

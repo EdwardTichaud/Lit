@@ -77,6 +77,10 @@ public static class LocalInputRouter
     public static float InputDebounceSeconds { get; set; } = DefaultInputDebounceSeconds;
 
     public static Vector2 MoveValue => moveValue;
+    // Kept separate from MoveValue: the latter can intentionally be routed to
+    // the free camera, while this shows whether the physical move control is
+    // still reaching the local input host.
+    public static Vector2 RawMoveValue => rawMoveValue;
     public static Vector2 CameraPanValue => Vector2.ClampMagnitude(cameraPanValue + cameraPanFromMoveValue, 1f);
     public static Vector2 CameraOrbitValue => cameraOrbitValue;
     public static Vector2 CameraPointerDelta => cameraPointerDelta;

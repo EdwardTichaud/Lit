@@ -85,6 +85,10 @@ public class KnowledgeManager : MonoBehaviour
     /// Declenche quand une connaissance est retiree.
     /// </summary>
     public event KnowledgeEvent KnowledgeRemoved;
+    /// <summary>
+    /// Declenche apres toute modification de la liste, y compris une restauration complete.
+    /// </summary>
+    public event Action KnowledgeListChanged;
 
     private void Awake()
     {
@@ -294,6 +298,7 @@ public class KnowledgeManager : MonoBehaviour
                 PlayUnlockEffects(knowledge);
             }
             KnowledgeUnlocked?.Invoke(knowledge);
+            KnowledgeListChanged?.Invoke();
             return true;
         }
 
@@ -341,6 +346,7 @@ public class KnowledgeManager : MonoBehaviour
             }
 
             KnowledgeRemoved?.Invoke(knowledge);
+            KnowledgeListChanged?.Invoke();
             return true;
         }
 
@@ -353,10 +359,17 @@ public class KnowledgeManager : MonoBehaviour
     public void ClearKnowledge()
     {
         EnsureLookup();
+        bool changed = lookup.Count > 0;
         lookup.Clear();
         if (unlockedKnowledge != null)
         {
+            changed |= unlockedKnowledge.Count > 0;
             unlockedKnowledge.Clear();
+        }
+
+        if (changed)
+        {
+            KnowledgeListChanged?.Invoke();
         }
     }
 
@@ -391,6 +404,7 @@ public class KnowledgeManager : MonoBehaviour
 
         lookupReady = true;
         PersistentWorldSceneInstaller.EnsureRuntimeKnowledgeManager(this);
+        KnowledgeListChanged?.Invoke();
     }
 
     private void EnsureLookup()

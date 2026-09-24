@@ -16,6 +16,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private bool cinematicPlaying;
     private bool impactResolved;
     private bool playerLockHeld;
+    private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private bool finishingCinematic;
     private SpiritBondController activeLightSkillBond;
     private bool usingPooledRig;
@@ -145,7 +146,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         cinematicSkill = skill;
         claritySpentForCinematic = RequiredClarity;
         combatManager.CancelPlayerActionForCinematic();
-        playerLockHeld = combatManager.TryLockPlayerForCinematic();
+        playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock);
         InputModeCoordinator.Enter(this, InputMode.Cinematic);
         combatInput?.SetInputActive(false);
         Trace("Verrous appliques | playerLock=" + playerLockHeld + " | inputCombat=false.");
@@ -263,7 +264,19 @@ public sealed class LightSkillCombatController : MonoBehaviour
     {
         if (!cinematicPlaying) return;
         Trace("Rig termine | runtime=" + (rig != null ? rig.name : "None") + ".");
-        StopCinematic(resolveImpact: cinematicSkill != null && cinematicSkill.ResolveDamageWhenTimelineStops);
+        StopCinematic(resolveImpact: rig != null && rig.LastEndReason == CombatCinematicEndReason.Completed &&
+            cinematicSkill != null && cinematicSkill.ResolveDamageWhenTimelineStops);
+    }
+
+    public void AbortForActionTermination()
+    {
+        StopCinematic(resolveImpact: false);
+        if (cinematicPlaying)
+        {
+            usingPooledRig = false;
+            StopCinematic(resolveImpact: false);
+        }
+        RestorePlayerControl("Actor action session ended");
     }
 
     private void Unbind()
@@ -303,7 +316,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         claritySpentForCinematic = 0f;
         if (playerLockHeld)
         {
-            combatManager?.UnlockPlayerAfterCinematic();
+            playerLock?.Dispose();
             playerLockHeld = false;
         }
 
@@ -368,7 +381,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     {
         if (playerLockHeld)
         {
-            combatManager?.UnlockPlayerAfterCinematic();
+            playerLock?.Dispose();
             playerLockHeld = false;
         }
 

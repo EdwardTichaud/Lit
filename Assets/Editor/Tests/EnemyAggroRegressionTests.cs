@@ -5,6 +5,33 @@ using UnityEngine;
 
 public sealed class EnemyAggroRegressionTests
 {
+    [TestCase(-94f)]
+    [TestCase(-91f)]
+    [TestCase(12f)]
+    public void PlayerImpactHeightIgnoresGiantLockPointHeight(float playerHeight)
+    {
+        var player = new GameObject("Impact caster");
+        var target = new GameObject("Giant lock point");
+        try
+        {
+            player.transform.position = new Vector3(1f, playerHeight, 2f);
+            target.transform.position = new Vector3(8f, 30f, 9f);
+            var offset = new Vector3(.2f, 1f, .3f);
+            Assert.That(CombatImpactFeedbackController.ResolvePlayerImpactPosition(target.transform, player.transform, offset),
+                Is.EqualTo(new Vector3(8f, playerHeight + 1.5f, 9f) + offset));
+            player.transform.position += Vector3.up * 2f;
+            Assert.That(CombatImpactFeedbackController.ResolvePlayerImpactPosition(target.transform, player.transform).y,
+                Is.EqualTo(playerHeight + 3.5f));
+            Assert.That(CombatImpactFeedbackController.ResolvePlayerImpactPosition(target.transform, null),
+                Is.EqualTo(target.transform.position));
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(target);
+        }
+    }
+
     [Test]
     public void EnemyImpactUsesSingleSkillEventReceiver()
     {

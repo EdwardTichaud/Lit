@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Item_Weapon_Sword
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemId: sword01
-  itemName: Sword
+  itemName: "Ep\xE9e simple"
   itemSprite: {fileID: 21300000, guid: 8283172e805bf58459c2e348ed41b55a, type: 3}
   description: "Une \xE9p\xE9e basique et assez fragile."
   readableKind: 0
@@ -34,6 +34,7 @@ MonoBehaviour:
     revelationLevel: 0
     narrativeTags: []
   knowledgeUnlockedOnRead: []
+  knowledgeUnlockedOnPickup: []
   temporalDistrictRegistry: {fileID: 0}
   refreshTemporalDistrictRegistryOnRead: 1
   canUse: 0
@@ -47,7 +48,6 @@ MonoBehaviour:
     enemyAnimationClip: {fileID: 7400000, guid: f4732f22a7f51414cafc30586339f031, type: 2}
     fallbackPlayerAnimationDuration: 1.2
     fallbackEnemyAnimationDuration: 1.35
-    impactDelaySeconds: 0.32
     slowTimeScale: 0.2
     slowDurationSeconds: 0.5
     playCounterActionCameraShot: 1

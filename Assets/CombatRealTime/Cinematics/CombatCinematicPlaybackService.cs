@@ -18,6 +18,31 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
     public bool IsPlaying => activeRig != null;
     public CombatCinematicRig ActiveRig => activeRig;
 
+    public static bool IsActivePlayerClip(PlayableDirector director, Animator actor, AnimationClip clip)
+    {
+        if (director == null || actor == null || clip == null ||
+            !(director.playableAsset is UnityEngine.Timeline.TimelineAsset timeline) ||
+            !director.playableGraph.IsValid()) return false;
+        foreach (var output in timeline.GetOutputTracks())
+        {
+            if (!(output is UnityEngine.Timeline.AnimationTrack track) || track.mutedInHierarchy ||
+                director.GetGenericBinding(track) != actor) continue;
+            if (ContainsActiveClip(track, clip, director.time)) return true;
+        }
+        return false;
+    }
+
+    private static bool ContainsActiveClip(UnityEngine.Timeline.TrackAsset track, AnimationClip clip, double time)
+    {
+        if (track.mutedInHierarchy) return false;
+        foreach (var timelineClip in track.GetClips())
+            if (timelineClip.asset is UnityEngine.Timeline.AnimationPlayableAsset animation && animation.clip == clip &&
+                time >= timelineClip.start - 0.034 && time <= timelineClip.end + 0.034) return true;
+        foreach (var child in track.GetChildTracks())
+            if (ContainsActiveClip(child, clip, time)) return true;
+        return false;
+    }
+
     private void Awake()
     {
         if (poolRoot == null)

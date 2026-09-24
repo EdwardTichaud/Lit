@@ -1158,8 +1158,13 @@ public sealed class GameFlowService : MonoBehaviour
             $"uccInputSuppressed={(bridge != null && bridge.IsInputSuppressedByUcc)} " +
             $"uccExternalLock={(bridge != null && bridge.IsExternalLockActive)} " +
             $"uccTraversalLock={(bridge != null && bridge.IsScriptedTraversalActive)} " +
+            $"uccDrive='{(bridge != null ? bridge.DriveDiagnostic : "none")}' " +
             $"bodyKinematic={(body != null && body.isKinematic)} velocity={(body != null ? body.linearVelocity.ToString("F3") : "n/a")} " +
             $"capsule={(capsule != null && capsule.enabled)} ground='{ground}' " +
+            $"inputHost={(LocalPlayerInput.Instance != null && LocalPlayerInput.Instance.isActiveAndEnabled)} " +
+            $"inputMode={InputModeCoordinator.CurrentMode} inputMaps='{(LocalPlayerInput.Instance != null ? LocalPlayerInput.Instance.RuntimeInputDiagnostic : "none")}' " +
+            $"rawMove={LocalInputRouter.RawMoveValue:F2} routedMove={LocalInputRouter.MoveValue:F2} " +
+            $"cameraFree={LocalInputRouter.CameraFreeModeActive} joinBlocked={JoinSyncSystem.IsGameplayBlocked} " +
             $"inputFocus={InputFocusStack.HasAnyFocus()} cameraFocusBlocked={InputFocusStack.HasAnyFocusBlockingCamera()} " +
             $"mainCamera='{(mainCamera != null ? mainCamera.name : "none")}' cameraEnabled={(mainCamera != null && mainCamera.isActiveAndEnabled)}");
     }

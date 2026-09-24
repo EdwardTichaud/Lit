@@ -1,5 +1,80 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1400000000000000003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1400000000000000002}
+  - component: {fileID: 1400000000000000004}
+  - component: {fileID: 1400000000000000005}
+  m_Layer: 5
+  m_Name: Cursor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &1400000000000000002
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400000000000000003}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3093796872826920830}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 220, y: 220}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &1400000000000000004
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400000000000000003}
+  m_CullTransparentMesh: 1
+--- !u!114 &1400000000000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400000000000000003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 818e638c7f613854399301c243b48f96, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &3371615080175422078
 GameObject:
   m_ObjectHideFlags: 0
@@ -10,6 +85,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3093796872826920830}
   - component: {fileID: 4735474516287004041}
+  - component: {fileID: 1400000000000000001}
+  - component: {fileID: 761149452171039665}
+  - component: {fileID: 1400000000000000006}
   m_Layer: 5
   m_Name: UI_Slot_InventorySlot_2
   m_TagString: Untagged
@@ -33,6 +111,7 @@ RectTransform:
   - {fileID: 3738216331857748435}
   - {fileID: 1029088347644903316}
   - {fileID: 6292228369320121289}
+  - {fileID: 1400000000000000002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -48,6 +127,108 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3371615080175422078}
   m_CullTransparentMesh: 1
+--- !u!114 &1400000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3371615080175422078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357db1abf0e04f0c81cdc585a1f44d83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
+  quantityText: {fileID: 5280300485413119058}
+  itemSpriteImage: {fileID: 3280965634746337223}
+--- !u!114 &761149452171039665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3371615080175422078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2489106270
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &1400000000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3371615080175422078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootSlotUI
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
+  representedItem: {fileID: 0}
+  storedItems: []
+  destroyWhenStorageEmpty: 0
+  allowTake: 1
+  maxStoredQuantity: 0
+  isLocked: 0
+  lockId: 
+  consumeKeyOnUse: 0
+  lockedNoKeyMessage: "Le conteneur est verrouill\xE9. Il faut la bonne cl\xE9."
+  unlockSuccessMessage: "Le conteneur est d\xE9verrouill\xE9."
+  allowLockpick: 1
+  lockDifficulty: 12
+  lockpickToolItem: {fileID: 0}
+  lockpickToolItemId: outils_de_crochetage
+  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir
+    ce coffre ?
+  missingLockpickMessage: Il manque des outils de crochetage.
+  lockpickSuccessMessage: "Crochetage r\xE9ussi."
+  lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
+  isTrapped: 0
+  triggerTrapOnOpen: 0
+  disarmTrapAfterTrigger: 1
+  trapEffect: 1
+  trapTeleportTarget: {fileID: 0}
+  trapUseTargetRotation: 1
+  trapTriggeredMessage: "Un pi\xE8ge de t\xE9l\xE9portation se d\xE9clenche !"
+  allowBreakWhenTakeDisabled: 1
+  breakInvalidMessage: Cet objet ne peut pas etre casse.
+  breakNoSpaceMessage: Pas assez de place dans le coffre.
+  takeBlockedMessage: Impossible de prendre cet objet.
+  takeAllSuccessMessage: "Objets r\xE9cup\xE9r\xE9s."
+  depositNoSpaceMessage: Pas assez de place dans le coffre.
+  showWorldInteractionUi: 1
+  requireLitInfluenceForInteraction: 1
+  reactToFlameInfluence: 1
+  actionBox: {fileID: 0}
+  actionBoxOffset: {x: 0, y: 0}
+  actionBoxFadeDuration: 0.15
+  actionBoxSetAlphaToZeroOnStart: 1
+  actionBoxAddCanvasGroupIfMissing: 1
+  actionBoxDisableRaycastsWhenHidden: 1
+  actionBoxEnabledAlpha: 1
+  actionBoxDisabledAlpha: 0.25
+  takeQuantityPanelOffset: {x: 0, y: 0}
+  takeQuantityFormat: '{0}/{1}'
+  interactionTrigger: {fileID: 0}
+  interactionMaxDistance: 1.75
+  linkedInventoryPanelController: {fileID: 0}
+  recoverableWorldInfo: {fileID: 0}
 --- !u!1 &3542886316923142188
 GameObject:
   m_ObjectHideFlags: 0
@@ -301,6 +482,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

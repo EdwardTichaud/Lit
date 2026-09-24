@@ -65,6 +65,11 @@ public class PausePanelController : MonoBehaviour
     public string voiceOptionLabel = "Voix";
     [SerializeField] private RectTransform audioOptionsRoot;
 
+    [Header("Knowledge")]
+    [SerializeField] private KnowledgePanelController knowledgePanel;
+    [SerializeField] private CanvasGroup knowledgePanelCanvasGroup;
+    [SerializeField, Min(0f)] private float knowledgePanelFadeDuration = 0.2f;
+
     private CanvasGroup panelCanvasGroup;
     private bool isOpen;
     private PanelState panelState = PanelState.Closed;
@@ -84,6 +89,12 @@ public class PausePanelController : MonoBehaviour
     private readonly System.Collections.Generic.List<RectTransform> defaultPauseOptions = new System.Collections.Generic.List<RectTransform>();
     private bool defaultPauseOptionsCaptured;
     private bool audioOptionsOpen;
+    private bool knowledgePanelOpen;
+    private RectTransform pauseCursorItemsParent;
+    private LayoutGroup pauseCursorLayoutGroup;
+    private CursorController.ItemFilter pauseCursorItemFilter;
+    private RectTransform pauseCursorVisual;
+    private bool pauseCursorNavigationCached;
 
     public bool IsOpen => isOpen;
     public bool IsTransitioning => panelState == PanelState.Opening || panelState == PanelState.Closing;
@@ -126,7 +137,13 @@ public class PausePanelController : MonoBehaviour
         ResolveButtons();
         EnsureCursorActions();
         ResolveStaticAudioOptions();
+        ResolveKnowledgePanel();
+        SetKnowledgePanelVisible(false, true);
         ResolveCursor();
+        if (cursorController != null)
+        {
+            UIManager.ConfigureDecorativeCursor(cursorController.cursor, false);
+        }
         SetAudioOptionsOpen(false, false);
         RefreshStaticAudioOptions();
 
@@ -178,6 +195,7 @@ public class PausePanelController : MonoBehaviour
     private void OnDisable()
     {
         RestoreAfterScreenshot(restorePanelActivation: false);
+        CloseKnowledgePanel(true);
         isOpen = false;
         panelState = PanelState.Closed;
         SetCursorState(false);
@@ -316,6 +334,12 @@ public class PausePanelController : MonoBehaviour
             return;
         }
 
+        if (knowledgePanelOpen)
+        {
+            CloseKnowledgePanel();
+            return;
+        }
+
         ClosePanel();
     }
 
@@ -355,6 +379,7 @@ public class PausePanelController : MonoBehaviour
 
         pausePanel.SetActive(true);
         ResolveStaticAudioOptions();
+        SetKnowledgePanelVisible(false, true);
         SetAudioOptionsOpen(false, false);
         RefreshStaticAudioOptions();
         if (cursorController != null)
@@ -384,6 +409,7 @@ public class PausePanelController : MonoBehaviour
         ReleasePauseTime();
         ApplyCursorSizing(false);
         SetAudioOptionsOpen(false, false);
+        CloseKnowledgePanel(true);
 
         SetCursorState(false);
         StartFade(0f, false);
@@ -502,6 +528,54 @@ public class PausePanelController : MonoBehaviour
     public void UI_Save()
     {
         HandleSaveClicked();
+    }
+
+    public void UI_OpenKnowledgePanel()
+    {
+        if (!isOpen || knowledgePanelOpen)
+        {
+            return;
+        }
+
+        ResolveKnowledgePanel();
+        if (knowledgePanel == null || knowledgePanelCanvasGroup == null)
+        {
+            Debug.LogWarning("PausePanelController: KnowledgePanel reference missing.", this);
+            return;
+        }
+
+        SetAudioOptionsOpen(false, false);
+        knowledgePanel.Refresh();
+        knowledgePanelOpen = true;
+        SetCursorState(false);
+        ConfigureKnowledgeNavigation();
+        SetKnowledgePanelVisible(true, false);
+        SetCursorState(true);
+        cursorController?.SelectFirst();
+    }
+
+    public void CloseKnowledgePanel()
+    {
+        CloseKnowledgePanel(false);
+    }
+
+    private void CloseKnowledgePanel(bool immediate)
+    {
+        if (!knowledgePanelOpen && !immediate)
+        {
+            return;
+        }
+
+        knowledgePanelOpen = false;
+        SetCursorState(false);
+        RestorePauseNavigation();
+        SetKnowledgePanelVisible(false, immediate);
+
+        if (isOpen)
+        {
+            SetCursorState(true);
+            cursorController?.Refresh();
+        }
     }
 
     public bool PrepareSaveForSceneTransition()
@@ -649,6 +723,7 @@ public class PausePanelController : MonoBehaviour
     private void EnsureCursorActions()
     {
         ConfigurePauseAction("ResumeButton", PauseCursorAction.PauseAction.Resume);
+        ConfigurePauseAction("KnowledgeButton", PauseCursorAction.PauseAction.Knowledge);
         ConfigurePauseAction("SaveButton", PauseCursorAction.PauseAction.Save);
         ConfigurePauseAction("QuitButton", PauseCursorAction.PauseAction.Quit);
     }
@@ -1263,6 +1338,46 @@ public class PausePanelController : MonoBehaviour
         }
     }
 
+    private void ResolveKnowledgePanel()
+    {
+        if (knowledgePanel == null && pausePanel != null && pausePanel.transform.parent != null)
+        {
+            Transform panelTransform = pausePanel.transform.parent.Find("KnowledgesPanel");
+            if (panelTransform != null)
+            {
+                knowledgePanel = panelTransform.GetComponent<KnowledgePanelController>();
+            }
+        }
+
+        if (knowledgePanelCanvasGroup == null && knowledgePanel != null)
+        {
+            knowledgePanelCanvasGroup = knowledgePanel.GetComponent<CanvasGroup>();
+        }
+    }
+
+    private void SetKnowledgePanelVisible(bool visible, bool immediate)
+    {
+        if (knowledgePanelCanvasGroup == null)
+        {
+            return;
+        }
+
+        UIManager.CancelCanvasGroupTransition(knowledgePanelCanvasGroup);
+        if (immediate)
+        {
+            knowledgePanelCanvasGroup.alpha = visible ? 1f : 0f;
+            knowledgePanelCanvasGroup.interactable = visible;
+            knowledgePanelCanvasGroup.blocksRaycasts = visible;
+            return;
+        }
+
+        UIManager.TransitionCanvasGroup(
+            this,
+            knowledgePanelCanvasGroup,
+            visible,
+            knowledgePanelFadeDuration);
+    }
+
     private void SetCursorState(bool enabled)
     {
         if (!enableCursorWhenOpen)
@@ -1279,6 +1394,46 @@ public class PausePanelController : MonoBehaviour
         {
             cursorNavigator.enabled = enabled;
         }
+    }
+
+    private void ConfigureKnowledgeNavigation()
+    {
+        if (cursorController == null || knowledgePanel == null || knowledgePanel.KnowledgeListContent == null)
+        {
+            return;
+        }
+
+        if (!pauseCursorNavigationCached)
+        {
+            pauseCursorItemsParent = cursorController.itemsParent;
+            pauseCursorLayoutGroup = cursorController.layoutGroup;
+            pauseCursorItemFilter = cursorController.itemFilter;
+            pauseCursorVisual = cursorController.cursor;
+            pauseCursorNavigationCached = true;
+        }
+
+        RectTransform content = knowledgePanel.KnowledgeListContent;
+        cursorController.itemsParent = content;
+        cursorController.layoutGroup = content.GetComponent<LayoutGroup>();
+        cursorController.itemFilter = CursorController.ItemFilter.MenuCursorHandlerOnly;
+        cursorController.cursor = null;
+        cursorController.Refresh();
+    }
+
+    private void RestorePauseNavigation()
+    {
+        if (cursorController == null || !pauseCursorNavigationCached)
+        {
+            return;
+        }
+
+        cursorController.itemsParent = pauseCursorItemsParent;
+        cursorController.layoutGroup = pauseCursorLayoutGroup;
+        cursorController.itemFilter = pauseCursorItemFilter;
+        cursorController.cursor = pauseCursorVisual;
+        cursorController.Refresh();
+        pauseCursorVisual = null;
+        pauseCursorNavigationCached = false;
     }
 
     private void LockGameplayInput(bool locked)

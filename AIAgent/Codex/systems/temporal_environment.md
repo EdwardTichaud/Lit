@@ -11,7 +11,11 @@ l’environnement HDRP du joueur local.
 - `TemporalAge` / `TemporalAgeUtility` : représentation et conversions.
 - `TemporalZone` / `TemporalObject` : âge local et objets affectés.
 - `TimePeriodVisibility` : filtrage des objets selon le temps.
-- `EnvironmentManager` / `EnvironmentZone` : profils HDRP et blending local.
+- `LocalVolumeAnchor` : ancre les Volumes HDRP locaux sur le personnage contrôlé,
+  plutôt que sur la caméra à la troisième personne.
+- `LocalVolumeSunController` : lie une racine de lumière directionnelle au
+  Volume local et l'active uniquement lorsque le personnage est dans cette
+  zone.
 - `Flame` : source d’état utilisée notamment par `AgeManager`; affiche en
   runtime une sphère transparente sans collider calée sur sa zone
   `LitInfluenceSource` quand l'influence est visible.
@@ -31,14 +35,22 @@ l’environnement HDRP du joueur local.
   vers la Flame commune éteinte la plus proche.
 - Un changement actualise visibilité temporelle, affichages et propriété shader.
 - Une `TemporalZone` peut appliquer explicitement un autre âge à ses objets.
-- `EnvironmentManager` suit `LocalPlayerContext`, évalue les zones autour du
-  personnage et mélange leurs profils vers des Volumes HDRP globaux runtime.
 
 ## Pièges observés
 
 - Le gameplay global doit lire `AgeManager` pour éviter des calculs divergents.
 - Une zone temporelle locale ne remplace pas implicitement l’âge global.
-- `EnvironmentManager` est volontairement client-local et ne doit pas être synchronisé.
-- Les profils HDRP source sont lus, pas modifiés; le manager travaille sur des
-  profils runtime.
+- Les profils HDRP sont uniquement portés par les `Volume` configurés dans les
+  scènes Core et leurs scènes additives. `ZoneManifest` ne pilote aucun profil
+  visuel runtime.
+- Dans `District_1_Core`, les Volumes locaux sont évalués depuis le personnage.
+  Leur `BoxCollider` définit la zone pleine et `blendDistance` la bande de fondu
+  autour de cette limite. Une caméra qui traverse seule une limite ne modifie pas
+  l'environnement du joueur.
+- Dans `District_1_Core`, chaque `LocalVolumeSunController` est directement
+  porté par son GameObject HDRP `Volume`. `Castle_Volume` pilote `Moon Light`
+  et `Oldbarn_Volume` pilote `Sun Light`. Les deux lumières commencent inactives
+  et ne sont activées qu'après l'évaluation de la position du personnage. Une
+  référence de Volume vide signifie « utiliser ce GameObject ». L'intensité et
+  la couleur restent entièrement réglées par les composants Unity de la lumière.
 - Les objets interactifs peuvent être exclus par `TimePeriodVisibility`.

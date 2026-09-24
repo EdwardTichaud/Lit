@@ -20,7 +20,7 @@ MonoBehaviour:
   - {fileID: 102900000, guid: 39c4053b37c182f4e83878ce09cee085, type: 3}
   - {fileID: 102900000, guid: ccaa4921d8a401c4496c4ecfe2f2db73, type: 3}
   - {fileID: 102900000, guid: eba58dff6e2cb774e91c7ac388c42d96, type: 3}
-  - {fileID: 102900000, guid: f4ce0086b8e1ae647aebbb22a40ef753, type: 3}
+  - {fileID: 102900000, guid: 1131d151a2c066d4b9a6031f5ba56c91, type: 3}
   - {fileID: 102900000, guid: d053c1550a1973a44b3198c10a3c5768, type: 3}
   - {fileID: 102900000, guid: 283714d43f84dcb488a9aa5f3952db1e, type: 3}
   - {fileID: 102900000, guid: 3f0e561768f53af46bf56474762ea6d9, type: 3}
@@ -34,7 +34,6 @@ MonoBehaviour:
   postLoadingScenes: []
   primarySceneName: District_1_Core
   loadingMessage: Exploration du quartier de la Lune...
-  volumeProfile: {fileID: 11400000, guid: 436e84d2038cdc849b5f055c376dea78, type: 2}
   music: {fileID: 11400000, guid: bc82412b1c3a0d34190b0438412c4483, type: 2}
   ambience: {fileID: 11400000, guid: 74ddcf84baf8207418932f48f561c751, type: 2}
   presentationAudioFadeDuration: 1
@@ -44,8 +43,8 @@ MonoBehaviour:
   - District_1_Crypt_Environment
   - District_1_Arena_Environment
   - District_1_Balcony_Environment
-  - District_1_OldBarn_Environment
-  - District_1_Global_Lights
+  - District_1_Environment_OldBarn
+  - District_1_Indoor_Lights
   - District_1_Interactives
   - District_1_Crypt_Flammes
   - District_1_Corridor_Flammes

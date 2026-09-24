@@ -43,6 +43,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
     private InputActionAsset actions;
     private InputMode baseMode = InputMode.Exploration;
     private string lastTransition = "Initialisation";
+    private object userInterfaceMovementOwner;
 
     public static InputMode CurrentMode => instance != null ? instance.ResolveMode() : InputMode.Exploration;
     public static string Diagnostics => instance != null ? instance.BuildDiagnostics() : "InputModeCoordinator non initialise.";
@@ -89,13 +90,52 @@ public sealed class InputModeCoordinator : MonoBehaviour
         if (instance == null) return;
         instance.stack.Clear();
         instance.baseMode = InputMode.Exploration;
+        instance.userInterfaceMovementOwner = null;
         instance.Apply("Clear");
+    }
+
+    // Certains panneaux de jeu, comme l'inventaire, laissent la locomotion
+    // disponible tout en maintenant toutes les autres actions de jeu fermees.
+    public static void SetUserInterfaceMovementPassthrough(object owner, bool enabled)
+    {
+        if (instance == null || owner == null)
+        {
+            return;
+        }
+
+        if (enabled)
+        {
+            if (ReferenceEquals(instance.userInterfaceMovementOwner, owner))
+            {
+                return;
+            }
+
+            instance.userInterfaceMovementOwner = owner;
+        }
+        else
+        {
+            if (!ReferenceEquals(instance.userInterfaceMovementOwner, owner))
+            {
+                return;
+            }
+
+            instance.userInterfaceMovementOwner = null;
+        }
+
+        if (instance.ResolveMode() == InputMode.UserInterface)
+        {
+            instance.Apply("UI movement passthrough");
+        }
     }
 
     public static bool IsGameplayBlocked => CurrentMode != InputMode.Exploration;
     public static bool IsCameraAllowed => CurrentMode == InputMode.Exploration || CurrentMode == InputMode.Dialogue ||
                                           CurrentMode == InputMode.Placement || CurrentMode == InputMode.Combat ||
                                           CurrentMode == InputMode.ThresholdSequence || CurrentMode == InputMode.CombatQTE;
+    public static bool IsUserInterfaceMovementPassthroughActive => instance != null &&
+        instance.ResolveMode() == InputMode.UserInterface &&
+        instance.userInterfaceMovementOwner != null &&
+        ReferenceEquals(instance.TopOwner, instance.userInterfaceMovementOwner);
 
     private void OnDestroy()
     {
@@ -170,6 +210,11 @@ public sealed class InputModeCoordinator : MonoBehaviour
             actions.FindActionMap(mapName, false)?.Enable();
         }
 
+        if (IsUserInterfaceMovementPassthroughActive)
+        {
+            actions.FindAction("Player/Move", false)?.Enable();
+        }
+
         LocalInputRouter.ResetMove();
         LocalInputRouter.ResetCamera();
         lastTransition = transition;
@@ -179,7 +224,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
         // shoulder button that stays held when it comes back. Re-read those
         // controls on the next frame so a cinematic/UI handoff cannot leave
         // locomotion permanently at zero.
-        if (mode == InputMode.Exploration || mode == InputMode.Combat)
+        if (mode == InputMode.Exploration || mode == InputMode.Combat || IsUserInterfaceMovementPassthroughActive)
         {
             LocalPlayerInput.RequestHeldLocomotionReconciliation("InputMode " + mode);
         }

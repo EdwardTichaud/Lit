@@ -17,12 +17,11 @@ public sealed class RuntimeStabilizationTests
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [Test]
-    public void ScientistEncounterRequiresTheChimeraKnowledge()
+    public void ScientistEncounterHasNoKnowledgePrerequisite()
     {
         var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset");
-        var knowledge = AssetDatabase.LoadAssetAtPath<KnowledgeSO>("Assets/Narrative/NinaCycle/Data/Knowledge_ExistenceDesChimeres.asset");
-        Assert.That(knowledge, Is.Not.Null);
-        Assert.That(data.enemyEncounterOptions.requiredKnowledge, Is.SameAs(knowledge));
+        Assert.That(data, Is.Not.Null);
+        Assert.That(data.enemyEncounterOptions.requiredKnowledge, Is.Null);
     }
 
     [Test]

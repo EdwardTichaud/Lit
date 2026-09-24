@@ -38,6 +38,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private bool cinematicPlaying;
     private bool impactResolved;
     private bool playerLockHeld;
+    private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private bool finishing;
     private CounterSkillSO activeSkill;
     private Animator guardAnimator;
@@ -48,6 +49,9 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public bool IsCinematicPlaying => cinematicPlaying;
     public bool IsGuardHeld => guardHeld;
+    private PlayerActionPresentationController guardPresentation;
+    private int guardGeneration;
+    private bool guardRequested;
 
     private void Awake()
     {
@@ -69,6 +73,14 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     private void Update()
     {
+        if ((guardRequested || guardHeld) && (combatManager == null || !combatManager.IsCombatActive ||
+            combatManager.IsCinematicSequenceActive || cinematicPlaying)) EndGuard();
+        if ((guardRequested || guardHeld) && combatManager != null && combatManager.PlayerRoot != null)
+        {
+            var health = combatManager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true);
+            if (health != null && health.CurrentHp <= 0) EndGuard();
+        }
+        if (guardRequested && !guardHeld) TryBeginGuard();
         if (!usingPooledRig && cinematicPlaying && director != null && director.duration > 0d)
         {
             cameraRig?.SetTimelineNormalizedTime((float)(director.time / director.duration));
@@ -99,13 +111,37 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public void BeginGuard()
     {
-        if (!guardHeld)
-        {
-            combatManager?.FacePlayerTowardsEngagedEnemy();
-            PlayGuardAnimation();
-            PlayGuardStartFeedback();
-        }
+        guardRequested = true;
+        TryBeginGuard();
+    }
 
+    private void TryBeginGuard()
+    {
+        ResolveReferences();
+        if (guardHeld || cinematicPlaying || combatManager == null || !combatManager.IsCombatActive ||
+            combatManager.IsCinematicSequenceActive || combatManager.PlayerRoot == null) return;
+        Transform player = combatManager.PlayerRoot;
+        var presentation = player.GetComponentInChildren<PlayerActionPresentationController>(true);
+        var bridge = player.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
+        var health = player.GetComponentInChildren<SquadCharacterController>(true);
+        if (presentation == null || !presentation.CanCancelToMobility ||
+            health != null && health.CurrentHp <= 0 || bridge == null || !bridge.IsDriving) return;
+        if (bridge.IsInputSuppressedByUcc && !presentation.OwnsOnlyActionMotionLock(bridge)) return;
+        ResolveGuardAnimator();
+        if (guardAnimator == null || !guardAnimator.isActiveAndEnabled ||
+            !guardAnimator.HasState(0, Animator.StringToHash(guardAnimatorState)) &&
+            !guardAnimator.HasState(0, Animator.StringToHash(guardFallbackAnimatorState))) return;
+        if (!presentation.CancelActionForMobility() || bridge.IsInputSuppressedByUcc) return;
+        combatManager.FacePlayerTowardsEngagedEnemy();
+        guardPresentation = presentation;
+        guardGeneration = presentation.BeginExternalPresentation(this, allowMobility: true);
+        int generation = guardGeneration;
+        presentation.RegisterActionCleanup(generation, () =>
+        {
+            if (guardGeneration == generation) guardHeld = false;
+        });
+        PlayGuardAnimation();
+        PlayGuardStartFeedback();
         guardHeld = true;
     }
 
@@ -124,7 +160,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         CombatReactionTelegraphController.Instance?.Clear();
         CombatWarningPresentationController.Instance?.ClearImmediate();
         combatManager.CancelPlayerActionForCinematic();
-        playerLockHeld = combatManager.TryLockPlayerForCinematic();
+        playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock);
         TimeManager manager = TimeManager.EnsureInstance();
         counterPauseHandle = manager != null ? manager.AcquireGlobalPause(this) : default;
         foreach (EnemyController state in FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude))
@@ -141,6 +177,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
             UnlockPlayer();
             return false;
         }
+        guardRequested = false;
         guardHeld = false;
         EnemyController.PlayOutcomeFeedback(attack, combatManager.PlayerRoot, EnemyAttackOutcome.Countered);
         return true;
@@ -148,6 +185,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public void EndGuard()
     {
+        guardRequested = false;
         if (guardHeld && !cinematicPlaying)
         {
             StopGuardAnimation();
@@ -155,6 +193,9 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         }
 
         guardHeld = false;
+        if (guardPresentation != null) guardPresentation.EndExternalPresentation(guardGeneration);
+        guardPresentation = null;
+        guardGeneration = 0;
     }
 
     private bool StartCounterSkill(CounterSkillSO skill)
@@ -261,8 +302,12 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         finishing = false;
     }
 
+    public void AbortForActionTermination() => AbortAndRestore();
+
     private void AbortAndRestore()
     {
+        guardRequested = false;
+        guardHeld = false;
         if (finishing) return;
         if (usingPooledRig && cinematicPlayback != null && cinematicPlayback.IsPlaying)
         {
@@ -287,7 +332,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private void UnlockPlayer()
     {
         if (!playerLockHeld) return;
-        combatManager?.UnlockPlayerAfterCinematic();
+        playerLock?.Dispose();
         playerLockHeld = false;
     }
 
@@ -322,15 +367,22 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private void StopGuardAnimation()
     {
         ResolveGuardAnimator();
+        if (guardAnimator == null || !guardAnimator.isActiveAndEnabled) return;
+        if (combatManager != null && combatManager.IsCinematicSequenceActive) return;
+        var player = combatManager != null ? combatManager.PlayerRoot : null;
+        var presentation = player != null ? player.GetComponentInChildren<PlayerActionPresentationController>(true) : null;
+        var health = player != null ? player.GetComponentInChildren<SquadCharacterController>(true) : null;
+        if (presentation != null && presentation.IsDeathAnimationLocked || health != null && health.CurrentHp <= 0) return;
+        var current = guardAnimator.GetCurrentAnimatorStateInfo(0);
+        var next = guardAnimator.IsInTransition(0) ? guardAnimator.GetNextAnimatorStateInfo(0) : default;
+        if (!current.IsName(guardAnimatorState) && !current.IsName(guardFallbackAnimatorState) &&
+            !next.IsName(guardAnimatorState) && !next.IsName(guardFallbackAnimatorState)) return;
         CrossFadeGuardState(guardReleaseAnimatorState);
     }
 
     private void ResolveGuardAnimator()
     {
-        if (guardAnimator == null && combatManager != null)
-        {
-            guardAnimator = combatManager.PlayerAnimator;
-        }
+        guardAnimator = combatManager != null ? combatManager.PlayerAnimator : null;
     }
 
     private void CrossFadeGuardState(string stateName)

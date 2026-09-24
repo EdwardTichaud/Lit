@@ -84,6 +84,17 @@ public sealed partial class CombatMobilityController : MonoBehaviour
     private float dodgeReadyAt;
     private float damageInvulnerableUntil;
     private Coroutine dodgeInvulnerabilityRoutine;
+    [SerializeField] private bool logMobilityRejections;
+    private string lastMobilityRejection;
+
+    private bool Reject(MobilityCommand command, string reason)
+    {
+        string message = command + ": " + reason;
+        if (logMobilityRejections && lastMobilityRejection != message)
+            Debug.Log("[CombatMobility] " + message, this);
+        lastMobilityRejection = message;
+        return false;
+    }
 
     public bool IsDamageInvulnerable => Time.unscaledTime < damageInvulnerableUntil;
 
@@ -158,26 +169,31 @@ public sealed partial class CombatMobilityController : MonoBehaviour
 
     public void RequestDodge()
     {
+        ResolveReferences();
+        combatInput?.CancelBufferedBasicSkills();
         TryExecute(MobilityCommand.Dodge, true);
     }
 
-    public bool TryDodgeImmediate() => TryExecute(MobilityCommand.Dodge, false);
+    public bool TryDodgeImmediate()
+    {
+        ResolveReferences();
+        combatInput?.CancelBufferedBasicSkills();
+        return TryExecute(MobilityCommand.Dodge, false);
+    }
 
     public void RequestJump()
     {
+        ResolveReferences();
+        combatInput?.CancelBufferedBasicSkills();
         TryExecute(MobilityCommand.Jump, true);
     }
 
     private void ResolveReferences()
     {
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
-        if (actionPresentation == null)
-        {
-            Transform player = RealTimeCombatManager.Instance != null
-                ? RealTimeCombatManager.Instance.PlayerRoot
-                : LocalPlayerContext.LocalCharacterRoot;
-            if (player != null) actionPresentation = player.GetComponentInChildren<PlayerActionPresentationController>(true);
-        }
+        Transform player = RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.PlayerRoot : LocalPlayerContext.LocalCharacterRoot;
+        actionPresentation = player != null ? player.GetComponentInChildren<PlayerActionPresentationController>(true) : null;
     }
 
     private PlayerScriptedDodgeController ResolveScriptedDodgeController(RealTimeCombatManager manager)
@@ -194,15 +210,22 @@ public sealed partial class CombatMobilityController : MonoBehaviour
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         if (manager == null || !manager.IsCombatActive || manager.IsCinematicSequenceActive || manager.PlayerRoot == null)
         {
-            return false;
+            bufferedCommand = MobilityCommand.None;
+            return Reject(command, "combat indisponible ou cinematique active");
         }
 
         ResolveReferences();
         LitOpsiveLocomotionBridge bridge = manager.PlayerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
-        if (bridge == null || !bridge.IsDriving || bridge.IsInputSuppressedByUcc)
+        if (bridge == null || !bridge.IsDriving)
         {
-            return false;
+            return Reject(command, "moteur UCC indisponible");
         }
+        scriptedDodgeController = ResolveScriptedDodgeController(manager);
+        bool ownedMotion = actionPresentation != null && actionPresentation.OwnsOnlyActionMotionLock(bridge);
+        bool ownedDodge = actionPresentation != null && actionPresentation.IsActionActive &&
+            bridge.HasOnlyScriptedMotionLock(scriptedDodgeController);
+        if (bridge.IsInputSuppressedByUcc && !ownedMotion && !ownedDodge)
+            return Reject(command, "verrou UCC externe ou traversee active");
 
         if (command == MobilityCommand.Dodge && IsDodgeBlockedByJump(manager.PlayerRoot, bridge))
         {
@@ -211,12 +234,12 @@ public sealed partial class CombatMobilityController : MonoBehaviour
                 bufferedCommand = MobilityCommand.None;
             }
 
-            return false;
+            return Reject(command, "saut ou atterrissage actif, ou personnage hors sol");
         }
 
         if (!IsOffCooldown(command))
         {
-            return false;
+            return Reject(command, "cooldown actif");
         }
 
         if (actionPresentation != null && !actionPresentation.CanCancelToMobility)
@@ -227,16 +250,25 @@ public sealed partial class CombatMobilityController : MonoBehaviour
                 bufferedCommandExpiresAt = Time.unscaledTime + mobilityInputBufferSeconds;
             }
 
-            return false;
+            return Reject(command, "fenetre d'annulation de l'action fermee");
         }
 
+        if (command == MobilityCommand.Dodge &&
+            !TryResolveDodge(manager, bridge, out _, out _, out _))
+            return Reject(command, "etat, clip ou profil de roulade indisponible");
         if (actionPresentation != null && !actionPresentation.CancelActionForMobility())
         {
             return false;
         }
 
+        if (ownedDodge) scriptedDodgeController.CancelDodge();
+        if (bridge.IsInputSuppressedByUcc)
+            return Reject(command, "verrou UCC encore actif apres restitution de l'action");
+        CounterSkillCombatController.Instance?.EndGuard();
+
         combatInput?.CancelBufferedBasicSkills();
         bufferedCommand = MobilityCommand.None;
+        lastMobilityRejection = null;
 
         switch (command)
         {
@@ -249,14 +281,13 @@ public sealed partial class CombatMobilityController : MonoBehaviour
         }
     }
 
-    private bool ExecuteDodge(RealTimeCombatManager manager, LitOpsiveLocomotionBridge bridge)
+    private bool TryResolveDodge(RealTimeCombatManager manager, LitOpsiveLocomotionBridge bridge,
+        out Vector3 direction, out string state, out CombatDodgeDashProfile dashProfile)
     {
         Vector2 movementInput = bridge.IsCombatLockActive
             ? bridge.CombatLockLocalInput
             : bridge.CurrentWorldMoveInput;
         bool hasExplicitDirection = movementInput.sqrMagnitude > 0.0001f;
-        Vector3 direction;
-        string state;
         if (hasExplicitDirection)
         {
             direction = new Vector3(bridge.CurrentWorldMoveInput.x, 0f, bridge.CurrentWorldMoveInput.y).normalized;
@@ -268,12 +299,22 @@ public sealed partial class CombatMobilityController : MonoBehaviour
             state = dodgeBackwardState;
         }
 
-        CombatDodgeDashProfile dashProfile = dodge.FindDashProfile(state);
+        dashProfile = dodge.FindDashProfile(state);
         if (dashProfile == null || dashProfile.distance <= 0f || dashProfile.durationSeconds <= 0f)
         {
             Debug.LogError("[Combat Dodge] Missing in-place dash profile for '" + state + "'.", this);
             return false;
         }
+
+        return actionPresentation != null && actionPresentation.CanPlayState(state) &&
+            scriptedDodgeController != null && scriptedDodgeController.isActiveAndEnabled &&
+            scriptedDodgeController.impulseSpeed > 0f;
+    }
+
+    private bool ExecuteDodge(RealTimeCombatManager manager, LitOpsiveLocomotionBridge bridge)
+    {
+        if (!TryResolveDodge(manager, bridge, out Vector3 direction, out string state, out var dashProfile))
+            return false;
 
         if (!TryPlayMobilityState(state, dodge, PlayerActionMovementPolicy.ExistingScripted, "Dodge"))
         {
@@ -283,7 +324,8 @@ public sealed partial class CombatMobilityController : MonoBehaviour
         scriptedDodgeController = ResolveScriptedDodgeController(manager);
         if (scriptedDodgeController == null || !scriptedDodgeController.TryStartDodge(bridge, actionPresentation, direction, dashProfile))
         {
-            return false;
+            actionPresentation?.CancelAction();
+            return Reject(MobilityCommand.Dodge, "demarrage du deplacement refuse; presentation annulee");
         }
 
         dodgeReadyAt = Time.unscaledTime + dodge.cooldownSeconds;
@@ -292,6 +334,13 @@ public sealed partial class CombatMobilityController : MonoBehaviour
             StopCoroutine(dodgeInvulnerabilityRoutine);
         }
 
+        int generation = actionPresentation.ActionGeneration;
+        actionPresentation.RegisterActionCleanup(generation, () =>
+        {
+            if (dodgeInvulnerabilityRoutine != null) StopCoroutine(dodgeInvulnerabilityRoutine);
+            dodgeInvulnerabilityRoutine = null;
+            damageInvulnerableUntil = 0f;
+        });
         dodgeInvulnerabilityRoutine = StartCoroutine(GrantDodgeInvulnerability());
         return true;
     }

@@ -1614,6 +1614,7 @@ GameObject:
   - component: {fileID: 126687598}
   - component: {fileID: 126687599}
   - component: {fileID: 126687600}
+  - component: {fileID: 126687601}
   m_Layer: 5
   m_Name: InventoryPanel
   m_TagString: Untagged
@@ -1695,6 +1696,28 @@ MonoBehaviour:
   disableRaycastsWhenHidden: 1
   localItemInformationPanelPrefab: {fileID: 4865652701375795038, guid: 48b357c808b087744a3b1275337f4af6, type: 3}
   localBuildingInformationPanelPrefab: {fileID: 4865652701375795038, guid: 8693d19c8191d354cad67928ac3d13e3, type: 3}
+  canvasGroup: {fileID: 126687598}
+  uiPanel: {fileID: 126687601}
+--- !u!114 &126687601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126687595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fb79be310d443c49ae34160dbd06c40, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::UiPanel
+  panelId: InventoryPanel
+  layer: 1
+  inputPolicy: 0
+  visibleAtStartup: 0
+  persistent: 0
+  deactivateWhenHidden: 0
+  transitionDuration: 0.5
+  canvasGroup: {fileID: 126687598}
 --- !u!114 &126687600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43441,6 +43464,7 @@ GameObject:
   - component: {fileID: 1133611985}
   - component: {fileID: 1133611986}
   - component: {fileID: 1133611987}
+  - component: {fileID: 1133611988}
   m_Layer: 5
   m_Name: LootPanel
   m_TagString: Untagged
@@ -43526,6 +43550,26 @@ MonoBehaviour:
   setAlphaToZeroOnStart: 1
   addCanvasGroupIfMissing: 1
   disableRaycastsWhenHidden: 1
+--- !u!114 &1133611988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1133611983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fb79be310d443c49ae34160dbd06c40, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::UiPanel
+  panelId: LootPanel
+  layer: 1
+  inputPolicy: 0
+  visibleAtStartup: 0
+  persistent: 0
+  deactivateWhenHidden: 0
+  transitionDuration: 0.5
+  canvasGroup: {fileID: 1133611986}
 --- !u!1 &1134087019
 GameObject:
   m_ObjectHideFlags: 0

@@ -281,7 +281,7 @@ public class NetworkInventory : NetworkBehaviour
             if (item.TryBreak(controller, out string reason))
             {
                 PlayActionAudio(ActionAudioCue.InventoryBreak);
-                InfoBoxUI.TryShow(item.GetBreakSuccessMessage());
+                InfoBoxUI.TryShow(item.GetDestroyNotification());
                 return true;
             }
 
@@ -387,7 +387,7 @@ public class NetworkInventory : NetworkBehaviour
             SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true, 0u, false);
             SyncFromController();
             PlayActionAudio(ActionAudioCue.InventoryDrop);
-            InfoBoxUI.TryShow(item.GetDropSuccessMessage());
+            InfoBoxUI.TryShow(item.GetDropNotification());
             return true;
         }
 
@@ -523,7 +523,7 @@ public class NetworkInventory : NetworkBehaviour
         if (item.TryBreak(controller, out string reason))
         {
             SyncFromController();
-            feedback = item.GetBreakSuccessMessage();
+            feedback = item.GetDestroyNotification();
             return true;
         }
 
@@ -572,7 +572,7 @@ public class NetworkInventory : NetworkBehaviour
 
         SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true, 0u, false);
         SyncFromController();
-        feedback = item.GetDropSuccessMessage();
+        feedback = item.GetDropNotification();
         return true;
     }
 

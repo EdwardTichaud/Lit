@@ -32,6 +32,7 @@ namespace Lit.Story
         private Coroutine playbackRoutine;
         private SquadCharacterController lockedPlayerController;
         private bool playerLockHeld;
+        private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
         private bool advanceRequested;
         private bool currentStepSkippable;
         private int currentStepStartedFrame;
@@ -321,7 +322,7 @@ namespace Lit.Story
             if (!playerLockHeld)
             {
                 lockedPlayerController = controller;
-                playerLockHeld = controller.TryBeginUccProgressiveStop(
+                playerLockHeld = controller.TryBeginUccProgressiveStop(this, out playerLock, 
                     disableGameplayInput: true,
                     stopActiveAbilities: true);
             }
@@ -443,7 +444,7 @@ namespace Lit.Story
                 lockedPlayerController != null;
             if (restorePlayerExternalLock)
             {
-                lockedPlayerController.EndUccExternalLock();
+                playerLock?.Dispose();
                 playerLockHeld = false;
             }
 
@@ -525,7 +526,7 @@ namespace Lit.Story
 
             if (restorePlayerExternalLock && lockedPlayerController != null)
             {
-                playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(
+                playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(this, out playerLock, 
                     disableGameplayInput: true,
                     stopActiveAbilities: false);
             }
@@ -681,7 +682,7 @@ namespace Lit.Story
                 return;
             }
 
-            playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(
+            playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(this, out playerLock, 
                 disableGameplayInput: true,
                 stopActiveAbilities: activeSequence.stopActiveAbilitiesOnLock);
         }
@@ -722,7 +723,7 @@ namespace Lit.Story
         {
             if (playerLockHeld && lockedPlayerController != null)
             {
-                lockedPlayerController.EndUccExternalLock();
+                playerLock?.Dispose();
             }
 
             playerLockHeld = false;

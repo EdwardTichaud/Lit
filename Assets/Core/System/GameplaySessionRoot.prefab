@@ -260,20 +260,6 @@ MonoBehaviour:
   slowMotionPresentation:
     enabled: 1
     cameraEffectsEnabled: 0
-    screenWave: {fileID: 6119416266814459275}
-    entryScreenWave:
-      origin: {x: 0.5, y: 0.5}
-      direction: {x: 0, y: 0}
-      reverse: 0
-      frequency: 0.8
-      propagationSpeed: 0.3
-      amplitude: 0.25
-      duration: 1.35
-      falloff: 0.45
-      fadeOutDuration: 0.5
-      highlightIntensity: 0
-      edgeContrast: 1
-      highlightColor: {r: 1, g: 1, b: 1, a: 1}
     cameraEnterBlendSeconds: 0.08
     cameraExitBlendSeconds: 0.14
     vignetteIntensity: 0.2
@@ -1365,7 +1351,6 @@ GameObject:
   - component: {fileID: 810000000000000004}
   - component: {fileID: 810000000000000005}
   - component: {fileID: 810000000000000006}
-  - component: {fileID: 6119416266814459275}
   - component: {fileID: 2872984668119182103}
   - component: {fileID: 6059674322863807500}
   - component: {fileID: 9218925662834059794}
@@ -1393,7 +1378,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7061287491190634350}
   - {fileID: 2567248197990508734}
   - {fileID: 410000000000000002}
   m_Father: {fileID: 9037320159994210700}
@@ -1781,7 +1765,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatImpactFeedbackController
   lockCamera: {fileID: 810000000000000003}
-  screenWave: {fileID: 6119416266814459275}
 --- !u!320 &810000000000000005
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -1819,34 +1802,6 @@ MonoBehaviour:
   lightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
   logLightSkillDiagnostics: 1
   cinematicCompletionGraceSeconds: 1.5
---- !u!114 &6119416266814459275
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 702c095fa0f1478eb988dd6d6ecf8f11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenWaveController
-  customPassVolume: {fileID: 4194062658610848301}
-  screenWaveMaterial: {fileID: 2100000, guid: 8279ae4f99f64a60b4c424efc12d7e55, type: 2}
-  customPassName: Screen Wave
-  defaultSettings:
-    origin: {x: 0.5, y: 0.5}
-    direction: {x: 0, y: 0}
-    reverse: 0
-    frequency: 4
-    propagationSpeed: 1.45
-    amplitude: 0.03
-    duration: 0.9
-    falloff: 2
-    fadeOutDuration: 0.35
-    highlightIntensity: 0.38
-    edgeContrast: 2.2
-    highlightColor: {r: 0.72, g: 0.9, b: 1, a: 1}
 --- !u!114 &2872984668119182103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2434,75 +2389,6 @@ MonoBehaviour:
   amount: 1
   writeShaderGlobals: 0
   useAgeManager: 1
---- !u!1 &5579332313967747319
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7061287491190634350}
-  - component: {fileID: 4194062658610848301}
-  m_Layer: 0
-  m_Name: ScreenWavePass
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7061287491190634350
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5579332313967747319}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1962244032958566552}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4194062658610848301
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5579332313967747319}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
-  m_IsGlobal: 1
-  fadeRadius: 0
-  priority: 1000
-  customPasses:
-  - rid: 5269762241000000001
-  injectionPoint: 6
-  m_TargetCamera: {fileID: 0}
-  useTargetCamera: 0
-  references:
-    version: 2
-    RefIds:
-    - rid: 5269762241000000001
-      type: {class: FullScreenCustomPass, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
-      data:
-        m_Name: Screen Wave
-        enabled: 0
-        targetColorBuffer: 0
-        targetDepthBuffer: 2
-        clearFlags: 0
-        passFoldout: 0
-        m_Version: 0
-        fullscreenPassMaterial: {fileID: 2100000, guid: 8279ae4f99f64a60b4c424efc12d7e55, type: 2}
-        materialPassIndex: 0
-        materialPassName: Custom Pass 0
-        fetchColorBuffer: 1
 --- !u!1 &6165832214879711617
 GameObject:
   m_ObjectHideFlags: 0

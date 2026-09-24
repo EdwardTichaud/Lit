@@ -79,7 +79,7 @@ public static class WorldPlacementUtility
 
     public static Vector3 ClampPositionAroundAnchor(Transform anchor, Item item, Vector3 position, Settings settings)
     {
-        if (anchor == null || item == null || item.isBuilding)
+        if (anchor == null || item == null)
         {
             return position;
         }

@@ -70,7 +70,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     {
         public Coroutine routine;
         public LitOpsiveLocomotionBridge bridge;
-        public bool ownsExternalLock;
+        public LitOpsiveLocomotionBridge.ExternalLockHandle externalLock;
         public bool ownsMotionAuthority;
     }
 
@@ -207,9 +207,9 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     {
         if (!TryResolveController(character, out SquadCharacterController controller) || activePassages.ContainsKey(controller.transform)) return;
         LitOpsiveLocomotionBridge bridge = controller.GetComponent<LitOpsiveLocomotionBridge>();
-        if (bridge == null || !bridge.BeginExternalLock(disableGameplayInput: true, stopActiveAbilities: true)) return;
+        if (bridge == null || !bridge.TryAcquireExternalLock(this, out var externalLock, disableGameplayInput: true, stopActiveAbilities: true)) return;
 
-        PassageRuntime runtime = new PassageRuntime { bridge = bridge, ownsExternalLock = true };
+        PassageRuntime runtime = new PassageRuntime { bridge = bridge, externalLock = externalLock };
         activePassages.Add(controller.transform, runtime);
         bridge.GetComponent<PlayerStateMotionController>()?.Cancel();
         runtime.ownsMotionAuthority = true;
@@ -288,7 +288,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     {
         if (runtime == null) return;
         if (runtime.ownsMotionAuthority && runtime.bridge != null) runtime.bridge.EnforceGameplayMotionAuthority();
-        if (runtime.ownsExternalLock && runtime.bridge != null) runtime.bridge.EndExternalLock();
+        runtime.externalLock?.Dispose();
         if (traveler != null && activePassages.TryGetValue(traveler, out PassageRuntime active) && active == runtime) activePassages.Remove(traveler);
     }
 
@@ -301,7 +301,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
             PassageRuntime runtime = passage.Value;
             if (runtime != null && runtime.routine != null) StopCoroutine(runtime.routine);
             if (runtime != null && runtime.ownsMotionAuthority && runtime.bridge != null) runtime.bridge.EnforceGameplayMotionAuthority();
-            if (runtime != null && runtime.ownsExternalLock && runtime.bridge != null) runtime.bridge.EndExternalLock();
+            runtime?.externalLock?.Dispose();
         }
     }
 

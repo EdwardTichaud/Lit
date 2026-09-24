@@ -88,7 +88,19 @@ public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCi
     public bool Interact(GhostController source)
     {
         if (!StartsAsGhost || !isActiveAndEnabled || source == null || source != ghost || !source.isActiveAndEnabled ||
-            (Online && !IsSpawned) || !IsDormant || !HasEncounterKnowledge) return false;
+            (Online && !IsSpawned) || !IsDormant) return false;
+
+        if (!HasEncounterKnowledge)
+        {
+            KnowledgeSO requirement = EncounterOptions != null ? EncounterOptions.requiredKnowledge : null;
+            string requirementName = requirement != null && !string.IsNullOrWhiteSpace(requirement.title)
+                ? requirement.title
+                : "une information essentielle";
+            source.ShowInteractionUnavailableFeedback(
+                "Il vous manque encore : " + requirementName + ".");
+            return true;
+        }
+
         var player = LocalPlayerUtils.GetControlledCharacter();
         if (player == null || !IsPlayerInRange(player.transform)) return false;
         if (Online) StartEncounterServerRpc();

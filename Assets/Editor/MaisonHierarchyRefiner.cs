@@ -190,12 +190,6 @@ public static class MaisonHierarchyRefiner
             }
         }
 
-        EnvironmentZone environmentZone = marker.GetComponent<EnvironmentZone>();
-        if (environmentZone != null && environmentZone.Profile != null)
-        {
-            return SanitizeRoomName(CleanAssetLabel(environmentZone.Profile.name, "BiomeZone_", null));
-        }
-
         Volume volume = marker.GetComponent<Volume>();
         if (volume != null && volume.sharedProfile != null)
         {
@@ -475,7 +469,6 @@ public static class MaisonHierarchyRefiner
     {
         return string.Equals(name, "Zone", StringComparison.OrdinalIgnoreCase) ||
                string.Equals(name, "Room", StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(name, "EnvironmentZone", StringComparison.OrdinalIgnoreCase) ||
                string.Equals(name, "TemporalZone", StringComparison.OrdinalIgnoreCase);
     }
 

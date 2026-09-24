@@ -15,13 +15,6 @@ public sealed class SkillVfxCue
 }
 
 [Serializable]
-public sealed class SkillScreenWaveCue
-{
-    public bool enabled;
-    public ScreenWaveController.ScreenWaveSettings settings = ScreenWaveController.ScreenWaveSettings.Default;
-}
-
-[Serializable]
 public sealed class SkillRetreatImpulse
 {
     public bool enabled;
@@ -86,9 +79,6 @@ public sealed class CombatImpactFeedbackProfile
 
     [Header("Lock Camera")]
     public CombatCameraImpactProfile camera = new CombatCameraImpactProfile();
-
-    [Header("Screen Wave")]
-    public SkillScreenWaveCue screenWave = new SkillScreenWaveCue();
 
     [Header("Optional Impact Cue")]
     public GameObject additionalImpactVfx;

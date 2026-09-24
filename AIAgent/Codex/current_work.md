@@ -1,3 +1,30 @@
+## Continuite des actions joueur (2026-09-20)
+
+- PlayerActionPresentationController identifie ses sessions par acteur/generation et centralise Completed, Interrupted, Failed, OwnerDisabled et Death. Les nettoyages sont invalides avant leur execution : un ancien callback ne termine pas la session suivante.
+- Les verrous UCC externes utilisent des handles idempotents. Migration des cinematiques, paliers, recul, planar motion, sequences narratives, transitions d'age et echelles ; plus de liberation externe anonyme.
+- Roulade, invulnerabilite et lunge sont rattaches a la generation. Les reactions aux degats passent par la presentation au lieu d'un CrossFade concurrent. Une anomalie desarme les BasicSkills maintenues ; garde et buffer de mobilite conservent leurs regles existantes.
+- Les Animation Events joueur verifient etat/clip et refusent les fondus ambigus vers le meme etat. Les paliers et cinematiques gardent leurs autorites specialisees. Menu Lit > Combat > Validate Player Action Event Blends pour les evenements trop proches de l'entree.
+- Validation : compilation runtime/editeur et 13 tests EditMode reussis. Tests Play Mode et combat District 1 encore a confirmer ; ne pas considerer la validation visuelle comme acquise.
+- Deux fiches Markdown avaient des octets Windows-1252 melanges a UTF8 : normalisation des seules sequences invalides, notes preexistantes conservees.
+
+## Lumières directionnelles par volume local District 1 (2026-09-20)
+
+`LocalVolumeSunController` est porté par chaque Volume HDRP concerné :
+`Castle_Volume` pilote `Moon Light`, `Oldbarn_Volume` pilote `Sun Light`. Les
+lumières démarrent inactives, puis sont activées seulement lorsque le personnage
+est dans le Volume associé. Intensité et couleur restent entièrement modifiables
+depuis les composants Unity de la lumière, y compris en Play. Compilation runtime
+à refaire ; à vérifier en Play : Castle, Oldbarn, frontière et chargement de scène.
+## Volumes locaux District 1 (2026-09-20)
+
+District_1_Core ancre l'evaluation des Volumes HDRP sur le personnage controle
+via LocalVolumeAnchor : une camera troisieme personne ne peut plus activer un
+volume avant le joueur. Le volume local Oldbarn dispose d'un blendDistance de
+2 m, au lieu d'une transition instantanee. Les volumes actifs restent locaux ;
+leurs BoxCollider definissent les limites de zone. Compilation runtime reussie.
+A verifier en Play : suivre le personnage et la camera independamment a la
+frontiere Forest/Oldbarn, puis ajuster les BoxCollider si un perimetre de
+design doit changer.
 ## UI monde d'interaction commune (2026-09-19)
 
 Les sept producteurs de libelles monde utilisent UI_World_InteractionBox via
@@ -32,8 +59,14 @@ ladders, Ghost_Scientifique fou, inventaire, torche et Munin ; repeter deux comb
 
 MainMenuNavigation ignorait les objets decoratifs 3D porteurs de MenuCursorAction. Leur focus pouvait etre invisible et bloquer le parcours clavier/manette. Seuls les controles places sous un Canvas sont maintenant eligibles. MainMenuInputRecovery remet aussi la preference de controle en automatique lorsque le joueur agit avec l'autre peripherique, pour ne jamais bloquer clavier ou manette. Compilation C# runtime et editeur reussie ; test Unity MainMenuLoadBrowserTests a executer.
 
-# Travail en cours
+## Volumes HDRP portés par les scènes Core (2026-09-20)
 
+`ZoneManifest` et `ZoneRuntimeContext` ne pilotent plus de profil HDRP.
+`EnvironmentManager`, `EnvironmentZone` et leur état runtime ont été retirés,
+y compris leurs composants de Bootstrap et Outdoor. Les Volumes restent des
+composants HDRP configurés dans les scènes Core et additives, sous la gestion
+des composants `Zone` déjà présents. Compilation runtime à refaire ; vérifier
+les chargements Maison/District 1 et les transitions entre volumes locaux.
 ## VFX ecran du MainMenu : layer et taille (2026-09-19)
 
 Le layer historique `VisualEffect` n'existe plus : les VFX ecran utilisent
@@ -168,12 +201,12 @@ cinematique n'est ajoutee. Regression couverte par des tests de liaison, mort,
 rechargement et presentation. Compilation C# runtime/editeur et YAML verifies;
 execution des tests Unity et parcours en jeu encore a valider.
 
-## Unification des ennemis � validation Unity restante
+## Unification des ennemis — validation Unity restante
 
 CharacterInfo reprend la sante de CombatHealth et copie les donnees CharacterData
 par instance. EnemyController partial regroupe le combat, les decisions, la
 navigation, la physique et les animations ennemies. Les anciens composants et
-l�executeur historique sont supprimes. Les fonctions d�animation du joueur sont
+l’executeur historique sont supprimes. Les fonctions d’animation du joueur sont
 separees. Les reglages sont dans CharacterData/EnemySettings et le profil existant,
 avec inspecteurs par categories et tooltips. Prefabs et references de scenes
 migres; GiantJuggernaut a une fiche distincte pour ses reglages differents.
@@ -1464,3 +1497,15 @@ NavMesh trouve, le delta, l'etat de l'agent et la destination de locomotion.
 - `CameraProfil_Melt` cadre Lucian en trois-quarts avec l'offset `(2, 1.8, -3.5)`, une entree/sortie de `0.5 s` et un maintien de `1 s`. Les durees UI et camera utilisent `Time.unscaledDeltaTime`.
 - `CameraProfilPreviewTool`, attache a AnimationLab, permet de lire un `CameraProfilSO` hors Play Mode. Son Inspector fournit `Play`, `Rejouer` et `Stop`; il utilise une CinemachineCamera temporaire et restaure la pose de `Preview_MainCamera` apres chaque lecture. Le FOV et sa duree de transition sont maintenant des donnees du profil, partagees entre l'aperçu et le runtime.
 - La presentation Melt capture puis restitue alpha, raycasts, HDR du givre et camera apres `endLerp`; aucun etat de presentation local ne persiste a la fin ou lors d'une interruption.
+
+# Notifications d'objets
+
+- Item genere maintenant les confirmations coherentes Objet recupere : [nom], Objet jete : [nom] et Objet detruit : [nom]. Elles sont utilisees par le ramassage, le jet et la destruction, localement comme via Netcode.
+
+# SceneMarker et Outline
+
+- Chaque Bake de SceneMarker inspecte la racine produite et ses enfants. Sans RuntimeOutlineTarget, l'Inspector demande au developpeur s'il souhaite en ajouter un, puis propose uniquement les GameObjects qui portent un Renderer. L'ajout est annulable et selectionne l'enfant choisi.
+
+# Scientifique fou : acces et connaissance
+
+- Le scientifique fou n'a aucun prerequis de connaissance pour son interaction Ghost. La defaite ncounter est enregistree au moment de sa mort et revele immediatement Existence des chimeres, independamment des flags legacy ou de la cinematique.

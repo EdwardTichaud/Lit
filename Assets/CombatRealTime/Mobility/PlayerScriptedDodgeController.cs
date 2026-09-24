@@ -17,6 +17,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
     public bool alignUnlockedDodgeToTravel { get => ModuleSettings.alignUnlockedDodgeToTravel; set => ModuleSettings.alignUnlockedDodgeToTravel = value; }
     public bool alignLockedForwardDodgeToTravel { get => ModuleSettings.alignLockedForwardDodgeToTravel; set => ModuleSettings.alignLockedForwardDodgeToTravel = value; }
 
+    private int dodgeGeneration;
     private Coroutine activeDodgeRoutine;
     private LitOpsiveLocomotionBridge activeBridge;
     private CombatTimeDomain activeTimeDomain;
@@ -61,12 +62,22 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
             return false;
         }
 
-        activeDodgeRoutine = StartCoroutine(RunDodge(actionPresentation, profile.durationSeconds * durationMultiplier));
+        int generation = ++dodgeGeneration;
+        int actionGeneration = actionPresentation.ActionGeneration;
+        if (!actionPresentation.RegisterActionCleanup(actionGeneration, () =>
+            { if (generation == dodgeGeneration) CancelDodge(); }))
+        {
+            CancelDodge();
+            return false;
+        }
+        activeDodgeRoutine = StartCoroutine(RunDodge(actionPresentation, actionGeneration, generation,
+            profile.durationSeconds * durationMultiplier));
         return true;
     }
 
     public void CancelDodge()
     {
+        dodgeGeneration++;
         if (activeDodgeRoutine != null)
         {
             StopCoroutine(activeDodgeRoutine);
@@ -81,15 +92,16 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         CancelDodge();
     }
 
-    private IEnumerator RunDodge(PlayerActionPresentationController actionPresentation, float maximumDuration)
+    private IEnumerator RunDodge(PlayerActionPresentationController actionPresentation, int actionGeneration, int generation, float maximumDuration)
     {
         float elapsed = 0f;
-        while (actionPresentation != null && actionPresentation.IsActionActive && elapsed < maximumDuration)
+        while (actionPresentation != null && actionPresentation.IsCurrentSession(actionGeneration) && generation == dodgeGeneration && elapsed < maximumDuration)
         {
             yield return new WaitForFixedUpdate();
             elapsed += activeTimeDomain != null ? activeTimeDomain.FixedDeltaTime : Time.fixedDeltaTime;
         }
 
+        if (generation != dodgeGeneration) yield break;
         activeDodgeRoutine = null;
         EndDodge();
     }

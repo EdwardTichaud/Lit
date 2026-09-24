@@ -497,11 +497,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LadderController
   leafs1: {fileID: 1004749100}
   leafs2: {fileID: 756603043}
-  activationRadius: 1.2
+  activationRadius: 2
   destinationLocalOffset: {x: 0, y: 0, z: 0}
   useDestinationRotation: 1
   interactionCollider: {fileID: 0}
-  interactionMaxDistance: 1.5
+  interactionMaxDistance: 2.5
   interactionPriority: 115
   climbInteractionText: Monter
   descendInteractionText: Descendre
@@ -5403,6 +5403,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!114 &833875486
 MonoBehaviour:
@@ -10366,6 +10368,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!114 &947205146
 MonoBehaviour:
@@ -15352,6 +15356,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!1 &1080280860
 GameObject:
@@ -15425,6 +15431,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!114 &1124350762
 MonoBehaviour:
@@ -15572,11 +15580,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LadderController
   leafs1: {fileID: 2056911205}
   leafs2: {fileID: 844626086}
-  activationRadius: 1.2
+  activationRadius: 2
   destinationLocalOffset: {x: 0, y: 0, z: 0}
   useDestinationRotation: 1
   interactionCollider: {fileID: 0}
-  interactionMaxDistance: 1.5
+  interactionMaxDistance: 2.5
   interactionPriority: 115
   climbInteractionText: Monter
   descendInteractionText: Descendre
@@ -20638,6 +20646,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!1 &1225579055
 GameObject:
@@ -31018,6 +31028,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!1 &1890447178
 GameObject:
@@ -31262,11 +31274,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LadderController
   leafs1: {fileID: 1882835279}
   leafs2: {fileID: 1182908992}
-  activationRadius: 1.2
+  activationRadius: 2
   destinationLocalOffset: {x: 0, y: 0, z: 0}
   useDestinationRotation: 1
   interactionCollider: {fileID: 0}
-  interactionMaxDistance: 1.5
+  interactionMaxDistance: 2.5
   interactionPriority: 115
   climbInteractionText: Monter
   descendInteractionText: Descendre
@@ -40971,6 +40983,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!114 &2057919370
 MonoBehaviour:
@@ -46319,6 +46333,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!4 &4180176604623241995
 Transform:

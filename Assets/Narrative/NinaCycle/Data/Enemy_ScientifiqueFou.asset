@@ -311,7 +311,7 @@ MonoBehaviour:
     introductionLine: "Vous n'auriez jamais d\xFB venir ici..."
     introductionSeconds: 2.5
     interactionDistance: 2.5
-    requiredKnowledge: {fileID: 11400000, guid: c5df294c93ed1724692a1b16d61f311d, type: 2}
+    requiredKnowledge: {fileID: 0}
   enemyDeathOptions:
     enabled: 1
     dialogueLine: Qu'est ce que... j'ai fait...

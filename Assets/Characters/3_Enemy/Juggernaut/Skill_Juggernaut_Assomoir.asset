@@ -85,21 +85,6 @@ MonoBehaviour:
       lookOffsetKick: {x: 0, y: 0.03, z: 0.2}
       fieldOfViewKick: -1
       recoverySharpness: 18
-    screenWave:
-      enabled: 0
-      settings:
-        origin: {x: 0.5, y: 0.5}
-        direction: {x: 0, y: 0}
-        reverse: 0
-        frequency: 14
-        propagationSpeed: 1.45
-        amplitude: 0.15
-        duration: 0.9
-        falloff: 6
-        fadeOutDuration: 0.75
-        highlightIntensity: 0.38
-        edgeContrast: 2.2
-        highlightColor: {r: 0.72, g: 0.9, b: 1, a: 1}
     additionalImpactVfx: {fileID: 0}
     additionalImpactAudio: {fileID: 0}
   retreatImpulse:

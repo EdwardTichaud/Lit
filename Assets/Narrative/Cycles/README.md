@@ -74,7 +74,8 @@ Le menu Lit > Narrative > Migrer Nina vers les etapes nommees et le generateur
 utilisent la meme configuration ; une fiche deja migree n'est pas remplacee.
 Nina devient Dead selon les deux connaissances. Scar parle deux secondes hors
 fondus, accorde Cicatrice, se dissout puis laisse decharger la scene.
-Le scientifique conserve sa condition d'introduction ExistenceDesChimeres.
+Le scientifique n'a aucune condition d'introduction : sa défaite débloque
+immédiatement ExistenceDesChimeres.
 La sequence cinematic manque de Timeline et de profil de liaison dans la scene
 Nina : son etape facultative reste non validee.
 

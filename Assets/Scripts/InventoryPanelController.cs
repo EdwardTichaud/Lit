@@ -131,6 +131,8 @@ public class InventoryPanelController : MonoBehaviour
     public string placementCannotPlaceMessage = "Cet objet ne peut pas etre pose.";
     [Tooltip("Message si la position est invalide.")]
     public string placementInvalidMessage = "Position invalide.";
+    [SerializeField, Tooltip("Indication affichee uniquement pendant la pose d'un objet.")]
+    private CanvasGroup placementHint;
 
     [Header("Beacon Placement")]
     [Tooltip("Hauteur du probe de mur pour les balises.")]
@@ -228,11 +230,18 @@ public class InventoryPanelController : MonoBehaviour
     private bool worldReadableSession;
 
     private readonly List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
+    private readonly List<InventorySlotUI> inventorySlotPool = new List<InventorySlotUI>();
+    private readonly Dictionary<InventorySlotUI, Vector3> inventorySlotBaseScales = new Dictionary<InventorySlotUI, Vector3>();
     private readonly List<InventoryEntry> entries = new List<InventoryEntry>();
+    [Header("Inventory Slot Highlight")]
+    [SerializeField, Min(1f), Tooltip("Multiplicateur d'echelle du slot survole ou selectionne.")]
+    private float focusedSlotScale = 1.05f;
     private InventorySlotUI currentFocusedSlot;
     private int lastMoveDirection;
     private float nextMoveTime;
     private bool cursorDirty;
+    private bool inventorySlotPoolInitialized;
+    private bool warnedMissingInventorySlotPrefab;
     private NetworkInventory currentNetworkInventory;
 
     private void Awake()
@@ -244,6 +253,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         InitializeActionBox();
+        SetPlacementHintVisible(false);
     }
 
     private void OnEnable()
@@ -656,6 +666,17 @@ public class InventoryPanelController : MonoBehaviour
 
     public bool IsOpen => inventoryOpen;
 
+    public void OpenActionsForSlot(InventorySlotUI slot)
+    {
+        if (!inventoryOpen || depositMode || slot == null)
+        {
+            return;
+        }
+
+        FocusSlot(slot);
+        if (!actionBoxVisible) ShowActionBox();
+    }
+
     private void OpenInventory()
     {
         InventoryUISettings settings = GetSettings();
@@ -670,10 +691,13 @@ public class InventoryPanelController : MonoBehaviour
         inventoryOpen = true;
         RegisterNetworkInventory();
         InputFocusStack.Push(this);
-        SetSquadInputLock(true);
+        InputModeCoordinator.SetUserInterfaceMovementPassthrough(this, true);
+        SetSquadInputLock(false);
         DisableInventoryCursorController();
         actionBoxSuppressFrame = Time.frameCount;
+        ResetInventoryNavigation();
         RebuildInventorySlots();
+        SelectFirstInventorySlot();
         RestorePendingSelection();
     }
 
@@ -685,6 +709,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         InventoryUISettings settings = GetSettings();
+        InputModeCoordinator.SetUserInterfaceMovementPassthrough(this, false);
         if (settings != null)
         {
             settings.ClosePanel();
@@ -714,7 +739,7 @@ public class InventoryPanelController : MonoBehaviour
         bool wasDeposit = depositMode;
         depositMode = false;
         depositContainer = null;
-        inventorySlots.Clear();
+        RecycleInventorySlots();
         entries.Clear();
 
         if (wasDeposit && previousDeposit != null)
@@ -765,8 +790,15 @@ public class InventoryPanelController : MonoBehaviour
 
     private void RebuildInventorySlots()
     {
+        InventorySlotUI previousSlot = currentFocusedSlot;
+        Item preferredItem = previousSlot != null ? previousSlot.Item : null;
+        int preferredHitPoints = previousSlot != null && previousSlot.HasCombatDefenseHitPoints
+            ? previousSlot.CombatDefenseHitPoints
+            : -1;
+        int previousIndex = previousSlot != null ? inventorySlots.IndexOf(previousSlot) : -1;
+
+        RecycleInventorySlots();
         currentFocusedSlot = null;
-        inventorySlots.Clear();
         entries.Clear();
 
         InventoryUISettings settings = GetSettings();
@@ -778,15 +810,12 @@ public class InventoryPanelController : MonoBehaviour
 
         Transform itemsParent = settings.itemsParent;
         GameObject itemPrefab = settings.itemPrefab;
-
-        for (int i = itemsParent.childCount - 1; i >= 0; i--)
-        {
-            Destroy(itemsParent.GetChild(i).gameObject);
-        }
+        EnsureInventorySlotPool(itemsParent);
 
         BuildEntries(entries);
 
         InventorySlotUI firstSlot = null;
+        InventorySlotUI preferredSlot = null;
         for (int i = 0; i < entries.Count; i++)
         {
             InventoryEntry entry = entries[i];
@@ -795,21 +824,9 @@ public class InventoryPanelController : MonoBehaviour
                 continue;
             }
 
-            GameObject slotObject = CreateInstance(itemPrefab, itemsParent);
-            if (slotObject == null)
+            InventorySlotUI slotUi = AcquireInventorySlot(itemPrefab, itemsParent);
+            if (slotUi != null)
             {
-                slotObject = CreateTextEntry(itemsParent);
-            }
-
-            if (slotObject != null)
-            {
-                SetEntryText(slotObject, BuildEntryQuantityText(entry));
-                SetEntrySprite(slotObject, entry.item);
-                InventorySlotUI slotUi = slotObject.GetComponent<InventorySlotUI>();
-                if (slotUi == null)
-                {
-                    slotUi = slotObject.AddComponent<InventorySlotUI>();
-                }
                 slotUi.Initialize(
                     this,
                     entry.item,
@@ -822,10 +839,24 @@ public class InventoryPanelController : MonoBehaviour
                 {
                     firstSlot = slotUi;
                 }
+
+                if (preferredSlot == null && entry.item == preferredItem &&
+                    (!entry.hasCombatDefenseHitPoints || entry.combatDefenseHitPoints == preferredHitPoints))
+                {
+                    preferredSlot = slotUi;
+                }
             }
         }
 
-        if (firstSlot != null)
+        if (preferredSlot != null)
+        {
+            FocusSlot(preferredSlot);
+        }
+        else if (previousIndex >= 0 && inventorySlots.Count > 0)
+        {
+            FocusSlot(inventorySlots[Mathf.Clamp(previousIndex, 0, inventorySlots.Count - 1)]);
+        }
+        else if (firstSlot != null)
         {
             FocusSlot(firstSlot);
         }
@@ -834,6 +865,87 @@ public class InventoryPanelController : MonoBehaviour
             settings.UpdateDescription(null);
             settings.HideCursor();
         }
+    }
+
+    private void EnsureInventorySlotPool(Transform parent)
+    {
+        if (inventorySlotPoolInitialized || parent == null)
+        {
+            return;
+        }
+
+        inventorySlotPoolInitialized = true;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            InventorySlotUI slot = parent.GetChild(i).GetComponent<InventorySlotUI>();
+            if (slot == null)
+            {
+                continue;
+            }
+
+            SetSlotHighlighted(slot, false);
+            slot.ResetForPool();
+            slot.gameObject.SetActive(false);
+            inventorySlotPool.Add(slot);
+        }
+    }
+
+    private InventorySlotUI AcquireInventorySlot(GameObject prefab, Transform parent)
+    {
+        for (int i = inventorySlotPool.Count - 1; i >= 0; i--)
+        {
+            InventorySlotUI slot = inventorySlotPool[i];
+            inventorySlotPool.RemoveAt(i);
+            if (slot == null)
+            {
+                continue;
+            }
+
+            slot.transform.SetParent(parent, false);
+            slot.gameObject.SetActive(true);
+            slot.transform.SetAsLastSibling();
+            return slot;
+        }
+
+        if (prefab == null)
+        {
+            if (!warnedMissingInventorySlotPrefab)
+            {
+                warnedMissingInventorySlotPrefab = true;
+                Debug.LogError("InventoryPanelController: le prefab de slot est obligatoire.", this);
+            }
+            return null;
+        }
+
+        GameObject instance = Instantiate(prefab, parent);
+        InventorySlotUI created = instance.GetComponent<InventorySlotUI>();
+        if (created != null)
+        {
+            return created;
+        }
+
+        Debug.LogError("InventoryPanelController: le prefab de slot doit porter InventorySlotUI.", prefab);
+        instance.SetActive(false);
+        return null;
+    }
+
+    private void RecycleInventorySlots()
+    {
+        for (int i = 0; i < inventorySlots.Count; i++)
+        {
+            InventorySlotUI slot = inventorySlots[i];
+            if (slot == null)
+            {
+                continue;
+            }
+
+            SetSlotHighlighted(slot, false);
+            slot.ResetForPool();
+            slot.gameObject.SetActive(false);
+            if (!inventorySlotPool.Contains(slot)) inventorySlotPool.Add(slot);
+        }
+
+        inventorySlots.Clear();
     }
 
     private void BuildEntries(List<InventoryEntry> target)
@@ -947,7 +1059,13 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (currentFocusedSlot != null && currentFocusedSlot != slot)
+        {
+            SetSlotHighlighted(currentFocusedSlot, false);
+        }
+
         currentFocusedSlot = slot;
+        SetSlotHighlighted(currentFocusedSlot, true);
         cursorDirty = true;
         InventoryUISettings settings = GetSettings();
         if (settings != null)
@@ -955,6 +1073,30 @@ public class InventoryPanelController : MonoBehaviour
             settings.UpdateDescription(slot.Item);
             AppendCombatDefenseHitPointsDescription(settings, slot);
         }
+    }
+
+    public void ClearSlotHighlight(InventorySlotUI slot)
+    {
+        if (slot != null && slot == currentFocusedSlot)
+        {
+            SetSlotHighlighted(slot, false);
+        }
+    }
+
+    private void SetSlotHighlighted(InventorySlotUI slot, bool highlighted)
+    {
+        if (slot == null || slot.SlotRect == null)
+        {
+            return;
+        }
+
+        if (!inventorySlotBaseScales.TryGetValue(slot, out Vector3 baseScale))
+        {
+            baseScale = slot.SlotRect.localScale;
+            inventorySlotBaseScales[slot] = baseScale;
+        }
+
+        slot.SlotRect.localScale = highlighted ? baseScale * focusedSlotScale : baseScale;
     }
 
     private string BuildEntryQuantityText(InventoryEntry entry)
@@ -1021,27 +1163,8 @@ public class InventoryPanelController : MonoBehaviour
             }
         }
 
-        Transform itemsParent = settings.itemsParent;
-        Transform cursorParent = itemsParent != null ? itemsParent.parent : slot.SlotRect.parent;
-        RectTransform cursor = settings.EnsureSlotCursor(cursorParent);
-        if (cursor == null)
-        {
-            cursorDirty = false;
-            return;
-        }
-
-        cursor.gameObject.SetActive(true);
-        if (cursorParent != null)
-        {
-            cursor.SetParent(cursorParent, false);
-        }
-        cursor.SetAsLastSibling();
-        cursor.pivot = new Vector2(0.5f, 0.5f);
-        cursor.position = slot.SlotRect.position;
-        Vector2 size = slot.SlotRect.rect.size;
-        Vector2 padding = settings.cursorPadding;
-        cursor.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x + padding.x);
-        cursor.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y + padding.y);
+        // La selection est marquee par l'echelle du slot ; aucun curseur mobile n'est utilise.
+        settings.HideCursor();
 
         if (actionBoxVisible)
         {
@@ -1064,7 +1187,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = LocalInputRouter.MoveValue;
+        Vector2 moveInput = GetInventoryNavigationInput();
         int direction = GetMoveDirection(moveInput, settings.moveDeadzone);
         if (direction == 0)
         {
@@ -1105,6 +1228,23 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         return input.y > 0f ? -1 : 1;
+    }
+
+    private Vector2 GetInventoryNavigationInput()
+    {
+        // Le stick gauche reste reserve a la locomotion lorsque l'inventaire
+        // est ouvert. Seule la croix directionnelle pilote les slots.
+        return Gamepad.current != null ? Gamepad.current.dpad.ReadValue() : Vector2.zero;
+    }
+
+    private void SelectFirstInventorySlot()
+    {
+        if (inventorySlots.Count == 0)
+        {
+            return;
+        }
+
+        FocusSlot(inventorySlots[0]);
     }
 
     private void MoveSlot(int direction, bool wrap)
@@ -2745,7 +2885,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = LocalInputRouter.MoveValue;
+        Vector2 moveInput = GetInventoryNavigationInput();
         int direction = GetActionBoxMoveDirection(moveInput, settings.moveDeadzone);
         if (direction == 0)
         {
@@ -2961,7 +3101,7 @@ public class InventoryPanelController : MonoBehaviour
         if (item.TryBreak(controller, out string reason))
         {
             PlayUiActionAudio(ActionAudioCue.InventoryBreak);
-            ShowActionFeedback(item.GetBreakSuccessMessage());
+            ShowActionFeedback(item.GetDestroyNotification());
             return true;
         }
 
@@ -3406,7 +3546,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = LocalInputRouter.MoveValue;
+        Vector2 moveInput = GetPlacementNavigationInput();
         Vector3 moveDir = GetPlacementMoveDirection(moveInput);
         Vector3 position = placementInstance.transform.position;
         if (moveDir.sqrMagnitude > 0f)
@@ -3431,6 +3571,11 @@ public class InventoryPanelController : MonoBehaviour
     private Vector3 GetPlacementMoveDirection(Vector2 input)
     {
         return WorldPlacementUtility.GetPlacementMoveDirection(input, GetPlacementSettings());
+    }
+
+    private static Vector2 GetPlacementNavigationInput()
+    {
+        return Gamepad.current != null ? Gamepad.current.dpad.ReadValue() : Vector2.zero;
     }
 
     private Camera ResolvePlacementCamera()
@@ -3575,6 +3720,8 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        WorldPickupUtility.EnsureDefaultBoxCollider(placementInstance);
+
         placementBaseRotation = placementInstance.transform.rotation;
 
         if (item.isBuilding)
@@ -3588,6 +3735,7 @@ public class InventoryPanelController : MonoBehaviour
 
         placementItem = item;
         placementActive = true;
+        SetPlacementHintVisible(true);
         CachePlacementPhysics(placementInstance);
         ApplyPlacementItemState(placementInstance, placementItem);
         if (placementItem != null && placementItem.isBuilding)
@@ -3987,7 +4135,7 @@ public class InventoryPanelController : MonoBehaviour
 
         CreateDroppedLootContainer(instance, item, quantity);
         PlayActionAudio(ActionAudioCue.InventoryDrop);
-        ShowActionFeedback(item.GetDropSuccessMessage());
+        ShowActionFeedback(item.GetDropNotification());
         return true;
     }
 
@@ -4072,7 +4220,7 @@ public class InventoryPanelController : MonoBehaviour
             ReleasePlacementFocus();
             if (requested)
             {
-                // Feedback géré par le serveur via RPC.
+                OpenInventory();
                 return;
             }
 
@@ -4119,6 +4267,7 @@ public class InventoryPanelController : MonoBehaviour
         placementGroundCollider = null;
         SetSquadInputLock(false);
         ReleasePlacementFocus();
+        OpenInventory();
         if (placedItem != null)
         {
             PlayActionAudio(ActionAudioCue.InventoryPlaceConfirm);
@@ -4270,10 +4419,23 @@ public class InventoryPanelController : MonoBehaviour
 
     private void ReleasePlacementFocus()
     {
+        SetPlacementHintVisible(false);
         if (!inventoryOpen)
         {
             InputFocusStack.Pop(this);
         }
+    }
+
+    private void SetPlacementHintVisible(bool visible)
+    {
+        if (placementHint == null)
+        {
+            return;
+        }
+
+        placementHint.alpha = visible ? 1f : 0f;
+        placementHint.interactable = false;
+        placementHint.blocksRaycasts = false;
     }
 
     private void ClearPlacementRestore()
@@ -4551,26 +4713,7 @@ public class InventoryPanelController : MonoBehaviour
             }
         }
 
-        if (!actionBoxCreateCursorIfMissing || parent == null)
-        {
-            return null;
-        }
-
-        GameObject cursorObject = new GameObject("ActionBox_Cursor", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
-        RectTransform rect = cursorObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        Image image = cursorObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.25f);
-        image.raycastTarget = false;
-        image.sprite = RuntimeUiSpriteUtility.SolidSprite;
-        image.type = Image.Type.Simple;
-        LayoutElement layout = cursorObject.GetComponent<LayoutElement>();
-        layout.ignoreLayout = true;
-        actionBoxCursor = rect;
-        return rect;
+        return null;
     }
 
     private CanvasGroup GetActionBoxCanvasGroup()
@@ -4580,13 +4723,7 @@ public class InventoryPanelController : MonoBehaviour
             return null;
         }
 
-        CanvasGroup canvasGroup = actionBox.GetComponent<CanvasGroup>();
-        if (canvasGroup == null && actionBoxAddCanvasGroupIfMissing)
-        {
-            canvasGroup = actionBox.AddComponent<CanvasGroup>();
-        }
-
-        return canvasGroup;
+        return actionBox.GetComponent<CanvasGroup>();
     }
 
     private void FadeActionBoxTo(float targetAlpha, float duration)
@@ -4712,54 +4849,5 @@ public class InventoryPanelController : MonoBehaviour
 
         public InventorySlotUI Slot { get; }
         public Vector2 Position { get; }
-    }
-}
-
-public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHandler
-{
-    public InventoryPanelController Owner { get; private set; }
-    public Item Item { get; private set; }
-    public int Quantity { get; private set; }
-    public bool HasCombatDefenseHitPoints { get; private set; }
-    public int CombatDefenseHitPoints { get; private set; }
-    public int CombatDefenseMaxHitPoints { get; private set; }
-    public RectTransform SlotRect { get; private set; }
-
-    public void Initialize(InventoryPanelController owner, Item item, int quantity)
-    {
-        Initialize(owner, item, quantity, false, 0, 0);
-    }
-
-    public void Initialize(
-        InventoryPanelController owner,
-        Item item,
-        int quantity,
-        bool hasCombatDefenseHitPoints,
-        int combatDefenseHitPoints,
-        int combatDefenseMaxHitPoints)
-    {
-        Owner = owner;
-        Item = item;
-        Quantity = Mathf.Max(0, quantity);
-        HasCombatDefenseHitPoints = hasCombatDefenseHitPoints;
-        CombatDefenseHitPoints = Mathf.Max(0, combatDefenseHitPoints);
-        CombatDefenseMaxHitPoints = Mathf.Max(0, combatDefenseMaxHitPoints);
-        SlotRect = GetComponent<RectTransform>();
-    }
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (Owner != null)
-        {
-            Owner.FocusSlot(this);
-        }
-    }
-
-    public void OnSelect(BaseEventData eventData)
-    {
-        if (Owner != null)
-        {
-            Owner.FocusSlot(this);
-        }
     }
 }

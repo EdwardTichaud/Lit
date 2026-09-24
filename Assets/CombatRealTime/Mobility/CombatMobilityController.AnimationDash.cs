@@ -44,7 +44,8 @@ public sealed partial class CombatMobilityController
             maximumDashImpulse);
 
         LitOpsiveLocomotionBridge bridge = caster.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
-        if (bridge == null || !bridge.AddExternalImpulse(lastDashDirection * impulse, ForceMode.VelocityChange, dashInputLockSeconds))
+        if (bridge == null || !bridge.AddExternalImpulse(lastDashDirection * impulse, ForceMode.VelocityChange,
+                dashInputLockSeconds, caster.GetComponentInChildren<PlayerActionPresentationController>(true)))
         {
             lastDashDirection = Vector3.zero;
         }

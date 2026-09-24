@@ -1,5 +1,17 @@
 # Combat
 
+## Sessions joueur et continuite
+
+PlayerActionPresentationController est le proprietaire de la generation d'action. RegisterActionCleanup et RegisterActionTermination enregistrent uniquement des ressources de la generation courante. TerminateAction invalide avant nettoyage ; Completed, Interrupted, Failed, OwnerDisabled et Death convergent vers ce chemin. Le remplacement valide l'etat avant de terminer l'action precedente, sans restitution intermediaire de locomotion.
+
+La surveillance lit l'etat courant et suivant : sortie externe, Animator desactive, entree impossible et absence de progression pendant une seconde locale effective declenchent un nettoyage cible. Les pauses globales/locales ne consomment pas ce delai. Une autre animation deja proprietaire n'est pas remplacee par Idle ; en l'air, la gravite et UCC restent prioritaires. Aucun impact de secours n'est ajoute par cette recuperation.
+
+Les sessions de garde et cinematiques s'enregistrent avec leur proprietaire. Les services de paliers/Timeline gardent leurs fins et watchdogs specifiques ; une interruption de session appelle leur annulation. La mort ne reprend pas une attaque bufferisee. Une anomalie annule les BasicSkills en attente et exige relachement puis nouvelle pression ; les demandes de mobilite existantes expirent toujours selon leur echeance initiale.
+
+PlayerCombatAnimationEvents conserve les noms et parametres auteur mais recoit AnimationEvent pour verifier clip et etat emetteurs. Les evenements d'un etat sortant, d'une session terminee ou d'un fondu vers le meme etat sont refuses. Les cinematiques verifient aussi la piste Player et le clip actif ; le QTE de palier verifie le clip de l'etape. Les timings places dans un fondu ambigu doivent etre deplaces par l'auteur ou utiliser des etats distincts.
+
+Validation ciblee : CombatExplorationRecoveryTests ; PlayerActionContinuityRuntimeTests. La validation d'un combat complet District 1, des transitions de palier et des cinematiques reste indispensable en plus des tests unitaires.
+
 ## Presentation du joueur modulaire
 
 PlayerCombatAnimationEvents est un routeur sur l Animator. Les handlers sont dans PlayerActionPresentationController.SkillEvents, avec des noms distincts pour ne pas recevoir deux fois les memes evenements. Le dash et son freinage sont dans CombatMobilityController.AnimationDash, avec capture du personnage et annulation propre. PlayerAnimationController ne contient plus de branche physique ennemie; PlayerRootMotionRelay ne consomme que les deltas cinematographiques autorises.
@@ -18,15 +30,15 @@ enemyDeathOptions configure l activation, les derniers mots, leur duree reelle e
 
 ## Controleur ennemi unifie
 
-EnemyController est l’unique composant de comportement ennemi, reparti en fichiers
+EnemyController est lâ€™unique composant de comportement ennemi, reparti en fichiers
 partial. CharacterInfo contient les donnees runtime et remplace CombatHealth.
 Les reglages viennent de CharacterData/EnemySettings et du profil de patterns;
 les copies runtime ne modifient pas les assets sources. La sante de squad reste
 independante. CharacterAnimationController est le contrat abstrait des animations;
 le joueur a PlayerAnimationController/PlayerRootMotionRelay/PlayerCombatAnimationEvents.
 
-L’horloge locale est commune aux decisions, mouvements et securites d’attaque.
-CompleteAction protege les fins d’action contre les doublons et callbacks anciens.
+Lâ€™horloge locale est commune aux decisions, mouvements et securites dâ€™attaque.
+CompleteAction protege les fins dâ€™action contre les doublons et callbacks anciens.
 Le mode Ghost du scientifique bascule CombatEnabled sans desactiver le composant.
 Les anciens noms cites dans les sections historiques ci-dessous designent les
 responsabilites desormais internes a EnemyController. Guide et bilan de validation :

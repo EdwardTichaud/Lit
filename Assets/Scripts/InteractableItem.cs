@@ -187,10 +187,13 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private LootSlotUI currentFocusedSlot;
     private bool squadInputLocked;
     private readonly List<LootSlotUI> lootSlots = new List<LootSlotUI>();
+    private readonly List<LootSlotUI> lootSlotPool = new List<LootSlotUI>();
     private int currentSlotIndex;
     private int lastMoveDirection;
     private float nextMoveTime;
     private bool cursorDirty;
+    private bool lootSlotPoolInitialized;
+    private bool warnedMissingLootSlotPrefab;
     private CanvasGroup actionBoxCanvasGroup;
     private Coroutine actionBoxFadeRoutine;
     private bool actionBoxVisible;
@@ -1205,6 +1208,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         lootOpen = false;
         InputFocusStack.Pop(this);
         SetSquadInputLock(false);
+        RecycleLootSlots();
         currentFocusedSlot = null;
         currentSlotIndex = 0;
         lastMoveDirection = 0;
@@ -1387,7 +1391,13 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        if (currentFocusedSlot != null && currentFocusedSlot != slot)
+        {
+            currentFocusedSlot.SetFocused(false);
+        }
+
         currentFocusedSlot = slot;
+        currentFocusedSlot.SetFocused(true);
         cursorDirty = true;
         if (lootSlots.Count > 0)
         {
@@ -1407,9 +1417,13 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void RebuildLootSlots(Item preferredItem, int preferredIndex = -1)
     {
+        LootSlotUI previousSlot = currentFocusedSlot;
+        LootItemEntry preferredEntry = previousSlot != null ? previousSlot.Entry : null;
+        int previousIndex = previousSlot != null ? lootSlots.IndexOf(previousSlot) : preferredIndex;
+
+        RecycleLootSlots();
         currentFocusedSlot = null;
         currentSlotIndex = 0;
-        lootSlots.Clear();
 
         LootUISettings settings = GetSettings(true);
         if (settings == null || settings.lootItemsParent == null)
@@ -1420,11 +1434,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         Transform itemsParent = settings.lootItemsParent;
         GameObject itemPrefab = settings.lootItemPrefab;
-
-        for (int i = itemsParent.childCount - 1; i >= 0; i--)
-        {
-            Destroy(itemsParent.GetChild(i).gameObject);
-        }
+        EnsureLootSlotPool(itemsParent);
 
         LootSlotUI firstSlot = null;
         LootSlotUI preferredSlot = null;
@@ -1443,37 +1453,25 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             }
 
             Item item = entryData.item;
-            GameObject entry = CreateInstance(itemPrefab, itemsParent);
-            if (entry == null)
+            LootSlotUI slotUi = AcquireLootSlot(itemPrefab, itemsParent);
+            if (slotUi != null)
             {
-                entry = CreateTextEntry(itemsParent);
-            }
-
-            if (entry != null)
-            {
-                SetEntryText(entry, quantity.ToString());
-                SetEntrySprite(entry, item);
-                LootSlotUI slotUi = entry.GetComponent<LootSlotUI>();
-                if (slotUi == null)
-                {
-                    slotUi = entry.AddComponent<LootSlotUI>();
-                }
                 slotUi.Initialize(this, entryData);
                 lootSlots.Add(slotUi);
                 if (firstSlot == null)
                 {
                     firstSlot = slotUi;
                 }
-                if (preferredSlot == null && preferredItem != null && preferredItem == item)
+                if (preferredSlot == null && (entryData == preferredEntry || (preferredItem != null && preferredItem == item)))
                 {
                     preferredSlot = slotUi;
                 }
             }
         }
 
-        if (lootSlots.Count > 0 && preferredIndex >= 0)
+        if (preferredSlot == null && lootSlots.Count > 0 && previousIndex >= 0)
         {
-            int clampedIndex = Mathf.Clamp(preferredIndex, 0, lootSlots.Count - 1);
+            int clampedIndex = Mathf.Clamp(previousIndex, 0, lootSlots.Count - 1);
             preferredSlot = lootSlots[clampedIndex];
         }
 
@@ -1496,6 +1494,64 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
                 settings.HideCursor();
             }
         }
+    }
+
+    private void EnsureLootSlotPool(Transform parent)
+    {
+        if (lootSlotPoolInitialized || parent == null) return;
+        lootSlotPoolInitialized = true;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            LootSlotUI slot = parent.GetChild(i).GetComponent<LootSlotUI>();
+            if (slot == null) continue;
+            slot.ResetForPool();
+            slot.gameObject.SetActive(false);
+            lootSlotPool.Add(slot);
+        }
+    }
+
+    private LootSlotUI AcquireLootSlot(GameObject prefab, Transform parent)
+    {
+        for (int i = lootSlotPool.Count - 1; i >= 0; i--)
+        {
+            LootSlotUI slot = lootSlotPool[i];
+            lootSlotPool.RemoveAt(i);
+            if (slot == null) continue;
+            slot.transform.SetParent(parent, false);
+            slot.gameObject.SetActive(true);
+            slot.transform.SetAsLastSibling();
+            return slot;
+        }
+
+        if (prefab == null)
+        {
+            if (!warnedMissingLootSlotPrefab)
+            {
+                warnedMissingLootSlotPrefab = true;
+                Debug.LogError("InteractableItem: le prefab de slot de loot est obligatoire.", this);
+            }
+            return null;
+        }
+
+        GameObject instance = Instantiate(prefab, parent);
+        LootSlotUI created = instance.GetComponent<LootSlotUI>();
+        if (created != null) return created;
+        Debug.LogError("InteractableItem: le prefab de slot de loot doit porter LootSlotUI.", prefab);
+        instance.SetActive(false);
+        return null;
+    }
+
+    private void RecycleLootSlots()
+    {
+        for (int i = 0; i < lootSlots.Count; i++)
+        {
+            LootSlotUI slot = lootSlots[i];
+            if (slot == null) continue;
+            slot.ResetForPool();
+            slot.gameObject.SetActive(false);
+            if (!lootSlotPool.Contains(slot)) lootSlotPool.Add(slot);
+        }
+        lootSlots.Clear();
     }
 
     private void UpdateCursorVisual()
@@ -1529,27 +1585,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             }
         }
 
-        Transform itemsParent = settings.lootItemsParent;
-        Transform cursorParent = itemsParent != null ? itemsParent.parent : slot.SlotRect.parent;
-        RectTransform cursor = settings.EnsureSlotCursor(cursorParent);
-        if (cursor == null)
-        {
-            cursorDirty = false;
-            return;
-        }
-
-        cursor.gameObject.SetActive(true);
-        if (cursorParent != null)
-        {
-            cursor.SetParent(cursorParent, false);
-        }
-        cursor.SetAsLastSibling();
-        cursor.pivot = new Vector2(0.5f, 0.5f);
-        cursor.position = slot.SlotRect.position;
-        Vector2 size = slot.SlotRect.rect.size;
-        Vector2 padding = settings.cursorPadding;
-        cursor.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x + padding.x);
-        cursor.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y + padding.y);
+        settings.HideCursor();
 
         cursorDirty = false;
     }
@@ -1689,7 +1725,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
         PlayActionAudio(ActionAudioCue.InventoryTake);
-        ShowActionFeedback(item.GetTakeSuccessMessage());
+        ShowActionFeedback(item.GetPickupNotification());
         return true;
     }
 
@@ -1780,7 +1816,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         HandleEmptyContainer();
         SyncNetFromLootItems();
         PlayActionAudio(ActionAudioCue.InventoryBreak);
-        ShowBreakFeedback(item.GetBreakSuccessMessage());
+        ShowBreakFeedback(item.GetDestroyNotification());
         return true;
     }
 
@@ -2332,13 +2368,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return null;
         }
 
-        CanvasGroup canvasGroup = actionBox.GetComponent<CanvasGroup>();
-        if (canvasGroup == null && actionBoxAddCanvasGroupIfMissing)
-        {
-            canvasGroup = actionBox.AddComponent<CanvasGroup>();
-        }
-
-        return canvasGroup;
+        return actionBox.GetComponent<CanvasGroup>();
     }
 
     private void FadeActionBoxTo(float targetAlpha, float duration)
@@ -2983,7 +3013,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
         PlayActionAudio(ActionAudioCue.InventoryTake);
-        ShowActionFeedback(item.GetTakeSuccessMessage());
+        ShowActionFeedback(item.GetPickupNotification());
         return true;
     }
 
@@ -3019,7 +3049,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             HandleEmptyContainer();
             SyncNetFromLootItems();
             ShowFeedbackWithAudioClientRpc(
-                representedPickup.GetTakeSuccessMessage(),
+                representedPickup.GetPickupNotification(),
                 false,
                 ActionAudioCue.InventoryTake,
                 clientRpcParams);
@@ -4282,7 +4312,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         SyncNetFromLootItems();
         HandleEmptyContainer();
         ShowFeedbackWithAudioClientRpc(
-            item.GetTakeSuccessMessage(),
+            item.GetPickupNotification(),
             false,
             ActionAudioCue.InventoryTake,
             BuildClientRpcParams(rpcParams));
@@ -4503,7 +4533,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         SyncNetFromLootItems();
         HandleEmptyContainer();
         ShowFeedbackWithAudioClientRpc(
-            item.GetBreakSuccessMessage(),
+            item.GetDestroyNotification(),
             true,
             ActionAudioCue.InventoryBreak,
             BuildClientRpcParams(rpcParams));
@@ -4743,13 +4773,17 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     }
 }
 
-public class LootSlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHandler
+public class LootSlotUI : MonoBehaviour, IMenuCursorHandler, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
+    [SerializeField] private TextMeshProUGUI quantityText;
+    [SerializeField] private Image itemSpriteImage;
+    [SerializeField] private GameObject cursor;
     public InteractableItem Owner { get; private set; }
     public InteractableItem.LootItemEntry Entry { get; private set; }
     public Item Item { get; private set; }
     public int Quantity { get; private set; }
     public RectTransform SlotRect { get; private set; }
+    public string SelectionKey => Entry != null ? Entry.GetHashCode().ToString() : string.Empty;
 
     public void Initialize(InteractableItem owner, InteractableItem.LootItemEntry entry)
     {
@@ -4758,21 +4792,65 @@ public class LootSlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHandler
         Item = entry != null ? entry.item : null;
         Quantity = entry != null ? Mathf.Max(0, entry.quantity) : 0;
         SlotRect = GetComponent<RectTransform>();
+        ResolveReferences();
+        if (quantityText != null) quantityText.text = Quantity.ToString();
+        if (itemSpriteImage != null)
+        {
+            itemSpriteImage.sprite = Item != null ? Item.itemSprite : null;
+            itemSpriteImage.enabled = itemSpriteImage.sprite != null;
+        }
+        SetFocused(false);
+    }
+
+    public void ResetForPool()
+    {
+        SetFocused(false);
+        Owner = null;
+        Entry = null;
+        Item = null;
+        Quantity = 0;
+        if (quantityText != null) quantityText.text = string.Empty;
+        if (itemSpriteImage != null) { itemSpriteImage.sprite = null; itemSpriteImage.enabled = false; }
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (Owner != null)
-        {
-            Owner.FocusSlot(this);
-        }
+        if (Owner != null) Owner.FocusSlot(this);
     }
+
+    public void OnPointerExit(PointerEventData eventData) => SetFocused(false);
 
     public void OnSelect(BaseEventData eventData)
     {
-        if (Owner != null)
+        if (Owner != null) Owner.FocusSlot(this);
+    }
+
+    public void OnDeselect(BaseEventData eventData) => SetFocused(false);
+    public void OnCursorFocus() { if (Owner != null) Owner.FocusSlot(this); }
+    public void OnCursorBlur() => SetFocused(false);
+    public void OnCursorSubmit() { }
+
+    public void SetFocused(bool focused)
+    {
+        if (cursor != null && cursor.activeSelf != focused) cursor.SetActive(focused);
+    }
+
+    private void ResolveReferences()
+    {
+        if (quantityText == null)
         {
-            Owner.FocusSlot(this);
+            Transform quantity = transform.Find("ItemSlot_ItemQuantity");
+            quantityText = quantity != null ? quantity.GetComponent<TextMeshProUGUI>() : null;
+        }
+        if (itemSpriteImage == null)
+        {
+            Transform sprite = transform.Find("ItemSlot_ItemSprite");
+            itemSpriteImage = sprite != null ? sprite.GetComponent<Image>() : null;
+        }
+        if (cursor == null)
+        {
+            Transform cursorTransform = transform.Find("Cursor");
+            cursor = cursorTransform != null ? cursorTransform.gameObject : null;
         }
     }
 }

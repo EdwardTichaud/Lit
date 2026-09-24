@@ -12,6 +12,7 @@ public sealed class AgeTransitionSafetyController : MonoBehaviour
     [SerializeField, Min(0.05f)] private float inputLockDuration = 0.35f;
     private AgeManager ageManager;
     private Coroutine transitionRoutine;
+    private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
 
     public static void EnsureFor(AgeManager manager)
     {
@@ -30,11 +31,16 @@ public sealed class AgeTransitionSafetyController : MonoBehaviour
     private void OnDisable()
     {
         if (ageManager != null) ageManager.AgeChanged -= OnAgeChanged;
+        if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+        playerLock?.Dispose();
+        LocalInputRouter.PopInteractionAndJumpSuppression(this);
     }
 
     private void OnAgeChanged(AgeManager manager, int previousYear, int currentYear)
     {
         if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+        playerLock?.Dispose();
+        LocalInputRouter.PopInteractionAndJumpSuppression(this);
         transitionRoutine = StartCoroutine(ApplyTransition());
     }
 
@@ -43,14 +49,14 @@ public sealed class AgeTransitionSafetyController : MonoBehaviour
         GameObject character = LocalPlayerUtils.GetControlledCharacter();
         SquadCharacterController controller = character != null ? character.GetComponentInParent<SquadCharacterController>() : null;
         LocalInputRouter.PushInteractionAndJumpSuppression(this);
-        if (controller != null) controller.TryBeginUccExternalLock(true, true);
+        if (controller != null) controller.TryBeginUccExternalLock(this, out playerLock, true, true);
 
         // AgeManager a deja rafraichi les objets temporels, shaders et displays
         // avant cet evenement; laisser une frame couvre les observers tardifs.
         yield return null;
         yield return new WaitForSecondsRealtime(inputLockDuration);
 
-        if (controller != null) controller.EndUccExternalLock();
+        playerLock?.Dispose();
         LocalInputRouter.PopInteractionAndJumpSuppression(this);
         transitionRoutine = null;
     }

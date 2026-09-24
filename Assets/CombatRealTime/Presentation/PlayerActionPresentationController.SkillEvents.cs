@@ -293,11 +293,12 @@ public sealed partial class PlayerActionPresentationController
 
         if (cue.delivery == SkillVfxDelivery.DirectOnTarget)
         {
-            Transform targetPoint = target.LockPoint;
-            PlaySkillVfxCueAudio(cue, targetPoint.position);
+            Transform targetPoint = target.LockPoint != null ? target.LockPoint : target.transform;
+            Vector3 impactPosition = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
+            PlaySkillVfxCueAudio(cue, impactPosition);
             if (cue.prefab != null)
             {
-                Instantiate(cue.prefab, targetPoint.position, targetPoint.rotation, targetPoint);
+                Instantiate(cue.prefab, impactPosition, targetPoint.rotation, targetPoint);
             }
 
             return;
@@ -346,12 +347,12 @@ public sealed partial class PlayerActionPresentationController
         }
 
         projectile.transform.SetParent(null, true);
-        Transform targetPoint = target.LockPoint;
+        Transform targetPoint = target.LockPoint != null ? target.LockPoint : target.transform;
         Vector3 startPosition = projectile.transform.position;
         float duration = Mathf.Max(0f, cue.travelDurationSeconds);
         if (duration <= 0f)
         {
-            projectile.transform.position = targetPoint.position;
+            projectile.transform.position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
             projectile.transform.rotation = targetPoint.rotation;
             projectile.transform.SetParent(targetPoint, true);
             yield break;
@@ -361,7 +362,7 @@ public sealed partial class PlayerActionPresentationController
         while (projectile != null && target != null && elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            Vector3 destination = targetPoint.position;
+            Vector3 destination = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
             Vector3 direction = destination - projectile.transform.position;
             if (direction.sqrMagnitude > 0.0001f)
             {
@@ -374,7 +375,7 @@ public sealed partial class PlayerActionPresentationController
 
         if (projectile != null && target != null)
         {
-            projectile.transform.position = targetPoint.position;
+            projectile.transform.position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
             projectile.transform.rotation = targetPoint.rotation;
             projectile.transform.SetParent(targetPoint, true);
         }
@@ -539,6 +540,7 @@ public sealed partial class PlayerActionPresentationController
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         target = manager != null ? manager.LockedEnemy : null;
         return skill != null && target != null && manager != null
+            && !(skill is BasicSkillsSO && basicSkillInterruptedByDamage)
             && manager.ApplySkillDamageToLockedEnemy(skill) > 0;
     }
 

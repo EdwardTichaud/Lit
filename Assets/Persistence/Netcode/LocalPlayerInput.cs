@@ -23,6 +23,21 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     /// </summary>
     public static bool HasActiveRuntimeInput => !applicationQuitting && Instance != null && Instance.playerInputs != null;
 
+    public string RuntimeInputDiagnostic
+    {
+        get
+        {
+            InputActionMap playerMap = playerInputs != null ? playerInputs.asset.FindActionMap("Player", false) : null;
+            InputActionMap combatMap = playerInputs != null ? playerInputs.asset.FindActionMap("RealTimeCombat", false) : null;
+            InputAction move = playerInputs != null ? playerInputs.asset.FindAction("Player/Move", false) : null;
+            return "host=" + isActiveAndEnabled +
+                   " playerMap=" + (playerMap != null && playerMap.enabled) +
+                   " move=" + (move != null && move.enabled) +
+                   " combatMap=" + (combatMap != null && combatMap.enabled) +
+                   " combatRequested=" + combatInputActive;
+        }
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeState()
     {
@@ -470,7 +485,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             Debug.Log("[Locomotion Handoff] Input mode changed | mode=" + mode + ".", this);
         }
 
-        if (mode == InputMode.Exploration || mode == InputMode.Combat)
+        if (mode == InputMode.Exploration || mode == InputMode.Combat || InputModeCoordinator.IsUserInterfaceMovementPassthroughActive)
         {
             ScheduleHeldLocomotionReconciliation("ModeChanged " + mode);
         }
@@ -512,12 +527,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         while (token == locomotionReconciliationToken)
         {
             InputMode mode = InputModeCoordinator.CurrentMode;
-            if (mode != InputMode.Exploration && mode != InputMode.Combat)
+            bool allowUiMovement = mode == InputMode.UserInterface &&
+                                   InputModeCoordinator.IsUserInterfaceMovementPassthroughActive;
+            if (mode != InputMode.Exploration && mode != InputMode.Combat && !allowUiMovement)
             {
                 yield break;
             }
 
-            if (InputFocusStack.HasAnyFocus())
+            if (InputFocusStack.HasAnyFocus() && !allowUiMovement)
             {
                 yield return null;
                 continue;

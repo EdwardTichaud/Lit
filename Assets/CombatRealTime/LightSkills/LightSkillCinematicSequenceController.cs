@@ -124,7 +124,9 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         if (!active || impactVfxSpawned || lightSkill == null || lightSkill.ImpactVfxPrefab == null || targetEnemy == null) return;
 
         Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.transform;
-        GameObject impact = Instantiate(lightSkill.ImpactVfxPrefab, target.position + lightSkill.ImpactVfxOffset, target.rotation);
+        Vector3 position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(
+            target, combatManager != null ? combatManager.PlayerRoot : null, lightSkill.ImpactVfxOffset);
+        GameObject impact = Instantiate(lightSkill.ImpactVfxPrefab, position, target.rotation);
         Destroy(impact, 10f);
         impactVfxSpawned = true;
     }
@@ -174,7 +176,9 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         while (active && projectileInstance != null && targetEnemy != null)
         {
             Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.transform;
-            Vector3 destination = target.position + (lightSkill != null ? lightSkill.ImpactVfxOffset : Vector3.zero);
+            Vector3 destination = CombatImpactFeedbackController.ResolvePlayerImpactPosition(
+                target, combatManager != null ? combatManager.PlayerRoot : null,
+                lightSkill != null ? lightSkill.ImpactVfxOffset : Vector3.zero);
             Vector3 delta = destination - projectileInstance.transform.position;
             if (delta.sqrMagnitude <= 0.0025f)
             {

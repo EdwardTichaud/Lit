@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.AI;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
@@ -29,8 +28,6 @@ public sealed class ZoneManifest : ScriptableObject
     [SerializeField, HideInInspector] private string primarySceneName;
     [SerializeField] private string loadingMessage = "Chargement...";
     [Header("Zone presentation")]
-    [Tooltip("Profil HDRP global de la zone. Les volumes locaux peuvent ensuite se superposer a cette base.")]
-    [SerializeField] private VolumeProfile volumeProfile;
     [Tooltip("Musique de fond de la zone. Laisser vide pour ne pas imposer de musique.")]
     [SerializeField] private AudioClipSO music;
     [Tooltip("Ambiance de fond de la zone. Laisser vide pour utiliser l'ambiance par defaut de l'application.")]
@@ -52,7 +49,6 @@ public sealed class ZoneManifest : ScriptableObject
 
     public string PrimarySceneName => primarySceneName;
     public string LoadingMessage => loadingMessage;
-    public VolumeProfile VolumeProfile => volumeProfile;
     public AudioClipSO Music => music;
     public AudioClipSO Ambience => ambience;
     public float PresentationAudioFadeDuration => Mathf.Max(0.01f, presentationAudioFadeDuration);

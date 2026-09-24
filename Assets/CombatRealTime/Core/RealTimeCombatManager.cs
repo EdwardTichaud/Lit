@@ -763,14 +763,16 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             }
         }
 
+        Vector3 impactPosition = CombatImpactFeedbackController.ResolvePlayerImpactPosition(
+            lockedEnemy.transform, playerRoot);
         if (attack.ImpactVfxPrefab != null)
         {
-            Instantiate(attack.ImpactVfxPrefab, lockedEnemy.transform.position, Quaternion.identity);
+            Instantiate(attack.ImpactVfxPrefab, impactPosition, Quaternion.identity);
         }
 
         if (attack.ImpactSfx != null)
         {
-            AudioManager.PlayClipAtPoint(attack.ImpactSfx, lockedEnemy.transform.position);
+            AudioManager.PlayClipAtPoint(attack.ImpactSfx, impactPosition);
         }
 
         cooldowns[attack] = Time.time + attack.CooldownSeconds;
@@ -1092,17 +1094,32 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         SetCinematicSequenceActive(false);
     }
 
-    public bool TryLockPlayerForCinematic(bool disableGameplayInput = true)
+    public bool TryLockPlayerForCinematic(object owner, out LitOpsiveLocomotionBridge.ExternalLockHandle handle, bool disableGameplayInput = true)
     {
-        return playerController != null && playerController.TryBeginUccExternalLock(
+        handle = null;
+        if (playerActionPresentation != null && playerActionPresentation.IsDeathAnimationLocked) return false;
+        bool acquired = playerController != null && playerController.TryBeginUccExternalLock(owner, out handle,
             disableGameplayInput: disableGameplayInput,
             stopActiveAbilities: true);
+        if (acquired && playerActionPresentation != null && owner is UnityEngine.Object sessionOwner)
+        {
+            var presentation = playerActionPresentation;
+            int generation = presentation.BeginExternalPresentation(sessionOwner);
+            var ownedLock = handle;
+            presentation.RegisterActionCleanup(generation, ownedLock.Dispose);
+            presentation.RegisterActionTermination(generation, reason =>
+            {
+                if (reason == PlayerActionPresentationController.ActionEndReason.Completed || sessionOwner == null) return;
+                if (sessionOwner is CombatHealthThresholdController threshold) threshold.AbortActiveSequence("Actor action session ended");
+                else if (sessionOwner is CounterSkillCombatController counter) counter.AbortForActionTermination();
+                else if (sessionOwner is LightSkillCombatController light) light.AbortForActionTermination();
+                else if (sessionOwner is CombatSkillCinematicController skill) skill.AbortForActionTermination();
+            });
+            ownedLock.Released += () => { if (presentation != null) presentation.EndExternalPresentation(generation); };
+        }
+        return acquired;
     }
 
-    public void UnlockPlayerAfterCinematic()
-    {
-        playerController?.EndUccExternalLock();
-    }
 
     /// <summary>
     /// Drives an authored threshold-failure recoil through UCC only. The motion
@@ -1576,6 +1593,15 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ClarityChanged?.Invoke(clarity, ClarityRank);
     }
 
+    public void InterruptBasicComboOnDamage(Transform damagedActor)
+    {
+        if (playerRoot == null || damagedActor == null ||
+            (damagedActor != playerRoot && !damagedActor.IsChildOf(playerRoot))) return;
+        combatInput?.CancelBufferedBasicSkills();
+        playerActionPresentation?.InterruptBasicSkillForDamage();
+        FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.ResetAllBasicSkillCombos();
+    }
+
     private int ApplyPlayerDamage(int damage)
     {
         if (playerMobility != null && playerMobility.IsDamageInvulnerable)
@@ -1591,7 +1617,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         // Squad/UCC health reports its own damage. Keep presentation only for
         // the CharacterInfo fallback, which has no squad damage recorder.
         if (playerController == null)
+        {
             CombatDamageWorldFeedback.Show(playerRoot, applied, new Color(1f, 0.48f, 0.48f), 2.05f);
+            if (applied > 0) InterruptBasicComboOnDamage(playerRoot);
+        }
         if (applied > 0 && !IsPlayerDead())
         {
             PlayPlayerHurtAnimation();
@@ -1614,11 +1643,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
-        if (playerActionPresentation == null ||
-            !playerActionPresentation.TryPlayCombatState(
-                playerHurtAnimatorState,
-                PlayerActionPresentationProfile.CreateDefault(),
-                "Hurt"))
+        if (playerActionPresentation != null)
+        {
+            playerActionPresentation.TryReplaceWithDamageReaction(playerHurtAnimatorState,
+                PlayerActionPresentationProfile.CreateDefault());
+        }
+        else
         {
             playerAnimator.CrossFade(stateHash, playerHurtTransitionDuration, 0);
         }

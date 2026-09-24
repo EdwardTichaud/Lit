@@ -35,17 +35,21 @@ public sealed class PlayerInPlaceTestRunner : IErrorCallbacks
         if (SessionState.GetBool("PlayerInPlace.TestsRunning", false) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode ||
             !File.Exists("Library/PlayerInPlaceTests.request")) return;
         string command = File.ReadAllText("Library/PlayerInPlaceTests.request").Trim();
-        bool runtime = command.StartsWith("runtime");
-        SessionState.SetBool("PlayerInPlace.Test.Reload", command == "runtime-reload");
+        bool continuityRuntime = command.StartsWith("continuity-runtime");
+        bool runtime = command.StartsWith("runtime") || continuityRuntime;
+        bool continuity = command == "continuity";
+        SessionState.SetBool("PlayerInPlace.Test.Reload", command.EndsWith("-reload"));
         File.Delete("Library/PlayerInPlaceTests.request");
         resultPath = runtime ? (command == "runtime-reload" ? "Library/PlayerInPlaceRuntimeReloadTests.xml" : "Library/PlayerInPlaceRuntimeTests.xml") : "Library/PlayerInPlaceTests.xml";
+        if (continuity) resultPath = "Library/PlayerActionContinuityTests.xml";
+        if (continuityRuntime) resultPath = command.EndsWith("-reload") ? "Library/ActionContinuityRuntimeReloadTests.xml" : "Library/ActionContinuityRuntimeTests.xml";
         SessionState.SetString("PlayerInPlace.TestResult", resultPath);
         SessionState.SetBool("PlayerInPlace.TestsRunning", true);
         runner = ScriptableObject.CreateInstance<TestRunnerApi>();
         runner.RegisterCallbacks(new PlayerInPlaceTestRunner());
         SuppressUnrelatedSceneRepair();
         runner.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode,
-            groupNames = new[] { runtime ? "^PlayerInPlaceRuntimeTests" : "^PlayerInPlaceTests" } }) { runSynchronously = !runtime });
+            groupNames = new[] { continuity ? "^CombatExplorationRecoveryTests" : continuityRuntime ? "^PlayerActionContinuityRuntimeTests" : runtime ? "^PlayerInPlaceRuntimeTests" : "^PlayerInPlaceTests" } }) { runSynchronously = !runtime });
     }
     public void RunStarted(ITestAdaptor test) { }
     public void OnError(string message)

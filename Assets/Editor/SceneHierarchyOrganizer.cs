@@ -400,7 +400,6 @@ public static class SceneHierarchyOrganizer
             }
 
             AddMarkers(root.GetComponentsInChildren<Zone>(true), markers);
-            AddMarkers(root.GetComponentsInChildren<EnvironmentZone>(true), markers);
             AddMarkers(root.GetComponentsInChildren<TemporalZone>(true), markers);
         }
 

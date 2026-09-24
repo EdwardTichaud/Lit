@@ -28,11 +28,10 @@ Les dialogues Nina ne sont pas configures pour cette disparition.
 ## Rencontre Ghost dans EnemyController
 
 enemyEncounterOptions.requiredKnowledge est une condition facultative de la
-rencontre. Le scientifique exige Knowledge_ExistenceDesChimeres : verification
-a l'interaction locale, au lancement autoritaire et a la fermeture reussie de
-l'introduction. Sans connaissance (ou sans service de connaissances disponible),
-il reste Ghost; obtenir la connaissance seul ne lance pas le combat. Une nouvelle
-interaction est requise. La connaissance suit le partage de session existant.
+rencontre. Le scientifique n'en a pas : son interaction Ghost lance directement
+l'introduction et le combat. `Existence des chimères` est révélée par le cycle
+dès que sa défaite `encounter` est enregistrée, avant toute cinématique ou
+présentation de fin. La connaissance suit le partage de session existant.
 
 ScientistEncounterController est supprime. CharacterData.enemyEncounterOptions active la phase Ghost, la replique d introduction, sa duree et la distance d interaction. EnemyController implemente IGhostInteractionHandler et ICycleCinematicBlocker. Les controles serveur, la visibilite Ghost et la progression Nina sont conserves. Les dernieres paroles sont configurees dans enemyDeathOptions et bloquent la presentation de cycle pendant leur lecture.
 
@@ -87,7 +86,9 @@ connaissances et résoudre les interactions narratives.
   leur `WorldPrefab` devient alors un objet de scène déjà configuré, sans
   instanciation runtime. Le Bake Character conserve le marker de persistance et
   place l'acteur immédiatement en solo ; en réseau, cette copie est masquée et
-  le spawn Netcode existant reste autoritaire. Les anciens
+  le spawn Netcode existant reste autoritaire. Après chaque Bake, l'Inspector
+  vérifie la hiérarchie produite : en l'absence de `RuntimeOutlineTarget`, il
+  propose de l'ajouter sur l'un des enfants qui porte un `Renderer`. Les anciens
   `ItemSceneMarker` se migrent depuis le menu `Lit/Scene Marker`.
 
 ## Cycles reutilisables et progression de partie

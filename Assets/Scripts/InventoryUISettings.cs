@@ -1,4 +1,3 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,16 +18,16 @@ public class InventoryUISettings : MonoBehaviour
     [Header("World information panels")]
     public GameObject localItemInformationPanelPrefab;
     public GameObject localBuildingInformationPanelPrefab;
-    [Tooltip("Curseur UI de selection.")]
+    [Tooltip("Ancien curseur global. Il reste masque : chaque slot utilise son propre Cursor.")]
     public RectTransform slotCursor;
-    [Tooltip("Controleur de curseur (optionnel).")]
+    [Tooltip("Ancien controleur global. La navigation est pilotee par InventoryPanelController.")]
     public CursorController cursorController;
     [Tooltip("Texte de description de l'item selectionne.")]
     public TextMeshProUGUI descriptionText;
     [Tooltip("Padding ajoute autour du slot selectionne.")]
     public Vector2 cursorPadding = new Vector2(10f, 10f);
-    [Tooltip("Cree un curseur si aucun n'est assigne.")]
-    public bool createCursorIfMissing = true;
+    [Tooltip("Compatibilite scene. Aucun curseur runtime n'est cree.")]
+    public bool createCursorIfMissing;
     [Tooltip("Synchronise les parametres vers le CursorController.")]
     public bool syncCursorControllerSettings = true;
 
@@ -47,12 +46,13 @@ public class InventoryUISettings : MonoBehaviour
     public float panelFadeDuration = 0.5f;
     [Tooltip("Met l'alpha a 0 au demarrage.")]
     public bool setAlphaToZeroOnStart = true;
-    [Tooltip("Ajoute un CanvasGroup si manquant.")]
-    public bool addCanvasGroupIfMissing = true;
+    [Tooltip("Compatibilite scene. Un CanvasGroup doit etre configure dans la scene.")]
+    public bool addCanvasGroupIfMissing;
     [Tooltip("Desactive les raycasts quand cache.")]
     public bool disableRaycastsWhenHidden = true;
 
-    private Coroutine fadeRoutine;
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private UiPanel uiPanel;
 
     private void Awake()
     {
@@ -120,6 +120,11 @@ public class InventoryUISettings : MonoBehaviour
                 cursorController.repeatInterval = repeatInterval;
                 cursorController.wrap = wrapCursor;
             }
+
+            // Le cadre global et son input concurrencent les cursors embarques dans les slots.
+            cursorController.cursor = null;
+            cursorController.allowInput = false;
+            cursorController.enabled = false;
         }
     }
 
@@ -129,6 +134,13 @@ public class InventoryUISettings : MonoBehaviour
         ResolveCursorController();
         if (inventoryPanel == null)
         {
+            return;
+        }
+
+        UiPanel managedPanel = GetUiPanel();
+        if (managedPanel != null)
+        {
+            managedPanel.Hide(true);
             return;
         }
 
@@ -152,16 +164,11 @@ public class InventoryUISettings : MonoBehaviour
             return;
         }
 
-        inventoryPanel.SetActive(true);
-        CanvasGroup canvasGroup = GetCanvasGroup();
-        if (canvasGroup != null)
+        UiPanel managedPanel = GetUiPanel();
+        if (managedPanel != null)
         {
-            canvasGroup.alpha = 0f;
-            if (disableRaycastsWhenHidden)
-            {
-                canvasGroup.interactable = false;
-                canvasGroup.blocksRaycasts = false;
-            }
+            managedPanel.Show();
+            return;
         }
 
         FadePanelTo(1f, panelFadeDuration);
@@ -174,18 +181,10 @@ public class InventoryUISettings : MonoBehaviour
             return;
         }
 
-        if (!CanRunCoroutines())
+        UiPanel managedPanel = GetUiPanel();
+        if (managedPanel != null)
         {
-            CanvasGroup canvasGroup = GetCanvasGroup();
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-                if (disableRaycastsWhenHidden)
-                {
-                    canvasGroup.interactable = false;
-                    canvasGroup.blocksRaycasts = false;
-                }
-            }
+            managedPanel.Hide();
             return;
         }
 
@@ -215,41 +214,12 @@ public class InventoryUISettings : MonoBehaviour
 
     public void HideCursor()
     {
-        if (slotCursor != null)
-        {
-            if (slotCursor.GetComponent<CursorController>() == null)
-            {
-                slotCursor.gameObject.SetActive(false);
-            }
-        }
+        if (slotCursor != null) slotCursor.gameObject.SetActive(false);
     }
 
     public RectTransform EnsureSlotCursor(Transform parent)
     {
-        ResolveCursorController();
-        if (slotCursor != null)
-        {
-            return slotCursor;
-        }
-
-        if (!createCursorIfMissing || parent == null)
-        {
-            return null;
-        }
-
-        GameObject cursorObject = new GameObject("InventoryPanel_SlotCursor", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        RectTransform rect = cursorObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        Image image = cursorObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.25f);
-        image.raycastTarget = false;
-        image.sprite = RuntimeUiSpriteUtility.SolidSprite;
-        image.type = Image.Type.Simple;
-        slotCursor = rect;
-        return rect;
+        return null;
     }
 
     private CanvasGroup GetCanvasGroup()
@@ -259,13 +229,23 @@ public class InventoryUISettings : MonoBehaviour
             return null;
         }
 
-        CanvasGroup canvasGroup = inventoryPanel.GetComponent<CanvasGroup>();
-        if (canvasGroup == null && addCanvasGroupIfMissing)
+        if (canvasGroup == null) canvasGroup = inventoryPanel.GetComponent<CanvasGroup>();
+        return canvasGroup;
+    }
+
+    private UiPanel GetUiPanel()
+    {
+        if (inventoryPanel == null)
         {
-            canvasGroup = inventoryPanel.AddComponent<CanvasGroup>();
+            return null;
         }
 
-        return canvasGroup;
+        if (uiPanel == null)
+        {
+            uiPanel = inventoryPanel.GetComponent<UiPanel>();
+        }
+
+        return uiPanel;
     }
 
     private void FadePanelTo(float targetAlpha, float duration)
@@ -276,73 +256,7 @@ public class InventoryUISettings : MonoBehaviour
             return;
         }
 
-        if (!CanRunCoroutines())
-        {
-            canvasGroup.alpha = targetAlpha;
-            if (disableRaycastsWhenHidden)
-            {
-                bool visible = targetAlpha > 0.001f;
-                canvasGroup.interactable = visible;
-                canvasGroup.blocksRaycasts = visible;
-            }
-            return;
-        }
-
-        if (fadeRoutine != null)
-        {
-            StopCoroutine(fadeRoutine);
-        }
-
-        float startAlpha = canvasGroup.alpha;
-        if (duration <= 0f)
-        {
-            canvasGroup.alpha = targetAlpha;
-            if (disableRaycastsWhenHidden)
-            {
-                bool visible = targetAlpha > 0.001f;
-                canvasGroup.interactable = visible;
-                canvasGroup.blocksRaycasts = visible;
-            }
-            return;
-        }
-
-        fadeRoutine = StartCoroutine(FadeRoutine(canvasGroup, startAlpha, targetAlpha, duration));
-    }
-
-    private IEnumerator FadeRoutine(CanvasGroup canvasGroup, float startAlpha, float targetAlpha, float duration)
-    {
-        if (canvasGroup == null)
-        {
-            yield break;
-        }
-
-        float time = 0f;
-        if (disableRaycastsWhenHidden)
-        {
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
-
-        while (time < duration)
-        {
-            time += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(time / duration);
-            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            yield return null;
-        }
-
-        canvasGroup.alpha = targetAlpha;
-        if (disableRaycastsWhenHidden)
-        {
-            bool visible = targetAlpha > 0.001f;
-            canvasGroup.interactable = visible;
-            canvasGroup.blocksRaycasts = visible;
-        }
-    }
-
-    private bool CanRunCoroutines()
-    {
-        return isActiveAndEnabled && gameObject.activeInHierarchy;
+        UIManager.TransitionCanvasGroup(this, canvasGroup, targetAlpha > 0.001f, duration);
     }
 
 #if UNITY_EDITOR

@@ -456,6 +456,8 @@ public static class NetcodePrefabRegistry
             return null;
         }
 
+        WorldPickupUtility.EnsureDefaultBoxCollider(instance);
+
         if (withLootContainer)
         {
             WorldPickupUtility.EnsurePickupInfrastructure(instance);

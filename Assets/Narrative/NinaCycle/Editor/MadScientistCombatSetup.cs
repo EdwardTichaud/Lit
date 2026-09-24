@@ -324,7 +324,7 @@ public static class MadScientistCombatSetup
         EnemyController brain = Ensure<EnemyController>(root);
         var data = info.SourceData;
         data.enemyEncounterOptions.startAsGhost = true;
-        data.enemyEncounterOptions.requiredKnowledge = AssetDatabase.LoadAssetAtPath<KnowledgeSO>("Assets/Narrative/NinaCycle/Data/Knowledge_ExistenceDesChimeres.asset");
+        data.enemyEncounterOptions.requiredKnowledge = null;
         if (string.IsNullOrEmpty(data.enemyEncounterOptions.introductionLine))
             data.enemyEncounterOptions.introductionLine = "Vous n'auriez jamais dû venir ici...";
         data.enemyDeathOptions.enabled = true;

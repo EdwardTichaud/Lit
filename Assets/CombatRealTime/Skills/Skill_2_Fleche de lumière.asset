@@ -13,12 +13,22 @@ MonoBehaviour:
   m_Name: "Skill_2_Fleche de lumi\xE8re"
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
   enemyImpact:
+    requireGroundedTarget: 0
     offset: {x: 0, y: 1, z: 1.3}
     radius: 1.4
     arcDegrees: 110
     targetMask:
       serializedVersion: 2
       m_Bits: 4294967295
+  enemyAttackFeedback:
+    damageVfx: {fileID: 0}
+    damageAudio: {fileID: 0}
+    guardVfx: {fileID: 0}
+    guardAudio: {fileID: 0}
+    counterVfx: {fileID: 0}
+    counterAudio: {fileID: 0}
+    height: 1.2
+    lifetimeSeconds: 3
   skillName: "Fl\xEAche de lumi\xE8re"
   description: 
   icon: {fileID: 21300000, guid: 2c04f4986ebc72e48a8b0c3eb2e42db2, type: 3}
@@ -67,7 +77,7 @@ MonoBehaviour:
       normalizedStartTime: 0
   vfxCues:
   - displayName: Bow Charge
-    prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
+    prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
     audioClip: {fileID: 0}
     delivery: 2
     holdAtCasterSeconds: 0
@@ -87,21 +97,6 @@ MonoBehaviour:
       lookOffsetKick: {x: 0, y: 0.015, z: 0.14}
       fieldOfViewKick: -0.8
       recoverySharpness: 24
-    screenWave:
-      enabled: 1
-      settings:
-        origin: {x: 0.5, y: 0.5}
-        direction: {x: 0, y: 0}
-        reverse: 0
-        frequency: 12
-        propagationSpeed: 2
-        amplitude: 0.09
-        duration: 0.25
-        falloff: 5
-        fadeOutDuration: 0.15
-        highlightIntensity: 0.85
-        edgeContrast: 2.7
-        highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1}
     additionalImpactVfx: {fileID: 0}
     additionalImpactAudio: {fileID: 11400000, guid: a1000000000000000000000000000004, type: 2}
   retreatImpulse:
@@ -167,10 +162,8 @@ MonoBehaviour:
     minimumLandingSpeed: 4
     maximumAirborneSeconds: 2.5
     enableHomingRush: 0
-    lockRushDestination: 0
     rushMaximumSpeed: 14
-    rushAcceleration: 46
-    rushDeceleration: 62
+    rushImpulseDuration: 0.35
     rushStoppingDistance: 1.25
     rushCollisionSkin: 0.04
     rushBlockingMask:

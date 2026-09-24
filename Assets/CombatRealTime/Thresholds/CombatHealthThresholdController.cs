@@ -54,6 +54,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private CombatThresholdQteInput expectedQteInput;
     private bool waitingForExpectedRelease;
     private bool playerLockHeld;
+    private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private bool failureCompletionRequested;
     private bool successResultResolved;
     private bool thresholdKillApplied;
@@ -268,7 +269,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         combatManager.SetCinematicSequenceActive(true);
         // A threshold is in-place and owns no virtual camera. Keep UCC's look
         // input alive while its movement lock still rejects locomotion.
-        playerLockHeld = combatManager.TryLockPlayerForCinematic(disableGameplayInput: false);
+        playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock, disableGameplayInput: false);
         if (!ApplyStagePose(playerPosition, playerRotation, enemyRotation, out string placementError))
         {
             RestoreCombatOwnership();
@@ -351,6 +352,22 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     }
 
     /// <summary>Called by the authored player Animation Event QTE(string input).</summary>
+    public bool AcceptsQteEvent(AnimationEvent source)
+    {
+        if (source == null || !source.isFiredByAnimator || state != SequenceState.PlayingSequence ||
+            combatManager == null || combatManager.PlayerAnimator == null) return false;
+        var step = GetCurrentStep();
+        if (step == null || source.animatorClipInfo.clip != step.qtePresentationClip) return false;
+        var animator = combatManager.PlayerAnimator;
+        var current = animator.GetCurrentAnimatorStateInfo(0);
+        var next = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
+        // Do not accept an event from a previous step fading out of the same generic state.
+        if (animator.IsInTransition(0) && current.fullPathHash == next.fullPathHash) return false;
+        var visible = animator.IsInTransition(0) ? next : current;
+        return source.animatorStateInfo.fullPathHash == visible.fullPathHash &&
+            visible.IsName(activeSequence.PlayerQteStateName);
+    }
+
     public void OpenQte(string input)
     {
         if (state != SequenceState.PlayingSequence)
@@ -684,7 +701,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         combatManager?.SetCinematicSequenceActive(false);
         if (playerLockHeld)
         {
-            combatManager?.UnlockPlayerAfterCinematic();
+            playerLock?.Dispose();
             playerLockHeld = false;
         }
         InputModeCoordinator.Exit(this);

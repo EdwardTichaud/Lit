@@ -1,5 +1,13 @@
 # Input, UCC et caméra
 
+## Verrous UCC possedes et restitution des actions
+
+TryAcquireExternalLock(owner, out handle, ...) remplace BeginExternalLock/EndExternalLock. Chaque ExternalLockHandle est lie a son bridge et ne peut etre libere qu'une fois par Dispose. Un handle conserve d'un ancien acteur ou d'une ancienne zone ne libere jamais un verrou nouveau. Les options de suppression d'input sont agregees entre proprietaires, y compris lors d'une acquisition imbriquee.
+
+SquadCharacterController et RealTimeCombatManager transmettent ces handles aux cinematiques, sequences narratives, echelles et transitions d'age. Les slots planar motion et les impulsions conservent leur propre handle. Desactiver un proprietaire libere sa ressource, pas les verrous des autres. L'invalidation de scene rend les handles anciens inertes.
+
+La generation PlayerActionPresentationController accompagne la roulade et ses protections. La restitution demande la reconciliation des inputs tenus apres liberation effective ; UI, traversee et cinematique encore actives restent bloquantes. Une fin d'action ne teleporte pas, ne supprime pas la chute et ne redemarre pas un combo interrompu. La fin normale d'un rebond conserve sa trajectoire legitime jusqu'au sol ; son interruption retire le pilotage restant sans remettre la verticale a zero.
+
 ## Reglages de locomotion avant affectation Squad
 
 Les blocs playerSettings des quatre fiches ont ete reserialises avec Unity :

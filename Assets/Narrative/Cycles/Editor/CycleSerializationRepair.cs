@@ -55,7 +55,7 @@ public static class CycleSerializationRepair
         EditorUtility.SetDirty(data);
         AssetDatabase.SaveAssetIfDirty(data);
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-        if (!data.enemyEncounterOptions.startAsGhost || !data.enemyDeathOptions.enabled || data.enemyEncounterOptions.requiredKnowledge == null)
+        if (!data.enemyEncounterOptions.startAsGhost || !data.enemyDeathOptions.enabled || data.enemyEncounterOptions.requiredKnowledge != null)
             throw new InvalidOperationException("Encounter options did not survive Unity serialization.");
     }
 }

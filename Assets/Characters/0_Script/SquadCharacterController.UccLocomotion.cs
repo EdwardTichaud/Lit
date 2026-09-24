@@ -116,16 +116,18 @@ public partial class SquadCharacterController
         return bridge.SetFlightInput(worldInput, boost, verticalInput);
     }
 
-    public bool TryBeginUccExternalLock(bool disableGameplayInput = true, bool stopActiveAbilities = false)
+    public bool TryBeginUccExternalLock(object owner, out LitOpsiveLocomotionBridge.ExternalLockHandle handle, bool disableGameplayInput = true, bool stopActiveAbilities = false)
     {
         LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
-        return bridge != null && bridge.BeginExternalLock(disableGameplayInput, stopActiveAbilities);
+        handle = null;
+        return bridge != null && bridge.TryAcquireExternalLock(owner, out handle, disableGameplayInput, stopActiveAbilities);
     }
 
-    public bool TryBeginUccProgressiveStop(bool disableGameplayInput = true, bool stopActiveAbilities = false)
+    public bool TryBeginUccProgressiveStop(object owner, out LitOpsiveLocomotionBridge.ExternalLockHandle handle, bool disableGameplayInput = true, bool stopActiveAbilities = false)
     {
         LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
-        return bridge != null && bridge.BeginExternalLockWithProgressiveStop(disableGameplayInput, stopActiveAbilities);
+        handle = null;
+        return bridge != null && bridge.TryAcquireExternalLock(owner, out handle, disableGameplayInput, stopActiveAbilities, progressiveStop: true);
     }
 
     public bool IsUccProgressiveStopComplete(float velocityThreshold)
@@ -137,15 +139,6 @@ public partial class SquadCharacterController
     public void CompleteUccProgressiveStop()
     {
         GetUccLocomotionBridge()?.CompleteProgressiveStop();
-    }
-
-    public void EndUccExternalLock()
-    {
-        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
-        if (bridge != null)
-        {
-            bridge.EndExternalLock();
-        }
     }
 
     public bool TrySetUccExternalPositionAndRotation(Vector3 position, Quaternion rotation, bool stopActiveAbilities = true)
