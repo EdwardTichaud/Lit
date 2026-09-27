@@ -61,8 +61,16 @@ public sealed class CycleDefinition : ScriptableObject
     public float completionPresentationTimeout = 15f;
     public bool HasSteps => steps != null && steps.Length > 0;
     public string StepKey(string id) => StateKey + ".step." + id;
-    public string FactKey(string id) => StateKey + ".defeat." + id;
+    public string FactKey(string id) => FactKey(CycleStepKind.EnemyDefeated, id);
+    public string FactKey(CycleStepKind kind, string id) => StateKey + ".fact." + kind.ToString().ToLowerInvariant() + "." + id;
+    public string MigrationKey => StateKey + ".migration";
+    public string RewardKey(string stepId, int index) => StateKey + ".reward." + stepId + "." + index;
     public CycleStep FindStep(string id) => Array.Find(steps ?? Array.Empty<CycleStep>(), step => step != null && step.id == id);
+    [Header("Migration des sauvegardes publiees")]
+    [Min(0), Tooltip("Version de migration. Zero signifie qu'aucun flag historique n'est lu par ce cycle.")]
+    public int legacyMigrationVersion;
+    [Tooltip("Conversion executee une seule fois des anciens bits vers les etapes nommees.")]
+    public CycleLegacyStepMigration[] legacyMigrations = Array.Empty<CycleLegacyStepMigration>();
     [Header("Fin partagee et scene du cycle")]
     [Min(0), Tooltip("Jalons tous requis pour terminer le cycle pour la partie entiere. Zero laisse la fin non configuree. Reutiliser les bits persistants existants.")]
     public int completionFlags;
@@ -121,7 +129,7 @@ public sealed class CycleDefinition : ScriptableObject
         if (dialogues != null) foreach (var dialogue in dialogues)
             if (dialogue != null) transitionBits |= dialogue.openedFlags | dialogue.completedFlags;
         if ((rewardBits & transitionBits) != 0) issues.Add("Reward bits must not be granted by other transitions.");
-        if (playCinematicAfterDefeat && (enemyDefeatedFlags <= 0 || cinematicCompletedFlags <= 0 ||
+        if (!HasSteps && playCinematicAfterDefeat && (enemyDefeatedFlags <= 0 || cinematicCompletedFlags <= 0 ||
             (enemyDefeatedFlags & cinematicCompletedFlags) != 0)) issues.Add("Encounter and cinematic flags must be distinct and positive.");
         return issues;
     }

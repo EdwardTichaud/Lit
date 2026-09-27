@@ -11,6 +11,12 @@ public sealed class SceneMarkerEditor : Editor
     private SerializedProperty characterDataProperty;
     private SerializedProperty itemProperty;
     private SerializedProperty ghostProperty;
+    private SerializedProperty flamePrefabProperty;
+    private SerializedProperty flameStartsLitProperty;
+    private SerializedProperty flameInteractionRadiusProperty;
+    private SerializedProperty flameInfluenceRadiusProperty;
+    private SerializedProperty flameChargeCostProperty;
+    private SerializedProperty flameIdOverrideProperty;
 
     private void OnEnable()
     {
@@ -18,6 +24,12 @@ public sealed class SceneMarkerEditor : Editor
         characterDataProperty = serializedObject.FindProperty("characterData");
         itemProperty = serializedObject.FindProperty("item");
         ghostProperty = serializedObject.FindProperty("ghost");
+        flamePrefabProperty = serializedObject.FindProperty("flamePrefab");
+        flameStartsLitProperty = serializedObject.FindProperty("flameStartsLit");
+        flameInteractionRadiusProperty = serializedObject.FindProperty("flameInteractionRadius");
+        flameInfluenceRadiusProperty = serializedObject.FindProperty("flameInfluenceRadius");
+        flameChargeCostProperty = serializedObject.FindProperty("flameChargeCost");
+        flameIdOverrideProperty = serializedObject.FindProperty("flameIdOverride");
     }
 
     public override void OnInspectorGUI()
@@ -32,6 +44,15 @@ public sealed class SceneMarkerEditor : Editor
         else if (assetType == SceneMarker.MarkerAssetType.Ghost)
         {
             EditorGUILayout.PropertyField(ghostProperty, new GUIContent("Ghost Data"));
+        }
+        else if (assetType == SceneMarker.MarkerAssetType.Flame || assetType == SceneMarker.MarkerAssetType.AncientFlame)
+        {
+            EditorGUILayout.PropertyField(flamePrefabProperty, new GUIContent("Flame Prefab"));
+            EditorGUILayout.PropertyField(flameStartsLitProperty, new GUIContent("Allumee au depart"));
+            EditorGUILayout.PropertyField(flameInteractionRadiusProperty, new GUIContent("Rayon d'interaction"));
+            EditorGUILayout.PropertyField(flameInfluenceRadiusProperty, new GUIContent("Rayon d'influence"));
+            EditorGUILayout.PropertyField(flameChargeCostProperty, new GUIContent("Cout Munin"));
+            EditorGUILayout.PropertyField(flameIdOverrideProperty, new GUIContent("ID de sauvegarde"));
         }
         else
         {
@@ -54,6 +75,14 @@ public sealed class SceneMarkerEditor : Editor
                 ? "Assigne un GhostData."
                 : "Bake in Scene instancie le World Prefab et lie le GhostData au GhostController de la scene.",
                 marker.Ghost == null ? MessageType.Info : MessageType.None);
+            DrawBakeButton(marker);
+        }
+        else if (marker.UsesFlame)
+        {
+            EditorGUILayout.HelpBox(marker.FlamePrefab == null
+                ? "Assigne un prefab contenant un composant Flame."
+                : "Bake in Scene instancie et configure la Flame avec l'etat, les rayons, le cout Munin et l'ID du marker.",
+                marker.FlamePrefab == null ? MessageType.Info : MessageType.None);
             DrawBakeButton(marker);
         }
         else if (marker.CharacterData == null)
@@ -166,6 +195,12 @@ public sealed class SceneMarkerEditor : Editor
         if (marker.UsesGhost)
         {
             BakeGhostMarker(marker);
+            return;
+        }
+
+        if (marker.UsesFlame)
+        {
+            BakeFlameMarker(marker);
             return;
         }
 
@@ -321,6 +356,43 @@ public sealed class SceneMarkerEditor : Editor
         root.name = string.IsNullOrWhiteSpace(ghostData.displayName) ? ghostData.name : ghostData.displayName;
         PromptToAddOutlineTargetIfMissing(root);
         Undo.DestroyObjectImmediate(marker);
+        EditorSceneManager.MarkSceneDirty(root.scene);
+        Selection.activeGameObject = root;
+    }
+
+    private static void BakeFlameMarker(SceneMarker marker)
+    {
+        GameObject prefab = marker.FlamePrefab;
+        if (prefab == null) return;
+        GameObject root = marker.gameObject;
+        GameObject previous = marker.BakedFlameInstance;
+        if (previous != null && previous.transform.parent == root.transform)
+        {
+            Undo.DestroyObjectImmediate(previous);
+        }
+
+        GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;
+        if (instance == null) return;
+        instance.transform.SetParent(root.transform, false);
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = prefab.transform.localRotation;
+        instance.transform.localScale = prefab.transform.localScale;
+        Flame flame = instance.GetComponentInChildren<Flame>(true);
+        if (flame == null)
+        {
+            Undo.DestroyObjectImmediate(instance);
+            Debug.LogError("[SceneMarker] Le prefab de Flame doit contenir un composant Flame.", root);
+            return;
+        }
+
+        Undo.RecordObject(marker, "Bake Flame Scene Marker");
+        Undo.RecordObject(flame, "Configure Flame Scene Marker");
+        marker.SetBakedFlameInstance(instance);
+        marker.ConfigureBakedFlame(flame);
+        root.name = marker.UsesAncientFlame ? "Ancient Flame" : "Flame";
+        EditorUtility.SetDirty(marker);
+        EditorUtility.SetDirty(flame);
+        PromptToAddOutlineTargetIfMissing(root);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
     }

@@ -21,7 +21,8 @@ public sealed class CycleProgressionService : MonoBehaviour
     private bool reconciling, dirty = true, messagesRegistered, receivedServerState;
     public bool IsReady => Authority || receivedServerState && !JoinSyncSystem.IsGameplayBlocked;
     private string previousState;
-    private float nextDependencyCheck;
+    private string pendingRewardCycle, pendingRewardStep;
+    private float nextDependencyCheck, nextMailboxCheck;
     public bool Authority => NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening || NetworkManager.Singleton.IsServer;
     public IReadOnlyList<CycleDefinition> Definitions => definitions;
     [Serializable] private sealed class Packet { public List<WorldVariableSnapshot> values; public string rewardCycle; public string rewardStep; }
@@ -94,12 +95,13 @@ public sealed class CycleProgressionService : MonoBehaviour
             if (step != null && step.terminal) { terminal = true; if (!IsStepCompleted(cycle, step.id)) return false; }
         return terminal;
     }
-    public bool HasDefeatFact(CycleDefinition cycle, string sourceId)
+    public bool HasDefeatFact(CycleDefinition cycle, string sourceId) => HasFact(cycle, CycleStepKind.EnemyDefeated, sourceId);
+    public bool HasFact(CycleDefinition cycle, CycleStepKind kind, string sourceId)
     {
         if (cycle == null) return false;
-        if (Read(cycle.FactKey(sourceId)) != 0) return true;
+        if (Read(cycle.FactKey(kind, sourceId)) != 0) return true;
         foreach (var step in cycle.steps ?? Array.Empty<CycleStep>())
-            if (step != null && step.kind == CycleStepKind.EnemyDefeated && step.sourceId == sourceId && IsStepCompleted(cycle, step.id)) return true;
+            if (step != null && step.kind == kind && step.sourceId == sourceId && IsStepCompleted(cycle, step.id)) return true;
         return false;
     }
     public bool IsCompletedScene(string sceneName)
@@ -117,8 +119,21 @@ public sealed class CycleProgressionService : MonoBehaviour
         foreach (var definition in Resources.LoadAll<CycleDefinition>("Narrative"))
             if (definition.cycleSceneName == sceneName &&
                 (state.TryGetInt(definition.StateKey + ".completed", out int completed) && completed != 0 ||
+                 HasTerminalSteps(state, definition) ||
                  state.TryGetInt(definition.StateKey, out int flags) && definition.IsCompleted(flags))) return true;
         return false;
+    }
+    private static bool HasTerminalSteps(WorldRulesStateManager state, CycleDefinition definition)
+    {
+        if (definition == null || !definition.HasSteps) return false;
+        bool terminal = false;
+        foreach (var step in definition.steps)
+        {
+            if (step == null || !step.terminal) continue;
+            terminal = true;
+            if (!state.TryGetInt(definition.StepKey(step.id), out int value) || value == 0) return false;
+        }
+        return terminal;
     }
     public CycleStatus GetStatus(CycleDefinition cycle)
     {
@@ -169,7 +184,9 @@ public sealed class CycleProgressionService : MonoBehaviour
         RegisterDefinition(cycle);
         Refresh();
         if (IsCompleted(cycle)) return false;
-        if (kind == CycleStepKind.EnemyDefeated && Read(cycle.FactKey(sourceId)) == 0) rules.SetInt(cycle.FactKey(sourceId), 1);
+        // Facts are deliberately persisted before prerequisites: a scene can load after the
+        // event and the ordered stages will reconcile when their requirements become true.
+        if (Read(cycle.FactKey(kind, sourceId)) == 0) rules.SetInt(cycle.FactKey(kind, sourceId), 1);
         // Capture eligible steps before applying this event. One click cannot traverse an entire chain.
         var eligible = new List<CycleStep>();
         foreach (var step in cycle.steps)
@@ -182,12 +199,8 @@ public sealed class CycleProgressionService : MonoBehaviour
     {
         if (IsStepCompleted(cycle, step.id)) return;
         rules.SetInt(cycle.StepKey(step.id), 1);
-        if (notify && step.legacyWriteFlags != 0) rules.SetInt(cycle.StateKey, Read(cycle.StateKey) | step.legacyWriteFlags);
-        if (notify && step.rewardSkill != null)
-        {
-            SkillUnlockPanel.TryShow(step.rewardSkill);
-            Broadcast(cycle.cycleId, step.id);
-        }
+        if (step.legacyWriteFlags != 0 && cycle.legacyMigrationVersion == 0) rules.SetInt(cycle.StateKey, Read(cycle.StateKey) | step.legacyWriteFlags);
+        ApplyRewards(cycle, step, notify);
     }
     public void Refresh()
     {
@@ -198,10 +211,7 @@ public sealed class CycleProgressionService : MonoBehaviour
         {
             if (Authority)
             {
-                foreach (var cycle in definitions)
-                    foreach (var step in cycle.steps ?? Array.Empty<CycleStep>())
-                        if (step != null && step.legacyAnyFlags != 0 && (Read(cycle.StateKey) & step.legacyAnyFlags) != 0)
-                            Complete(cycle, step, false);
+                foreach (var cycle in definitions) ApplyMigration(cycle);
                 // Bounded fixed point: persistent facts may unlock several ordered steps or another cycle.
                 int limit = 1;
                 foreach (var cycle in definitions) limit += cycle.steps?.Length ?? 0;
@@ -214,7 +224,7 @@ public sealed class CycleProgressionService : MonoBehaviour
                         {
                             if (!IsStepActive(cycle, step)) continue;
                             bool fact = step.kind == CycleStepKind.Knowledge && step.knowledge != null && KnowledgeManager.Instance != null && KnowledgeManager.Instance.HasKnowledge(step.knowledge) ||
-                                step.kind == CycleStepKind.EnemyDefeated && Read(cycle.FactKey(step.sourceId)) != 0;
+                                step.kind != CycleStepKind.Knowledge && HasFact(cycle, step.kind, step.sourceId);
                             if (fact) { Complete(cycle, step, true); changed = true; }
                         }
                         if (IsCompleted(cycle) && Read(cycle.StateKey + ".completed") == 0)
@@ -223,15 +233,130 @@ public sealed class CycleProgressionService : MonoBehaviour
                     if (!changed) break;
                 }
             }
+            if (Authority && Time.unscaledTime >= nextMailboxCheck)
+            {
+                nextMailboxCheck = Time.unscaledTime + .5f;
+                DepositMailbox();
+            }
             string current = JsonUtility.ToJson(Capture());
             if (current != previousState)
             {
                 previousState = current;
-                if (Authority) Broadcast();
+                if (Authority) Broadcast(pendingRewardCycle, pendingRewardStep);
+                pendingRewardCycle = pendingRewardStep = null;
                 Changed?.Invoke();
             }
         }
         finally { reconciling = false; }
+    }
+    private void ApplyMigration(CycleDefinition cycle)
+    {
+        if (cycle == null || cycle.legacyMigrationVersion <= 0 || Read(cycle.MigrationKey) >= cycle.legacyMigrationVersion) return;
+        int flags = Read(cycle.StateKey); // retained for diagnostics; never read again once version is stored.
+        foreach (var migration in cycle.legacyMigrations ?? Array.Empty<CycleLegacyStepMigration>())
+        {
+            if (migration == null || string.IsNullOrWhiteSpace(migration.stepId)) continue;
+            bool all = migration.allFlags == 0 || (flags & migration.allFlags) == migration.allFlags;
+            bool any = migration.anyFlags == 0 || (flags & migration.anyFlags) != 0;
+            var step = cycle.FindStep(migration.stepId);
+            if (all && any && step != null) Complete(cycle, step, false);
+        }
+        rules.SetInt(cycle.MigrationKey, cycle.legacyMigrationVersion);
+    }
+
+    private void ApplyRewards(CycleDefinition cycle, CycleStep step, bool notify)
+    {
+        if (cycle == null || step == null) return;
+        var rewards = step.rewards ?? Array.Empty<CycleReward>();
+        // The former single Skill field remains readable for released non-migrated assets.
+        int count = rewards.Length + (step.rewardSkill != null && rewards.Length == 0 ? 1 : 0);
+        for (int index = 0; index < count; index++)
+        {
+            CycleReward reward = index < rewards.Length ? rewards[index] : new CycleReward { kind = CycleRewardKind.Skill, skill = step.rewardSkill };
+            if (reward == null) continue;
+            string key = cycle.RewardKey(step.id, index);
+            if (Read(key) != 0) continue;
+            bool applied = ApplyReward(cycle, step, index, reward);
+            if (!applied) continue;
+            rules.SetInt(key, 1);
+            if (notify)
+            {
+                if (reward.kind == CycleRewardKind.Skill && reward.skill != null) SkillUnlockPanel.TryShow(reward.skill);
+                pendingRewardCycle = cycle.cycleId;
+                pendingRewardStep = step.id;
+            }
+        }
+    }
+
+    private bool ApplyReward(CycleDefinition cycle, CycleStep step, int index, CycleReward reward)
+    {
+        switch (reward.kind)
+        {
+            case CycleRewardKind.Skill:
+                if (reward.skill == null) return false;
+                return true;
+            case CycleRewardKind.Knowledge:
+                if (reward.knowledge == null) return false;
+                KnowledgeReveal.Reveal(reward.knowledge, "Le groupe", cycle.cycleId + "." + step.id);
+                return true;
+            case CycleRewardKind.Item:
+                if (reward.item == null || reward.quantity <= 0) return false;
+                EnqueueMailbox(cycle.RewardKey(step.id, index));
+                return true;
+            case CycleRewardKind.WorldVariable:
+            case CycleRewardKind.Activation:
+                if (string.IsNullOrWhiteSpace(reward.key)) return false;
+                if (reward.kind == CycleRewardKind.Activation || reward.valueType == WorldVariableValueType.Bool) rules.SetBool(reward.key, reward.kind == CycleRewardKind.Activation || reward.boolValue);
+                else if (reward.valueType == WorldVariableValueType.Int) rules.SetInt(reward.key, reward.intValue);
+                else if (reward.valueType == WorldVariableValueType.Float) rules.SetFloat(reward.key, reward.floatValue);
+                else rules.SetString(reward.key, reward.stringValue);
+                return true;
+        }
+        return false;
+    }
+
+    [Serializable] private sealed class Mailbox { public List<string> rewardKeys = new List<string>(); }
+    private const string MailboxKey = "narrative.rewards.maison.mailbox";
+    private Mailbox ReadMailbox()
+    {
+        if (rules == null || !rules.TryGetString(MailboxKey, out string json) || string.IsNullOrWhiteSpace(json)) return new Mailbox();
+        return JsonUtility.FromJson<Mailbox>(json) ?? new Mailbox();
+    }
+    private void WriteMailbox(Mailbox mailbox) => rules.SetString(MailboxKey, JsonUtility.ToJson(mailbox ?? new Mailbox()));
+    private void EnqueueMailbox(string rewardKey)
+    {
+        var mailbox = ReadMailbox();
+        if (!mailbox.rewardKeys.Contains(rewardKey)) { mailbox.rewardKeys.Add(rewardKey); WriteMailbox(mailbox); }
+    }
+    private void DepositMailbox()
+    {
+        if (Maison.Instance == null) return;
+        var mailbox = ReadMailbox();
+        if (mailbox.rewardKeys.Count == 0) return;
+        var containers = Maison.Instance.ResolveMaisonLootContainers(null);
+        Maison.Instance.EnsureHomeContainers(containers);
+        bool changed = false;
+        for (int i = mailbox.rewardKeys.Count - 1; i >= 0; i--)
+        {
+            if (!TryResolveItemReward(mailbox.rewardKeys[i], out CycleReward reward)) { mailbox.rewardKeys.RemoveAt(i); changed = true; continue; }
+            int remaining = Mathf.Max(1, reward.quantity);
+            foreach (var chest in containers)
+            {
+                if (chest == null || remaining <= 0) continue;
+                remaining -= chest.AddItemsWithCapacity(reward.item, remaining);
+            }
+            if (remaining == 0) { mailbox.rewardKeys.RemoveAt(i); changed = true; }
+        }
+        if (changed) WriteMailbox(mailbox);
+    }
+    private bool TryResolveItemReward(string rewardKey, out CycleReward result)
+    {
+        result = null;
+        foreach (var cycle in definitions) foreach (var step in cycle.steps ?? Array.Empty<CycleStep>())
+            if (step != null) for (int i = 0; i < (step.rewards?.Length ?? 0); i++)
+                if (cycle.RewardKey(step.id, i) == rewardKey && step.rewards[i] != null && step.rewards[i].kind == CycleRewardKind.Item)
+                { result = step.rewards[i]; return true; }
+        return false;
     }
     private void OnVariablesChanged() { dirty = true; }
     private void OnKnowledge(KnowledgeSO _) { dirty = true; Changed?.Invoke(); }
@@ -311,7 +436,14 @@ public sealed class CycleProgressionService : MonoBehaviour
         foreach (var value in packet.values)
             if (value != null && value.Key.StartsWith("narrative.", StringComparison.Ordinal)) combined.Add(value);
         rules.ApplyVariables(combined);
-        if (show && reward.rewardSkill != null) SkillUnlockPanel.TryShow(reward.rewardSkill);
+        if (show) ShowRewardNotification(reward);
         Refresh();
+    }
+    private static void ShowRewardNotification(CycleStep step)
+    {
+        if (step == null) return;
+        if (step.rewardSkill != null) SkillUnlockPanel.TryShow(step.rewardSkill);
+        foreach (var reward in step.rewards ?? Array.Empty<CycleReward>())
+            if (reward != null && reward.kind == CycleRewardKind.Skill && reward.skill != null) SkillUnlockPanel.TryShow(reward.skill);
     }
 }

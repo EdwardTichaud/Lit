@@ -26,7 +26,7 @@ public sealed class CycleTests
     }
 
     [Test]
-    public void ScarDisappearanceUsesItsExistingRewardMilestone()
+    public void ScarDisappearanceUsesItsNamedRewardStep()
     {
         var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
         var dialogue = definition.FindDialogue("scar");
@@ -34,10 +34,13 @@ public sealed class CycleTests
         Assert.That(dialogue.disappearanceDelay, Is.Zero);
         Assert.That(definition.ResolveDialogueSeconds(dialogue), Is.EqualTo(2f));
         Assert.That(definition.ResolveDialogueSeconds(definition.FindDialogue("nina")), Is.EqualTo(4f));
-        Assert.That(dialogue.HasCompleted(7), Is.False);
-        Assert.That(dialogue.HasCompleted(8), Is.True);
-        Assert.That(definition.IsCompleted(8), Is.True);
-        Assert.That(definition.IsCompleted(7), Is.False);
+        var step = definition.FindStep("scar_reward");
+        Assert.That(step, Is.Not.Null);
+        Assert.That(step.terminal, Is.True);
+        Assert.That(step.rewards, Has.Length.EqualTo(1));
+        Assert.That(step.rewards[0].kind, Is.EqualTo(CycleRewardKind.Skill));
+        Assert.That(dialogue.HasCompleted(8), Is.False);
+        Assert.That(definition.IsCompleted(8), Is.False);
         Assert.That(definition.cycleSceneName, Is.EqualTo("District_1_Enigme_Ghost_Nina"));
         Assert.That(definition.FindDialogue("nina").disappearAfterCompletion, Is.False);
     }
@@ -115,6 +118,29 @@ public sealed class CycleTests
             Assert.That(interaction.Ghost.IsDialogueDisappearanceComplete, Is.False);
         }
         finally { Object.DestroyImmediate(root); Object.DestroyImmediate(definition); }
+    }
+
+    [Test]
+    public void DeactivationBindingHidesTargetWhenItsConditionMatches()
+    {
+        var root = new GameObject("Cycle deactivation fixture");
+        var target = new GameObject("Target");
+        target.transform.SetParent(root.transform);
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        try
+        {
+            var cycle = root.AddComponent<CycleController>();
+            cycle.definition = definition;
+            cycle.deactivations = new[] { new CycleDeactivationBinding { target = target } };
+            var apply = typeof(CycleController).GetMethod("ApplyPresentation", Private);
+            apply.Invoke(cycle, null);
+            Assert.That(target.activeSelf, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(definition);
+        }
     }
 
     [TestCase(false)]
@@ -210,6 +236,13 @@ public sealed class CycleTests
             Assert.That(cycle.encounterEnemy, Is.InstanceOf<ICycleCinematicBlocker>());
             Assert.That(cycle.poses[0].conditionBoolParameter, Is.EqualTo("isDead"));
             Assert.That(cycle.poses[0].condition.knowledge.Length, Is.EqualTo(2));
+            Assert.That(cycle.activations, Has.Length.EqualTo(2));
+            foreach (var activation in cycle.activations)
+            {
+                Assert.That(activation.condition.anyFlags, Is.Zero);
+                Assert.That(activation.condition.requirements.conditions, Has.Length.EqualTo(1));
+                Assert.That(activation.condition.requirements.conditions[0].stepId, Is.EqualTo("nina_spoken"));
+            }
         }
         finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene); }
     }
@@ -221,8 +254,9 @@ public sealed class CycleTests
         var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
         Assert.That(definition.ValidateConfiguration(), Is.Empty);
         Assert.That(definition.StateKey, Is.EqualTo("narrative.district1.nina"));
+        Assert.That(definition.legacyMigrationVersion, Is.EqualTo(1));
         Assert.That(definition.FindDialogue("nina").openedFlags, Is.EqualTo(20));
-        Assert.That(definition.FindDialogue("scar").rewardFlag, Is.EqualTo(8));
+        Assert.That(definition.FindDialogue("scar").rewardFlag, Is.Zero);
     }
 
     [Test]

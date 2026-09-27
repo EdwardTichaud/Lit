@@ -264,6 +264,28 @@ void LitIceFrostedEdgesV3_float(
         PositionWS, FlameCenter, FlameInfluenceRadius,
         TransitionSoftness, TransitionProgress);
 
+    // This is deliberately applied after the ice/normal blend: a narrative
+    // dissolve therefore removes the same material in either visual state.
+    // A stable world-space noise produces a true dissolve rather than a flat
+    // alpha fade, while 0 is fully visible and 1 fully clipped.
+    float dissolveStrength = saturate(_DissolveStrength);
+    // DissolveScale is an authored world-space *size*, not a frequency:
+    // 10 must therefore create visibly larger islands than 1.
+    float dissolveScale = max(0.01, _DissolveScale);
+    float3 dissolvePosition = PositionWS / dissolveScale;
+    float proceduralDissolve = frac(sin(dot(dissolvePosition, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+    // Project the authored Noise on the three world planes. Sampling only XZ
+    // makes a vertical wall look almost uniform; this triplanar blend keeps
+    // the pattern readable on walls, floors and props alike.
+    float3 dissolveNormal = abs(normalize(NormalWS));
+    dissolveNormal /= max(0.0001, dissolveNormal.x + dissolveNormal.y + dissolveNormal.z);
+    float shapedDissolve =
+        SAMPLE_TEXTURE2D(_DissolveShape, sampler_DissolveShape, dissolvePosition.zy).r * dissolveNormal.x +
+        SAMPLE_TEXTURE2D(_DissolveShape, sampler_DissolveShape, dissolvePosition.xz).r * dissolveNormal.y +
+        SAMPLE_TEXTURE2D(_DissolveShape, sampler_DissolveShape, dissolvePosition.xy).r * dissolveNormal.z;
+    float dissolveNoise = lerp(proceduralDissolve, shapedDissolve, saturate(_DissolveShapeBlend));
+    clip((1.0 - dissolveStrength) - dissolveNoise + 0.0001);
+
     float3 revealedBaseColor = BaseColor.rgb * baseAppearance.rgb;
     // Autodesk Interactive converts perceptual roughness with 1 - sqrt(roughness).
     // Keep the independent scalar controls as fallbacks when a map is disabled.

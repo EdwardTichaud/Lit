@@ -106,7 +106,6 @@ public sealed partial class EnemyController
             return false;
         }
 
-        if (AnimationAnimator.transform != transform) { error = "Animator ennemi requis sur la racine"; return false; }
         error = null;
         return true;
     }
@@ -219,31 +218,15 @@ public sealed partial class EnemyController
 
     private void AnimationResolveReferences()
     {
-        // Root Animator is the current authoring convention. It owns the same
-        // transform as physics, navigation and combat, preventing a visual
-        // hierarchy from silently becoming a second movement authority.
-        Animator rootAnimator = GetComponent<Animator>();
-        if (rootAnimator != null)
+        // An Animator may live on the combat root or on its visual child. Keep
+        // an explicit valid assignment, otherwise resolve root first then the
+        // complete child hierarchy so neither authoring layout needs a dummy
+        // Animator component on the root.
+        if (AnimationAnimationRoot == null) AnimationAnimationRoot = transform;
+        if (AnimationAnimator == null ||
+            (AnimationAnimator.transform != transform && !AnimationAnimator.transform.IsChildOf(transform)))
         {
-            AnimationAnimationRoot = transform;
-            AnimationAnimator = rootAnimator;
-        }
-        else
-        {
-            // Legacy prefabs keep their child Animator contract unchanged.
-            if (AnimationAnimationRoot == null)
-            {
-                AnimationAnimationRoot = transform;
-            }
-
-            if (AnimationAnimator == null)
-            {
-                AnimationAnimator = AnimationAnimationRoot.GetComponent<Animator>();
-                if (AnimationAnimator == null)
-                {
-                    AnimationAnimator = AnimationAnimationRoot.GetComponentInChildren<Animator>(true);
-                }
-            }
+            AnimationAnimator = ResolveAnimatorInHierarchy();
         }
 
         if (AnimationLockPoint == null)
@@ -256,6 +239,15 @@ public sealed partial class EnemyController
         AnimationTimeDomain ??= GetComponent<CombatTimeDomain>();
 
         AnimationEnemyPhysicsMotor ??= GetComponent<EnemyController>();
+    }
+
+    private Animator ResolveAnimatorInHierarchy() => ResolveAnimatorInHierarchy(gameObject);
+
+    private static Animator ResolveAnimatorInHierarchy(GameObject actor)
+    {
+        if (actor == null) return null;
+        Animator rootAnimator = actor.GetComponent<Animator>();
+        return rootAnimator != null ? rootAnimator : actor.GetComponentInChildren<Animator>(true);
     }
 
     private void AnimationLogDevelopmentContractDiagnostic()
@@ -290,6 +282,24 @@ public sealed partial class EnemyController
         AnimationValidateAnimatorState(idleState);
         AnimationValidateAnimatorState("Hit");
         AnimationValidateAnimatorState("Death");
+        foreach (string parameter in EnemyAnimatorContract.RequiredParameters)
+        {
+            bool found = false;
+            foreach (AnimatorControllerParameter animatorParameter in AnimationAnimator.parameters)
+            {
+                if (animatorParameter.name == parameter)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                Debug.LogError("[CombatAnimatorContract] actor='" + name + "' controller='" +
+                               AnimationAnimator.runtimeAnimatorController.name + "' missing required parameter='" + parameter + "'.", this);
+            }
+        }
 
         // A state is required only when this enemy can actually play the
         // corresponding SkillSO. GiantJuggernaut has its own skill set and

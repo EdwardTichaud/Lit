@@ -95,9 +95,10 @@ public sealed class NinaCycleTests
     {
         var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
         var lucian = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset");
-        Assert.NotNull(definition.FindDialogue("scar").rewardSkill);
-        Assert.AreEqual("Cicatrice", definition.FindDialogue("scar").rewardSkill.SkillName);
-        Assert.IsFalse(lucian.combatSkills.Contains(definition.FindDialogue("scar").rewardSkill));
+        SkillSO cicatrice = definition.FindStep("scar_reward").rewards[0].skill;
+        Assert.NotNull(cicatrice);
+        Assert.AreEqual("Cicatrice", cicatrice.SkillName);
+        Assert.IsFalse(lucian.combatSkills.Contains(cicatrice));
     }
 
     [Test]
@@ -213,7 +214,7 @@ public sealed class NinaCycleTests
     {
         var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
         Assert.AreEqual(expected, definition.FindDialogue("nina").condition.Matches(state,
-            knowledge => knowledge == definition.knowledgeOnEnemyDefeat[0] ? existence : dilemma));
+            knowledge => knowledge == definition.FindStep("chimeras_known").knowledge ? existence : dilemma));
     }
 
     [Test]
@@ -226,20 +227,17 @@ public sealed class NinaCycleTests
         Assert.AreEqual(Item.ReadableKind.Parchment, letter.readableKind);
         Assert.Contains(definition.FindDialogue("nina").condition.knowledge[1], letter.knowledgeUnlockedOnRead);
         Assert.IsEmpty(letter.knowledgeUnlockedOnPickup);
-        Assert.IsFalse(letter.knowledgeUnlockedOnRead.Contains(definition.knowledgeOnEnemyDefeat[0]));
+        Assert.IsFalse(letter.knowledgeUnlockedOnRead.Contains(definition.FindStep("chimeras_known").knowledge));
     }
 
-    [TestCase(0, true, false)]
-    [TestCase(2, true, false)]
-    [TestCase(4, false, false)]
-    [TestCase(4, true, true)]
-    [TestCase(16, true, true)]
-    [TestCase(16, false, false)]
-    [TestCase(8, true, false)]
-    public void NinaBloodAndScarUnlockWhenDeadDialogueStartsAndSupportExistingSaves(int state, bool allKnowledgeKnown, bool expected)
+    [Test]
+    public void NinaBloodAndScarUseTheNamedNinaDialogueStep()
     {
         var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
-        Assert.AreEqual(expected, definition.FindDialogue("scar").condition.Matches(state, _ => allKnowledgeKnown));
+        var scar = definition.FindDialogue("scar");
+        Assert.AreEqual(0, scar.condition.anyFlags);
+        Assert.AreEqual(1, scar.condition.requirements.conditions.Length);
+        Assert.AreEqual("nina_spoken", scar.condition.requirements.conditions[0].stepId);
     }
 }
 #endif

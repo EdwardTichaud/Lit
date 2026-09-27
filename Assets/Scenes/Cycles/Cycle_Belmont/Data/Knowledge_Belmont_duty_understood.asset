@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Belmont_duty_understood
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 452594f58841781458e22fe6107c75c3
+  knowledgeId: belmont.duty_understood
+  title: "Le tour de la Veill\xE9e"
+  description: "\xC9tienne n\u2019a pas abandonn\xE9 \xC9lo\xEFse : il a choisi de
+    prendre son tour de Veill\xE9e."
+  category: 16
+  sourceType: 0
+  importance: 1
+  tags:
+  - belmont
+  - veillee
+  districtId: district_1
+  roomId: 
+  personId: eloise_belmont
+  lineageId: belmont
+  objectId: 
+  readableItem: {fileID: 0}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

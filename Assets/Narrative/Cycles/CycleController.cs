@@ -17,6 +17,10 @@ public sealed class CycleController : NetworkBehaviour
     public EnemyController encounterEnemy;
     public CycleInteraction[] interactions = Array.Empty<CycleInteraction>();
     public CycleActivationBinding[] activations = Array.Empty<CycleActivationBinding>();
+    [Tooltip("Objets à cacher lorsque leur condition est satisfaite. L'état est réappliqué après chargement ou synchronisation réseau.")]
+    public CycleDeactivationBinding[] deactivations = Array.Empty<CycleDeactivationBinding>();
+    [Tooltip("Objets qui se dissolvent avant d'etre desactives lorsque leur condition est satisfaite.")]
+    public CycleDissolveBinding[] disappearances = Array.Empty<CycleDissolveBinding>();
     public CyclePoseBinding[] poses = Array.Empty<CyclePoseBinding>();
     public PlayableDirector director;
     public TimelineBindingProfile bindingProfile;
@@ -27,6 +31,10 @@ public sealed class CycleController : NetworkBehaviour
     [Tooltip("Ennemis de cette scene a suspendre pendant ses sequences ; vide utilise seulement la rencontre liee.")]
     public EnemyController[] cinematicParticipants = Array.Empty<EnemyController>();
     public CycleEncounterBinding[] encounters = Array.Empty<CycleEncounterBinding>();
+    [Tooltip("Flames suivies par ce cycle. Une Flame deja allumee apres chargement valide immediatement son jalon.")]
+    public CycleFlameBinding[] flames = Array.Empty<CycleFlameBinding>();
+    [Tooltip("Repliques automatiques de l'histoire. Elles ne demandent pas une nouvelle interaction au joueur.")]
+    public CycleAutoDialogueBinding[] autoDialogues = Array.Empty<CycleAutoDialogueBinding>();
     public CycleSequenceBinding[] sequences = Array.Empty<CycleSequenceBinding>();
     private readonly HashSet<string> attemptedSequences = new HashSet<string>();
     private CycleSequenceBinding activeSequence;
@@ -54,6 +62,10 @@ public sealed class CycleController : NetworkBehaviour
     private readonly HashSet<ulong> viewers = new HashSet<ulong>();
     private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
     private readonly HashSet<CycleInteraction> presentedInteractions = new HashSet<CycleInteraction>();
+    private readonly HashSet<CycleDissolveBinding> presentedDisappearances = new HashSet<CycleDissolveBinding>();
+    private readonly Dictionary<CycleDissolveBinding, Coroutine> activeDissolves = new Dictionary<CycleDissolveBinding, Coroutine>();
+    private readonly HashSet<GhostController> observedPuzzleGhosts = new HashSet<GhostController>();
+    private readonly HashSet<CycleAutoDialogueBinding> playedAutoDialogues = new HashSet<CycleAutoDialogueBinding>();
     private bool Online => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     private bool Authority => !Online || IsSpawned && IsServer;
     private int State => rules != null && definition != null && rules.TryGetInt(definition.StateKey, out int value) ? value : 0;
@@ -62,7 +74,8 @@ public sealed class CycleController : NetworkBehaviour
         (progression == null || progression.Matches(definition, condition.requirements));
     private bool HasFlags(int flags) => flags != 0 && (State & flags) == flags;
 
-    private void OnEnable() { presentationDirty = true; ResolveRules(); }
+    private void OnEnable() { presentationDirty = true; ResolveRules(); BindGhostPuzzleEvents(); }
+    public override void OnDestroy() { UnbindGhostPuzzleEvents(); base.OnDestroy(); }
     public override void OnNetworkSpawn() { ResolveRules(); presentationDirty = true; }
     public override void OnNetworkDespawn() => OnDisable();
     private void ResolveRules()
@@ -79,11 +92,12 @@ public sealed class CycleController : NetworkBehaviour
     private void OnProgressionChanged() => presentationDirty = true;
     private void Update()
     {
+        BindGhostPuzzleEvents();
         if (Time.unscaledTime >= nextBindingCheck)
         {
             nextBindingCheck = Time.unscaledTime + .5f;
             ResolveRules();
-            if (Authority && definition != null) { BindEncounter(); BindAdditionalEncounters(); }
+            if (Authority && definition != null) { BindEncounter(); BindAdditionalEncounters(); BindFlames(); }
         }
         if (rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
         if (Online && (!IsSpawned || !Authority && (progression == null || !progression.IsReady))) return;
@@ -92,7 +106,7 @@ public sealed class CycleController : NetworkBehaviour
             presentationDirty = false;
             if (Authority)
             {
-                RevealKnowledgeAfterDefeat();
+                TryStartAutoDialogue();
                 TryStartSequence();
             }
             ApplyPresentation();
@@ -117,11 +131,86 @@ public sealed class CycleController : NetworkBehaviour
             if (next != null && next.IsDead) Report(CycleStepKind.EnemyDefeated, binding.id);
         }
     }
+
+    private void BindFlames()
+    {
+        foreach (var binding in flames ?? Array.Empty<CycleFlameBinding>())
+        {
+            if (binding == null || binding.flame == null) continue;
+            if (binding.callback == null)
+            {
+                binding.callback = (flame, lit) => { if (Authority && lit) Report(CycleStepKind.Interaction, binding.id); };
+                binding.flame.StateChanged += binding.callback;
+            }
+            if (binding.flame.IsEffectivelyLit) Report(CycleStepKind.Interaction, binding.id);
+        }
+    }
+
+    private void TryStartAutoDialogue()
+    {
+        if (localDialogue || cinematicRunning || progression == null) return;
+        foreach (var binding in autoDialogues ?? Array.Empty<CycleAutoDialogueBinding>())
+        {
+            if (binding == null || string.IsNullOrWhiteSpace(binding.id) || playedAutoDialogues.Contains(binding) ||
+                !Evaluate(binding.condition)) continue;
+            var step = definition.FindStep(binding.id);
+            if (step == null || step.kind != CycleStepKind.DialogueCompleted || !progression.IsStepActive(definition, step)) continue;
+            playedAutoDialogues.Add(binding);
+            StartCoroutine(CompleteAutoDialogue(binding));
+            return;
+        }
+    }
+
+    private IEnumerator CompleteAutoDialogue(CycleAutoDialogueBinding binding)
+    {
+        string line = binding.line;
+        if (Online && IsSpawned) PlayAutoDialogueClientRpc(binding.id);
+        else DialoguePanelUI.TryShowTimedConversation(line, binding.durationSeconds, _ => { }, this);
+        yield return new WaitForSecondsRealtime(Mathf.Max(.1f, binding.durationSeconds));
+        if (Authority && binding != null) Report(CycleStepKind.DialogueCompleted, binding.id);
+    }
+
+    [ClientRpc]
+    private void PlayAutoDialogueClientRpc(string id)
+    {
+        var binding = Array.Find(autoDialogues ?? Array.Empty<CycleAutoDialogueBinding>(), item => item != null && item.id == id);
+        if (binding != null && !string.IsNullOrWhiteSpace(binding.line))
+            DialoguePanelUI.TryShowTimedConversation(binding.line, binding.durationSeconds, _ => { }, this);
+    }
+
+    private void BindGhostPuzzleEvents()
+    {
+        foreach (var interaction in interactions ?? Array.Empty<CycleInteraction>())
+        {
+            if (interaction == null || interaction.cycle != this || !interaction.useGhostPuzzleResolution) continue;
+            GhostController ghost = interaction.Ghost;
+            if (ghost == null || !observedPuzzleGhosts.Add(ghost)) continue;
+            ghost.Understood += OnPuzzleGhostUnderstood;
+        }
+    }
+
+    private void UnbindGhostPuzzleEvents()
+    {
+        foreach (GhostController ghost in observedPuzzleGhosts)
+            if (ghost != null) ghost.Understood -= OnPuzzleGhostUnderstood;
+        observedPuzzleGhosts.Clear();
+    }
+
+    private void OnPuzzleGhostUnderstood(GhostController ghost)
+    {
+        if (!Authority || definition == null || ghost == null) return;
+        foreach (var interaction in interactions ?? Array.Empty<CycleInteraction>())
+        {
+            if (interaction == null || !interaction.useGhostPuzzleResolution || interaction.Ghost != ghost) continue;
+            CycleDialogue dialogue = definition.FindDialogue(interaction.dialogueId);
+            if (dialogue != null && Evaluate(dialogue.condition))
+                Report(CycleStepKind.DialogueCompleted, interaction.dialogueId);
+        }
+    }
     private void Report(CycleStepKind kind, string id)
     {
         if (definition != null && definition.HasSteps && progression != null) progression.Report(this, kind, id);
         presentationDirty = true;
-        RevealKnowledgeAfterDefeat();
     }
     private void TryStartSequence()
     {
@@ -242,11 +331,59 @@ public sealed class CycleController : NetworkBehaviour
                     interaction.Ghost.IsDialogueDisappearanceComplete) { visible = false; break; }
             if (binding.target.activeSelf != visible) binding.target.SetActive(visible);
         }
+        if (deactivations != null) foreach (var binding in deactivations)
+        {
+            if (binding == null || binding.target == null || binding.target == gameObject) continue;
+            bool visible = !Evaluate(binding.condition);
+            if (binding.target.activeSelf != visible) binding.target.SetActive(visible);
+        }
+        ApplyDisappearances();
         if (poses != null) foreach (var binding in poses)
         {
             if (binding == null || binding.animator == null || !binding.animator.isActiveAndEnabled) continue;
             binding.Apply(Evaluate(binding.condition));
         }
+    }
+
+    private void ApplyDisappearances()
+    {
+        foreach (var binding in disappearances ?? Array.Empty<CycleDissolveBinding>())
+        {
+            if (binding == null || binding.target == null || binding.target == gameObject) continue;
+            bool shouldDisappear = Evaluate(binding.condition);
+            bool firstPresentation = presentedDisappearances.Add(binding);
+            if (!shouldDisappear)
+            {
+                if (activeDissolves.TryGetValue(binding, out Coroutine running) && running != null) StopCoroutine(running);
+                activeDissolves.Remove(binding);
+                binding.ApplyStrength(0f);
+                if (!binding.target.activeSelf) binding.target.SetActive(true);
+                continue;
+            }
+            if (!binding.target.activeSelf || activeDissolves.ContainsKey(binding)) continue;
+            // Une sauvegarde deja resolue ne rejoue pas l'effet devant un joueur qui arrive tard.
+            if (firstPresentation) { binding.ApplyStrength(1f); binding.target.SetActive(false); continue; }
+            activeDissolves[binding] = StartCoroutine(DissolveAndHide(binding));
+        }
+    }
+
+    private IEnumerator DissolveAndHide(CycleDissolveBinding binding)
+    {
+        binding.ApplyStrength(0f);
+        float elapsed = 0f;
+        float duration = Mathf.Max(.01f, binding.durationSeconds);
+        while (elapsed < duration && binding != null && binding.target != null)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            binding.ApplyStrength(Mathf.SmoothStep(0f, 1f, elapsed / duration));
+            yield return null;
+        }
+        if (binding != null && binding.target != null)
+        {
+            binding.ApplyStrength(1f);
+            binding.target.SetActive(false);
+        }
+        activeDissolves.Remove(binding);
     }
     private void BindEncounter()
     {
@@ -292,15 +429,7 @@ public sealed class CycleController : NetworkBehaviour
         if (flag == 0 || (State & flag) == flag) return;
         ApplyState(State | flag);
         presentationDirty = true;
-        RevealKnowledgeAfterDefeat();
     }
-    private void RevealKnowledgeAfterDefeat()
-    {
-        if (!Authority || definition == null || !HasRecordedEncounterDefeat() || definition.knowledgeOnEnemyDefeat == null) return;
-        foreach (var knowledge in definition.knowledgeOnEnemyDefeat)
-            if (knowledge != null && !Knows(knowledge)) KnowledgeReveal.Reveal(knowledge, "Le groupe", definition.cycleId);
-    }
-
     private bool HasRecordedEncounterDefeat()
     {
         return HasFlags(definition.enemyDefeatedFlags) ||
@@ -440,11 +569,16 @@ public sealed class CycleController : NetworkBehaviour
         }
         if (Completed || dialogue.disappearAfterCompletion && IsDialogueCompleted(dialogue)) return false;
         bool available = Evaluate(dialogue.condition);
-        string text = !available ? dialogue.unavailableLine : dialogue.HasReward(State) && !string.IsNullOrWhiteSpace(dialogue.repeatLine) ? dialogue.repeatLine : dialogue.line;
+        string text = !available ? dialogue.unavailableLine : IsDialogueCompleted(dialogue) && !string.IsNullOrWhiteSpace(dialogue.repeatLine) ? dialogue.repeatLine : dialogue.line;
         if (string.IsNullOrWhiteSpace(text)) return false;
         bool startedOnline = Online;
         var manager = NetworkManager.Singleton;
         if (startedOnline && !IsSpawned) return false;
+        if (startedOnline)
+        {
+            RequestDialogueServerRpc(id);
+            return true;
+        }
         int token = ++dialogueToken;
         localDialogue = true;
         bool shown = DialoguePanelUI.TryShowTimedConversation(text, definition.ResolveDialogueSeconds(dialogue), completed =>
@@ -458,8 +592,7 @@ public sealed class CycleController : NetworkBehaviour
             else CompleteDialogue(0, id, token, completed, LocalPlayerUtils.GetControlledCharacter());
         }, this);
         if (!shown) { localDialogue = false; return false; }
-        if (startedOnline) BeginDialogueServerRpc(id, token);
-        else BeginDialogue(0, id, token, LocalPlayerUtils.GetControlledCharacter());
+        BeginDialogue(0, id, token, LocalPlayerUtils.GetControlledCharacter());
         return true;
     }
     private CycleInteraction FindInteraction(string id)
@@ -526,11 +659,31 @@ public sealed class CycleController : NetworkBehaviour
         Report(CycleStepKind.Interaction, id);
     }
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void BeginDialogueServerRpc(string id, int token, RpcParams rpc = default)
+    private void RequestDialogueServerRpc(string id, RpcParams rpc = default)
     {
         var root = NetcodePlayerUtils.GetPlayerTransform(rpc.Receive.SenderClientId);
+        int token = ++dialogueToken;
         BeginDialogue(rpc.Receive.SenderClientId, id, token, root != null ? root.gameObject : null);
+        if (pendingDialogues.ContainsKey(rpc.Receive.SenderClientId)) OpenDialogueClientRpc(id, token, BuildClientRpcParams(rpc.Receive.SenderClientId));
     }
+    [ClientRpc] private void OpenDialogueClientRpc(string id, int token, ClientRpcParams rpcParams = default)
+    {
+        var dialogue = definition != null ? definition.FindDialogue(id) : null;
+        if (dialogue == null || localDialogue) return;
+        string text = IsDialogueCompleted(dialogue) && !string.IsNullOrWhiteSpace(dialogue.repeatLine) ? dialogue.repeatLine : dialogue.line;
+        if (string.IsNullOrWhiteSpace(text)) return;
+        localDialogue = true;
+        bool shown = DialoguePanelUI.TryShowTimedConversation(text, definition.ResolveDialogueSeconds(dialogue), completed =>
+        {
+            localDialogue = false;
+            if (this != null && isActiveAndEnabled && IsSpawned) CompleteDialogueServerRpc(id, token, completed);
+        }, this);
+        if (!shown) localDialogue = false;
+    }
+    private static ClientRpcParams BuildClientRpcParams(ulong clientId) => new ClientRpcParams
+    {
+        Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+    };
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void CompleteDialogueServerRpc(string id, int token, bool completed, RpcParams rpc = default)
     {
@@ -551,6 +704,7 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void OnDisable()
     {
+        UnbindGhostPuzzleEvents();
         cinematicRunning = false;
         attemptedCinematic = false;
         sequencePending = false;
@@ -574,9 +728,16 @@ public sealed class CycleController : NetworkBehaviour
         ReleaseEnemies();
         CancelPlayback();
         StopAllCoroutines();
+        activeDissolves.Clear();
         localDialogue = false;
         if (health != null) health.HealthChanged -= OnHealthChanged;
         health = null;
+        foreach (var binding in flames ?? Array.Empty<CycleFlameBinding>())
+            if (binding != null && binding.flame != null && binding.callback != null)
+            {
+                binding.flame.StateChanged -= binding.callback;
+                binding.callback = null;
+            }
     }
 
     private void ReleaseEnemies()
@@ -597,6 +758,48 @@ public sealed class CycleActivationBinding
 {
     public GameObject target;
     public CycleCondition condition = new CycleCondition();
+}
+
+/// <summary>Inverse presentation binding: hides its target when the condition becomes true.</summary>
+[Serializable]
+public sealed class CycleDeactivationBinding
+{
+    public GameObject target;
+    public CycleCondition condition = new CycleCondition();
+}
+
+/// <summary>Disparition visuelle avant desactivation. Les materiaux qui exposent
+/// _DissolveStrength sont pilotes par MaterialPropertyBlock, sans etre modifies globalement.</summary>
+[Serializable]
+public sealed class CycleDissolveBinding
+{
+    private static readonly int DissolveStrengthId = Shader.PropertyToID("_DissolveStrength");
+    public GameObject target;
+    public CycleCondition condition = new CycleCondition();
+    [Min(.01f)] public float durationSeconds = 2f;
+    [NonSerialized] private Renderer[] renderers;
+    [NonSerialized] private MaterialPropertyBlock block;
+
+    public void ApplyStrength(float value)
+    {
+        if (target == null) return;
+        renderers ??= target.GetComponentsInChildren<Renderer>(true);
+        block ??= new MaterialPropertyBlock();
+        float clamped = Mathf.Clamp01(value);
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer == null) continue;
+            Material[] materials = renderer.sharedMaterials;
+            for (int index = 0; index < materials.Length; index++)
+            {
+                Material material = materials[index];
+                if (material == null || !material.HasProperty(DissolveStrengthId)) continue;
+                renderer.GetPropertyBlock(block, index);
+                block.SetFloat(DissolveStrengthId, clamped);
+                renderer.SetPropertyBlock(block, index);
+            }
+        }
+    }
 }
 
 [Serializable]

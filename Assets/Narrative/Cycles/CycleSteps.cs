@@ -3,9 +3,34 @@ using UnityEngine;
 
 public enum CycleCategory { Main, Side }
 public enum CycleStatus { Unavailable, Available, InProgress, Completed }
-public enum CycleStepKind { Knowledge, DialogueCompleted, EnemyDefeated, Interaction, SequenceCompleted }
+public enum CycleStepKind { Knowledge, DialogueCompleted, EnemyDefeated, Interaction, SequenceCompleted, Read, Collected, ZoneEntered, NamedFact }
 public enum CycleRequirementKind { Step, Knowledge, CycleCompleted }
 public enum CycleRequirementMode { All, Any }
+public enum CycleRewardKind { Skill, Knowledge, Item, WorldVariable, Activation }
+
+[Serializable]
+public sealed class CycleReward
+{
+    [Tooltip("Type de recompense partagee par toute la session.")] public CycleRewardKind kind;
+    public SkillSO skill;
+    public KnowledgeSO knowledge;
+    [Tooltip("Objet remis au coffre de la Maison.")] public Item item;
+    [Min(1)] public int quantity = 1;
+    [Tooltip("Cle persistante pour une variable monde ou une activation.")] public string key;
+    public WorldVariableValueType valueType = WorldVariableValueType.Bool;
+    public int intValue = 1;
+    public float floatValue;
+    public bool boolValue = true;
+    public string stringValue;
+}
+
+[Serializable]
+public sealed class CycleLegacyStepMigration
+{
+    [Tooltip("Etape nommee a valider si les bits historiques correspondent.")] public string stepId;
+    [Tooltip("Au moins un de ces bits historiques est requis.")] public int anyFlags;
+    [Tooltip("Tous ces bits historiques sont requis.")] public int allFlags;
+}
 
 [Serializable]
 public sealed class CycleRequirement
@@ -50,6 +75,8 @@ public sealed class CycleStep
     public bool terminal;
     [Tooltip("Competence partagee accordee une seule fois. Vide signifie aucune recompense.")]
     public SkillSO rewardSkill;
+    [Tooltip("Recompenses idempotentes. Leur cle est derivee du cycle, de l'etape et de leur index.")]
+    public CycleReward[] rewards = Array.Empty<CycleReward>();
     [HideInInspector] public int legacyAnyFlags;
     [HideInInspector] public int legacyWriteFlags;
 }
@@ -75,4 +102,24 @@ public sealed class CycleSequenceBinding
     [Tooltip("Source de l'etape de sequence ; unique dans ce cycle.")] public string id;
     [Tooltip("Director de cette scene ; vide garde l'etape en attente avec diagnostic.")] public UnityEngine.Playables.PlayableDirector director;
     [Tooltip("Liaisons de la Timeline ; requises pour lancer la sequence.")] public Lit.Timeline.TimelineBindingProfile profile;
+}
+
+/// <summary>Relie une Flame existante a un jalon Interaction du cycle. L'etat de la Flame
+/// reste sa source de verite et est deja sauvegarde par le systeme de monde.</summary>
+[Serializable]
+public sealed class CycleFlameBinding
+{
+    [Tooltip("Source de l'etape Interaction correspondante.")] public string id;
+    public Flame flame;
+    [NonSerialized] public Action<Flame, bool> callback;
+}
+
+/// <summary>Une replique qui se joue une seule fois lorsque son etape devient active.</summary>
+[Serializable]
+public sealed class CycleAutoDialogueBinding
+{
+    [Tooltip("ID de l'etape DialogueCompleted correspondante.")] public string id;
+    public CycleCondition condition = new CycleCondition();
+    [TextArea] public string line;
+    [Min(.1f)] public float durationSeconds = 4f;
 }

@@ -195,3 +195,12 @@ plus disparaitre a distance pendant le combat. La replique d'introduction
 existante precede l'activation du cerveau et de la navigation ennemis.
 L'instance Nina herite des quatre composants CombatHealth/CharacterInfo/
 EnemySkills/RealTimeCombatEnemy du prefab sans copie additionnelle.
+## Socle de cycles nommes
+
+CycleProgressionService centralise les etapes nommees, les migrations et les recompenses. Les faits comprennent connaissance, dialogue ferme, interaction, ennemi vaincu, lecture, collecte, entree de zone et fait nomme. Un fait est persiste avant ses prerequis puis reconcilie lorsque les services disponibles peuvent terminer les etapes. Chaque CycleStep peut accorder des CycleReward idempotentes de type Skill, Knowledge, Item, WorldVariable ou Activation. Le validateur global Lit/Narrative/Validate All Cycles controle les definitions et leurs scenes avant build.
+
+Nina est le premier cycle sans flags actifs : ses anciens bits restent uniquement une source de migration versionnee. La defaite du scientifique accorde Existence des chimeres et Scar accorde Cicatrice par les recompenses de leurs etapes. Nina's Blood et Scar utilisent l'etape nina_spoken.
+
+## Cycle Luc : etapes nommees (2026-09-27)
+
+Luc suit le meme socle que Nina, sans flags historiques car son ancien flux n'en persistait pas. Les connaissances du collier et de la tombe reconciliant les deux premieres etapes, l'interaction luc puis sa fermeture valident la conclusion. La connaissance jonLocation est une recompense idempotente de luc_farewell; Ghost_Luc est relie a CycleInteraction et CycleController par Lit/Narrative/Configure Luc Cycle. La scene est referencee sous District_1_Cycle_Luc dans le manifest District 1.

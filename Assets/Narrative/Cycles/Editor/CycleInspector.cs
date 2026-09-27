@@ -10,7 +10,7 @@ public sealed class CycleInspector : Editor
         var cycle = (CycleController)target;
         serializedObject.Update();
         CycleInspectorLayout.Group(serializedObject, "Identite et liaisons", "Fiche du cycle et acteurs propres a cette scene.", "definition", "interactions", "encounters", "sequences");
-        CycleInspectorLayout.Group(serializedObject, "Presentation", "Objets et poses visibles selon les conditions ; seuls les participants listes sont suspendus.", "activations", "poses", "cinematicParticipants");
+        CycleInspectorLayout.Group(serializedObject, "Presentation", "Objets affichés, cachés ou dissous selon les conditions ; seuls les participants listes sont suspendus.", "activations", "deactivations", "disappearances", "poses", "cinematicParticipants");
         CycleInspectorLayout.Group(serializedObject, "Rencontre historique", "Liaisons existantes conservees pour Nina ; source encounter pour l'ennemi et cinematic pour la sequence.", "encounterMarker", "encounterEnemy", "director", "bindingProfile");
         serializedObject.ApplyModifiedProperties();
         if (cycle.definition == null)
@@ -92,7 +92,8 @@ public sealed class CycleDefinitionInspector : Editor
         CycleInspectorLayout.Group(serializedObject, "Disponibilite et objectifs", "Prerequis du cycle, etapes paralleles ou ordonnees et objectifs terminaux requis pour sa fin.", "prerequisites", "steps");
         CycleInspectorLayout.Group(serializedObject, "Dialogues", "Textes, durees en secondes reelles et presentation des interlocuteurs.", "dialogueSeconds", "dialogues");
         CycleInspectorLayout.Group(serializedObject, "Fin et dechargement", "Scene additive dediee et delai maximal de presentation avant nettoyage partage.", "cycleSceneName", "completionPresentationTimeout");
-        CycleInspectorLayout.Group(serializedObject, "Compatibilite des sauvegardes", "Jalons numeriques historiques : ne pas modifier ceux des cycles publies.", "completionFlags", "enemyDefeatedFlags", "knowledgeOnEnemyDefeat", "playCinematicAfterDefeat", "deathDelay", "cinematicCompletedFlags");
+        CycleInspectorLayout.Group(serializedObject, "Migration des sauvegardes", "Conversion unique des flags publies vers les etapes. Les nouveaux cycles ne configurent pas de flags.", "legacyMigrationVersion", "legacyMigrations");
+        CycleInspectorLayout.Group(serializedObject, "Compatibilite cinematographique", "Champs historiques conserves pour les cycles non migres.", "completionFlags", "enemyDefeatedFlags", "knowledgeOnEnemyDefeat", "playCinematicAfterDefeat", "deathDelay", "cinematicCompletedFlags");
         serializedObject.ApplyModifiedProperties();
         foreach (string issue in definition.ValidateConfiguration()) EditorGUILayout.HelpBox(issue, MessageType.Warning);
         if (!AssetDatabase.GetAssetPath(definition).Contains("/Resources/Narrative/"))

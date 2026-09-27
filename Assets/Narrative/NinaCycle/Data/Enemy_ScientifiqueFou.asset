@@ -235,7 +235,7 @@ MonoBehaviour:
       alignUnlockedDodgeToTravel: 1
       alignLockedForwardDodgeToTravel: 1
   uniqueId: 030c09c97c1b1714a912dbf5e4f2d27e
-  characterId: 
+  characterId: mad_scientist_nina
   characterName: Scientifique fou
   portrait: {fileID: 0}
   worldPrefab: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}

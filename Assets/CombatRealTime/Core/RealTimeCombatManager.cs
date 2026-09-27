@@ -300,6 +300,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             playerRoot = player;
             ResolvePlayerReferences();
+            StowPlayerTorchForCombat();
             combatActive = true;
             clarity = 0f;
             cooldowns.Clear();
@@ -315,6 +316,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         SetEnemyAttackMode(enemy, true);
+        enemy.BeginBattleWall();
         if (newAggro)
         {
             enemyAggroAnnounced = true;
@@ -333,6 +335,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         playerRoot = player;
         ResolvePlayerReferences();
+        StowPlayerTorchForCombat();
         combatActive = true;
         clarity = 0f;
         cooldowns.Clear();
@@ -343,6 +346,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         combatInput?.SetInputActive(true);
         ClarityChanged?.Invoke(clarity, ClarityRank);
         CombatStateChanged?.Invoke(true);
+        enemy.BeginBattleWall();
         return true;
     }
 
@@ -360,6 +364,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         CloseReactionWindow(notify: false);
         if (engagedEnemy != null)
         {
+            engagedEnemy.GetComponent<EnemyController>()?.EndBattleWall();
             SetEnemyAttackMode(engagedEnemy, false);
             engagedEnemy.CompleteRetaliation();
         }
@@ -1547,6 +1552,27 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         playerActionPresentation.ResolveReferences(playerAnimator, playerLocomotionBridge);
         if (playerMobility == null) playerMobility = GetComponent<CombatMobilityController>();
         if (combatInput == null) combatInput = FindAnyObjectByType<RealTimeCombatInput>();
+    }
+
+    /// <summary>
+    /// Combat needs both hands free. Prefer the input relay so that the torch
+    /// state is authoritative in multiplayer; a scene without that relay still
+    /// supports the same behaviour locally.
+    /// </summary>
+    private void StowPlayerTorchForCombat()
+    {
+        if (playerController == null || !playerController.IsFlameEquipped)
+        {
+            return;
+        }
+
+        NetworkCharacterInput networkInput = playerRoot != null
+            ? playerRoot.GetComponentInChildren<NetworkCharacterInput>(true)
+            : null;
+        if (networkInput == null || !networkInput.TryUnequipTorchForCombat())
+        {
+            playerController.ToggleFlame();
+        }
     }
 
     private void RefreshLockedEnemyStrafeBinding()

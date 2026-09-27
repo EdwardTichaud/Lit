@@ -8,7 +8,8 @@ using UnityEditor;
 #endif
 
 /// <summary>
-/// Point d'auteur unique pour les personnages, items et fantomes. Tous les
+/// Point d'auteur unique pour les personnages, items, fantomes et sources de
+/// Flame. Tous les
 /// objets sont materialises par le bake d'editeur. Au runtime le
 /// marker ne cree jamais de prefab : il ne fait que referencer l'objet baked
 /// deja present dans la scene.
@@ -21,15 +22,26 @@ public sealed class SceneMarker : MonoBehaviour
     {
         Character = 0,
         Item = 1,
-        Ghost = 2
+        Ghost = 2,
+        Flame = 3,
+        AncientFlame = 4
     }
 
     [SerializeField] private MarkerAssetType assetType = MarkerAssetType.Character;
     [SerializeField] private CharacterData characterData;
     [SerializeField] private Item item;
     [SerializeField] private GhostData ghost;
+    [Header("Flame")]
+    [SerializeField] private GameObject flamePrefab;
+    [SerializeField] private bool flameStartsLit;
+    [SerializeField, Min(0.1f)] private float flameInteractionRadius = 2f;
+    [SerializeField, Min(0f)] private float flameInfluenceRadius = 6f;
+    [SerializeField, Min(0)] private int flameChargeCost = 1;
+    [SerializeField, Tooltip("Identifiant de sauvegarde explicite. Vide : identifiant stable derive du marker.")]
+    private string flameIdOverride;
     [SerializeField, HideInInspector] private string markerId;
     [SerializeField, HideInInspector] private GameObject bakedCharacterInstance;
+    [SerializeField, HideInInspector] private GameObject bakedFlameInstance;
 
     private static readonly Dictionary<string, SceneMarker> markersById = new Dictionary<string, SceneMarker>();
 
@@ -38,13 +50,17 @@ public sealed class SceneMarker : MonoBehaviour
     public CharacterData CharacterData => characterData;
     public Item Item => item;
     public GhostData Ghost => ghost;
+    public GameObject FlamePrefab => flamePrefab;
     public MarkerAssetType AssetType => assetType;
     public bool UsesCharacter => assetType == MarkerAssetType.Character;
     public bool UsesItem => assetType == MarkerAssetType.Item;
     public bool UsesGhost => assetType == MarkerAssetType.Ghost;
+    public bool UsesFlame => assetType == MarkerAssetType.Flame || assetType == MarkerAssetType.AncientFlame;
+    public bool UsesAncientFlame => assetType == MarkerAssetType.AncientFlame;
     public string MarkerId => markerId;
     public GameObject RuntimeInstance => runtimeInstance;
     public GameObject BakedCharacterInstance => bakedCharacterInstance;
+    public GameObject BakedFlameInstance => bakedFlameInstance;
 
     private void Awake()
     {
@@ -111,6 +127,25 @@ public sealed class SceneMarker : MonoBehaviour
         ghost = value;
     }
 
+    public void SetFlame(GameObject prefab, bool ancient)
+    {
+        assetType = ancient ? MarkerAssetType.AncientFlame : MarkerAssetType.Flame;
+        flamePrefab = prefab;
+    }
+
+    public void SetBakedFlameInstance(GameObject instance)
+    {
+        bakedFlameInstance = instance;
+    }
+
+    public void ConfigureBakedFlame(Flame flame)
+    {
+        if (flame == null) return;
+        string persistentId = string.IsNullOrWhiteSpace(flameIdOverride) ? markerId : flameIdOverride;
+        flame.ConfigureFromSceneMarker(persistentId, UsesAncientFlame, flameStartsLit,
+            flameInteractionRadius, flameInfluenceRadius, flameChargeCost);
+    }
+
     public GameObject ResolvePreviewPrefab()
     {
         if (UsesItem)
@@ -121,6 +156,11 @@ public sealed class SceneMarker : MonoBehaviour
         if (UsesGhost)
         {
             return ghost != null ? ghost.ResolveWorldPrefab() : null;
+        }
+
+        if (UsesFlame)
+        {
+            return flamePrefab;
         }
 
         return characterData != null ? characterData.ResolveWorldPrefab() : null;
@@ -455,7 +495,7 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
-        if (!UsesCharacter)
+        if (!UsesCharacter && !UsesFlame)
         {
             return;
         }

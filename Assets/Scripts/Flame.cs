@@ -138,6 +138,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
+        ResolvePresentationReferences();
         EnsureInteractionTrigger();
         EnsureRevealSource();
         EnsureId();
@@ -207,6 +208,21 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             && litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
     }
 
+    /// <summary>Applies the authoring values stored on a SceneMarker during an editor bake.</summary>
+    public void ConfigureFromSceneMarker(string persistentId, bool isAncient, bool startsLit,
+        float markerInteractionRadius, float markerInfluenceRadius, int markerChargeCost)
+    {
+        flameId = persistentId ?? string.Empty;
+        ancientFlame = isAncient;
+        isLit = startsLit;
+        interactionRadius = Mathf.Max(0.1f, markerInteractionRadius);
+        chargeCostToLight = Mathf.Max(0, markerChargeCost);
+        EnsureInteractionTrigger();
+        EnsureLitInfluence();
+        litInfluence.SetRadius(markerInfluenceRadius);
+        ApplyVisuals(!Application.isPlaying);
+    }
+
     private void EnsureId()
     {
         if (TryResolvePersistentObjectId(out string resolvedId))
@@ -256,6 +272,22 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         if (flameLightReceiver != null)
         {
             flameLightReceiver.ConfigureWorldRevealSource(true);
+        }
+    }
+
+    private void ResolvePresentationReferences()
+    {
+        // Certains prefabs de Flame contiennent deja une Light mais n'avaient
+        // pas renseigne la reference. Sans cette resolution, l'etat "allume"
+        // ne pouvait activer aucune lumiere reelle.
+        if (flameLight == null)
+        {
+            flameLight = GetComponentInChildren<Light>(true);
+        }
+
+        if (flameLightReceiver == null)
+        {
+            flameLightReceiver = GetComponentInChildren<FlameLightReceiver>(true);
         }
     }
 
@@ -370,9 +402,11 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void ApplyVisuals(bool immediate)
     {
+        ResolvePresentationReferences();
+
         if (flameLight != null)
         {
-            flameLight.enabled = isLit;
+            flameLight.enabled = IsEffectivelyLit;
         }
 
         ApplyLitActivationTargets();
@@ -1537,7 +1571,9 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         }
     }
 
-    private void OnDrawGizmosSelected()
+    // Le rayon utile est visible directement sur chaque Flame dans la Scene view.
+    // Il reste controle par l'option "Dessine le rayon..." de LitInfluenceSource.
+    private void OnDrawGizmos()
     {
         EnsureLitInfluence();
         litInfluence.DrawGizmos(transform, IsEffectivelyLit);

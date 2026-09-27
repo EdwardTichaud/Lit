@@ -16,8 +16,12 @@ public static class CycleSharedSkills
         {
             if (definition != null && definition.steps != null)
                 foreach (var step in definition.steps)
-                    if (step != null && step.rewardSkill != null && rules.TryGetInt(definition.StepKey(step.id), out int completed) &&
-                        completed != 0 && !result.Contains(step.rewardSkill)) result.Add(step.rewardSkill);
+                    if (step != null && rules.TryGetInt(definition.StepKey(step.id), out int completed) && completed != 0)
+                    {
+                        if (step.rewardSkill != null && !result.Contains(step.rewardSkill)) result.Add(step.rewardSkill);
+                        foreach (var reward in step.rewards ?? System.Array.Empty<CycleReward>())
+                            if (reward != null && reward.kind == CycleRewardKind.Skill && reward.skill != null && !result.Contains(reward.skill)) result.Add(reward.skill);
+                    }
             if (definition != null && definition.dialogues != null && rules.TryGetInt(definition.StateKey, out int state))
                 foreach (var dialogue in definition.dialogues)
                     if (dialogue != null && dialogue.rewardSkill != null && dialogue.HasReward(state) && !result.Contains(dialogue.rewardSkill))

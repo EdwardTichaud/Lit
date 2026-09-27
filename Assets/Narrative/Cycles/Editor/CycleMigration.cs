@@ -25,14 +25,23 @@ public static class CycleMigration
         definition.description = "Comprendre le destin de Nina et recueillir le souvenir de Scar.";
         definition.category = CycleCategory.Side;
         definition.completionPresentationTimeout = 15f;
+        definition.legacyMigrationVersion = 1;
+        definition.legacyMigrations = new[]
+        {
+            new CycleLegacyStepMigration { stepId = "scientist_defeated", anyFlags = 1 },
+            new CycleLegacyStepMigration { stepId = "nina_spoken", anyFlags = 20 },
+            new CycleLegacyStepMigration { stepId = "scar_reward", anyFlags = 8 },
+            new CycleLegacyStepMigration { stepId = "aftermath_seen", anyFlags = 2 }
+        };
         definition.steps = new[]
         {
             new CycleStep { id = "chimeras_known", title = "Decouvrir l'existence des chimeres", kind = CycleStepKind.Knowledge, knowledge = nina.condition.knowledge[0] },
             new CycleStep { id = "edouard_understood", title = "Lire la lettre d'Edouard", kind = CycleStepKind.Knowledge, knowledge = nina.condition.knowledge[1] },
-            new CycleStep { id = "scientist_defeated", title = "Vaincre le scientifique", kind = CycleStepKind.EnemyDefeated, sourceId = "encounter", legacyAnyFlags = 1, legacyWriteFlags = 1 },
+            new CycleStep { id = "scientist_defeated", title = "Vaincre le scientifique", kind = CycleStepKind.EnemyDefeated, sourceId = "encounter", legacyAnyFlags = 1, legacyWriteFlags = 1,
+                rewards = new[] { new CycleReward { kind = CycleRewardKind.Knowledge, knowledge = nina.condition.knowledge[0] } } },
             new CycleStep { id = "nina_spoken", title = "Parler a Nina", kind = CycleStepKind.Interaction, sourceId = "nina", legacyAnyFlags = 20, legacyWriteFlags = 20, prerequisites = Requires("chimeras_known", "edouard_understood") },
             new CycleStep { id = "scar_reward", title = "Recevoir Cicatrice de Scar", kind = CycleStepKind.DialogueCompleted, sourceId = "scar", terminal = true,
-                rewardSkill = scar.rewardSkill, legacyAnyFlags = 8, legacyWriteFlags = 8, prerequisites = Requires("nina_spoken") },
+                rewards = new[] { new CycleReward { kind = CycleRewardKind.Skill, skill = scar.rewardSkill } }, legacyAnyFlags = 8, legacyWriteFlags = 8, prerequisites = Requires("nina_spoken") },
             new CycleStep { id = "aftermath_seen", title = "Voir le souvenir apres le combat (facultatif)", kind = CycleStepKind.SequenceCompleted, sourceId = "cinematic", legacyAnyFlags = 2, legacyWriteFlags = 2, prerequisites = Requires("scientist_defeated") }
         };
     }

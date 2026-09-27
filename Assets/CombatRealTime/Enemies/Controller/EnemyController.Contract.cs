@@ -82,7 +82,7 @@ public sealed partial class EnemyController
         ContractCapsuleCollider = GetComponent<CapsuleCollider>();
         ContractNavigationAgent = GetComponent<NavMeshAgent>();
         ContractNavigation = GetComponent<EnemyController>();
-        ContractAnimator = ContractAnimationRoot != null ? ContractAnimationRoot.Animator : GetComponent<Animator>();
+        ContractAnimator = ContractAnimationRoot != null ? ContractAnimationRoot.Animator : ResolveAnimatorInHierarchy();
     }
 
     private static Animator ContractResolveAnimator(GameObject actor)
@@ -93,7 +93,7 @@ public sealed partial class EnemyController
         }
 
         CharacterAnimationController contract = actor.GetComponent<CharacterAnimationController>();
-        return contract != null ? contract.Animator : actor.GetComponent<Animator>();
+        return contract != null && contract.Animator != null ? contract.Animator : ResolveAnimatorInHierarchy(actor);
     }
 
     private static string ContractPresent(Object value)

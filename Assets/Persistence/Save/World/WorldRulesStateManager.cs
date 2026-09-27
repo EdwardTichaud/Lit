@@ -105,6 +105,18 @@ public class WorldRulesStateManager : MonoBehaviour
         return false;
     }
 
+    public bool TryGetBool(string key, out bool value)
+    {
+        if (variables.TryGetValue(key ?? string.Empty, out WorldVariableSnapshot snapshot) && snapshot != null &&
+            snapshot.ValueType == WorldVariableValueType.Bool)
+        {
+            value = snapshot.BoolValue;
+            return true;
+        }
+        value = false;
+        return false;
+    }
+
     public List<WorldVariableSnapshot> CaptureVariables()
     {
         List<WorldVariableSnapshot> results = new List<WorldVariableSnapshot>(variables.Count);

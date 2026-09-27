@@ -5338,6 +5338,7 @@ GameObject:
   - component: {fileID: 847953340343303029}
   - component: {fileID: 7177769581939990386}
   - component: {fileID: 708000000000000001}
+  - component: {fileID: 1198186905291357981}
   - component: {fileID: 708000000000000002}
   m_Layer: 0
   m_Name: GiantJuggernaut
@@ -5411,22 +5412,30 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
   m_Name: 
-  m_EditorClassIdentifier:
-  combatEnabled: 1
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   ActorAnimator: {fileID: 88241028141342083}
   ActorEnemyLockPoint: {fileID: 937648210628518453}
-  SkillsAnimator: {fileID: 88241028141342083}
-  SkillsCasterVfxPoint: {fileID: 0}
-  SkillsSkills:
-  - {fileID: 11400000, guid: 868c6bf11c102084591a5986869d6755, type: 2}
-  AnimationAnimationRoot: {fileID: 4030110569289934102}
+  AnimationAnimationRoot: {fileID: 6330181374611752953}
   AnimationAnimator: {fileID: 88241028141342083}
   AnimationLockPoint: {fileID: 937648210628518453}
+  inputPromptAnchor: {fileID: 0}
+  inputPromptOffset: {x: 0, y: 1.25, z: 0}
+  CreateWall: 0
+  battleWallPrefab: {fileID: 0}
+  ContractRigidbodyComponent: {fileID: 0}
+  ContractCapsuleCollider: {fileID: 0}
+  ContractNavigationAgent: {fileID: 0}
+  ContractAnimator: {fileID: 88241028141342083}
+  LocomotionNavigationAgent: {fileID: 7177769581939990386}
+  NavigationNavigationAgent: {fileID: 0}
   PhysicsNavigationAgent: {fileID: 7177769581939990386}
   PhysicsBody: {fileID: 708000000000000001}
   PhysicsBodyCollider: {fileID: 708000000000000002}
-  LocomotionNavigationAgent: {fileID: 7177769581939990386}
+  SkillsAnimator: {fileID: 88241028141342083}
+  SkillsCasterVfxPoint: {fileID: 6314463698388112091}
   visionOrigin: {fileID: 6314463698388112091}
+  combatEnabled: 1
 --- !u!195 &7177769581939990386
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -5474,8 +5483,33 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 1
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 3
+--- !u!114 &1198186905291357981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3897823286
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!136 &708000000000000002
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -7523,10 +7557,10 @@ Animator:
   m_GameObject: {fileID: 6670537791433563459}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
-  m_Controller: {fileID: 9100000, guid: 7d46c52cfbf9f3949a6d268fca8cc77c, type: 2}
-  m_CullingMode: 1
+  m_Controller: {fileID: 9100000, guid: 42bfaebd5af3fce46977c1e67d0692ac, type: 2}
+  m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -7547,21 +7581,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
-  enemy: {fileID: 847953340343303029}
-  enemySkills: {fileID: 0}
-  skillsManager: {fileID: 0}
-  combatInput: {fileID: 0}
-  playerBow: {fileID: 0}
-  playerSword: {fileID: 0}
-  inputPromptAnchor: {fileID: 0}
-  inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  dashOvershootDistance: 1.25
-  dashImpulsePerMeter: 8
-  minimumDashImpulse: 14
-  maximumDashImpulse: 32
-  dashInputLockSeconds: 0.1
-  stopDashDuration: 0.18
-  stopDashDeceleration: 65
 --- !u!114 &1545306088066156453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7574,7 +7593,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
-  actor: {fileID: 847953340343303029}
 --- !u!1 &6691210866271643018
 GameObject:
   m_ObjectHideFlags: 0
@@ -9169,7 +9187,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8002864311571095184}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7545615, y: 0.08327811, z: 0.6496128, w: -0.041289695}
+  m_LocalRotation: {x: 0.75456154, y: 0.08327812, z: 0.64961284, w: -0.0412897}
   m_LocalPosition: {x: -0.055161893, y: 0.013148296, z: 0.014278725}
   m_LocalScale: {x: 0.9999996, y: 1, z: 0.9999999}
   m_ConstrainProportionsScale: 0

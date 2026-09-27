@@ -38,7 +38,7 @@ public sealed partial class EnemyController
     public event Action<int> LightAbsorbed;
     public event Action<SkillSO, int> RetaliationStarted;
     public CharacterInfo Health => ActorHealth != null ? ActorHealth : GetComponent<CharacterInfo>();
-    public override Animator Animator => ActorAnimator != null ? ActorAnimator : GetComponent<Animator>();
+    public override Animator Animator => ActorAnimator != null ? ActorAnimator : ResolveAnimatorInHierarchy();
     public override Transform LockPoint => ActorResolveLockPoint();
     public bool CanSeePlayer { get; private set; }
 
@@ -583,7 +583,16 @@ public sealed partial class EnemyController
         LightAbsorbed?.Invoke(damage);
     }
 
-    private Animator ActorResolveCombatAnimator() => GetComponent<Animator>();
+    private Animator ActorResolveCombatAnimator()
+    {
+        if (AnimationAnimator != null &&
+            (AnimationAnimator.transform == transform || AnimationAnimator.transform.IsChildOf(transform)))
+        {
+            return AnimationAnimator;
+        }
+
+        return ResolveAnimatorInHierarchy();
+    }
 
     private Transform ActorResolveLockPoint()
     {

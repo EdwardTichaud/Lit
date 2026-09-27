@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c342623c95244b90ad99b3c2d719de59, type: 3}
+  m_Name: GhostData_Eloise_Belmont
+  m_EditorClassIdentifier: Assembly-CSharp::GhostData
+  ghostId: ghost_eloise_belmont
+  displayName: "\xC9lo\xEFse Belmont"
+  apparitionAge: 666
+  apparitionLocationId: district_1.corridor.vigil_alcove
+  worldPrefab: {fileID: 7500569944753999537, guid: b73785a6b280b1c49b513e872504adca, type: 3}
+  targetId: etienne_belmont
+  targetDisplayName: "\xC9tienne Belmont"
+  expectedAnswerType: 3
+  apparitionLine: "La flamme baisse\u2026 \xC9tienne devait revenir avant le changement
+    de tour."
+  question: "As-tu vu \xC9tienne ?"
+  knowledgeUnlockedOnListen: []
+  reactions:
+  - reactionId: etienne_took_the_watch
+    optionText: "\xC9tienne a pris ton tour pour te laisser te reposer. Il a ensuite
+      \xE9t\xE9 envoy\xE9 aux conduits."
+    requirement:
+      requiredKnowledge:
+      - {fileID: 11400000, guid: db6caeb7f0181c64f932632b73c7ae79, type: 2}
+      - {fileID: 11400000, guid: e534818a14ce3ae41b1199c8a05e7038, type: 2}
+      - {fileID: 11400000, guid: d27a5ad6081425e43acaab7f66450eda, type: 2}
+      anyKnowledge: []
+      requiredCategories: 
+      requiredTags: []
+      requiredCategoryCounts: []
+      requiredTagCounts: []
+    priority: 100
+    responseLine: "Alors il ne m\u2019a pas abandonn\xE9e\u2026 Il a gard\xE9 la
+      flamme jusqu\u2019au bout. Je peux enfin laisser son tour se terminer."
+    marksGhostUnderstood: 1
+    unlockKnowledge:
+    - {fileID: 11400000, guid: 452594f58841781458e22fe6107c75c3, type: 2}
+    triggerEffectIds: []
+    notes: "R\xE9solution humaine : le cycle ne r\xE9v\xE8le ni la mort exacte d\u2019\xC9tienne
+      ni le rituel."
+  missingKnowledgeLine: "Il a pris ma Veill\xE9e. Pourquoi n\u2019est-il pas revenu
+    ?"
+  puzzleSteps: []
+  evidence:
+  - evidenceType: 1
+    registryEntry: {fileID: 11400000, guid: f7890c690b2e96548892db769843b1b9, type: 2}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: dbdb0c15ed56fd345ab88b02b86959d3, type: 2}
+    locationId: district_1.corridor.archive_table
+    note: "Le registre confirme la rel\xE8ve."
+  - evidenceType: 4
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 11400000, guid: ef3c9fa93c9c2dd47ad912d6cfa833dc, type: 2}
+    transgenerationalObject: {fileID: 11400000, guid: c24418c04af4b804991377a9a28eaa5f, type: 2}
+    readableItem: {fileID: 11400000, guid: 6f73f027a97617648ba32f15a1a1812d, type: 2}
+    locationId: district_1.corridor.vigil_alcove
+    note: "La note \xE9tablit le choix d\u2019\xC9tienne."
+  - evidenceType: 4
+    registryEntry: {fileID: 11400000, guid: f7890c690b2e96548892db769843b1b9, type: 2}
+    familyRecord: {fileID: 11400000, guid: c78f0fd3d3c957b489d9fb2c9e5e0f1a, type: 2}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: 61a2994cfac9aab4db1790d176bd0014, type: 2}
+    locationId: district_1.corridor.dark_niche
+    note: "Le relev\xE9 suit \xC9tienne jusqu\u2019aux conduits."
+  dissolveTargetGameObjectIds: []
+  includeChildrenInDissolveTargets: 1
+  addDissolveControllerIfMissing: 1
+  dissolveTargetDurationOverride: -1
+  notes: 

@@ -4,7 +4,7 @@ using UnityEngine.AI;
 
 /// <summary>One lifecycle and one authority for enemy decisions, movement and actions.</summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterInfo), typeof(Animator), typeof(NavMeshAgent))]
+[RequireComponent(typeof(CharacterInfo), typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
 public sealed partial class EnemyController : CharacterAnimationController
 {
@@ -89,6 +89,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     private void OnDisable()
     {
         if (!initialized) return;
+        BattleWallOnDisable();
         EncounterOnDisable();
         HideInput();
         RecoveryOnDisable();
@@ -119,6 +120,30 @@ public sealed partial class EnemyController : CharacterAnimationController
         if (!IsSuspended) return;
         transform.SetPositionAndRotation(transform.position + delta, rotation * transform.rotation);
         if (PhysicsBody != null) { PhysicsBody.position = transform.position; PhysicsBody.rotation = transform.rotation; }
+        Physics.SyncTransforms();
+    }
+
+    /// <summary>Keeps an enemy inside its active combat arena without interrupting the action owner.</summary>
+    public void ConstrainToBattleWall(Vector3 position)
+    {
+        if ((transform.position - position).sqrMagnitude <= 0.000001f)
+        {
+            return;
+        }
+
+        transform.position = position;
+        if (PhysicsBody != null)
+        {
+            PhysicsBody.position = position;
+        }
+
+        NavMeshAgent agent = GetComponent<NavMeshAgent>();
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.Warp(position);
+            agent.nextPosition = position;
+        }
+
         Physics.SyncTransforms();
     }
     public void NotifyAttackCompleted() => ResolveAnimationAttackEnded();

@@ -6,6 +6,8 @@ public sealed class CycleInteraction : MonoBehaviour, IGhostInteractionHandler, 
 {
     [Tooltip("Cycle proprietaire de cette interaction.")] public CycleController cycle;
     [Tooltip("ID du dialogue, ou source d'une etape Interaction sans dialogue.")] public string dialogueId;
+    [Tooltip("Utilise l'énigme à connaissances du Ghost. Sa résolution complète alors l'étape DialogueCompleted correspondante du cycle.")]
+    public bool useGhostPuzzleResolution;
     [SerializeField, Tooltip("Point utilise pour un PNJ ou objet. Vide utilise ce Transform ; un Ghost utilise ses propres reglages.")]
     private Transform interactionAnchor;
     [SerializeField, Min(0), Tooltip("Distance maximale en metres pour un PNJ ou objet ; zero exige le contact au point.")]
@@ -14,7 +16,8 @@ public sealed class CycleInteraction : MonoBehaviour, IGhostInteractionHandler, 
     private Collider interactionCollider;
     private GhostController ghost;
     public GhostController Ghost => ghost != null ? ghost : ghost = GetComponent<GhostController>();
-    public bool Interact(GhostController actor) => actor == Ghost && TryInteract();
+    public bool Interact(GhostController actor) => actor == Ghost &&
+        (useGhostPuzzleResolution ? actor.InteractWithGhostPuzzle() : TryInteract());
     // Callable by the existing NPC/object interaction system; never grants a milestone directly.
     public bool TryInteract() => isActiveAndEnabled && cycle != null && cycle.Interact(this);
     internal bool IsWithinRange(GameObject player)

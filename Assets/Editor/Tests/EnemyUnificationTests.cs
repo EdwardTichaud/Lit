@@ -70,6 +70,7 @@ public sealed class EnemyUnificationTests
     }
 
     [TestCase("Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab")]
+    [TestCase("Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/ShadowGuardian.prefab")]
     [TestCase("Assets/Characters/9_Ghosts/Luc/Enemy_Model_MadScientist.prefab")]
     [TestCase("Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut.prefab")]
     public void EnemyPrefabUsesOneControllerAndNoPlayerAnimationReceiver(string path)
@@ -83,6 +84,12 @@ public sealed class EnemyUnificationTests
         Assert.That(prefab.GetComponent<Animator>(), Is.Not.Null);
         Assert.That(prefab.GetComponent<CharacterInfo>().SourceData, Is.Not.Null);
         foreach (var component in prefab.GetComponentsInChildren<MonoBehaviour>(true)) Assert.That(component, Is.Not.Null, "Missing script in " + path);
+    }
+
+    [Test]
+    public void EnemyAnimationContractAssetsAreValid()
+    {
+        Assert.DoesNotThrow(() => EnemyAnimationContractMigration.ValidateOrThrow());
     }
 
     [Test]

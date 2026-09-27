@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Belmont_shift_register
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: db6caeb7f0181c64f932632b73c7ae79
+  knowledgeId: belmont.shift_register
+  title: "La rel\xE8ve d\u2019\xC9tienne"
+  description: "\xC9tienne Belmont a pris le tour de Veill\xE9e d\u2019\xC9lo\xEFse."
+  category: 16
+  sourceType: 0
+  importance: 1
+  tags:
+  - belmont
+  - veillee
+  districtId: district_1
+  roomId: 
+  personId: etienne_belmont
+  lineageId: belmont
+  objectId: 
+  readableItem: {fileID: 11400000, guid: dbdb0c15ed56fd345ab88b02b86959d3, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

@@ -68,6 +68,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 9317d89215d40fd46b93f6b2710999d4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DissolveShape:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _NormalTexture:
         m_Texture: {fileID: 2800000, guid: abc00000000012270248397446470677, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -102,6 +106,9 @@ Material:
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
+    - _DissolveScale: 7
+    - _DissolveShapeBlend: 1
+    - _DissolveStrength: 0
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 1

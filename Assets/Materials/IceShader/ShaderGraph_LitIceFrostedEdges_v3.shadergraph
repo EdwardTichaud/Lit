@@ -146,6 +146,18 @@
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930130"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c6930131"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c6930132"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c6930133"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c6930134"
         }
     ],
     "m_Keywords": [],
@@ -8265,6 +8277,92 @@
     "m_EnumValues": [
         0
     ]
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c6930131",
+    "m_Guid": { "m_GuidSerialized": "77777777-7777-4777-8777-9a57c6930131" },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "Dissolve Strength",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "DissolveStrength",
+    "m_DefaultReferenceName": "_DissolveStrength",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": 0.0,
+    "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
+    "m_RangeValues": { "x": 0.0, "y": 1.0 },
+    "m_SliderType": 0,
+    "m_SliderPower": 3.0,
+    "m_EnumType": 0,
+    "m_CSharpEnumString": "",
+    "m_EnumNames": [ "Default" ],
+    "m_EnumValues": [ 0 ]
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c6930132",
+    "m_Guid": { "m_GuidSerialized": "77777777-7777-4777-8777-9a57c6930132" },
+    "promotedFromAssetID": "", "promotedFromCategoryName": "", "promotedOrdering": -1,
+    "m_Name": "Dissolve Scale", "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "DissolveScale", "m_DefaultReferenceName": "_DissolveScale",
+    "m_OverrideReferenceName": "", "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false, "m_CustomSlotLabel": "", "m_DismissedVersion": 0,
+    "m_Precision": 0, "overrideHLSLDeclaration": false, "hlslDeclarationOverride": 0,
+    "m_Hidden": false, "m_PerRendererData": false, "m_customAttributes": [],
+    "m_Value": 7.0, "m_FloatType": 0, "m_LiteralFloatMode": false,
+    "m_RangeValues": { "x": 0.01, "y": 20.0 }, "m_SliderType": 0, "m_SliderPower": 3.0,
+    "m_EnumType": 0, "m_CSharpEnumString": "", "m_EnumNames": [ "Default" ], "m_EnumValues": [ 0 ]
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c6930133",
+    "m_Guid": { "m_GuidSerialized": "77777777-7777-4777-8777-9a57c6930133" },
+    "promotedFromAssetID": "", "promotedFromCategoryName": "", "promotedOrdering": -1,
+    "m_Name": "Dissolve Shape", "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "DissolveShape", "m_DefaultReferenceName": "_DissolveShape",
+    "m_OverrideReferenceName": "", "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false, "m_CustomSlotLabel": "", "m_DismissedVersion": 0,
+    "m_Precision": 0, "overrideHLSLDeclaration": false, "hlslDeclarationOverride": 0,
+    "m_Hidden": false, "m_PerRendererData": false, "m_customAttributes": [],
+    "m_Value": { "m_SerializedTexture": "", "m_Guid": "" },
+    "isMainTexture": false, "useTilingAndOffset": false, "useTexelSize": true,
+    "isHDR": false, "m_Modifiable": true, "m_DefaultType": 0
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c6930134",
+    "m_Guid": { "m_GuidSerialized": "77777777-7777-4777-8777-9a57c6930134" },
+    "promotedFromAssetID": "", "promotedFromCategoryName": "", "promotedOrdering": -1,
+    "m_Name": "Dissolve Shape Blend", "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "DissolveShapeBlend", "m_DefaultReferenceName": "_DissolveShapeBlend",
+    "m_OverrideReferenceName": "", "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false, "m_CustomSlotLabel": "", "m_DismissedVersion": 0,
+    "m_Precision": 0, "overrideHLSLDeclaration": false, "hlslDeclarationOverride": 0,
+    "m_Hidden": false, "m_PerRendererData": false, "m_customAttributes": [],
+    "m_Value": 1.0, "m_FloatType": 1, "m_LiteralFloatMode": false,
+    "m_RangeValues": { "x": 0.0, "y": 1.0 }, "m_SliderType": 0, "m_SliderPower": 3.0,
+    "m_EnumType": 0, "m_CSharpEnumString": "", "m_EnumNames": [ "Default" ], "m_EnumValues": [ 0 ]
 }
 
 {

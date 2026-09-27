@@ -360,6 +360,50 @@ public class NetworkCharacterInput : NetworkBehaviour
         ToggleTorchServerRpc();
     }
 
+    /// <summary>
+    /// Ranges the carried torch when a local combat session begins. Unlike a
+    /// direct controller call, this keeps the authoritative flame state and
+    /// every connected client in sync.
+    /// </summary>
+    public bool TryUnequipTorchForCombat()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller == null || !controller.IsFlameEquipped)
+        {
+            return controller != null;
+        }
+
+        if (!IsSpawned || NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+        {
+            ToggleTorchLocal();
+            return true;
+        }
+
+        if (!IsOwner)
+        {
+            return false;
+        }
+
+        if (ShouldUseHostLocalMovePath())
+        {
+            ToggleTorchLocal();
+            if (IsServer)
+            {
+                UpdateFlameClientRpc(controller.IsFlameEquipped, controller.FlameSecondsRemaining);
+            }
+        }
+        else
+        {
+            ToggleTorchServerRpc();
+        }
+
+        return true;
+    }
+
     private void HandleLocomotionModeRequest()
     {
         if (!locomotionModeRequested)

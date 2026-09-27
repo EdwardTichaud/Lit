@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3387e76e8bae479dab327bd8580b77fc
+VisualEffectImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 352338
+  packageName: Character Effects
+  packageVersion: 1.1
+  assetPath: Assets/INab Studio/Vfx Assets/Character Effects/Core/Graphs/Character
+    Fire.vfx
+  uploadId: 858964

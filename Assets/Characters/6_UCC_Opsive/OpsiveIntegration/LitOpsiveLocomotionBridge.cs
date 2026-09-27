@@ -280,6 +280,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         Vector2 worldInput = isWorldSpace || squadController == null ? input : squadController.GetWorldSpaceInput(input);
+        worldInput = BattleWallContainment.ConstrainPlanarInput(transform, worldInput);
         ApplyWorldMoveInput(worldInput);
     }
 
@@ -910,6 +911,21 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         lastPosition = position;
         hasLastPosition = true;
         ForceZeroInput();
+        return true;
+    }
+
+    /// <summary>Repositions UCC at the arena boundary without cancelling its current action.</summary>
+    public bool ConstrainToBattleWall(Vector3 position)
+    {
+        ResolveReferences();
+        if (locomotion == null)
+        {
+            return false;
+        }
+
+        locomotion.SetPositionAndRotation(position, locomotion.transform.rotation, false, false);
+        lastPosition = position;
+        hasLastPosition = true;
         return true;
     }
 

@@ -15,11 +15,23 @@ public static class CycleValidation
             if (step.kind == CycleStepKind.Knowledge && step.knowledge == null) issues.Add("Connaissance absente : " + step.id);
             if (step.kind != CycleStepKind.Knowledge && string.IsNullOrWhiteSpace(step.sourceId)) issues.Add("Source absente : " + step.id);
             if (step.kind == CycleStepKind.DialogueCompleted && cycle.FindDialogue(step.sourceId) == null) issues.Add("Dialogue absent : " + step.sourceId);
+            foreach (var reward in step.rewards ?? Array.Empty<CycleReward>())
+            {
+                if (reward == null) { issues.Add("Recompense vide : " + step.id); continue; }
+                if (reward.kind == CycleRewardKind.Skill && reward.skill == null) issues.Add("Competence absente : " + step.id);
+                if (reward.kind == CycleRewardKind.Knowledge && reward.knowledge == null) issues.Add("Connaissance de recompense absente : " + step.id);
+                if (reward.kind == CycleRewardKind.Item && reward.item == null) issues.Add("Objet de recompense absent : " + step.id);
+                if ((reward.kind == CycleRewardKind.WorldVariable || reward.kind == CycleRewardKind.Activation) && string.IsNullOrWhiteSpace(reward.key)) issues.Add("Cle de recompense absente : " + step.id);
+            }
             terminal |= step.terminal;
             ValidateRequirements(cycle, step.prerequisites, issues);
         }
         if (!terminal) issues.Add("Fin inatteignable : aucune etape terminale.");
         ValidateRequirements(cycle, cycle.prerequisites, issues);
+        if (cycle.legacyMigrationVersion > 0)
+            foreach (var migration in cycle.legacyMigrations ?? Array.Empty<CycleLegacyStepMigration>())
+                if (migration == null || cycle.FindStep(migration.stepId) == null || (migration.anyFlags == 0 && migration.allFlags == 0))
+                    issues.Add("Migration invalide.");
         var visiting = new HashSet<string>();
         var visited = new HashSet<string>();
         foreach (var step in cycle.steps)

@@ -4341,7 +4341,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7005787142804927576}
-  m_Enabled: 1
+  m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.5
   m_Speed: 2.8
@@ -4534,6 +4534,8 @@ MonoBehaviour:
   AnimationLockPoint: {fileID: 2663386024477595524}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
+  CreateWall: 0
+  battleWallPrefab: {fileID: 0}
   ContractRigidbodyComponent: {fileID: 3634362987184117151}
   ContractCapsuleCollider: {fileID: 8170008773839381790}
   ContractNavigationAgent: {fileID: 8100414059305065397}
@@ -4544,7 +4546,7 @@ MonoBehaviour:
   PhysicsBody: {fileID: 3634362987184117151}
   PhysicsBodyCollider: {fileID: 8170008773839381790}
   SkillsAnimator: {fileID: 327572561411875199}
-  SkillsCasterVfxPoint: {fileID: 0}
+  SkillsCasterVfxPoint: {fileID: 1702866972060765472}
   visionOrigin: {fileID: 2663386024477595524}
   combatEnabled: 1
 --- !u!114 &1677265370121901268

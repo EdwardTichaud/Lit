@@ -56,7 +56,7 @@ public sealed class CycleProgressionTests
         Assert.That(service.IsCompleted(first), Is.True);
         Assert.That(service.GetStatus(second), Is.EqualTo(CycleStatus.Available));
     }
-    [Test] public void EarlyEventsAreDiscardedButDefeatsArePersistentFacts()
+    [Test] public void EarlyEventsArePersistedAndReconciledAfterPrerequisites()
     {
         var first = Interaction("first");
         var last = Interaction("last", true); last.prerequisites = Requires("first");
@@ -67,19 +67,17 @@ public sealed class CycleProgressionTests
         Assert.That(service.IsStepCompleted(cycle, "enemy"), Is.False);
         Report(cycle, CycleStepKind.Interaction, "first");
         Assert.That(service.IsStepCompleted(cycle, "enemy"), Is.True);
-        Assert.That(service.IsStepCompleted(cycle, "last"), Is.False);
-        Report(cycle, CycleStepKind.Interaction, "last");
+        Assert.That(service.IsStepCompleted(cycle, "last"), Is.True);
         Assert.That(service.IsCompleted(cycle), Is.True);
     }
-    [Test] public void OneEventCannotTraverseTwoOrderedSteps()
+    [Test] public void PersistedFactCanReconcileTwoOrderedSteps()
     {
         var a = Interaction("a");
         var b = Interaction("b", true); b.sourceId = "a"; b.prerequisites = Requires("a");
         var cycle = Cycle(a, b);
         Report(cycle, CycleStepKind.Interaction, "a");
         Assert.That(service.IsStepCompleted(cycle, "a"), Is.True);
-        Assert.That(service.IsStepCompleted(cycle, "b"), Is.False);
-        Report(cycle, CycleStepKind.Interaction, "a");
+        Assert.That(service.IsStepCompleted(cycle, "b"), Is.True);
         Assert.That(service.IsCompleted(cycle), Is.True);
     }
     [Test] public void CrossCycleRequirementsAndAnyConditionsWork()
@@ -90,7 +88,7 @@ public sealed class CycleProgressionTests
         Assert.That(service.GetStatus(next), Is.EqualTo(CycleStatus.Unavailable));
         Assert.That(Report(next, CycleStepKind.Interaction, "end"), Is.False);
         Report(first, CycleStepKind.Interaction, "end");
-        Assert.That(service.GetStatus(next), Is.EqualTo(CycleStatus.Available));
+        Assert.That(service.GetStatus(next), Is.EqualTo(CycleStatus.Completed));
         var any = Requires("end", "missing"); any.mode = CycleRequirementMode.Any;
         Assert.That(service.Matches(first, any), Is.True);
         any.mode = CycleRequirementMode.All;
@@ -141,6 +139,26 @@ public sealed class CycleProgressionTests
         rules.TryGetInt(nina.StateKey, out int after);
         Assert.That(after, Is.EqualTo(flags));
         Assert.That(service.IsCompleted(nina), Is.False);
+    }
+    [TestCase(0, "")]
+    [TestCase(1, "scientist_defeated")]
+    [TestCase(2, "aftermath_seen")]
+    [TestCase(4, "nina_spoken")]
+    [TestCase(8, "scar_reward")]
+    [TestCase(16, "nina_spoken")]
+    [TestCase(20, "nina_spoken")]
+    [TestCase(31, "scar_reward")]
+    public void NinaLegacyStatesMigrateOnceToNamedSteps(int flags, string expectedStep)
+    {
+        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        service.RegisterDefinition(nina);
+        rules.SetInt(nina.StateKey, flags);
+        service.Refresh();
+        Assert.That(string.IsNullOrEmpty(expectedStep) || service.IsStepCompleted(nina, expectedStep), Is.True);
+        Assert.That(rules.TryGetInt(nina.MigrationKey, out int version) && version == nina.legacyMigrationVersion, Is.True);
+        int writes = 0; rules.VariablesChanged += () => writes++;
+        service.Refresh();
+        Assert.That(writes, Is.Zero);
     }
     [Test] public void CircularAndMissingDependenciesAreReported()
     {

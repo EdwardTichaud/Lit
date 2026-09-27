@@ -1,3 +1,16 @@
+## Verification Nina apres socle de cycles (2026-09-27)
+
+La scene Nina avait encore deux activations dependantes du flag historique 20, alors que le cycle migre ne l'ecrit plus. Elles utilisent maintenant l'etape nina_spoken : apres les deux connaissances, Nina devient Dead; apres son dialogue, Nina's Blood et Scar deviennent visibles. Les tests de scene et de recompense ont ete mis a jour pour refuser ce retour aux flags. Unity batch reste indisponible : valider dans l'editeur le parcours scientifique, lettre, Nina, sang, Scar et rechargement d'une sauvegarde historique.
+
+## Socle de cycles narratifs (2026-09-26)
+
+Nina utilise desormais les etapes nommees comme source de verite. Les anciens bits sont conserves dans narrative.district1.nina uniquement pour une migration versionnee executee une fois : scientifique (1), Nina (20), Scar (8) et aftermath (2). La defaite du scientifique accorde Existence des chimeres via la recompense de l'etape; Scar accorde Cicatrice de la meme maniere. CycleProgressionService persiste les faits generiques avant les prerequis, reconcilie les etapes et les recompenses lorsque les services deviennent disponibles, et reconnait les etapes terminales lors du saut de scene. CycleReward couvre Skill, Knowledge, Item, WorldVariable et Activation. Les items attendent dans la boite Maison si le coffre est absent ou plein. Les dialogues reseau demandent maintenant une validation du serveur avant affichage local. Lit/Narrative/Validate All Cycles est execute avant build; Lit/Narrative/New Cycle cree une definition sous Resources/Narrative.
+
+Validation Unity batch lancee avec 6000.4.9f1 : l'editeur a quitte immediatement avec son code interne 1 avant compilation (aucun diagnostic C# dans le log). Retester dans l'editeur : migration 0/1/2/4/8/16/20/31, recompenses, coffre Maison, dialogues host/client et validation globale.
+
+## Cycle Luc migre vers les etapes nommees (2026-09-27)
+
+Luc n'avait aucun flag historique : les connaissances existantes du collier et de la tombe alimentent des etapes Knowledge, puis le dialogue luc valide interaction et fermeture. La connaissance Le destin de Jon est maintenant une recompense de l'etape terminale et ne peut etre accordee qu'une fois. L'outil Lit/Narrative/Configure Luc Cycle relie Ghost_Luc au CycleController dans District_1_Cycle_Luc et corrige son nom dans le manifest. Compilation Unity et execution LucCycleTests restent a faire apres import des nouveaux scripts.
 ## Continuite des actions joueur (2026-09-20)
 
 - PlayerActionPresentationController identifie ses sessions par acteur/generation et centralise Completed, Interrupted, Failed, OwnerDisabled et Death. Les nettoyages sont invalides avant leur execution : un ancien callback ne termine pas la session suivante.

@@ -31,9 +31,9 @@ public static class NinaCycleSetup
         var existence = Knowledge("ExistenceDesChimeres", "Existence des chimÃ¨res", "Des Ãªtres vivants ont Ã©tÃ© fusionnÃ©s artificiellement par le Scientifique fou.");
         var dilemma = Knowledge("DilemmeEdouard", "Dilemme Ã‰douard", "Ã‰douard a dÃ©couvert que Nina Ã©tait issue de la fusion d'une enfant et d'un chien. Comment lui venir en aide sans lui infliger davantage de souffrance ?");
         definition.cycleId = "district1.nina";
-        definition.completionFlags = 8;
+        definition.completionFlags = 0;
         definition.cycleSceneName = "District_1_Enigme_Ghost_Nina";
-        definition.knowledgeOnEnemyDefeat = new[] { existence };
+        definition.knowledgeOnEnemyDefeat = Array.Empty<KnowledgeSO>();
         definition.playCinematicAfterDefeat = true;
         definition.dialogues = new[]
         {
@@ -45,6 +45,18 @@ public static class NinaCycleSetup
                 rewardSkill = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/CombatRealTime/Skills/Skill_3_Cicatrice.asset") }
         };
         CycleMigration.ConfigureNina(definition);
+        var ninaDialogue = definition.FindDialogue("nina");
+        var scarDialogue = definition.FindDialogue("scar");
+        ninaDialogue.openedFlags = 0;
+        scarDialogue.rewardFlag = 0;
+        scarDialogue.rewardSkill = null;
+        scarDialogue.condition = new CycleCondition
+        {
+            requirements = new CycleRequirements
+            {
+                conditions = new[] { new CycleRequirement { kind = CycleRequirementKind.Step, stepId = "nina_spoken" } }
+            }
+        };
         var letter = Asset<Item>(DataPath + "/Item_Edward.asset");
         letter.itemId = "item_edward";
         letter.itemName = "Lettre manuscrite d'Ã‰douard";

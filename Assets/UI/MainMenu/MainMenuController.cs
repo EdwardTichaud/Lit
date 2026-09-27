@@ -1600,14 +1600,10 @@ public class MainMenuController : MonoBehaviour
 
         mainMenuAudioPlayed = true;
 
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayClip(mainMenuLoadAudio, Vector3.zero);
-        }
-        else if (mainMenuLoadAudio.audioClip != null)
-        {
-            AudioManager.PlayClipAtPoint(mainMenuLoadAudio, Vector3.zero);
-        }
+        // Le theme du menu appartient au canal musique persistant. Le jouer
+        // comme un one-shot boucle le laisserait actif pendant que la zone
+        // Maison lance sa propre musique.
+        AudioManager.EnsureInstance().PlayMusic(mainMenuLoadAudio);
     }
 
     private void PlayTitleCardSfx()

@@ -35,7 +35,7 @@ TimelineManager gardent leurs effets. GameFlowService possede le dechargement.
 
 L'Inspecteur propose categories repliables et tooltips. En Play Mode, le
 controleur affiche l'etat partage et la raison d'attente de chaque objectif.
-Les champs numeriques historiques sont reserves a la compatibilite de Nina.
+Les nouveaux cycles n'utilisent aucun flag. Une migration versionnee est reservee aux contenus publies.
 
 ## Progression et persistance
 
@@ -47,7 +47,8 @@ Le dialogue est valide apres fermeture naturelle, controle du token, de la
 portee et de sa duree. Interaction correspond a l'ouverture validee ou a l'action
 sans dialogue. Le serveur reste seul autorise a valider en reseau.
 
-Les cles narrative.<cycleId>.step.<id>, .defeat.<sourceId> et .completed utilisent
+Les cles narrative.<cycleId>.step.<id>, .fact.<type>.<source>, .reward.<step>.<index>
+et .completed utilisent
 WorldVariableSnapshot sans nouveau format binaire. Le service de session emet
 les etats et JoinSync conserve les variables apres dechargement. Un envoi au
 signal ClientMarkedReady actualise l'etat apres le snapshot initial.
@@ -67,9 +68,9 @@ dans sa validation des scenes requises pour le NavMesh.
 ## Nina
 
 Etapes : chimeras_known, edouard_understood, scientist_defeated, nina_spoken,
-scar_reward et aftermath_seen (facultative). Le bit 8 conserve la fin ; 4/16 la
-visite de Nina, 1 la mort du scientifique et 2 la sequence. La migration des
-sauvegardes est automatique et idempotente, sans reecrire les bits existants.
+scar_reward et aftermath_seen (facultative). Les etapes terminales remplacent
+les flags actifs. La migration versionnee lit une seule fois les anciens bits 1,
+2, 4/16/20 et 8, les conserve pour diagnostic et ne les reevalue plus.
 Le menu Lit > Narrative > Migrer Nina vers les etapes nommees et le generateur
 utilisent la meme configuration ; une fiche deja migree n'est pas remplacee.
 Nina devient Dead selon les deux connaissances. Scar parle deux secondes hors

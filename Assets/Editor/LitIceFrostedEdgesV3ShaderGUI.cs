@@ -12,6 +12,7 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
     private static bool s_ReflectionsExpanded = true;
     private static bool s_WallsFloorsExpanded = true;
     private static bool s_TransitionExpanded = true;
+    private static bool s_DissolveExpanded = true;
     private static string s_LastBakeMessage;
     private static MessageType s_LastBakeMessageType = MessageType.Info;
     private static GUIStyle s_SectionHeaderStyle;
@@ -47,6 +48,8 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             DrawWallsAndFloorsProperties(materialEditor, properties));
         DrawSection("FLAME TRANSITION", ref s_TransitionExpanded, () =>
             DrawTransitionProperties(materialEditor, properties));
+        DrawSection("DISSOLVE", ref s_DissolveExpanded, () =>
+            DrawDissolveProperties(materialEditor, properties));
 
         EditorGUILayout.Space(4f);
         m_HdrpBlocks.OnGUI(materialEditor, properties);
@@ -232,6 +235,18 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             "Largeur du fondu spatial autour du rayon.");
         DrawProperty(editor, properties, "_TransitionProgress", "Transition Progress",
             "Progression manuelle : 0 = glace, 1 = apparence normale dans la zone de flamme.");
+    }
+
+    private void DrawDissolveProperties(MaterialEditor editor, MaterialProperty[] properties)
+    {
+        DrawProperty(editor, properties, "_DissolveStrength", "Dissolve Strength",
+            "0 conserve le matériau visible ; 1 le dissout entièrement. Cette valeur peut être animée par CycleController sans modifier le matériau partagé.");
+        DrawProperty(editor, properties, "_DissolveScale", "Dissolve Scale",
+            "Taille monde du Noise : une petite valeur produit de petits trous ; une valeur élevée produit de grandes zones de dissolve. Fonctionne sur murs, sols et props.");
+        DrawProperty(editor, properties, "_DissolveShape", "Dissolve Shape",
+            "Texture en niveaux de gris qui définit la forme du dissolve. Le blanc disparaît en premier.", true);
+        DrawProperty(editor, properties, "_DissolveShapeBlend", "Shape Blend",
+            "0 utilise le bruit procédural ; 1 utilise entièrement la texture de forme.");
     }
 
     private static void DrawSection(string title, ref bool expanded, Action drawContents)

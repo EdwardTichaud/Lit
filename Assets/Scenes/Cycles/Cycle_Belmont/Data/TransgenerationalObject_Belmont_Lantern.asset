@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6cdede0158248d1aa26b71d1466222c, type: 3}
+  m_Name: TransgenerationalObject_Belmont_Lantern
+  m_EditorClassIdentifier: Assembly-CSharp::TransgenerationalObjectRecord
+  objectId: belmont_lantern
+  displayName: "Lanterne de Veill\xE9e Belmont"
+  description: "Une petite lanterne caboss\xE9e, transmise entre les gardiens de
+    Veill\xE9e."
+  associatedLineageId: belmont
+  successiveOwnerIds:
+  - etienne_belmont
+  - eloise_belmont
+  appearsAtAges: 9a020000
+  foundLocations:
+  - district_1.corridor.vigil_alcove
+  notes: "Objet domestique : il relie la note d\u2019\xC9tienne \xE0 la garde d\u2019\xC9lo\xEFse."

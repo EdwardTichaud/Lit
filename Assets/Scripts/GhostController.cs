@@ -467,11 +467,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     }
 
     /// <summary>Version du gate outline qui ne repasse pas par un adaptateur.</summary>
-    public bool AllowsDefaultRuntimeOutline => outlineWhileGhostIsRevealed &&
-                                               isRevealedToPlayer &&
-                                               ghostRenderersVisible &&
-                                               CanAppearAtAll() &&
-                                               IsControlledPlayerWithinGhostOutlineRange();
+    public bool AllowsDefaultRuntimeOutline => IsRuntimeOutlineAvailableFor(
+        ResolveCharacterController(LocalPlayerUtils.GetControlledCharacter()));
 
     public bool AllowsRuntimeOutline => AllowsDefaultRuntimeOutline;
     public event System.Action<GhostController> Understood;
@@ -688,7 +685,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         onGhostDataChanged.Invoke();
     }
 
-    public bool CanBeDetectedBy(SquadCharacterController controller) => !finalResolvedGhostCleanupInProgress && TryEvaluateRevealForController(controller, out _);
+    public bool CanBeDetectedBy(SquadCharacterController controller)
+    {
+        // A ghost that is only present in its influence zone must not compete
+        // with nearby loot or readable items. It becomes an interaction
+        // candidate only once its visual outline can genuinely be displayed.
+        return !finalResolvedGhostCleanupInProgress &&
+               TryEvaluateRevealForController(controller, out _) &&
+               IsRuntimeOutlineAvailableFor(controller);
+    }
 
     public Collider GetInteractionDetectionCollider()
     {
@@ -818,6 +823,18 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         foreach (var behaviour in GetComponents<MonoBehaviour>())
             if (behaviour != null && behaviour.isActiveAndEnabled && behaviour is IGhostInteractionHandler handler)
                 return handler.Interact(this);
+
+        return InteractWithGhostPuzzle();
+    }
+
+    /// <summary>
+    /// Runs this ghost's knowledge puzzle without consulting interaction
+    /// adapters. A cycle can opt into this path and observe Understood to
+    /// make its own milestone authoritative.
+    /// </summary>
+    public bool InteractWithGhostPuzzle()
+    {
+        if (!isActiveAndEnabled) return false;
 
         if (ghostData == null)
         {
@@ -1278,10 +1295,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         return (characterPosition - anchorPosition).sqrMagnitude <= proximityPresentationDistance * proximityPresentationDistance;
     }
 
-    private bool IsControlledPlayerWithinGhostOutlineRange()
+    private bool IsRuntimeOutlineAvailableFor(SquadCharacterController controller)
     {
-        GameObject controlledCharacter = LocalPlayerUtils.GetControlledCharacter();
-        if (controlledCharacter == null)
+        if (!outlineWhileGhostIsRevealed ||
+            !isRevealedToPlayer ||
+            !ghostRenderersVisible ||
+            !CanAppearAtAll() ||
+            !HasVisibleRuntimeOutlineDissolve() ||
+            !HasAuthoredRuntimeOutlineTarget() ||
+            controller == null)
         {
             return false;
         }
@@ -1290,10 +1312,21 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         // before that candidate reaches its own valid interaction range.
         float outlineRange = Mathf.Max(interactionMaxDistance, ghostOutlineActivationDistance);
         return CharacterInteractionDetection.IsCharacterWithinRange(
-            controlledCharacter.transform,
+            controller.transform,
             GetInteractionDetectionCollider(),
             GetInteractionAnchor(),
             outlineRange);
+    }
+
+    private bool HasAuthoredRuntimeOutlineTarget()
+    {
+        if (TryGetComponent(out RuntimeOutlineRendererReference reference))
+        {
+            Renderer renderer = reference.outlineRenderer;
+            return renderer != null && renderer.GetComponent<RuntimeOutlineTarget>() != null;
+        }
+
+        return GetComponentInChildren<RuntimeOutlineTarget>(true) != null;
     }
 
     private void BeginAppearanceProximityPresentation()
@@ -1465,12 +1498,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             return visible;
         }
 
-        if (!float.IsNaN(currentProximityDissolveAmount))
-        {
-            return IsRuntimeOutlineDissolveVisible(currentProximityDissolveAmount);
-        }
-
-        return !enableProximityDissolve;
+        // No dissolve controller is present: renderer visibility remains the
+        // authoritative fallback for outline eligibility.
+        return !enableProximityDissolve || (isRevealedToPlayer && ghostRenderersVisible);
     }
 
     private bool TryAnyProximityDissolveControllerVisible(out bool visible)
@@ -1488,7 +1518,11 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             }
 
             hasController = true;
-            if (IsRuntimeOutlineDissolveVisible(dissolve.CurrentDissolveAmount))
+            // GhostDissolveController exposes the actual presentation alpha.
+            // Its dissolve amount can have either polarity depending on the
+            // shader configuration, so it must not be used as a visibility
+            // proxy here.
+            if (dissolve.CurrentGhostAlpha > 0.01f)
             {
                 visible = true;
                 return true;
@@ -1496,15 +1530,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         return hasController;
-    }
-
-    private bool IsRuntimeOutlineDissolveVisible(float dissolveAmount)
-    {
-        float clampedAmount = Mathf.Clamp01(dissolveAmount);
-        float clampedThreshold = Mathf.Clamp01(outlineVisibleDissolveThreshold);
-        return outlineVisibleBelowDissolveThreshold
-            ? clampedAmount < clampedThreshold
-            : clampedAmount > clampedThreshold;
     }
 
     private void EnsureProximityDissolveControllersResolved()

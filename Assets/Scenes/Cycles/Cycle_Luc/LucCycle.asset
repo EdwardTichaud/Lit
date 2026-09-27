@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: LucCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: district1.luc
+  title: Le souvenir de Luc
+  description: Retrouver les traces de Jon pour apaiser Luc.
+  category: 1
+  completionPresentationTimeout: 15
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: jon_collar_collected
+    title: Trouver le collier de Jon
+    description: Le collier et sa clochette confirment que Jon etait un animal familier.
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: e1d45eceb8dd4a35a35ff4ee16ae5baa, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: jon_grave_read
+    title: Lire la tombe de Jon
+    description: La petite tombe confirme le destin de Jon.
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 45fd1bc4980241aa9366ee3dcebfb90d, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: luc_spoken
+    title: Parler a Luc de Jon
+    description: Dire a Luc ce qui est arrive a Jon.
+    kind: 3
+    sourceId: luc
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: jon_collar_collected
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: jon_grave_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: luc_farewell
+    title: Apaiser Luc
+    description: Luc accepte enfin le destin de Jon.
+    kind: 1
+    sourceId: luc
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: luc_spoken
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 1
+      skill: {fileID: 0}
+      knowledge: {fileID: 11400000, guid: 422f055239c3a104ea7445057bc960df, type: 2}
+      item: {fileID: 0}
+      quantity: 1
+      key: 
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: District_1_Cycle_Luc
+  dialogueSeconds: 4
+  dialogues:
+  - id: luc
+    durationSeconds: 4
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: jon_collar_collected
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+        - kind: 0
+          stepId: jon_grave_read
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: Mon Jon... mon petit chat... Il repose donc ici. Je peux enfin le laisser partir.
+    unavailableLine: Je cherche Jon... Il y avait toujours cette petite clochette...
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 1
+    disappearanceDelay: 0
+  enemyDefeatedFlags: 0
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2
