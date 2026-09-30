@@ -4867,7 +4867,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2334679563321303860}
   m_Layer: 0
-  m_Name: Model_Flame_Brazier
+  m_Name: Model_BrokenAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4888,6 +4888,37 @@ Transform:
   m_Children:
   - {fileID: 8922661611099151867}
   - {fileID: 8718530351011828693}
+  m_Father: {fileID: 739617814141756082}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1531961569559521797
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3890724604177174167}
+  m_Layer: 0
+  m_Name: EmissionPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3890724604177174167
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531961569559521797}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.87, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 739617814141756082}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1632613461250186376
@@ -14720,11 +14751,13 @@ GameObject:
   - component: {fileID: 739617814141756082}
   - component: {fileID: 5523210836528485492}
   - component: {fileID: 988919632115976157}
-  - component: {fileID: 603739931620500168}
-  - component: {fileID: 2828832265441885423}
   - component: {fileID: 6128372694158385396}
-  - component: {fileID: 3021423573564032108}
-  - component: {fileID: 3833634241090967849}
+  - component: {fileID: 4254147237030291728}
+  - component: {fileID: 4254147237030291729}
+  - component: {fileID: 4254147237030291730}
+  - component: {fileID: 4254147237030291731}
+  - component: {fileID: 4254147237030291732}
+  - component: {fileID: 4254147237030291733}
   m_Layer: 0
   m_Name: BrokenAnchor
   m_TagString: Untagged
@@ -14747,6 +14780,7 @@ Transform:
   m_Children:
   - {fileID: 934250593115948624}
   - {fileID: 2334679563321303860}
+  - {fileID: 3890724604177174167}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!135 &5523210836528485492
@@ -14782,67 +14816,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d482e64f4c70ee4fae5f379165d46a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
-  characterData: {fileID: 11400000, guid: 0f40027d56bb41c8ab255aeacc3d7669, type: 2}
-  maxHp: 300
-  currentHp: 300
+  characterData: {fileID: 11400000, guid: 5619b589e83041c8970ee97c1e039844, type: 2}
+  maxHp: 3
+  currentHp: 3
   initializeEmptyHealthToMax: 1
---- !u!114 &603739931620500168
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4254147237030291727}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  ActorAnimator: {fileID: 0}
-  ActorEnemyLockPoint: {fileID: 934250593115948624}
-  AnimationAnimationRoot: {fileID: 0}
-  AnimationAnimator: {fileID: 0}
-  AnimationLockPoint: {fileID: 934250593115948624}
-  inputPromptAnchor: {fileID: 0}
-  inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  CreateWall: 0
-  battleWallPrefab: {fileID: 0}
-  ContractRigidbodyComponent: {fileID: 0}
-  ContractCapsuleCollider: {fileID: 0}
-  ContractNavigationAgent: {fileID: 0}
-  ContractAnimator: {fileID: 0}
-  LocomotionNavigationAgent: {fileID: 2828832265441885423}
-  NavigationNavigationAgent: {fileID: 0}
-  PhysicsNavigationAgent: {fileID: 2828832265441885423}
-  PhysicsBody: {fileID: 3021423573564032108}
-  PhysicsBodyCollider: {fileID: 3833634241090967849}
-  SkillsAnimator: {fileID: 0}
-  SkillsCasterVfxPoint: {fileID: 739617814141756082}
-  visionOrigin: {fileID: 739617814141756082}
-  combatEnabled: 1
---- !u!195 &2828832265441885423
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4254147237030291727}
-  m_Enabled: 0
-  m_AgentTypeID: 0
-  m_Radius: 0.7
-  m_Speed: 3.6
-  m_Acceleration: 12
-  avoidancePriority: 50
-  m_AngularSpeed: 540
-  m_StoppingDistance: 2.2
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2.2
-  m_BaseOffset: 0
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!114 &6128372694158385396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14855,7 +14832,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2087628783
+  GlobalObjectIdHash: 1704096383
   InScenePlacedSourceGlobalObjectIdHash: 1704096383
   DeferredDespawnTick: 0
   Ownership: 1
@@ -14868,34 +14845,29 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!54 &3021423573564032108
-Rigidbody:
+--- !u!95 &4254147237030291728
+Animator:
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4254147237030291727}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 1
-  m_Constraints: 112
-  m_CollisionDetection: 3
---- !u!136 &3833634241090967849
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 91f2a0d7357535341b9e5acd7e8c9629, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!136 &4254147237030291729
 CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -14914,10 +14886,122 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.7
-  m_Height: 2.2
+  m_Radius: 1.25
+  m_Height: 2.5
   m_Direction: 1
   m_Center: {x: 0, y: 1.1, z: 0}
+--- !u!54 &4254147237030291730
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4254147237030291727}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 1
+  m_Constraints: 126
+  m_CollisionDetection: 3
+--- !u!195 &4254147237030291731
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4254147237030291727}
+  m_Enabled: 0
+  m_AgentTypeID: 0
+  m_Radius: 1.25
+  m_Speed: 0
+  m_Acceleration: 0
+  avoidancePriority: 50
+  m_AngularSpeed: 0
+  m_StoppingDistance: 2
+  m_AutoTraverseOffMeshLink: 0
+  m_AutoBraking: 1
+  m_AutoRepath: 0
+  m_Height: 2.5
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &4254147237030291732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4254147237030291727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
+  m_Name: EnemyController
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyController
+  ShowTopMostFoldoutHeaderGroup: 1
+  ActorAnimator: {fileID: 4254147237030291728}
+  ActorEnemyLockPoint: {fileID: 3890724604177174167}
+  AnimationAnimationRoot: {fileID: 739617814141756082}
+  AnimationAnimator: {fileID: 4254147237030291728}
+  AnimationLockPoint: {fileID: 3890724604177174167}
+  inputPromptAnchor: {fileID: 0}
+  inputPromptOffset: {x: 0, y: 1.25, z: 0}
+  CreateWall: 1
+  battleWallPrefab: {fileID: 5051682734331238811, guid: e5281b19f0eb49d4f9d2914e07192808, type: 3}
+  ContractRigidbodyComponent: {fileID: 0}
+  ContractCapsuleCollider: {fileID: 0}
+  ContractNavigationAgent: {fileID: 0}
+  ContractAnimator: {fileID: 4254147237030291728}
+  LocomotionNavigationAgent: {fileID: 0}
+  NavigationNavigationAgent: {fileID: 0}
+  PhysicsNavigationAgent: {fileID: 0}
+  PhysicsBody: {fileID: 0}
+  PhysicsBodyCollider: {fileID: 0}
+  SkillsAnimator: {fileID: 0}
+  SkillsCasterVfxPoint: {fileID: 0}
+  visionOrigin: {fileID: 0}
+  combatEnabled: 1
+--- !u!114 &4254147237030291733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4254147237030291727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb9be5eb5f9c697429a2ef495d5e59d5, type: 3}
+  m_Name: BrokenAnchorBoss
+  m_EditorClassIdentifier: Assembly-CSharp::BrokenAnchorBoss
+  ShowTopMostFoldoutHeaderGroup: 1
+  definition: {fileID: 11400000, guid: 208b5b34d09c486d8732f2f87f432d07, type: 2}
+  enemy: {fileID: 4254147237030291732}
+  emissionPoint: {fileID: 0}
+  torches:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  orbPrefab: {fileID: 114000, guid: 364d8f95622c49bb9e4b7835e1f07b76, type: 3}
+  telegraphSeconds: 0.75
+  salvoIntervalSeconds: 3
+  orbSpeed: 12
+  orbLifetimeSeconds: 8
+  playerDamage: 15
+  launchClearance: 0.35
+  releaseConvergenceSeconds: 3.5
 --- !u!1 &4583555009385755415
 GameObject:
   m_ObjectHideFlags: 0
@@ -19874,7 +19958,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -19905,7 +19989,7 @@ Transform:
   m_GameObject: {fileID: 6118193545315593972}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.928, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19939,12 +20023,12 @@ GameObject:
   - component: {fileID: 8718530351011828693}
   - component: {fileID: 3975642118673316793}
   m_Layer: 0
-  m_Name: Flame
+  m_Name: Anchor_Core
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8718530351011828693
 Transform:
   m_ObjectHideFlags: 0
@@ -20084,7 +20168,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -20096,7 +20180,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7362022998807915835}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
@@ -20114,7 +20198,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5220983895688451316}
   m_Layer: 0
-  m_Name: Flame_Fire_Flame_Flame
+  m_Name: Anchor_Fire_Disabled
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25016,7 +25100,7 @@ Transform:
   m_GameObject: {fileID: 9031395629627231130}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0024674016, y: 0, z: -0.004469205}
+  m_LocalPosition: {x: -0.017664924, y: 0, z: -0.022066548}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -25033,8 +25117,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 9.879057
-  m_Range: 5.805436
+  m_Intensity: 8.752023
+  m_Range: 5.652925
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -25235,7 +25319,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9031395629627231130}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f3e10f1710d75e43bf63af34beedf4e, type: 3}
   m_Name: 
@@ -25246,8 +25330,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncFlameReceiverColor: 1
   deferShadowingToFlameReceiver: 1
-  baseIntensity: 10.527016
-  baseRange: 5.9149814
+  baseIntensity: 8.577758
+  baseRange: 5.597445
   emberColor: {r: 1, g: 1, b: 1, a: 1}
   flameColor: {r: 1, g: 1, b: 1, a: 1}
   intensityVariation: 0.24

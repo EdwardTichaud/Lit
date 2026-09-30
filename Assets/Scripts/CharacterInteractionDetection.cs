@@ -28,6 +28,52 @@ public static class CharacterInteractionDetection
     private static readonly Vector3[] visibilitySamplePoints = new Vector3[VisibilitySampleCapacity];
     private static readonly RaycastHit[] visibilityRaycastHits = new RaycastHit[VisibilityRaycastHitCapacity];
     private static readonly List<Renderer> visibilityRenderers = new List<Renderer>(16);
+    private static Flame[] activeFlames = System.Array.Empty<Flame>();
+    private static int activeFlamesFrame = -1;
+
+    /// <summary>
+    /// World interactions are readable only under an active Flame influence.
+    /// Flames themselves remain exempt: an unlit Flame must still be reachable
+    /// so the player can restore light to a dark area.
+    /// </summary>
+    public static bool IsInActiveFlameInfluence(ICharacterDetectedInteractable target)
+    {
+        if (target == null || target is Flame)
+        {
+            return true;
+        }
+
+        if (!(target is Component component) || component == null)
+        {
+            return true;
+        }
+
+        Collider collider = target.GetInteractionDetectionCollider();
+        Transform anchor = target.GetInteractionAnchor();
+        Vector3 fallbackPoint = GetInteractionPoint(collider, anchor, component.transform.position);
+        RefreshActiveFlames();
+        for (int index = 0; index < activeFlames.Length; index++)
+        {
+            Flame flame = activeFlames[index];
+            if (flame != null && flame.ProvidesLitInfluenceTo(collider, fallbackPoint))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void RefreshActiveFlames()
+    {
+        if (activeFlamesFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        activeFlamesFrame = Time.frameCount;
+        activeFlames = Object.FindObjectsByType<Flame>(FindObjectsSortMode.None);
+    }
 
     public static ICharacterDetectedInteractable ResolveTarget(Collider collider)
     {

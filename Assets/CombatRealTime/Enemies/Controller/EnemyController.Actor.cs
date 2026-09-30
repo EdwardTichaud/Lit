@@ -126,6 +126,7 @@ public sealed partial class EnemyController
     public int ReceiveDamage(int amount, bool canPrepareRetaliation = false, SquadCharacterController source = null)
     {
         if (!CombatEnabled) return 0;
+        if (!BossFilterIncomingDamage(amount, source, out amount)) return 0;
         EnemyController brain = GetComponent<EnemyController>();
         if (brain != null && brain.HasProfile)
             amount = brain.ResolveGuardDamage(amount);

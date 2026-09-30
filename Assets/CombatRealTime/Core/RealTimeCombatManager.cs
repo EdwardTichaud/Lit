@@ -192,6 +192,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             gameObject.AddComponent<CombatThreatPanelController>();
         }
+        if (GetComponent<BossCombatHud>() == null)
+        {
+            gameObject.AddComponent<BossCombatHud>();
+        }
         ResolvePlayerReferences();
         RegisterExistingAttackModes();
     }
@@ -283,9 +287,9 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts the combat state from an enemy sighting or a received hit without
-    /// forcing a manual camera lock. The event is idempotent for the current
-    /// engaged enemy and is the only source for the combat-entry threat banner.
+    /// Starts combat from an enemy sighting or a received hit. Combat always
+    /// begins locked onto its engaged enemy; the player remains free to unlock
+    /// or cycle targets afterwards.
     /// </summary>
     public bool BeginEnemyAggro(Transform player, EnemyController enemy)
     {
@@ -314,6 +318,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             SetEngagedEnemy(enemy);
         }
+
+        // Do not route this through TryLockEnemy: an automatic encounter may
+        // legitimately begin just outside the player's manual lock range.
+        // BeginCombat already follows this rule, so aggro must do the same.
+        SetLockedEnemy(null);
+        SetLockedEnemy(enemy);
 
         SetEnemyAttackMode(enemy, true);
         enemy.BeginBattleWall();

@@ -1857,6 +1857,14 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             return;
         }
 
+        // The ghost listens to the shared input for dialogue choices, but the
+        // actual world interaction belongs exclusively to the target selected
+        // by the local character. A nearer torch, readable or item wins.
+        if (!RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        {
+            return;
+        }
+
         GameObject character = ResolveInteractionCharacter();
         if (character == null)
         {

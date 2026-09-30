@@ -171,12 +171,27 @@ public partial class SquadCharacterController
             }
 
             int priority = candidate.GetInteractionPriority(this);
+            // Ghosts remain prioritised by their authored value against distant
+            // candidates, but never replace a closer ordinary interaction.
+            // This prevents their dialogue subscription from stealing a torch,
+            // readable or pickup in the same small play space.
+            bool closerOrdinaryObjectBeatsGhost =
+                bestTarget is GhostController &&
+                !(candidate is GhostController) &&
+                distanceSqr < bestDistanceSqr;
+            bool ghostCannotBeatCloserOrdinaryObject =
+                candidate is GhostController &&
+                !(bestTarget is GhostController) &&
+                distanceSqr > bestDistanceSqr;
+
             if (bestTarget == null ||
-                priority > bestPriority ||
-                (priority == bestPriority &&
-                 (distanceSqr < bestDistanceSqr ||
-                  (distanceSqr == bestDistanceSqr &&
-                   GetInteractionCandidateTieBreaker(candidate) < GetInteractionCandidateTieBreaker(bestTarget)))))
+                closerOrdinaryObjectBeatsGhost ||
+                (!ghostCannotBeatCloserOrdinaryObject &&
+                 (priority > bestPriority ||
+                  (priority == bestPriority &&
+                   (distanceSqr < bestDistanceSqr ||
+                    (distanceSqr == bestDistanceSqr &&
+                     GetInteractionCandidateTieBreaker(candidate) < GetInteractionCandidateTieBreaker(bestTarget)))))))
             {
                 bestTarget = candidate;
                 bestPriority = priority;
@@ -204,6 +219,15 @@ public partial class SquadCharacterController
         }
 
         if (!candidate.CanBeDetectedBy(this))
+        {
+            return false;
+        }
+
+        // One central gate keeps every ordinary interactable unavailable in
+        // darkness, including authored readables that do not own a bespoke
+        // ILitInfluenceReceiver implementation. Flames are exempted by the
+        // shared helper so the player can still restore a dark zone.
+        if (!CharacterInteractionDetection.IsInActiveFlameInfluence(candidate))
         {
             return false;
         }

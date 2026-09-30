@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
+  m_Name: CharacterData_BrokenAnchor
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  uniqueId: c08e5cce9e004bdda1591eab095f2b20
+  characterId: broken_anchor_belmont
+  characterName: "L'Ancre bris\xE9e"
+  portrait: {fileID: 0}
+  worldPrefab: {fileID: 4254147237030291727, guid: 91a25b2509ec9bc4da31b026e5cb69d1, type: 3}
+  skills: []
+  combatSkills: []
+  enemyCombatProfile: {fileID: 0}
+  groundBasicSkills: []
+  airBasicSkills: []
+  stats:
+    strength: 0
+    dexterity: 0
+    constitution: 0
+    intelligence: 0
+    wisdom: 0
+    charisma: 0
+  starterItemsWithQuantity: []
+  hp: 3
+  isEnemy: 1
+  enableCombatHealthThresholds: 0
+  combatHealthThresholdStages: []
+  voiceLines: []
+  maisonWaitingPoint: 0

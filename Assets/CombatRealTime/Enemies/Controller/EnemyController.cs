@@ -52,6 +52,7 @@ public sealed partial class EnemyController : CharacterAnimationController
         NavigationAwake();
         LocomotionAwake();
         BrainAwake();
+        BossAwake();
         ContractAwake();
         RecoveryAwake();
         EncounterAwake();
@@ -66,7 +67,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     {
         if (!initialized) return;
         EncounterOnEnable();
-        if (CombatEnabled) NavigationOnEnable();
+        if (CombatEnabled && !IsBossBrainSuppressed) NavigationOnEnable();
         RecoveryOnEnable();
     }
     private void Update()
