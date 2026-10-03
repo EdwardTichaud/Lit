@@ -31,6 +31,8 @@ MonoBehaviour:
   edgeScrolling: 0
   edgePixels: 20
   maximumPanRadius: 20
+  maximumFreeCameraDistance: 24
+  collisionRecoverySpeed: 8
   boundarySlowZone: 4
   teleportDistance: 3
   groundProbeHeight: 2
@@ -38,5 +40,9 @@ MonoBehaviour:
   groundSmoothTime: 0.16
   collisionReturnTime: 0.15
   occlusionInterval: 0.05
+  obstacleMode: 0
+  maskRadius: 0.16
+  maskFeather: 0.025
+  maskFadeTime: 0.12
   occlusionRestoreDelay: 0.15
   showDiagnostics: 0

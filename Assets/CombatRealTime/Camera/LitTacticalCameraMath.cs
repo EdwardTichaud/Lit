@@ -2,6 +2,12 @@ using UnityEngine;
 
 public static class LitTacticalCameraMath
 {
+    public static Vector3 ClampCameraDistance(Vector3 camera, Vector3 player, float radius)
+        => player + Vector3.ClampMagnitude(camera - player, Mathf.Max(0, radius));
+
+    public static Vector3 SlideMotion(Vector3 motion, Vector3 surfaceNormal)
+        => Vector3.ProjectOnPlane(motion, surfaceNormal);
+
     public static Vector3 ClampPivot(Vector3 pivot, Vector3 player, float radius)
     {
         Vector3 delta = pivot - player;

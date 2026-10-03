@@ -1,5 +1,7 @@
 using UnityEngine;
 
+public enum TacticalObstacleMode { Sliding, VisibilityMask }
+
 [CreateAssetMenu(menuName = "Lit/Camera/Tactical Profile")]
 public sealed class LitTacticalCameraProfile : ScriptableObject
 {
@@ -26,6 +28,10 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Min(1)] public float edgePixels = 20;
     [Header("Safety")]
     [Min(1)] public float maximumPanRadius = 20;
+    [Min(1), Tooltip("Maximum actual camera distance from the player in free inspection, including zoom.")]
+    public float maximumFreeCameraDistance = 24;
+    [Min(.1f), Tooltip("Retraction speed used to escape a blocked camera trajectory.")]
+    public float collisionRecoverySpeed = 8;
     [Min(.01f)] public float boundarySlowZone = 4;
     [Min(.1f)] public float teleportDistance = 3;
     [Min(.1f)] public float groundProbeHeight = 2;
@@ -33,9 +39,19 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Min(.01f)] public float groundSmoothTime = .16f;
     [Min(.01f)] public float collisionReturnTime = .15f;
     [Header("Occlusion")]
+    [Tooltip("Follow only. Free L3 camera always slides; cinematics restore the mask.")]
+    public TacticalObstacleMode obstacleMode = TacticalObstacleMode.Sliding;
+    [Range(.01f, .5f), Tooltip("Circle radius as a fraction of screen height, corrected for aspect ratio.")]
+    public float maskRadius = .16f;
+    [Range(.001f, .1f), Tooltip("Dithered soft edge width as a fraction of screen height.")]
+    public float maskFeather = .025f;
+    [Min(.01f)] public float maskFadeTime = .12f;
     [Min(.01f)] public float occlusionInterval = .05f;
     [Min(0)] public float occlusionRestoreDelay = .15f;
     public bool showDiagnostics;
+
+    public static TacticalObstacleMode ResolveObstacleMode(TacticalObstacleMode requested, bool freeCamera, bool cinematic)
+        => freeCamera || cinematic ? TacticalObstacleMode.Sliding : requested;
 
     private void OnValidate()
     {

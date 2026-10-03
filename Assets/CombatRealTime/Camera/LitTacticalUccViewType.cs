@@ -15,6 +15,16 @@ public sealed class LitTacticalUccViewType : Adventure
     public Vector3 Pivot => pivot;
     public bool Following => following;
 
+    public void SetFreeCamera(bool free)
+    {
+        if (!free) { Recenter(false); return; }
+        if (!initialized) Recenter(true);
+        following = false;
+        recentering = false;
+        targetPivot = pivot;
+        pivotVelocity = Vector3.zero;
+    }
+
     public void Configure(LitGameplayCameraModeController controller, LitTacticalCameraProfile settings, ThirdPerson source)
     {
         owner = controller;
@@ -64,10 +74,11 @@ public sealed class LitTacticalUccViewType : Adventure
         Quaternion planar = Quaternion.Euler(0, yaw, 0);
         Vector3 pan = planar * new Vector3(input.pan.x, 0, input.pan.y);
         pan = LitTacticalCameraMath.SlowOutwardPan(pan, targetPivot - anchor, profile.maximumPanRadius, profile.boundarySlowZone);
-        if (pan.sqrMagnitude > .000001f) { following = recentering = false; targetPivot += pan; }
+        // Only the explicit L3 inspection toggle can detach character follow.
+        if (!following && pan.sqrMagnitude > .000001f) targetPivot += pan;
         if (following) targetPivot = anchor;
         targetPivot = LitTacticalCameraMath.ClampPivot(targetPivot, anchor, profile.maximumPanRadius);
-        targetPivot = LitTacticalBounds.Constrain(targetPivot, m_CharacterTransform.position);
+        if (!following) targetPivot = LitTacticalBounds.Constrain(targetPivot, m_CharacterTransform.position);
         // Probe close to the previous floor, never select an arbitrary floor above it.
         if (!following)
         {
@@ -92,13 +103,13 @@ public sealed class LitTacticalUccViewType : Adventure
             recentering ? profile.recenterTime : following ? profile.followTime : profile.panTime, Mathf.Infinity, dt);
         if (!following)
         {
-            Vector3 constrained = owner.ConstrainPose(pivot, nextPivot, CollisionRadius);
+            Vector3 constrained = owner.ConstrainPan(pivot, nextPivot, CollisionRadius);
             if ((constrained - nextPivot).sqrMagnitude > .0001f) { pivotVelocity = Vector3.zero; targetPivot = constrained; }
             nextPivot = constrained;
         }
         pivot = nextPivot;
         pivot = LitTacticalCameraMath.ClampPivot(pivot, anchor, profile.maximumPanRadius);
-        pivot = LitTacticalBounds.Constrain(pivot, m_CharacterTransform.position);
+        if (!following) pivot = LitTacticalBounds.Constrain(pivot, m_CharacterTransform.position);
         if (recentering && (pivot - anchor).sqrMagnitude < .0025f) recentering = false;
         zoom = Mathf.SmoothDamp(zoom, targetZoom, ref zoomVelocity, profile.zoomTime, Mathf.Infinity, dt);
     }
@@ -111,15 +122,31 @@ public sealed class LitTacticalUccViewType : Adventure
         m_Yaw = Mathf.DeltaAngle(0, yaw - m_BaseRotation.eulerAngles.y);
         return owner != null ? owner.BlendRotation(rotation) : rotation;
     }
-    public override Quaternion LateRotate(bool immediateUpdate) => Rotate(0, 0, immediateUpdate);
+    public override Quaternion LateRotate(bool immediateUpdate)
+    {
+        Tick();
+        if (!following || owner == null || owner.IsBlending) return Rotate(0, 0, immediateUpdate);
+        // Aim from the actual collision-resolved pose, not the nominal orbit.
+        // The pivot may lag or retract, but the character stays in the sightline.
+        Vector3 aim = GetAnchorPosition() - m_Transform.position;
+        if (aim.sqrMagnitude < .0001f) return m_Transform.rotation;
+        Quaternion rotation = Quaternion.LookRotation(aim, Vector3.up);
+        m_Pitch = Mathf.DeltaAngle(0, rotation.eulerAngles.x);
+        m_Yaw = Mathf.DeltaAngle(0, rotation.eulerAngles.y - m_BaseRotation.eulerAngles.y);
+        return rotation;
+    }
     public override Vector3 Move(bool immediateUpdate)
     {
         Tick();
         if (!initialized) return m_Transform.position;
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
         Vector3 direction = rotation * Vector3.back;
-        Vector3 desired = owner.ConstrainPose(pivot, pivot + direction * zoom, CollisionRadius);
+        Vector3 desired = pivot + direction * zoom;
+        if (!following) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetAnchorPosition(), profile.maximumFreeCameraDistance);
+        owner.PrepareVisibilityMask(desired, GetAnchorPosition(), CollisionRadius);
+        desired = owner.ConstrainPose(pivot, desired, CollisionRadius);
         float clearDistance = Vector3.Distance(pivot, desired);
+        direction = (desired - pivot).normalized;
         if (clearDistance < resolvedDistance) { resolvedDistance = clearDistance; distanceVelocity = 0; }
         else if (lastCollisionFrame != Time.frameCount)
             resolvedDistance = Mathf.SmoothDamp(resolvedDistance, clearDistance, ref distanceVelocity, profile.collisionReturnTime);
