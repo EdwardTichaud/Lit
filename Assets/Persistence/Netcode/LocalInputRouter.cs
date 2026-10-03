@@ -33,6 +33,9 @@ public static class LocalInputRouter
     public static event Action<Vector2> Move;
     public static event Action<InputAction.CallbackContext> Jump;
     public static event Action<InputAction.CallbackContext> Interact;
+    // Optional transient prompts can consume confirmation without selecting a
+    // nearby world object. No subscriber leaves normal interaction unchanged.
+    public static event Action<InputAction.CallbackContext> PrioritizedInteract;
     public static event Action<InputAction.CallbackContext> TriggerMunin;
     public static event Action<InputAction.CallbackContext> CompanionFusion;
     public static event Action<InputAction.CallbackContext> ToggleTorch;
@@ -50,6 +53,7 @@ public static class LocalInputRouter
     public static event Action<int> CombatUseItem;
     public static event Action CameraRecenter;
     public static event Action CameraToggleFreeMode;
+    public static event Action TacticalInspection;
 
     private static Vector2 moveValue;
     private static Vector2 rawMoveValue;
@@ -121,6 +125,7 @@ public static class LocalInputRouter
         CombatUseItem = null;
         CameraRecenter = null;
         CameraToggleFreeMode = null;
+        TacticalInspection = null;
 
         moveValue = Vector2.zero;
         rawMoveValue = Vector2.zero;
@@ -356,6 +361,8 @@ public static class LocalInputRouter
         }
 
         interactConsumed = false;
+        PrioritizedInteract?.Invoke(context);
+        if (interactConsumed) return;
         if (!InputFocusStack.HasAnyFocus() &&
             RuntimeOutlineSelectionManager.ActiveInteractable is ILocalInteractHandler activeHandler &&
             activeHandler.TryHandleLocalInteract())
@@ -624,6 +631,11 @@ public static class LocalInputRouter
         NotifyGameplayActivity();
         SetCameraFreeModeActive(false, suppressImmediateCharacterMove: true);
         CameraRecenter?.Invoke();
+    }
+
+    internal static void RaiseTacticalInspection()
+    {
+        if (!JoinSyncSystem.IsGameplayBlocked) TacticalInspection?.Invoke();
     }
 
     internal static void RaiseCameraToggleFreeMode()

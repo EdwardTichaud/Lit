@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0600a24eabe04b5b9e109d9bea6f8729, type: 3}
+  m_Name: TimelineBindingProfile_LastRelief
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Timeline.TimelineBindingProfile
+  timeline: {fileID: 11400000, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+  bindings:
+  - track: {fileID: -1127733252830509470, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: camera.cinemachine_brain
+    required: 1
+  - track: {fileID: 7941601992608095281, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.colleague0.animation
+    required: 1
+  - track: {fileID: -1703212553944111299, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.colleague0.visible
+    required: 1
+  - track: {fileID: 8465929227696332048, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.colleague1.animation
+    required: 1
+  - track: {fileID: -7966843485461397805, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.colleague1.visible
+    required: 1
+  - track: {fileID: 2708993417099072585, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.echo.visible
+    required: 1
+  - track: {fileID: 3735123380236308146, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.counterweight
+    required: 1
+  - track: {fileID: -8439045323983447805, guid: 2d17ced99b1161f4f8c95d92a7a63bc2, type: 2}
+    bindingId: district1.etienne.rupture_audio
+    required: 1

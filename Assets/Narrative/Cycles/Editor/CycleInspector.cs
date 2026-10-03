@@ -12,6 +12,7 @@ public sealed class CycleInspector : Editor
         CycleInspectorLayout.Group(serializedObject, "Identite et liaisons", "Fiche du cycle et acteurs propres a cette scene.", "definition", "interactions", "encounters", "sequences");
         CycleInspectorLayout.Group(serializedObject, "Presentation", "Objets affichés, cachés ou dissous selon les conditions ; seuls les participants listes sont suspendus.", "activations", "deactivations", "disappearances", "poses", "cinematicParticipants");
         CycleInspectorLayout.Group(serializedObject, "Rencontre historique", "Liaisons existantes conservees pour Nina ; source encounter pour l'ennemi et cinematic pour la sequence.", "encounterMarker", "encounterEnemy", "director", "bindingProfile");
+        DrawDevStartControls(cycle, serializedObject);
         serializedObject.ApplyModifiedProperties();
         if (cycle.definition == null)
         {
@@ -53,14 +54,16 @@ public sealed class CycleInspector : Editor
                     EditorGUILayout.HelpBox("Sequence non liee : " + step.title, MessageType.Error);
             }
         }
-        if (Application.isPlaying && CycleProgressionService.Instance != null)
+        if (Application.isPlaying && (CycleProgressionService.Instance != null || cycle.IsDevSimulationActive))
         {
             using (new EditorGUI.DisabledScope(true))
             {
-                EditorGUILayout.TextField("Etat partage", cycle.Status.ToString());
+                EditorGUILayout.TextField(cycle.IsDevSimulationActive ? "État Dev" : "État partagé", cycle.Status.ToString());
                 foreach (var step in cycle.definition.steps)
-                    if (step != null) EditorGUILayout.TextField(step.title, CycleProgressionService.Instance.ExplainBlocked(cycle.definition, step));
+                    if (step != null) EditorGUILayout.TextField(step.title, cycle.ExplainStepForInspector(step));
             }
+            if (cycle.IsDevSimulationActive)
+                EditorGUILayout.HelpBox("Simulation active : aucun jalon, savoir, objet, activation ni récompense n'est écrit dans la sauvegarde.", MessageType.Info);
         }
         if (cycle.interactions != null) foreach (var binding in cycle.interactions)
             if (binding == null || binding.cycle != cycle || cycle.definition.FindDialogue(binding.dialogueId) == null && !cycle.definition.steps.Any(step => step != null && step.kind == CycleStepKind.Interaction && step.sourceId == binding.dialogueId))
@@ -78,6 +81,25 @@ public sealed class CycleInspector : Editor
             EditorUtility.SetDirty(cycle);
         }
         EditorGUILayout.HelpBox("Placer la definition dans Resources/Narrative pour retrouver les skills apres chargement. Conserver l'ID du cycle et ses bits une fois les sauvegardes publiees.", MessageType.Info);
+    }
+
+    private static void DrawDevStartControls(CycleController cycle, SerializedObject serialized)
+    {
+        SerializedProperty enabled = serialized.FindProperty("devStartEnabled");
+        SerializedProperty stepId = serialized.FindProperty("devStartStepId");
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Dev - démarrage de cycle", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(enabled, new GUIContent("Activer le départ de test"));
+        using (new EditorGUI.DisabledScope(!enabled.boolValue || cycle.definition == null))
+        {
+            CycleStep[] steps = cycle.definition != null ? cycle.definition.steps.Where(step => step != null).ToArray() : System.Array.Empty<CycleStep>();
+            string[] labels = new[] { "Choisir une étape" }.Concat(steps.Select(step => step.title + " (" + step.id + ")")).ToArray();
+            int current = System.Array.FindIndex(steps, step => step.id == stepId.stringValue) + 1;
+            int next = EditorGUILayout.Popup(new GUIContent("Étape de départ"), current, labels);
+            if (next > 0) stepId.stringValue = steps[next - 1].id;
+        }
+        if (enabled.boolValue)
+            EditorGUILayout.HelpBox("Les étapes placées avant celle choisie sont simulées comme validées pendant le Play Mode. L'étape choisie reste à tester ; la sauvegarde n'est jamais modifiée.", MessageType.Info);
     }
 }
 

@@ -397,9 +397,22 @@ public sealed class CycleProgressionService : MonoBehaviour
     private Packet Capture(string rewardCycle = null, string rewardStep = null)
     {
         var values = rules.CaptureVariables();
-        values.RemoveAll(value => value == null || !value.Key.StartsWith("narrative.", StringComparison.Ordinal));
+        values.RemoveAll(value => value == null || !IsSynchronizedKey(value.Key));
         values.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
         return new Packet { values = values, rewardCycle = rewardCycle, rewardStep = rewardStep };
+    }
+    // Persistent scene gates may use a world key outside the narrative namespace.
+    // Replicate only explicitly declared cycle rewards, never arbitrary world variables.
+    private bool IsSynchronizedKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        if (key.StartsWith("narrative.", StringComparison.Ordinal)) return true;
+        foreach (var definition in definitions)
+            foreach (var step in definition.steps ?? Array.Empty<CycleStep>())
+                foreach (var reward in step?.rewards ?? Array.Empty<CycleReward>())
+                    if (reward != null && (reward.kind == CycleRewardKind.Activation || reward.kind == CycleRewardKind.WorldVariable) && reward.key == key)
+                        return true;
+        return false;
     }
     private void Broadcast(string rewardCycle = null, string rewardStep = null)
     {
@@ -432,9 +445,9 @@ public sealed class CycleProgressionService : MonoBehaviour
         var reward = cycle != null ? cycle.FindStep(packet.rewardStep) : null;
         bool show = reward != null && !IsStepCompleted(cycle, reward.id);
         var combined = rules.CaptureVariables();
-        combined.RemoveAll(value => value != null && value.Key.StartsWith("narrative.", StringComparison.Ordinal));
+        combined.RemoveAll(value => value != null && IsSynchronizedKey(value.Key));
         foreach (var value in packet.values)
-            if (value != null && value.Key.StartsWith("narrative.", StringComparison.Ordinal)) combined.Add(value);
+            if (value != null && IsSynchronizedKey(value.Key)) combined.Add(value);
         rules.ApplyVariables(combined);
         if (show) ShowRewardNotification(reward);
         Refresh();

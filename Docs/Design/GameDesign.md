@@ -470,6 +470,54 @@ Le joueur doit :
 5. revenir voir Luc ;
 6. faire disparaître le mur qui bloque la progression.
 
+### Suite du cycle Belmont — Le Puits de la Relève
+
+**Direction retenue.** Après avoir allumé la première Ancient Flame, le joueur
+ouvre le `Wall_2` du cycle Belmont et accède au **Puits de la Relève**. Cette
+zone prolonge directement la piste d'Étienne Belmont : il y a été envoyé après
+avoir assuré la Veillée d'Éloïse.
+
+Le Puits est un nœud vertical, industriel et cérémoniel du réseau de Veillée :
+conduits monumentaux, chaînes, roues de maintenance et lignes de lumière qui
+recommencent à circuler. L'Ancient Flame n'y apporte pas une réponse, mais rend
+visible que le réseau a cessé de transmettre correctement la Veillée.
+
+La zone accueille le cycle principal **La dernière relève** (`district1.etienne`),
+indépendant de Belmont : son entrée est pilotée par le trigger du Puits, tandis
+que les accès physiques organisent la chronologie. Trois preuves récupérables, lisibles dans n'importe
+quel ordre, établissent le passage des collègues, la dérivation sous la statue
+et le choix d'Étienne de tenir le frein. La lanterne reste auprès d'Éloïse ; une
+manivelle de maintenance représente le poste d'Étienne.
+
+Libérer le frein après les preuves fait apparaître **Le Poids mort** : créature
+de fracture, combat ordinaire à 300 PV, engagement à 8 mètres, BattleWall.
+Le frein immobilise le boss 4 secondes, avec une recharge partagée de 12 secondes.
+Il ne lui inflige aucun dégât. Sa mort déclenche **Tenir jusqu'au dernier**, un
+souvenir de 30 secondes : les collègues passent, Étienne reste, le frein rompt.
+Le fragment confirme sa mort et surtout le succès de son geste. Après le
+souvenir, le joueur revient volontairement apaiser Étienne : « Alors… je peux
+lâcher. » La résolution ouvre durablement la sortie, puis Lucian conclut.
+
+`District_1_PuitsDeLaReleve_Environment` possède l'architecture permanente,
+les trois Flames communes allumées, les cadrages et le contrepoids.
+`District_1_Cycle_Etienne` possède les acteurs, indices, frein et cinématique.
+La sortie permanente consulte `district1.etienne.flooded_conduits_access`,
+même après déchargement du cycle. Les déplacements sont fixes ; aucun contrepoids
+ne transporte le joueur, aucun saut obligatoire, aucune nouvelle Ancient Flame.
+Le raccord est derrière `Wall_2` Belmont, sans reconstruire la scène existante.
+
+Le prochain espace narratif est **Les Conduits Noyés**, où les traces de la
+Veillée se mêlent à une eau noire réfléchissante. Son contenu jouable reste
+réservé au prochain cycle. La révélation présente reste limitée au trajet des
+installations vers la statue, sans explication du rituel ni des Chanteurs.
+
+#### Pistes conservées pour des zones ultérieures
+
+- **La Nef des Tours Interrompus** : une salle immense de postes de Veillée
+  abandonnés, qui raconte l'échelle collective du rituel et de son abandon.
+- **Le Réservoir des Cendres** : une zone d'eau noire et de reflets décalés ;
+  la lumière y révèle des traces temporelles, sans matérialiser les morts.
+
 ## Direction d'écriture
 
 Les textes doivent être :
@@ -501,6 +549,14 @@ Les textes doivent être :
 8. Un registre utile à plusieurs indices.
 9. Un objet transgénérationnel.
 10. Les premières spécialisations coopératives validées.
+
+## Cycle Ardent — La voix retenue
+
+Les Conduits Noyés prolongent le Puits de la Relève. Le cycle Ardent reste
+indépendant : enquête partageable, trois relais parallèles, Faux Chœur à
+vulnérabilité temporaire et souvenir Timeline confirmé par le groupe.
+La récompense ouvre la galerie des processions, vers une future Nef des Tours
+Interrompus, sans nouvelle Ancient Flame. Voir [Cycle_Ardent.md](Cycle_Ardent.md).
 
 ## Hors priorité
 

@@ -108,8 +108,6 @@ public class MainMenuPointerCursor : MonoBehaviour
     private Vector2 screenPosition;
     private bool hasScreenPosition;
     private PointerSource activeSource = PointerSource.Mouse;
-    private bool cachedCursorVisible;
-    private CursorLockMode cachedCursorLockMode;
     private GameObject syntheticUiHover;
     private CursorIntercation worldHover;
     private Vector3 currentFlamePosition;
@@ -297,16 +295,12 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private void CacheAndApplySystemCursor()
     {
-        cachedCursorVisible = Cursor.visible;
-        cachedCursorLockMode = Cursor.lockState;
-
         if (!hideSystemCursor)
         {
             return;
         }
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = false;
+        LitSystemCursorLease.Acquire(this, false, CursorLockMode.None, 100);
     }
 
     private void RestoreSystemCursor()
@@ -316,8 +310,7 @@ public class MainMenuPointerCursor : MonoBehaviour
             return;
         }
 
-        Cursor.visible = cachedCursorVisible;
-        Cursor.lockState = cachedCursorLockMode;
+        LitSystemCursorLease.Release(this);
     }
 
     private void InitializeScreenPosition()

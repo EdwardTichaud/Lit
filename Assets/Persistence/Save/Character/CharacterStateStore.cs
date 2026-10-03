@@ -1435,6 +1435,20 @@ public class CharacterStateStore : MonoBehaviour
                 continue;
             }
 
+            // Cycle start simulations can temporarily light/extinguish a Flame. Keep the player's
+            // actual saved value instead of serializing the simulated presentation.
+            if (CycleController.IsDevSimulationFlame(flame))
+            {
+                FlameSaveEntry savedEntry = loadedData != null && loadedData.flames != null
+                    ? loadedData.flames.Find(entry => entry != null && entry.flameId == id)
+                    : null;
+                if (savedEntry != null)
+                {
+                    results.Add(new FlameSaveEntry { flameId = id, isLit = savedEntry.isLit });
+                }
+                continue;
+            }
+
             results.Add(new FlameSaveEntry
             {
                 flameId = id,
@@ -1483,6 +1497,11 @@ public class CharacterStateStore : MonoBehaviour
         {
             Flame flame = flames[i];
             if (flame == null)
+            {
+                continue;
+            }
+
+            if (CycleController.IsDevSimulationFlame(flame))
             {
                 continue;
             }

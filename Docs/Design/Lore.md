@@ -197,14 +197,45 @@ Au fil des générations, ils continuent ces pratiques alors que leur significat
 disparaît progressivement. Leur histoire raconte l'usure de l'héritage : le geste
 reste précis tandis que son intention s'efface.
 
+#### Étienne — La dernière relève
+
+Étienne Belmont prend volontairement le tour d'Éloïse lorsqu'elle ne peut plus
+assurer sa Veillée. Affecté aux conduits inférieurs, il meurt pendant la
+catastrophe en maintenant un passage de maintenance ouvert pour ses collègues.
+Le contrepoids est défaillant : il reste au frein, et les collègues passent.
+
+Sa mémoire demeure attachée à ce geste. Il croit encore que les autres sont
+derrière le passage et culpabilise de ne pas être revenu auprès d'Éloïse.
+Lucian l'apaise en lui prouvant que la relève est passée et qu'Éloïse sait
+pourquoi il a pris sa place, sans lui demander un nouveau sacrifice.
+« Alors… je peux lâcher. »
+
+Étienne avait observé que les installations de Veillée convergeaient vers des
+salles inférieures proches de la statue. Il ignorait leur fonction véritable,
+le rituel, les fondateurs et le rôle réel des Chanteurs. Le Puits ne révèle que
+ce trajet, le choix d'Étienne et le succès de son geste.
+
+Le Poids mort est une créature de la fracture assemblée autour du contrepoids,
+pas Étienne transformé ni un gardien conscient. La scène montrant sa dernière
+relève est un fragment de mémoire de la fracture, non un voyage dans le passé.
+La lanterne Belmont reste auprès d'Éloïse ; une manivelle usée matérialise le
+poste d'Étienne. Aucune nouvelle filiation familiale n'est introduite.
+
 ### Ardent
 
-Les Ardent représentent une autre facette du château. Leur histoire reste à
-développer.
+Nora Ardent est morte pendant la catastrophe. Dans les Conduits Noyés, sa mémoire
+reste attachée à la voix de sa fille Iris derrière une porte condamnée.
+Iris, jeune Chanteuse, avait pourtant quitté ces galeries pour rejoindre les
+salles inférieures, par la voie de la statue. Les consignes de rassemblement
+présentaient ce transfert comme une protection des voix.
 
-Elle devra montrer une manière distincte de vivre ou de subir le système, sans
-dupliquer la fonction narrative des Belmont. Aucun détail supplémentaire sur
-leur courant, leur métier ou leur destinée n'est canonique à ce stade.
+Les conduits portent les voix d'autres salles ; la fracture peut aussi conserver
+un fragment après le départ de son locuteur. Nora confond cette répétition avec
+la présence d'Iris. Le cycle « La voix retenue » apaise cette attente, sans révéler
+le destin final d'Iris, le rituel, les fondateurs ou les lignées captives.
+Le ruban réparé puis transmis par Nora à Iris constitue leur trace familiale.
+Le Faux Chœur est une créature de fracture, ni Nora ni Iris transformée.
+Le courant religieux et le métier de Nora restent indéterminés.
 
 ## Les registres
 

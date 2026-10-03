@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Ardent_iris_departure_understood
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 542f0e06a492d844bb9e34775cfc283d
+  knowledgeId: district1.ardent.iris_departure_understood
+  title: "La voix persiste apr\xE8s le d\xE9part d\u2019Iris"
+  description: "Le souvenir montre Iris quitter les galeries. Son sort apr\xE8s ce
+    d\xE9part reste inconnu."
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: district1.conduits_noyes
+  roomId: 
+  personId: iris_ardent
+  lineageId: ardent
+  objectId: 
+  readableItem: {fileID: 0}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

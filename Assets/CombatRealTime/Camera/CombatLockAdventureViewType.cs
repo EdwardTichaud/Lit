@@ -65,7 +65,7 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
             lockFollowVelocity = Vector3.zero;
             hasLockSmoothedPosition = true;
             RecordMotion(targetPosition, targetPosition, immediateUpdate, true, explicitSnap ? reason : CameraSnapReason.InitialBind);
-            return targetPosition;
+            return PresentPosition(targetPosition);
         }
 
         Vector3 anchorPosition = GetAnchorPosition() + m_CollisionAnchorOffset;
@@ -74,7 +74,7 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
             lockSmoothedPosition = targetPosition;
             lockFollowVelocity = Vector3.zero;
             RecordMotion(targetPosition, targetPosition, immediateUpdate, true, CameraSnapReason.Collision);
-            return targetPosition;
+            return PresentPosition(targetPosition);
         }
 
         lockSmoothedPosition = Vector3.SmoothDamp(
@@ -85,7 +85,7 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
             lockMaximumFollowSpeed,
             Time.deltaTime);
         RecordMotion(targetPosition, lockSmoothedPosition, immediateUpdate, false, CameraSnapReason.InitialBind);
-        return lockSmoothedPosition;
+        return PresentPosition(lockSmoothedPosition);
     }
 
     /// <summary>
@@ -118,10 +118,10 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
         // UCC still owns the returned rotation and applies the collision-aware move.
         if (adapter != null && adapter.LockActive)
         {
-            return base.Rotate(0f, 0f, immediateUpdate);
+            return PresentRotation(base.Rotate(0f, 0f, immediateUpdate));
         }
 
-        return base.Rotate(horizontalMovement, verticalMovement, immediateUpdate);
+        return PresentRotation(base.Rotate(horizontalMovement, verticalMovement, immediateUpdate));
     }
 
     public override Quaternion LateRotate(bool immediateUpdate)
@@ -160,7 +160,7 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
         if (immediateUpdate)
         {
             SynchronizeOrbitAngles(targetRotation);
-            return targetRotation;
+            return PresentRotation(targetRotation);
         }
 
         Quaternion resolvedRotation = Quaternion.RotateTowards(
@@ -168,7 +168,7 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
             targetRotation,
             maximumLockRotationDegreesPerSecond * Time.unscaledDeltaTime);
         SynchronizeOrbitAngles(resolvedRotation);
-        return resolvedRotation;
+        return PresentRotation(resolvedRotation);
     }
 
     private Vector3 SmoothLockAxis(Vector3 targetAxis, bool immediateUpdate)

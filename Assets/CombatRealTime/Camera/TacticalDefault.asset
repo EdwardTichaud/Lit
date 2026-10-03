@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30d968f394df4db0996406a5ad7c1011, type: 3}
+  m_Name: TacticalDefault
+  m_EditorClassIdentifier:
+  fieldOfView: 60
+  distanceLimits: {x: 4, y: 18}
+  initialDistance: 10
+  pitchLimits: {x: 25, y: 75}
+  initialPitch: 50
+  followTime: 0.16
+  panTime: 0.1
+  zoomTime: 0.12
+  recenterTime: 0.25
+  transitionTime: 0.3
+  panSpeed: 10
+  mouseOrbitSensitivity: 0.12
+  dragSensitivity: 0.015
+  wheelSensitivity: 0.015
+  gamepadOrbitSpeed: 120
+  gamepadZoomSpeed: 8
+  edgeScrolling: 0
+  edgePixels: 20
+  maximumPanRadius: 20
+  boundarySlowZone: 4
+  teleportDistance: 3
+  groundProbeHeight: 2
+  maximumGroundStep: 1.2
+  groundSmoothTime: 0.16
+  collisionReturnTime: 0.15
+  occlusionInterval: 0.05
+  occlusionRestoreDelay: 0.15
+  showDiagnostics: 0

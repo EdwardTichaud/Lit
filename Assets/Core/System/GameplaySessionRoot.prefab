@@ -629,6 +629,7 @@ MonoBehaviour:
   captureScreenshotOnSave: 1
   screenshotFileName: screenshot.png
   forceScreenshotOnSave: 1
+  savingPanel: {fileID: 0}
 --- !u!1 &1490784988004945664
 GameObject:
   m_ObjectHideFlags: 0
@@ -1722,6 +1723,7 @@ MonoBehaviour:
       blockedStepRatio: 0.35
   dodgeStartupSeconds: 0.05
   dodgeInvulnerabilitySeconds: 0.18
+  logMobilityRejections: 0
 --- !u!114 &810000000000000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1918,6 +1920,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14c16264ee6e6b8428b89e0500662619, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealthThresholdController
+  dodgeWindowSeconds: 0.5
+  counterWindowSeconds: 0.2
+  reactionTimeScale: 0.4
+  logEnemyReactions: 0
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0
@@ -2388,7 +2394,6 @@ MonoBehaviour:
   softness: 0
   amount: 1
   writeShaderGlobals: 0
-  useAgeManager: 1
 --- !u!1 &6165832214879711617
 GameObject:
   m_ObjectHideFlags: 0
@@ -2455,6 +2460,7 @@ GameObject:
   - component: {fileID: 1950877512696852750}
   - component: {fileID: 945441929012122784}
   - component: {fileID: 8509255067673385053}
+  - component: {fileID: 3156449220114887422}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2900,6 +2906,21 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6208594910752237019}
   m_Enabled: 1
+--- !u!114 &3156449220114887422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6208594910752237019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30d968f394df4db0996406a5ad7c1016, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialMode: 1
+  profile: {fileID: 11400000, guid: 30d968f394df4db0996406a5ad7c1017, type: 2}
+  effectiveMode: 1
 --- !u!1 &6785266020379462434
 GameObject:
   m_ObjectHideFlags: 0
@@ -3392,22 +3413,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &8310274956290150231
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7350801756007259132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49c8e4a268854df1b9268fb1b49e5c9a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  showOutlines: 1
-  outlineColor: {r: 1, g: 1, b: 1, a: 1}
-  thickness: 4
-  alphaThreshold: 0.1
 --- !u!4 &8581103469629144558
 Transform:
   m_ObjectHideFlags: 0
@@ -3498,6 +3503,22 @@ MonoBehaviour:
         materialPassIndex: 0
         materialPassName: Custom Pass 0
         fetchColorBuffer: 0
+--- !u!114 &8310274956290150231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7350801756007259132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49c8e4a268854df1b9268fb1b49e5c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  showOutlines: 1
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  thickness: 4
+  alphaThreshold: 0.1
 --- !u!1 &7527676561694138771
 GameObject:
   m_ObjectHideFlags: 0

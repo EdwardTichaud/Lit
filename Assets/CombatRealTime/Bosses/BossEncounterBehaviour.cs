@@ -20,7 +20,7 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
     public event Action PresentationChanged;
     public BossDefinitionSO Definition => definition;
     public EnemyController Enemy => enemy != null ? enemy : GetComponent<EnemyController>();
-    public bool SuppressDefaultEnemyBrain => true;
+    public virtual bool SuppressDefaultEnemyBrain => definition == null || definition.SuppressDefaultEnemyBrain;
     public bool IsBossEngaged => State == BossEncounterState.Engaged;
     public bool IsBossResolved => State == BossEncounterState.Resolved;
     public int CurrentSegments => IsSpawned ? replicatedSegments.Value : offlineSegments;
@@ -90,7 +90,7 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
         OnBossResolvedAuthoritatively();
     }
 
-    public bool FilterIncomingDamage(int incomingDamage, SquadCharacterController source, out int permittedDamage)
+    public virtual bool FilterIncomingDamage(int incomingDamage, SquadCharacterController source, out int permittedDamage)
     {
         permittedDamage = Mathf.Max(0, incomingDamage);
         if (definition == null || definition.DamagePolicy == BossDamagePolicy.Normal) return true;
@@ -120,7 +120,7 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
         if (localCombatOpen) manager.BeginEnemyAggro(player, Enemy);
     }
 
-    private void EndLocalCombatPresentation()
+    protected void EndLocalCombatPresentation()
     {
         if (!localCombatOpen) return;
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
@@ -134,7 +134,7 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
         else offlineState = value;
         PresentationChanged?.Invoke();
     }
-    private void SetSegments(int value)
+    protected void SetSegments(int value)
     {
         if (IsSpawned) replicatedSegments.Value = value;
         else offlineSegments = value;

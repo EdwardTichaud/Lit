@@ -202,6 +202,10 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnLocomotionMode(InputAction.CallbackContext context)
     {
+        // L3 belongs to inspection only while the tactical option is selected.
+        if (context.control != null && context.control.name == "leftStickPress" && context.control.device is UnityEngine.InputSystem.Gamepad &&
+            Camera.main != null && LitGameplayCameraModeController.KeepsTacticalView(
+                Camera.main.GetComponent<Opsive.UltimateCharacterController.Camera.CameraController>())) return;
         if (context.performed && ShouldProcess(context))
         {
             LocalInputRouter.RaiseLocomotionMode(context);
@@ -413,11 +417,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
-    public void OnToggleFreeCamera(InputAction.CallbackContext context)
+    public void OnTacticalInspection(InputAction.CallbackContext context)
     {
         if (context.performed && ShouldProcess(context))
         {
-            LocalInputRouter.RaiseCameraToggleFreeMode();
+            LocalInputRouter.RaiseTacticalInspection();
         }
     }
 

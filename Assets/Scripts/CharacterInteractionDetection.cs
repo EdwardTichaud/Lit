@@ -33,12 +33,12 @@ public static class CharacterInteractionDetection
 
     /// <summary>
     /// World interactions are readable only under an active Flame influence.
-    /// Flames themselves remain exempt: an unlit Flame must still be reachable
-    /// so the player can restore light to a dark area.
+    /// Les Flames et les torches de puzzle restent exemptes : elles doivent
+    /// être atteignables pour pouvoir restaurer une zone sombre.
     /// </summary>
     public static bool IsInActiveFlameInfluence(ICharacterDetectedInteractable target)
     {
-        if (target == null || target is Flame)
+        if (target == null || target is Flame || target is BrokenAnchorTorch)
         {
             return true;
         }

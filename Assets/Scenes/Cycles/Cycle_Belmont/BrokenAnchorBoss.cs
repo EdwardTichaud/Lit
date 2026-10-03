@@ -10,7 +10,7 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
 {
     [Header("Puzzle targets")]
     [SerializeField] private Transform emissionPoint;
-    [SerializeField] private Flame[] torches = Array.Empty<Flame>();
+    [SerializeField] private BrokenAnchorTorch[] torches = Array.Empty<BrokenAnchorTorch>();
     [SerializeField] private BrokenAnchorLightBall orbPrefab;
     [Header("Attack")]
     [SerializeField, Min(0f)] private float telegraphSeconds = .75f;
@@ -23,13 +23,14 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
     [Header("Release presentation")]
     [SerializeField, Min(.1f)] private float releaseConvergenceSeconds = 3.5f;
     private Coroutine firing;
-    private Coroutine releasePresentation;
-    private readonly HashSet<Flame> acceptedTorches = new();
+    private readonly HashSet<BrokenAnchorTorch> acceptedTorches = new();
+    private readonly HashSet<BrokenAnchorTorch> observedTorches = new();
+    private int lastPresentedSegments = int.MinValue;
 
-    public void Configure(Transform source, Flame[] targets, BrokenAnchorLightBall projectile, float telegraph, float interval, float speed, float lifetime, int damage, float releaseSeconds)
+    public void Configure(Transform source, BrokenAnchorTorch[] targets, BrokenAnchorLightBall projectile, float telegraph, float interval, float speed, float lifetime, int damage, float releaseSeconds)
     {
         emissionPoint = source;
-        torches = targets ?? Array.Empty<Flame>();
+        torches = targets ?? Array.Empty<BrokenAnchorTorch>();
         orbPrefab = projectile;
         telegraphSeconds = Mathf.Max(0f, telegraph);
         salvoIntervalSeconds = Mathf.Max(.1f, interval);
@@ -37,48 +38,123 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
         orbLifetimeSeconds = Mathf.Max(.1f, lifetime);
         playerDamage = Mathf.Max(0, damage);
         releaseConvergenceSeconds = Mathf.Max(.1f, releaseSeconds);
+        RebindTorchEvents();
+        SynchronizeHealth(CurrentSegments);
     }
 
     protected override void Awake()
     {
         base.Awake();
-        foreach (Flame torch in torches) if (torch != null && torch.IsEffectivelyLit) acceptedTorches.Add(torch);
+        RebindTorchEvents();
+        SynchronizeHealth(CurrentSegments);
     }
+
+    private void OnEnable() => RebindTorchEvents();
     protected override void Update()
     {
         base.Update();
+        // Boss segments are replicated independently of CharacterInfo. Mirror them on every
+        // peer so the existing combat HUD always displays 3/3, 2/3, 1/3 and 0/3 correctly.
+        if (lastPresentedSegments != CurrentSegments)
+        {
+            lastPresentedSegments = CurrentSegments;
+            SynchronizeHealth(CurrentSegments);
+        }
         if (Authority && IsBossEngaged && firing == null) firing = StartCoroutine(FireLoop());
         if ((!IsBossEngaged || IsBossResolved) && firing != null) { StopCoroutine(firing); firing = null; }
-        if (IsBossResolved && releasePresentation == null) releasePresentation = StartCoroutine(PlayReleasePresentation());
     }
     private void OnDisable()
     {
         if (firing != null) StopCoroutine(firing);
-        if (releasePresentation != null) StopCoroutine(releasePresentation);
-        firing = null; releasePresentation = null;
+        firing = null;
+        UnbindTorchEvents();
     }
 
-    /// <summary>Authoritative projectile callback; torch state itself remains owned by Flame/progression.</summary>
-    public void NotifyTorchLit(Flame torch)
+    private void OnDestroy() => UnbindTorchEvents();
+
+    /// <summary>Authoritative projectile callback; the boss accepts each dedicated torch once.</summary>
+    public void NotifyTorchLit(BrokenAnchorTorch torch)
     {
-        if (!Authority || !IsBossEngaged || torch == null || Array.IndexOf(torches, torch) < 0 || !torch.IsEffectivelyLit) return;
-        if (!acceptedTorches.Add(torch)) return;
-        RemoveSegmentAuthoritatively();
+        AcceptLitTorch(torch, "projectile");
     }
     protected override void OnBossEngagedAuthoritatively()
     {
-        foreach (Flame torch in torches) if (torch != null && torch.IsEffectivelyLit && acceptedTorches.Add(torch)) RemoveSegmentAuthoritatively();
+        Trace($"combat engagé | segments={CurrentSegments}/{MaximumSegments}");
+        SynchronizeHealth(CurrentSegments);
+        ReconcileLitTorches("engagement");
     }
     protected override void OnBossResolvedAuthoritatively()
     {
         if (firing != null) { StopCoroutine(firing); firing = null; }
-        if (Enemy != null && Enemy.Health != null) Enemy.Health.SetHealth(0, MaximumSegments);
+        SynchronizeHealth(0);
+        Trace("résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.");
     }
 
     protected override void OnSegmentChangedAuthoritatively(int remaining)
     {
-        if (Enemy != null && Enemy.Health != null) Enemy.Health.SetHealth(remaining, MaximumSegments);
+        SynchronizeHealth(remaining);
     }
+
+    private void RebindTorchEvents()
+    {
+        UnbindTorchEvents();
+        foreach (BrokenAnchorTorch torch in torches ?? Array.Empty<BrokenAnchorTorch>())
+        {
+            if (torch == null || !observedTorches.Add(torch)) continue;
+            torch.StateChanged += OnTorchStateChanged;
+        }
+        if (Authority && IsBossEngaged) ReconcileLitTorches("reliure");
+    }
+
+    private void UnbindTorchEvents()
+    {
+        foreach (BrokenAnchorTorch torch in observedTorches)
+            if (torch != null) torch.StateChanged -= OnTorchStateChanged;
+        observedTorches.Clear();
+    }
+
+    private void OnTorchStateChanged(BrokenAnchorTorch torch, bool lit)
+    {
+        if (!lit) return;
+        AcceptLitTorch(torch, "événement de torche");
+    }
+
+    private void ReconcileLitTorches(string source)
+    {
+        foreach (BrokenAnchorTorch torch in torches ?? Array.Empty<BrokenAnchorTorch>())
+            if (torch != null && torch.IsLit) AcceptLitTorch(torch, source);
+    }
+
+    private void AcceptLitTorch(BrokenAnchorTorch torch, string source)
+    {
+        if (!Authority || torch == null || Array.IndexOf(torches, torch) < 0 || !torch.IsLit)
+        {
+            Trace($"torche refusée ({source}) : état ou autorité invalide.");
+            return;
+        }
+        if (!IsBossEngaged || IsBossResolved)
+        {
+            Trace($"torche '{torch.name}' détectée ({source}) mais combat non actif.");
+            return;
+        }
+        if (!acceptedTorches.Add(torch))
+        {
+            Trace($"torche '{torch.name}' ignorée ({source}) : déjà comptabilisée.");
+            return;
+        }
+
+        int before = CurrentSegments;
+        RemoveSegmentAuthoritatively();
+        Trace($"torche '{torch.name}' acceptée ({source}) : segments {before}/{MaximumSegments} -> {CurrentSegments}/{MaximumSegments}.");
+    }
+
+    private void SynchronizeHealth(int current)
+    {
+        if (Enemy != null && Enemy.Health != null)
+            Enemy.Health.SetHealth(Mathf.Clamp(current, 0, MaximumSegments), MaximumSegments);
+    }
+
+    private void Trace(string message) => Debug.Log("[BrokenAnchorBoss] " + message, this);
 
     private IEnumerator FireLoop()
     {
@@ -146,31 +222,5 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
         if (orbPrefab == null) { Debug.LogError("[Belmont] Prefab BrokenAnchorLightBall manquant.", this); return; }
         BrokenAnchorLightBall orb = Instantiate(orbPrefab, origin, Quaternion.identity);
         orb.Launch(destination, orbSpeed, orbLifetimeSeconds, playerDamage, authoritative, this, Enemy != null ? Enemy.transform : null);
-    }
-    private IEnumerator PlayReleasePresentation()
-    {
-        if (Enemy == null) yield break;
-        Vector3 destination = Enemy.transform.position + Vector3.up * 1.25f;
-        List<Transform> motes = new();
-        foreach (Flame torch in torches)
-        {
-            if (torch == null) continue;
-            GameObject mote = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            mote.name = "AnchorRelease_Light";
-            mote.transform.position = torch.transform.position + Vector3.up * .85f;
-            mote.transform.localScale = Vector3.one * .16f;
-            Destroy(mote.GetComponent<Collider>());
-            Light light = mote.AddComponent<Light>(); light.type = LightType.Point; light.color = new Color(.55f, .85f, 1f); light.intensity = 4f; light.range = 3f;
-            motes.Add(mote.transform);
-        }
-        Vector3[] origins = motes.ConvertAll(mote => mote.position).ToArray();
-        for (float elapsed = 0f; elapsed < releaseConvergenceSeconds; elapsed += Time.unscaledDeltaTime)
-        {
-            float progress = Mathf.SmoothStep(0f, 1f, elapsed / releaseConvergenceSeconds);
-            for (int i = 0; i < motes.Count; i++) if (motes[i] != null) motes[i].position = Vector3.Lerp(origins[i], destination, progress);
-            yield return null;
-        }
-        foreach (Transform mote in motes) if (mote != null) Destroy(mote.gameObject);
-        releasePresentation = null;
     }
 }

@@ -127,6 +127,12 @@ namespace Lit.Editor
                     errors.Add($"Profile '{profile.name}': piste '{binding.track.name}' absente de '{timeline.name}'.");
                 }
 
+                if (binding.bindingId == "camera.cinemachine_brain")
+                {
+                    if (outputTypes.TryGetValue(binding.track, out Type cameraType) && cameraType != typeof(Unity.Cinemachine.CinemachineBrain))
+                        errors.Add($"Profile '{profile.name}': camera.cinemachine_brain exige une piste Cinemachine.");
+                    continue; // Supplied by the local gameplay camera, not by an additive scene.
+                }
                 if (binding.required && (string.IsNullOrWhiteSpace(binding.bindingId) || !targets.ContainsKey(binding.bindingId.Trim())))
                 {
                     errors.Add($"Profile '{profile.name}': cible requise '{binding.bindingId}' absente des scenes chargees.");

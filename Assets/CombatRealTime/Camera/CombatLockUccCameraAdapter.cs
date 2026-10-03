@@ -64,6 +64,7 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
             combatLockView.ResetLockAxisSmoothing();
         }
 
+        if (LitGameplayCameraModeController.KeepsTacticalView(cameraController)) return;
         cameraController.SetViewType(typeof(CombatLockAdventureViewType), false);
         combatLockView.ResetFollowSmoothing();
         LogTransition("entered CombatLock");
@@ -133,14 +134,15 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         combatLockView?.ResetLockAxisSmoothing();
         SetImpactPresentation(Vector3.zero, 0f);
 
-        if (cameraController != null && !string.IsNullOrEmpty(previousViewTypeFullName))
+        if (cameraController != null && !LitGameplayCameraModeController.KeepsTacticalView(cameraController) &&
+            !string.IsNullOrEmpty(previousViewTypeFullName))
         {
             UccViewType[] views = cameraController.ViewTypes;
             for (int i = 0; views != null && i < views.Length; i++)
             {
                 if (views[i] != null && views[i].GetType().FullName == previousViewTypeFullName)
                 {
-                    cameraController.SetViewType(views[i].GetType(), false);
+                    cameraController.SetViewType(views[i] is LitTacticalUccViewType ? typeof(LitSmoothAdventureViewType) : views[i].GetType(), false);
                     break;
                 }
             }

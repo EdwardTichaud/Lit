@@ -18,6 +18,8 @@ public sealed class BossDefinitionSO : ScriptableObject
     [SerializeField] private BossDamagePolicy damagePolicy = BossDamagePolicy.Invulnerable;
     [SerializeField] private bool showBossBar = true;
     [SerializeField] private bool showImmuneImpact = true;
+    [SerializeField, Tooltip("Désactive l'IA ordinaire pour un boss piloté entièrement par son comportement dédié.")]
+    private bool suppressDefaultEnemyBrain = true;
 
     public string BossId => bossId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
@@ -27,4 +29,5 @@ public sealed class BossDefinitionSO : ScriptableObject
     public BossDamagePolicy DamagePolicy => damagePolicy;
     public bool ShowBossBar => showBossBar;
     public bool ShowImmuneImpact => showImmuneImpact;
+    public bool SuppressDefaultEnemyBrain => suppressDefaultEnemyBrain;
 }

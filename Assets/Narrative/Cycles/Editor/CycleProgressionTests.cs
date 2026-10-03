@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
@@ -55,6 +56,37 @@ public sealed class CycleProgressionTests
         Report(first, CycleStepKind.Interaction, "left");
         Assert.That(service.IsCompleted(first), Is.True);
         Assert.That(service.GetStatus(second), Is.EqualTo(CycleStatus.Available));
+    }
+    [Test] public void AuthoredCyclesHaveNoCrossCyclePrerequisites()
+    {
+        foreach (string guid in AssetDatabase.FindAssets("t:CycleDefinition", new[] { "Assets" }))
+        {
+            var cycle = AssetDatabase.LoadAssetAtPath<CycleDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            var requirements = new[] { cycle.prerequisites }
+                .Concat((cycle.steps ?? Array.Empty<CycleStep>()).Where(s => s != null).Select(s => s.prerequisites))
+                .Concat((cycle.dialogues ?? Array.Empty<CycleDialogue>()).Where(d => d != null).Select(d => d.condition?.requirements));
+            Assert.That(requirements.SelectMany(r => r?.conditions ?? Array.Empty<CycleRequirement>())
+                .Any(r => r != null && r.kind == CycleRequirementKind.CycleCompleted), Is.False,
+                cycle.cycleId + " must use scene triggers rather than another cycle's completion.");
+        }
+    }
+    [Test] public void ValidationRejectsNewCrossCycleDependencies()
+    {
+        var first = Cycle(Interaction("end", true));
+        var next = Cycle(Interaction("end", true));
+        next.prerequisites.conditions = new[] { new CycleRequirement { kind = CycleRequirementKind.CycleCompleted, cycle = first } };
+        Assert.That(next.ValidateConfiguration().Any(issue => issue.Contains("independants")), Is.True);
+    }
+    [Test] public void EtienneStartsAtItsEntryTriggerWithoutCompletingBelmont()
+    {
+        var cycle = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/EtienneCycle.asset");
+        service.RegisterDefinition(cycle);
+        Assert.That(service.GetStatus(cycle), Is.EqualTo(CycleStatus.Available));
+        Assert.That(service.IsStepCompleted(cycle, "puits_entered"), Is.False);
+        Assert.That(service.IsStepActive(cycle, cycle.FindStep("relief_register_read")), Is.False);
+        Assert.That(Report(cycle, CycleStepKind.ZoneEntered, "puits_entry"), Is.True);
+        Assert.That(service.IsStepCompleted(cycle, "puits_entered"), Is.True);
+        Assert.That(service.IsStepActive(cycle, cycle.FindStep("relief_register_read")), Is.True);
     }
     [Test] public void EarlyEventsArePersistedAndReconciledAfterPrerequisites()
     {

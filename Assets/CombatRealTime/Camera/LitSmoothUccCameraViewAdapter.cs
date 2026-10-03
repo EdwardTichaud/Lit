@@ -67,6 +67,8 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     /// <summary>The only gameplay-facing path allowed to request an intentional UCC camera snap.</summary>
     public bool RequestImmediatePose(CameraSnapReason reason)
     {
+        var mode = GetComponent<LitGameplayCameraModeController>();
+        if (mode != null && mode.isActiveAndEnabled && mode.HandleSnap(reason)) return true;
         if (!InstallSmoothGameplayView() || cameraController == null)
         {
             return false;
@@ -168,7 +170,8 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
         // extension. Reassert the exploration contract, but never interrupt
         // the dedicated combat view or an intentional UCC transition.
         if (!cameraController.IsTransitioning &&
-            cameraController.ActiveViewType is not LitSmoothAdventureViewType)
+            cameraController.ActiveViewType is not LitSmoothAdventureViewType &&
+            !LitGameplayCameraModeController.KeepsTacticalView(cameraController))
         {
             smoothViewInstalled = false;
             InstallSmoothGameplayView();
@@ -256,7 +259,7 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
             followTeleportSnapDistance,
             collisionSnapDistance);
         bool combatViewActive = cameraController.ActiveViewType is CombatLockAdventureViewType;
-        if (!combatViewActive)
+        if (!combatViewActive && !LitGameplayCameraModeController.KeepsTacticalView(cameraController))
         {
             cameraController.ThirdPersonViewTypeFullName = typeof(LitSmoothAdventureViewType).FullName;
             if (cameraController.enabled && cameraController.Character != null)
@@ -317,7 +320,7 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
 
         for (int i = 0; i < views.Length; i++)
         {
-            if (views[i] is Adventure adventure && views[i] is not LitSmoothAdventureViewType)
+            if (views[i] is Adventure adventure && views[i] is not LitSmoothAdventureViewType && views[i] is not LitTacticalUccViewType)
             {
                 return adventure;
             }

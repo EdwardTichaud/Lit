@@ -246,6 +246,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             if (cameraController != null)
             {
                 cameraControllerEnabledBeforeCinematic = cameraController.enabled;
+                cameraController.GetComponent<LitGameplayCameraModeController>()?.BeginExternalControl();
                 cameraController.enabled = false;
             }
 
@@ -255,6 +256,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         if (cameraController != null)
         {
             cameraController.enabled = cameraControllerEnabledBeforeCinematic;
+            cameraController.GetComponent<LitGameplayCameraModeController>()?.EndExternalControl();
             if (active && cameraController.enabled)
             {
                 ResolveAdapter()?.ActivateLock();

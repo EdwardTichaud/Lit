@@ -183,7 +183,7 @@ public class KnowledgeRequirement
         for (int i = 0; i < requiredKnowledge.Count; i++)
         {
             KnowledgeSO knowledge = requiredKnowledge[i];
-            if (knowledge != null && !manager.HasKnowledge(knowledge))
+            if (knowledge != null && !HasKnowledge(manager, knowledge))
             {
                 return false;
             }
@@ -209,7 +209,7 @@ public class KnowledgeRequirement
             }
 
             hasConfiguredKnowledge = true;
-            if (manager.HasKnowledge(knowledge))
+            if (HasKnowledge(manager, knowledge))
             {
                 return true;
             }
@@ -228,7 +228,8 @@ public class KnowledgeRequirement
         for (int i = 0; i < requiredCategories.Count; i++)
         {
             KnowledgeCategory category = requiredCategories[i];
-            if (category != KnowledgeCategory.Unknown && !manager.HasKnowledgeInCategory(category))
+            if (category != KnowledgeCategory.Unknown && !manager.HasKnowledgeInCategory(category) &&
+                !CycleController.HasVirtualKnowledgeForDevSimulation(manager, category))
             {
                 return false;
             }
@@ -236,6 +237,9 @@ public class KnowledgeRequirement
 
         return true;
     }
+
+    private static bool HasKnowledge(KnowledgeManager manager, KnowledgeSO knowledge) =>
+        manager != null && manager.HasKnowledge(knowledge) || CycleController.IsVirtuallyKnownForDevSimulation(knowledge);
 
     private bool HasRequiredTags(KnowledgeManager manager)
     {
@@ -247,7 +251,8 @@ public class KnowledgeRequirement
         for (int i = 0; i < requiredTags.Count; i++)
         {
             string tag = requiredTags[i];
-            if (!string.IsNullOrWhiteSpace(tag) && !manager.HasKnowledgeWithTag(tag))
+            if (!string.IsNullOrWhiteSpace(tag) && !manager.HasKnowledgeWithTag(tag) &&
+                !CycleController.HasVirtualKnowledgeWithTagForDevSimulation(manager, tag))
             {
                 return false;
             }
@@ -272,7 +277,8 @@ public class KnowledgeRequirement
             }
 
             int minimum = Mathf.Max(1, requirement.minimumCount);
-            if (manager.CountKnowledgeInCategory(requirement.category) < minimum)
+            if (manager.CountKnowledgeInCategory(requirement.category) +
+                CycleController.CountVirtualKnowledgeForDevSimulation(manager, requirement.category) < minimum)
             {
                 return false;
             }
@@ -297,7 +303,8 @@ public class KnowledgeRequirement
             }
 
             int minimum = Mathf.Max(1, requirement.minimumCount);
-            if (manager.CountKnowledgeWithTag(requirement.tag) < minimum)
+            if (manager.CountKnowledgeWithTag(requirement.tag) +
+                CycleController.CountVirtualKnowledgeWithTagForDevSimulation(manager, requirement.tag) < minimum)
             {
                 return false;
             }

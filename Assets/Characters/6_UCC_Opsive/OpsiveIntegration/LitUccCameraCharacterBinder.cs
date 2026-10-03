@@ -30,6 +30,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     /// <summary>Reserve la camera a une Timeline sans creer d'objet ni perdre le personnage actuellement lie.</summary>
     public void BeginTimelineControl()
     {
+        GetComponent<LitGameplayCameraModeController>()?.BeginExternalControl();
         timelineControlHeld = true;
         if (bindRoutine != null)
         {
@@ -57,6 +58,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
             cameraController.enabled = true;
         }
 
+        GetComponent<LitGameplayCameraModeController>()?.EndExternalControl();
         QueueBind();
     }
 

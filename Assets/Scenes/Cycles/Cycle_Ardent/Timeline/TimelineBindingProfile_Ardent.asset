@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0600a24eabe04b5b9e109d9bea6f8729, type: 3}
+  m_Name: TimelineBindingProfile_Ardent
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Timeline.TimelineBindingProfile
+  timeline: {fileID: 11400000, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+  bindings:
+  - track: {fileID: 7653324194855134086, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: camera.cinemachine_brain
+    required: 1
+  - track: {fileID: 5161872532103281250, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.memory.0.visible
+    required: 1
+  - track: {fileID: 4227983804383491952, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.memory.1.visible
+    required: 1
+  - track: {fileID: 4535385628916417908, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.memory.1.animation
+    required: 1
+  - track: {fileID: -3309090320459796514, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.memory.2.visible
+    required: 1
+  - track: {fileID: -5586166271060884504, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.memory.2.animation
+    required: 1
+  - track: {fileID: 8926008960978876912, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.caption.0
+    required: 1
+  - track: {fileID: 3546391759542376225, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.caption.1
+    required: 1
+  - track: {fileID: 4260606739271780196, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.caption.2
+    required: 1
+  - track: {fileID: -4825908775611995708, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.caption.3
+    required: 1
+  - track: {fileID: -2911277628928525213, guid: 724eb0f77d761e441ae909d308ab2a0e, type: 2}
+    bindingId: district1.ardent.memory.domestic
+    required: 1

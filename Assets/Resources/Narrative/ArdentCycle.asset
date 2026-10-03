@@ -1,0 +1,379 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: ArdentCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: district1.ardent
+  title: La voix retenue
+  description: "Distinguer une voix de la pr\xE9sence d\u2019Iris, apaiser Nora et
+    ouvrir la galerie des processions."
+  category: 0
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: conduits_entered
+    title: "Entrer dans les Conduits Noy\xE9s"
+    description: 
+    kind: 7
+    sourceId: conduits_entry
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: lucian_conduits_entry
+    title: "D\xE9couvrir les voix"
+    description: 
+    kind: 1
+    sourceId: lucian_conduits_entry
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: conduits_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: transfer_register_read
+    title: "Registre de transfert d\u2019Iris"
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: d67376c4ba67d2f408c8ab798b295256, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: conduits_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: conduit_instruction_read
+    title: Consigne de maintenance des conduits
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 40c0e18fd37ffd844885c4a5906b6965, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: conduits_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: iris_ribbon_found
+    title: "Ruban familial d\u2019Iris"
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: f258c41422a0b624dbf61ed75e1db5ee, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: conduits_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: echo_relay_one_tuned
+    title: "R\xE9gler un relais d\u2019\xE9cho"
+    description: 
+    kind: 3
+    sourceId: echo_relay_one_tuned
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: transfer_register_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: conduit_instruction_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: iris_ribbon_found
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: echo_relay_two_tuned
+    title: "R\xE9gler un relais d\u2019\xE9cho"
+    description: 
+    kind: 3
+    sourceId: echo_relay_two_tuned
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: transfer_register_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: conduit_instruction_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: iris_ribbon_found
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: echo_relay_three_tuned
+    title: "R\xE9gler un relais d\u2019\xE9cho"
+    description: 
+    kind: 3
+    sourceId: echo_relay_three_tuned
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: transfer_register_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: conduit_instruction_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: iris_ribbon_found
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: false_choir_defeated
+    title: "Vaincre Le Faux Ch\u0153ur"
+    description: 
+    kind: 2
+    sourceId: false_choir
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: echo_relay_one_tuned
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: echo_relay_two_tuned
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: echo_relay_three_tuned
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: voice_departure_seen
+    title: "Voir le d\xE9part d\u2019Iris"
+    description: 
+    kind: 4
+    sourceId: voice_departure
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: false_choir_defeated
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 1
+      skill: {fileID: 0}
+      knowledge: {fileID: 11400000, guid: 542f0e06a492d844bb9e34775cfc283d, type: 2}
+      item: {fileID: 0}
+      quantity: 1
+      key: 
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: nora_spoken
+    title: Apaiser Nora
+    description: 
+    kind: 1
+    sourceId: nora
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: voice_departure_seen
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 1
+      skill: {fileID: 0}
+      knowledge: {fileID: 11400000, guid: 8947a237464689b46bb10a1666c741f5, type: 2}
+      item: {fileID: 0}
+      quantity: 1
+      key: 
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    - kind: 4
+      skill: {fileID: 0}
+      knowledge: {fileID: 0}
+      item: {fileID: 0}
+      quantity: 1
+      key: district1.ardent.lower_procession_access
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: lucian_after_ardent
+    title: "Poursuivre vers les salles inf\xE9rieures"
+    description: 
+    kind: 1
+    sourceId: lucian_after_ardent
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: nora_spoken
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: District_1_Cycle_Ardent
+  dialogueSeconds: 4
+  dialogues:
+  - id: lucian_conduits_entry
+    durationSeconds: 4
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: conduits_entered
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Ces voix\u2026 Elles semblent venir de partout \xE0 la fois."
+    unavailableLine: 
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  - id: nora
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: voice_departure_seen
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Alors\u2026 ce n\u2019est pas ici que je dois l\u2019attendre."
+    unavailableLine: "\xC9coutez\u2026 Elle chante encore. Ne fermez pas le passage."
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 1
+    disappearanceDelay: 0
+  - id: lucian_after_ardent
+    durationSeconds: 5
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: nora_spoken
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Iris est pass\xE9e par ici. La voix est rest\xE9e, pas elle. Suivons son
+      trajet."
+    unavailableLine: 
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 0
+  cinematicCompletedFlags: 2

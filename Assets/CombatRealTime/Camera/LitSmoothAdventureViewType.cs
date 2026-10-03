@@ -322,7 +322,26 @@ public class LitSmoothAdventureViewType : Adventure
         }
         ReportUnexpectedAirborneSnap(immediateUpdate, requestedSnap);
         RecordMotion(targetPosition, resolvedPosition, immediateUpdate, mustSnap, requestedSnap ? reason : CameraSnapReason.InitialBind);
-        return resolvedPosition;
+        return PresentPosition(resolvedPosition);
+    }
+
+    protected Vector3 PresentPosition(Vector3 position)
+    {
+        var mode = m_GameObject.GetComponent<LitGameplayCameraModeController>();
+        return mode != null && mode.isActiveAndEnabled && mode.IsBlending
+            ? mode.BlendPosition(position, GetAnchorPosition(), CollisionRadius) : position;
+    }
+
+    protected Quaternion PresentRotation(Quaternion rotation)
+    {
+        var mode = m_GameObject.GetComponent<LitGameplayCameraModeController>();
+        return mode != null && mode.isActiveAndEnabled && mode.IsBlending ? mode.BlendRotation(rotation) : rotation;
+    }
+
+    public override Quaternion Rotate(float horizontalMovement, float verticalMovement, bool immediateUpdate)
+    {
+        Quaternion rotation = base.Rotate(horizontalMovement, verticalMovement, immediateUpdate);
+        return GetType() == typeof(LitSmoothAdventureViewType) ? PresentRotation(rotation) : rotation;
     }
 
     private bool MustSnapExplorationFollow(Vector3 targetPosition)

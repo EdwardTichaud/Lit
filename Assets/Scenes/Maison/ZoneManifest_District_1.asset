@@ -22,7 +22,6 @@ MonoBehaviour:
   - {fileID: 102900000, guid: eba58dff6e2cb774e91c7ac388c42d96, type: 3}
   - {fileID: 102900000, guid: 1131d151a2c066d4b9a6031f5ba56c91, type: 3}
   - {fileID: 102900000, guid: d053c1550a1973a44b3198c10a3c5768, type: 3}
-  - {fileID: 102900000, guid: 283714d43f84dcb488a9aa5f3952db1e, type: 3}
   - {fileID: 102900000, guid: 3f0e561768f53af46bf56474762ea6d9, type: 3}
   - {fileID: 102900000, guid: d36b2c156b097be4cbcf48af8bcc44e3, type: 3}
   - {fileID: 102900000, guid: 007201eb6f185f94faeb3a7aa9e0ff3b, type: 3}
@@ -32,6 +31,10 @@ MonoBehaviour:
   - {fileID: 102900000, guid: af9b246b67e7e3c4f9396e2e547fc250, type: 3}
   - {fileID: 102900000, guid: 1c11bf5e6f504b84389bce7e16f35603, type: 3}
   - {fileID: 102900000, guid: 87918142a1a790a45b785df504549fef, type: 3}
+  - {fileID: 102900000, guid: 168287124881c224da339a5a74bcb636, type: 3}
+  - {fileID: 102900000, guid: 16bd42ecfd0ba024cb4aed13baed7334, type: 3}
+  - {fileID: 102900000, guid: c15f8be46e1b2a549be874a2935c8454, type: 3}
+  - {fileID: 102900000, guid: 9834005d1395a684ab8f0c9a99067416, type: 3}
   postLoadingScenes: []
   primarySceneName: District_1_Core
   loadingMessage: Exploration du quartier de la Lune...
@@ -47,7 +50,6 @@ MonoBehaviour:
   - District_1_Environment_OldBarn
   - District_1_Indoor_Lights
   - District_1_Interactives
-  - District_1_Crypt_Flammes
   - District_1_Corridor_Flammes
   - District_1_Rooms_Flammes
   - District_1_Cycle_Luc
@@ -57,8 +59,12 @@ MonoBehaviour:
   - District_1_Sequences
   - District_1_Cycle_Nina
   - District_1_Cycle_Belmont
+  - District_1_PuitsDeLaReleve_Environment
+  - District_1_Cycle_Etienne
+  - "District_1_ConduitsNoy\xE9s_Environement"
+  - District_1_Cycle_Ardent
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
-  bakedNavMeshData: {fileID: 23800000, guid: 5f9c79bf7d1906646af4e698f2b49a3e, type: 2}
-  bakedNavMeshVersion: 20260905163655
+  bakedNavMeshData: {fileID: 23800000, guid: 2b68058f92bf0ec45ba2d737d30d2ef7, type: 2}
+  bakedNavMeshVersion: 20261003142505
   bakedNavMeshAgentTypeId: 0

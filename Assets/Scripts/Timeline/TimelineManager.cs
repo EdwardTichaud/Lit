@@ -320,9 +320,16 @@ namespace Lit.Timeline
                 return true;
             }
 
+            RegisterParticipant(playback, playback.director);
             for (int i = 0; i < playback.participants.Count; i++)
             {
-                playback.participants[i].OnTimelinePlaybackStarted(playback.director);
+                try { playback.participants[i].OnTimelinePlaybackStarted(playback.director); }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception);
+                    FinishPlayback(playback, TimelinePlaybackState.Failed);
+                    return false;
+                }
             }
 
             playback.director.stopped += OnDirectorStopped;
@@ -346,7 +353,13 @@ namespace Lit.Timeline
                 return target != null;
             }
 
-            return !string.IsNullOrWhiteSpace(bindingId) && registeredTargets.TryGetValue(bindingId.Trim(), out target) && target != null;
+            if (!string.IsNullOrWhiteSpace(bindingId) && registeredTargets.TryGetValue(bindingId.Trim(), out target) && target != null) return true;
+            if (bindingId == "camera.cinemachine_brain")
+            {
+                target = LitCameraDirector.EnsureInstance()?.CinemachineBrain;
+                return target != null;
+            }
+            return false;
         }
 
         private static bool IsCompatible(Type expectedType, UnityEngine.Object target)
@@ -382,7 +395,9 @@ namespace Lit.Timeline
                     $"TimelineManager: lecture de '{director.playableAsset?.name}' terminee a {director.time:0.###} s.",
                     director);
 #endif
-                FinishPlayback(playback, TimelinePlaybackState.Completed);
+                bool reachedEnd = director.duration > 0 && !double.IsInfinity(director.duration) &&
+                    director.time >= director.duration - .05d;
+                FinishPlayback(playback, reachedEnd ? TimelinePlaybackState.Completed : TimelinePlaybackState.Stopped);
             }
         }
 
@@ -391,7 +406,19 @@ namespace Lit.Timeline
             List<ActivePlayback> interrupted = new List<ActivePlayback>();
             foreach (ActivePlayback playback in activePlaybacks.Values)
             {
-                if (playback.director == null || playback.director.gameObject.scene == scene)
+                bool missingRequiredBinding = false;
+                if (playback.director != null && playback.handle.State == TimelinePlaybackState.Playing)
+                {
+                    foreach (TimelineBindingDefinition binding in playback.profile.Bindings)
+                    {
+                        if (binding != null && binding.required && binding.track != null && playback.director.GetGenericBinding(binding.track) == null)
+                        {
+                            missingRequiredBinding = true;
+                            break;
+                        }
+                    }
+                }
+                if (playback.director == null || playback.director.gameObject.scene == scene || missingRequiredBinding)
                 {
                     interrupted.Add(playback);
                 }
@@ -399,7 +426,7 @@ namespace Lit.Timeline
 
             for (int i = 0; i < interrupted.Count; i++)
             {
-                FinishPlayback(interrupted[i], TimelinePlaybackState.Failed, "Scene du PlayableDirector dechargee.");
+                FinishPlayback(interrupted[i], TimelinePlaybackState.Failed, "Scene du Director ou d'une cible requise dechargee.");
             }
         }
 
@@ -428,7 +455,8 @@ namespace Lit.Timeline
 
             for (int i = playback.participants.Count - 1; i >= 0; i--)
             {
-                playback.participants[i].OnTimelinePlaybackFinished(playback.director);
+                try { playback.participants[i].OnTimelinePlaybackFinished(playback.director); }
+                catch (Exception exception) { Debug.LogException(exception); }
             }
             playback.participants.Clear();
 

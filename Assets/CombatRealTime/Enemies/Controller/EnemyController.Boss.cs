@@ -9,7 +9,7 @@ public sealed partial class EnemyController
     private void BossAwake()
     {
         bossEncounter = GetComponent<BossEncounterBehaviour>();
-        if (bossEncounter != null) SetSuspended(true);
+        if (bossEncounter != null && bossEncounter.SuppressDefaultEnemyBrain) SetSuspended(true);
     }
 
     private bool BossFilterIncomingDamage(int amount, SquadCharacterController source, out int permittedDamage)

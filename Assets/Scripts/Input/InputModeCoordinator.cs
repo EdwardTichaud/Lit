@@ -18,7 +18,8 @@ public enum InputMode
     CombatQTE,
     CombatWheel,
     Cinematic,
-    Disabled
+    Disabled,
+    TacticalInspection
 }
 
 public enum InputModeAction { Submit, Cancel, Navigate, Pause }
@@ -131,7 +132,8 @@ public sealed class InputModeCoordinator : MonoBehaviour
     public static bool IsGameplayBlocked => CurrentMode != InputMode.Exploration;
     public static bool IsCameraAllowed => CurrentMode == InputMode.Exploration || CurrentMode == InputMode.Dialogue ||
                                           CurrentMode == InputMode.Placement || CurrentMode == InputMode.Combat ||
-                                          CurrentMode == InputMode.ThresholdSequence || CurrentMode == InputMode.CombatQTE;
+                                          CurrentMode == InputMode.ThresholdSequence || CurrentMode == InputMode.CombatQTE ||
+                                          CurrentMode == InputMode.TacticalInspection;
     public static bool IsUserInterfaceMovementPassthroughActive => instance != null &&
         instance.ResolveMode() == InputMode.UserInterface &&
         instance.userInterfaceMovementOwner != null &&
@@ -250,6 +252,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
             case InputMode.ThresholdSequence:
                 yield return "Camera";
                 yield break;
+            case InputMode.TacticalInspection: yield return "Camera"; yield break;
             case InputMode.CombatWheel: yield return "CombatWheel"; yield break;
             case InputMode.CombatQTE:
                 yield return "Camera";

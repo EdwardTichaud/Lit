@@ -104,6 +104,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cycles/Cycle_Belmont/District_1_Cycle_Belmont.unity
     guid: 87918142a1a790a45b785df504549fef
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_PuitsDeLaReleve_Environment.unity
+    guid: 168287124881c224da339a5a74bcb636
+  - enabled: 1
+    path: Assets/Scenes/Cycles/Cycle_Etienne/District_1_Cycle_Etienne.unity
+    guid: 16bd42ecfd0ba024cb4aed13baed7334
+  - enabled: 1
+    path: "Assets/Scenes/District_1/District_1_ConduitsNoy\xE9s_Environement.unity"
+    guid: c15f8be46e1b2a549be874a2935c8454
+  - enabled: 1
+    path: Assets/Scenes/Cycles/Cycle_Ardent/District_1_Cycle_Ardent.unity
+    guid: 9834005d1395a684ab8f0c9a99067416
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

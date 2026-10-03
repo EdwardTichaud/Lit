@@ -5,6 +5,9 @@ public static class CycleValidation
 {
     public static void Validate(CycleDefinition cycle, List<string> issues)
     {
+        ValidateRequirements(cycle, cycle.prerequisites, issues);
+        foreach (var dialogue in cycle.dialogues ?? Array.Empty<CycleDialogue>())
+            if (dialogue != null) ValidateRequirements(cycle, dialogue.condition?.requirements, issues);
         if (!cycle.HasSteps) return;
         var ids = new HashSet<string>();
         bool terminal = false;
@@ -27,7 +30,6 @@ public static class CycleValidation
             ValidateRequirements(cycle, step.prerequisites, issues);
         }
         if (!terminal) issues.Add("Fin inatteignable : aucune etape terminale.");
-        ValidateRequirements(cycle, cycle.prerequisites, issues);
         if (cycle.legacyMigrationVersion > 0)
             foreach (var migration in cycle.legacyMigrations ?? Array.Empty<CycleLegacyStepMigration>())
                 if (migration == null || cycle.FindStep(migration.stepId) == null || (migration.anyFlags == 0 && migration.allFlags == 0))
@@ -47,7 +49,8 @@ public static class CycleValidation
             if (requirement.kind == CycleRequirementKind.Step && owner.FindStep(requirement.stepId) == null)
                 issues.Add("Etape requise introuvable : " + requirement.stepId);
             if (requirement.kind == CycleRequirementKind.Knowledge && requirement.knowledge == null) issues.Add("Connaissance requise absente.");
-            if (requirement.kind == CycleRequirementKind.CycleCompleted && requirement.cycle == null) issues.Add("Cycle requis absent.");
+            if (requirement.kind == CycleRequirementKind.CycleCompleted)
+                issues.Add("Les cycles doivent rester independants : remplacer le prerequis CycleCompleted par un trigger d'entree ou un acces physique.");
         }
     }
     private static bool HasLoop(CycleDefinition cycle, string id, HashSet<string> visiting, HashSet<string> visited)

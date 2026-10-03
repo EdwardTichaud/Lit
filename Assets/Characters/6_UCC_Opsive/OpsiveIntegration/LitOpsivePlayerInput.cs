@@ -188,6 +188,7 @@ public class LitOpsivePlayerInput : OpsivePlayerInput
 
     private Vector2 ResolveMovement()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.TacticalInspection) return Vector2.zero;
         if (hasMovementOverride)
         {
             return movementOverride;

@@ -299,6 +299,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return false;
         }
 
+        if (enemy.BossEncounter != null && !enemy.BossEncounter.IsBossEngaged) return false;
         bool newAggro = !enemyAggroAnnounced || !combatActive || engagedEnemy != enemy;
         if (!combatActive)
         {
@@ -342,6 +343,9 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             return false;
         }
+        // A boss owns its engagement gate (party gathering, puzzle prerequisites,
+        // etc.). Manual targeting must not bypass it and erect a wall early.
+        if (enemy.BossEncounter != null && !enemy.BossEncounter.IsBossEngaged) return false;
 
         playerRoot = player;
         ResolvePlayerReferences();

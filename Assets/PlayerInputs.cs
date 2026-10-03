@@ -612,12 +612,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""ToggleFreeCamera"",
+                    ""name"": ""TacticalInspection"",
                     ""type"": ""Button"",
                     ""id"": ""8401479d-ed89-4177-a0be-396ea46b6223"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": """",
+                    ""interactions"": ""Hold(duration=0.6)"",
                     ""initialStateCheck"": false
                 }
             ],
@@ -816,7 +816,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
-                    ""action"": ""ToggleFreeCamera"",
+                    ""action"": ""TacticalInspection"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1768,7 +1768,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Camera_OrbitModifier = m_Camera.FindAction("OrbitModifier", throwIfNotFound: true);
         m_Camera_PanModifier = m_Camera.FindAction("PanModifier", throwIfNotFound: true);
         m_Camera_Recenter = m_Camera.FindAction("Recenter", throwIfNotFound: true);
-        m_Camera_ToggleFreeCamera = m_Camera.FindAction("ToggleFreeCamera", throwIfNotFound: true);
+        m_Camera_TacticalInspection = m_Camera.FindAction("TacticalInspection", throwIfNotFound: true);
         // Falling
         m_Falling = asset.FindActionMap("Falling", throwIfNotFound: true);
         m_Falling_Move = m_Falling.FindAction("Move", throwIfNotFound: true);
@@ -2180,7 +2180,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_OrbitModifier;
     private readonly InputAction m_Camera_PanModifier;
     private readonly InputAction m_Camera_Recenter;
-    private readonly InputAction m_Camera_ToggleFreeCamera;
+    private readonly InputAction m_Camera_TacticalInspection;
     /// <summary>
     /// Provides access to input actions defined in input action map "Camera".
     /// </summary>
@@ -2229,9 +2229,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Recenter => m_Wrapper.m_Camera_Recenter;
         /// <summary>
-        /// Provides access to the underlying input action "Camera/ToggleFreeCamera".
+        /// Provides access to the underlying input action "Camera/TacticalInspection".
         /// </summary>
-        public InputAction @ToggleFreeCamera => m_Wrapper.m_Camera_ToggleFreeCamera;
+        public InputAction @TacticalInspection => m_Wrapper.m_Camera_TacticalInspection;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2285,9 +2285,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Recenter.started += instance.OnRecenter;
             @Recenter.performed += instance.OnRecenter;
             @Recenter.canceled += instance.OnRecenter;
-            @ToggleFreeCamera.started += instance.OnToggleFreeCamera;
-            @ToggleFreeCamera.performed += instance.OnToggleFreeCamera;
-            @ToggleFreeCamera.canceled += instance.OnToggleFreeCamera;
+            @TacticalInspection.started += instance.OnTacticalInspection;
+            @TacticalInspection.performed += instance.OnTacticalInspection;
+            @TacticalInspection.canceled += instance.OnTacticalInspection;
         }
 
         /// <summary>
@@ -2326,9 +2326,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Recenter.started -= instance.OnRecenter;
             @Recenter.performed -= instance.OnRecenter;
             @Recenter.canceled -= instance.OnRecenter;
-            @ToggleFreeCamera.started -= instance.OnToggleFreeCamera;
-            @ToggleFreeCamera.performed -= instance.OnToggleFreeCamera;
-            @ToggleFreeCamera.canceled -= instance.OnToggleFreeCamera;
+            @TacticalInspection.started -= instance.OnTacticalInspection;
+            @TacticalInspection.performed -= instance.OnTacticalInspection;
+            @TacticalInspection.canceled -= instance.OnTacticalInspection;
         }
 
         /// <summary>
@@ -3746,12 +3746,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRecenter(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "ToggleFreeCamera" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "TacticalInspection" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnToggleFreeCamera(InputAction.CallbackContext context);
+        void OnTacticalInspection(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Falling" which allows adding and removing callbacks.

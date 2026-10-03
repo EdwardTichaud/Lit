@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c342623c95244b90ad99b3c2d719de59, type: 3}
+  m_Name: GhostData_Etienne_Belmont
+  m_EditorClassIdentifier: Assembly-CSharp::GhostData
+  ghostId: ghost_etienne_belmont
+  displayName: "\xC9tienne Belmont"
+  apparitionAge: 666
+  apparitionLocationId: district_1.puits.poste_du_frein
+  worldPrefab: {fileID: 6291493948535969969, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
+  targetId: last_relief
+  targetDisplayName: "Le passage de la rel\xE8ve"
+  expectedAnswerType: 3
+  apparitionLine: "Le passage\u2026 Il faut le tenir. Ils sont encore derri\xE8re."
+  question: Ils ont pu passer ?
+  knowledgeUnlockedOnListen: []
+  reactions:
+  - reactionId: relief_survived
+    optionText: "Ils sont pass\xE9s, \xC9tienne. Le registre le confirme. Et \xC9lo\xEFse
+      sait pourquoi tu as pris sa place."
+    requirement:
+      requiredKnowledge:
+      - {fileID: 11400000, guid: 651a75f9f854223489c0bc3e4a400c96, type: 2}
+      - {fileID: 11400000, guid: 09f768304a4f9354ebe6a807c8d3d8c6, type: 2}
+      - {fileID: 11400000, guid: af0561e1ca25c2b4f873b68de3bf6bbc, type: 2}
+      - {fileID: 11400000, guid: 2f9cac9c98580444795ad030db04dd88, type: 2}
+      anyKnowledge: []
+      requiredCategories: 
+      requiredTags: []
+      requiredCategoryCounts: []
+      requiredTagCounts: []
+    priority: 100
+    responseLine: "Alors\u2026 je peux l\xE2cher."
+    marksGhostUnderstood: 1
+    unlockKnowledge: []
+    triggerEffectIds: []
+    notes: 
+  missingKnowledgeLine: "Le passage\u2026 Il faut le tenir. Ils sont encore derri\xE8re."
+  puzzleSteps: []
+  evidence:
+  - evidenceType: 4
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: 3862003b23dd11841b1d277ccf50515d, type: 2}
+    locationId: district_1.puits_de_la_releve
+    note: 
+  - evidenceType: 4
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: 3c055f778e5a15f4b8a1de6c1252ab78, type: 2}
+    locationId: district_1.puits_de_la_releve
+    note: 
+  - evidenceType: 4
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: 6446ed001b484e84d959aacf9cb51f9b, type: 2}
+    locationId: district_1.puits_de_la_releve
+    note: 
+  dissolveTargetGameObjectIds: []
+  includeChildrenInDissolveTargets: 1
+  addDissolveControllerIfMissing: 1
+  dissolveTargetDurationOverride: -1
+  notes: "Mort lors de la catastrophe, en tenant le passage pour les coll\xE8gues.
+    Le souvenir confirme le succ\xE8s du geste ; aucune r\xE9v\xE9lation du rituel."

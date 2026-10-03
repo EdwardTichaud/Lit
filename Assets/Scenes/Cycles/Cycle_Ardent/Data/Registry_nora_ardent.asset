@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d322eb9a8243d4a16a2edbfaf173e4, type: 3}
+  m_Name: Registry_nora_ardent
+  m_EditorClassIdentifier: Assembly-CSharp::RegistryEntry
+  entryId: district1.ardent.nora_ardent
+  personName: Nora Ardent
+  entryType: 2
+  age: 666
+  district: "Conduits Noy\xE9s"
+  room: 
+  cause: 
+  note: Mort pendant la catastrophe, dans les galeries de maintenance.
+  isStruckOut: 0
+  readableReferences:
+  - {fileID: 11400000, guid: 403fb23e511c32944b0f5bbe0d33f733, type: 2}
+  associatedObjectIds: []

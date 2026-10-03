@@ -274,6 +274,7 @@ GameObject:
   - component: {fileID: 1054944628}
   - component: {fileID: 1054944627}
   - component: {fileID: 452504792}
+  - component: {fileID: 1054944629}
   m_Layer: 0
   m_Name: Castle_Volume
   m_TagString: Untagged
@@ -315,8 +316,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 238.88148, y: 56.95101, z: 66.71162}
-  m_Center: {x: 30.768913, y: -5.0175133, z: 39.103245}
+  m_Size: {x: 257.781, y: 56.95101, z: 66.71162}
+  m_Center: {x: 21.319157, y: -5.0175133, z: 39.103245}
 --- !u!114 &1054944628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -334,6 +335,27 @@ MonoBehaviour:
   blendDistance: 5
   weight: 1
   sharedProfile: {fileID: 11400000, guid: 033ede440f4a6944e91efbd246efb805, type: 2}
+--- !u!65 &1054944629
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1054944625}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 57.173325, y: 82.8737, z: 76.9041}
+  m_Center: {x: -78.340675, y: -22.314919, z: 103.55718}
 --- !u!1 &1150687518
 GameObject:
   m_ObjectHideFlags: 0
@@ -719,7 +741,7 @@ Transform:
   m_GameObject: {fileID: 1477286790}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 21.99, y: -93.812996, z: 45.9}
+  m_LocalPosition: {x: -89.88, y: -93.812996, z: 51.88}
   m_LocalScale: {x: 3.0000012, y: 3, z: 3.0000012}
   m_ConstrainProportionsScale: 0
   m_Children: []

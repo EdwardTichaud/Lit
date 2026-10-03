@@ -35,13 +35,13 @@ public sealed class CycleLegacyStepMigration
 [Serializable]
 public sealed class CycleRequirement
 {
-    [Tooltip("Fait requis : etape de ce cycle, connaissance partagee ou autre cycle termine.")]
+    [Tooltip("Fait requis : etape de ce cycle ou connaissance. CycleCompleted est historique : utiliser un trigger pour la chronologie entre cycles.")]
     public CycleRequirementKind kind;
     [Tooltip("Identifiant stable de l'etape de ce cycle.")]
     public string stepId;
     [Tooltip("Connaissance requise ; vide ne valide pas cette condition.")]
     public KnowledgeSO knowledge;
-    [Tooltip("Autre cycle requis ; vide ne valide pas cette condition.")]
+    [Tooltip("Compatibilite historique uniquement. Les cycles actuels ne doivent pas dependre d'un autre cycle.")]
     public CycleDefinition cycle;
 }
 
@@ -99,19 +99,22 @@ public sealed class CycleEncounterBinding
 [Serializable]
 public sealed class CycleSequenceBinding
 {
+    [Tooltip("Rassemblement optionnel avant lecture ; vide conserve le lancement habituel.")] public CycleGroupSequenceGate startGate;
     [Tooltip("Source de l'etape de sequence ; unique dans ce cycle.")] public string id;
     [Tooltip("Director de cette scene ; vide garde l'etape en attente avec diagnostic.")] public UnityEngine.Playables.PlayableDirector director;
     [Tooltip("Liaisons de la Timeline ; requises pour lancer la sequence.")] public Lit.Timeline.TimelineBindingProfile profile;
 }
 
-/// <summary>Relie une Flame existante a un jalon Interaction du cycle. L'etat de la Flame
-/// reste sa source de verite et est deja sauvegarde par le systeme de monde.</summary>
+/// <summary>Relie une source lumineuse à un jalon Interaction du cycle.
+/// Une torche de boss peut partager cette persistance sans devenir une Flame ordinaire.</summary>
 [Serializable]
 public sealed class CycleFlameBinding
 {
     [Tooltip("Source de l'etape Interaction correspondante.")] public string id;
     public Flame flame;
+    [Tooltip("Torche de puzzle spécialisée, utilisée à la place de Flame.")] public BrokenAnchorTorch bossTorch;
     [NonSerialized] public Action<Flame, bool> callback;
+    [NonSerialized] public Action<BrokenAnchorTorch, bool> bossTorchCallback;
 }
 
 /// <summary>Une replique qui se joue une seule fois lorsque son etape devient active.</summary>

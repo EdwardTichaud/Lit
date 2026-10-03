@@ -203,6 +203,8 @@ public sealed class LitCameraDirector : MonoBehaviour
             uccCameraHandler.enabled = uccHandlerWasEnabled;
         }
 
+        uccCameraController?.GetComponent<LitGameplayCameraModeController>()?.EndExternalControl();
+
         if (uccCameraController != null && uccCameraController.enabled && uccCameraController.Character != null)
         {
             LitSmoothUccCameraViewAdapter smoothAdapter = uccCameraController.GetComponent<LitSmoothUccCameraViewAdapter>();
@@ -247,6 +249,8 @@ public sealed class LitCameraDirector : MonoBehaviour
 
     private void SuspendUccCameraControl()
     {
+        if (uccCameraController != null)
+            uccCameraController.GetComponent<LitGameplayCameraModeController>()?.BeginExternalControl();
         if (!hasUccState)
         {
             uccControllerWasEnabled = uccCameraController != null && uccCameraController.enabled;

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_LastRelief
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 2f9cac9c98580444795ad030db04dd88
+  knowledgeId: district1.etienne.LastRelief
+  title: "Le dernier geste d'\xC9tienne"
+  description: "Un fragment de m\xE9moire montre les coll\xE8gues atteindre l'autre
+    c\xF4t\xE9. \xC9tienne reste au frein et meurt lorsque le m\xE9canisme c\xE8de
+    pendant la catastrophe."
+  category: 15
+  sourceType: 6
+  importance: 2
+  tags:
+  - etienne
+  - belmont
+  - puits_de_la_releve
+  districtId: district_1
+  roomId: puits_de_la_releve
+  personId: etienne_belmont
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 0}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

@@ -3,13 +3,11 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class BrokenAnchorTorchReceiverStandalone : MonoBehaviour
 {
-    [SerializeField] private Flame flame;
-    public Flame Flame => flame != null ? flame : GetComponentInParent<Flame>();
+    [SerializeField] private BrokenAnchorTorch torch;
+    public BrokenAnchorTorch Torch => torch != null ? torch : GetComponentInParent<BrokenAnchorTorch>();
     public bool TryLight()
     {
-        Flame target = Flame;
-        if (target == null || target.IsEffectivelyLit) return false;
-        target.SetLit(true);
-        return true;
+        BrokenAnchorTorch target = Torch;
+        return target != null && target.TryLight();
     }
 }

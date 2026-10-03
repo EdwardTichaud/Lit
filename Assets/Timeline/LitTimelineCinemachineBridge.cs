@@ -1,6 +1,8 @@
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Playables;
+using Lit.Timeline;
+using System.Linq;
 
 /// <summary>
 /// Switches camera authority only when the owning runtime rig explicitly
@@ -10,7 +12,7 @@ using UnityEngine.Playables;
 [DefaultExecutionOrder(-450)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayableDirector))]
-public sealed class LitTimelineCinemachineBridge : MonoBehaviour
+public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlaybackParticipant
 {
     [SerializeField] private PlayableDirector director;
 
@@ -20,6 +22,17 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
     private bool savedBrainUpdateMode;
     private CinemachineBrain.UpdateMethods previousUpdateMethod;
     private CinemachineBrain.BrainUpdateMethods previousBlendUpdateMethod;
+
+    public void OnTimelinePlaybackStarted(PlayableDirector playback)
+    {
+        if (playback == null || playback != GetComponent<PlayableDirector>()) return;
+        if (!playback.playableAsset.outputs.Any(output => output.sourceObject is CinemachineTrack)) return;
+        director = playback;
+        if (!BeginCameraControlNow())
+            throw new System.InvalidOperationException("Timeline : la caméra de gameplay ne peut pas être confiée à Cinemachine.");
+    }
+
+    public void OnTimelinePlaybackFinished(PlayableDirector playback) => EndCameraControl();
 
     private void Reset()
     {

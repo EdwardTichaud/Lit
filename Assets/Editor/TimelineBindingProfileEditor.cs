@@ -51,6 +51,14 @@ namespace Lit.Editor
             EditorGUILayout.EndHorizontal();
 
             serializedObject.ApplyModifiedProperties();
+            EditorGUILayout.Space();
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+            {
+                if (GUILayout.Button("Préparer l’aperçu Timeline (scènes chargées)"))
+                    TimelineProfilePreviewBindings.Prepare((TimelineBindingProfile)target);
+                if (TimelineProfilePreviewBindings.Active && GUILayout.Button("Terminer l’aperçu et restaurer"))
+                    TimelineProfilePreviewBindings.Restore();
+            }
         }
 
         private void DrawBinding(int index, TimelineAsset timelineAsset)

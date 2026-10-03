@@ -853,7 +853,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         KnowledgeManager manager = KnowledgeManager.GetOrCreate();
-        if (unlockKnowledgeOnListen && manager != null)
+        if (unlockKnowledgeOnListen && manager != null && !UsesDevCycleSimulation())
         {
             manager.UnlockKnowledgeList(ghostData.knowledgeUnlockedOnListen);
         }
@@ -897,7 +897,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         KnowledgeManager manager = KnowledgeManager.GetOrCreate();
-        if (manager != null)
+        if (manager != null && !UsesDevCycleSimulation())
         {
             manager.UnlockKnowledgeList(reaction.unlockKnowledge);
         }
@@ -910,6 +910,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         if (!feedbackShown) CompletePuzzleStepAfterSolvedDialogue(reaction);
 
         return true;
+    }
+
+    private bool UsesDevCycleSimulation()
+    {
+        CycleInteraction interaction = GetComponent<CycleInteraction>();
+        return interaction != null && interaction.cycle != null && interaction.cycle.IsDevSimulationActive;
     }
 
     private void TriggerDissolveEffects(GhostKnowledgeReaction reaction, KnowledgeManager manager)

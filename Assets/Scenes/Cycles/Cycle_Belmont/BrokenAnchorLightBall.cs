@@ -34,6 +34,7 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
     private bool authoritative;
     private bool resolved;
     private bool collisionArmed;
+    private bool dashDirectionTriggered;
     private BrokenAnchorBoss owner;
     private Transform ownerRoot;
     private Collider[] ownerColliders = System.Array.Empty<Collider>();
@@ -59,11 +60,10 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
     {
         launchPosition = transform.position;
         impactPosition = destination;
-        Vector3 delta = impactPosition - launchPosition;
-        if (delta.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(delta.normalized, Vector3.up);
         hoverPosition = launchPosition + Vector3.up * ascentHeight;
         flightElapsed = 0f;
         collisionArmed = false;
+        dashDirectionTriggered = false;
         damage = Mathf.Max(0, playerDamage);
         authoritative = isAuthoritative;
         owner = boss;
@@ -101,6 +101,18 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
             {
                 collisionArmed = true;
                 if (hitCollider != null) hitCollider.enabled = authoritative;
+            }
+
+            // La direction de l'attaque n'est revelee qu'a la sortie du hover.
+            // Pendant la montee et la suspension, la boule ne "regarde" donc pas
+            // deja le joueur.
+            if (!dashDirectionTriggered)
+            {
+                dashDirectionTriggered = true;
+                Vector3 dashDirection = impactPosition - hoverPosition;
+                if (dashDirection.sqrMagnitude > .0001f)
+                    transform.rotation = Quaternion.LookRotation(dashDirection.normalized, Vector3.up);
+                Trace("direction de charge declenchee | destination=" + impactPosition.ToString("F2"));
             }
             float dashProgress = Mathf.Clamp01((flightElapsed - riseDuration - hoverDuration) / dashDuration);
             nextPosition = Vector3.Lerp(hoverPosition, impactPosition, dashProgress);
@@ -156,7 +168,8 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
             resolved = true;
             bool lit = torch.TryLight();
             Trace(lit ? "impact torche" : "impact torche deja allumee");
-            if (lit) owner?.NotifyTorchLit(torch.Flame);
+            // BrokenAnchorBoss écoute directement l'état de la torche. Cela couvre aussi
+            // les restaurations de sauvegarde et évite qu'un projectile dupliqué compte deux fois.
             Destroy(gameObject);
             return;
         }

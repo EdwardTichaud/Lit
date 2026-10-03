@@ -32,8 +32,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.38, y: 0.38, z: 0.38}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.17, y: 0.17, z: 0.17}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1353268302143229917}
   m_Father: {fileID: 0}
@@ -71,7 +71,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8f7f424fb68f7e84494b6e21c3c81cff, type: 2}
+  - {fileID: 2100000, guid: 42058643273712a4daa6202cf5736b10, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -159,9 +159,9 @@ MonoBehaviour:
   hitCollider: {fileID: 135000}
   characterEffect: {fileID: 3254552919837619792}
   ascentHeight: 2
-  riseSeconds: 0.1
-  hoverSeconds: 0.5
-  dashSeconds: 0.2
+  riseSeconds: 0.4
+  hoverSeconds: 1.2
+  dashSeconds: 0.6
 --- !u!114 &3254552919837619792
 MonoBehaviour:
   m_ObjectHideFlags: 0

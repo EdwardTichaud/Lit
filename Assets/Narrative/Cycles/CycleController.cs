@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Lit.Timeline;
 using Unity.Netcode;
 using UnityEngine;
@@ -36,13 +37,17 @@ public sealed class CycleController : NetworkBehaviour
     [Tooltip("Repliques automatiques de l'histoire. Elles ne demandent pas une nouvelle interaction au joueur.")]
     public CycleAutoDialogueBinding[] autoDialogues = Array.Empty<CycleAutoDialogueBinding>();
     public CycleSequenceBinding[] sequences = Array.Empty<CycleSequenceBinding>();
+
+    [Header("Dev - démarrage de cycle")]
+    [SerializeField, Tooltip("Simule les jalons antérieurs à l'étape choisie. Cet état est local, temporaire et n'écrit jamais la sauvegarde.")]
+    private bool devStartEnabled;
+    [SerializeField, Tooltip("Étape qui reste à accomplir au lancement du test. Les étapes placées avant elle dans la définition sont simulées comme terminées.")]
+    private string devStartStepId;
     private readonly HashSet<string> attemptedSequences = new HashSet<string>();
     private CycleSequenceBinding activeSequence;
     private string activeSequenceId = "cinematic";
     private PlayableDirector ActiveDirector => activeSequence != null ? activeSequence.director : director;
     private TimelineBindingProfile ActiveProfile => activeSequence != null ? activeSequence.profile : bindingProfile;
-    public CycleStatus Status => progression != null ? progression.GetStatus(definition) : CycleStatus.Unavailable;
-    private bool Completed => progression != null ? progression.IsCompleted(definition) : definition != null && definition.IsCompleted(State);
     private WorldRulesStateManager rules;
     private CharacterInfo health;
     private TimelinePlaybackHandle playback;
@@ -66,21 +71,141 @@ public sealed class CycleController : NetworkBehaviour
     private readonly Dictionary<CycleDissolveBinding, Coroutine> activeDissolves = new Dictionary<CycleDissolveBinding, Coroutine>();
     private readonly HashSet<GhostController> observedPuzzleGhosts = new HashSet<GhostController>();
     private readonly HashSet<CycleAutoDialogueBinding> playedAutoDialogues = new HashSet<CycleAutoDialogueBinding>();
+    private readonly HashSet<string> devCompletedSteps = new HashSet<string>();
+    private readonly HashSet<string> devFacts = new HashSet<string>();
+    private readonly HashSet<KnowledgeSO> devKnowledge = new HashSet<KnowledgeSO>();
+    private bool devSimulationInitialized;
     private bool Online => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     private bool Authority => !Online || IsSpawned && IsServer;
-    private int State => rules != null && definition != null && rules.TryGetInt(definition.StateKey, out int value) ? value : 0;
-    private bool Knows(KnowledgeSO knowledge) => knowledge != null && KnowledgeManager.Instance != null && KnowledgeManager.Instance.HasKnowledge(knowledge);
+    private bool DevSimulationActive
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            return devStartEnabled && definition != null && definition.FindStep(devStartStepId) != null;
+#else
+            return false;
+#endif
+        }
+    }
+    public bool IsDevSimulationActive => DevSimulationActive;
+    public string DevSimulationStartStepId => devStartStepId;
+
+    /// <summary>Extends knowledge checks while a cycle start simulation is running, without mutating KnowledgeManager.</summary>
+    public static bool IsVirtuallyKnownForDevSimulation(KnowledgeSO knowledge)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (knowledge == null) return false;
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CycleController controller in controllers)
+            if (controller != null && controller.DevSimulationActive && controller.devKnowledge.Contains(knowledge)) return true;
+#endif
+        return false;
+    }
+
+    public static bool HasVirtualKnowledgeForDevSimulation(KnowledgeManager manager, KnowledgeCategory category)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CycleController controller in controllers)
+            if (controller != null && controller.DevSimulationActive && controller.devKnowledge.Any(knowledge =>
+                knowledge != null && knowledge.category == category && (manager == null || !manager.HasKnowledge(knowledge)))) return true;
+#endif
+        return false;
+    }
+
+    public static int CountVirtualKnowledgeForDevSimulation(KnowledgeManager manager, KnowledgeCategory category, string tag = null)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        int count = 0;
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        HashSet<KnowledgeSO> counted = new HashSet<KnowledgeSO>();
+        foreach (CycleController controller in controllers)
+            if (controller != null && controller.DevSimulationActive)
+                foreach (KnowledgeSO knowledge in controller.devKnowledge)
+                    if (knowledge != null && counted.Add(knowledge) && knowledge.category == category &&
+                        (string.IsNullOrWhiteSpace(tag) || knowledge.HasTag(tag)) && (manager == null || !manager.HasKnowledge(knowledge))) count++;
+        return count;
+#else
+        return 0;
+#endif
+    }
+
+    public static bool HasVirtualKnowledgeWithTagForDevSimulation(KnowledgeManager manager, string tag) =>
+        HasVirtualKnowledgeWithTagIgnoringCategory(manager, tag);
+
+    private static bool HasVirtualKnowledgeWithTagIgnoringCategory(KnowledgeManager manager, string tag)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CycleController controller in controllers)
+            if (controller != null && controller.DevSimulationActive && controller.devKnowledge.Any(knowledge =>
+                knowledge != null && knowledge.HasTag(tag) && (manager == null || !manager.HasKnowledge(knowledge)))) return true;
+#endif
+        return false;
+    }
+
+    public static int CountVirtualKnowledgeWithTagForDevSimulation(KnowledgeManager manager, string tag)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        int count = 0;
+        HashSet<KnowledgeSO> counted = new HashSet<KnowledgeSO>();
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CycleController controller in controllers)
+            if (controller != null && controller.DevSimulationActive)
+                foreach (KnowledgeSO knowledge in controller.devKnowledge)
+                    if (knowledge != null && counted.Add(knowledge) && knowledge.HasTag(tag) && (manager == null || !manager.HasKnowledge(knowledge))) count++;
+        return count;
+#else
+        return 0;
+#endif
+    }
+
+    /// <summary>True when this Flame is temporarily driven by a cycle-start simulation.
+    /// Persistence providers use this to retain its real saved state while Play Mode is testing a cycle.</summary>
+    public static bool IsDevSimulationFlame(Flame flame)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (flame == null) return false;
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CycleController controller in controllers)
+        {
+            if (controller == null || !controller.DevSimulationActive) continue;
+            foreach (CycleFlameBinding binding in controller.flames ?? Array.Empty<CycleFlameBinding>())
+                if (binding != null && binding.flame == flame) return true;
+        }
+#endif
+        return false;
+    }
+    public string ExplainStepForInspector(CycleStep step)
+    {
+        if (step == null) return string.Empty;
+        if (DevSimulationActive)
+            return DevIsStepCompleted(definition, step.id) ? "Simulée comme validée" :
+                IsStepActive(step) ? "Étape de test active" : "Verrouillée dans la simulation";
+        return progression != null ? progression.ExplainBlocked(definition, step) : "État indisponible";
+    }
+    public CycleStatus Status => DevSimulationActive ? CycleStatus.InProgress : progression != null ? progression.GetStatus(definition) : CycleStatus.Unavailable;
+    private bool Completed => !DevSimulationActive && (progression != null ? progression.IsCompleted(definition) : definition != null && definition.IsCompleted(State));
+    private int State => DevSimulationActive ? 0 : rules != null && definition != null && rules.TryGetInt(definition.StateKey, out int value) ? value : 0;
+    private bool Knows(KnowledgeSO knowledge) => knowledge != null && (DevSimulationActive && devKnowledge.Contains(knowledge) || KnowledgeManager.Instance != null && KnowledgeManager.Instance.HasKnowledge(knowledge));
     public bool Evaluate(CycleCondition condition) => condition != null && condition.Matches(State, Knows) &&
-        (progression == null || progression.Matches(definition, condition.requirements));
+        (DevSimulationActive ? DevMatches(definition, condition.requirements) : progression == null || progression.Matches(definition, condition.requirements));
     private bool HasFlags(int flags) => flags != 0 && (State & flags) == flags;
 
-    private void OnEnable() { presentationDirty = true; ResolveRules(); BindGhostPuzzleEvents(); }
+    private void OnEnable() { devSimulationInitialized = false; presentationDirty = true; ResolveRules(); BindGhostPuzzleEvents(); }
+    private void OnValidate() { devSimulationInitialized = false; }
     public override void OnDestroy() { UnbindGhostPuzzleEvents(); base.OnDestroy(); }
     public override void OnNetworkSpawn() { ResolveRules(); presentationDirty = true; }
     public override void OnNetworkDespawn() => OnDisable();
     private void ResolveRules()
     {
         if (rules == null) rules = FindAnyObjectByType<WorldRulesStateManager>();
+        if (DevSimulationActive)
+        {
+            InitializeDevSimulation();
+            return;
+        }
         if (progression == null && rules != null && Application.isPlaying)
         {
             progression = CycleProgressionService.Ensure(rules);
@@ -90,6 +215,84 @@ public sealed class CycleController : NetworkBehaviour
         }
     }
     private void OnProgressionChanged() => presentationDirty = true;
+
+    private void InitializeDevSimulation()
+    {
+        if (devSimulationInitialized || !DevSimulationActive || definition == null) return;
+        devSimulationInitialized = true;
+        devCompletedSteps.Clear();
+        devFacts.Clear();
+        devKnowledge.Clear();
+
+        CycleStep[] steps = definition.steps ?? Array.Empty<CycleStep>();
+        int startIndex = Array.FindIndex(steps, step => step != null && step.id == devStartStepId);
+        for (int index = 0; index < startIndex; index++)
+            DevCompleteStep(steps[index]);
+
+        presentationDirty = true;
+    }
+
+    private bool DevIsStepCompleted(CycleDefinition cycle, string stepId) =>
+        cycle == definition && !string.IsNullOrWhiteSpace(stepId) && devCompletedSteps.Contains(stepId);
+
+    private bool DevHasFact(CycleDefinition cycle, CycleStepKind kind, string sourceId) =>
+        cycle == definition && !string.IsNullOrWhiteSpace(sourceId) && devFacts.Contains(DevFactKey(kind, sourceId));
+
+    private static string DevFactKey(CycleStepKind kind, string sourceId) => kind + ":" + sourceId;
+
+    private bool DevMatches(CycleDefinition owner, CycleRequirements requirements)
+    {
+        if (requirements == null || requirements.conditions == null || requirements.conditions.Length == 0) return true;
+        bool any = requirements.mode == CycleRequirementMode.Any;
+        foreach (CycleRequirement requirement in requirements.conditions)
+        {
+            bool matches = requirement != null && (requirement.kind == CycleRequirementKind.Step
+                ? DevIsStepCompleted(owner, requirement.stepId)
+                : requirement.kind == CycleRequirementKind.Knowledge ? Knows(requirement.knowledge)
+                : requirement.cycle != null && (requirement.cycle == definition
+                    ? false
+                    : progression != null && progression.IsCompleted(requirement.cycle)));
+            if (any && matches) return true;
+            if (!any && !matches) return false;
+        }
+        return !any;
+    }
+
+    private bool IsStepActive(CycleStep step)
+    {
+        if (!DevSimulationActive)
+            return progression != null && progression.IsStepActive(definition, step);
+        // The test state simulates only the past. The real definition remains authoritative
+        // for parallel branches such as the three Broken Anchor torches.
+        return step != null && !DevIsStepCompleted(definition, step.id) &&
+            DevMatches(definition, step.prerequisites);
+    }
+
+    private bool HasFact(CycleStepKind kind, string sourceId) => DevSimulationActive
+        ? DevHasFact(definition, kind, sourceId)
+        : progression != null && progression.HasFact(definition, kind, sourceId);
+
+    private void DevReport(CycleStepKind kind, string sourceId)
+    {
+        if (definition == null || string.IsNullOrWhiteSpace(sourceId)) return;
+        devFacts.Add(DevFactKey(kind, sourceId));
+        foreach (CycleStep step in definition.steps ?? Array.Empty<CycleStep>())
+            if (step != null && step.kind == kind && step.sourceId == sourceId && IsStepActive(step))
+                DevCompleteStep(step);
+        presentationDirty = true;
+    }
+
+    private void DevCompleteStep(CycleStep step)
+    {
+        if (step == null || string.IsNullOrWhiteSpace(step.id) || !devCompletedSteps.Add(step.id)) return;
+        if (step.kind != CycleStepKind.Knowledge && !string.IsNullOrWhiteSpace(step.sourceId))
+            devFacts.Add(DevFactKey(step.kind, step.sourceId));
+        if (step.kind == CycleStepKind.Knowledge && step.knowledge != null) devKnowledge.Add(step.knowledge);
+        foreach (CycleReward reward in step.rewards ?? Array.Empty<CycleReward>())
+            if (reward != null && reward.kind == CycleRewardKind.Knowledge && reward.knowledge != null)
+                devKnowledge.Add(reward.knowledge);
+    }
+
     private void Update()
     {
         BindGhostPuzzleEvents();
@@ -100,7 +303,7 @@ public sealed class CycleController : NetworkBehaviour
             if (Authority && definition != null) { BindEncounter(); BindAdditionalEncounters(); BindFlames(); }
         }
         if (rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
-        if (Online && (!IsSpawned || !Authority && (progression == null || !progression.IsReady))) return;
+        if (Online && !DevSimulationActive && (!IsSpawned || !Authority && (progression == null || !progression.IsReady))) return;
         if (presentationDirty)
         {
             presentationDirty = false;
@@ -127,7 +330,7 @@ public sealed class CycleController : NetworkBehaviour
                 binding.callback = changed => { if (Authority && changed.IsDead) Report(CycleStepKind.EnemyDefeated, binding.id); };
                 if (next != null) next.HealthChanged += binding.callback;
             }
-            if (next != null && !next.IsDead && progression != null && progression.HasDefeatFact(definition, binding.id)) next.ForceDefeat();
+            if (next != null && !next.IsDead && HasFact(CycleStepKind.EnemyDefeated, binding.id)) next.ForceDefeat();
             if (next != null && next.IsDead) Report(CycleStepKind.EnemyDefeated, binding.id);
         }
     }
@@ -136,25 +339,51 @@ public sealed class CycleController : NetworkBehaviour
     {
         foreach (var binding in flames ?? Array.Empty<CycleFlameBinding>())
         {
-            if (binding == null || binding.flame == null) continue;
-            if (binding.callback == null)
+            if (binding == null) continue;
+            if (binding.flame != null)
             {
-                binding.callback = (flame, lit) => { if (Authority && lit) Report(CycleStepKind.Interaction, binding.id); };
-                binding.flame.StateChanged += binding.callback;
+                // The test start point owns the visible state of regular Flames too (notably the Ancient Flame).
+                // The persistence layer deliberately ignores these temporary changes.
+                if (DevSimulationActive && Authority)
+                {
+                    bool shouldBeLit = HasFact(CycleStepKind.Interaction, binding.id);
+                    if (binding.flame.IsLit != shouldBeLit) binding.flame.SetLit(shouldBeLit);
+                }
+                if (binding.callback == null)
+                {
+                    binding.callback = (flame, lit) => { if (Authority && lit) Report(CycleStepKind.Interaction, binding.id); };
+                    binding.flame.StateChanged += binding.callback;
+                }
+                if (binding.flame.IsEffectivelyLit) Report(CycleStepKind.Interaction, binding.id);
+                continue;
             }
-            if (binding.flame.IsEffectivelyLit) Report(CycleStepKind.Interaction, binding.id);
+
+            BrokenAnchorTorch torch = binding.bossTorch;
+            if (torch == null) continue;
+            if (binding.bossTorchCallback == null)
+            {
+                binding.bossTorchCallback = (_, lit) =>
+                {
+                    if (!Authority || !lit) return;
+                    Debug.Log($"[Belmont] Torche '{binding.id}' allumée : rapport du jalon.", this);
+                    Report(CycleStepKind.Interaction, binding.id);
+                };
+                torch.StateChanged += binding.bossTorchCallback;
+            }
+            if (Authority && HasFact(CycleStepKind.Interaction, binding.id)) torch.RestoreLitFromCycle();
+            if (torch.IsLit) Report(CycleStepKind.Interaction, binding.id);
         }
     }
 
     private void TryStartAutoDialogue()
     {
-        if (localDialogue || cinematicRunning || progression == null) return;
+        if (localDialogue || cinematicRunning || !DevSimulationActive && progression == null) return;
         foreach (var binding in autoDialogues ?? Array.Empty<CycleAutoDialogueBinding>())
         {
             if (binding == null || string.IsNullOrWhiteSpace(binding.id) || playedAutoDialogues.Contains(binding) ||
                 !Evaluate(binding.condition)) continue;
             var step = definition.FindStep(binding.id);
-            if (step == null || step.kind != CycleStepKind.DialogueCompleted || !progression.IsStepActive(definition, step)) continue;
+            if (step == null || step.kind != CycleStepKind.DialogueCompleted || !IsStepActive(step)) continue;
             playedAutoDialogues.Add(binding);
             StartCoroutine(CompleteAutoDialogue(binding));
             return;
@@ -209,8 +438,52 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void Report(CycleStepKind kind, string id)
     {
-        if (definition != null && definition.HasSteps && progression != null) progression.Report(this, kind, id);
+        if (DevSimulationActive) DevReport(kind, id);
+        else if (definition != null && definition.HasSteps && progression != null) progression.Report(this, kind, id);
         presentationDirty = true;
+    }
+
+    /// <summary>Read-only bridge for scene mechanics, including the memory-only Dev state.</summary>
+    public bool IsSceneStepCompleted(string stepId)
+    {
+        ResolveRules();
+        return definition != null && (DevSimulationActive ? DevIsStepCompleted(definition, stepId) :
+            progression != null && progression.IsStepCompleted(definition, stepId));
+    }
+
+    public bool IsSceneEventActive(CycleStepKind kind, string sourceId)
+    {
+        ResolveRules();
+        return isActiveAndEnabled && definition != null && !Completed &&
+            Array.Exists(definition.steps ?? Array.Empty<CycleStep>(), step =>
+                step != null && step.kind == kind && step.sourceId == sourceId && IsStepActive(step));
+    }
+
+    /// <summary>Trusted server-side mechanics only. Remote callers must first validate their player and range.</summary>
+    public bool TryReportSceneEvent(CycleStepKind kind, string sourceId)
+    {
+        if (!Authority || (kind != CycleStepKind.ZoneEntered && kind != CycleStepKind.NamedFact &&
+            kind != CycleStepKind.Interaction) || !IsSceneEventActive(kind, sourceId)) return false;
+        Report(kind, sourceId);
+        return true;
+    }
+
+    /// <summary>A failed sequence may be retried explicitly; no success or reward is synthesized.</summary>
+    public bool TryRetrySceneSequence(string sourceId)
+    {
+        if (!Authority || cinematicRunning || sequencePending ||
+            !IsSceneEventActive(CycleStepKind.SequenceCompleted, sourceId) ||
+            !attemptedSequences.Remove(sourceId)) return false;
+        presentationDirty = true;
+        return true;
+    }
+    /// <summary>Explicit retry/start request from an optional rendezvous, with normal progression checks.</summary>
+    public bool RequestSceneSequence(string sourceId)
+    {
+        if (!Authority || cinematicRunning || sequencePending || !IsSceneEventActive(CycleStepKind.SequenceCompleted, sourceId)) return false;
+        attemptedSequences.Remove(sourceId);
+        presentationDirty = true;
+        return true;
     }
     private void TryStartSequence()
     {
@@ -219,12 +492,12 @@ public sealed class CycleController : NetworkBehaviour
         {
             foreach (var step in definition.steps)
             {
-                if (step == null || step.kind != CycleStepKind.SequenceCompleted || progression == null ||
-                    !progression.IsStepActive(definition, step) || attemptedSequences.Contains(step.sourceId)) continue;
+                if (step == null || step.kind != CycleStepKind.SequenceCompleted || !IsStepActive(step) || attemptedSequences.Contains(step.sourceId)) continue;
                 activeSequence = Array.Find(sequences, item => item != null && item.id == step.sourceId);
                 activeSequenceId = step.sourceId;
                 if (activeSequence == null && step.sourceId != "cinematic")
                 { Debug.LogWarning("[Cycle] Liaison de sequence absente : " + step.sourceId, this); attemptedSequences.Add(step.sourceId); continue; }
+                if (activeSequence != null && activeSequence.startGate != null && !activeSequence.startGate.Ready) continue;
                 attemptedSequences.Add(step.sourceId);
                 sequencePending = true;
                 StartCoroutine(DeathSequence());
@@ -305,10 +578,10 @@ public sealed class CycleController : NetworkBehaviour
     private bool IsDialogueCompleted(CycleDialogue dialogue)
     {
         if (dialogue.HasCompleted(State)) return true;
-        if (progression == null || definition == null || !definition.HasSteps) return false;
+        if ((!DevSimulationActive && progression == null) || definition == null || !definition.HasSteps) return false;
         foreach (var step in definition.steps)
             if (step != null && step.kind == CycleStepKind.DialogueCompleted && step.sourceId == dialogue.id &&
-                progression.IsStepCompleted(definition, step.id)) return true;
+                (DevSimulationActive ? DevIsStepCompleted(definition, step.id) : progression != null && progression.IsStepCompleted(definition, step.id))) return true;
         return false;
     }
     private void ApplyPresentation()
@@ -325,7 +598,7 @@ public sealed class CycleController : NetworkBehaviour
         if (activations != null) foreach (var binding in activations)
         {
             if (binding == null || binding.target == null || binding.target == gameObject) continue;
-            bool visible = Evaluate(binding.condition);
+            bool visible = Evaluate(binding.condition) && (!binding.useHideCondition || !Evaluate(binding.hideWhen));
             if (visible && interactions != null) foreach (var interaction in interactions)
                 if (interaction != null && interaction.gameObject == binding.target && interaction.Ghost != null &&
                     interaction.Ghost.IsDialogueDisappearanceComplete) { visible = false; break; }
@@ -395,7 +668,7 @@ public sealed class CycleController : NetworkBehaviour
             if (health != null) health.HealthChanged += OnHealthChanged;
         }
         if (health == null) return;
-        if (definition.HasSteps && progression != null ? progression.HasDefeatFact(definition, "encounter") : HasFlags(definition.enemyDefeatedFlags))
+        if (definition.HasSteps ? HasFact(CycleStepKind.EnemyDefeated, "encounter") : HasFlags(definition.enemyDefeatedFlags))
         {
             if (!health.IsDead) health.ForceDefeat();
         }
@@ -424,6 +697,7 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void Commit(int flag)
     {
+        if (DevSimulationActive) return;
         ResolveRules();
         if (!Authority || rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
         if (flag == 0 || (State & flag) == flag) return;
@@ -433,10 +707,11 @@ public sealed class CycleController : NetworkBehaviour
     private bool HasRecordedEncounterDefeat()
     {
         return HasFlags(definition.enemyDefeatedFlags) ||
-            definition.HasSteps && progression != null && progression.HasDefeatFact(definition, "encounter");
+            definition.HasSteps && HasFact(CycleStepKind.EnemyDefeated, "encounter");
     }
     private void ApplyState(int state)
     {
+        if (DevSimulationActive) return;
         ResolveRules();
         if (rules != null && definition != null) rules.SetInt(definition.StateKey, state);
     }
@@ -456,6 +731,12 @@ public sealed class CycleController : NetworkBehaviour
             Debug.LogWarning("[Cycle] CinÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©matique ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  assigner : progression conservÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e en attente.", this);
             yield break;
         }
+        ulong[] selectedAudience = null;
+        if (activeSequence != null && activeSequence.startGate != null && !activeSequence.startGate.TryConsume(out selectedAudience))
+        {
+            attemptedSequences.Remove(activeSequenceId);
+            yield break;
+        }
         cinematicRunning = true;
         var participants = cinematicParticipants != null && cinematicParticipants.Length > 0
             ? cinematicParticipants : new[] { encounterEnemy };
@@ -471,8 +752,8 @@ public sealed class CycleController : NetworkBehaviour
         viewers.Clear();
         if (Online)
         {
-            foreach (ulong id in NetworkManager.Singleton.ConnectedClientsIds) viewers.Add(id);
-            PlayCinematicClientRpc(token, activeSequenceId);
+            foreach (ulong id in selectedAudience ?? NetworkManager.Singleton.ConnectedClientsIds.ToArray()) viewers.Add(id);
+            PlayCinematicClientRpc(token, activeSequenceId, new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = viewers.ToArray() } });
         }
         else StartCoroutine(LocalCinematic(token));
         double timeout = Time.realtimeSinceStartupAsDouble + ActiveDirector.playableAsset.duration + 30d;
@@ -491,7 +772,7 @@ public sealed class CycleController : NetworkBehaviour
         ActiveDirector.playableAsset.duration > 0 && !double.IsInfinity(ActiveDirector.playableAsset.duration) &&
         ActiveProfile != null && ActiveProfile.Matches(ActiveDirector.playableAsset);
 
-    [ClientRpc] private void PlayCinematicClientRpc(int token, string id)
+    [ClientRpc] private void PlayCinematicClientRpc(int token, string id, ClientRpcParams targets = default)
     {
         activeSequenceId = id;
         activeSequence = Array.Find(sequences, item => item != null && item.id == id);
@@ -733,11 +1014,18 @@ public sealed class CycleController : NetworkBehaviour
         if (health != null) health.HealthChanged -= OnHealthChanged;
         health = null;
         foreach (var binding in flames ?? Array.Empty<CycleFlameBinding>())
+        {
             if (binding != null && binding.flame != null && binding.callback != null)
             {
                 binding.flame.StateChanged -= binding.callback;
                 binding.callback = null;
             }
+            if (binding != null && binding.bossTorch != null && binding.bossTorchCallback != null)
+            {
+                binding.bossTorch.StateChanged -= binding.bossTorchCallback;
+                binding.bossTorchCallback = null;
+            }
+        }
     }
 
     private void ReleaseEnemies()
@@ -758,6 +1046,8 @@ public sealed class CycleActivationBinding
 {
     public GameObject target;
     public CycleCondition condition = new CycleCondition();
+    [Tooltip("Activer une condition de fin optionnelle. Désactivé préserve les liaisons existantes.")] public bool useHideCondition;
+    public CycleCondition hideWhen = new CycleCondition();
 }
 
 /// <summary>Inverse presentation binding: hides its target when the condition becomes true.</summary>

@@ -616,6 +616,10 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
     }
 
     [SerializeField] private Flame flame;
+    private bool capturedInitialState;
+    private bool initialLit;
+    private bool hasAppliedPersistentState;
+    private bool appliedPersistentLit;
 
     public string ProviderId => "flame";
 
@@ -630,7 +634,11 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
         if (flame == null)
         {
             enabled = false;
+            return;
         }
+
+        initialLit = flame.IsLit;
+        capturedInitialState = true;
     }
 
     public byte[] CaptureState(PersistentStateContext context)
@@ -646,9 +654,15 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
             return Array.Empty<byte>();
         }
 
+        // A CycleController dev simulation owns this Flame's visible state for the duration of
+        // Play Mode. Preserve the real state that was loaded (or the authored default) instead.
+        bool litToPersist = flame.IsLit;
+        if (CycleController.IsDevSimulationFlame(flame))
+            litToPersist = hasAppliedPersistentState ? appliedPersistentLit : capturedInitialState && initialLit;
+
         return PersistentStateJson.ToBytes(new FlameStateData
         {
-            IsLit = flame.IsLit
+            IsLit = litToPersist
         });
     }
 
@@ -672,10 +686,13 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
 
         if (phase == PersistentApplyPhase.ApplyGameplayState)
         {
-            flame.SetLit(data.IsLit);
+            hasAppliedPersistentState = true;
+            appliedPersistentLit = data.IsLit;
+            bool simulated = CycleController.IsDevSimulationFlame(flame);
+            if (!simulated) flame.SetLit(data.IsLit);
             PersistentStateValidation.LogValidation(
                 "flame_world_rules",
-                flame.IsLit == data.IsLit,
+                simulated || flame.IsLit == data.IsLit,
                 $"persistentId='{PersistentStateValidation.ResolvePersistentId(flame)}' expectedLit={data.IsLit} actualLit={flame.IsLit}",
                 flame,
                 context);
