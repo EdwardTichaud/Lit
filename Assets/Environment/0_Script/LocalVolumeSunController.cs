@@ -18,6 +18,12 @@ public sealed class LocalVolumeSunController : MonoBehaviour
     [SerializeField, Tooltip("Ancre explicite. Laisser vide pour suivre le personnage controle.")]
     private Transform anchor;
 
+    [Header("Runtime debug")]
+    [SerializeField, Tooltip("Influence actuellement evaluee pour la zone de lumiere.")]
+    private float currentInfluence;
+    [SerializeField, Tooltip("Etat actuellement applique a Sun Root.")]
+    private bool lightIsActive;
+
     private bool initialSunRootActive;
 
     private void Awake()
@@ -29,6 +35,8 @@ public sealed class LocalVolumeSunController : MonoBehaviour
 
         if (sunRoot == null || sunVolume == null)
         {
+            Debug.LogError("[LocalVolumeSunController] Configuration incomplete sur " + name +
+                           ". Renseigner Sun Root et Sun Volume.", this);
             enabled = false;
             return;
         }
@@ -50,11 +58,13 @@ public sealed class LocalVolumeSunController : MonoBehaviour
             return;
         }
 
-        SetVisible(EvaluateInfluence(sunVolume, anchor.position) > 0.001f);
+        currentInfluence = EvaluateInfluence(sunVolume, anchor.position);
+        SetVisible(currentInfluence > 0.001f);
     }
 
     private void SetVisible(bool visible)
     {
+        lightIsActive = visible;
         if (sunRoot.activeSelf != visible)
         {
             sunRoot.SetActive(visible);
@@ -83,24 +93,27 @@ public sealed class LocalVolumeSunController : MonoBehaviour
             return Mathf.Clamp01(volume.weight);
         }
 
-        Collider volumeCollider = volume.GetComponent<Collider>();
-        if (volumeCollider == null || !volumeCollider.enabled)
+        // HDRP enregistre tous les colliders portes par un Volume. La zone
+        // d'influence est leur union, avec le meilleur poids parmi eux.
+        float influence = 0f;
+        for (int i = 0; i < volume.colliders.Count; i++)
         {
-            return 0f;
+            Collider collider = volume.colliders[i];
+            if (collider == null || !collider.enabled)
+            {
+                continue;
+            }
+
+            float signedDistance = EvaluateSignedDistance(collider, position);
+            float colliderInfluence = signedDistance <= 0f
+                ? Mathf.Clamp01(volume.weight)
+                : volume.blendDistance <= 0f
+                    ? 0f
+                    : Mathf.Clamp01(volume.weight) * Mathf.Clamp01(1f - signedDistance / volume.blendDistance);
+            influence = Mathf.Max(influence, colliderInfluence);
         }
 
-        float signedDistance = EvaluateSignedDistance(volumeCollider, position);
-        if (signedDistance <= 0f)
-        {
-            return Mathf.Clamp01(volume.weight);
-        }
-
-        if (volume.blendDistance <= 0f)
-        {
-            return 0f;
-        }
-
-        return Mathf.Clamp01(volume.weight) * Mathf.Clamp01(1f - signedDistance / volume.blendDistance);
+        return influence;
     }
 
     private static float EvaluateSignedDistance(Collider volumeCollider, Vector3 position)

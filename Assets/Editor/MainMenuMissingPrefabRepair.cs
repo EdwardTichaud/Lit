@@ -12,12 +12,23 @@ internal static class MainMenuMissingPrefabRepair
 
     static MainMenuMissingPrefabRepair()
     {
-        EditorApplication.delayCall += RepairMissingPrefab;
+        // Script recompilation also occurs while Unity is entering Play Mode.
+        // Opening or saving a scene is an editor-only operation and Unity
+        // explicitly rejects it in that state.
+        if (!EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            EditorApplication.delayCall += RepairMissingPrefab;
+        }
     }
 
     [MenuItem("Lit/Scenes/Repair MainMenu Missing Prefab")]
     private static void RepairMissingPrefab()
     {
+        if (EditorApplication.isPlayingOrWillChangePlaymode || Application.isPlaying)
+        {
+            return;
+        }
+
         Scene scene = EditorSceneManager.GetSceneByPath(MainMenuScenePath);
         bool openedForRepair = false;
         if (!scene.IsValid() || !scene.isLoaded)

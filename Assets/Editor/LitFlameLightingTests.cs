@@ -67,7 +67,7 @@ public sealed class LitFlameLightingTests
         Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
         try
         {
-            LitContrastLight[] profiles = Object.FindObjectsByType<LitContrastLight>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            LitContrastLight[] profiles = Object.FindObjectsByType<LitContrastLight>(FindObjectsInactive.Include)
                 .Where(profile => profile.gameObject.scene == scene)
                 .ToArray();
             Assert.That(profiles, Is.Not.Empty, path);

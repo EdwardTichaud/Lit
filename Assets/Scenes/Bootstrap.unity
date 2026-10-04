@@ -17204,7 +17204,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 51.63825, y: 51.63825, z: 51.63825}
+  m_LocalScale: {x: 53.86418, y: 53.86418, z: 53.86418}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -26751,8 +26751,8 @@ MonoBehaviour:
   gameplaySessionPrefab: {fileID: 809035977521740313, guid: 26170eb52d187d3478a73900745c308a, type: 3}
   postLoadingStableFrames: 15
   postLoadingMaximumStableFrameSeconds: 0.05
-  loadingSceneStableFrames: 12
-  loadingSceneMaximumStableFrameSeconds: 0.05
+  loadingSceneStableFrames: 1
+  navigationPreparationMaximumWaitSeconds: 30
   editorStartGameplayDirectly: 1
   editorStartManifest: {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
   editorStartSceneName: 
@@ -40589,8 +40589,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ae7591013796a147b280ab1f38d21ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LoadingScreenService
-  showFadeDuration: 2
-  minimumVisibleDuration: 10
+  showFadeDuration: 0.35
+  minimumVisibleDuration: 1
   hideDelayAfterSceneLoad: 0.25
   readyHoldDuration: 1.25
   hideFadeDuration: 0.5

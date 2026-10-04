@@ -30,7 +30,7 @@ public static class LitFlameLightingMigration
         for (int i = 0; i < ScenePaths.Length; i++)
         {
             Scene scene = EditorSceneManager.OpenScene(ScenePaths[i], OpenSceneMode.Additive);
-            foreach (LitContrastLight profile in Object.FindObjectsByType<LitContrastLight>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (LitContrastLight profile in Object.FindObjectsByType<LitContrastLight>(FindObjectsInactive.Include))
             {
                 if (profile.gameObject.scene != scene) continue;
                 reverted += RevertLegacyLightOverrides(profile);

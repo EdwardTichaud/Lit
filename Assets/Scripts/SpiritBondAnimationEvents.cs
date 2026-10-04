@@ -44,12 +44,12 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
     public void PlayEffect_CharacterEffect()
     {
         ResolveBond();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: PlayEffect_CharacterEffect received.", this);
 #endif
         if (bond != null && !bond.IsCinematicFusion && IsRupturePlaying())
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             Debug.Log($"[SpiritBond] Frame {Time.frameCount}: legacy PlayEffect on Rupture routed to Holy stop.", this);
 #endif
             bond.StopHolyEffectFromAnimationEvent();
@@ -65,7 +65,7 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
     /// </summary>
     public void StopEffect_CharacterEffect()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: StopEffect_CharacterEffect received.", this);
 #endif
         ResolveBond();

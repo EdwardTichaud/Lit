@@ -168,7 +168,13 @@ public class SquadManager : MonoBehaviour
 
     void OnDisable()
     {
-        currentCharacter?.GetComponent<SquadCharacterController>()?.SetTorchBoostHeld(false);
+        // Unity can destroy the character first during a single-scene load.
+        // An explicit Unity null check avoids dereferencing that stale wrapper
+        // while tearing down the old squad.
+        if (currentCharacter != null)
+        {
+            currentCharacter.GetComponent<SquadCharacterController>()?.SetTorchBoostHeld(false);
+        }
         LocalInputRouter.Jump -= OnJumpPerformed;
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;

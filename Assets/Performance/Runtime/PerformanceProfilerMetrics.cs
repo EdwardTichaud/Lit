@@ -56,19 +56,19 @@ namespace Lit.Performance
         private static int iceInfluencesDiscarded;
         private static int iceTransitioningRenderers;
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void Begin(ProfilerMarker marker)
         {
             marker.Begin();
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void End(ProfilerMarker marker)
         {
             marker.End();
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void PublishVisibility(int examined, int modified, int raycasts)
         {
             visibilityFrame = Time.frameCount;
@@ -77,7 +77,7 @@ namespace Lit.Performance
             visibilityRaycasts = raycasts;
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void PublishLightBudget(int candidates, int retained, int shadowedRetained)
         {
             lightFrame = Time.frameCount;
@@ -86,7 +86,7 @@ namespace Lit.Performance
             shadowedLightsRetained = shadowedRetained;
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void PublishPortalBudget(int evaluated, int rendered)
         {
             portalFrame = Time.frameCount;
@@ -94,7 +94,7 @@ namespace Lit.Performance
             portalCamerasRendered = rendered;
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void AddIceInfluences(int examined, int modified)
         {
             EnsureIceFrame();
@@ -103,7 +103,7 @@ namespace Lit.Performance
             iceRenderersModified += modified;
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR"), Conditional("DEBUG")]
         public static void AddIceInfluenceSelection(
             int active,
             int selected,

@@ -10,6 +10,9 @@ public sealed partial class EnemyController
     private GameObject activeBattleWall;
     private bool ShouldCreateBattleWall => Configuration.ArenaCreateBattleWall;
 
+    /// <summary>True only while this encounter owns a live containment wall.</summary>
+    public bool HasActiveBattleWall => activeBattleWall != null && activeBattleWall.activeInHierarchy;
+
     /// <summary>Called by the combat authority once this enemy becomes engaged.</summary>
     public void BeginBattleWall()
     {

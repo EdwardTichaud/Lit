@@ -81,7 +81,7 @@ public sealed class CycleController : NetworkBehaviour
     {
         get
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             return devStartEnabled && definition != null && definition.FindStep(devStartStepId) != null;
 #else
             return false;
@@ -94,9 +94,9 @@ public sealed class CycleController : NetworkBehaviour
     /// <summary>Extends knowledge checks while a cycle start simulation is running, without mutating KnowledgeManager.</summary>
     public static bool IsVirtuallyKnownForDevSimulation(KnowledgeSO knowledge)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (knowledge == null) return false;
-        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include);
         foreach (CycleController controller in controllers)
             if (controller != null && controller.DevSimulationActive && controller.devKnowledge.Contains(knowledge)) return true;
 #endif
@@ -105,8 +105,8 @@ public sealed class CycleController : NetworkBehaviour
 
     public static bool HasVirtualKnowledgeForDevSimulation(KnowledgeManager manager, KnowledgeCategory category)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#if UNITY_EDITOR || DEBUG
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include);
         foreach (CycleController controller in controllers)
             if (controller != null && controller.DevSimulationActive && controller.devKnowledge.Any(knowledge =>
                 knowledge != null && knowledge.category == category && (manager == null || !manager.HasKnowledge(knowledge)))) return true;
@@ -116,9 +116,9 @@ public sealed class CycleController : NetworkBehaviour
 
     public static int CountVirtualKnowledgeForDevSimulation(KnowledgeManager manager, KnowledgeCategory category, string tag = null)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         int count = 0;
-        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include);
         HashSet<KnowledgeSO> counted = new HashSet<KnowledgeSO>();
         foreach (CycleController controller in controllers)
             if (controller != null && controller.DevSimulationActive)
@@ -136,8 +136,8 @@ public sealed class CycleController : NetworkBehaviour
 
     private static bool HasVirtualKnowledgeWithTagIgnoringCategory(KnowledgeManager manager, string tag)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#if UNITY_EDITOR || DEBUG
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include);
         foreach (CycleController controller in controllers)
             if (controller != null && controller.DevSimulationActive && controller.devKnowledge.Any(knowledge =>
                 knowledge != null && knowledge.HasTag(tag) && (manager == null || !manager.HasKnowledge(knowledge)))) return true;
@@ -147,10 +147,10 @@ public sealed class CycleController : NetworkBehaviour
 
     public static int CountVirtualKnowledgeWithTagForDevSimulation(KnowledgeManager manager, string tag)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         int count = 0;
         HashSet<KnowledgeSO> counted = new HashSet<KnowledgeSO>();
-        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include);
         foreach (CycleController controller in controllers)
             if (controller != null && controller.DevSimulationActive)
                 foreach (KnowledgeSO knowledge in controller.devKnowledge)
@@ -165,9 +165,9 @@ public sealed class CycleController : NetworkBehaviour
     /// Persistence providers use this to retain its real saved state while Play Mode is testing a cycle.</summary>
     public static bool IsDevSimulationFlame(Flame flame)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (flame == null) return false;
-        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        CycleController[] controllers = FindObjectsByType<CycleController>(FindObjectsInactive.Include);
         foreach (CycleController controller in controllers)
         {
             if (controller == null || !controller.DevSimulationActive) continue;

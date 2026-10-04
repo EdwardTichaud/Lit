@@ -1982,7 +1982,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void TraceExternalTraversalCorrection()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (!logScriptedTraversalDiagnostics || !scriptedTraversalPoseActive || locomotion == null)
         {
             return;
@@ -2003,7 +2003,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void TraceAppliedTraversalPose()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (!logScriptedTraversalDiagnostics)
         {
             return;

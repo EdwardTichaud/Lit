@@ -43,10 +43,10 @@ public sealed class GameFlowService : MonoBehaviour
     [Tooltip("Une image depassant ce seuil remet le compteur de stabilite a zero.")]
     [SerializeField, Min(0.01f)] private float postLoadingMaximumStableFrameSeconds = 0.05f;
     [Header("Loading scenes")]
-    [Tooltip("Nombre minimal d'images laissees au rendu entre deux sous-scenes obligatoires du manifeste.")]
-    [SerializeField, Min(1)] private int loadingSceneStableFrames = 12;
-    [Tooltip("Une image longue relance la periode de stabilisation avant la sous-scene suivante.")]
-    [SerializeField, Min(0.01f)] private float loadingSceneMaximumStableFrameSeconds = 0.05f;
+    [Tooltip("Nombre d'images laissees au rendu apres l'activation d'une sous-scene obligatoire.")]
+    [SerializeField, Min(1)] private int loadingSceneStableFrames = 1;
+    [Tooltip("Delai maximal consacre a la preparation de navigation. Au-dela, la partie s'ouvre et un diagnostic est ecrit.")]
+    [SerializeField, Min(1f)] private float navigationPreparationMaximumWaitSeconds = 30f;
 
 #if UNITY_EDITOR
     [Header("Editor test startup")]
@@ -73,7 +73,6 @@ public sealed class GameFlowService : MonoBehaviour
     private bool postLoadingPriorityApplied;
     private ThreadPriority previousBackgroundLoadingPriority;
     private bool returnToMenuShouldSave;
-
     public bool IsTransitioning => transitionRoutine != null;
     public bool HasGameplaySession => gameplaySessionRoot != null;
     public string HubSceneName => hubManifest != null && hubManifest.IsValid
@@ -96,6 +95,18 @@ public sealed class GameFlowService : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateApplicationRoot()
     {
+#if UNITY_EDITOR
+        // Always enter the game through the authored Bootstrap scene. Unity's
+        // Play-from-current-scene mode otherwise creates enemies and UI before
+        // GameFlow, its manifests and the loading overlay exist.
+        if (!string.Equals(SceneManager.GetActiveScene().name, BootstrapSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            Debug.Log("[GameFlow] Test de scene direct detecte. Redirection vers Bootstrap.");
+            SceneManager.LoadScene(BootstrapSceneName, LoadSceneMode.Single);
+            return;
+        }
+#endif
+
         if (Instance != null)
         {
             return;
@@ -680,10 +691,21 @@ public sealed class GameFlowService : MonoBehaviour
         {
             string zoneId = manifest != null && manifest.IsValid ? manifest.PrimarySceneName : reason;
             world.BeginWorld(zoneId, manifest);
+            float deadline = Time.unscaledTime + Mathf.Max(1f, Instance != null
+                ? Instance.navigationPreparationMaximumWaitSeconds
+                : 30f);
             while (world.State == NavMeshWorldState.Loading ||
                    world.State == NavMeshWorldState.Building ||
                    world.State == NavMeshWorldState.Validating)
             {
+                if (Time.unscaledTime >= deadline)
+                {
+                    Debug.LogError("[GameFlow] Delai de preparation NavMesh depasse pour " + zoneId +
+                                   ". La scene est revelee sans navigation afin de ne jamais bloquer le chargement.");
+                    world.InvalidateWorld("delai GameFlow");
+                    break;
+                }
+
                 yield return null;
             }
 
@@ -1256,7 +1278,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     private static void EnforceSingleAudioListener()
     {
-        AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Exclude);
         if (listeners == null || listeners.Length <= 1)
         {
             return;
@@ -1319,11 +1341,6 @@ public sealed class GameFlowService : MonoBehaviour
                 yield break;
             }
 
-            // Cette attente est volontaire : LoadingScenes est une file et non
-            // un lot. Unity finit completement une activation et le rendu a le
-            // temps de respirer avant que la scene obligatoire suivante ne soit
-            // demandee.
-            yield return WaitForStableLoadingFrames();
             SceneTransitionProfiler.Mark($"Phase loading {i + 1}/{manifest.LoadingSceneNames.Count} demandee ({additionalScene})");
             yield return LoadAdditiveRoutine(additionalScene, loadingMessage);
             AddLoadedGameplayScene(additionalScene);
@@ -1471,18 +1488,11 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator WaitForStableLoadingFrames()
     {
-        int stableFrames = 0;
-        while (stableFrames < loadingSceneStableFrames)
+        // This is a rendering breath, not a completion condition. One frame
+        // after an activation keeps the loading overlay responsive without
+        // adding an avoidable pause before every following scene.
+        for (int frame = 0; frame < loadingSceneStableFrames; frame++)
         {
-            if (Time.unscaledDeltaTime <= loadingSceneMaximumStableFrameSeconds)
-            {
-                stableFrames++;
-            }
-            else
-            {
-                stableFrames = 0;
-            }
-
             SceneTransitionProfiler.Pulse();
             yield return null;
         }

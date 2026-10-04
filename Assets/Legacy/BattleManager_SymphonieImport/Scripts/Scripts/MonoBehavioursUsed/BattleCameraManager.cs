@@ -733,7 +733,7 @@ public class BattleCameraManager : MonoBehaviour
     private void RefreshCameraCache()
     {
         cameraByName.Clear();
-        foreach (var cam in FindObjectsByType<CinemachineCamera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        foreach (var cam in FindObjectsByType<CinemachineCamera>(FindObjectsInactive.Exclude))
         {
             if (cam == null)
                 continue;

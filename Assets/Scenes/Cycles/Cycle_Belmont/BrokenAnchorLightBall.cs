@@ -250,7 +250,7 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
     }
 
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
-    [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+    [System.Diagnostics.Conditional("DEBUG")]
     private void Trace(string message) => Debug.Log("[BrokenAnchorLightBall] " + message, this);
 
     private sealed class RaycastHitDistanceComparer : System.Collections.Generic.IComparer<RaycastHit>

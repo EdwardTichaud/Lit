@@ -21,7 +21,7 @@ public sealed class PlayerRootMotionRelay : MonoBehaviour
         LogDevelopmentContractDiagnostic();
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
     private void OnValidate()
     {
         animator = GetComponent<Animator>();
@@ -45,7 +45,7 @@ public sealed class PlayerRootMotionRelay : MonoBehaviour
 
     private void LogDevelopmentContractDiagnostic()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (actor == null)
         {
             Debug.LogError("[CombatAnimatorContract] Root motion relay without PlayerAnimationController.", this);

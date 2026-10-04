@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -980,7 +980,7 @@ public class BattleTransitionManager : MonoBehaviour
         }
 
         // Assigne la caméra au Canvas en ScreenSpace-Camera
-        var battleUICanvas = FindObjectsByType<Canvas>(FindObjectsSortMode.None)
+        var battleUICanvas = FindObjectsByType<Canvas>()
             .FirstOrDefault(c => c.renderMode == RenderMode.ScreenSpaceCamera);
 
         if (battleUICanvas != null)
@@ -1008,7 +1008,7 @@ public class BattleTransitionManager : MonoBehaviour
     private IEnumerator ResetDissolveShaderValues(float duration)
     {
         // Inclut les renderers inactifs car certains decors peuvent etre masques pendant le combat
-        Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsInactive.Include);
         var propertyBlock = new MaterialPropertyBlock();
         var targets = new List<(Renderer renderer, int index, float startValue)>();
 

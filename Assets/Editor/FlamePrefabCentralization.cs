@@ -32,12 +32,12 @@ public static class FlamePrefabCentralization
         Materials materials = LoadMaterials();
         ConfigureWallTorch(materials);
         ConfigureBrazier(materials);
-        int migrated = MigrateLegacyAncientInstances();
+        int migrated = MigrateLegacyFlameContent();
         UpdateEditorTools();
         DeleteLegacyAssets();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[Lit Lighting] Centralized Flames into WallTorch and Brazier; migrated {migrated} legacy Ancient Flame instance(s).");
+        Debug.Log($"[Lit Lighting] Centralized Flames into WallTorch and Brazier; migrated {migrated} legacy Flame instance(s).");
     }
 
     private static void RunRequested()
@@ -164,10 +164,10 @@ public static class FlamePrefabCentralization
         }
     }
 
-    private static int MigrateLegacyAncientInstances()
+    private static int MigrateLegacyFlameContent()
     {
         int migrated = 0;
-        foreach (string guid in AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" }))
+        foreach (string guid in AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }))
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
@@ -200,7 +200,30 @@ public static class FlamePrefabCentralization
                     ReplaceLegacyAncient(legacy);
                     migrated++;
                 }
+
+                // Several District 1 scenes used the old light prefabs solely as a
+                // visual child of a flame mesh. Keep each authored visual and its
+                // overrides, but unpack it before deleting the source asset so the
+                // scene cannot retain a missing-prefab dependency.
+                var legacyLightRoots = new List<GameObject>();
+                foreach (Transform transform in Resources.FindObjectsOfTypeAll<Transform>())
+                {
+                    if (transform.gameObject.scene != scene) continue;
+                    GameObject instanceRoot = PrefabUtility.GetNearestPrefabInstanceRoot(transform.gameObject);
+                    if (instanceRoot == null || !seenRoots.Add(instanceRoot.GetEntityId().GetHashCode())) continue;
+
+                    string sourcePath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(instanceRoot);
+                    if (sourcePath == LegacyCommonPath || sourcePath == LegacyAncientLightPath)
+                        legacyLightRoots.Add(instanceRoot);
+                }
+
+                foreach (GameObject legacyLight in legacyLightRoots)
+                {
+                    PrefabUtility.UnpackPrefabInstance(legacyLight, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+                    migrated++;
+                }
                 if (legacyRoots.Count > 0) EditorSceneManager.SaveScene(scene);
+                else if (legacyLightRoots.Count > 0) EditorSceneManager.SaveScene(scene);
             }
             finally { EditorSceneManager.CloseScene(scene, true); }
         }
@@ -255,6 +278,12 @@ public static class FlamePrefabCentralization
     {
         foreach (string path in new[] { LegacyCommonPath, LegacyAncientLightPath, LegacyAncientPath })
         {
+            foreach (string candidate in AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }))
+            {
+                string scenePath = AssetDatabase.GUIDToAssetPath(candidate);
+                if (Array.IndexOf(AssetDatabase.GetDependencies(scenePath, true), path) >= 0)
+                    throw new InvalidOperationException("Legacy Flame asset is still referenced by scene: " + scenePath);
+            }
             if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path) != null && !AssetDatabase.DeleteAsset(path))
                 throw new InvalidOperationException("Unable to delete legacy Flame asset: " + path);
         }

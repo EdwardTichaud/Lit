@@ -336,7 +336,7 @@ namespace Lit.Timeline
             playback.director.time = 0d;
             playback.director.Play();
             playback.handle.State = TimelinePlaybackState.Playing;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             Debug.Log(
                 $"TimelineManager: lecture de '{timeline.name}' demarree " +
                 $"(duree {playback.director.duration:0.###} s, director '{playback.director.name}').",
@@ -390,7 +390,7 @@ namespace Lit.Timeline
         {
             if (director != null && activePlaybacks.TryGetValue(director, out ActivePlayback playback))
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                 Debug.Log(
                     $"TimelineManager: lecture de '{director.playableAsset?.name}' terminee a {director.time:0.###} s.",
                     director);

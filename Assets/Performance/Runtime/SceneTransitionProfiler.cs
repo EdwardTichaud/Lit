@@ -37,7 +37,7 @@ namespace Lit.Performance
         {
             get
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                 return true;
 #else
                 return false;

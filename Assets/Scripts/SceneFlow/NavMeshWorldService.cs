@@ -182,7 +182,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
     public bool TryValidatePosition(Vector3 position, int areaMask, out NavMeshHit hit)
     {
         hit = default;
-        if (!IsReady)
+        if (!IsReady || !HasLiveNavMeshData())
         {
             return false;
         }
@@ -205,6 +205,13 @@ public sealed class NavMeshWorldService : MonoBehaviour
                Mathf.Abs(delta.y) <= anchorPositionTolerance;
     }
 
+    private static bool HasLiveNavMeshData()
+    {
+        NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
+        return triangulation.vertices != null && triangulation.vertices.Length >= 3 &&
+               triangulation.indices != null && triangulation.indices.Length >= 3;
+    }
+
     public bool TryRegisterAgent(NavMeshAgent agent, Vector3 expectedPosition)
     {
         if (agent == null)
@@ -212,7 +219,11 @@ public sealed class NavMeshWorldService : MonoBehaviour
             return false;
         }
 
-        if (!IsReady)
+        // State alone is insufficient during an additive-scene transition:
+        // the previous world may still report Ready for one frame after its
+        // NavMeshData was removed. Never enable an agent until Unity exposes
+        // actual polygons for the current world.
+        if (!IsReady || !HasLiveNavMeshData())
         {
             if (agent.enabled) agent.enabled = false;
             return false;
@@ -254,6 +265,11 @@ public sealed class NavMeshWorldService : MonoBehaviour
         agent.transform.position = hit.position;
         if (!agent.enabled)
         {
+            // Recheck immediately before the native component is enabled.
+            // This prevents Unity's "Failed to create agent" error when a
+            // NavMesh swap occurs between validation and attachment.
+            if (!HasLiveNavMeshData())
+                return false;
             agent.enabled = true;
         }
 
@@ -301,13 +317,29 @@ public sealed class NavMeshWorldService : MonoBehaviour
             success = SquadAIManager.Instance != null &&
                       SquadAIManager.Instance.RebuildNavMeshForLoadedWorld(reason);
         }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            Fail("exception pendant le bake runtime : " + exception.Message, "runtime colliders");
+            return false;
+        }
         finally
         {
             runtimeBuildInProgress = false;
             RestoreAgentsAfterNavMeshSwap();
         }
-        SetState(success ? NavMeshWorldState.Validating : NavMeshWorldState.Failed);
-        bool worldValid = ValidateWorld("runtime colliders");
+        bool worldValid;
+        try
+        {
+            SetState(success ? NavMeshWorldState.Validating : NavMeshWorldState.Failed);
+            worldValid = ValidateWorld("runtime colliders");
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            Fail("exception pendant la validation runtime : " + exception.Message, "runtime colliders");
+            return false;
+        }
         if (!success || !worldValid)
         {
             Fail("bake runtime invalide", "runtime colliders");
@@ -324,39 +356,56 @@ public sealed class NavMeshWorldService : MonoBehaviour
         yield return new WaitForFixedUpdate();
         Physics.SyncTransforms();
 
-        if (manifest != null && manifest.BakedNavMeshData != null &&
-            (manifest.BakedNavMeshAgentTypeId < 0 ||
-             manifest.BakedNavMeshAgentTypeId == surface.agentTypeID))
+        bool bakedWorldReady = false;
+        try
         {
-            SetState(NavMeshWorldState.Validating);
-            SuspendAgentsForNavMeshSwap();
-            try
+            if (manifest != null && manifest.BakedNavMeshData != null &&
+                (manifest.BakedNavMeshAgentTypeId < 0 ||
+                 manifest.BakedNavMeshAgentTypeId == surface.agentTypeID))
             {
-                surface.RemoveData();
-                surface.navMeshData = manifest.BakedNavMeshData;
-                surface.AddData();
-                if (ValidateWorld("asset pre-bake"))
+                SetState(NavMeshWorldState.Validating);
+                SuspendAgentsForNavMeshSwap();
+                try
                 {
-                    SetReady("asset pre-bake");
-                    buildRoutine = null;
-                    yield break;
-                }
+                    surface.RemoveData();
+                    surface.navMeshData = manifest.BakedNavMeshData;
+                    surface.AddData();
+                    if (ValidateWorld("asset pre-bake"))
+                    {
+                        SetReady("asset pre-bake");
+                        bakedWorldReady = true;
+                    }
 
-                surface.RemoveData();
-                surface.navMeshData = null;
+                    if (!bakedWorldReady)
+                    {
+                        surface.RemoveData();
+                        surface.navMeshData = null;
+                    }
+                }
+                finally
+                {
+                    RestoreAgentsAfterNavMeshSwap();
+                }
+                if (!bakedWorldReady && logDiagnostics)
+                {
+                    Debug.LogWarning("[NavMeshWorld] NavMeshData pre-bake refuse pour la zone " + currentZoneId + ". Fallback runtime.", this);
+                }
             }
-            finally
+
+            if (!bakedWorldReady)
             {
-                RestoreAgentsAfterNavMeshSwap();
-            }
-            if (logDiagnostics)
-            {
-                Debug.LogWarning("[NavMeshWorld] NavMeshData pre-bake refuse pour la zone " + currentZoneId + ". Fallback runtime.", this);
+                RebuildRuntimeNow("zone complete chargee");
             }
         }
-
-        RebuildRuntimeNow("zone complete chargee");
-        buildRoutine = null;
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            Fail("exception pendant la preparation : " + exception.Message, "initialisation");
+        }
+        finally
+        {
+            buildRoutine = null;
+        }
     }
 
     private IEnumerator BuildRuntimeRoutine(string reason)
@@ -493,7 +542,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
     private void SuspendAgentsForNavMeshSwap()
     {
         suspendedAgents.Clear();
-        NavMeshAgent[] agents = FindObjectsByType<NavMeshAgent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        NavMeshAgent[] agents = FindObjectsByType<NavMeshAgent>(FindObjectsInactive.Exclude);
         for (int i = 0; i < agents.Length; i++)
         {
             NavMeshAgent agent = agents[i];
@@ -516,7 +565,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
             }
 
             int areaMask = agent.areaMask == 0 ? NavMesh.AllAreas : agent.areaMask;
-            if (surface != null && agent.agentTypeID == surface.agentTypeID &&
+            if (surface != null && HasLiveNavMeshData() && agent.agentTypeID == surface.agentTypeID &&
                 NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit, anchorSampleRadius, areaMask))
             {
                 Vector3 delta = hit.position - agent.transform.position;

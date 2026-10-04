@@ -201,7 +201,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// <summary>AnimationEvent: plays Holy at the precise authored frame.</summary>
     public void TriggerHolyEffectFromAnimationEvent()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: Holy start requested by AnimationEvent.", this);
 #endif
         ResolveReferences();
@@ -220,7 +220,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// <summary>AnimationEvent: stops Holy at the precise authored frame.</summary>
     public void StopHolyEffectFromAnimationEvent()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: Holy stop requested by AnimationEvent.", this);
 #endif
         StopHoly();
@@ -692,14 +692,14 @@ public sealed class SpiritBondController : MonoBehaviour
     {
         if (holyEffect == null)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             Debug.LogWarning("[SpiritBond] Holy start ignored: CharacterEffect is missing.", this);
 #endif
             return;
         }
 
         CharacterEffectRuntimeRepair.EnsureReady(holyEffect);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: CharacterEffect.StartEffect() on '{holyEffect.name}'.", holyEffect);
 #endif
         holyEffect.StartEffect();
@@ -709,13 +709,13 @@ public sealed class SpiritBondController : MonoBehaviour
     {
         if (holyEffect == null)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             Debug.LogWarning("[SpiritBond] Holy stop ignored: CharacterEffect is missing.", this);
 #endif
             return;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: CharacterEffect.StopEffect() on '{holyEffect.name}'.", holyEffect);
 #endif
         holyEffect.StopEffect();

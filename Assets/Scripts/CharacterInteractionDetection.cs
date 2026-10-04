@@ -72,7 +72,7 @@ public static class CharacterInteractionDetection
         }
 
         activeFlamesFrame = Time.frameCount;
-        activeFlames = Object.FindObjectsByType<Flame>(FindObjectsSortMode.None);
+        activeFlames = Object.FindObjectsByType<Flame>();
     }
 
     public static ICharacterDetectedInteractable ResolveTarget(Collider collider)

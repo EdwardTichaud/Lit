@@ -6,8 +6,10 @@ internal static class LitPlayModeTimingLogger
 {
     private const string EnabledPrefKey = "Lit.PlayModeTimingLogger.Enabled";
     private const string MenuPath = "Lit/Performance/Log Play Mode Timing";
-    private static double playStartTime;
-    private static double editStartTime;
+    // Static fields are reset when domain reload is enabled. SessionState is
+    // kept by the editor across that reload, so the measurement stays valid.
+    private const string PlayStartKey = "Lit.PlayModeTimingLogger.PlayStart";
+    private const string EditStartKey = "Lit.PlayModeTimingLogger.EditStart";
 
     static LitPlayModeTimingLogger()
     {
@@ -40,17 +42,33 @@ internal static class LitPlayModeTimingLogger
         switch (state)
         {
             case PlayModeStateChange.ExitingEditMode:
-                playStartTime = EditorApplication.timeSinceStartup;
+                SessionState.SetFloat(PlayStartKey, (float)EditorApplication.timeSinceStartup);
                 break;
             case PlayModeStateChange.EnteredPlayMode:
-                Debug.Log($"[PlayModeTiming] Enter Play Mode: {EditorApplication.timeSinceStartup - playStartTime:0.00}s");
+                LogDuration("Enter Play Mode", PlayStartKey);
                 break;
             case PlayModeStateChange.ExitingPlayMode:
-                editStartTime = EditorApplication.timeSinceStartup;
+                SessionState.SetFloat(EditStartKey, (float)EditorApplication.timeSinceStartup);
                 break;
             case PlayModeStateChange.EnteredEditMode:
-                Debug.Log($"[PlayModeTiming] Return Edit Mode: {EditorApplication.timeSinceStartup - editStartTime:0.00}s");
+                LogDuration("Return Edit Mode", EditStartKey);
                 break;
         }
+    }
+
+    private static void LogDuration(string label, string key)
+    {
+        float start = SessionState.GetFloat(key, -1f);
+        double now = EditorApplication.timeSinceStartup;
+        if (start >= 0f && now >= start)
+        {
+            Debug.Log($"[PlayModeTiming] {label}: {now - start:0.00}s");
+        }
+        else
+        {
+            Debug.Log($"[PlayModeTiming] {label}: mesure indisponible.");
+        }
+
+        SessionState.SetFloat(key, -1f);
     }
 }

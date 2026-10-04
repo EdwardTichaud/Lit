@@ -236,6 +236,26 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         EnemyController engagedBehaviour = engagedEnemy != null
             ? engagedEnemy.GetComponent<EnemyController>()
             : null;
+        // Some encounters deliberately do not create a BattleWall. Do not
+        // depend on the enemy brain reaching its return state in that case:
+        // a committed attack, an animation state or a temporarily unavailable
+        // NavMesh must never trap the player in combat after they have left
+        // the authored pursuit zone.
+        if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null &&
+            !engagedBehaviour.IsFlameDormant && !engagedBehaviour.HasActiveBattleWall &&
+            playerRoot != null && engagedBehaviour.IsPositionOutsidePursuitZone(playerRoot.position))
+        {
+            if (logCombatDisengageDiagnostics)
+            {
+                Debug.Log("[RealTimeCombat Debug] EndCombat fuite sans BattleWall | enemy='" + engagedEnemy.name +
+                          "' | player=" + playerRoot.position.ToString("F2") +
+                          " | spawnRadius=" + engagedBehaviour.PursuitRadius.ToString("F1") + ".", this);
+            }
+
+            EndCombat();
+            return;
+        }
+
         if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null && !engagedBehaviour.IsFlameDormant && engagedBehaviour.ShouldEndCombatForPursuit)
         {
             if (logCombatDisengageDiagnostics)

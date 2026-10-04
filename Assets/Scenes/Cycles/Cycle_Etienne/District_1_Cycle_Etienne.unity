@@ -1170,17 +1170,29 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 278974291796714892, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3681491817930468723, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
+      propertyPath: InitialModule.startSizeY.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3681491817930468723, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
+      propertyPath: InitialModule.startSizeZ.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 5278389027223934819, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5278389027223934819, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.099999994
       objectReference: {fileID: 0}
     - target: {fileID: 6411167676801556583, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
       propertyPath: m_ShadowDimmer
-      value: 1
+      value: 0.75
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1415,7 +1427,7 @@ MonoBehaviour:
   showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
-  interactMaxDistance: 1
+  interactMaxDistance: 2
   interactionPriority: 80
   interactionRadius: 2
   interactionCenter: {x: 0, y: 0, z: 0}
@@ -1810,63 +1822,6 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
---- !u!1 &899918566
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 899918567}
-  - component: {fileID: 899918568}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &899918567
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 899918566}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1277034554}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &899918568
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 899918566}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f8c4db6b1a9475e9e5b9d80b20ee401, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneMarker
-  assetType: 3
-  characterData: {fileID: 0}
-  item: {fileID: 0}
-  ghost: {fileID: 0}
-  flamePrefab: {fileID: 5592833885186605095, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
-  flameStartsLit: 0
-  flameInteractionRadius: 2
-  flameLightAndInfluenceRadius: 6
-  flameTorchPointCost: 0
-  flameIdOverride: flame-5c8bfcf2367345b58dad48d09c126a26
-  markerId: GlobalObjectId_V1-2-16bd42ecfd0ba024cb4aed13baed7334-899918566-0
-  bakedCharacterInstance: {fileID: 0}
-  bakedFlameInstance: {fileID: 0}
 --- !u!1 &937752400
 GameObject:
   m_ObjectHideFlags: 0
@@ -2225,33 +2180,18 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3681491817930468723, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
-      propertyPath: InitialModule.startSizeY.minMaxState
-      value: 3
+    - target: {fileID: 652809537018247060, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.00023517571
       objectReference: {fileID: 0}
-    - target: {fileID: 3681491817930468723, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
-      propertyPath: InitialModule.startSizeZ.minMaxState
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5278389027223934819, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5278389027223934819, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
-      propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411167676801556583, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
-      propertyPath: m_ShadowDimmer
-      value: 1
+    - target: {fileID: 652809537018247060, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.02436621
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 278974290391432599, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1107305081}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
 --- !u!4 &1107305078 stripped
 Transform:
@@ -2268,11 +2208,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 278974290391432599, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
   m_PrefabInstance: {fileID: 1107305077}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1107305081
+--- !u!114 &1107305081 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 4529104019183896007, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
+  m_PrefabInstance: {fileID: 1107305077}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1107305080}
   m_Enabled: 1
@@ -2280,25 +2219,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aaf3f8ddc407ec4da32ec6a5b12e395, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlameLightReceiver
-  targetLight: {fileID: 1107305079}
-  searchInChildren: 1
-  disableColorTemperatureWhenColored: 1
-  configureFlameShadowing: 1
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 1
-  owner: {fileID: 0}
-  searchOwnerInParents: 1
-  registerAsWorldRevealSource: 0
-  worldSourceCountsAsActive: 1
-  revealColor: {r: 1, g: 0.31, b: 0.08, a: 1}
 --- !u!1001 &1121170580
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2624,7 +2544,7 @@ Transform:
   - {fileID: 1997380614}
   - {fileID: 848966280}
   - {fileID: 1400758174}
-  - {fileID: 899918567}
+  - {fileID: 1553880016}
   m_Father: {fileID: 784297443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1322350154
@@ -2689,11 +2609,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5278389027223934819, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.099999994
       objectReference: {fileID: 0}
     - target: {fileID: 6411167676801556583, guid: cf91f05c7b7c2f04a9412b7f784944d0, type: 3}
       propertyPath: m_ShadowDimmer
-      value: 1
+      value: 0.75
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2888,7 +2808,7 @@ MonoBehaviour:
   showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
-  interactMaxDistance: 1
+  interactMaxDistance: 2
   interactionPriority: 80
   interactionRadius: 2
   interactionCenter: {x: 0, y: 0, z: 0}
@@ -3131,6 +3051,207 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
   m_PrefabInstance: {fileID: 1486865316}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1537890937
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1553880016}
+    m_Modifications:
+    - target: {fileID: 372463292482483223, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_Range
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 990725368457637123, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_ShadowDimmer
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 1224290397413548975, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 293602331
+      objectReference: {fileID: 0}
+    - target: {fileID: 1224290397413548975, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1224290397413548975, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1504774135
+      objectReference: {fileID: 0}
+    - target: {fileID: 2019392378688444935, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_Range
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2019392378688444935, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_Shadows.m_NearPlane
+      value: 0.06
+      objectReference: {fileID: 0}
+    - target: {fileID: 5000373747530552544, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0061508073
+      objectReference: {fileID: 0}
+    - target: {fileID: 5000373747530552544, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.022850309
+      objectReference: {fileID: 0}
+    - target: {fileID: 5166339357755194629, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: range
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5592833885186605095, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_Name
+      value: Model_Flame_WallTorch
+      objectReference: {fileID: 0}
+    - target: {fileID: 6240253858294329587, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6438142123183598203, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: range
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6650117497551731440, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.006877353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6650117497551731440, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.025361137
+      objectReference: {fileID: 0}
+    - target: {fileID: 6818332778410496789, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: range
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298649770839387657, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_Range
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: flameId
+      value: flame-dd58b532dc03475ca79a7b01ea60bb35
+      objectReference: {fileID: 0}
+    - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: litInfluence.radius
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: overridePrimaryLightRange
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+--- !u!4 &1537890938 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+  m_PrefabInstance: {fileID: 1537890937}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1537890939 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5592833885186605095, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+  m_PrefabInstance: {fileID: 1537890937}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1553880015
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1553880016}
+  - component: {fileID: 1553880017}
+  m_Layer: 0
+  m_Name: Flame_frein
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1553880016
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553880015}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.9415377, z: -0, w: 0.33690792}
+  m_LocalPosition: {x: 21.523, y: -21.123, z: 44.508}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1537890938}
+  m_Father: {fileID: 1277034554}
+  m_LocalEulerAnglesHint: {x: 0, y: -140.623, z: 0}
+--- !u!114 &1553880017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553880015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f8c4db6b1a9475e9e5b9d80b20ee401, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneMarker
+  assetType: 3
+  characterData: {fileID: 0}
+  item: {fileID: 0}
+  ghost: {fileID: 0}
+  flamePrefab: {fileID: 5592833885186605095, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+  flameStartsLit: 0
+  flameInteractionRadius: 2
+  flameLightAndInfluenceRadius: 6
+  flameTorchPointCost: 0
+  flameIdOverride: flame-dd58b532dc03475ca79a7b01ea60bb35
+  markerId: GlobalObjectId_V1-2-16bd42ecfd0ba024cb4aed13baed7334-1553880015-0
+  bakedCharacterInstance: {fileID: 0}
+  bakedFlameInstance: {fileID: 1537890939}
 --- !u!1 &1570385126
 GameObject:
   m_ObjectHideFlags: 0
@@ -3458,7 +3579,7 @@ MonoBehaviour:
   showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
-  interactMaxDistance: 1
+  interactMaxDistance: 2
   interactionPriority: 80
   interactionRadius: 2
   interactionCenter: {x: 0, y: 0, z: 0}
@@ -3782,7 +3903,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.02
+    m_NearPlane: 0.059149813
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -3847,7 +3968,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.02
+    m_NearPlane: 0.059149813
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -3912,7 +4033,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.02
+    m_NearPlane: 0.059149813
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -40784,34 +40905,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 72165810432214889}
   searchInChildren: 1
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncFlameReceiverColor: 1
-  deferShadowingToFlameReceiver: 1
-  baseIntensity: 10.527016
-  baseRange: 5.9149814
-  emberColor: {r: 1, g: 1, b: 1, a: 1}
-  flameColor: {r: 1, g: 1, b: 1, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 7.5
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 1
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 1
+  movementAmplitude: 0.015
+  movementSpeed: 1.6
 --- !u!114 &8967781289261742847
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40826,34 +40921,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 72165810404236963}
   searchInChildren: 1
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncFlameReceiverColor: 1
-  deferShadowingToFlameReceiver: 1
-  baseIntensity: 10.527016
-  baseRange: 5.9149814
-  emberColor: {r: 1, g: 1, b: 1, a: 1}
-  flameColor: {r: 1, g: 1, b: 1, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 7.5
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 1
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 1
+  movementAmplitude: 0.015
+  movementSpeed: 1.6
 --- !u!114 &8967781289661472208
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40868,34 +40937,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 72165812155136396}
   searchInChildren: 1
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncFlameReceiverColor: 1
-  deferShadowingToFlameReceiver: 1
-  baseIntensity: 10.527016
-  baseRange: 5.9149814
-  emberColor: {r: 1, g: 1, b: 1, a: 1}
-  flameColor: {r: 1, g: 1, b: 1, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 7.5
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 1
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 1
+  movementAmplitude: 0.015
+  movementSpeed: 1.6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -96,7 +96,7 @@ public class CinemachineBlendSwitcher : MonoBehaviour
 
         // Collecte automatique des CinemachineCamera si la liste est vide.
         if (cameras == null || cameras.Count == 0)
-            cameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None).ToList();
+            cameras = FindObjectsByType<CinemachineCamera>().ToList();
 
         cameras = cameras.Where(c => c != null).Distinct().ToList();
 
@@ -270,7 +270,7 @@ public class CinemachineBlendSwitcher : MonoBehaviour
     /// </summary>
     public void RebuildMap()
     {
-        cameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None)
+        cameras = FindObjectsByType<CinemachineCamera>()
             .Where(c => c != null).Distinct().ToList();
         _byName.Clear();
         foreach (var c in cameras)

@@ -252,7 +252,7 @@ public sealed partial class EnemyController
 
     private void AnimationLogDevelopmentContractDiagnostic()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (!ValidateAnimationContract(out string contractError))
         {
             Debug.LogError("[CombatAnimatorContract] " + contractError, this);

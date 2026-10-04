@@ -1283,8 +1283,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     {
         if (!overridePrimaryLightRange)
         {
-            foreach (FlickeringLight flicker in GetComponentsInChildren<FlickeringLight>(true))
-                flicker.ClearExternalRange();
             return;
         }
 
@@ -1294,9 +1292,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
         foreach (LitContrastLight profile in GetComponentsInChildren<LitContrastLight>(true))
             profile.SetRangeFromFlame(range);
-
-        foreach (FlickeringLight flicker in GetComponentsInChildren<FlickeringLight>(true))
-            flicker.SetExternalRange(range);
 
         for (int i = 0; i < flameLights.Length; i++)
         {
@@ -1672,10 +1667,8 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         EnsureLitInfluence();
         ResolvePresentationReferences();
         SyncInfluenceRangeToLights();
-        if (!Application.isPlaying)
-        {
-            ApplyVisuals(true);
-        }
+        // Changing active GameObjects here makes Unity dispatch OnBecameInvisible while it is
+        // validating the component. Runtime activation is applied normally by Awake/OnEnable.
     }
 
     // Le rayon utile est visible directement sur chaque Flame dans la Scene view.

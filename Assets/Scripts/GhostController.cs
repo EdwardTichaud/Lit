@@ -1646,7 +1646,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         int state = Animator.StringToHash(appearanceAnimationState);
         if (!appearanceAnimator.HasState(layer, state))
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             Debug.LogWarning($"[GhostController] Animation state '{appearanceAnimationState}' introuvable sur '{appearanceAnimator.name}'.", this);
 #endif
             return;

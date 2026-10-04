@@ -366,7 +366,9 @@ public static class MadScientistCombatSetup
         capsule.enabled = true;
         capsule.radius = Mathf.Max(.3f, capsule.radius);
         capsule.height = Mathf.Max(capsule.radius * 2f, capsule.height);
-        agent.enabled = true;
+        // Agent activation belongs to NavMeshWorldService, after the current
+        // world has exposed valid NavMesh data.
+        agent.enabled = false;
         agent.updateRotation = false;
         agent.speed = 2.8f;
         agent.acceleration = 14f;

@@ -194,9 +194,9 @@ public class SetRenderingLayer : MonoBehaviour
     {
         // Récupère tous les Renderer et Terrain présents dans la scène complète
         // Utilise la nouvelle API FindObjectsByType pour inclure les objets inactifs
-        var components = FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+        var components = FindObjectsByType<Renderer>(FindObjectsInactive.Include)
             .Cast<Component>()
-            .Concat(FindObjectsByType<Terrain>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            .Concat(FindObjectsByType<Terrain>(FindObjectsInactive.Include))
             .ToArray();
 
         int count = ApplyRenderingLayersTo(components);

@@ -12,6 +12,8 @@ public sealed class LitTacticalUccViewType : Adventure
     private bool following = true, initialized, recentering;
     private Vector2 pendingPan;
     private Vector3 lastResolvedPosition;
+    private Quaternion renderedAimRotation;
+    private bool hasRenderedAimRotation;
     private LitTacticalSimulationClock clock;
     private LitTacticalDistanceRecovery distanceRecovery;
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
@@ -65,6 +67,7 @@ public sealed class LitTacticalUccViewType : Adventure
         if (immediate) pivot = targetPivot;
         lastAnchor = GetFollowAnchor();
         distanceRecovery.Reset(zoom);
+        hasRenderedAimRotation = false;
         initialized = true;
         clock.Reset();
     }
@@ -148,11 +151,28 @@ public sealed class LitTacticalUccViewType : Adventure
         Vector3 displayedAnchor = GetFollowAnchor(true);
         Vector3 aim = displayedAnchor - m_Transform.position;
         if (aim.sqrMagnitude < .0001f) return m_Transform.rotation;
-        Quaternion rotation = Quaternion.LookRotation(aim, Vector3.up);
-        m_Pitch = Mathf.DeltaAngle(0, rotation.eulerAngles.x);
-        m_Yaw = Mathf.DeltaAngle(0, rotation.eulerAngles.y - m_BaseRotation.eulerAngles.y);
+        Quaternion targetRotation = Quaternion.LookRotation(aim, Vector3.up);
+        // SimulationManager interpolates the position between fixed steps.
+        // Rebuilding a full look rotation from that interpolated position in
+        // every LateUpdate transfers tiny physics/interpolation differences
+        // directly to the image. Keep the look target, but filter only that
+        // presentation correction. Large discontinuities (teleport/recenter)
+        // still snap immediately.
+        if (!hasRenderedAimRotation || Quaternion.Angle(renderedAimRotation, targetRotation) > 15f)
+        {
+            renderedAimRotation = targetRotation;
+            hasRenderedAimRotation = true;
+        }
+        else
+        {
+            float blend = 1f - Mathf.Exp(-Mathf.Max(1f, profile.renderedAimSharpness) * Time.unscaledDeltaTime);
+            renderedAimRotation = Quaternion.Slerp(renderedAimRotation, targetRotation, blend);
+        }
+
+        m_Pitch = Mathf.DeltaAngle(0, renderedAimRotation.eulerAngles.x);
+        m_Yaw = Mathf.DeltaAngle(0, renderedAimRotation.eulerAngles.y - m_BaseRotation.eulerAngles.y);
         owner.RecordTacticalMotion(GetFollowAnchor(), displayedAnchor, lastResolvedPosition, m_Transform.position, 0, false, true);
-        return rotation;
+        return renderedAimRotation;
     }
     public override Vector3 Move(bool immediateUpdate)
     {

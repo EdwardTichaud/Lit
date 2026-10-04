@@ -9,8 +9,8 @@ public static class InventoryUiAudit
     private static void Run()
     {
         int issues = 0;
-        InventoryUISettings[] inventories = Object.FindObjectsByType<InventoryUISettings>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        LootUISettings[] loots = Object.FindObjectsByType<LootUISettings>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        InventoryUISettings[] inventories = Object.FindObjectsByType<InventoryUISettings>(FindObjectsInactive.Include);
+        LootUISettings[] loots = Object.FindObjectsByType<LootUISettings>(FindObjectsInactive.Include);
 
         for (int i = 0; i < inventories.Length; i++)
         {
@@ -34,7 +34,7 @@ public static class InventoryUiAudit
             }
         }
 
-        InventoryPanelController[] controllers = Object.FindObjectsByType<InventoryPanelController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        InventoryPanelController[] controllers = Object.FindObjectsByType<InventoryPanelController>(FindObjectsInactive.Include);
         for (int i = 0; i < controllers.Length; i++)
         {
             InventoryPanelController controller = controllers[i];
@@ -45,7 +45,7 @@ public static class InventoryUiAudit
             }
         }
 
-        QuantityBox[] quantityBoxes = Object.FindObjectsByType<QuantityBox>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        QuantityBox[] quantityBoxes = Object.FindObjectsByType<QuantityBox>(FindObjectsInactive.Include);
         for (int i = 0; i < quantityBoxes.Length; i++)
         {
             if (quantityBoxes[i].GetComponent<CanvasGroup>() == null)

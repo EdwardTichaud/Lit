@@ -111,6 +111,23 @@ public sealed class EnemyUnificationTests
         finally { Object.DestroyImmediate(root); Object.DestroyImmediate(skill); }
     }
 
+    [Test]
+    public void PursuitEscapeUsesEncounterHomeAndIgnoresVerticalDistance()
+    {
+        var root = new GameObject("Pursuit escape fixture");
+        root.SetActive(false);
+        try
+        {
+            var enemy = root.AddComponent<EnemyController>();
+            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            typeof(EnemyController).GetField("BrainHome", flags).SetValue(enemy, new Vector3(10f, 2f, -3f));
+
+            Assert.That(enemy.IsPositionOutsidePursuitZone(new Vector3(30f, 100f, -3f)), Is.False);
+            Assert.That(enemy.IsPositionOutsidePursuitZone(new Vector3(30.01f, 2f, -3f)), Is.True);
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
     [UnityTest]
     public IEnumerator InstancesDoNotShareMutableRuntimeData()
     {

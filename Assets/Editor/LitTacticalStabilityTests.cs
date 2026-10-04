@@ -65,4 +65,18 @@ public sealed class LitTacticalStabilityTests
         for (int i = 0; i < 20; i++)
             Assert.That(recovery.Resolve(i % 2 == 0 ? 4 : 5, 10, .02f, false, .08f, .15f), Is.EqualTo(2));
     }
+
+    [Test]
+    public void RenderedAimProfileKeepsAResponsivePositiveDefault()
+    {
+        var profile = ScriptableObject.CreateInstance<LitTacticalCameraProfile>();
+        try
+        {
+            Assert.That(profile.renderedAimSharpness, Is.GreaterThan(1f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(profile);
+        }
+    }
 }

@@ -247,7 +247,7 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
 
     private void LogTransition(string message)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (logViewTransitions)
         {
             Debug.Log($"[CombatLockCamera] {message}; activeView={ActiveViewTypeFullName}; previousView={previousViewTypeFullName}", this);

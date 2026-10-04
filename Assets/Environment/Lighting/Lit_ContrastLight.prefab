@@ -253,8 +253,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitContrastLight
   role: 1
-  authoringNote: A warm practical source with a visible soft shadow. Keep its range
-    short so the arena background stays dark.
+  authoringNote: A warm practical source with a visible soft shadow. Keep its range short so the arena background stays dark.
   lightType: 2
   lightColor: {r: 1, g: 0.38, b: 0.08, a: 1}
   intensityUnit: 0

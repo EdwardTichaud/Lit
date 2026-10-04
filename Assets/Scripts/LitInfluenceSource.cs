@@ -199,7 +199,7 @@ public class LitInfluenceSource
 
     private void Scan(MonoBehaviour owner, LitInfluenceSourceKind sourceKind)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         PerformanceProfilerMetrics.Begin(PerformanceProfilerMetrics.IceInfluenceScan);
         try
         {
@@ -263,12 +263,12 @@ public class LitInfluenceSource
                 }
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             int examinedRenderers = scannedMaterialRenderers.Count;
 #endif
             UpdateMaterialInfluence(info);
             removalBuffer.Clear();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             PerformanceProfilerMetrics.AddIceInfluences(examinedRenderers, examinedRenderers);
         }
         finally
@@ -492,7 +492,7 @@ internal static class FlameInfluenceMaterialRuntime
         phase2BLegacyBenchmarkMode = false;
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
     internal static void ConfigurePhase2BBenchmark(bool legacyMode)
     {
         if (rendererInfluences.Count != 0)
@@ -620,12 +620,12 @@ internal static class FlameInfluenceMaterialRuntime
             return;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         PerformanceProfilerMetrics.Begin(PerformanceProfilerMetrics.IceInfluenceTransitions);
         try
         {
 #endif
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             int examinedRenderers = 0;
             int modifiedRenderers = 0;
 #endif
@@ -634,7 +634,7 @@ internal static class FlameInfluenceMaterialRuntime
             completedTransitionRenderers.Clear();
             foreach (Renderer renderer in transitioningRenderers)
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                 examinedRenderers++;
 #endif
                 if (renderer == null
@@ -673,14 +673,14 @@ internal static class FlameInfluenceMaterialRuntime
                     ClearInfluence(renderer, false);
                     staleRenderers.Add(renderer);
                     completedTransitionRenderers.Add(renderer);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                     modifiedRenderers++;
 #endif
                 }
                 else if (changed)
                 {
                     ApplyBestInfluence(renderer, influences, false);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                     modifiedRenderers++;
 #endif
                 }
@@ -700,7 +700,7 @@ internal static class FlameInfluenceMaterialRuntime
             staleRenderers.Clear();
             completedTransitionRenderers.Clear();
             RefreshUpdaterState();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             PerformanceProfilerMetrics.AddIceInfluences(examinedRenderers, modifiedRenderers);
         }
         finally
@@ -717,7 +717,7 @@ internal static class FlameInfluenceMaterialRuntime
             return;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         PerformanceProfilerMetrics.Begin(PerformanceProfilerMetrics.IceInfluenceTransitions);
         try
         {
@@ -728,7 +728,7 @@ internal static class FlameInfluenceMaterialRuntime
             staleRenderers.Clear();
             foreach (KeyValuePair<Renderer, List<SourceInfluence>> entry in rendererInfluences)
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                 examinedRenderers++;
 #endif
                 Renderer renderer = entry.Key;
@@ -776,7 +776,7 @@ internal static class FlameInfluenceMaterialRuntime
                     changed = true;
                 }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
                 if (changed)
                     modifiedRenderers++;
 #endif
@@ -790,7 +790,7 @@ internal static class FlameInfluenceMaterialRuntime
 
             staleRenderers.Clear();
             RefreshUpdaterState();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             PerformanceProfilerMetrics.AddIceInfluences(examinedRenderers, modifiedRenderers);
         }
         finally
@@ -1028,7 +1028,7 @@ internal static class FlameInfluenceMaterialRuntime
             influenceDistances[targetIndex] = distance;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         PerformanceProfilerMetrics.AddIceInfluenceSelection(
             activeCount,
             count,

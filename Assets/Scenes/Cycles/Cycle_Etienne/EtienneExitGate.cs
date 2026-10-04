@@ -9,7 +9,7 @@ public sealed class EtienneExitGate : MonoBehaviour
     private void LateUpdate()
     {
         if (activation == null || activation.target == null) return;
-        foreach (CycleController cycle in FindObjectsByType<CycleController>(FindObjectsSortMode.None))
+        foreach (CycleController cycle in FindObjectsByType<CycleController>())
         {
             if (cycle.definition == null || cycle.definition.cycleId != "district1.etienne" || !cycle.IsDevSimulationActive) continue;
             activation.target.SetActive(!cycle.IsSceneStepCompleted("etienne_spoken"));

@@ -77,7 +77,11 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
         UnbindTorchEvents();
     }
 
-    private void OnDestroy() => UnbindTorchEvents();
+    public override void OnDestroy()
+    {
+        UnbindTorchEvents();
+        base.OnDestroy();
+    }
 
     /// <summary>Authoritative projectile callback; the boss accepts each dedicated torch once.</summary>
     public void NotifyTorchLit(BrokenAnchorTorch torch)

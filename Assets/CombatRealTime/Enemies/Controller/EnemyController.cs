@@ -41,7 +41,20 @@ public sealed partial class EnemyController : CharacterAnimationController, ILit
     public bool IsCinematicSuspended => IsSuspended;
     public float PursuitRadius => BrainProfile != null ? BrainProfile.pursuitRadius : 20f;
     public bool ShouldEndCombatForPursuit => BrainReturning;
-    public bool IsPlayerOutsidePursuitZone => BrainTarget != null && Vector3.ProjectOnPlane(BrainTarget.transform.position - BrainHome, Vector3.up).sqrMagnitude > PursuitRadius * PursuitRadius;
+    public bool IsPlayerOutsidePursuitZone => BrainTarget != null && IsPositionOutsidePursuitZone(BrainTarget.transform.position);
+
+    /// <summary>
+    /// Uses the encounter's authored home and pursuit radius instead of the
+    /// current enemy position. This remains valid while an enemy is committed
+    /// to an attack or while its navigation is temporarily unavailable.
+    /// </summary>
+    public bool IsPositionOutsidePursuitZone(Vector3 position)
+    {
+        Vector3 delta = position - BrainHome;
+        delta.y = 0f;
+        float radius = Mathf.Max(0f, PursuitRadius);
+        return delta.sqrMagnitude > radius * radius;
+    }
 
     private void Awake()
     {

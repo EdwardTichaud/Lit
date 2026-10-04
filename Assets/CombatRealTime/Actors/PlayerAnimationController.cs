@@ -263,7 +263,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
 
     private void LogDevelopmentContractDiagnostic()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
         if (!ValidateContract(out string contractError))
         {
             Debug.LogError("[CombatAnimatorContract] " + contractError, this);
