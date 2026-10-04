@@ -31,9 +31,9 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, HideInInspector] private List<Item> enabledCombatItems = new List<Item>();
     [SerializeField, HideInInspector] private List<CombatDefenseItemHitPointData> combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
     [SerializeField, Tooltip("Duree initiale de la flamme (secondes).")]
-    private int startingFlameSeconds = 300;
+    private int startingFlameSeconds = 1000;
     [SerializeField, Tooltip("Duree restante de la flamme (secondes).")]
-    private int flameSecondsRemaining = 300;
+    private int flameSecondsRemaining = 1000;
     [SerializeField, Tooltip("Active les logs du flux d'initialisation d'inventaire.")]
     private bool logInventoryInitialization;
 
@@ -117,6 +117,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private float flameUpperBodyMovingLayerWeight = 0.76f;
     [SerializeField, Tooltip("Vitesse de lissage du poids du layer flamme.")]
     private float flameUpperBodyLayerWeightResponsiveness = 10f;
+    [SerializeField, Range(1f, 5f), Tooltip("Multiplicateur de portee lorsque R3 est maintenu hors combat.")]
+    private float torchBoostRangeMultiplier = 2.5f;
+    [SerializeField, Min(1), Tooltip("Points de torche consommes chaque seconde pendant le faisceau renforce.")]
+    private int torchBoostPointsPerSecond = 20;
 
     [Header("External Forces")]
     [SerializeField, Tooltip("Temps de blocage input apres une force externe.")]
@@ -147,6 +151,9 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool flameVisualTransitionStateObserved;
     private float flameVisualTransitionTimer;
     private float flameDrainTimer;
+    private bool torchBoostHeld;
+    private bool torchBoostActive;
+    private readonly Dictionary<Light, float> baseTorchLightRanges = new Dictionary<Light, float>();
     private float nextCollisionRefreshTime;
     private bool collidersDirty = true;
     private readonly List<Collider> cachedColliders = new List<Collider>();
@@ -739,6 +746,38 @@ public partial class SquadCharacterController : MonoBehaviour
     public bool HasFlameItem => CharacterFlameSystemEnabled && FlameItem != null;
 
     public bool IsFlameEquipped => CharacterFlameSystemEnabled && flameEquipped;
+
+    public void SetTorchBoostHeld(bool held)
+    {
+        torchBoostHeld = held;
+        RefreshTorchBoostState();
+    }
+
+    /// <summary>Spends torch points for a nearby world interaction.</summary>
+    public bool TrySpendFlamePoints(int points)
+    {
+        if (!CharacterFlameSystemEnabled || points <= 0)
+        {
+            return true;
+        }
+
+        if (!HasFlameItem || flameSecondsRemaining < points)
+        {
+            return false;
+        }
+
+        int previousSeconds = flameSecondsRemaining;
+        bool previousEquipped = flameEquipped;
+        flameSecondsRemaining -= points;
+        if (flameSecondsRemaining <= 0)
+        {
+            flameSecondsRemaining = 0;
+            SetFlameEquipped(false);
+        }
+
+        SyncFlameStateToCharacterDataIfChanged(previousSeconds, previousEquipped);
+        return true;
+    }
 
     public static IReadOnlyList<SquadCharacterController> ActiveCharacters => registeredCharacters;
 
@@ -2600,6 +2639,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (!flameEquipped)
         {
+            SetTorchBoostActive(false);
             flameDrainTimer = 0f;
             SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
             return;
@@ -2607,6 +2647,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (!HasFlameItem)
         {
+            SetTorchBoostActive(false);
             flameDrainTimer = 0f;
             SetFlameEquipped(false);
             SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
@@ -2615,21 +2656,25 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (flameSecondsRemaining <= 0)
         {
+            SetTorchBoostActive(false);
             SetFlameEquipped(false);
             SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
             return;
         }
 
+        RefreshTorchBoostState();
+        int pointsPerSecond = torchBoostActive ? torchBoostPointsPerSecond : 1;
         flameDrainTimer += deltaTime;
         while (flameDrainTimer >= 1f && flameSecondsRemaining > 0)
         {
-            flameSecondsRemaining -= 1;
+            flameSecondsRemaining -= pointsPerSecond;
             flameDrainTimer -= 1f;
         }
 
         if (flameSecondsRemaining <= 0)
         {
             flameSecondsRemaining = 0;
+            SetTorchBoostActive(false);
             SetFlameEquipped(false);
         }
 
@@ -2702,6 +2747,10 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         flameEquipped = equipped;
+        if (!flameEquipped)
+        {
+            SetTorchBoostActive(false);
+        }
 
         SetFlameAnimatorBool(flameEquipped, false);
 
@@ -2709,6 +2758,38 @@ public partial class SquadCharacterController : MonoBehaviour
         UpdateFlameAnimationLayerWeight(immediate: true);
 
         SyncFlameStateToCharacterData();
+    }
+
+    private void RefreshTorchBoostState()
+    {
+        bool combatActive = RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.IsCombatActive;
+        SetTorchBoostActive(torchBoostHeld && flameEquipped && !combatActive);
+    }
+
+    private void SetTorchBoostActive(bool active)
+    {
+        if (torchBoostActive == active)
+        {
+            return;
+        }
+
+        torchBoostActive = active;
+        EnsureFlameCached();
+        if (flameTransform == null)
+        {
+            return;
+        }
+
+        foreach (Light light in flameTransform.GetComponentsInChildren<Light>(true))
+        {
+            if (light == null) continue;
+            if (!baseTorchLightRanges.TryGetValue(light, out float baseRange))
+            {
+                baseRange = light.range;
+                baseTorchLightRanges.Add(light, baseRange);
+            }
+            light.range = active ? baseRange * torchBoostRangeMultiplier : baseRange;
+        }
     }
 
     private void ApplyFlameVisualState(bool equipped)

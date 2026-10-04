@@ -73,6 +73,7 @@ public static class LitAtmosphereSetup
             LitAtmosphereParticles atmosphere = atmosphereRoot.AddComponent<LitAtmosphereParticles>();
             ParticleSystem dust = CreateParticleSystem(atmosphereRoot.transform, "Particles_IceDust");
             atmosphere.ConfigureAuthoring(LitAtmosphereParticles.Profile.CastleIceDust, new[] { dust }, materials.Dust, materials.Embers, materials.AncientMist);
+            atmosphere.ApplyVisibilityDefaults();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -103,6 +104,7 @@ public static class LitAtmosphereSetup
                 atmosphere.ConfigureAuthoring(profile, new[] { embers, mist }, materials.Dust, materials.Embers, materials.AncientMist);
             }
             else atmosphere.ConfigureAuthoring(profile, new[] { embers }, materials.Dust, materials.Embers, materials.AncientMist);
+            atmosphere.ApplyVisibilityDefaults();
 
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
@@ -163,8 +165,10 @@ public static class LitAtmosphereSetup
         }
 
         if (material.HasProperty("_BaseColorMap")) material.SetTexture("_BaseColorMap", texture);
+        if (material.HasProperty("_UnlitColorMap")) material.SetTexture("_UnlitColorMap", texture);
         if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
         if (material.HasProperty("_Color")) material.SetColor("_Color", color);
+        if (material.HasProperty("_UnlitColor")) material.SetColor("_UnlitColor", color);
         if (material.HasProperty("_SurfaceType")) material.SetFloat("_SurfaceType", 1f);
         if (material.HasProperty("_BlendMode")) material.SetFloat("_BlendMode", emissive ? 1f : 0f);
         if (material.HasProperty("_AlphaCutoffEnable")) material.SetFloat("_AlphaCutoffEnable", 1f);

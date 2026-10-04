@@ -68,7 +68,16 @@ interactions et active les objets qui exigent une influence suffisante. Sa
 réserve décroît seulement lorsqu'elle est allumée; combustible et braseros la
 rechargent. Une réserve vide éteint la torche, mais ne bloque jamais le
 déplacement ou l'inventaire du joueur. Les Flames et Ancient Flames s’allument
-désormais directement avec Interact, à proximité : Munin n’est plus requis.
+directement avec Interact, à proximité, ou avec l’action de torche lorsqu’elles
+sont ciblées : aucun choix intermédiaire ni Munin n’est requis. Allumer une
+Flame coûte 10 points de torche, allumer une Ancient Flame en coûte 20 ;
+l’extinction est gratuite. Une nouvelle partie démarre avec 1 000 points et la
+torche équipée en consomme 1 par seconde.
+
+En exploration, maintenir R3 active le faisceau renforcé de la torche : sa
+portée lumineuse est multipliée par 2,5 et son drain passe à 20 points par
+seconde. Le relâchement de R3, l’entrée en combat, le rangement ou l’épuisement
+de la torche restaurent immédiatement le rayon et le drain normaux.
 
 Munin demeure un élément de lore, sans présence ni mécanique jouable actuelle.
 La direction retenue pour une future réintroduction est une fusion de Lucian et

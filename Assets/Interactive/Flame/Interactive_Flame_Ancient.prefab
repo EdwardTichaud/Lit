@@ -125,6 +125,8 @@ MonoBehaviour:
   flameId: scene-flame:Maison:E6C2F108
   flameObject: {fileID: 62136207090779188}
   flameLight: {fileID: 978710310134188699}
+  overridePrimaryLightRange: 0
+  primaryLightRange: 6
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
@@ -140,7 +142,7 @@ MonoBehaviour:
   interactionTrigger: {fileID: 8177418773124164552}
   litInfluence:
     enabled: 1
-    radius: 6
+    radius: 5
     transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:

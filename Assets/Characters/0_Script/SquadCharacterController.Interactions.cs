@@ -261,7 +261,18 @@ public partial class SquadCharacterController
                              CharacterInteractionDetection.IsCharacterInsideInteractionCollider(transform, collider);
             bool inMuninDistance = IsMuninLightInteractionTarget(candidate) &&
                                    CharacterInteractionDetection.IsCharacterWithinRange(transform, collider, anchor, maxDistance);
-            if (!inTrigger && !inMuninDistance)
+            // Flames deliberately use a generous trigger only to receive
+            // physics enter/exit notifications. It must not make their
+            // outline visible farther away than they can be lit: an outlined
+            // Flame is always actionable with Interact.
+            bool flameIsWithinInteractionRange = candidate is Flame flame &&
+                                                  flame.IsCharacterWithinInteractionDistance(transform);
+            if (!flameIsWithinInteractionRange && !inTrigger && !inMuninDistance)
+            {
+                return false;
+            }
+
+            if (candidate is Flame && !flameIsWithinInteractionRange)
             {
                 return false;
             }

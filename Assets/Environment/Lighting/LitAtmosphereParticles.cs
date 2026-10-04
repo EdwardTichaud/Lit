@@ -52,7 +52,12 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
         castleDustVolume.y = Mathf.Max(0.1f, castleDustVolume.y);
         castleDustVolume.z = Mathf.Max(0.1f, castleDustVolume.z);
         ConfigureSystems();
-        if (isActiveAndEnabled) RefreshEmissionState();
+        // AddComponent invokes OnValidate before the editor setup can assign
+        // its serialized particle references. Avoid a transient false error
+        // during that single construction step; invalid saved setups still
+        // report their configuration once they own a reference slot.
+        if (isActiveAndEnabled && particleSystems != null && particleSystems.Length > 0)
+            RefreshEmissionState();
     }
 
     public bool ValidateConfiguration(out string reason)
@@ -101,6 +106,38 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
         dustMaterial = dust;
         emberMaterial = embers;
         ancientMistMaterial = mist;
+        ConfigureSystems();
+    }
+
+    /// <summary>
+    /// Applies the initial cinematic calibration once when the authoring setup
+    /// is rebuilt. All values stay serialized afterwards and remain editable
+    /// in the Inspector.
+    /// </summary>
+    public void ApplyVisibilityDefaults()
+    {
+        switch (profile)
+        {
+            case Profile.CastleIceDust:
+                density = 1.8f;
+                particleSize = 1.65f;
+                opacity = 0.28f;
+                alphaClipThreshold = 0.01f;
+                break;
+            case Profile.FlameEmbers:
+                density = 3.5f;
+                particleSize = 1.7f;
+                opacity = 0.85f;
+                alphaClipThreshold = 0.01f;
+                break;
+            case Profile.AncientFlameMix:
+                density = 2.5f;
+                particleSize = 1.8f;
+                opacity = 0.42f;
+                alphaClipThreshold = 0.01f;
+                break;
+        }
+
         ConfigureSystems();
     }
 
@@ -162,13 +199,13 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
     {
         if (!ValidateConfiguration(out _)) return;
         if (profile == Profile.CastleIceDust)
-            ConfigureDust(particleSystems[0], dustMaterial, new Color(0.62f, 0.8f, 1f, opacity), castleDustVolume, 12f * density, 150, particleSize, 1f);
+            ConfigureDust(particleSystems[0], dustMaterial, new Color(0.62f, 0.8f, 1f, opacity), castleDustVolume, 28f * density, 360, particleSize, 1f);
         else if (profile == Profile.FlameEmbers)
-            ConfigureEmbers(particleSystems[0], emberMaterial, new Color(1f, 0.22f, 0.035f, opacity), 1.6f * density, particleSize);
+            ConfigureEmbers(particleSystems[0], emberMaterial, new Color(1f, 0.22f, 0.035f, opacity), 2f * density, particleSize);
         else
         {
-            ConfigureEmbers(particleSystems[0], emberMaterial, new Color(1f, 0.25f, 0.04f, opacity), 0.9f * density, particleSize);
-            ConfigureDust(particleSystems[1], ancientMistMaterial, new Color(0.22f, 0.72f, 1f, opacity), new Vector3(1.4f, 1f, 1.4f), 3f * density, 32, particleSize, 0.65f);
+            ConfigureEmbers(particleSystems[0], emberMaterial, new Color(1f, 0.25f, 0.04f, opacity), 1.6f * density, particleSize);
+            ConfigureDust(particleSystems[1], ancientMistMaterial, new Color(0.22f, 0.72f, 1f, opacity), new Vector3(1.8f, 2.4f, 1.8f), 5f * density, 56, particleSize, 1.2f);
         }
     }
 
@@ -176,8 +213,10 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
     {
         ParticleSystem.MainModule main = system.main;
         main.loop = true; main.playOnAwake = true; main.prewarm = true; main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = maxParticles; main.startLifetime = new ParticleSystem.MinMaxCurve(9f, 16f);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(0.02f, 0.06f); main.startSize = new ParticleSystem.MinMaxCurve(0.05f * profileSize * sizeMultiplier, 0.12f * profileSize * sizeMultiplier);
+        main.maxParticles = Mathf.Clamp(Mathf.CeilToInt(maxParticles * density), maxParticles, 900);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(9f, 16f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0.02f, 0.06f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.08f * profileSize * sizeMultiplier, 0.18f * profileSize * sizeMultiplier);
         main.startColor = color;
         ParticleSystem.EmissionModule emission = system.emission; emission.enabled = true; emission.rateOverTime = rate;
         ParticleSystem.ShapeModule shape = system.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Box; shape.scale = box;
@@ -196,8 +235,8 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
     {
         ParticleSystem.MainModule main = system.main;
         main.loop = true; main.playOnAwake = true; main.prewarm = true; main.simulationSpace = ParticleSystemSimulationSpace.Local;
-        main.maxParticles = 18; main.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 1.6f);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(0.1f, 0.3f); main.startSize = new ParticleSystem.MinMaxCurve(0.01f * sizeMultiplier, 0.028f * sizeMultiplier);
+        main.maxParticles = 56; main.startLifetime = new ParticleSystem.MinMaxCurve(0.9f, 1.8f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0.14f, 0.38f); main.startSize = new ParticleSystem.MinMaxCurve(0.025f * sizeMultiplier, 0.07f * sizeMultiplier);
         main.startColor = color;
         ParticleSystem.EmissionModule emission = system.emission; emission.enabled = true; emission.rateOverTime = rate;
         ParticleSystem.ShapeModule shape = system.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Sphere; shape.radius = 0.16f;
@@ -217,6 +256,7 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
         if (renderer == null) return;
         renderer.sharedMaterial = material;
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sortMode = ParticleSystemSortMode.Distance;
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
         renderer.enableGPUInstancing = true;

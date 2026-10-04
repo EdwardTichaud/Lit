@@ -2706,8 +2706,8 @@ MonoBehaviour:
   equippedInteractionItems: []
   enabledCombatItems: []
   combatDefenseItemHitPoints: []
-  startingFlameSeconds: 300
-  flameSecondsRemaining: 300
+  startingFlameSeconds: 1000
+  flameSecondsRemaining: 1000
   logInventoryInitialization: 0
   characterData: {fileID: 0}
   maxHp: 10
@@ -2741,6 +2741,8 @@ MonoBehaviour:
   flameUpperBodyIdleLayerWeight: 0.85
   flameUpperBodyMovingLayerWeight: 0.25
   flameUpperBodyLayerWeightResponsiveness: 12
+  torchBoostRangeMultiplier: 2.5
+  torchBoostPointsPerSecond: 20
   inputLockTime: 0.2
   knockbackForceMode: 2
   ignoreCharacterCollisions: 1

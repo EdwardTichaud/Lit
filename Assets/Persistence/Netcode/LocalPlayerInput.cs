@@ -246,9 +246,22 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnMelt(InputAction.CallbackContext context)
     {
-        if (context.performed && CanProcessGameplayAction(context))
+        // R3 used to trigger Munin fusion. Outside combat it now holds the
+        // exploration torch boost; cancelled is deliberately forwarded so the
+        // standard range and drain are restored immediately on release.
+        if (combatInputActive || IsLocalCombatActive())
         {
-            LocalInputRouter.RaiseCompanionFusion(context);
+            LocalInputRouter.SetTorchBoostHeld(false);
+            return;
+        }
+
+        if (context.canceled)
+        {
+            LocalInputRouter.SetTorchBoostHeld(false);
+        }
+        else if ((context.started || context.performed) && CanProcessGameplayAction(context))
+        {
+            LocalInputRouter.SetTorchBoostHeld(context.ReadValueAsButton());
         }
     }
 
@@ -427,6 +440,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnRecenter(InputAction.CallbackContext context)
     {
+        // R3 is reserved for the exploration torch boost. Keyboard C remains
+        // the manual camera-recenter control, and combat keeps its own inputs.
+        if (!combatInputActive && !IsLocalCombatActive() && context.control != null &&
+            context.control.name == "rightStickPress" && context.control.device is Gamepad)
+        {
+            return;
+        }
+
         if (context.performed && ShouldProcess(context))
         {
             LocalInputRouter.RaiseCameraRecenter();

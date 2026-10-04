@@ -15283,6 +15283,8 @@ MonoBehaviour:
   flameId: scene-flame:Model_Flame_Brazier:6237B2EC
   flameObject: {fileID: 0}
   flameLight: {fileID: 72165811001392007}
+  overridePrimaryLightRange: 0
+  primaryLightRange: 6
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
@@ -15298,7 +15300,7 @@ MonoBehaviour:
   interactionTrigger: {fileID: 5519159958752702840}
   litInfluence:
     enabled: 1
-    radius: 6
+    radius: 5.9149814
     transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:

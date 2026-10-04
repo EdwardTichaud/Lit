@@ -158,6 +158,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
         LocalInputRouter.CompanionFusion += OnCompanionFusionPerformed;
         LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
+        LocalInputRouter.TorchBoostChanged += OnTorchBoostChanged;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.LeftShoulder += OnLeftShoulderPerformed;
@@ -167,11 +168,13 @@ public class SquadManager : MonoBehaviour
 
     void OnDisable()
     {
+        currentCharacter?.GetComponent<SquadCharacterController>()?.SetTorchBoostHeld(false);
         LocalInputRouter.Jump -= OnJumpPerformed;
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
         LocalInputRouter.CompanionFusion -= OnCompanionFusionPerformed;
         LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
+        LocalInputRouter.TorchBoostChanged -= OnTorchBoostChanged;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
@@ -2060,7 +2063,7 @@ public class SquadManager : MonoBehaviour
         {
             if (LocalInputRouter.TryConsumeToggleTorch())
             {
-                ShowFlameChoice(flame, controller);
+                flame.TryStartDirectInteraction(controller != null ? controller.gameObject : null);
             }
             return;
         }
@@ -2069,6 +2072,16 @@ public class SquadManager : MonoBehaviour
         {
             controller?.ToggleFlame();
         }
+    }
+
+    private void OnTorchBoostChanged(bool held)
+    {
+        if (currentCharacter == null || IsInputLocked())
+        {
+            return;
+        }
+
+        currentCharacter.GetComponent<SquadCharacterController>()?.SetTorchBoostHeld(held);
     }
 
     private static Flame FindFlameInRange(SquadCharacterController controller)

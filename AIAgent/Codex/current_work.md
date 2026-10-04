@@ -23,7 +23,12 @@ les activations Flame/Ancient Flame, le rendu de poussière et la torche après
 
 Munin n’est plus présent sur les prefabs joueur et son interface est retirée des
 scènes de démarrage. Les Flames et Ancient Flames s’allument avec `Interact`, à
-proximité, sans charge ni compagnon. Munin reste un élément de lore : une future
+proximité, en consommant respectivement 10 ou 20 points de torche. La torche
+commence à 1 000 points et consomme 1 point par seconde lorsqu’elle est sortie.
+En exploration, le maintien de R3 multiplie sa portée par 2,5 et consomme 20
+points par seconde ; combat, relâchement, rangement ou réserve vide restaurent
+immédiatement le comportement normal.
+Munin reste un élément de lore : une future
 fusion de Lucian et Munin, inspirée de *Shaman King*, pourra servir d’action
 spécifique, sans mécanique implémentée pour le moment.
 ## Eclairage de contraste du château (2026-10-04)

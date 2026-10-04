@@ -2446,8 +2446,8 @@ MonoBehaviour:
   equippedInteractionItems: []
   enabledCombatItems: []
   combatDefenseItemHitPoints: []
-  startingFlameSeconds: 300
-  flameSecondsRemaining: 300
+  startingFlameSeconds: 1000
+  flameSecondsRemaining: 1000
   logInventoryInitialization: 0
   characterData: {fileID: 11400000, guid: 93fcbfad59b9a584da708ffad022343d, type: 2}
   maxHp: 10

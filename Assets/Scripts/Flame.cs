@@ -31,6 +31,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     public int ChargeCostToLight => ancientFlame
         ? Mathf.Max(2, chargeCostToLight)
         : Mathf.Max(0, chargeCostToLight);
+    public int TorchPointCostToLight => ancientFlame ? 20 : 10;
     public IReadOnlyList<GameObject> CommonLightActivationOrder => commonLightActivationOrder;
     public Color FlameColor => LitFlameColorUtility.ResolveFlameColor(flameLight, flameObject, Color.white);
 
@@ -46,6 +47,11 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private GameObject flameObject;
     [Tooltip("Lumiere de flamme optionnelle.")]
     public Light flameLight;
+    [Header("Light Range")]
+    [SerializeField, Tooltip("Active une portee specifique pour cette instance. Desactive : chaque Light conserve la valeur du prefab ou son override local.")]
+    private bool overridePrimaryLightRange;
+    [SerializeField, Min(0.1f), Tooltip("Portee appliquee a la lumiere principale quand la surcharge est activee.")]
+    private float primaryLightRange = 6f;
     [Tooltip("Objets actives quand la flamme est allumee.")]
     public GameObject[] activateWhenLitTargets = Array.Empty<GameObject>();
     [SerializeField, Tooltip("Configure cette flamme comme source de reveal/dissolve de monde.")]
@@ -126,6 +132,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private MeshRenderer influenceSphereRenderer;
     private Material runtimeInfluenceSphereMaterial;
     private MaterialPropertyBlock influenceSphereProperties;
+    private Light[] flameLights = Array.Empty<Light>();
     private NetworkVariable<bool> netIsLit = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private const string InfluenceSphereVisualName = "LitInfluenceSphereVisual";
     private static readonly int baseColorPropertyId = Shader.PropertyToID("_BaseColor");
@@ -232,7 +239,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         chargeCostToLight = Mathf.Max(0, markerChargeCost);
         EnsureInteractionTrigger();
         EnsureLitInfluence();
-        litInfluence.SetRadius(markerInfluenceRadius);
+        SyncInfluenceRangeToLights();
         ApplyVisuals(!Application.isPlaying);
     }
 
@@ -297,6 +304,9 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         {
             flameLight = GetComponentInChildren<Light>(true);
         }
+
+        flameLights = GetComponentsInChildren<Light>(true);
+        ApplyConfiguredPrimaryLightRange();
 
         if (flameLightReceiver == null)
         {
@@ -426,6 +436,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
         ApplyLitActivationTargets();
         UpdateFlameVisuals(immediate);
+        SyncInfluenceRangeToLights();
         UpdateInfluenceSphereVisual();
     }
 
@@ -682,7 +693,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        if (!IsCharacterWithinInteractDistance(character.transform))
+        if (!IsCharacterWithinInteractionDistance(character.transform))
         {
             return;
         }
@@ -724,6 +735,25 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         // portee d'Interact/torche). Reutiliser la meme regle que la detection
         // evite un refus silencieux apres avoir valide le bouton Munin.
         if (controller == null || !CanBeDetectedBy(controller) || !IsCharacterInRange(character.transform))
+        {
+            return false;
+        }
+
+        currentCharacter = character;
+        StartInteraction();
+        return true;
+    }
+
+    /// <summary>Starts a nearby direct player interaction without an action-choice UI.</summary>
+    public bool TryStartDirectInteraction(GameObject character)
+    {
+        if (character == null || interactionInProgress)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
+        if (controller == null || !CanBeDetectedBy(controller) || !IsCharacterWithinInteractionDistance(character.transform))
         {
             return false;
         }
@@ -938,34 +968,14 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private IEnumerator HandleInteractionRoutine()
     {
         interactionInProgress = true;
-        MuninController munin = ResolveMuninController();
-        if (munin != null)
+        yield return null;
+        if (IsNetworked() && !IsServer)
         {
-            if (munin.IsMoving)
-            {
-                interactionInProgress = false;
-                interactionRoutine = null;
-                yield break;
-            }
-
-            // Eteindre reste utile pour le noir, les Ombres et la narration, mais ne
-            // rembourse jamais Munin. Seul l'allumage consomme la valeur configuree.
-            int requiredCharges = GetChargeCostForTargetState(!isLit);
-            if (requiredCharges > 0 && !munin.TryConsumeCharge(requiredCharges))
-            {
-                interactionInProgress = false;
-                interactionRoutine = null;
-                yield break;
-            }
-
-            activeMuninController = munin;
-            Vector3 targetPosition = ResolveMuninTargetPosition();
-            yield return munin.MoveToWorldAndBack(targetPosition, ToggleFromInteraction);
-            activeMuninController = null;
+            RequestInteractServerRpc();
         }
         else
         {
-            ToggleFromInteraction();
+            TryToggleWithTorchPoints(currentCharacter);
         }
 
         interactionInProgress = false;
@@ -1032,7 +1042,12 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             ResolveInteractionDistanceForCharacter(characterRoot));
     }
 
-    private bool IsCharacterWithinInteractDistance(Transform characterRoot)
+    /// <summary>
+    /// The strict range shared by interaction and the runtime outline. The
+    /// physics trigger may be wider, because it is used only for reliable
+    /// enter/exit tracking.
+    /// </summary>
+    public bool IsCharacterWithinInteractionDistance(Transform characterRoot)
     {
         if (characterRoot == null)
         {
@@ -1083,6 +1098,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private void UpdateLitInfluence(bool force)
     {
         EnsureLitInfluence();
+        SyncInfluenceRangeToLights();
         LitInfluenceSourceKind sourceKind = ancientFlame
             ? LitInfluenceSourceKind.AncientFlame
             : LitInfluenceSourceKind.Flame;
@@ -1123,31 +1139,32 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private void RequestInteractServerRpc(RpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!IsCharacterWithinInteractionDistance(playerRoot))
         {
             return;
         }
 
-        SetLitServer(!isLit);
+        TryToggleWithTorchPoints(playerRoot != null ? playerRoot.gameObject : null);
     }
 
-    private void ToggleFromInteraction()
+    private bool TryToggleWithTorchPoints(GameObject character)
     {
-        if (IsNetworked())
+        if (!isLit)
         {
-            if (IsServer)
+            SquadCharacterController controller = character != null
+                ? character.GetComponent<SquadCharacterController>()
+                : null;
+            if (controller == null || !controller.TrySpendFlamePoints(TorchPointCostToLight))
             {
-                SetLitServer(!isLit);
+                if (!IsNetworked() || IsServer)
+                    InfoBoxUI.TryShow($"Il faut {TorchPointCostToLight} points de torche pour allumer cette flamme.");
+                return false;
             }
-            else
-            {
-                RequestInteractServerRpc();
-            }
-
-            return;
         }
 
-        SetLitInternal(!isLit);
+        if (IsNetworked()) SetLitServer(!isLit);
+        else SetLitInternal(!isLit);
+        return true;
     }
 
     private MuninController ResolveMuninController()
@@ -1244,6 +1261,38 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         if (litInfluence == null)
         {
             litInfluence = new LitInfluenceSource(6f);
+        }
+    }
+
+    private void ApplyConfiguredPrimaryLightRange()
+    {
+        if (overridePrimaryLightRange && flameLight != null)
+        {
+            flameLight.range = Mathf.Max(0.1f, primaryLightRange);
+        }
+    }
+
+    private void SyncInfluenceRangeToLights()
+    {
+        EnsureLitInfluence();
+        if (flameLights == null || flameLights.Length == 0)
+        {
+            return;
+        }
+
+        float range = 0f;
+        for (int i = 0; i < flameLights.Length; i++)
+        {
+            Light light = flameLights[i];
+            if (light != null)
+            {
+                range = Mathf.Max(range, light.range);
+            }
+        }
+
+        if (range > 0f)
+        {
+            litInfluence.SetRadius(range);
         }
     }
 
@@ -1576,10 +1625,13 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private void OnValidate()
     {
         chargeCostToLight = Mathf.Max(0, chargeCostToLight);
+        primaryLightRange = Mathf.Max(0.1f, primaryLightRange);
         influenceSphereAlpha = Mathf.Clamp01(influenceSphereAlpha);
         EnsureId();
         EnsureInteractionTrigger();
         EnsureLitInfluence();
+        ResolvePresentationReferences();
+        SyncInfluenceRangeToLights();
         if (!Application.isPlaying)
         {
             ApplyVisuals(true);

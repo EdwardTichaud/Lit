@@ -247,7 +247,10 @@ public class NetworkCharacterInput : NetworkBehaviour
         Flame flame = FindFlameInRange();
         if (flame != null)
         {
-            ShowFlameChoice(flame);
+            if (LocalInputRouter.TryConsumeToggleTorch())
+            {
+                flame.TryStartDirectInteraction(controller != null ? controller.gameObject : gameObject);
+            }
             return;
         }
 

@@ -19553,7 +19553,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 11.502075
-  m_Range: 6.1214123
+  m_Range: 14
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -19867,6 +19867,8 @@ MonoBehaviour:
   flameId: scene-flame:Model_Flame_WallTorch:B4F48E56
   flameObject: {fileID: 0}
   flameLight: {fileID: 4464983121657690211}
+  overridePrimaryLightRange: 0
+  primaryLightRange: 6
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
@@ -19882,7 +19884,7 @@ MonoBehaviour:
   interactionTrigger: {fileID: 7202045463180924218}
   litInfluence:
     enabled: 1
-    radius: 6
+    radius: 14
     transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:

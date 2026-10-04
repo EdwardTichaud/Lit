@@ -4512,6 +4512,7 @@ MonoBehaviour:
   ContractCapsuleCollider: {fileID: 8170008773839381790}
   ContractNavigationAgent: {fileID: 8100414059305065397}
   ContractAnimator: {fileID: 327572561411875199}
+  requiresFlameInfluence: 1
   LocomotionNavigationAgent: {fileID: 8100414059305065397}
   NavigationNavigationAgent: {fileID: 8100414059305065397}
   PhysicsNavigationAgent: {fileID: 8100414059305065397}
