@@ -18,7 +18,6 @@ public sealed class MuninGameplayRemovalTests
 
     [TestCase("Assets/Prefabs/Model_Flame_WallTorch.prefab")]
     [TestCase("Assets/Prefabs/Model_Flame_Brazier.prefab")]
-    [TestCase("Assets/Interactive/Flame/Interactive_Flame_Ancient.prefab")]
     public void Flames_UseNearbyDirectInteraction(string path)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);

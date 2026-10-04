@@ -14,8 +14,8 @@ public sealed class SceneMarkerEditor : Editor
     private SerializedProperty flamePrefabProperty;
     private SerializedProperty flameStartsLitProperty;
     private SerializedProperty flameInteractionRadiusProperty;
-    private SerializedProperty flameInfluenceRadiusProperty;
-    private SerializedProperty flameChargeCostProperty;
+    private SerializedProperty flameLightAndInfluenceRadiusProperty;
+    private SerializedProperty flameTorchPointCostProperty;
     private SerializedProperty flameIdOverrideProperty;
 
     private void OnEnable()
@@ -27,14 +27,15 @@ public sealed class SceneMarkerEditor : Editor
         flamePrefabProperty = serializedObject.FindProperty("flamePrefab");
         flameStartsLitProperty = serializedObject.FindProperty("flameStartsLit");
         flameInteractionRadiusProperty = serializedObject.FindProperty("flameInteractionRadius");
-        flameInfluenceRadiusProperty = serializedObject.FindProperty("flameInfluenceRadius");
-        flameChargeCostProperty = serializedObject.FindProperty("flameChargeCost");
+        flameLightAndInfluenceRadiusProperty = serializedObject.FindProperty("flameLightAndInfluenceRadius");
+        flameTorchPointCostProperty = serializedObject.FindProperty("flameTorchPointCost");
         flameIdOverrideProperty = serializedObject.FindProperty("flameIdOverride");
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
+        SceneMarker marker = (SceneMarker)target;
         EditorGUILayout.PropertyField(assetTypeProperty, new GUIContent("Type"));
         SceneMarker.MarkerAssetType assetType = (SceneMarker.MarkerAssetType)assetTypeProperty.enumValueIndex;
         if (assetType == SceneMarker.MarkerAssetType.Item)
@@ -50,9 +51,17 @@ public sealed class SceneMarkerEditor : Editor
             EditorGUILayout.PropertyField(flamePrefabProperty, new GUIContent("Flame Prefab"));
             EditorGUILayout.PropertyField(flameStartsLitProperty, new GUIContent("Allumee au depart"));
             EditorGUILayout.PropertyField(flameInteractionRadiusProperty, new GUIContent("Rayon d'interaction"));
-            EditorGUILayout.PropertyField(flameInfluenceRadiusProperty, new GUIContent("Rayon d'influence"));
-            EditorGUILayout.PropertyField(flameChargeCostProperty, new GUIContent("Cout Munin"));
+            EditorGUILayout.PropertyField(flameLightAndInfluenceRadiusProperty, new GUIContent("Rayon lumière et influence"));
+            EditorGUILayout.PropertyField(flameTorchPointCostProperty, new GUIContent("Coût de torche"));
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(flameIdOverrideProperty, new GUIContent("ID de sauvegarde"));
+            if (GUILayout.Button("Regénérer", GUILayout.Width(88f)))
+            {
+                marker.RegenerateFlameSaveId();
+                EditorUtility.SetDirty(marker);
+                serializedObject.Update();
+            }
+            EditorGUILayout.EndHorizontal();
         }
         else
         {
@@ -60,7 +69,6 @@ public sealed class SceneMarkerEditor : Editor
         }
         serializedObject.ApplyModifiedProperties();
 
-        SceneMarker marker = (SceneMarker)target;
         if (marker.UsesItem)
         {
             EditorGUILayout.HelpBox(marker.Item == null
@@ -81,7 +89,7 @@ public sealed class SceneMarkerEditor : Editor
         {
             EditorGUILayout.HelpBox(marker.FlamePrefab == null
                 ? "Assigne un prefab contenant un composant Flame."
-                : "Bake in Scene instancie et configure la Flame avec l'etat, les rayons, le cout Munin et l'ID du marker.",
+                : "Bake in Scene configure l'état, le coût de torche, l'ID aléatoire et un rayon commun aux Lights et à l'influence.",
                 marker.FlamePrefab == null ? MessageType.Info : MessageType.None);
             DrawBakeButton(marker);
         }

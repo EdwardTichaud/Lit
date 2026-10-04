@@ -44,6 +44,19 @@ public class FlameLightReceiver : MonoBehaviour
     public SquadCharacterController Owner => owner;
     public bool ControlsShadowing => configureFlameShadowing;
     public Color CurrentFlameColor => targetLight != null ? targetLight.color : revealColor;
+
+    /// <summary>Uses this component only as a world-reveal source; HDRP profiles own the artistic light setup.</summary>
+    public void ConfigureAsWorldRevealSource(Light light, Color color)
+    {
+        targetLight = light;
+        searchInChildren = false;
+        configureFlameShadowing = false;
+        registerAsWorldRevealSource = true;
+        worldSourceCountsAsActive = true;
+        revealColor = color;
+        CacheLight();
+        ApplyRevealColor();
+    }
     public Vector3 FlameWorldPosition => targetLight != null ? targetLight.transform.position : transform.position;
 
     private void Awake()

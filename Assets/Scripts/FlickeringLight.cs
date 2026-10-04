@@ -53,6 +53,34 @@ public class FlickeringLight : MonoBehaviour
     private HDAdditionalLightData targetHdLight;
     private FlameLightReceiver flameLightReceiver;
     private float nextRuntimeUpdateTime;
+    private bool hasExternalRange;
+    private float externalRange;
+
+    /// <summary>Locks the range to its owning Flame while retaining intensity, color and position flicker.</summary>
+    public void SetExternalRange(float value)
+    {
+        hasExternalRange = true;
+        externalRange = Mathf.Max(0.01f, value);
+        if (targetLight != null)
+            targetLight.range = externalRange;
+    }
+
+    public void ClearExternalRange() => hasExternalRange = false;
+
+    /// <summary>Configures this component as the intensity/color flicker for one Flame-owned light.</summary>
+    public void ConfigureForFlame(Light light)
+    {
+        targetLight = light;
+        searchInChildren = false;
+        useCurrentLightAsBase = true;
+        syncFlameReceiverColor = false;
+        deferShadowingToFlameReceiver = true;
+        configureCandleShadowing = false;
+        hasCachedState = false;
+        CacheLight();
+        CacheInitialState();
+        InitializeNoiseSeeds();
+    }
 
     private float noiseSeedA;
     private float noiseSeedB;
@@ -258,7 +286,9 @@ public class FlickeringLight : MonoBehaviour
         Color drivenEmberColor = Color.Lerp(emberColor, drivenFlameColor, 0.35f);
 
         targetLight.intensity = Mathf.Max(0.01f, baseIntensity * (1f + (flicker * intensityVariation)));
-        targetLight.range = Mathf.Max(0.01f, baseRange * (1f + ((primary * 0.6f + secondary * 0.4f) * rangeVariation)));
+        targetLight.range = hasExternalRange
+            ? externalRange
+            : Mathf.Max(0.01f, baseRange * (1f + ((primary * 0.6f + secondary * 0.4f) * rangeVariation)));
         targetLight.color = Color.Lerp(drivenEmberColor, drivenFlameColor, Mathf.Lerp(0.5f, normalizedHeat, colorVariation));
 
         if (!animateLocalPosition)

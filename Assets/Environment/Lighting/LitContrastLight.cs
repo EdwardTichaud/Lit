@@ -49,6 +49,15 @@ public sealed class LitContrastLight : MonoBehaviour
     public Role LightRole => role;
     public bool BloomEligible => bloomEligible;
 
+    /// <summary>Sets the range authored by a Flame/SceneMarker while preserving this light profile.</summary>
+    public void SetRangeFromFlame(float value)
+    {
+        range = Mathf.Max(0.01f, value);
+        ResolveComponents();
+        if (cachedLight != null)
+            cachedLight.range = range;
+    }
+
     private void Reset() => ApplyRolePreset();
     private void OnEnable() => ApplySettings();
     private void OnValidate() => ApplySettings();

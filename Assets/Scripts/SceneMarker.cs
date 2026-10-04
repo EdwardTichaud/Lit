@@ -35,9 +35,11 @@ public sealed class SceneMarker : MonoBehaviour
     [SerializeField] private GameObject flamePrefab;
     [SerializeField] private bool flameStartsLit;
     [SerializeField, Min(0.1f)] private float flameInteractionRadius = 2f;
-    [SerializeField, Min(0f)] private float flameInfluenceRadius = 6f;
-    [SerializeField, Min(0)] private int flameChargeCost = 1;
-    [SerializeField, Tooltip("Identifiant de sauvegarde explicite. Vide : identifiant stable derive du marker.")]
+    [SerializeField, Min(0.1f), Tooltip("Rayon unique applique a l'influence de gameplay et a toutes les Lights de la Flame.")]
+    private float flameLightAndInfluenceRadius = 6f;
+    [SerializeField, Min(0), Tooltip("Points de torche consommes a l'allumage. 0 utilise 10 pour une Flame et 20 pour une Ancient Flame.")]
+    private int flameTorchPointCost;
+    [SerializeField, Tooltip("Identifiant de sauvegarde aleatoire et stable de cette Flame.")]
     private string flameIdOverride;
     [SerializeField, HideInInspector] private string markerId;
     [SerializeField, HideInInspector] private GameObject bakedCharacterInstance;
@@ -131,6 +133,8 @@ public sealed class SceneMarker : MonoBehaviour
     {
         assetType = ancient ? MarkerAssetType.AncientFlame : MarkerAssetType.Flame;
         flamePrefab = prefab;
+        flameTorchPointCost = ancient ? 20 : 10;
+        EnsureFlameSaveId();
     }
 
     public void SetBakedFlameInstance(GameObject instance)
@@ -141,9 +145,36 @@ public sealed class SceneMarker : MonoBehaviour
     public void ConfigureBakedFlame(Flame flame)
     {
         if (flame == null) return;
-        string persistentId = string.IsNullOrWhiteSpace(flameIdOverride) ? markerId : flameIdOverride;
+        EnsureFlameSaveId();
+        string persistentId = flameIdOverride;
         flame.ConfigureFromSceneMarker(persistentId, UsesAncientFlame, flameStartsLit,
-            flameInteractionRadius, flameInfluenceRadius, flameChargeCost);
+            flameInteractionRadius, flameLightAndInfluenceRadius, ResolveFlameTorchPointCost());
+    }
+
+    public void RegenerateFlameSaveId()
+    {
+        flameIdOverride = CreateRandomFlameSaveId();
+    }
+
+    private int ResolveFlameTorchPointCost()
+    {
+        return flameTorchPointCost > 0 ? flameTorchPointCost : UsesAncientFlame ? 20 : 10;
+    }
+
+    private bool EnsureFlameSaveId()
+    {
+        if (UsesFlame && string.IsNullOrWhiteSpace(flameIdOverride))
+        {
+            flameIdOverride = CreateRandomFlameSaveId();
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string CreateRandomFlameSaveId()
+    {
+        return "flame-" + Guid.NewGuid().ToString("N");
     }
 
     public GameObject ResolvePreviewPrefab()
@@ -500,8 +531,14 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
+        bool generatedFlameSaveId = EnsureFlameSaveId();
+        flameInteractionRadius = Mathf.Max(0.1f, flameInteractionRadius);
+        flameLightAndInfluenceRadius = Mathf.Max(0.1f, flameLightAndInfluenceRadius);
+        flameTorchPointCost = Mathf.Max(0, flameTorchPointCost);
+
         string generatedId = PersistentIdUtility.GenerateSceneObjectId(gameObject);
-        if (!string.IsNullOrWhiteSpace(generatedId) && !string.Equals(markerId, generatedId, StringComparison.Ordinal))
+        if (generatedFlameSaveId ||
+            (!string.IsNullOrWhiteSpace(generatedId) && !string.Equals(markerId, generatedId, StringComparison.Ordinal)))
         {
             markerId = generatedId;
             EditorUtility.SetDirty(this);

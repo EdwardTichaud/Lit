@@ -22,7 +22,6 @@ public static class MuninGameplayRemoval
     {
         "Assets/Prefabs/Model_Flame_WallTorch.prefab",
         "Assets/Prefabs/Model_Flame_Brazier.prefab",
-        "Assets/Interactive/Flame/Interactive_Flame_Ancient.prefab",
         "Assets/Environment/Castle/Balconies/Balcony_1.prefab"
     };
 

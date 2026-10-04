@@ -10,8 +10,8 @@ using UnityEngine.SceneManagement;
 public static class LitAtmosphereSetup
 {
     private const string CoreScenePath = "Assets/Scenes/District_1/District_1_Core.unity";
-    private const string CommonFlamePath = "Assets/Interactive/Flame/Light_Flame_Fire_Common.prefab";
-    private const string AncientFlamePath = "Assets/Interactive/Flame/Light_Flame_Fire_Ancient.prefab";
+    private const string CommonFlamePath = "Assets/Prefabs/Model_Flame_WallTorch.prefab";
+    private const string AncientFlamePath = "Assets/Prefabs/Model_Flame_Brazier.prefab";
     private const string MaterialFolder = "Assets/Environment/Lighting/Materials";
     private const string RequestPath = "Library/LitAtmosphereRepair.request";
     private const string ResultPath = "Library/LitAtmosphereRepair.result";

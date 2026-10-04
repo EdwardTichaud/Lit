@@ -315,7 +315,7 @@ public static class BelmontCycleSetup
         material.SetColor("_EmissionColor", flame.flameLight.color * (ancient ? 3f : 2f));
         visual.GetComponent<Renderer>().sharedMaterial = material;
         flame.activateWhenLitTargets = new[] { visual };
-        flame.ConfigureFromSceneMarker(id, ancient, false, 2f, ancient ? 12f : 7f, ancient ? 2 : 1);
+        flame.ConfigureFromSceneMarker(id, ancient, false, 2f, ancient ? 12f : 7f, ancient ? 20 : 10);
         return flame;
     }
 

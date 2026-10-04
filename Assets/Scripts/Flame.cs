@@ -31,7 +31,9 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     public int ChargeCostToLight => ancientFlame
         ? Mathf.Max(2, chargeCostToLight)
         : Mathf.Max(0, chargeCostToLight);
-    public int TorchPointCostToLight => ancientFlame ? 20 : 10;
+    public int TorchPointCostToLight => torchPointCostToLight > 0
+        ? torchPointCostToLight
+        : ancientFlame ? 20 : 10;
     public IReadOnlyList<GameObject> CommonLightActivationOrder => commonLightActivationOrder;
     public Color FlameColor => LitFlameColorUtility.ResolveFlameColor(flameLight, flameObject, Color.white);
 
@@ -115,6 +117,8 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private Vector3 muninTargetOffset = Vector3.zero;
     [SerializeField, Min(0), Tooltip("Charges Munin consommees uniquement pour allumer cette flamme. L'extinction ne rend jamais de charge.")]
     private int chargeCostToLight = 1;
+    [SerializeField, Min(0), Tooltip("Points de torche consommes pour allumer. Zero conserve le cout par defaut : 10 Flame, 20 Ancient Flame.")]
+    private int torchPointCostToLight;
 
     private readonly List<ParticleSystem> flameParticleSystems = new List<ParticleSystem>();
     private readonly Dictionary<ParticleSystem, EmissionBase> emissionBases = new Dictionary<ParticleSystem, EmissionBase>();
@@ -230,15 +234,19 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     /// <summary>Applies the authoring values stored on a SceneMarker during an editor bake.</summary>
     public void ConfigureFromSceneMarker(string persistentId, bool isAncient, bool startsLit,
-        float markerInteractionRadius, float markerInfluenceRadius, int markerChargeCost)
+        float markerInteractionRadius, float markerLightAndInfluenceRadius, int markerTorchPointCost)
     {
         flameId = persistentId ?? string.Empty;
         ancientFlame = isAncient;
         isLit = startsLit;
         interactionRadius = Mathf.Max(0.1f, markerInteractionRadius);
-        chargeCostToLight = Mathf.Max(0, markerChargeCost);
+        torchPointCostToLight = Mathf.Max(0, markerTorchPointCost);
+        overridePrimaryLightRange = true;
+        primaryLightRange = Mathf.Max(0.1f, markerLightAndInfluenceRadius);
+        ResolvePresentationReferences();
         EnsureInteractionTrigger();
         EnsureLitInfluence();
+        litInfluence.SetRadius(primaryLightRange);
         SyncInfluenceRangeToLights();
         ApplyVisuals(!Application.isPlaying);
     }
@@ -429,9 +437,15 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     {
         ResolvePresentationReferences();
 
-        if (flameLight != null)
+        if (flameLights == null || flameLights.Length == 0)
         {
-            flameLight.enabled = IsEffectivelyLit;
+            flameLights = GetComponentsInChildren<Light>(true);
+        }
+
+        for (int i = 0; i < flameLights.Length; i++)
+        {
+            if (flameLights[i] != null)
+                flameLights[i].enabled = IsEffectivelyLit;
         }
 
         ApplyLitActivationTargets();
@@ -980,6 +994,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
         interactionInProgress = false;
         interactionRoutine = null;
+        yield break;
     }
 
     private GameObject ResolveCurrentInteractionCharacter()
@@ -1266,9 +1281,27 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void ApplyConfiguredPrimaryLightRange()
     {
-        if (overridePrimaryLightRange && flameLight != null)
+        if (!overridePrimaryLightRange)
         {
-            flameLight.range = Mathf.Max(0.1f, primaryLightRange);
+            foreach (FlickeringLight flicker in GetComponentsInChildren<FlickeringLight>(true))
+                flicker.ClearExternalRange();
+            return;
+        }
+
+        float range = Mathf.Max(0.1f, primaryLightRange);
+        if (flameLights == null || flameLights.Length == 0)
+            flameLights = GetComponentsInChildren<Light>(true);
+
+        foreach (LitContrastLight profile in GetComponentsInChildren<LitContrastLight>(true))
+            profile.SetRangeFromFlame(range);
+
+        foreach (FlickeringLight flicker in GetComponentsInChildren<FlickeringLight>(true))
+            flicker.SetExternalRange(range);
+
+        for (int i = 0; i < flameLights.Length; i++)
+        {
+            if (flameLights[i] != null)
+                flameLights[i].range = range;
         }
     }
 
@@ -1277,6 +1310,12 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         EnsureLitInfluence();
         if (flameLights == null || flameLights.Length == 0)
         {
+            return;
+        }
+
+        if (overridePrimaryLightRange)
+        {
+            litInfluence.SetRadius(Mathf.Max(0.1f, primaryLightRange));
             return;
         }
 
@@ -1625,6 +1664,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private void OnValidate()
     {
         chargeCostToLight = Mathf.Max(0, chargeCostToLight);
+        torchPointCostToLight = Mathf.Max(0, torchPointCostToLight);
         primaryLightRange = Mathf.Max(0.1f, primaryLightRange);
         influenceSphereAlpha = Mathf.Clamp01(influenceSphereAlpha);
         EnsureId();

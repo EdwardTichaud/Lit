@@ -15444,6 +15444,10 @@ PrefabInstance:
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
       value: 1504774135
       objectReference: {fileID: 0}
+    - target: {fileID: 4464983121657690211, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: m_Range
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 5542233510125878911, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -15490,7 +15494,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
       propertyPath: flameId
-      value: GlobalObjectId_V1-2-87918142a1a790a45b785df504549fef-859785587-0
+      value: flame-410d66b4e8e4407ead26a48defd2d12f
+      objectReference: {fileID: 0}
+    - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: litInfluence.radius
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: torchPointCostToLight
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8355070776308582647, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
+      propertyPath: overridePrimaryLightRange
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -30603,9 +30619,9 @@ MonoBehaviour:
   flamePrefab: {fileID: 5592833885186605095, guid: bcd469d1332e0f146bdcae220775ad22, type: 3}
   flameStartsLit: 0
   flameInteractionRadius: 2
-  flameInfluenceRadius: 6
-  flameChargeCost: 1
-  flameIdOverride: 
+  flameLightAndInfluenceRadius: 6
+  flameTorchPointCost: 0
+  flameIdOverride: flame-410d66b4e8e4407ead26a48defd2d12f
   markerId: GlobalObjectId_V1-2-87918142a1a790a45b785df504549fef-859785587-0
   bakedCharacterInstance: {fileID: 0}
   bakedFlameInstance: {fileID: 531619727}
@@ -61055,6 +61071,8 @@ MonoBehaviour:
   flameId: district1.belmont.first_ancient
   flameObject: {fileID: 0}
   flameLight: {fileID: 1401516292}
+  overridePrimaryLightRange: 0
+  primaryLightRange: 6
   activateWhenLitTargets:
   - {fileID: 0}
   configureRevealSource: 1
@@ -61071,7 +61089,7 @@ MonoBehaviour:
   interactionTrigger: {fileID: 1741236593}
   litInfluence:
     enabled: 1
-    radius: 12
+    radius: 5.9149814
     transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:
@@ -61093,6 +61111,7 @@ MonoBehaviour:
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
   chargeCostToLight: 0
+  torchPointCostToLight: 0
 --- !u!135 &1741236593
 SphereCollider:
   m_ObjectHideFlags: 0

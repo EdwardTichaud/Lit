@@ -15,9 +15,8 @@ public sealed class LitFlameLightingTests
         "Assets/Scenes/District_5.unity"
     };
 
-    [TestCase("Assets/Interactive/Flame/Light_Flame_Fire_Common.prefab", 1)]
-    [TestCase("Assets/Interactive/Flame/Light_Flame_Fire_Ancient.prefab", 2)]
-    [TestCase("Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab", 1)]
+    [TestCase("Assets/Prefabs/Model_Flame_WallTorch.prefab", 1)]
+    [TestCase("Assets/Prefabs/Model_Flame_Brazier.prefab", 2)]
     public void ContrastLightPrefabs_ContainExpectedProfiles(string path, int minimumProfiles)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -51,8 +50,8 @@ public sealed class LitFlameLightingTests
         }
     }
 
-    [TestCase("Assets/Interactive/Flame/Light_Flame_Fire_Common.prefab", LitAtmosphereParticles.Profile.FlameEmbers)]
-    [TestCase("Assets/Interactive/Flame/Light_Flame_Fire_Ancient.prefab", LitAtmosphereParticles.Profile.AncientFlameMix)]
+    [TestCase("Assets/Prefabs/Model_Flame_WallTorch.prefab", LitAtmosphereParticles.Profile.FlameEmbers)]
+    [TestCase("Assets/Prefabs/Model_Flame_Brazier.prefab", LitAtmosphereParticles.Profile.AncientFlameMix)]
     public void FlameAtmospherePrefabs_HaveExplicitValidParticleSystems(string path, LitAtmosphereParticles.Profile expectedProfile)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);

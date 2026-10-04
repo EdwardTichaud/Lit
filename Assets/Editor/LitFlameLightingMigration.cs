@@ -16,9 +16,8 @@ public static class LitFlameLightingMigration
 
     private static readonly string[] PrefabPaths =
     {
-        "Assets/Interactive/Flame/Light_Flame_Fire_Common.prefab",
-        "Assets/Interactive/Flame/Light_Flame_Fire_Ancient.prefab",
-        "Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab"
+        "Assets/Prefabs/Model_Flame_WallTorch.prefab",
+        "Assets/Prefabs/Model_Flame_Brazier.prefab"
     };
 
     [MenuItem("Lit/Lighting/Migrate Flame Contrast Lights")]
@@ -50,7 +49,6 @@ public static class LitFlameLightingMigration
         var failures = new List<string>();
         ValidatePrefab(PrefabPaths[0], 1, failures);
         ValidatePrefab(PrefabPaths[1], 2, failures);
-        ValidatePrefab(PrefabPaths[2], 1, failures);
         if (failures.Count > 0)
         {
             Debug.LogError("[Lit Lighting] Validation failed:\n" + string.Join("\n", failures));
