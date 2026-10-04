@@ -87,16 +87,22 @@ public static class EtienneCycleValidation
             if (brake == null || brake.cycle != controller || brake.boss == null || brake.boss.Enemy != boss || !HasVisibleOutline(brake.gameObject))
                 issues.Add("Frein absent, mal relié ou sans outline visible.");
             var flames = env.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Flame>(true)).ToArray();
-            if (flames.Length != 3 || flames.Any(f => !new SerializedObject(f).FindProperty("isLit").boolValue || new SerializedObject(f).FindProperty("ancientFlame").boolValue || f.flameLight == null))
-                issues.Add("Trois Flames communes allumées avec lumière sont requises.");
+            var allCycleFlames = objects.Select(g => g.GetComponent<Flame>()).Where(f => f != null).ToArray();
+            if (allCycleFlames.Any(f => new SerializedObject(f).FindProperty("isLit").boolValue))
+                issues.Add("Toutes les Flames du cycle doivent commencer eteintes.");
+            if (allCycleFlames.Any(f => string.IsNullOrWhiteSpace(f.FlameId)) ||
+                allCycleFlames.Select(f => f.FlameId).Distinct().Count() != allCycleFlames.Length)
+                issues.Add("Les identifiants persistants des Flames doivent etre uniques et non vides.");
+            if (flames.Length != 3 || flames.Any(f => new SerializedObject(f).FindProperty("isLit").boolValue || new SerializedObject(f).FindProperty("ancientFlame").boolValue || f.flameLight == null))
+                issues.Add("Trois Flames communes initialement éteintes avec lumière sont requises.");
             foreach (Transform target in documents.Select(d => d.transform).Concat(new[]{ghost != null ? ghost.transform : null, brake != null ? brake.transform : null}).Where(t => t != null))
                 if (!flames.Any(f => {
                     var state = new SerializedObject(f);
                     var influence = state.FindProperty("litInfluence");
                     Vector3 center = f.transform.TransformPoint(influence.FindPropertyRelative("center").vector3Value);
-                    return state.FindProperty("isLit").boolValue && influence.FindPropertyRelative("enabled").boolValue &&
+                    return influence.FindPropertyRelative("enabled").boolValue &&
                         Vector3.Distance(target.position, center) <= influence.FindPropertyRelative("radius").floatValue;
-                })) issues.Add("Interaction hors de l'influence d'une Flame allumée : " + target.name);
+                })) issues.Add("Interaction hors de la couverture potentielle des Flames : " + target.name);
             var gate = env.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<CycleActivationId>(true)).SingleOrDefault(a => a.activationId == "district1.etienne.flooded_conduits_access");
             if (gate == null || gate.target == null || gate.activeWhenSet) issues.Add("La sortie persistante doit s'effacer après la récompense.");
             var memory = controller.sequences.FirstOrDefault(s => s.id == "last_relief");

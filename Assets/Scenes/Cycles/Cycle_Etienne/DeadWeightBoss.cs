@@ -14,7 +14,7 @@ public sealed class DeadWeightBoss : BossEncounterBehaviour
     private CharacterInfo observedHealth;
     private bool ownsSuspension;
 
-    private double Now => IsSpawned ? NetworkManager.ServerTime.Time : Time.timeAsDouble;
+    private double Now => EncounterTime;
     public bool IsBrakeHolding => IsBossEngaged && Now < (IsSpawned ? stunUntil.Value : offlineStunUntil);
     public double BrakeCooldownRemaining => System.Math.Max(0, (IsSpawned ? brakeReadyAt.Value : offlineBrakeReadyAt) - Now);
 
@@ -64,7 +64,7 @@ public sealed class DeadWeightBoss : BossEncounterBehaviour
 
     public bool TryApplyEmergencyBrake()
     {
-        if (!Authority || !IsBossEngaged || BrakeCooldownRemaining > 0 || observedHealth == null || observedHealth.IsDead)
+        if (!Authority || !IsBossEngaged || Enemy == null || Enemy.IsFlameDormant || BrakeCooldownRemaining > 0 || observedHealth == null || observedHealth.IsDead)
             return false;
         double stop = Now + brakeStunSeconds, ready = Now + Mathf.Max(brakeStunSeconds, brakeCooldownSeconds);
         if (IsSpawned) { stunUntil.Value = stop; brakeReadyAt.Value = ready; }

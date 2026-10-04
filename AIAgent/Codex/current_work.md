@@ -12,11 +12,20 @@ Les Flames fixes, Ancient Flames et la torche Lucian utilisent `LitContrastLight
 Les Flames sont chaudes, courtes et ombrées ; les Ancient Flames combinent un
 coeur chaud et une aura cyan verticale. La torche reste à 5 m, identique à son
 rayon d'influence. Le `Castle_Volume` porte maintenant la poussière glacée
-runtime, et les Flames génèrent des braises discrètes. La brume du château est
+avec des systèmes de particules sérialisés, et les Flames génèrent des braises
+uniquement lorsqu’elles sont allumées. La brume du château est
 resserrée à 62 m avec un libre parcours moyen de 28 m. Les contrôles de volume,
 densité et taille des particules sont exposés dans l'Inspector. Valider en Play
 les activations Flame/Ancient Flame, le rendu de poussière et la torche après
 équiper/ranger.
+
+## Munin retiré du gameplay (2026-10-04)
+
+Munin n’est plus présent sur les prefabs joueur et son interface est retirée des
+scènes de démarrage. Les Flames et Ancient Flames s’allument avec `Interact`, à
+proximité, sans charge ni compagnon. Munin reste un élément de lore : une future
+fusion de Lucian et Munin, inspirée de *Shaman King*, pourra servir d’action
+spécifique, sans mécanique implémentée pour le moment.
 ## Eclairage de contraste du château (2026-10-04)
 
 `Lit_ContrastLight` est un prefab HDRP réutilisable avec les préréglages

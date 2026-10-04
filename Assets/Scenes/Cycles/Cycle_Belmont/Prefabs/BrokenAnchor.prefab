@@ -14964,6 +14964,7 @@ MonoBehaviour:
   ContractCapsuleCollider: {fileID: 0}
   ContractNavigationAgent: {fileID: 0}
   ContractAnimator: {fileID: 4254147237030291728}
+  requiresFlameInfluence: 1
   LocomotionNavigationAgent: {fileID: 0}
   NavigationNavigationAgent: {fileID: 0}
   PhysicsNavigationAgent: {fileID: 0}

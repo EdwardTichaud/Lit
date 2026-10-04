@@ -49,7 +49,9 @@ public sealed class AncientFlameEnemyBlocker : MonoBehaviour
     private void EvaluateBlockState()
     {
         nextRefreshTime = Time.unscaledTime + refreshInterval;
-        ApplyBlockState(!ignoreEnemySuppression && HasNearbyLivingEnemy());
+        // A lit Flame must not revoke the very influence keeping nearby enemies awake.
+        // Retain this component for serialized compatibility, but retire proximity suppression.
+        ApplyBlockState(false);
     }
 
     private bool HasNearbyLivingEnemy()

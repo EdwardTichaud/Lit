@@ -17,6 +17,7 @@ public sealed partial class CombatHealthThresholdController
     private SkillSO attackQteSkill;
     private int attackQteActionId;
     private double attackReactionOpenedAt, dodgeDeadline, counterDeadline;
+    private double reactionClock;
     private TimeManager reactionTimeManager;
     private TimeManager.TimeRequestHandle reactionSlowMotionHandle;
     private readonly System.Collections.Generic.HashSet<AnimationClip> legacyReactionClips =
@@ -44,7 +45,7 @@ public sealed partial class CombatHealthThresholdController
         var network = Unity.Netcode.NetworkManager.Singleton;
         if (network != null && network.IsListening && !network.IsServer) return;
         if (!isActiveAndEnabled || combatManager == null || !combatManager.IsCombatActive ||
-            combatManager.IsCinematicSequenceActive || enemy == null || enemy != combatManager.EngagedEnemy ||
+            combatManager.IsCinematicSequenceActive || enemy == null || enemy.IsFlameDormant || enemy != combatManager.EngagedEnemy ||
             enemy.ActiveSkill == null || combatManager.PlayerRoot == null || qteOpen ||
             (state != SequenceState.Idle && state != SequenceState.Pending)) return;
         if (attackQteEnemy == enemy && attackQteActionId == enemy.ActionSequenceId && attackQteSkill == enemy.ActiveSkill)
@@ -57,7 +58,7 @@ public sealed partial class CombatHealthThresholdController
         attackQteSkill = enemy.ActiveSkill;
         attackQteActionId = enemy.ActionSequenceId;
         attackReactionVictim = combatManager.PlayerRoot;
-        attackReactionOpenedAt = Time.unscaledTimeAsDouble;
+        attackReactionOpenedAt = reactionClock;
         dodgeDeadline = attackReactionOpenedAt + Mathf.Max(.05f, dodgeWindowSeconds);
         counterDeadline = attackReactionOpenedAt + Mathf.Clamp(counterWindowSeconds, .01f, Mathf.Max(.05f, dodgeWindowSeconds));
         dodgeAwaitingRelease = combatInput != null && combatInput.IsReactionButtonHeld(EnemyAttackReaction.Dodge);
@@ -81,10 +82,24 @@ public sealed partial class CombatHealthThresholdController
 
     private void Update()
     {
+        UpdateThresholdFlamePause();
+        if (attackQteEnemy == null || !attackQteEnemy.IsFlameDormant) reactionClock += Time.unscaledDeltaTime;
         if (attackQteEnemy == null && !attackQteActive && !attackDodgeProtected) return;
         if (!AttackReactionStillValid()) { ClearAttackReaction(); return; }
+        if (attackQteEnemy.IsFlameDormant)
+        {
+            // Preserve eligibility, but do not leave global slow motion running
+            // throughout an encounter's local darkness pause.
+            ReleaseReactionSlowMotion();
+            return;
+        }
+        if (attackQteActive && reactionTimeScale < 1f && reactionTimeManager == null)
+        {
+            reactionTimeManager = TimeManager.EnsureInstance();
+            if (reactionTimeManager != null) reactionSlowMotionHandle = reactionTimeManager.AcquireGlobal(Mathf.Clamp(reactionTimeScale, .01f, 1f), this);
+        }
         if (combatInput != null && !combatInput.IsInputActive) CloseAttackQte();
-        if (attackQteActive && Time.unscaledTimeAsDouble >= dodgeDeadline) CloseAttackQte();
+        if (attackQteActive && reactionClock >= dodgeDeadline) CloseAttackQte();
     }
 
     public void ReleaseEnemyReactionButton(EnemyAttackReaction reaction)
@@ -96,7 +111,7 @@ public sealed partial class CombatHealthThresholdController
     // True means the press was handled, not that a defence necessarily succeeded.
     public bool TryHandleEnemyReaction(EnemyAttackReaction reaction)
     {
-        if (!IsReactionPressEligible(reaction, Time.unscaledTimeAsDouble)) return false;
+        if (attackQteEnemy == null || attackQteEnemy.IsFlameDormant || !IsReactionPressEligible(reaction, reactionClock)) return false;
         EnemyController enemy = attackQteEnemy;
         var skill = attackQteSkill;
         if (reaction == EnemyAttackReaction.Dodge)
@@ -148,6 +163,11 @@ public sealed partial class CombatHealthThresholdController
     private void CloseAttackQte()
     {
         attackQteActive = false;
+        ReleaseReactionSlowMotion();
+    }
+
+    private void ReleaseReactionSlowMotion()
+    {
         if (reactionTimeManager != null) reactionTimeManager.Release(reactionSlowMotionHandle);
         reactionSlowMotionHandle = default;
         reactionTimeManager = null;

@@ -55,6 +55,14 @@ Les gizmos sélectionnés montrent les limites et les groupes. Activer `Show Dia
 
 ## Validation
 
+### Correction du léger tremblement de visée
+
+Le cadrage final ne doit pas utiliser `ViewType.GetAnchorPosition()` : cette méthode UCC lit la position physique du personnage, tandis que la caméra a déjà été interpolée pour l'affichage. Les quatre personnages ont l'interpolation UCC activée ; mélanger ces deux instants produit une erreur de visée en dents de scie à chaque étape physique.
+
+La vue tactique utilise désormais un ancrage stable calculé depuis la racine : position physique pour le suivi/collisions, position affichée pour `LateRotate`. Les offsets horizontaux suivent l'orbite nominale et non la rotation de caméra déjà corrigée, ce qui évite une boucle de rétroaction. Aucun os animé n'entre dans ce calcul. Aucun second pilote de Transform ni nouveau lissage des commandes n'a été ajouté ; UCC conserve son interpolation et les tests de collision.
+
+Les tests à 30/60/120 FPS reproduisent le mélange physique/affichage de l'ancien calcul, vérifient qu'il générait une erreur angulaire, puis contrôlent que la nouvelle visée reste stable aux frontières des étapes fixes. Un test couvre aussi la stabilité avec offsets non nuls pendant la rotation du personnage. La compilation et les tests de calcul ne remplacent pas une vérification visuelle en gameplay : marche/course, rotations, lock, murs, zoom et reprise Timeline restent à contrôler en Play.
+
 ### Zoom manette et roue de compétences
 
 En suivi comme en inspection tactique : LT/L2 rapproche, RT/R2 éloigne. La distance demandée est comprise entre 1 et 10 m dans le profil par défaut ; les collisions peuvent toujours rétracter davantage la caméra pour éviter un mur. Le zoom reste amorti et proportionnel à la pression des gâchettes. Les deux gâchettes à pression égale s'annulent. Les menus/roues et Timelines suspendent le zoom.

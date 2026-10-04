@@ -2,6 +2,10 @@ using UnityEngine;
 
 public static class LitTacticalCameraMath
 {
+    // Root-owned target: no animated bone and no feedback from the camera's corrected rotation.
+    public static Vector3 StableFollowAnchor(Vector3 rootPosition, Quaternion rootRotation, Quaternion orbitRotation, Vector3 offset)
+        => rootPosition + rootRotation * Vector3.up * offset.y +
+            orbitRotation * Vector3.right * offset.x + orbitRotation * Vector3.forward * offset.z;
     // Positive zoom input decreases the view's distance.
     public static float TriggerZoomDelta(float left, float right, float speed, float dt)
         => (Mathf.Clamp01(left) - Mathf.Clamp01(right)) * Mathf.Max(0, speed) * Mathf.Max(0, dt);

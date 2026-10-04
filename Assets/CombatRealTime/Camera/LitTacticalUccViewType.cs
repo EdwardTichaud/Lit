@@ -18,6 +18,12 @@ public sealed class LitTacticalUccViewType : Adventure
     public Vector3 Pivot => pivot;
     public bool Following => following;
     public override bool UseSmoothOffset => false; // Never rotate the world orbit with combatant yaw.
+    private Vector3 GetFollowAnchor(bool rendered = false)
+    {
+        Vector3 position = rendered ? m_CharacterTransform.position : CharacterPosition;
+        Quaternion rotation = rendered ? m_CharacterTransform.rotation : CharacterRotation;
+        return LitTacticalCameraMath.StableFollowAnchor(position, rotation, Quaternion.Euler(pitch, yaw, 0), m_CameraController.AnchorOffset);
+    }
 
     public void SetFreeCamera(bool free)
     {
@@ -55,9 +61,9 @@ public sealed class LitTacticalUccViewType : Adventure
         zoomVelocity = groundVelocity = 0;
         pendingPan = Vector2.zero;
         if (m_CharacterTransform == null) { initialized = false; return; }
-        targetPivot = GetAnchorPosition();
+        targetPivot = GetFollowAnchor();
         if (immediate) pivot = targetPivot;
-        lastAnchor = GetAnchorPosition();
+        lastAnchor = GetFollowAnchor();
         distanceRecovery.Reset(zoom);
         initialized = true;
         clock.Reset();
@@ -75,7 +81,7 @@ public sealed class LitTacticalUccViewType : Adventure
 
     private void Tick(float dt, bool immediate)
     {
-        Vector3 anchor = GetAnchorPosition();
+        Vector3 anchor = GetFollowAnchor();
         if (!initialized || (anchor - lastAnchor).sqrMagnitude > profile.teleportDistance * profile.teleportDistance) Recenter(true);
         lastAnchor = anchor;
         Quaternion planar = Quaternion.Euler(0, yaw, 0);
@@ -136,17 +142,16 @@ public sealed class LitTacticalUccViewType : Adventure
         if (!following || owner == null || owner.IsBlending)
             return m_CharacterLocomotion != null && m_CharacterLocomotion.Interpolate ? m_Transform.rotation :
                 owner != null ? owner.BlendRotation(Quaternion.Euler(pitch, yaw, 0)) : Quaternion.Euler(pitch, yaw, 0);
-        // GetRenderedAnchor uses the current camera axes for UCC's anchor offset.
-        // Feeding it back into rotation makes the target move whenever this view rotates,
-        // producing a visible frame-to-frame correction. The tactical pivot is the stable,
-        // character-owned anchor that Move already follows.
-        Vector3 displayedAnchor = GetAnchorPosition();
+        // UCC has interpolated the camera AND character before LateRotate.
+        // A physics anchor here creates a sawtooth aim error at every fixed step.
+        // Use the same root-owned target, evaluated in the displayed time domain.
+        Vector3 displayedAnchor = GetFollowAnchor(true);
         Vector3 aim = displayedAnchor - m_Transform.position;
         if (aim.sqrMagnitude < .0001f) return m_Transform.rotation;
         Quaternion rotation = Quaternion.LookRotation(aim, Vector3.up);
         m_Pitch = Mathf.DeltaAngle(0, rotation.eulerAngles.x);
         m_Yaw = Mathf.DeltaAngle(0, rotation.eulerAngles.y - m_BaseRotation.eulerAngles.y);
-        owner.RecordTacticalMotion(GetAnchorPosition(), displayedAnchor, lastResolvedPosition, m_Transform.position, 0, false, true);
+        owner.RecordTacticalMotion(GetFollowAnchor(), displayedAnchor, lastResolvedPosition, m_Transform.position, 0, false, true);
         return rotation;
     }
     public override Vector3 Move(bool immediateUpdate)
@@ -162,9 +167,9 @@ public sealed class LitTacticalUccViewType : Adventure
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
         Vector3 direction = rotation * Vector3.back;
         Vector3 desired = pivot + direction * zoom;
-        if (!following) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetAnchorPosition(), profile.maximumFreeCameraDistance);
+        if (!following) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetFollowAnchor(), profile.maximumFreeCameraDistance);
         Vector3 requested = desired;
-        owner.PrepareVisibilityMask(desired, GetAnchorPosition(), CollisionRadius);
+        owner.PrepareVisibilityMask(desired, GetFollowAnchor(), CollisionRadius);
         desired = owner.ConstrainPose(pivot, desired, CollisionRadius);
         float clearDistance = Vector3.Distance(pivot, desired);
         direction = (desired - pivot).normalized;
@@ -172,7 +177,7 @@ public sealed class LitTacticalUccViewType : Adventure
             immediateUpdate, profile.collisionClearHoldTime, profile.collisionReturnTime);
         desired = pivot + direction * resolvedDistance;
         lastResolvedPosition = owner.BlendPosition(desired, pivot, CollisionRadius, dt, immediateUpdate);
-        owner.RecordTacticalMotion(GetAnchorPosition(), GetAnchorPosition(), requested, lastResolvedPosition, dt, immediateUpdate, false);
+        owner.RecordTacticalMotion(GetFollowAnchor(), GetFollowAnchor(true), requested, lastResolvedPosition, dt, immediateUpdate, false);
         return lastResolvedPosition;
     }
 }

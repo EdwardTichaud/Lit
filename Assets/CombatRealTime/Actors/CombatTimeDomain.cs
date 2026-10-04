@@ -14,11 +14,19 @@ public sealed class CombatTimeDomain : MonoBehaviour
     private float localTime;
     private float animatorBaseSpeed = 1f;
     private bool animatorSpeedCaptured;
+    private readonly System.Collections.Generic.HashSet<object> intrinsicPauses = new System.Collections.Generic.HashSet<object>();
+    public void SetIntrinsicPause(object owner, bool paused)
+    {
+        if (owner == null) return;
+        if (paused) intrinsicPauses.Add(owner); else intrinsicPauses.Remove(owner);
+        ApplyAnimatorSpeed();
+    }
 
-    public float Scale => localScale;
-    public float DeltaTime => Time.deltaTime * localScale;
-    public float FixedDeltaTime => Time.fixedDeltaTime * localScale;
+    public float Scale => intrinsicPauses.Count > 0 ? 0 : localScale;
+    public float DeltaTime => Time.deltaTime * Scale;
+    public float FixedDeltaTime => Time.fixedDeltaTime * Scale;
     public float LocalTime => localTime;
+    public float BaseAnimatorSpeed => animatorBaseSpeed;
 
     private void Awake()
     {
@@ -79,7 +87,7 @@ public sealed class CombatTimeDomain : MonoBehaviour
         ResolveAnimator();
         if (animator != null && animatorSpeedCaptured)
         {
-            animator.speed = animatorBaseSpeed * localScale;
+            animator.speed = animatorBaseSpeed * Scale;
         }
     }
 }

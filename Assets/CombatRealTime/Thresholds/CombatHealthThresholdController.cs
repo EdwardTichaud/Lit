@@ -70,6 +70,30 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private AnimationClip qtePlaceholderClip;
     private AnimationClip successPlaceholderClip;
     private TimeManager.TimeRequestHandle qteSlowMotionHandle;
+    private CombatTimeDomain thresholdFlamePausedPlayer;
+
+    private void UpdateThresholdFlamePause()
+    {
+        bool paused = activeEnemy != null && activeEnemy.IsFlameDormant &&
+            (state == SequenceState.PlayingSequence || state == SequenceState.SuccessPresentation);
+        CombatTimeDomain next = paused && combatManager != null && combatManager.PlayerRoot != null
+            ? combatManager.PlayerRoot.GetComponent<CombatTimeDomain>() : null;
+        if (next == thresholdFlamePausedPlayer) return;
+        thresholdFlamePausedPlayer?.SetIntrinsicPause(this, false);
+        thresholdFlamePausedPlayer = next;
+        thresholdFlamePausedPlayer?.SetIntrinsicPause(this, true);
+    }
+
+    private IEnumerator WaitForThresholdSeconds(float seconds, bool unscaled = false)
+    {
+        float elapsed = 0f;
+        while (elapsed < seconds || (activeEnemy != null && activeEnemy.IsFlameDormant))
+        {
+            if (activeEnemy == null || !activeEnemy.IsFlameDormant)
+                elapsed += unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
+            yield return null;
+        }
+    }
 
     public static CombatHealthThresholdController Instance { get; private set; }
     public bool IsSequenceActive => state == SequenceState.Pending ||
@@ -103,6 +127,8 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void OnDisable()
     {
+        thresholdFlamePausedPlayer?.SetIntrinsicPause(this, false);
+        thresholdFlamePausedPlayer = null;
         ClearAttackReaction();
         AbortActiveSequence("desactivation");
         SetQteInputEnabled(false);
@@ -238,7 +264,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
             // Let an already-authored enemy action complete, but do not allow
             // the AI to arm another one while the stage is pending.
-            if (!activeEnemy.IsAttackCommitted && !combatManager.IsCinematicSequenceActive && !attackQteActive)
+            if (!activeEnemy.IsFlameDormant && !activeEnemy.IsAttackCommitted && !combatManager.IsCinematicSequenceActive && !attackQteActive)
             {
                 if (TryResolveStagePose(out Vector3 playerPosition, out Quaternion playerRotation, out Quaternion enemyRotation, out string poseIssue))
                 {
@@ -327,11 +353,13 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
                 yield break;
             }
 
+            if (activeEnemy != null && activeEnemy.IsFlameDormant) { yield return null; continue; }
             elapsed += Time.unscaledDeltaTime;
             qtePanel?.SetProgress(elapsed / duration);
             yield return null;
         }
 
+        while (activeEnemy != null && activeEnemy.IsFlameDormant) yield return null;
         if (token == sessionToken && qteOpen && state == SequenceState.PlayingSequence)
         {
             FailQte("expiration");
@@ -342,7 +370,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     {
         ThresholdSequenceStep step = GetCurrentStep();
         float timeout = step != null ? step.qteEventTimeoutSeconds : 3f;
-        yield return new WaitForSecondsRealtime(timeout);
+        yield return WaitForThresholdSeconds(timeout, true);
         if (token == sessionToken && state == SequenceState.PlayingSequence && !qteOpen &&
             openedQteCount < expectedEventIndex)
         {
@@ -471,7 +499,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private IEnumerator WatchFailureRetaliation(int token, AnimationClip clip, float graceSeconds)
     {
-        yield return new WaitForSecondsRealtime(Mathf.Max(1f, clip != null ? clip.length : 0f) + graceSeconds);
+        yield return WaitForThresholdSeconds(Mathf.Max(1f, clip != null ? clip.length : 0f) + graceSeconds, true);
         if (token == sessionToken && state == SequenceState.FailureRetaliation && activeEnemy != null)
         {
             Trace("Fin de riposte absente : recuperation forcee.");
@@ -543,7 +571,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private IEnumerator CompleteSuccessAfterDelay(int token, float delay)
     {
-        if (delay > 0f) yield return new WaitForSeconds(delay);
+        yield return WaitForThresholdSeconds(Mathf.Max(0f, delay));
         if (token == sessionToken && state == SequenceState.SuccessPresentation)
         {
             ResolveSuccessResultAtDelay();
@@ -551,7 +579,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             AnimationClip successClip = GetCurrentSuccessClip();
             float clipLength = successClip != null ? successClip.length : 0f;
             float remainingVisualSeconds = Mathf.Max(0f, clipLength - Mathf.Max(0f, delay));
-            if (remainingVisualSeconds > 0f) yield return new WaitForSeconds(remainingVisualSeconds);
+            if (remainingVisualSeconds > 0f) yield return WaitForThresholdSeconds(remainingVisualSeconds);
 
             if (token == sessionToken && state == SequenceState.SuccessPresentation)
             {
@@ -586,7 +614,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private IEnumerator AdvanceAfterIntermediateStepSuccess(int token, float successClipLength)
     {
-        if (successClipLength > 0f) yield return new WaitForSeconds(successClipLength);
+        yield return WaitForThresholdSeconds(Mathf.Max(0f, successClipLength));
         if (token != sessionToken || state != SequenceState.SuccessPresentation || activeSequence == null)
         {
             yield break;
@@ -637,7 +665,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
         animator.CrossFade(combatIdleHash, blend, 0, 0f);
         Trace("Sortie animation de succes | destination=CombatIdle | blend=" + blend.ToString("F2") + "s.");
-        if (blend > 0f) yield return new WaitForSeconds(blend);
+        yield return WaitForThresholdSeconds(Mathf.Max(0f, blend));
     }
 
     private void ResolveSuccessResultAtDelay()
@@ -798,6 +826,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         successResultResolved = false;
         thresholdKillApplied = false;
         activeEnemy = null;
+        UpdateThresholdFlamePause();
         activeStage = null;
         activeSequence = null;
         state = SequenceState.Idle;
@@ -1073,6 +1102,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void OnQteButton(CombatThresholdQteInput input, InputAction.CallbackContext context)
     {
+        if (activeEnemy != null && activeEnemy.IsFlameDormant) return;
         if (context.phase != InputActionPhase.Performed || !qteOpen || state != SequenceState.PlayingSequence) return;
         if (waitingForExpectedRelease) return;
         if (input != expectedQteInput)

@@ -35,15 +35,31 @@ public sealed class LitFlameLightingTests
         Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
         try
         {
-            bool found = false;
+            LitAtmosphereParticles atmosphere = null;
             foreach (GameObject root in scene.GetRootGameObjects())
-                found |= root.GetComponentInChildren<LitAtmosphereParticles>(true) != null;
-            Assert.That(found, Is.True, path);
+            {
+                atmosphere = root.GetComponentInChildren<LitAtmosphereParticles>(true);
+                if (atmosphere != null) break;
+            }
+            Assert.That(atmosphere, Is.Not.Null, path);
+            Assert.That(atmosphere.CurrentProfile, Is.EqualTo(LitAtmosphereParticles.Profile.CastleIceDust));
+            Assert.That(atmosphere.ValidateConfiguration(out string reason), Is.True, reason);
         }
         finally
         {
             EditorSceneManager.CloseScene(scene, true);
         }
+    }
+
+    [TestCase("Assets/Interactive/Flame/Light_Flame_Fire_Common.prefab", LitAtmosphereParticles.Profile.FlameEmbers)]
+    [TestCase("Assets/Interactive/Flame/Light_Flame_Fire_Ancient.prefab", LitAtmosphereParticles.Profile.AncientFlameMix)]
+    public void FlameAtmospherePrefabs_HaveExplicitValidParticleSystems(string path, LitAtmosphereParticles.Profile expectedProfile)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        LitAtmosphereParticles atmosphere = prefab.GetComponent<LitAtmosphereParticles>();
+        Assert.That(atmosphere, Is.Not.Null, path);
+        Assert.That(atmosphere.CurrentProfile, Is.EqualTo(expectedProfile));
+        Assert.That(atmosphere.ValidateConfiguration(out string reason), Is.True, $"{path}: {reason}");
     }
 
     [TestCaseSource(nameof(FlameScenePaths))]

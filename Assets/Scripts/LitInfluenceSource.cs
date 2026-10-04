@@ -90,6 +90,10 @@ public class LitInfluenceSource
     public float TransitionDuration => transitionDuration;
     public Vector3 Center => center;
     public bool DrawDebugGizmos => drawDebugGizmos;
+    public bool AcceptsCollider(Collider collider) => collider != null && collider.enabled &&
+        collider.gameObject.activeInHierarchy && (layerMask.value & (1 << collider.gameObject.layer)) != 0 &&
+        (!collider.isTrigger || queryTriggerInteraction == QueryTriggerInteraction.Collide ||
+            (queryTriggerInteraction == QueryTriggerInteraction.UseGlobal && Physics.queriesHitTriggers));
 
     public Vector3 GetWorldCenter(Transform owner)
     {

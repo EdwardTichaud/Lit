@@ -81,6 +81,7 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
 
     private void Update()
     {
+        if (owner != null && owner.Enemy != null && owner.Enemy.IsFlameDormant) return;
         Vector3 previousPosition = transform.position;
         flightElapsed += Time.unscaledDeltaTime;
         Vector3 nextPosition;
@@ -156,6 +157,7 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
 
     private void HandleImpact(Collider other)
     {
+        if (owner != null && owner.Enemy != null && owner.Enemy.IsFlameDormant) return;
         if (IsOwnerCollider(other))
         {
             Trace("collision ignoree avec l'Ancre");

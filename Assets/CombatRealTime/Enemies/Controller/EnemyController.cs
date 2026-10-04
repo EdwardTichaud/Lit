@@ -6,7 +6,7 @@ using UnityEngine.AI;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterInfo), typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
-public sealed partial class EnemyController : CharacterAnimationController
+public sealed partial class EnemyController : CharacterAnimationController, ILitInfluenceReceiver
 {
     private CharacterInfo info;
     private EnemySettings fallbackSettings;
@@ -25,7 +25,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     private bool combatEnabled = true;
     public bool CombatEnabled
     {
-        get => combatEnabled && (!StartsAsGhost || CurrentState == EncounterState.Active);
+        get => combatEnabled && !IsFlameDormant && (!StartsAsGhost || CurrentState == EncounterState.Active);
         set
         {
             if (combatEnabled == value) return;
@@ -57,6 +57,7 @@ public sealed partial class EnemyController : CharacterAnimationController
         RecoveryAwake();
         EncounterAwake();
         initialized = true;
+        FlameInfluenceRefresh(true);
     }
     private void OnAnimatorMove()
     {
@@ -66,12 +67,14 @@ public sealed partial class EnemyController : CharacterAnimationController
     private void OnEnable()
     {
         if (!initialized) return;
+        FlameInfluenceRefresh(true);
         EncounterOnEnable();
         if (CombatEnabled && !IsBossBrainSuppressed) NavigationOnEnable();
         RecoveryOnEnable();
     }
     private void Update()
     {
+        FlameInfluenceRefresh();
         if (Authority && CurrentState == EncounterState.Dialogue &&
             (Health.IsDead || Online && !NetworkManager.Singleton.ConnectedClients.ContainsKey(introductionClient)))
             CompleteIntroduction(introductionToken, introductionClient, false);
@@ -79,16 +82,18 @@ public sealed partial class EnemyController : CharacterAnimationController
         BrainUpdate();
         LocomotionUpdate();
     }
-    private void FixedUpdate() { if (initialized && BrainAuthority) PhysicsFixedUpdate(); }
+    private void FixedUpdate() { if (initialized && BrainAuthority && !IsFlameDormant) PhysicsFixedUpdate(); }
     private void LateUpdate()
     {
         if (!initialized) return;
+        if (IsFlameDormant) return;
         if (CombatEnabled && BrainAuthority) LocomotionLateUpdate();
         PhysicsLateUpdate();
         AnimationLateUpdate();
     }
     private void OnDisable()
     {
+        FlameInfluenceRelease();
         if (!initialized) return;
         BattleWallOnDisable();
         EncounterOnDisable();
@@ -106,10 +111,12 @@ public sealed partial class EnemyController : CharacterAnimationController
     {
         base.OnNetworkSpawn();
         EncounterOnNetworkSpawn();
+        FlameInfluenceNetworkSpawn();
         if (initialized && isActiveAndEnabled) OnEnable();
     }
     public override void OnNetworkDespawn()
     {
+        FlameInfluenceNetworkDespawn();
         OnDisable();
         EncounterOnNetworkDespawn();
         base.OnNetworkDespawn();
@@ -118,6 +125,7 @@ public sealed partial class EnemyController : CharacterAnimationController
     public bool PlaceForCinematic(Vector3 position, Quaternion rotation) => Place(position, rotation);
     public void ApplyCinematicRootMotion(Vector3 delta, Quaternion rotation)
     {
+        if (IsFlameDormant) return;
         if (!IsSuspended) return;
         transform.SetPositionAndRotation(transform.position + delta, rotation * transform.rotation);
         if (PhysicsBody != null) { PhysicsBody.position = transform.position; PhysicsBody.rotation = transform.rotation; }

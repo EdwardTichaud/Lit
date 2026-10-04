@@ -674,6 +674,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!64 &492601536
 MeshCollider:
@@ -817,9 +819,9 @@ MonoBehaviour:
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: "La flamme est allum\xE9e."
   unlitStateMessage: "La flamme est \xE9teinte."
   interactMaxDistance: 1
@@ -850,7 +852,7 @@ MonoBehaviour:
   emissionFadeDuration: 0.6
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!114 &506504661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1105,9 +1107,9 @@ MonoBehaviour:
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allume.
   unlitStateMessage: La flamme est eteint.
   interactMaxDistance: 1
@@ -1138,7 +1140,7 @@ MonoBehaviour:
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 2
+  chargeCostToLight: 0
 --- !u!1 &738669054
 GameObject:
   m_ObjectHideFlags: 0
@@ -1604,9 +1606,9 @@ MonoBehaviour:
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: "La flamme est allum\xE9e."
   unlitStateMessage: "La flamme est \xE9teinte."
   interactMaxDistance: 1
@@ -1637,7 +1639,7 @@ MonoBehaviour:
   emissionFadeDuration: 0.6
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!114 &1260755694
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1754,6 +1756,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!1001 &1455754518
 PrefabInstance:
@@ -6965,8 +6969,8 @@ MonoBehaviour:
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
   useInteractInput: 1
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: "La flamme est allum\xE9e."
   unlitStateMessage: "La flamme est \xE9teinte."
   interactMaxDistance: 1
@@ -6997,7 +7001,7 @@ MonoBehaviour:
   emissionFadeDuration: 0.6
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!114 &1860774860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7035,6 +7039,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
   outlined: 0
 --- !u!114 &1860774862
 MonoBehaviour:
@@ -12158,9 +12164,9 @@ MonoBehaviour:
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: "La flamme est allum\xE9e."
   unlitStateMessage: "La flamme est \xE9teinte."
   interactMaxDistance: 1
@@ -12191,7 +12197,7 @@ MonoBehaviour:
   emissionFadeDuration: 0.6
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!108 &5278389028542989267
 Light:
   m_ObjectHideFlags: 0

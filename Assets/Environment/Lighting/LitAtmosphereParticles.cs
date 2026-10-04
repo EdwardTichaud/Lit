@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// Generates lightweight, soft-particle atmosphere for the castle and fixed flames.
-/// The particle controls remain authorable on the prefab; no global Volume is changed.
+/// Authoring controller for the castle's ambient particles and fixed-flame accents.
+/// Particle systems are serialized children: this component never creates renderers
+/// or materials at runtime, which keeps scene loading deterministic.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class LitAtmosphereParticles : MonoBehaviour
@@ -14,25 +16,33 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
     [SerializeField, Min(0.01f)] private float density = 1f;
     [SerializeField] private Vector3 castleDustVolume = new Vector3(58f, 15f, 58f);
     [SerializeField, Range(0.25f, 3f)] private float particleSize = 1f;
-    [SerializeField, Tooltip("Use an HDRP particle material with soft depth fading. A per-instance copy is used at runtime.")]
-    private Material particleMaterial;
-    [SerializeField] private Texture2D particleTexture;
+    [SerializeField, Range(0.01f, 1f)] private float opacity = 0.16f;
+    [SerializeField, Range(0f, 1f)] private float alphaClipThreshold = 0.04f;
     [SerializeField] private bool previewInEditMode;
+    [SerializeField, Tooltip("Explicit authored particle systems. Their count depends on the selected profile.")]
+    private ParticleSystem[] particleSystems = Array.Empty<ParticleSystem>();
+    [SerializeField] private Material dustMaterial;
+    [SerializeField] private Material emberMaterial;
+    [SerializeField] private Material ancientMistMaterial;
 
-    private ParticleSystem[] systems;
-    private Material runtimeMaterial;
+    private Flame sourceFlame;
+    private bool loggedInvalidConfiguration;
+
+    public Profile CurrentProfile => profile;
+    public int RequiredSystemCount => profile == Profile.AncientFlameMix ? 2 : 1;
+
+    private void Awake() => ConfigureSystems();
 
     private void OnEnable()
     {
-        BuildIfNeeded();
-        SetPreviewState(Application.isPlaying || previewInEditMode);
+        BindFlame();
+        RefreshEmissionState();
     }
 
     private void OnDisable()
     {
-        if (systems == null) return;
-        foreach (ParticleSystem system in systems)
-            if (system != null) system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        UnbindFlame();
+        StopAll();
     }
 
     private void OnValidate()
@@ -41,177 +51,176 @@ public sealed class LitAtmosphereParticles : MonoBehaviour
         castleDustVolume.x = Mathf.Max(0.1f, castleDustVolume.x);
         castleDustVolume.y = Mathf.Max(0.1f, castleDustVolume.y);
         castleDustVolume.z = Mathf.Max(0.1f, castleDustVolume.z);
-        if (Application.isPlaying && isActiveAndEnabled)
-        {
-            BuildIfNeeded();
-            Configure();
-        }
+        ConfigureSystems();
+        if (isActiveAndEnabled) RefreshEmissionState();
     }
 
-    private void BuildIfNeeded()
+    public bool ValidateConfiguration(out string reason)
     {
-        int count = profile == Profile.AncientFlameMix ? 2 : 1;
-        if (HasValidSystems(count)) return;
-
-        systems = new ParticleSystem[count];
-        for (int i = 0; i < count; i++)
+        if (particleSystems == null || particleSystems.Length != RequiredSystemCount)
         {
-            systems[i] = GetOrCreateSystem(i);
-            ParticleSystemRenderer renderer = systems[i] != null ? systems[i].GetComponent<ParticleSystemRenderer>() : null;
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            renderer.sharedMaterial = ResolveMaterial();
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            renderer.enableGPUInstancing = true;
-        }
-
-        Configure();
-    }
-
-    private bool HasValidSystems(int count)
-    {
-        if (systems == null || systems.Length != count)
-        {
+            reason = $"{profile} requires {RequiredSystemCount} explicitly assigned ParticleSystem reference(s).";
             return false;
         }
-
-        for (int i = 0; i < systems.Length; i++)
+        for (int i = 0; i < particleSystems.Length; i++)
         {
-            if (systems[i] == null || systems[i].GetComponent<ParticleSystemRenderer>() == null)
+            if (particleSystems[i] == null)
             {
+                reason = $"Particle system {i} is missing.";
+                return false;
+            }
+            if (particleSystems[i].GetComponent<ParticleSystemRenderer>() == null)
+            {
+                reason = $"Particle system '{particleSystems[i].name}' has no ParticleSystemRenderer.";
                 return false;
             }
         }
-
+        if (profile == Profile.CastleIceDust && dustMaterial == null)
+        {
+            reason = "Castle dust requires a lit transparent dust material.";
+            return false;
+        }
+        if (profile == Profile.FlameEmbers && emberMaterial == null)
+        {
+            reason = "Flame embers require an emissive transparent material.";
+            return false;
+        }
+        if (profile == Profile.AncientFlameMix && (emberMaterial == null || ancientMistMaterial == null))
+        {
+            reason = "Ancient flame requires both ember and cyan-mist materials.";
+            return false;
+        }
+        reason = null;
         return true;
     }
 
-    private ParticleSystem GetOrCreateSystem(int index)
+    public void ConfigureAuthoring(Profile newProfile, ParticleSystem[] systems, Material dust, Material embers, Material mist)
     {
-        string childName = $"Particles_{index}";
-        Transform child = transform.Find(childName);
-        GameObject childObject = child != null ? child.gameObject : new GameObject(childName);
-        if (child == null)
-        {
-            childObject.transform.SetParent(transform, false);
-        }
-
-        ParticleSystem system = childObject.GetComponent<ParticleSystem>();
-        if (system == null)
-        {
-            return childObject.AddComponent<ParticleSystem>();
-        }
-
-        if (system.GetComponent<ParticleSystemRenderer>() != null)
-        {
-            return system;
-        }
-
-        // A ParticleSystemRenderer removed from an authored child cannot be
-        // restored in place at runtime. Keep the broken child dormant and use
-        // a clean sibling so enabling this component never throws repeatedly.
-        childObject.SetActive(false);
-        string replacementName = childName + "_Runtime";
-        Transform replacement = transform.Find(replacementName);
-        GameObject replacementObject = replacement != null ? replacement.gameObject : new GameObject(replacementName);
-        if (replacement == null)
-        {
-            replacementObject.transform.SetParent(transform, false);
-        }
-
-        return replacementObject.GetComponent<ParticleSystem>() ?? replacementObject.AddComponent<ParticleSystem>();
+        profile = newProfile;
+        particleSystems = systems ?? Array.Empty<ParticleSystem>();
+        dustMaterial = dust;
+        emberMaterial = embers;
+        ancientMistMaterial = mist;
+        ConfigureSystems();
     }
 
-    private void Configure()
+    private void BindFlame()
     {
-        if (systems == null) return;
+        Flame resolved = GetComponentInParent<Flame>();
+        if (resolved == sourceFlame) return;
+        UnbindFlame();
+        sourceFlame = resolved;
+        if (sourceFlame != null) sourceFlame.StateChanged += OnFlameStateChanged;
+    }
+
+    private void UnbindFlame()
+    {
+        if (sourceFlame != null) sourceFlame.StateChanged -= OnFlameStateChanged;
+        sourceFlame = null;
+    }
+
+    private void OnFlameStateChanged(Flame _, bool isLit) => SetEmissionState(isLit);
+
+    private void RefreshEmissionState()
+    {
+        if (!ValidateConfiguration(out string reason))
+        {
+            if (!loggedInvalidConfiguration)
+            {
+                loggedInvalidConfiguration = true;
+                Debug.LogError($"[{nameof(LitAtmosphereParticles)}] '{name}' is not configured: {reason} It will not create runtime particle systems.", this);
+            }
+            return;
+        }
+        loggedInvalidConfiguration = false;
+        bool canPreview = Application.isPlaying || previewInEditMode;
+        SetEmissionState(canPreview && (sourceFlame == null || sourceFlame.IsEffectivelyLit));
+    }
+
+    private void SetEmissionState(bool active)
+    {
+        if (particleSystems == null) return;
+        foreach (ParticleSystem system in particleSystems)
+        {
+            if (system == null) continue;
+            if (active)
+            {
+                if (!system.isPlaying) system.Play(true);
+            }
+            else system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+    }
+
+    private void StopAll()
+    {
+        if (particleSystems == null) return;
+        foreach (ParticleSystem system in particleSystems)
+            if (system != null) system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+    }
+
+    private void ConfigureSystems()
+    {
+        if (!ValidateConfiguration(out _)) return;
         if (profile == Profile.CastleIceDust)
-            ConfigureDust(systems[0], new Color(0.62f, 0.8f, 1f, 0.16f), castleDustVolume, 28f * density, 220, particleSize, 1f);
+            ConfigureDust(particleSystems[0], dustMaterial, new Color(0.62f, 0.8f, 1f, opacity), castleDustVolume, 12f * density, 150, particleSize, 1f);
         else if (profile == Profile.FlameEmbers)
-            ConfigureEmbers(systems[0], new Color(1f, 0.22f, 0.035f, 0.28f), 2.2f * density, particleSize);
+            ConfigureEmbers(particleSystems[0], emberMaterial, new Color(1f, 0.22f, 0.035f, opacity), 1.6f * density, particleSize);
         else
         {
-            ConfigureEmbers(systems[0], new Color(1f, 0.25f, 0.04f, 0.2f), 1.2f * density, particleSize);
-            ConfigureDust(systems[1], new Color(0.22f, 0.72f, 1f, 0.2f), new Vector3(1.4f, 1f, 1.4f), 4.5f * density, 42, particleSize, 0.65f);
+            ConfigureEmbers(particleSystems[0], emberMaterial, new Color(1f, 0.25f, 0.04f, opacity), 0.9f * density, particleSize);
+            ConfigureDust(particleSystems[1], ancientMistMaterial, new Color(0.22f, 0.72f, 1f, opacity), new Vector3(1.4f, 1f, 1.4f), 3f * density, 32, particleSize, 0.65f);
         }
     }
 
-    private static void ConfigureDust(ParticleSystem system, Color color, Vector3 box, float rate, int maxParticles, float sizeMultiplier, float profileSize)
+    private void ConfigureDust(ParticleSystem system, Material material, Color color, Vector3 box, float rate, int maxParticles, float sizeMultiplier, float profileSize)
     {
-        if (system == null) return;
         ParticleSystem.MainModule main = system.main;
         main.loop = true; main.playOnAwake = true; main.prewarm = true; main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = maxParticles; main.startLifetime = new ParticleSystem.MinMaxCurve(8f, 14f);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(0.025f, 0.08f); main.startSize = new ParticleSystem.MinMaxCurve(0.06f * profileSize * sizeMultiplier, 0.14f * profileSize * sizeMultiplier);
+        main.maxParticles = maxParticles; main.startLifetime = new ParticleSystem.MinMaxCurve(9f, 16f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0.02f, 0.06f); main.startSize = new ParticleSystem.MinMaxCurve(0.05f * profileSize * sizeMultiplier, 0.12f * profileSize * sizeMultiplier);
         main.startColor = color;
         ParticleSystem.EmissionModule emission = system.emission; emission.enabled = true; emission.rateOverTime = rate;
         ParticleSystem.ShapeModule shape = system.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Box; shape.scale = box;
-        ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime; velocity.enabled = true; velocity.space = ParticleSystemSimulationSpace.World; velocity.y = new ParticleSystem.MinMaxCurve(0.015f, 0.05f);
-        ParticleSystem.NoiseModule noise = system.noise; noise.enabled = true; noise.strength = 0.06f; noise.frequency = 0.18f; noise.scrollSpeed = 0.05f;
+        ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        // Unity requires X/Y/Z curves in Velocity over Lifetime to share the same mode.
+        velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+        velocity.y = new ParticleSystem.MinMaxCurve(0.01f, 0.035f);
+        velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+        ParticleSystem.NoiseModule noise = system.noise; noise.enabled = true; noise.strength = 0.045f; noise.frequency = 0.16f; noise.scrollSpeed = 0.04f;
+        ConfigureRenderer(system, material);
     }
 
-    private static void ConfigureEmbers(ParticleSystem system, Color color, float rate, float sizeMultiplier)
+    private void ConfigureEmbers(ParticleSystem system, Material material, Color color, float rate, float sizeMultiplier)
     {
-        if (system == null) return;
         ParticleSystem.MainModule main = system.main;
         main.loop = true; main.playOnAwake = true; main.prewarm = true; main.simulationSpace = ParticleSystemSimulationSpace.Local;
-        main.maxParticles = 24; main.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 1.8f);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(0.12f, 0.36f); main.startSize = new ParticleSystem.MinMaxCurve(0.012f * sizeMultiplier, 0.035f * sizeMultiplier);
+        main.maxParticles = 18; main.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 1.6f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0.1f, 0.3f); main.startSize = new ParticleSystem.MinMaxCurve(0.01f * sizeMultiplier, 0.028f * sizeMultiplier);
         main.startColor = color;
         ParticleSystem.EmissionModule emission = system.emission; emission.enabled = true; emission.rateOverTime = rate;
-        ParticleSystem.ShapeModule shape = system.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Sphere; shape.radius = 0.18f;
-        ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime; velocity.enabled = true; velocity.y = new ParticleSystem.MinMaxCurve(0.35f, 0.85f);
-        ParticleSystem.NoiseModule noise = system.noise; noise.enabled = true; noise.strength = 0.12f; noise.frequency = 0.8f;
+        ParticleSystem.ShapeModule shape = system.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Sphere; shape.radius = 0.16f;
+        ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.Local;
+        velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+        velocity.y = new ParticleSystem.MinMaxCurve(0.3f, 0.75f);
+        velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+        ParticleSystem.NoiseModule noise = system.noise; noise.enabled = true; noise.strength = 0.1f; noise.frequency = 0.75f;
+        ConfigureRenderer(system, material);
     }
 
-    private Material ResolveMaterial()
+    private void ConfigureRenderer(ParticleSystem system, Material material)
     {
-        if (runtimeMaterial != null) return runtimeMaterial;
-        if (particleMaterial != null)
-        {
-            runtimeMaterial = new Material(particleMaterial) { name = "Runtime_LitAtmosphereSoftParticle", hideFlags = HideFlags.DontSave };
-            if (runtimeMaterial.HasProperty("_Color")) runtimeMaterial.SetColor("_Color", Color.white);
-            return runtimeMaterial;
-        }
-
-        Shader shader = Shader.Find("HDRP/Unlit") ?? Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Particles/Standard Unlit");
-        if (shader == null) return null;
-        runtimeMaterial = new Material(shader) { name = "Runtime_LitAtmosphereSoftParticle", hideFlags = HideFlags.DontSave };
-        if (particleTexture != null)
-        {
-            if (runtimeMaterial.HasProperty("_BaseColorMap")) runtimeMaterial.SetTexture("_BaseColorMap", particleTexture);
-            if (runtimeMaterial.HasProperty("_MainTex")) runtimeMaterial.SetTexture("_MainTex", particleTexture);
-        }
-        if (runtimeMaterial.HasProperty("_SurfaceType")) runtimeMaterial.SetFloat("_SurfaceType", 1f);
-        if (runtimeMaterial.HasProperty("_BlendMode")) runtimeMaterial.SetFloat("_BlendMode", 0f);
-        if (runtimeMaterial.HasProperty("_ZWrite")) runtimeMaterial.SetFloat("_ZWrite", 0f);
-        if (runtimeMaterial.HasProperty("_BaseColor")) runtimeMaterial.SetColor("_BaseColor", Color.white);
-        runtimeMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        return runtimeMaterial;
-    }
-
-    private void SetPreviewState(bool active)
-    {
-        if (systems == null) return;
-        foreach (ParticleSystem system in systems)
-        {
-            if (system == null) continue;
-            if (active && !system.isPlaying) system.Play(true);
-            else if (!active) system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (runtimeMaterial != null)
-        {
-            Destroy(runtimeMaterial);
-            runtimeMaterial = null;
-        }
+        ParticleSystemRenderer renderer = system.GetComponent<ParticleSystemRenderer>();
+        if (renderer == null) return;
+        renderer.sharedMaterial = material;
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.enableGPUInstancing = true;
+        if (material != null && material.HasProperty("_AlphaCutoff"))
+            material.SetFloat("_AlphaCutoff", alphaClipThreshold);
     }
 }

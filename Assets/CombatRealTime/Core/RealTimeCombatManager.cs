@@ -236,7 +236,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         EnemyController engagedBehaviour = engagedEnemy != null
             ? engagedEnemy.GetComponent<EnemyController>()
             : null;
-        if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null && engagedBehaviour.ShouldEndCombatForPursuit)
+        if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null && !engagedBehaviour.IsFlameDormant && engagedBehaviour.ShouldEndCombatForPursuit)
         {
             if (logCombatDisengageDiagnostics)
             {
@@ -739,7 +739,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public bool TryUseAttack(int slotIndex)
     {
-        if (!combatActive || IsPlayerDead() || lockedEnemy == null || playerLoadout == null ||
+        if (!combatActive || IsPlayerDead() || lockedEnemy == null || lockedEnemy.IsFlameDormant || playerLoadout == null ||
             (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
         {
             return false;
@@ -809,7 +809,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool TryUseSkill(SkillSO skill)
     {
-        if (!combatActive || IsPlayerDead() || lockedEnemy == null || skill == null ||
+        if (!combatActive || IsPlayerDead() || lockedEnemy == null || lockedEnemy.IsFlameDormant || skill == null ||
             (lockedEnemy.Health != null && lockedEnemy.Health.IsDead) || playerAnimator == null || playerRoot == null)
         {
             return false;
@@ -925,7 +925,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public int ApplySkillDamageToLockedEnemy(SkillSO skill)
     {
-        if (!combatActive || skill == null || lockedEnemy == null ||
+        if (!combatActive || skill == null || lockedEnemy == null || lockedEnemy.IsFlameDormant ||
             playerRoot == null || (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
         {
             return 0;
@@ -1033,7 +1033,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool CompleteThresholdKill(EnemyController enemy, bool endCombatImmediately = true)
     {
-        if (enemy == null || !enemy.ForceDefeatFromThreshold())
+        if (enemy == null || enemy.IsFlameDormant || !enemy.ForceDefeatFromThreshold())
         {
             return false;
         }
@@ -1273,7 +1273,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         outcome = EnemyAttackOutcome.Miss;
         var network = Unity.Netcode.NetworkManager.Singleton;
         if (network != null && network.IsListening && !network.IsServer) return 0;
-        if (victim == null || victim.CurrentHp <= 0 || attacker == null || !attacker.isActiveAndEnabled ||
+        if (victim == null || victim.CurrentHp <= 0 || attacker == null || attacker.IsFlameDormant || !attacker.isActiveAndEnabled ||
             attacker.ActionSequenceId != actionId || attacker.ActiveSkill != skill ||
             attacker.Health != null && attacker.Health.IsDead || IsCinematicSequenceActive) return 0;
 
@@ -1310,6 +1310,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public int ApplyEnemySkillDamageToPlayer(EnemyController caster, SkillSO skill)
     {
+        if (caster != null && caster.IsFlameDormant) return 0;
         CombatHealthThresholdController.Instance?.CancelAttackQte(caster);
         if (CombatHealthThresholdController.Instance != null &&
             CombatHealthThresholdController.Instance.IsAttackDodged(caster, playerRoot, skill)) return 0;
@@ -1349,7 +1350,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public void BeginEnemyAttackWindow(EnemyController enemy, float durationSeconds)
     {
-        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != engagedEnemy || enemy.ActiveSkill == null)
+        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy.IsFlameDormant || enemy != engagedEnemy || enemy.ActiveSkill == null)
         {
             return;
         }
@@ -1372,7 +1373,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     {
         // A counter is earned only through the authored attack QTE and its cinematic.
         if (reaction == RealTimeCombatReaction.Counter) return;
-        if (!reactionWindowOpen || engagedEnemy == null || engagedEnemy.ActiveSkill == null ||
+        if (!reactionWindowOpen || engagedEnemy == null || engagedEnemy.IsFlameDormant || engagedEnemy.ActiveSkill == null ||
             (reaction != RealTimeCombatReaction.Counter &&
              reaction != RealTimeCombatReaction.Dodge &&
              reaction != RealTimeCombatReaction.Jump))
@@ -1419,7 +1420,14 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         int token,
         float durationSeconds)
     {
-        yield return new WaitForSecondsRealtime(durationSeconds);
+        float elapsed = 0f;
+        while (elapsed < durationSeconds || (enemy != null && enemy.IsFlameDormant))
+        {
+            if (enemy == null || token != reactionWindowToken) yield break;
+            if (!enemy.IsFlameDormant)
+                elapsed += enemy.TimeDomain != null ? enemy.TimeDomain.DeltaTime : Time.deltaTime;
+            yield return null;
+        }
         if (token != reactionWindowToken || !reactionWindowOpen || enemy == null || enemy != engagedEnemy || enemy.ActiveSkill != skill)
         {
             yield break;
@@ -1468,7 +1476,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void CompleteEnemyAttack(EnemyController enemy)
     {
-        if (enemy == null || enemy != engagedEnemy)
+        if (enemy == null || enemy.IsFlameDormant || enemy != engagedEnemy)
         {
             return;
         }

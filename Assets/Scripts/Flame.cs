@@ -13,6 +13,10 @@ using Unity.Netcode;
 [DisallowMultipleComponent]
 public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 {
+    private static readonly HashSet<Flame> activeInfluenceFlames = new HashSet<Flame>();
+    public static IEnumerable<Flame> ActiveInfluenceFlames => activeInfluenceFlames;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetInfluenceRegistry() => activeInfluenceFlames.Clear();
     [Header("State")]
     [SerializeField, Tooltip("Etat de la flamme au demarrage.")]
     private bool isLit = false;
@@ -50,17 +54,17 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private FlameLightReceiver flameLightReceiver;
 
     [Header("Interaction")]
-    [Tooltip("Ecoute Interact en plus de TriggerMunin.")]
-    public bool useInteractInput = false;
-    [SerializeField, Tooltip("Autorise l'appel de Munin depuis le choix d'interaction de la torche.")]
-    private bool useTriggerMuninInput = true;
+    [Tooltip("Allume ou eteint la flamme avec Interact lorsque le joueur est proche.")]
+    public bool useInteractInput = true;
+    [SerializeField, Tooltip("Compatibilite de sauvegarde des anciennes scenes Munin. Laissez desactive.")]
+    private bool useTriggerMuninInput = false;
     [SerializeField, Tooltip("Affiche un dialogue d'etat avec Interact sans changer la flamme.")]
-    private bool showStateDialogueOnInteract = true;
+    private bool showStateDialogueOnInteract = false;
     [SerializeField, Tooltip("Message affiche avec Interact quand la flamme est allumee.")]
     private string litStateMessage = "La flamme est allumee.";
     [SerializeField, Tooltip("Message affiche avec Interact quand la flamme est eteinte.")]
     private string unlitStateMessage = "La flamme est eteinte.";
-    [SerializeField, Min(0.05f), Tooltip("Distance maximale propre a Interact. TriggerMunin continue d'utiliser le collider trigger.")]
+    [SerializeField, Min(0.05f), Tooltip("Distance maximale pour interagir directement avec la flamme.")]
     private float interactMaxDistance = 1f;
     [SerializeField, Tooltip("Priorite de selection si plusieurs interactions sont proches.")]
     private int interactionPriority = 80;
@@ -176,14 +180,17 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     public float GetInteractionMaxDistance(SquadCharacterController controller)
     {
-        float distance = Mathf.Max(0.1f, interactionRadius);
-        MuninController munin = controller != null ? MuninController.FindForCharacter(controller.gameObject) : null;
-        if (munin != null && munin.TryGetLightSourceDetectionDistance(this, out float muninDistance))
-        {
-            distance = Mathf.Max(distance, muninDistance);
-        }
+        return Mathf.Max(0.05f, interactMaxDistance);
+    }
 
-        return distance;
+    /// <summary>Applies the post-Munin interaction model to authored Flame assets.</summary>
+    public void ConfigureDirectInteraction()
+    {
+        useInteractInput = true;
+        useTriggerMuninInput = false;
+        showStateDialogueOnInteract = false;
+        muninController = null;
+        chargeCostToLight = 0;
     }
 
     public int GetInteractionPriority(SquadCharacterController controller)
@@ -206,6 +213,12 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         return isActiveAndEnabled && IsEffectivelyLit
             && litInfluence != null
             && litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
+    }
+
+    public bool ProvidesEnemyActivationTo(Collider collider)
+    {
+        EnsureLitInfluence();
+        return litInfluence.AcceptsCollider(collider) && ProvidesLitInfluenceTo(collider, collider.transform.position);
     }
 
     /// <summary>Applies the authoring values stored on a SceneMarker during an editor bake.</summary>
@@ -293,6 +306,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void OnEnable()
     {
+        activeInfluenceFlames.Add(this);
         EnsureRevealSource();
         ApplyVisuals(true);
 
@@ -312,6 +326,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void OnDisable()
     {
+        activeInfluenceFlames.Remove(this);
         LocalInputRouter.Interact -= OnInteractPerformed;
         ClearLitInfluence();
         SetInfluenceSphereVisualActive(false);

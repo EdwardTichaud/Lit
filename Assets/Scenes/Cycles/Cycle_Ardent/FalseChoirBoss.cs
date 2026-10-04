@@ -16,7 +16,7 @@ public sealed class FalseChoirBoss : BossEncounterBehaviour
     private int offlineRelay;
     private double offlineExposed, offlineReady;
     private CharacterInfo health;
-    private double Now => IsSpawned ? NetworkManager.ServerTime.Time : Time.unscaledTimeAsDouble;
+    private double Now => EncounterTime;
     public int ActiveRelay => IsSpawned ? activeRelay.Value : offlineRelay;
     public bool IsExposed => IsBossEngaged && Now < (IsSpawned ? exposedUntil.Value : offlineExposed);
     public double CooldownRemaining => System.Math.Max(0,(IsSpawned ? readyAt.Value : offlineReady)-Now);
@@ -50,7 +50,7 @@ public sealed class FalseChoirBoss : BossEncounterBehaviour
     protected override void Update()
     {
         BindHealth();
-        if(Authority && IsBossEngaged)
+        if(Authority && IsBossEngaged && Enemy != null && !Enemy.IsFlameDormant)
         {
             double end=IsSpawned ? exposedUntil.Value : offlineExposed;
             if(end > 0 && Now >= end)
@@ -66,7 +66,7 @@ public sealed class FalseChoirBoss : BossEncounterBehaviour
     }
     public bool TryReveal(int index)
     {
-        if(!Authority || !IsBossEngaged || IsExposed || CooldownRemaining > 0 || index != ActiveRelay) return false;
+        if(!Authority || !IsBossEngaged || Enemy == null || Enemy.IsFlameDormant || IsExposed || CooldownRemaining > 0 || index != ActiveRelay) return false;
         if(IsSpawned) { exposedUntil.Value=Now+revealSeconds; readyAt.Value=Now+Mathf.Max(revealSeconds,relayCooldownSeconds); }
         else { offlineExposed=Now+revealSeconds; offlineReady=Now+Mathf.Max(revealSeconds,relayCooldownSeconds); }
         return true;

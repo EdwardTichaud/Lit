@@ -331,6 +331,12 @@ public sealed partial class EnemyController
             return;
         }
 
+        if (IsFlameDormant)
+        {
+            // Cinematic ownership ended, but darkness still owns the pose.
+            PhysicsSetState(CombatEnemyPhysicsState.Navigation, "cinematic ended during flame pause");
+            return;
+        }
         PhysicsSnapToGroundIfAvailable();
         PhysicsResumeNavigation();
         PhysicsSetState(CombatEnemyPhysicsState.Navigation, "fin cinematique");

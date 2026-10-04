@@ -761,12 +761,12 @@ MonoBehaviour:
   flameId: scene-flame:Maison:DED51263
   flameObject: {fileID: 0}
   flameLight: {fileID: 0}
+  activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  activateWhenLitTargets: []
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: "La flamme est allum\xE9e."
   unlitStateMessage: "La flamme est \xE9teinte."
   interactMaxDistance: 1
@@ -777,6 +777,7 @@ MonoBehaviour:
   litInfluence:
     enabled: 1
     radius: 4
+    transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:
       serializedVersion: 2
@@ -785,10 +786,18 @@ MonoBehaviour:
     refreshInterval: 0.25
     notifyStay: 1
     drawDebugGizmos: 1
+  showInfluenceSphere: 1
+  influenceSphereOnlyWhenLit: 1
+  influenceSphereAlpha: 0.14
+  influenceSphereColor: {r: 1, g: 0.72, b: 0.18, a: 1}
+  ancientInfluenceSphereColor: {r: 0.35, g: 0.72, b: 1, a: 1}
+  influenceSphereMaterialOverride: {fileID: 0}
+  commonLightActivationOrder: []
+  ancientFlame: 0
   emissionFadeDuration: 0.6
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!135 &3449268001123855281
 SphereCollider:
   m_ObjectHideFlags: 0

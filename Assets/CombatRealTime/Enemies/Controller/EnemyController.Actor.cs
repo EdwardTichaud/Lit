@@ -266,6 +266,7 @@ public sealed partial class EnemyController
     /// </summary>
     public bool TryStartThresholdFailureRetaliation(SkillSO skill)
     {
+        if (!CombatEnabled || !BrainAuthority) return false;
         if (skill == null || ActorActiveSkill != null || ActorEnemySkills == null || !ActorEnemySkills.SetActiveSkill(skill))
         {
             return false;
@@ -295,6 +296,7 @@ public sealed partial class EnemyController
     /// <summary>Starts an autonomous attack chosen by EnemyCombatBrain. It deliberately bypasses the legacy retaliation ledger.</summary>
     public bool TryStartAutonomousAttack(SkillSO skill)
     {
+        if (!CombatEnabled || IsSuspended || !BrainAuthority) return false;
         if (skill == null || ActorActiveSkill != null || ActorEnemySkills == null || !ActorEnemySkills.SetActiveSkill(skill) || ActorHealth != null && ActorHealth.IsDead)
         {
             return false;
@@ -572,9 +574,11 @@ public sealed partial class EnemyController
             yield break;
         }
 
-        float animationSpeed = Mathf.Max(0.01f, Mathf.Abs(ActorAnimator.speed * hitState.speed));
+        float animationSpeed = Mathf.Max(0.01f, Mathf.Abs((TimeDomain != null ? TimeDomain.BaseAnimatorSpeed : ActorAnimator.speed) * hitState.speed));
         float waitSeconds = Mathf.Max(0.01f, hitState.length * ActorHitRecoveryNormalizedTime / animationSpeed);
-        yield return new WaitForSeconds(waitSeconds);
+        if (TimeDomain != null) yield return TimeDomain.WaitForLocalSeconds(waitSeconds);
+        else yield return new WaitForSeconds(waitSeconds);
+        while (IsFlameDormant) yield return null;
         if (ActorAnimator != null && !ActorDeathAnimationPlayed && ActorAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash == hitStateHash && !string.IsNullOrWhiteSpace(ActorIdleAnimatorState))
         {
             ReturnToIdleAnimation();

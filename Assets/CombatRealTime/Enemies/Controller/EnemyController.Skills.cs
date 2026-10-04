@@ -99,6 +99,7 @@ public sealed partial class EnemyController
 
     public bool PlayActiveSkill()
     {
+        if (IsFlameDormant) return false;
         SkillsResolveReferences();
         if (SkillsAnimator == null || SkillsActiveSkill.AnimationClip == null)
         {
@@ -132,6 +133,7 @@ public sealed partial class EnemyController
     /// <summary>One instantaneous, authority-owned impact per authored enemy action.</summary>
     public void ExecuteEnemyAttack(SkillSO authoredSkill)
     {
+        if (IsFlameDormant) return;
         SkillsResolveReferences();
         var manager = RealTimeCombatManager.Instance;
         var network = Unity.Netcode.NetworkManager.Singleton;
@@ -254,6 +256,8 @@ public sealed partial class EnemyController
                 yield return new WaitForSeconds(cue.holdAtCasterSeconds);
         }
 
+        while (IsFlameDormant) yield return null;
+
         if (projectile == null || target == null)
         {
             if (projectile != null)
@@ -278,6 +282,7 @@ public sealed partial class EnemyController
         float elapsed = 0f;
         while (projectile != null && target != null && elapsed < duration)
         {
+            if (IsFlameDormant) { yield return null; continue; }
             elapsed += SkillsTimeDomain != null ? SkillsTimeDomain.DeltaTime : Time.deltaTime;
             Vector3 destination = target.position;
             Vector3 direction = destination - projectile.transform.position;
@@ -290,6 +295,7 @@ public sealed partial class EnemyController
             yield return null;
         }
 
+        while (IsFlameDormant) yield return null;
         if (projectile != null && target != null)
         {
             projectile.transform.position = target.position;

@@ -16,6 +16,15 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
     private BossEncounterState offlineState;
     private int offlineSegments;
     private bool localCombatOpen;
+    private readonly NetworkVariable<double> replicatedEncounterClock = new(0);
+    private double offlineEncounterClock;
+    protected double EncounterTime => IsSpawned ? replicatedEncounterClock.Value : offlineEncounterClock;
+    protected System.Collections.IEnumerator WaitForEncounterSeconds(float seconds)
+    {
+        double until = EncounterTime + Mathf.Max(0, seconds);
+        while (EncounterTime < until && !IsBossResolved) yield return null;
+        while (Enemy != null && Enemy.IsFlameDormant && !IsBossResolved) yield return null;
+    }
 
     public event Action PresentationChanged;
     public BossDefinitionSO Definition => definition;
@@ -54,6 +63,11 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
 
     protected virtual void Update()
     {
+        if (Authority && Enemy != null && !Enemy.IsFlameDormant)
+        {
+            double delta = Enemy.TimeDomain != null ? Enemy.TimeDomain.DeltaTime : Time.deltaTime;
+            if (IsSpawned) replicatedEncounterClock.Value += delta; else offlineEncounterClock += delta;
+        }
         if (Authority && State == BossEncounterState.Dormant && CanEngage(ResolveAuthoritativePlayer()))
             EngageAuthoritatively();
         RefreshLocalCombatPresentation();
@@ -61,20 +75,20 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
 
     protected virtual bool CanEngage(Transform player)
     {
-        return player != null && Enemy != null && Enemy.gameObject.activeInHierarchy &&
+        return player != null && Enemy != null && !Enemy.IsFlameDormant && Enemy.gameObject.activeInHierarchy &&
                (player.position - Enemy.transform.position).sqrMagnitude <= Mathf.Pow(definition != null ? definition.EngagementDistance : 8f, 2f);
     }
 
     protected void EngageAuthoritatively()
     {
-        if (!Authority || State != BossEncounterState.Dormant || Enemy == null) return;
+        if (!Authority || State != BossEncounterState.Dormant || Enemy == null || Enemy.IsFlameDormant) return;
         SetState(BossEncounterState.Engaged);
         OnBossEngagedAuthoritatively();
     }
 
     protected void RemoveSegmentAuthoritatively()
     {
-        if (!Authority || State != BossEncounterState.Engaged) return;
+        if (!Authority || State != BossEncounterState.Engaged || Enemy == null || Enemy.IsFlameDormant) return;
         int next = Mathf.Max(0, CurrentSegments - 1);
         SetSegments(next);
         OnSegmentChangedAuthoritatively(next);

@@ -26,6 +26,7 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
     private readonly HashSet<BrokenAnchorTorch> acceptedTorches = new();
     private readonly HashSet<BrokenAnchorTorch> observedTorches = new();
     private int lastPresentedSegments = int.MinValue;
+    private bool wasFlameDormant;
 
     public void Configure(Transform source, BrokenAnchorTorch[] targets, BrokenAnchorLightBall projectile, float telegraph, float interval, float speed, float lifetime, int damage, float releaseSeconds)
     {
@@ -53,6 +54,12 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
     protected override void Update()
     {
         base.Update();
+        if (Enemy != null && Enemy.IsFlameDormant) { wasFlameDormant = true; return; }
+        if (wasFlameDormant)
+        {
+            wasFlameDormant = false;
+            if (Authority && IsBossEngaged) ReconcileLitTorches("flame resumed");
+        }
         // Boss segments are replicated independently of CharacterInfo. Mirror them on every
         // peer so the existing combat HUD always displays 3/3, 2/3, 1/3 and 0/3 correctly.
         if (lastPresentedSegments != CurrentSegments)
@@ -60,7 +67,7 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
             lastPresentedSegments = CurrentSegments;
             SynchronizeHealth(CurrentSegments);
         }
-        if (Authority && IsBossEngaged && firing == null) firing = StartCoroutine(FireLoop());
+        if (Authority && IsBossEngaged && Enemy != null && !Enemy.IsFlameDormant && firing == null) firing = StartCoroutine(FireLoop());
         if ((!IsBossEngaged || IsBossResolved) && firing != null) { StopCoroutine(firing); firing = null; }
     }
     private void OnDisable()
@@ -127,6 +134,7 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
 
     private void AcceptLitTorch(BrokenAnchorTorch torch, string source)
     {
+        if (Enemy == null || Enemy.IsFlameDormant) return;
         if (!Authority || torch == null || Array.IndexOf(torches, torch) < 0 || !torch.IsLit)
         {
             Trace($"torche refusée ({source}) : état ou autorité invalide.");
@@ -160,16 +168,18 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
     {
         while (IsBossEngaged && !IsBossResolved)
         {
+            while (Enemy != null && Enemy.IsFlameDormant && !IsBossResolved) yield return null;
+            if (IsBossResolved) break;
             Transform target = ResolveTarget();
             if (target != null)
             {
                 Vector3 origin = emissionPoint != null ? emissionPoint.position : Enemy.transform.position + Vector3.up * 1.5f;
                 Vector3 destination = target.position + Vector3.up;
-                yield return new WaitForSecondsRealtime(telegraphSeconds);
+                yield return WaitForEncounterSeconds(telegraphSeconds);
                 if (!IsBossEngaged || IsBossResolved) break;
                 Fire(origin, destination);
             }
-            yield return new WaitForSecondsRealtime(salvoIntervalSeconds);
+            yield return WaitForEncounterSeconds(salvoIntervalSeconds);
         }
         firing = null;
     }

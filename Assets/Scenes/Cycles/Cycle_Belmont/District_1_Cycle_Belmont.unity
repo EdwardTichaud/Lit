@@ -61059,9 +61059,9 @@ MonoBehaviour:
   - {fileID: 0}
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
   interactMaxDistance: 1
@@ -61092,7 +61092,7 @@ MonoBehaviour:
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 2
+  chargeCostToLight: 0
 --- !u!135 &1741236593
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -66378,6 +66378,14 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
   - target: {fileID: 1346025729}
     condition:
       requirements:
@@ -66387,6 +66395,14 @@ MonoBehaviour:
           stepId: lucian_after_shadow
           knowledge: {fileID: 0}
           cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
       allFlags: 0
       anyFlags: 0
       knowledge: []
@@ -66402,6 +66418,14 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
   - target: {fileID: 78378454}
     condition:
       requirements:
@@ -66411,6 +66435,14 @@ MonoBehaviour:
           stepId: lucian_after_shadow
           knowledge: {fileID: 0}
           cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
       allFlags: 0
       anyFlags: 0
       knowledge: []
@@ -66426,6 +66458,14 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
   - target: {fileID: 1741236591}
     condition:
       requirements:
@@ -66435,6 +66475,14 @@ MonoBehaviour:
           stepId: lower_flames_restored
           knowledge: {fileID: 0}
           cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
       allFlags: 0
       anyFlags: 0
       knowledge: []
@@ -66517,7 +66565,8 @@ MonoBehaviour:
       de rage\u2026 dissip\xE9e. Mais les conduits restent plong\xE9s dans le noir."
     durationSeconds: 5
   sequences:
-  - id: anchor_release
+  - startGate: {fileID: 0}
+    id: anchor_release
     director: {fileID: 802461002}
     profile: {fileID: 11400000, guid: e75e3adeeca775b4998fd9f6e77cb76b, type: 2}
   devStartEnabled: 0

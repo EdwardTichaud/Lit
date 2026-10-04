@@ -2,13 +2,14 @@ using UnityEngine;
 
 public sealed partial class EnemyController
 {
-    public bool IsSuspended { get; private set; }
+    private bool cinematicSuspended;
+    public bool IsSuspended => cinematicSuspended || IsFlameDormant;
 
     public void SetSuspended(bool value)
     {
-        if (IsSuspended == value)
+        if (cinematicSuspended == value)
             return;
-        IsSuspended = value;
+        cinematicSuspended = value;
         EnemyController motor = GetComponent<EnemyController>();
         if (value)
         {

@@ -30,6 +30,7 @@ public sealed partial class EnemyController
 
     public void EnemyAttack(SkillSO skill)
     {
+        if (IsFlameDormant) return;
         TraceEnemyEvent(nameof(EnemyAttack));
         this.ExecuteEnemyAttack(skill);
     }
@@ -42,6 +43,7 @@ public sealed partial class EnemyController
 
     public void QTE(string input)
     {
+        if (IsFlameDormant) return;
         EnemyController enemy = this;
         if (enemy != null) CombatHealthThresholdController.Instance?.OpenAttackQte(enemy, input);
         else CombatHealthThresholdController.Instance?.OpenQte(input);
@@ -49,6 +51,7 @@ public sealed partial class EnemyController
 
     public void OpenEnemyReactionOpportunity()
     {
+        if (IsFlameDormant) return;
         CombatHealthThresholdController.Instance?.OpenEnemyReactionOpportunity(this);
     }
 
@@ -57,7 +60,7 @@ public sealed partial class EnemyController
 
     private void CompleteAction(int sequence, bool recovery)
     {
-        if (!BrainAuthority || sequence != ActionSequenceId || ActiveSkill == null || (sequence == completedActionSequence && !recovery)) return;
+        if (IsFlameDormant || !BrainAuthority || sequence != ActionSequenceId || ActiveSkill == null || (sequence == completedActionSequence && !recovery)) return;
         completedActionSequence = sequence;
         CombatHealthThresholdController.Instance?.EndEnemyReactionAction(this);
         if (IsAutonomousActionActive)

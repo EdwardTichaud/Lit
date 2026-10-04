@@ -56404,7 +56404,7 @@ MonoBehaviour:
   searchOwnerInParents: 1
   registerAsWorldRevealSource: 0
   worldSourceCountsAsActive: 1
-  revealColor: {r: 1, g: 1, b: 1, a: 1}
+  revealColor: {r: 1, g: 0.31, b: 0.08, a: 1}
 --- !u!1001 &792407339
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -61200,7 +61200,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flame
   ShowTopMostFoldoutHeaderGroup: 1
-  isLit: 1
+  isLit: 0
   flameId: district1.puits.galerie
   flameObject: {fileID: 1322350157}
   flameLight: {fileID: 1322350156}
@@ -61208,9 +61208,9 @@ MonoBehaviour:
   - {fileID: 1322350157}
   configureRevealSource: 1
   flameLightReceiver: {fileID: 1322350158}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
   interactMaxDistance: 1
@@ -61241,7 +61241,7 @@ MonoBehaviour:
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!135 &848966282
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -77328,7 +77328,7 @@ MonoBehaviour:
   searchOwnerInParents: 1
   registerAsWorldRevealSource: 0
   worldSourceCountsAsActive: 1
-  revealColor: {r: 1, g: 1, b: 1, a: 1}
+  revealColor: {r: 1, g: 0.31, b: 0.08, a: 1}
 --- !u!1001 &1107598279
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -93319,7 +93319,7 @@ MonoBehaviour:
   searchOwnerInParents: 1
   registerAsWorldRevealSource: 0
   worldSourceCountsAsActive: 1
-  revealColor: {r: 1, g: 1, b: 1, a: 1}
+  revealColor: {r: 1, g: 0.31, b: 0.08, a: 1}
 --- !u!1001 &1323443497
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -98873,7 +98873,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flame
   ShowTopMostFoldoutHeaderGroup: 1
-  isLit: 1
+  isLit: 0
   flameId: district1.puits.poste
   flameObject: {fileID: 792229996}
   flameLight: {fileID: 792229995}
@@ -98881,9 +98881,9 @@ MonoBehaviour:
   - {fileID: 792229996}
   configureRevealSource: 1
   flameLightReceiver: {fileID: 792229997}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
   interactMaxDistance: 1
@@ -98914,7 +98914,7 @@ MonoBehaviour:
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!135 &1400758176
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -140993,7 +140993,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flame
   ShowTopMostFoldoutHeaderGroup: 1
-  isLit: 1
+  isLit: 0
   flameId: district1.puits.belvedere
   flameObject: {fileID: 1107305080}
   flameLight: {fileID: 1107305079}
@@ -141001,9 +141001,9 @@ MonoBehaviour:
   - {fileID: 1107305080}
   configureRevealSource: 1
   flameLightReceiver: {fileID: 1107305081}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
   interactMaxDistance: 1
@@ -141034,7 +141034,7 @@ MonoBehaviour:
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!135 &1997380616
 SphereCollider:
   m_ObjectHideFlags: 0

@@ -19870,9 +19870,9 @@ MonoBehaviour:
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 0}
-  useInteractInput: 0
-  useTriggerMuninInput: 1
-  showStateDialogueOnInteract: 1
+  useInteractInput: 1
+  useTriggerMuninInput: 0
+  showStateDialogueOnInteract: 0
   litStateMessage: La flamme est allumee.
   unlitStateMessage: La flamme est eteinte.
   interactMaxDistance: 1
@@ -19903,7 +19903,7 @@ MonoBehaviour:
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
-  chargeCostToLight: 1
+  chargeCostToLight: 0
 --- !u!135 &7202045463180924218
 SphereCollider:
   m_ObjectHideFlags: 0
