@@ -35,5 +35,25 @@ public sealed class EnemyDeathPresentationTests
             Object.DestroyImmediate(target);
         }
     }
+
+    [Test]
+    public void HealthDefeatStartsTheSharedDeathPresentation()
+    {
+        var root = new GameObject("Death presentation test");
+        try
+        {
+            var health = root.AddComponent<CharacterInfo>();
+            var enemy = root.AddComponent<EnemyController>();
+            Assert.That(root.GetComponent<EnemyDeathPresentation>(), Is.Not.Null);
+
+            health.SetHealth(1, 1);
+            Assert.That(enemy.ForceDefeatFromThreshold(), Is.True);
+            Assert.That(health.IsDead, Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
 }
 #endif

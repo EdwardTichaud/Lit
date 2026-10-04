@@ -5,17 +5,15 @@ public sealed partial class EnemyController
 {
     private const string DefaultBattleWallPrefabPath = "Assets/Prefabs/BattleWall.prefab";
 
-    [Header("Combat Arena")]
-    [Tooltip("Crée BattleWall au démarrage du combat. Désactivé par défaut : les ennemis ordinaires restent fuyables.")]
-    public bool CreateWall;
     [SerializeField, Tooltip("Prefab de barrière instancié au point de départ du combat.")]
     private GameObject battleWallPrefab;
     private GameObject activeBattleWall;
+    private bool ShouldCreateBattleWall => Configuration.ArenaCreateBattleWall;
 
     /// <summary>Called by the combat authority once this enemy becomes engaged.</summary>
     public void BeginBattleWall()
     {
-        if (!CreateWall || activeBattleWall != null || !isActiveAndEnabled) return;
+        if (!ShouldCreateBattleWall || activeBattleWall != null || !isActiveAndEnabled) return;
         if (Online && !IsServer) return;
 
         if (battleWallPrefab == null)
@@ -87,7 +85,7 @@ public sealed partial class EnemyController
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (!CreateWall || battleWallPrefab != null) return;
+        if (battleWallPrefab != null) return;
         battleWallPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(DefaultBattleWallPrefabPath);
         if (battleWallPrefab != null) UnityEditor.EditorUtility.SetDirty(this);
     }

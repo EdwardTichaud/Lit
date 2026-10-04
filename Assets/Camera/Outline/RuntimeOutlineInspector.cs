@@ -13,6 +13,17 @@ public sealed class RuntimeOutlineInspector : MonoBehaviour
     private Color outlineColor = Color.white;
     [SerializeField, Range(0.5f, 12f), Tooltip("Epaisseur en pixels du rendu. Valeur initiale du projet : 4.")]
     private float thickness = 4f;
+    [Header("Epaisseur selon la distance")]
+    [SerializeField, Tooltip("Ajuste l'epaisseur du contour selon la distance entre la camera active et l'objet interactif selectionne.")]
+    private bool scaleThicknessWithCameraDistance = true;
+    [SerializeField, Min(0.1f), Tooltip("Distance a laquelle le contour conserve son epaisseur de proximite.")]
+    private float nearDistance = 3f;
+    [SerializeField, Min(0.1f), Tooltip("Distance a laquelle le contour atteint son epaisseur minimale.")]
+    private float farDistance = 16f;
+    [SerializeField, Range(0.5f, 12f), Tooltip("Epaisseur du contour a proximite.")]
+    private float nearThickness = 4f;
+    [SerializeField, Range(0.5f, 12f), Tooltip("Epaisseur du contour a distance, notamment en camera tactique.")]
+    private float farThickness = 1.5f;
     [SerializeField, Range(0.001f, 1f), Tooltip("Pixels sous ce seuil d'opacite exclus du contour. Augmenter resserre le contour des particules diffuses.")]
     private float alphaThreshold = 0.1f;
 
@@ -50,8 +61,44 @@ public sealed class RuntimeOutlineInspector : MonoBehaviour
         if (runtimeMaterial == null || outlinePass == null) return;
         outlinePass.enabled = showOutlines;
         runtimeMaterial.SetColor("_OutlineColor", outlineColor);
-        runtimeMaterial.SetFloat("_Thickness", Mathf.Max(0.5f, thickness));
+        runtimeMaterial.SetFloat("_Thickness", GetEffectiveThickness());
         Shader.SetGlobalFloat("_RuntimeOutlineAlphaThreshold", Mathf.Clamp(alphaThreshold, 0.001f, 1f));
+    }
+
+    private float GetEffectiveThickness()
+    {
+        if (!scaleThicknessWithCameraDistance)
+        {
+            return Mathf.Max(0.5f, thickness);
+        }
+
+        Camera camera = Camera.main;
+        if (camera == null || RuntimeOutlineSelectionManager.SelectedTargets.Count == 0)
+        {
+            return Mathf.Max(0.5f, thickness);
+        }
+
+        float closestDistance = float.PositiveInfinity;
+        for (int i = 0; i < RuntimeOutlineSelectionManager.SelectedTargets.Count; i++)
+        {
+            RuntimeOutlineTarget target = RuntimeOutlineSelectionManager.SelectedTargets[i];
+            if (target == null) continue;
+
+            Renderer renderer = target.GetComponent<Renderer>();
+            Vector3 point = renderer != null
+                ? renderer.bounds.ClosestPoint(camera.transform.position)
+                : target.transform.position;
+            closestDistance = Mathf.Min(closestDistance, Vector3.Distance(camera.transform.position, point));
+        }
+
+        if (float.IsPositiveInfinity(closestDistance))
+        {
+            return Mathf.Max(0.5f, thickness);
+        }
+
+        float maxDistance = Mathf.Max(nearDistance + 0.01f, farDistance);
+        float t = Mathf.InverseLerp(nearDistance, maxDistance, closestDistance);
+        return Mathf.Max(0.5f, Mathf.Lerp(nearThickness, farThickness, t));
     }
 
     private void OnDisable()

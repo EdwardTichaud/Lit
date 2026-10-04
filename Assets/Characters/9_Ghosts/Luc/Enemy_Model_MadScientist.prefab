@@ -1978,7 +1978,6 @@ GameObject:
   - component: {fileID: 4032231266312343244}
   - component: {fileID: 3994226511889523073}
   - component: {fileID: 3787794328459508143}
-  - component: {fileID: 4865055466029696179}
   m_Layer: 0
   m_Name: TorchLight
   m_TagString: Untagged
@@ -2207,32 +2206,6 @@ MonoBehaviour:
   m_AreaLightEmissiveMeshShadowCastingMode: 0
   m_AreaLightEmissiveMeshMotionVectorGenerationMode: 0
   m_AreaLightEmissiveMeshLayer: -1
---- !u!114 &4865055466029696179
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3436253744618016746}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e418d3ab4c7d4a8bbd5b69ba0df80b15, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerTorchInfluence
-  torchLight: {fileID: 3994226511889523073}
-  owner: {fileID: 0}
-  litInfluence:
-    enabled: 1
-    radius: 5
-    transitionDuration: 5
-    center: {x: 0, y: 0, z: 0}
-    layerMask:
-      serializedVersion: 2
-      m_Bits: 4294967295
-    queryTriggerInteraction: 2
-    refreshInterval: 0.25
-    notifyStay: 1
-    drawDebugGizmos: 1
 --- !u!1 &3464910743615896186
 GameObject:
   m_ObjectHideFlags: 0
@@ -4534,8 +4507,7 @@ MonoBehaviour:
   AnimationLockPoint: {fileID: 2663386024477595524}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  CreateWall: 0
-  battleWallPrefab: {fileID: 0}
+  battleWallPrefab: {fileID: 5051682734331238811, guid: e5281b19f0eb49d4f9d2914e07192808, type: 3}
   ContractRigidbodyComponent: {fileID: 3634362987184117151}
   ContractCapsuleCollider: {fileID: 8170008773839381790}
   ContractNavigationAgent: {fileID: 8100414059305065397}

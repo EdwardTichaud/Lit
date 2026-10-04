@@ -15,7 +15,6 @@ MonoBehaviour:
   bossId: district1.ardent.false_choir
   displayName: "Le Faux Ch\u0153ur"
   engagementDistance: 8
-  createBattleWall: 1
   segmentCount: 300
   damagePolicy: 0
   showBossBar: 0

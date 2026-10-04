@@ -1210,7 +1210,6 @@ MonoBehaviour:
   playerOptionPrefix: 'Vous : '
   ghostResponsePrefix: 
   reactionChoiceParent: {fileID: 0}
-  reactionChoiceWidth: 680
   closeChoiceText: Reculer
   reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules: []
@@ -1307,6 +1306,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CycleInteraction
   cycle: {fileID: 1557098352}
   dialogueId: nina
+  useGhostPuzzleResolution: 0
+  interactionAnchor: {fileID: 0}
+  interactionDistance: 3
+  interactionCollider: {fileID: 0}
 --- !u!4 &317574095
 Transform:
   m_ObjectHideFlags: 0
@@ -2897,14 +2900,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1482067150}
     m_Modifications:
-    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: RecoveryEnemy
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: RecoveryEnemySkills
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 819693776246483267, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 1077096534
@@ -2982,9 +2977,9 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: LocomotionEnemy
+      propertyPath: enemy
       value: 
-      objectReference: {fileID: 1127182593}
+      objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: PhysicsEnemy
       value: 
@@ -2994,16 +2989,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: RecoveryEnemy
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: LocomotionEnemy
+      value: 
+      objectReference: {fileID: 1127182593}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: ContractEnemySkills
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: RecoveryEnemySkills
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_Name
       value: Enemy_Model_MadScientist
-      objectReference: {fileID: 0}
-    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: enemy
-      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7645014274984057121, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.y
@@ -3077,7 +3080,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
   m_Name: 
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
 --- !u!1 &1141546268
 GameObject:
   m_ObjectHideFlags: 0
@@ -4840,6 +4843,14 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
   - target: {fileID: 1670984215}
     condition:
       requirements:
@@ -4852,9 +4863,22 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+  deactivations: []
+  disappearances: []
   poses:
   - animator: {fileID: 320956124}
     condition:
+      requirements:
+        mode: 0
+        conditions: []
       allFlags: 0
       anyFlags: 0
       knowledge:
@@ -4867,6 +4891,13 @@ MonoBehaviour:
     crossFade: 0.15
   director: {fileID: 319334202}
   bindingProfile: {fileID: 0}
+  cinematicParticipants: []
+  encounters: []
+  flames: []
+  autoDialogues: []
+  sequences: []
+  devStartEnabled: 0
+  devStartStepId: 
 --- !u!114 &1557098353
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4967,7 +4998,6 @@ MonoBehaviour:
   playerOptionPrefix: 'Vous : '
   ghostResponsePrefix: 
   reactionChoiceParent: {fileID: 0}
-  reactionChoiceWidth: 680
   closeChoiceText: Reculer
   reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules: []
@@ -5064,6 +5094,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CycleInteraction
   cycle: {fileID: 1557098352}
   dialogueId: scar
+  useGhostPuzzleResolution: 0
+  interactionAnchor: {fileID: 0}
+  interactionDistance: 3
+  interactionCollider: {fileID: 0}
 --- !u!4 &1670984219
 Transform:
   m_ObjectHideFlags: 0

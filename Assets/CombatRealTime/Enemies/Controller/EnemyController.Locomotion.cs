@@ -118,6 +118,15 @@ public sealed partial class EnemyController
 #endif
     private void LocomotionUpdate()
     {
+        if (IsBossBrainSuppressed)
+        {
+            if (LocomotionNavigationRequested || LocomotionWasNavigating)
+            {
+                StopNavigation();
+            }
+            return;
+        }
+
         if (LocomotionEnemy != null && LocomotionEnemy.Health != null && LocomotionEnemy.Health.IsDead)
         {
             LocomotionCombatTarget = null;
@@ -131,6 +140,9 @@ public sealed partial class EnemyController
 
     private void LocomotionLateUpdate()
     {
+        if (IsBossBrainSuppressed)
+            return;
+
         if (LocomotionEnemy != null && LocomotionEnemy.Health != null && LocomotionEnemy.Health.IsDead)
             return;
         // Le root motion peut ecrire la rotation apres l'IA. On conserve donc

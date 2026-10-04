@@ -15,6 +15,8 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     private bool combatInputActive;
     private Coroutine locomotionReconciliationRoutine;
     private int locomotionReconciliationToken;
+    private bool tacticalSprintOwned;
+    [SerializeField, Range(.5f, 1f)] private float tacticalSprintStickThreshold = .9f;
 
     /// <summary>
     /// True only while the persistent input host still owns a live runtime
@@ -124,6 +126,15 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     private void Update()
     {
+        bool tactical = LitGameplayCameraModeController.TacticalGamepadTriggersOwned;
+        if (tactical || tacticalSprintOwned)
+        {
+            var action = playerInputs != null ? playerInputs.asset.FindAction("Player/RightShoulder", false) : null;
+            bool allowed = (InputModeCoordinator.CurrentMode == InputMode.Exploration || InputModeCoordinator.CurrentMode == InputMode.Combat) &&
+                !InputFocusStack.HasAnyFocus() && !GamepadInputContextStack.IsGameplayInputSuppressed && !JoinSyncSystem.IsGameplayBlocked && Application.isFocused;
+            LocalInputRouter.SetRightShoulderPressed(allowed && ReadSprintIntent(action));
+        }
+        tacticalSprintOwned = tactical;
         if (combatInputActive)
         {
             LocalInputRouter.SetFlightVerticalValue(0f);
@@ -192,6 +203,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     public void OnRightShoulder(InputAction.CallbackContext context)
     {
         bool shouldProcess = ShouldProcess(context);
+        if (context.control != null && context.control.device is Gamepad && LitGameplayCameraModeController.TacticalGamepadTriggersOwned)
+        {
+            LocalInputRouter.SetRightShoulderPressed(false);
+            return;
+        }
         LocalInputRouter.SetRightShoulderPressed(shouldProcess && context.ReadValueAsButton());
 
         if (context.performed && shouldProcess)
@@ -557,7 +573,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             }
 
             Vector2 move = moveAction.ReadValue<Vector2>();
-            bool sprint = sprintAction != null && sprintAction.enabled && sprintAction.ReadValue<float>() > 0.5f;
+            bool sprint = ReadSprintIntent(sprintAction);
             LocalInputRouter.SetRightShoulderPressed(sprint);
             LocalInputRouter.SetMoveValue(move);
 
@@ -575,6 +591,18 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
             yield return null;
         }
+    }
+
+    private bool ReadSprintIntent(InputAction action)
+    {
+        if (!LitGameplayCameraModeController.TacticalGamepadTriggersOwned)
+            return action != null && action.enabled && action.ReadValue<float>() > .5f;
+        if (action != null && action.enabled)
+            foreach (var control in action.controls)
+                if (!(control.device is Gamepad) && control is UnityEngine.InputSystem.Controls.ButtonControl button &&
+                    button.isPressed && MainMenuInputSettings.AllowsKeyboardMouse()) return true;
+        return MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null &&
+            Gamepad.current.leftStick.ReadValue().magnitude >= tacticalSprintStickThreshold;
     }
 
     private static float ReadFlightVerticalInput()

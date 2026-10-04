@@ -7,6 +7,43 @@ using Unity.Cinemachine;
 
 public sealed class LitTacticalCameraTests
 {
+    [Test] public void TacticalMotorPreservesLocalAxesAndDoesNotCompeteForFacing()
+    {
+        var type = new LitTacticalMovementType();
+        Vector2 input = new Vector2(-.3f, -.4f);
+        Assert.That(type.GetInputVector(input), Is.EqualTo(input));
+        Assert.That(type.GetDeltaYawRotation(1, 1, 1, 1), Is.Zero);
+    }
+
+    [Test] public void CombatBarrierIsIgnoredOnlyByTacticalGameplayAndStaysSolid()
+    {
+        var cameraRoot = new GameObject("Inactive camera filter test");
+        cameraRoot.SetActive(false);
+        var barrier = new GameObject("Combat barrier filter test");
+        barrier.SetActive(false);
+        var child = new GameObject("Collider");
+        child.transform.SetParent(barrier.transform);
+        var ordinaryWall = new GameObject("Ordinary wall");
+        try
+        {
+            var controller = cameraRoot.AddComponent<LitGameplayCameraModeController>();
+            barrier.AddComponent<BattleWallContainment>();
+            var collider = child.AddComponent<BoxCollider>();
+            var wallCollider = ordinaryWall.AddComponent<BoxCollider>();
+            var mode = typeof(LitGameplayCameraModeController).GetField("effectiveMode", BindingFlags.Instance | BindingFlags.NonPublic);
+            mode.SetValue(controller, GameplayCameraMode.ThirdPerson);
+            Assert.That(controller.ShouldIgnoreTacticalCollider(collider), Is.False);
+            mode.SetValue(controller, GameplayCameraMode.Tactical);
+            Assert.That(controller.ShouldIgnoreTacticalCollider(collider), Is.True);
+            Assert.That(controller.ShouldIgnoreTacticalCollider(wallCollider), Is.False);
+            typeof(LitGameplayCameraModeController).GetField("external", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(controller, true);
+            Assert.That(controller.ShouldIgnoreTacticalCollider(collider), Is.False);
+            Assert.That(collider.enabled, Is.True);
+            Assert.That(collider.isTrigger, Is.False);
+        }
+        finally { Object.DestroyImmediate(cameraRoot); Object.DestroyImmediate(barrier); Object.DestroyImmediate(ordinaryWall); }
+    }
+
     [TestCase(TacticalObstacleMode.Sliding, false, false, TacticalObstacleMode.Sliding)]
     [TestCase(TacticalObstacleMode.VisibilityMask, false, false, TacticalObstacleMode.VisibilityMask)]
     [TestCase(TacticalObstacleMode.VisibilityMask, true, false, TacticalObstacleMode.Sliding)]

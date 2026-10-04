@@ -244,6 +244,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
   enemyCombatProfile: {fileID: 11400000, guid: 2b290b3d3df6f2f43aef78dcf8b56be9, type: 2}
   enemySettings:
+    ArenaCreateBattleWall: 1
     LocomotionPositioning:
       preferredDistance: 2.6
       minimumRetreatDistance: 1.2
@@ -292,7 +293,7 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 134228617
     PhysicsLogStateChanges: 0
-    PhysicsLogPoseAudit: 1
+    PhysicsLogPoseAudit: 0
     PhysicsPoseJumpDiagnosticDistance: 0.5
     PhysicsMaximumRootMotionDeltaPerFrame: 0.5
     PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75

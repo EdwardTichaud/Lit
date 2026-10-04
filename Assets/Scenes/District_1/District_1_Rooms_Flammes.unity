@@ -250,24 +250,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5278389027223934819, guid: 8cdceabb4d49e1648a42ff371b5d281d, type: 3}
-      propertyPath: m_Range
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5278389027223934819, guid: 8cdceabb4d49e1648a42ff371b5d281d, type: 3}
       propertyPath: m_Enabled
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5278389027223934819, guid: 8cdceabb4d49e1648a42ff371b5d281d, type: 3}
-      propertyPath: m_Intensity
-      value: 11.140845
-      objectReference: {fileID: 0}
-    - target: {fileID: 5278389027223934819, guid: 8cdceabb4d49e1648a42ff371b5d281d, type: 3}
-      propertyPath: m_Shadows.m_Type
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5278389027223934819, guid: 8cdceabb4d49e1648a42ff371b5d281d, type: 3}
-      propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

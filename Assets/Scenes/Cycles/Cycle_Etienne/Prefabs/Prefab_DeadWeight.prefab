@@ -9799,7 +9799,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
   GlobalObjectIdHash: 1219134173
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 1219134173
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -9831,7 +9831,6 @@ MonoBehaviour:
   AnimationLockPoint: {fileID: 0}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  CreateWall: 1
   battleWallPrefab: {fileID: 5051682734331238811, guid: e5281b19f0eb49d4f9d2914e07192808, type: 3}
   ContractRigidbodyComponent: {fileID: 3859433335606347761}
   ContractCapsuleCollider: {fileID: 4559566784039838816}

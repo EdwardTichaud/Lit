@@ -5421,8 +5421,7 @@ MonoBehaviour:
   AnimationLockPoint: {fileID: 937648210628518453}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  CreateWall: 0
-  battleWallPrefab: {fileID: 0}
+  battleWallPrefab: {fileID: 5051682734331238811, guid: e5281b19f0eb49d4f9d2914e07192808, type: 3}
   ContractRigidbodyComponent: {fileID: 0}
   ContractCapsuleCollider: {fileID: 0}
   ContractNavigationAgent: {fileID: 0}

@@ -76,6 +76,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             RealTimeCombatManager.Instance.LockChanged -= OnLockChanged;
         }
 
+        SetCinematicOverride(false);
         RestoreGameplayCamera();
     }
 
@@ -163,7 +164,6 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
     private void RestoreGameplayCamera()
     {
-        SetCinematicOverride(false);
         if (!active)
         {
             return;

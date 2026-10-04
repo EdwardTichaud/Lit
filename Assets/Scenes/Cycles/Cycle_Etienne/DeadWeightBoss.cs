@@ -87,7 +87,14 @@ public sealed class DeadWeightBoss : BossEncounterBehaviour
         if (observedHealth.IsDead) { if (!IsBossResolved) ResolveAuthoritatively(); return; }
         if (!IsBossResolved && CurrentSegments != observedHealth.CurrentHp) SetSegments(observedHealth.CurrentHp);
     }
-    protected override void OnBossResolvedAuthoritatively() => ReleaseBrakeSuspension();
+    protected override void OnBossResolvedAuthoritatively()
+    {
+        ReleaseBrakeSuspension();
+        // A boss can resolve through a scripted segment or restored cycle,
+        // without a final ordinary hit. Use the common defeat path in both
+        // cases so the death animation and dissolution are never skipped.
+        Enemy?.ForceDefeatFromThreshold();
+    }
     private void ReleaseBrakeSuspension()
     {
         if (!ownsSuspension) return;

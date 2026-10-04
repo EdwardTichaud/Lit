@@ -5589,7 +5589,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1219134173
+  GlobalObjectIdHash: 271248220
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -5622,7 +5622,6 @@ MonoBehaviour:
   AnimationLockPoint: {fileID: 0}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  CreateWall: 1
   battleWallPrefab: {fileID: 15785371388746913, guid: 0cd337af6ba3f7545a895840c6ed194a, type: 3}
   ContractRigidbodyComponent: {fileID: 5505819252221104884}
   ContractCapsuleCollider: {fileID: 3470235572636951309}

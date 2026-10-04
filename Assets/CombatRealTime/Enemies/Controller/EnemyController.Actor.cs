@@ -518,9 +518,29 @@ public sealed partial class EnemyController
             return;
         }
 
+        int deathState = ActorResolveAnimatorStateHash(ActorDeathAnimatorState);
+        if (deathState == 0)
+        {
+            Debug.LogError("[CombatAnimatorContract] Etat de mort introuvable pour '" + name + "' : " + ActorDeathAnimatorState + ".", this);
+            return;
+        }
+
         ActorDeathAnimationPlayed = true;
         CancelHitRecovery();
-        ActorAnimator.CrossFade(ActorDeathAnimatorState, ActorDeathAnimationTransitionSeconds, 0);
+        ActorAnimator.CrossFade(deathState, ActorDeathAnimationTransitionSeconds, 0);
+    }
+
+    private int ActorResolveAnimatorStateHash(string stateName)
+    {
+        string fullPath = stateName.Contains(".") ? stateName : "Base Layer." + stateName;
+        int fullPathHash = Animator.StringToHash(fullPath);
+        if (ActorAnimator.HasState(0, fullPathHash))
+        {
+            return fullPathHash;
+        }
+
+        int shortNameHash = Animator.StringToHash(stateName);
+        return ActorAnimator.HasState(0, shortNameHash) ? shortNameHash : 0;
     }
 
     public void ReturnToIdleAnimation()

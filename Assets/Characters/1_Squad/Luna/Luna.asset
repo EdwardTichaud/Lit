@@ -301,7 +301,7 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 4294967295
     PhysicsLogStateChanges: 0
-    PhysicsLogPoseAudit: 1
+    PhysicsLogPoseAudit: 0
     PhysicsPoseJumpDiagnosticDistance: 0.5
     PhysicsMaximumRootMotionDeltaPerFrame: 0.5
     PhysicsMaximumRootMotionDistancePerFixedUpdate: 0.75

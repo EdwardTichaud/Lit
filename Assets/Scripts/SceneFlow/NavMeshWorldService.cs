@@ -49,6 +49,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
     private NavMeshWorldReport lastReport;
     private GameObject runtimeSurfaceHost;
     private readonly List<NavMeshAgent> suspendedAgents = new List<NavMeshAgent>();
+    private readonly HashSet<int> incompatibleAgentDiagnostics = new HashSet<int>();
 
     public NavMeshWorldState State { get; private set; } = NavMeshWorldState.Unloaded;
     public bool IsReady => State == NavMeshWorldState.Ready;
@@ -217,6 +218,18 @@ public sealed class NavMeshWorldService : MonoBehaviour
             return false;
         }
 
+        if (surface == null || agent.agentTypeID != surface.agentTypeID)
+        {
+            if (agent.enabled) agent.enabled = false;
+            if (logDiagnostics && incompatibleAgentDiagnostics.Add(agent.GetInstanceID()))
+            {
+                Debug.LogWarning("[NavMeshWorld] Agent refuse : type incompatible | actor=" + agent.name +
+                                 " | agentType=" + agent.agentTypeID + " | worldType=" +
+                                 (surface != null ? surface.agentTypeID : -1), agent);
+            }
+            return false;
+        }
+
         int areaMask = agent.areaMask == 0 ? NavMesh.AllAreas : agent.areaMask;
         if (!TryValidatePosition(expectedPosition, areaMask, out NavMeshHit hit))
         {
@@ -235,6 +248,10 @@ public sealed class NavMeshWorldService : MonoBehaviour
         }
 
         agent.updateRotation = false;
+        // A valid sample can differ by a few millimetres after a NavMesh data
+        // swap. Align before enabling so Unity never tries to create an agent
+        // from a stale, off-mesh transform.
+        agent.transform.position = hit.position;
         if (!agent.enabled)
         {
             agent.enabled = true;
@@ -499,12 +516,14 @@ public sealed class NavMeshWorldService : MonoBehaviour
             }
 
             int areaMask = agent.areaMask == 0 ? NavMesh.AllAreas : agent.areaMask;
-            if (NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit, anchorSampleRadius, areaMask))
+            if (surface != null && agent.agentTypeID == surface.agentTypeID &&
+                NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit, anchorSampleRadius, areaMask))
             {
                 Vector3 delta = hit.position - agent.transform.position;
                 if (new Vector2(delta.x, delta.z).magnitude <= anchorPositionTolerance &&
                     Mathf.Abs(delta.y) <= anchorPositionTolerance)
                 {
+                    agent.transform.position = hit.position;
                     agent.enabled = true;
                 }
             }

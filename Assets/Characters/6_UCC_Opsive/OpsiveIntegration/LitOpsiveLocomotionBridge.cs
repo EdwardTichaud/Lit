@@ -232,7 +232,40 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsCombatLockActive => combatLockActive;
     public bool IsCombatDirectionalEvasionFacing => combatDirectionalEvasionFacing;
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
-    private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive;
+    private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive && !IsTacticalMovementActive;
+    private bool IsTacticalMovementActive => LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _);
+    private string movementTypeBeforeTactical;
+    private void SyncTacticalMovementType()
+    {
+        if (locomotion == null || locomotion.MovementTypes == null || locomotion.ActiveMovementType == null) return;
+        if (IsTacticalMovementActive)
+        {
+            if (movementTypeBeforeTactical == null)
+                movementTypeBeforeTactical = combatMovementTypeApplied ? movementTypeBeforeCombatLock : locomotion.MovementTypeFullName;
+            if (combatLockActive && !combatDirectionalEvasionFacing) return;
+            if (locomotion.ActiveMovementType is LitTacticalMovementType) return;
+            bool installed = false;
+            foreach (var type in locomotion.MovementTypes) if (type is LitTacticalMovementType) { installed = true; break; }
+            if (!installed)
+            {
+                var type = new LitTacticalMovementType();
+                type.Initialize(locomotion); type.Awake();
+                var types = new System.Collections.Generic.List<Opsive.UltimateCharacterController.Character.MovementTypes.MovementType>(locomotion.MovementTypes) { type };
+                locomotion.MovementTypes = types.ToArray();
+            }
+            locomotion.SetMovementType(typeof(LitTacticalMovementType).FullName);
+        }
+        else RestoreTacticalMovementType();
+    }
+    private void RestoreTacticalMovementType()
+    {
+        if (movementTypeBeforeTactical == null || locomotion == null) return;
+        if (movementTypeBeforeCombatLock == typeof(LitTacticalMovementType).FullName)
+            movementTypeBeforeCombatLock = movementTypeBeforeTactical;
+        if (locomotion.ActiveMovementType is LitTacticalMovementType)
+            locomotion.SetMovementType(movementTypeBeforeTactical);
+        movementTypeBeforeTactical = null;
+    }
     public string CurrentAnimationPhase => ResolveCurrentAnimationPhase().ToString();
     public LocomotionPresentationState CurrentLocomotionPresentationState => groundedPresentationState;
     public bool CanDriveScriptedTraversal
@@ -1257,6 +1290,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private void OnDisable()
     {
         RestoreExplorationMovementType();
+        RestoreTacticalMovementType();
         CancelObstacleTraversal();
         ClearCombatAirborneHolds();
         if (scriptedTraversalReleaseRoutine != null)
@@ -1345,6 +1379,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void LateUpdate()
     {
+        SyncTacticalMovementType();
         // UCC abilities can update after this bridge depending on Script
         // Execution Order. Repeat the vertical neutralization after their
         // frame work so StayAirborne remains visually stable.
@@ -1508,6 +1543,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool TryResolveCombatLockMove(Vector2 rawInput, out Vector2 worldInput)
     {
         worldInput = Vector2.zero;
+        if (LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _))
+        {
+            ResetCombatOrbitRadius();
+            return false;
+        }
         if (!combatLockActive || combatLockTarget == null)
         {
             return false;
@@ -2172,6 +2212,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void ApplyWorldMoveInput(Vector2 worldInput)
     {
+        SyncTacticalMovementType();
         // This is the last point before the override reaches UCC. Reassert
         // the movement type here so another UCC callback cannot collapse the
         // just-computed target-relative input back into Adventure forward.
@@ -2197,6 +2238,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         currentWorldMoveInput = ResolveGroundedFeelWorldMoveInput(targetWorldMoveInput, targetMagnitude);
         float magnitude = currentWorldMoveInput.magnitude;
+        if (combatLockActive && !combatDirectionalEvasionFacing &&
+            LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _))
+        {
+            ResetCombatOrbitRadius();
+            if (magnitude > movementDeadZone) ExitCombatIdleForMovement();
+            MaintainCombatLockFacing();
+            combatLockLocalInput = ResolveLocalMoveInput(new Vector3(currentWorldMoveInput.x, 0, currentWorldMoveInput.y), magnitude);
+            SetCombatAnimatorInput(combatLockLocalInput);
+        }
         if (magnitude <= movementDeadZone)
         {
             currentWorldMoveInput = Vector2.zero;
@@ -2213,6 +2263,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             {
                 lookDirection = ResolveOrientationLookDirection(direction, magnitude);
                 lookSource.SetPlanarLookDirection(lookDirection);
+                if (IsTacticalMovementActive && IsDriving && !IsScriptedTraversalActive && lookDirection.sqrMagnitude > .0001f)
+                    locomotion.SetRotation(Quaternion.LookRotation(lookDirection, Vector3.up), snapAnimator: false);
             }
 
             opsiveInput = ResolveOpsiveMoveInput(direction, magnitude);

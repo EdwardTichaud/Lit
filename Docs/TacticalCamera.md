@@ -13,12 +13,12 @@ UCC reste le seul pilote de la caméra physique. La vue Adventure sérialisée n
 | Contexte | Commandes |
 | --- | --- |
 | Clavier/souris | Droit maintenu : orbite ; molette : zoom ; C : recentrage. Flèches et glissement milieu : uniquement en caméra libre |
-| Manette, suivi | Stick gauche : personnage ; stick droit : orbite ; clic L3 : caméra libre |
+| Manette, suivi | Stick gauche : personnage (course à forte inclinaison) ; stick droit : orbite ; LT : rapprocher ; RT : éloigner ; RB : roue de compétences ; clic L3 : caméra libre |
 | Manette, inspection libre | Stick gauche : pan ; stick droit : orbite ; gâchettes : zoom ; clic L3 : retour au suivi ; maintien R3 : sortie et recentrage |
 
-La caméra suit et vise le joueur par défaut, y compris lorsqu'une collision modifie sa position réelle. Un pan ne détache jamais ce suivi. L'action dédiée `Camera/TacticalInspection` remplace l'ancien `ToggleFreeCamera` dans l'asset d'entrées et son wrapper généré. Son binding L3 utilise maintenant un simple clic, sans maintien. La vue third-person ignore cette action et conserve le clic L3 de locomotion ; celui-ci est ignoré uniquement en mode tactique. Le second clic L3 réactive le suivi et recentre progressivement. L'inspection n'active que l'ActionMap Camera, utilise également le contexte de suppression de gameplay existant, et bloque les overrides de déplacement UCC. Les gâchettes et le D-pad ne pilotent pas la caméra hors inspection. La perte de focus, les menus, un changement de personnage, une cinématique ou une désactivation quittent l'inspection.
+La caméra suit et vise le joueur par défaut, y compris lorsqu'une collision modifie sa position réelle. Un pan ne détache jamais ce suivi. L'action dédiée `Camera/TacticalInspection` remplace l'ancien `ToggleFreeCamera` dans l'asset d'entrées et son wrapper généré. Son binding L3 utilise maintenant un simple clic, sans maintien. La vue third-person ignore cette action et conserve le clic L3 de locomotion ; celui-ci est ignoré uniquement en mode tactique. Le second clic L3 réactive le suivi et recentre progressivement. L'inspection n'active que l'ActionMap Camera, utilise également le contexte de suppression de gameplay existant, et bloque les overrides de déplacement UCC. Les gâchettes pilotent le zoom en suivi et en inspection ; le D-pad conserve ses commandes de gameplay hors inspection. La perte de focus, les menus, un changement de personnage, une cinématique ou une désactivation quittent l'inspection.
 
-Le pivot libre reste limité à 20 m horizontalement (`Maximum Pan Radius`). Une seconde limite de 24 m borne la position de caméra, zoom et hauteur compris (`Maximum Free Camera Distance`). Ces deux limites restent réglables dans le profil. Les volumes de scène ne contraignent que le pivot libre : ils ne peuvent plus retenir la caméra de suivi lorsque le personnage se déplace.
+Le pivot libre reste limité à 20 m horizontalement (`Maximum Pan Radius`). Une seconde limite de 10 m borne la position de caméra, zoom et hauteur compris (`Maximum Free Camera Distance`). Ces deux limites restent réglables dans le profil. Les volumes de scène ne contraignent que le pivot libre : ils ne peuvent plus retenir la caméra de suivi lorsque le personnage se déplace.
 
 Le contrôle du trajet glisse sur les obstacles et autorise le mouvement tangent ou sortant lorsqu'une surface est déjà au contact. Si un coin empêche tout progrès, la caméra se rétracte vers le dernier ancrage accessible à `Collision Recovery Speed` avant de retrouver sa distance normale. Les colliders ne sont jamais désactivés pour débloquer le mouvement.
 
@@ -54,6 +54,38 @@ La détection part de la pose souhaitée, avant rétraction, et inclut les colli
 Les gizmos sélectionnés montrent les limites et les groupes. Activer `Show Diagnostics` du profil pour voir le pivot et la ligne de caméra. Les collisions rétractent immédiatement la caméra, filtrent le retour et vérifient également le trajet de pan et de transition. La hauteur du pivot libre ne change que si le sondage proche trouve un sol dans la marge autorisée ; sinon elle est conservée.
 
 ## Validation
+
+### Zoom manette et roue de compétences
+
+En suivi comme en inspection tactique : LT/L2 rapproche, RT/R2 éloigne. La distance demandée est comprise entre 1 et 10 m dans le profil par défaut ; les collisions peuvent toujours rétracter davantage la caméra pour éviter un mur. Le zoom reste amorti et proportionnel à la pression des gâchettes. Les deux gâchettes à pression égale s'annulent. Les menus/roues et Timelines suspendent le zoom.
+
+La roue de compétences s'ouvre désormais avec RB/R1 maintenu et se ferme au relâchement ; le clavier conserve son raccourci. Les deux assets d'input et le wrapper `PlayerInputs` utilisent ce binding. L'ancien binding de zoom RB passe à RT. Pour ne pas courir en dézoomant, le sprint manette tactique se déclenche à partir de 90 % d'inclinaison du stick gauche (réglage `Tactical Sprint Stick Threshold` sur `LocalPlayerInput`). Le sprint clavier et third-person restent inchangés. L'inspection, les menus et le retour de contexte annulent/restaurent cet intent via le routeur existant. La limite de distance réelle au joueur en inspection libre est également réglée à 10 m.
+
+Vérification de ce raccord : compilation runtime/éditeur sans erreur et 13 tests de calcul réussis, dont le sens des gâchettes et les limites à 30/60/120 étapes par seconde. La roue RB, le sprint et le ressenti du zoom restent à vérifier visuellement en Play avec une manette.
+
+### Déplacement relatif à la vue tactique
+
+Le stick gauche et le clavier utilisent la base horizontale de la caméra affichée, jamais l'orientation du personnage ou la direction de l'ennemi. La base est capturée après le cadrage UCC ; les mises à jour physiques ne la remplacent pas par une pose de simulation non affichée. Tourner la caméra pendant un déplacement maintenu change la direction demandée sans mémorisation d'angle de caméra fixe. La magnitude analogique est conservée et les diagonales restent limitées à 1.
+
+La règle s'applique uniquement lorsque la vue UCC tactique est réellement active et liée à ce personnage, hors contrôle cinématique. Une caméra de rendu momentanément indisponible conserve la dernière base valide ; avant la première base valide, le déplacement demandé est nul. Le changement de personnage efface cette base. En lock, le personnage garde son regard vers la cible, sans correction de rayon autour de l'ennemi ; les animations latérales/arrière utilisent le déplacement réel exprimé dans son repère local. L'inspection L3 et les blocages d'entrée existants restent inchangés.
+
+`LitTacticalMovementType` est installé au runtime pour l'exploration tactique : il conserve les axes injectés et laisse le bridge orienter le personnage avec son amortissement existant. Le type antérieur est restitué à la sortie du mode ; le lock conserve son type UCC spécifique. Les commandes `MoveWorld` des scripts ne sont pas reconverties.
+
+Validation automatisée : les 9 cas de `LitTacticalMovementTests` passent dans le projet Unity isolé (quatre angles caméra, quatre orientations personnage et huit directions, pitch 25–90°, magnitude analogique et rotation avec input maintenu). Le test du type de mouvement intégré est compilé avec le projet. Essais visuels gameplay à effectuer : exploration et lock, changements de cible/mode/personnage, stick partiel et course, L3/menu/Timeline, pentes et obstacles. Aucun essai Play de la scène gameplay n'a été effectué pour cette correction.
+
+### Stabilité du suivi et entrée en combat
+
+La vue tactique conserve le yaw d'orbite, le zoom et le FOV choisis à l'entrée en combat : le lock reste une sélection de combat, pas un ordre de recadrage. Les notifications d'aggro répétées du même ennemi ne retirent/réappliquent plus le lock et ne remplacent pas un déverrouillage manuel. Une perte de lock ne termine plus une suspension cinématique.
+
+Le pivot avance selon les étapes de simulation UCC, même si plusieurs étapes physiques partagent une frame affichée. Les deltas d'entrée s'accumulent jusqu'à leur consommation unique ; les changements de contexte/focus, binds et téléportations les annulent. L'orientation finale vise l'ancrage affiché/interpolé du joueur depuis la pose réelle de caméra, sans avancer une seconde fois le suivi dans LateRotate. L'orbite libre conserve l'interpolation UCC et reste limitée en distance.
+
+Les colliders enfants d'un `BattleWallContainment` sont exclus des seules requêtes caméra tactiques (y compris sol et masque), sans modifier couche, collider ou matériaux : ils continuent de retenir les personnages. Le third-person et les autres obstacles restent inchangés. La rétraction est immédiate ; le retour attend `Collision Clear Hold Time` (0,08 s par défaut), puis utilise `Collision Return Time`. Cette hystérésis évite les petites oscillations de distance au contact d'un mur. Une pose immédiate ne balaie pas depuis une ancienne position précédant une téléportation.
+
+`LitTacticalStabilityTests` couvre l'accumulation/consommation des entrées, leur restitution, les étapes fixes multiples, les appels immédiats et le retour après collision à 30/60/120 étapes par seconde. Le test de filtre de barrière dans `LitTacticalCameraTests` vérifie aussi l'obstacle ordinaire, la cinématique et le maintien du collider solide. Avec `Show Diagnostics`, le menu contextuel **Diagnostics: Dump Tactical Motion** de la MainCamera affiche les 32 derniers échantillons physique/affichage ; le stockage ne génère pas d'allocation par frame.
+
+Vérifications de cette correction : compilation C# runtime et éditeur sans erreur ; 8 tests de `LitTacticalStabilityTests` exécutés et réussis dans le projet Unity isolé. Le test intégré de barrière est compilé, mais n'a pas été exécuté dans le projet gameplay. Aucun essai visuel Play de la scène de combat n'a été effectué pendant cette correction.
+
+Essai Play spécifique requis : déclencher un combat à l'arrêt puis en courant, recevoir plusieurs dégâts du même ennemi, enlever manuellement le lock, passer près de la BattleWall et d'un mur normal, essayer L3 et une Timeline. Vérifier la conservation de l'orbite/zoom/FOV, l'absence de tremblement et la priorité cinématique. Les tests automatisés de logique ne prouvent pas le ressenti visuel dans la scène gameplay.
 
 `LitTacticalCameraTests` couvre la résolution mode/lock et obstacles/suivi/libre/cinématique, le défaut Sliding, la projection d'une cible derrière la caméra, la compatibilité de tous les slots et le diagnostic unique, le contrat des trois graphs, la restitution des blocs renderer et par slot (en préservant les autres effets), les colliders/matériaux, les limites, le contexte exclusif d'inspection, le curseur, le Bootstrap et la pièce compatible. Les lancer dans le Test Runner, onglet EditMode.
 

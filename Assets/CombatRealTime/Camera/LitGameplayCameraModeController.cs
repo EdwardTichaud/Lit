@@ -32,6 +32,58 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
     private LitTacticalVisibilityMask visibilityMask;
     private TacticalObstacleMode lastObstacleMode;
     private LitTacticalCameraProfile runtimeProfile;
+    private LitTacticalInputBuffer pendingInput;
+    private static readonly HashSet<LitGameplayCameraModeController> MovementControllers = new HashSet<LitGameplayCameraModeController>();
+    private GameObject movementCharacter;
+    private Vector3 movementForward, movementRight;
+    private bool hasMovementBasis;
+    public bool HasTacticalMovementFor(Transform character) => isActiveAndEnabled && !external &&
+        effectiveMode == GameplayCameraMode.Tactical && ucc != null && ucc.enabled && ucc.Character != null &&
+        ucc.Character.transform == character && ucc.ActiveViewType is LitTacticalUccViewType;
+
+    public static bool TryGetTacticalMovement(Transform character, out LitGameplayCameraModeController controller)
+    {
+        foreach (var candidate in MovementControllers)
+            if (candidate != null && candidate.HasTacticalMovementFor(character)) { controller = candidate; return true; }
+        controller = null;
+        return false;
+    }
+    public static bool TacticalGamepadTriggersOwned
+    {
+        get
+        {
+            foreach (var candidate in MovementControllers)
+                if (candidate != null && candidate.ucc != null && candidate.ucc.Character != null &&
+                    candidate.HasTacticalMovementFor(candidate.ucc.Character.transform)) return true;
+            return false;
+        }
+    }
+    public Vector2 ResolveScreenMoveInput(Vector2 input)
+    {
+        if (ucc == null || ucc.Character != movementCharacter) ResetMovementBasis();
+        if (!hasMovementBasis) CaptureMovementBasis();
+        return hasMovementBasis ? LitTacticalCameraMath.ScreenToWorldInput(input, movementForward, movementRight) : Vector2.zero;
+    }
+    private void ResetMovementBasis() { movementCharacter = ucc != null ? ucc.Character : null; hasMovementBasis = false; }
+    private void CaptureMovementBasis()
+    {
+        if (ucc == null) return;
+        if (ucc.Character != movementCharacter) ResetMovementBasis();
+        var camera = GetComponent<Camera>();
+        if (camera == null || !camera.isActiveAndEnabled || external || !(ucc.ActiveViewType is LitTacticalUccViewType)) return;
+        if (LitTacticalCameraMath.TryMovementBasis(transform.rotation, out var forward, out var right))
+        { movementForward = forward; movementRight = right; hasMovementBasis = true; }
+    }
+    private struct MotionSample
+    {
+        public int frame;
+        public double fixedTime;
+        public bool display, immediate;
+        public float dt;
+        public Vector3 physicsAnchor, displayedAnchor, desired, resolved;
+    }
+    private readonly MotionSample[] motionTrace = new MotionSample[32];
+    private int traceIndex;
     public GameplayCameraMode RequestedMode => requestedMode;
     public GameplayCameraMode EffectiveMode => effectiveMode;
     public bool InspectionActive => inspection;
@@ -42,9 +94,46 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         inspection || tactical == null || !tactical.Following, external || effectiveMode != GameplayCameraMode.Tactical || !isActiveAndEnabled);
     public bool MaskActive => EffectiveObstacleMode == TacticalObstacleMode.VisibilityMask && ucc != null && ucc.enabled && ucc.Character != null;
     public bool IsBlending => !external && profile != null && Time.time - blendStarted < profile.transitionTime;
-    public void ResetPoseTracking() { hasPreviousPosition = hasVisibleAnchor = false; blendStarted = -100; RestoreOcclusion(); }
+    public void ResetPoseTracking() { hasPreviousPosition = hasVisibleAnchor = false; blendStarted = -100; ClearTacticalInput(); RestoreOcclusion(); }
     public struct TacticalInput { public Vector2 pan, orbit; public float zoom; }
     public TacticalInput FrameInput { get; private set; }
+    private void ClearTacticalInput() { FrameInput = default; pendingInput.Clear(); }
+    public TacticalInput ConsumeTacticalInput()
+    {
+        pendingInput.Consume(out Vector2 pan, out Vector2 orbit, out float zoom);
+        return new TacticalInput { pan = pan, orbit = orbit, zoom = zoom };
+    }
+    public Vector3 GetRenderedAnchor()
+    {
+        if (ucc == null || ucc.Character == null) return transform.position;
+        Transform root = ucc.Character.transform;
+        return (ucc.Anchor != null ? ucc.Anchor.position : root.position) +
+            transform.right * ucc.AnchorOffset.x + root.up * ucc.AnchorOffset.y + transform.forward * ucc.AnchorOffset.z;
+    }
+    public bool ShouldIgnoreTacticalCollider(Collider collider)
+    {
+        if (collider == null) return true;
+        if (ucc != null && ucc.Character != null && collider.transform.IsChildOf(ucc.Character.transform)) return true;
+        return effectiveMode == GameplayCameraMode.Tactical && !external &&
+            collider.GetComponentInParent<BattleWallContainment>() != null;
+    }
+    public void RecordTacticalMotion(Vector3 physicsAnchor, Vector3 displayedAnchor, Vector3 desired, Vector3 resolved,
+        float dt, bool immediate, bool display)
+    {
+        if (profile == null || !profile.showDiagnostics) return;
+        motionTrace[traceIndex++ % motionTrace.Length] = new MotionSample { frame = Time.frameCount,
+            fixedTime = Time.fixedTimeAsDouble, display = display, immediate = immediate, dt = dt,
+            physicsAnchor = physicsAnchor, displayedAnchor = displayedAnchor, desired = desired, resolved = resolved };
+    }
+    [ContextMenu("Diagnostics: Dump Tactical Motion")]
+    private void DumpTacticalMotion()
+    {
+        for (int i = Mathf.Max(0, traceIndex - motionTrace.Length); i < traceIndex; i++)
+        {
+            var s = motionTrace[i % motionTrace.Length];
+            Debug.Log($"frame={s.frame} fixed={s.fixedTime:F3} display={s.display} immediate={s.immediate} dt={s.dt:F3} physics={s.physicsAnchor:F3} rendered={s.displayedAnchor:F3} desired={s.desired:F3} resolved={s.resolved:F3}", this);
+        }
+    }
     public static bool KeepsTacticalView(UccCamera camera)
     {
         var controller = camera != null ? camera.GetComponent<LitGameplayCameraModeController>() : null;
@@ -62,6 +151,7 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
     }
     private void OnEnable()
     {
+        MovementControllers.Add(this);
         if (binder != null) binder.CharacterBound += OnBound;
         InputModeCoordinator.ModeChanged += OnInputModeChanged;
         LocalInputRouter.CameraRecenter += Recenter;
@@ -69,31 +159,34 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
     }
     private void OnDisable()
     {
+        MovementControllers.Remove(this);
+        ResetMovementBasis();
         if (binder != null) binder.CharacterBound -= OnBound;
         InputModeCoordinator.ModeChanged -= OnInputModeChanged;
         LocalInputRouter.CameraRecenter -= Recenter;
         LocalInputRouter.TacticalInspection -= ToggleInspection;
-        ExitInspection(); RestoreOcclusion(); ReleaseCursor(); FrameInput = default;
+        ExitInspection(); RestoreOcclusion(); ReleaseCursor(); ClearTacticalInput();
         if (ucc != null && ucc.enabled && ucc.Character != null && ucc.ActiveViewType is LitTacticalUccViewType)
         { requestedMode = GameplayCameraMode.ThirdPerson; ApplyMode(false); }
     }
     private void OnDestroy() { visibilityMask?.Dispose(); if (runtimeProfile != null) Destroy(runtimeProfile); }
     private void OnBound(UccCamera camera, Transform character)
-    { boundCharacter = null; initializedMode = false; ExitInspection(); RestoreOcclusion(); }
+    { boundCharacter = null; initializedMode = false; ResetMovementBasis(); ExitInspection(); ClearTacticalInput(); RestoreOcclusion(); }
     public void SetMode(GameplayCameraMode mode)
     {
         if (!Application.isPlaying) { initialMode = mode; return; }
         if (requestedMode == mode && initializedMode) return;
         requestedMode = mode;
-        ExitInspection(); RestoreOcclusion(); FrameInput = default;
+        ResetMovementBasis();
+        ExitInspection(); RestoreOcclusion(); ClearTacticalInput();
         if (!external) ApplyMode(true);
     }
     [ContextMenu("Play: Third Person")] private void SelectThirdPerson() => SetMode(GameplayCameraMode.ThirdPerson);
     [ContextMenu("Play: Tactical")] private void SelectTactical() => SetMode(GameplayCameraMode.Tactical);
     public void BeginExternalControl()
-    { external = true; ExitInspection(); RestoreOcclusion(); ReleaseCursor(); FrameInput = default; blendStarted = -100; }
+    { external = true; ExitInspection(); RestoreOcclusion(); ReleaseCursor(); ClearTacticalInput(); blendStarted = -100; }
     public void EndExternalControl()
-    { external = false; if (!isActiveAndEnabled) return; ApplyMode(false); tactical?.Recenter(true); }
+    { external = false; if (!isActiveAndEnabled) return; ApplyMode(false); if (TacticalRequested) tactical?.Recenter(true); }
     public bool HandleSnap(CameraSnapReason reason)
     {
         if (!TacticalRequested) return false;
@@ -160,14 +253,14 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
     }
     private float BlendFraction => Mathf.SmoothStep(0, 1, Mathf.Clamp01((Time.time - blendStarted) / Mathf.Max(.001f, profile.transitionTime)));
     public Quaternion BlendRotation(Quaternion target) => Quaternion.Slerp(blendStartRotation, target, BlendFraction);
-    public Vector3 BlendPosition(Vector3 target, Vector3 anchor, float radius)
+    public Vector3 BlendPosition(Vector3 target, Vector3 anchor, float radius, float deltaTime = -1, bool immediateUpdate = false)
     {
         Vector3 position = Vector3.Lerp(blendStartPosition, target, BlendFraction);
         Vector3 playerAnchor = ucc.Anchor != null ? ucc.Anchor.position + ucc.AnchorOffset : anchor;
         if (inspection) position = LitTacticalCameraMath.ClampCameraDistance(position, playerAnchor, profile.maximumFreeCameraDistance);
         position = ConstrainPose(anchor, position, radius);
         // Continuous sweep is required in tactical mode; third-person keeps native UCC collision outside transitions.
-        if (hasPreviousPosition && (effectiveMode == GameplayCameraMode.Tactical || BlendFraction < 1))
+        if (!immediateUpdate && hasPreviousPosition && (effectiveMode == GameplayCameraMode.Tactical || BlendFraction < 1))
         {
             Vector3 requestedPosition = position;
             position = Slide(previousPosition, requestedPosition, radius);
@@ -178,14 +271,14 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
                 (position - previousPosition).sqrMagnitude < .0001f)
             {
                 Vector3 retreat = Vector3.MoveTowards(previousPosition, hasVisibleAnchor ? lastVisibleAnchor : anchor,
-                    profile.collisionRecoverySpeed * Mathf.Min(Time.deltaTime, .1f));
+                    profile.collisionRecoverySpeed * Mathf.Min(deltaTime >= 0 ? deltaTime : Time.deltaTime, .1f));
                 position = Slide(previousPosition, retreat, radius);
             }
         }
         if (inspection)
         {
             Vector3 limited = LitTacticalCameraMath.ClampCameraDistance(position, playerAnchor, profile.maximumFreeCameraDistance);
-            position = hasPreviousPosition ? Sweep(previousPosition, limited, radius) : limited;
+            position = !immediateUpdate && hasPreviousPosition ? Sweep(previousPosition, limited, radius) : limited;
         }
         previousPosition = position;
         hasPreviousPosition = true;
@@ -223,7 +316,7 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         float distance = length;
         for (int i = 0; i < count; i++)
         {
-            if (hits[i].collider.transform.IsChildOf(ucc.Character.transform)) continue;
+            if (ShouldIgnoreTacticalCollider(hits[i].collider)) continue;
             if (MaskActive)
             {
                 var group = hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>();
@@ -241,7 +334,7 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
     }
     private void Update()
     {
-        if (external || ucc == null || !ucc.enabled || ucc.Character == null) return;
+        if (external || ucc == null || !ucc.enabled || ucc.Character == null) { ClearTacticalInput(); return; }
         if (boundCharacter != ucc.Character)
         { boundCharacter = ucc.Character; tactical?.Recenter(true); initializedMode = false; }
         ApplyMode(initializedMode);
@@ -249,7 +342,7 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         bool allowed = effectiveMode == GameplayCameraMode.Tactical && InputModeCoordinator.IsCameraAllowed &&
             !InputFocusStack.HasAnyFocusBlockingCamera() && !JoinSyncSystem.IsGameplayBlocked && Application.isFocused;
         if (!allowed) ExitInspection();
-        if (!allowed) { ReleaseCursor(); return; }
+        if (!allowed) { ClearTacticalInput(); ReleaseCursor(); return; }
         AcquireCursor(); ReadInput();
     }
     private void ReadInput()
@@ -262,7 +355,7 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         bool mouseBlocked = textActive || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
         Vector2 delta = LocalInputRouter.ConsumeCameraPointerDelta();
         float scroll = LocalInputRouter.ConsumeCameraPointerScrollValue();
-        if (textActive) return;
+        if (textActive) { ClearTacticalInput(); return; }
         if (MainMenuInputSettings.AllowsKeyboardMouse() && !mouseBlocked)
         {
             var k = Keyboard.current;
@@ -287,13 +380,15 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         if (MainMenuInputSettings.AllowsGamepad())
         {
             input.orbit += LocalInputRouter.CameraOrbitValue * profile.gamepadOrbitSpeed * dt;
-            if (inspection && Gamepad.current != null)
+            if (Gamepad.current != null)
             {
-                input.pan += Gamepad.current.leftStick.ReadValue() * profile.panSpeed * dt;
-                input.zoom += (Gamepad.current.rightTrigger.ReadValue() - Gamepad.current.leftTrigger.ReadValue()) * profile.gamepadZoomSpeed * dt;
+                if (inspection) input.pan += Gamepad.current.leftStick.ReadValue() * profile.panSpeed * dt;
+                input.zoom += LitTacticalCameraMath.TriggerZoomDelta(Gamepad.current.leftTrigger.ReadValue(),
+                    Gamepad.current.rightTrigger.ReadValue(), profile.gamepadZoomSpeed, dt);
             }
         }
         FrameInput = input;
+        pendingInput.Add(input.pan, input.orbit, input.zoom);
     }
     private void ToggleInspection()
     {
@@ -301,6 +396,7 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         if (!TacticalRequested || external || InputFocusStack.HasAnyFocus() ||
             (InputModeCoordinator.CurrentMode != InputMode.Exploration && InputModeCoordinator.CurrentMode != InputMode.Combat)) return;
         inspection = true;
+        ClearTacticalInput();
         RestoreOcclusion();
         tactical?.SetFreeCamera(true);
         GamepadInputContextStack.Push(this, GamepadInputContext.UserInterface);
@@ -313,16 +409,16 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
         tactical?.SetFreeCamera(false);
         GamepadInputContextStack.Pop(this);
         InputModeCoordinator.Exit(this);
-        FrameInput = default;
+        ClearTacticalInput();
     }
     private void OnInputModeChanged(InputMode mode)
     {
-        FrameInput = default;
+        ClearTacticalInput();
         if (inspection && mode != InputMode.TacticalInspection) ExitInspection();
         if (!InputModeCoordinator.IsCameraAllowed) ReleaseCursor();
     }
     private void OnApplicationFocus(bool focused)
-    { if (!focused) { ExitInspection(); FrameInput = default; ReleaseCursor(); } }
+    { if (!focused) { ExitInspection(); ClearTacticalInput(); ReleaseCursor(); } }
     private void AcquireCursor()
     {
         if (cursorOwned) return;
@@ -331,7 +427,12 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
     }
     private void ReleaseCursor()
     { if (!cursorOwned) return; cursorOwned = false; LitSystemCursorLease.Release(this); }
-    private void LateUpdate() { if (!MaskActive) RestoreOcclusion(); }
+    private void LateUpdate()
+    {
+        if (effectiveMode == GameplayCameraMode.Tactical && !external) CaptureMovementBasis();
+        else ResetMovementBasis();
+        if (!MaskActive) RestoreOcclusion();
+    }
     public void PrepareVisibilityMask(Vector3 desired, Vector3 playerAnchor, float radius)
     {
         // Live profile changes restore the previous effect without changing orbit or binding.

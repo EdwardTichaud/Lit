@@ -301,6 +301,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (enemy.BossEncounter != null && !enemy.BossEncounter.IsBossEngaged) return false;
         bool newAggro = !enemyAggroAnnounced || !combatActive || engagedEnemy != enemy;
+        bool acquireLock = !combatActive || engagedEnemy != enemy;
         if (!combatActive)
         {
             playerRoot = player;
@@ -323,8 +324,9 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         // Do not route this through TryLockEnemy: an automatic encounter may
         // legitimately begin just outside the player's manual lock range.
         // BeginCombat already follows this rule, so aggro must do the same.
-        SetLockedEnemy(null);
-        SetLockedEnemy(enemy);
+        // Repeated damage/aggro from the same encounter must not bounce the
+        // camera lock or undo a manual unlock/target selection.
+        if (acquireLock) SetLockedEnemy(enemy);
 
         SetEnemyAttackMode(enemy, true);
         enemy.BeginBattleWall();
@@ -355,7 +357,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         cooldowns.Clear();
         playerController?.HideLocalInteractionPresentation();
         SetEngagedEnemy(enemy);
-        SetLockedEnemy(null);
         SetLockedEnemy(enemy);
         combatInput?.SetInputActive(true);
         ClarityChanged?.Invoke(clarity, ClarityRank);

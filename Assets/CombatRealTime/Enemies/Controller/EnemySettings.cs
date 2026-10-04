@@ -4,6 +4,10 @@ using UnityEngine;
 [System.Serializable]
 public sealed class EnemySettings
 {
+    [Header("Combat Arena")]
+    [Tooltip("Crée une BattleWall pour cet ennemi pendant son combat. Cette option est l'unique autorité, y compris pour les boss.")]
+    public bool ArenaCreateBattleWall;
+
     [Tooltip("Poursuite et presentation du deplacement.") ]
      public EnemyController.CombatPositioningProfile LocomotionPositioning = new EnemyController.CombatPositioningProfile();
     [Tooltip("Poursuite et presentation du deplacement.") ]
@@ -87,7 +91,7 @@ public sealed class EnemySettings
     [Header("Diagnostics")]
      public bool PhysicsLogStateChanges;
     [Tooltip("Trace les ecritures de pose afin d'identifier un systeme qui deplace l'ennemi hors de son SceneMarker.")]
-    public bool PhysicsLogPoseAudit = true;
+    public bool PhysicsLogPoseAudit;
     [Tooltip("Collisions et mouvement des actions.") ]
     [Min(0.5f)] public float PhysicsPoseJumpDiagnosticDistance = 0.5f;
     [Min(0.01f), Tooltip("Distance horizontale maximale acceptee depuis un unique delta de root motion ennemi.")]

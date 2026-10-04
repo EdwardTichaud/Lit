@@ -1,3 +1,32 @@
+## Outlines interactifs et camera tactique (2026-10-04)
+
+`RuntimeOutlineInspector` adapte maintenant le contour des interactifs a la
+distance entre la camera principale et la cible selectionnee. Par defaut, il
+passe progressivement de 4 px a 3 m a 1,5 px a 16 m, ce qui garde les objets
+proches lisibles sans epaissir l'image en camera tactique. Les quatre valeurs
+sont reglables sur `GameplaySessionRoot > OutlineManager`.
+
+## Flames et atmosphère du château (2026-10-04)
+
+Les Flames fixes, Ancient Flames et la torche Lucian utilisent `LitContrastLight`.
+Les Flames sont chaudes, courtes et ombrées ; les Ancient Flames combinent un
+coeur chaud et une aura cyan verticale. La torche reste à 5 m, identique à son
+rayon d'influence. Le `Castle_Volume` porte maintenant la poussière glacée
+runtime, et les Flames génèrent des braises discrètes. La brume du château est
+resserrée à 62 m avec un libre parcours moyen de 28 m. Les contrôles de volume,
+densité et taille des particules sont exposés dans l'Inspector. Valider en Play
+les activations Flame/Ancient Flame, le rendu de poussière et la torche après
+équiper/ranger.
+## Eclairage de contraste du château (2026-10-04)
+
+`Lit_ContrastLight` est un prefab HDRP réutilisable avec les préréglages
+Faisceau lunaire, Flamme et Magie/cristal. Chaque instance reste réglable dans
+l'Inspector (couleur, unité/intensité, portée, ombres et volumétrie) et ne
+modifie jamais l'exposition ni le bloom global. `Lit_Volume_Castle` réduit le
+fill indirect à 0,28, conserve les réflexions à 0,65 et les probes à 0,75 ; son
+bloom reste réservé aux sources très lumineuses. Compilation Unity réussie ; valider
+en Play : château sombre, faisceau lunaire lisible, flamme avec ombre douce,
+arrière-plan presque noir et épée sans blanchiment.
 ## Verification Nina apres socle de cycles (2026-09-27)
 
 La scene Nina avait encore deux activations dependantes du flag historique 20, alors que le cycle migre ne l'ecrit plus. Elles utilisent maintenant l'etape nina_spoken : apres les deux connaissances, Nina devient Dead; apres son dialogue, Nina's Blood et Scar deviennent visibles. Les tests de scene et de recompense ont ete mis a jour pour refuser ce retour aux flags. Unity batch reste indisponible : valider dans l'editeur le parcours scientifique, lettre, Nina, sang, Scar et rechargement d'une sauvegarde historique.
@@ -1432,6 +1461,28 @@ facteur de 2,5 à leur `startSize` et restaure les valeurs auteurs à sa désact
 
 ## Prochaine utilisation
 
+## Direction château : chaleur et givre (2026-10-04)
+
+Le château doit rester en état matériel `Ice` et en ambiance froide. La
+chaleur, notamment la torche du joueur, fond localement le givre vers l'état
+`Normal`, révèle les interactions et active les objets dépendants de cette
+influence. La torche possède une réserve rechargeable par combustible et
+braseros. Le travail à venir doit séparer la ressource, l'influence gameplay et
+la transition shader afin que chacune soit testable et synchronisable.
+
+`Lit_Volume_Castle`, profil HDRP partagé du château, porte désormais les
+réglages suivants : il
+fixe l'exposition à `-0,35 EV`, ajoute une brume volumétrique bleue dense et
+modérée, et la `Moon Light` du `Castle_Volume` éclaire à `1,1 lux` avec ombres
+souples. Le profil est le point d'ajustement des valeurs d'ambiance; les
+lumières pratiques restent indépendantes.
+
+Le Shader Graph `LitIceFrostedEdges_v3` concentre les reflets bleu froid sur
+les arêtes bakées et texturées, sans rendre le corps sombre uniforme miroir.
+La transition de flamme conserve les textures de l'état normal, ajoute une
+humidité chaude, puis produit dans le fondu une bordure de fonte animée avec
+gouttelettes et faible émission orange optionnelle.
+
 Le deblocage d'une `KnowledgeSO` n'interrompt plus le personnage par un
 `CrossFade` force vers `Knowledge_Unlock`. Ce comportement legacy, partage par
 les objets recuperables et les stabs, ecrasait des parametres Animator de
@@ -1522,3 +1573,11 @@ NavMesh trouve, le delta, l'etat de l'agent et la destination de locomotion.
 # Scientifique fou : acces et connaissance
 
 - Le scientifique fou n'a aucun prerequis de connaissance pour son interaction Ghost. La defaite ncounter est enregistree au moment de sa mort et revele immediatement Existence des chimeres, independamment des flags legacy ou de la cinematique.
+
+# Mort des ennemis de cycle
+
+- `EnemyDeathPresentation` se lie directement au changement de sante et conserve
+  son controle de secours par image. L'animation `Death`, la dissolution et la
+  desactivation sont ainsi lancees meme si une victoire est resolue hors du flux
+  habituel de degats. `DeadWeightBoss` force egalement ce flux a sa resolution;
+  le `ShadowGuardian` de Belmont le partage par son `EnemyController`.

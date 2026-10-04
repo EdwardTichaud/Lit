@@ -183,9 +183,9 @@ internal static class LitIceShaderInstaller
 
     private static void ApplyRecommendedPresetValues(Material material)
     {
-        SetColor(material, "_IceDeepColor", new Color(0.015f, 0.11f, 0.26f, 1f));
-        SetColor(material, "_FrostColor", new Color(1.0f, 1.3f, 1.8f, 1f));
-        SetColor(material, "_CrackColor", new Color(0.8f, 1.2f, 1.7f, 1f));
+        SetColor(material, "_IceDeepColor", new Color(0.012f, 0.048f, 0.13f, 1f));
+        SetColor(material, "_FrostColor", new Color(0.18f, 0.62f, 1.35f, 1f));
+        SetColor(material, "_CrackColor", new Color(0.07f, 0.32f, 0.8f, 1f));
         SetFloat(material, "_IceScale", 1.8f);
         SetFloat(material, "_FrostWidth", 0.22f);
         SetFloat(material, "_Transparency", 0.93f);
@@ -198,7 +198,7 @@ internal static class LitIceShaderInstaller
         SetFloat(material, "_FresnelIntensity", 0.0f);
         SetFloat(material, "_EmissionIntensity", 3.0f);
         SetFloat(material, "_EdgeBakedBoost", 0.9f);
-        SetFloat(material, "_Smoothness", 0.88f);
+        SetFloat(material, "_Smoothness", 0.62f);
         SetFloat(material, "_Metallic", 0.0f);
     }
 
@@ -230,7 +230,7 @@ internal static class LitIceShaderInstaller
         SetFloat(material, "_CrackTextureStrength", 0.0f);
         SetFloat(material, "_CrackTextureScale", 1.0f);
         SetFloat(material, "_CrackTextureInvert", 0.0f);
-        SetFloat(material, "_ReflectionStrength", 0.18f);
+        SetFloat(material, "_ReflectionStrength", 0.78f);
         SetFloat(material, "_IceReliefNormalStrength", 0.75f);
         SetFloat(material, "_IceReliefRoughnessInfluence", 0.4f);
         SetFloat(material, "_TextureEdgeStrength", 1.0f);

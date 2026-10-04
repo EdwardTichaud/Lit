@@ -67,17 +67,22 @@ public sealed partial class EnemyController
 
     private void BrainAwake()
     {
-        BrainPath = new NavMeshPath();
-        BrainEnemy = GetComponent<EnemyController>();
-        BrainSkills = GetComponent<EnemyController>();
-        BrainLocomotion = GetComponent<EnemyController>();
-        BrainMotor = GetComponent<EnemyController>();
-        BrainNavigation = GetComponent<EnemyController>();
-        BrainCinematic = GetComponent<EnemyController>();
-        BrainClock = GetComponent<CombatTimeDomain>();
+        BrainEnsureRuntimeReferences();
         BrainResolveProfile();
         BrainHome = transform.position;
         BrainHomeRotation = transform.rotation;
+    }
+
+    private void BrainEnsureRuntimeReferences()
+    {
+        BrainPath ??= new NavMeshPath();
+        BrainEnemy ??= this;
+        BrainSkills ??= this;
+        BrainLocomotion ??= this;
+        BrainMotor ??= this;
+        BrainNavigation ??= this;
+        BrainCinematic ??= this;
+        BrainClock ??= GetComponent<CombatTimeDomain>();
     }
 
     private void BrainStart()
@@ -532,18 +537,20 @@ public sealed partial class EnemyController
 
     public void Suspend()
     {
+        BrainEnsureRuntimeReferences();
         if (BrainSuspended)
             return;
         BrainSuspended = true;
         CancelAction("suspension");
         BrainGuardUntil = 0f;
-        BrainLocomotion.StopNavigation();
+        BrainLocomotion?.StopNavigation();
         BrainSetPhase(CombatPhase.Suspended, "QTE ou cinematique");
     }
 
     public void EnterStagger(float seconds)
     {
-        if (!BrainAuthority || BrainEnemy.IsAttackCommitted)
+        BrainEnsureRuntimeReferences();
+        if (!BrainAuthority || BrainEnemy == null || BrainEnemy.IsAttackCommitted)
             return;
         CancelAction("stagger");
         BrainReadyAt = BrainNow + Mathf.Max(0f, seconds);
@@ -552,6 +559,7 @@ public sealed partial class EnemyController
 
     public void CancelAction(string reason)
     {
+        BrainEnsureRuntimeReferences();
         BrainAirborneChoiceMade = false;
         BrainAirborneChoice = null;
         BrainMotor?.EndEnemyAdvance();

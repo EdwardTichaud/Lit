@@ -14959,7 +14959,6 @@ MonoBehaviour:
   AnimationLockPoint: {fileID: 3890724604177174167}
   inputPromptAnchor: {fileID: 0}
   inputPromptOffset: {x: 0, y: 1.25, z: 0}
-  CreateWall: 1
   battleWallPrefab: {fileID: 5051682734331238811, guid: e5281b19f0eb49d4f9d2914e07192808, type: 3}
   ContractRigidbodyComponent: {fileID: 0}
   ContractCapsuleCollider: {fileID: 0}
@@ -25018,7 +25017,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: da4151beb54540e448aabbfc78b812bf, type: 2}
+  - {fileID: 2100000, guid: 15cb5872528ca2b43b5d03db1b9882ca, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

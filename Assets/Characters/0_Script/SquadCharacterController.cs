@@ -2326,6 +2326,11 @@ public partial class SquadCharacterController : MonoBehaviour
         TraceDistrictMoveIntent(input);
 #endif
         LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        if (bridge != null && LitGameplayCameraModeController.TryGetTacticalMovement(bridge.transform, out _))
+        {
+            TryForwardMoveToUcc(input, isWorldSpace: false);
+            return;
+        }
         if (bridge != null && bridge.TryResolveCombatLockMove(input, out Vector2 targetRelativeWorldInput))
         {
             TryForwardMoveToUcc(targetRelativeWorldInput, isWorldSpace: true);
@@ -3081,10 +3086,20 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Light torchLight = visual.AddComponent<Light>();
         torchLight.type = LightType.Point;
-        torchLight.color = new Color(1f, 0.55f, 0.18f);
-        torchLight.intensity = 4f;
-        torchLight.range = 6f;
-        torchLight.shadows = LightShadows.Soft;
+        LitContrastLight contrastLight = visual.AddComponent<LitContrastLight>();
+        contrastLight.Configure(
+            LightType.Point,
+            new Color(1f, 0.33f, 0.1f),
+            UnityEngine.Rendering.LightUnit.Lumen,
+            250f,
+            5f,
+            55f,
+            true,
+            0.5f,
+            0.45f,
+            0.4f,
+            true,
+            "Fallback player torch. Its visual range is also its gameplay influence range.");
         visual.AddComponent<FlameLightReceiver>();
         return visual;
     }
@@ -3142,6 +3157,13 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private Vector3 GetMoveDirection(Vector2 input, bool inputRepresentsRawMovement = false)
     {
+        var bridge = GetUccLocomotionBridge();
+        if (bridge != null && LitGameplayCameraModeController.TryGetTacticalMovement(bridge.transform, out var tacticalCamera))
+        {
+            ClearStoredMovementReference();
+            Vector2 worldInput = tacticalCamera.ResolveScreenMoveInput(input);
+            return new Vector3(worldInput.x, 0, worldInput.y);
+        }
         Vector3 move = new Vector3(input.x, 0f, input.y);
         if (!ShouldUseCameraRelativeInput())
         {

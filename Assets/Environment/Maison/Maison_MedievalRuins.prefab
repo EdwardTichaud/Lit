@@ -90646,19 +90646,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.944092
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.8067344
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.94796693
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 4.376621
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -90670,7 +90670,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -93104,19 +93104,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 3.0390599
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.7755087
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.93956
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 4.861906
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -93128,7 +93128,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -95594,19 +95594,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.9169395
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.81132954
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.94920415
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 4.3178306
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -95618,7 +95618,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -97872,19 +97872,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 3.0190647
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.77670276
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.9398815
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 4.8338985
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -97896,7 +97896,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -105572,19 +105572,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.9239652
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.8117804
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.9493255
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 4.305466
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -105596,7 +105596,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -105910,19 +105910,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.9636717
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.79671216
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.9452687
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 4.533388
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -105934,7 +105934,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -108446,19 +108446,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.7461462
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.8637196
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.96330917
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 3.4652157
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -108470,7 +108470,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -115030,19 +115030,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.8595097
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.830283
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.95430696
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 3.996526
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -115054,7 +115054,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -122438,19 +122438,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Range
-      value: 2.7826185
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.b
-      value: 0.848172
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Color.g
-      value: 0.9591232
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Intensity
-      value: 3.7194698
+      value: 19.894367
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LightUnit
@@ -122462,7 +122462,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8818524623528635586, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Shadows.m_NearPlane
-      value: 0.02
+      value: 0.049999997
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

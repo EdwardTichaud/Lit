@@ -53,6 +53,7 @@ public sealed class LitTacticalVisibilityMask
             int count = Physics.OverlapSphereNonAlloc(desired, Mathf.Max(.01f, radius), overlaps, layers, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
+                if (owner.ShouldIgnoreTacticalCollider(overlaps[i])) continue;
                 var group = overlaps[i].GetComponentInParent<LitCameraOcclusionGroup>();
                 Mark(group, false); if (hasEnemy) Mark(group, true);
             }
@@ -80,7 +81,8 @@ public sealed class LitTacticalVisibilityMask
         Vector3 delta = target - origin;
         if (delta.sqrMagnitude < .0001f) return;
         int count = Physics.RaycastNonAlloc(origin, delta.normalized, hits, delta.magnitude, layers, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < count; i++) Mark(hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>(), isEnemy);
+        for (int i = 0; i < count; i++)
+            if (!owner.ShouldIgnoreTacticalCollider(hits[i].collider)) Mark(hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>(), isEnemy);
     }
     private void Mark(LitCameraOcclusionGroup group, bool isEnemy)
     {

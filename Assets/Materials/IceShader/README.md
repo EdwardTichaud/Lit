@@ -58,6 +58,12 @@ The v3 shader is available at **LIT > Ice > Lit Ice Frosted Edges V3**. It keeps
 
 V3 also detects frosted edges that exist only in material textures, such as mortar joints on a geometrically flat brick wall. **Texture Edge Strength** controls their colour and emission, while **Texture Edge Width** is the neighbour sampling distance in texels. **Texture Edge Threshold** filters small noisy variations: raise it when the Normal Map creates too much frost and lower it when important joints are missed. **Texture Edge Normal Influence** controls detection from the Normal Map. **Texture Edge Roughness Influence** adds detection from the Roughness Map and only contributes when **Use Base Roughness Texture** is enabled. Set **Texture Edge Strength** to `0` to disable texture-edge frost while preserving the relief itself.
 
+## Cold ridges and heat boundary (v3)
+
+V3 keeps the deep ice body dark and comparatively matte. Its Reflection Strength is concentrated on baked and texture-detected edges, so those edges catch sharper blue reflection-probe highlights without turning a whole wall into a mirror. `Ice Deep Color` therefore controls the almost-black unlit mass, while `Frost / Edge Color` controls the cold ridge hue.
+
+A flame still reveals exactly the authored normal material, its maps, and its scalar fallbacks. The shader adds a small warm, wet response without replacing them. In the middle of the existing `Transition Softness` fade, it derives a thin procedural melt boundary: animated world-space noise breaks the ring into droplets and irregular steam-like shimmer, slightly warms the albedo and increases smoothness. When **Enable Material Emission** is enabled, this same boundary emits a very weak orange signal scaled by **Material Emission Intensity**. No extra influence data, texture, or runtime component is needed.
+
 ## V3 material inspector and edge bake
 
 V3 uses a dedicated material inspector. Its exposed controls are grouped into **State: Frost**, **State: Normal**, **Option: Walls / Floors**, and **Flame Transition**. HDRP surface, transparency, and advanced settings remain available below those groups.

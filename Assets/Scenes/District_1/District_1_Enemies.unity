@@ -274,8 +274,15 @@ MonoBehaviour:
   characterData: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
   item: {fileID: 11400000, guid: 7df7b280729e46f8afc1d17dff7e0af1, type: 2}
   ghost: {fileID: 0}
+  flamePrefab: {fileID: 0}
+  flameStartsLit: 0
+  flameInteractionRadius: 2
+  flameInfluenceRadius: 6
+  flameChargeCost: 1
+  flameIdOverride: 
   markerId: GlobalObjectId_V1-2-6f707f864cc6ecd40a182bedabf7a0ee-900000000000000100-0
   bakedCharacterInstance: {fileID: 0}
+  bakedFlameInstance: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

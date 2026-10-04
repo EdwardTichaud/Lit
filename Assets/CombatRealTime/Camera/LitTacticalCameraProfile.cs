@@ -7,7 +7,7 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
 {
     [Header("Framing")]
     [Range(20, 100)] public float fieldOfView = 60;
-    public Vector2 distanceLimits = new Vector2(4, 18);
+    public Vector2 distanceLimits = new Vector2(1, 10);
     public float initialDistance = 10;
     public Vector2 pitchLimits = new Vector2(25, 75);
     public float initialPitch = 50;
@@ -29,7 +29,7 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Header("Safety")]
     [Min(1)] public float maximumPanRadius = 20;
     [Min(1), Tooltip("Maximum actual camera distance from the player in free inspection, including zoom.")]
-    public float maximumFreeCameraDistance = 24;
+    public float maximumFreeCameraDistance = 10;
     [Min(.1f), Tooltip("Retraction speed used to escape a blocked camera trajectory.")]
     public float collisionRecoverySpeed = 8;
     [Min(.01f)] public float boundarySlowZone = 4;
@@ -38,6 +38,8 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Min(.1f)] public float maximumGroundStep = 1.2f;
     [Min(.01f)] public float groundSmoothTime = .16f;
     [Min(.01f)] public float collisionReturnTime = .15f;
+    [Min(0), Tooltip("Stable clearance required before collision distance restores; retraction remains immediate.")]
+    public float collisionClearHoldTime = .08f;
     [Header("Occlusion")]
     [Tooltip("Follow only. Free L3 camera always slides; cinematics restore the mask.")]
     public TacticalObstacleMode obstacleMode = TacticalObstacleMode.Sliding;

@@ -15,7 +15,6 @@ MonoBehaviour:
   bossId: district1.etienne.dead_weight
   displayName: Le Poids mort
   engagementDistance: 8
-  createBattleWall: 1
   segmentCount: 300
   damagePolicy: 0
   showBossBar: 0

@@ -54,6 +54,11 @@ GhostDissolveController et desactive la racine. Les objets et identites persista
 ne sont pas detruits. Les materiaux sans dissolution utilisent temporairement
 Resources/EnemyDeathDissolve, derive du shader Ghost; les originaux sont restaures
 a la desactivation. La disparition ne depend pas de la fermeture de la victoire.
+La presentation s'abonne directement a CharacterInfo.HealthChanged, avec un
+controle de secours lorsque la sante est assignee plus tard : une defaite de cycle
+ou de boss ne peut donc plus manquer l'animation et la dissolution. DeadWeight
+route aussi toute resolution de boss vers ForceDefeatFromThreshold; le Veilleur
+d'Ombre de Belmont utilise le meme contrat commun.
 
 ## Victoire du scientifique
 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TacticalDefault
   m_EditorClassIdentifier:
   fieldOfView: 60
-  distanceLimits: {x: 4, y: 18}
+  distanceLimits: {x: 1, y: 10}
   initialDistance: 10
   pitchLimits: {x: 25, y: 75}
   initialPitch: 50
@@ -31,7 +31,7 @@ MonoBehaviour:
   edgeScrolling: 0
   edgePixels: 20
   maximumPanRadius: 20
-  maximumFreeCameraDistance: 24
+  maximumFreeCameraDistance: 10
   collisionRecoverySpeed: 8
   boundarySlowZone: 4
   teleportDistance: 3
@@ -39,6 +39,7 @@ MonoBehaviour:
   maximumGroundStep: 1.2
   groundSmoothTime: 0.16
   collisionReturnTime: 0.15
+  collisionClearHoldTime: 0.08
   occlusionInterval: 0.05
   obstacleMode: 0
   maskRadius: 0.16

@@ -15,8 +15,8 @@ MonoBehaviour:
   bossId: broken_anchor_belmont
   displayName: "L'Ancre bris\xE9e"
   engagementDistance: 8
-  createBattleWall: 1
   segmentCount: 3
   damagePolicy: 1
   showBossBar: 0
   showImmuneImpact: 1
+  suppressDefaultEnemyBrain: 1

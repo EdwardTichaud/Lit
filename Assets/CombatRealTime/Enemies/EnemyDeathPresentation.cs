@@ -13,10 +13,45 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
     private GhostDissolveController dissolve;
     private readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
     private readonly List<Material> temporaryMaterials = new List<Material>();
+    private CharacterInfo observedHealth;
 
     private void Awake() => enemy = GetComponent<EnemyController>();
 
+    private void OnEnable()
+    {
+        BindHealth();
+        BeginIfDead();
+    }
+
     private void Update()
+    {
+        // The health event is the normal path. Keep this fallback for an
+        // enemy whose CharacterInfo is assigned after this component wakes.
+        BindHealth();
+        BeginIfDead();
+    }
+
+    private void BindHealth()
+    {
+        CharacterInfo next = enemy != null ? enemy.Health : null;
+        if (observedHealth == next) return;
+        UnbindHealth();
+        observedHealth = next;
+        if (observedHealth != null) observedHealth.HealthChanged += OnHealthChanged;
+    }
+
+    private void UnbindHealth()
+    {
+        if (observedHealth != null) observedHealth.HealthChanged -= OnHealthChanged;
+        observedHealth = null;
+    }
+
+    private void OnHealthChanged(CharacterInfo health)
+    {
+        if (health != null && health.IsDead) BeginIfDead();
+    }
+
+    private void BeginIfDead()
     {
         if (routine == null && enemy != null && enemy.Health != null && enemy.Health.IsDead)
             routine = StartCoroutine(Disappear());
@@ -95,6 +130,7 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 
     private void OnDisable()
     {
+        UnbindHealth();
         if (routine != null) StopCoroutine(routine);
         routine = null;
         RestorePresentation();

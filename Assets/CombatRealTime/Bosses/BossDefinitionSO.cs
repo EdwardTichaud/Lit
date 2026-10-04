@@ -13,7 +13,6 @@ public sealed class BossDefinitionSO : ScriptableObject
     [SerializeField] private string bossId = "boss";
     [SerializeField] private string displayName = "Boss";
     [SerializeField, Min(.1f)] private float engagementDistance = 8f;
-    [SerializeField] private bool createBattleWall = true;
     [SerializeField, Min(1)] private int segmentCount = 3;
     [SerializeField] private BossDamagePolicy damagePolicy = BossDamagePolicy.Invulnerable;
     [SerializeField] private bool showBossBar = true;
@@ -24,7 +23,6 @@ public sealed class BossDefinitionSO : ScriptableObject
     public string BossId => bossId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public float EngagementDistance => engagementDistance;
-    public bool CreateBattleWall => createBattleWall;
     public int SegmentCount => Mathf.Max(1, segmentCount);
     public BossDamagePolicy DamagePolicy => damagePolicy;
     public bool ShowBossBar => showBossBar;

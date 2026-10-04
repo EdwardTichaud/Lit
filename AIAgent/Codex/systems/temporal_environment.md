@@ -54,3 +54,59 @@ l’environnement HDRP du joueur local.
   référence de Volume vide signifie « utiliser ce GameObject ». L'intensité et
   la couleur restent entièrement réglées par les composants Unity de la lumière.
 - Les objets interactifs peuvent être exclus par `TimePeriodVisibility`.
+
+## Direction validée : chaleur et givre du château
+
+Le château reste sous un froid glacial : les matériaux utilisent leur état
+`Ice` par défaut. Une source de chaleur applique localement et progressivement
+un état `Normal`, puis le givre revient lorsque la source s'éloigne. Cette
+influence visuelle ne doit jamais être confondue avec la visibilité HDRP d'un
+Volume.
+
+La torche du joueur est une source mobile de chaleur : elle révèle les
+interactions et active les objets qui exigent une influence suffisante. Sa
+réserve décroît seulement lorsqu'elle est allumée; combustible et braseros la
+rechargent. Une réserve vide éteint la torche, mais ne bloque jamais le
+déplacement ou l'inventaire du joueur.
+
+Le rendu repose sur une ambiance bleu nuit très faible, un faisceau lunaire
+directionnel localisé, un brouillard volumétrique et des sources pratiques.
+Les flammes chaudes guident l'exploration; le cyan reste réservé aux éléments
+surnaturels et aux mécaniques de puzzle.
+
+`Lit_Volume_Castle` porte l'étalonnage local : exposition fixe à `-0,35 EV`,
+brume volumétrique bleu nuit (28 m de libre parcours moyen, anisotropie `0,45`,
+distance maximale 62 m)
+et contraste modéré. `Castle_Volume` n'active sa `Moon Light` qu'à l'intérieur
+de sa zone; elle éclaire à `1,1 lux`, projette des ombres douces et renforce la
+brume sans devenir une lumière d'ambiance uniforme. Les intensités des sources
+pratiques restent les réglages auteurs qui guident l'exploration.
+
+`Lit_ContrastLight` est le prefab HDRP commun des sources locales. Son composant
+`LitContrastLight` offre les rôles Faisceau lunaire, Flamme et Magie/cristal, et
+applique leurs couleurs, unités, portées, ombres souples et contribution
+volumétrique depuis l'Inspector. Il ne pilote ni l'exposition ni le bloom du
+Volume. Dans le château, le fill indirect est réduit (`0,28`), les réflexions
+restent limitées (`0,65`) et les probes à `0,75` : le fond peut ainsi s'effacer,
+pendant que les faisceaux de lune et sources pratiques créent le contraste.
+Le bloom du profil est réservé aux émissions qui franchissent son seuil : torche,
+braises, magie et cristaux de glace. Les matériaux d'armes doivent rester sous
+ce seuil.
+
+Les Flames communes utilisent une source locale chaude, courte et ombrée. Les
+Ancient Flames combinent un coeur chaud et une aura cyan verticale de puissance
+égale ; l'aura reste sans ombre pour éviter une seconde source de fill. La torche
+joueur garde une portée de 5 m, car sa portée HDRP pilote aussi son rayon
+d'influence de gameplay. `LitAtmosphereParticles` crée en jeu la poussière
+froide du `Castle_Volume`, les braises des Flames et le mélange froid/chaud des
+Ancient Flames. Les particules utilisent une texture alpha et un matériau
+transparent ; elles ne sont pas créées en édition et n'affectent aucun autre
+Volume.
+
+Le Shader Graph `LitIceFrostedEdges_v3` rend le corps de glace sombre et mat,
+mais garde les arêtes géométriques et texturées plus lisses afin d'y concentrer
+les reflets bleus. Dans l'influence d'une flamme, il révèle les textures de
+l'état normal, les réchauffe légèrement et augmente leur aspect humide. Le
+milieu du fondu d'influence devient une bordure de fonte bruitée et animée,
+avec gouttelettes et une très faible émission orange si l'émission du matériau
+est activée.

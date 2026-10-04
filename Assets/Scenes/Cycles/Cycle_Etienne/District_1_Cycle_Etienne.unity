@@ -168,7 +168,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -451,7 +451,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -983,6 +983,14 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
   - target: {fileID: 964046223}
     condition:
       requirements:
@@ -992,6 +1000,14 @@ MonoBehaviour:
           stepId: brake_released
           knowledge: {fileID: 0}
           cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    useHideCondition: 0
+    hideWhen:
+      requirements:
+        mode: 0
+        conditions: []
       allFlags: 0
       anyFlags: 0
       knowledge: []
@@ -1052,7 +1068,8 @@ MonoBehaviour:
       \xE9taient pass\xE9s. Ces conduits vont sous la statue\u2026 Je dois continuer."
     durationSeconds: 7
   sequences:
-  - id: last_relief
+  - startGate: {fileID: 0}
+    id: last_relief
     director: {fileID: 144378225}
     profile: {fileID: 11400000, guid: 188e88e424ac4bb4b9878897bc7c7ed0, type: 2}
   devStartEnabled: 0
@@ -1369,15 +1386,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5085031594953229734, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5314048971624604642, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5509116963988150178, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Name
@@ -1508,7 +1525,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -1674,10 +1691,6 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 3219046909
       objectReference: {fileID: 0}
-    - target: {fileID: 2225947782755653642, guid: 049f1509efeb6944fbb0ae6a85c3ed7a, type: 3}
-      propertyPath: InScenePlacedSourceGlobalObjectIdHash
-      value: 1219134173
-      objectReference: {fileID: 0}
     - target: {fileID: 4549345586202174929, guid: 049f1509efeb6944fbb0ae6a85c3ed7a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 13.18
@@ -1718,13 +1731,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5768931852624876223, guid: 049f1509efeb6944fbb0ae6a85c3ed7a, type: 3}
+      propertyPath: CreateWall
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8247241061401054916, guid: 049f1509efeb6944fbb0ae6a85c3ed7a, type: 3}
       propertyPath: m_Name
       value: DeadWeight
-      objectReference: {fileID: 0}
-    - target: {fileID: 8247241061401054916, guid: 049f1509efeb6944fbb0ae6a85c3ed7a, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2127,7 +2140,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -2250,15 +2263,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5085031594953229734, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5314048971624604642, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5509116963988150178, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Name
@@ -2557,15 +2570,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5085031594953229734, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5314048971624604642, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5509116963988150178, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Bindings.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
       propertyPath: m_Name

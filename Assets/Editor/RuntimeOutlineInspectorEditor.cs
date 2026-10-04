@@ -13,6 +13,16 @@ public sealed class RuntimeOutlineInspectorEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("showOutlines"), new GUIContent("Afficher les contours"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("outlineColor"), new GUIContent("Couleur et opacite"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("thickness"), new GUIContent("Epaisseur (pixels)"));
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Adaptation a la camera", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("scaleThicknessWithCameraDistance"), new GUIContent("Adapter a la distance"));
+        if (serializedObject.FindProperty("scaleThicknessWithCameraDistance").boolValue)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("nearDistance"), new GUIContent("Distance proche"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("farDistance"), new GUIContent("Distance lointaine"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("nearThickness"), new GUIContent("Epaisseur proche"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("farThickness"), new GUIContent("Epaisseur lointaine"));
+        }
         EditorGUILayout.PropertyField(serializedObject.FindProperty("alphaThreshold"), new GUIContent("Seuil de transparence"));
         serializedObject.ApplyModifiedProperties();
 

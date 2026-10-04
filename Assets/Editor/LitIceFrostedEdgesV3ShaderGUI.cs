@@ -232,9 +232,13 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
         DrawProperty(editor, properties, "_FlameInfluenceRadius", "Flame Influence Radius",
             "Rayon monde de l’influence. Zéro désactive entièrement la transition spatiale.");
         DrawProperty(editor, properties, "_TransitionSoftness", "Transition Softness",
-            "Largeur du fondu spatial autour du rayon.");
+            "Largeur du fondu spatial autour du rayon. Sa partie centrale devient automatiquement une fine bordure de fonte animée.");
         DrawProperty(editor, properties, "_TransitionProgress", "Transition Progress",
             "Progression manuelle : 0 = glace, 1 = apparence normale dans la zone de flamme.");
+        EditorGUILayout.HelpBox(
+            "La frontière de chaleur ajoute automatiquement gouttelettes, surface plus humide et teinte orange faible. "
+            + "Active Enable Material Emission pour rendre son émission visible; aucun nouveau paramètre runtime n'est requis.",
+            MessageType.None);
     }
 
     private void DrawDissolveProperties(MaterialEditor editor, MaterialProperty[] properties)

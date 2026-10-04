@@ -31,7 +31,6 @@ public abstract class BossEncounterBehaviour : NetworkBehaviour, IBossEncounterB
     protected virtual void Awake()
     {
         if (enemy == null) enemy = GetComponent<EnemyController>();
-        if (enemy != null && definition != null) enemy.CreateWall = definition.CreateBattleWall;
         SetSegmentsLocal(MaximumSegments);
     }
 
