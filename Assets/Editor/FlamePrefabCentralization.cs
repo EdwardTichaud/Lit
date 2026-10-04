@@ -191,7 +191,7 @@ public static class FlamePrefabCentralization
 
                     GameObject legacyRoot = isLegacyPrefabInstance ? instanceRoot :
                         (isUnpackedLegacyRoot ? flame.gameObject : null);
-                    if (legacyRoot != null && seenRoots.Add(legacyRoot.GetInstanceID()))
+                    if (legacyRoot != null && seenRoots.Add(legacyRoot.GetEntityId().GetHashCode()))
                         legacyRoots.Add(legacyRoot);
                 }
 

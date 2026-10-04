@@ -1388,8 +1388,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Nora : J\u2019ai refait la couture. Il tenait d\xE9j\xE0 mes cheveux quand
-    j\u2019avais ton \xE2ge."
+  m_text: "Nora : J\u2019ai refait la couture. Il tenait d\xE9j\xE0 mes cheveux quand j\u2019avais ton \xE2ge."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1439,7 +1438,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -3746,7 +3745,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -4855,6 +4854,14 @@ PrefabInstance:
     - target: {fileID: 5434131765590432883, guid: eff6c94d1fa101943b3fc523cbe1c450, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7780648999671923530, guid: eff6c94d1fa101943b3fc523cbe1c450, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3942260737
+      objectReference: {fileID: 0}
+    - target: {fileID: 7780648999671923530, guid: eff6c94d1fa101943b3fc523cbe1c450, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2657786482
       objectReference: {fileID: 0}
     - target: {fileID: 8144340869683838473, guid: eff6c94d1fa101943b3fc523cbe1c450, type: 3}
       propertyPath: m_Name
@@ -6709,7 +6716,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -9307,7 +9314,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -9768,7 +9775,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -10629,7 +10636,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -10969,7 +10976,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -14200,7 +14207,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -21068,7 +21075,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -23449,7 +23456,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -28724,7 +28731,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -30698,8 +30705,7 @@ MonoBehaviour:
       allFlags: 0
       anyFlags: 0
       knowledge: []
-    line: "Iris est pass\xE9e par ici. La voix est rest\xE9e, pas elle. Suivons son
-      trajet."
+    line: "Iris est pass\xE9e par ici. La voix est rest\xE9e, pas elle. Suivons son trajet."
     durationSeconds: 5
   sequences:
   - startGate: {fileID: 1243758309}
@@ -30727,7 +30733,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -32681,7 +32687,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -34145,7 +34151,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -36623,7 +36629,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -38525,6 +38531,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1170732083}
     m_Modifications:
+    - target: {fileID: 462460123797761288, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 90328949
+      objectReference: {fileID: 0}
+    - target: {fileID: 462460123797761288, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 271248220
+      objectReference: {fileID: 0}
     - target: {fileID: 1593202554068474222, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
       propertyPath: cycle
       value: 
@@ -38596,6 +38610,50 @@ PrefabInstance:
     - target: {fileID: 5897523970581850453, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
       propertyPath: m_Name
       value: Prefab_FalseChoir
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: ActorAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: SkillsAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: ContractAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: battleWallPrefab
+      value: 
+      objectReference: {fileID: 5051682734331238811, guid: e5281b19f0eb49d4f9d2914e07192808, type: 3}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: AnimationAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: AnimationAnimationRoot
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: ContractCapsuleCollider
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: ContractNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: LocomotionNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: NavigationNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6052637200855533076, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
+      propertyPath: ContractRigidbodyComponent
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -38933,6 +38991,14 @@ PrefabInstance:
     - target: {fileID: 4157453228226054805, guid: eace07fe664402741a16e06dfb980e0e, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4889414678729248806, guid: eace07fe664402741a16e06dfb980e0e, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 875626641
+      objectReference: {fileID: 0}
+    - target: {fileID: 4889414678729248806, guid: eace07fe664402741a16e06dfb980e0e, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 52681260
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -41609,7 +41675,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -43400,6 +43466,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1170732083}
     m_Modifications:
+    - target: {fileID: 3460486093085145953, guid: 9e40eedcaed7d7d4db81c3161c908c08, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2656978148
+      objectReference: {fileID: 0}
+    - target: {fileID: 3460486093085145953, guid: 9e40eedcaed7d7d4db81c3161c908c08, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2791496635
+      objectReference: {fileID: 0}
     - target: {fileID: 7068896444875195039, guid: 9e40eedcaed7d7d4db81c3161c908c08, type: 3}
       propertyPath: m_Name
       value: Consigne de maintenance des conduits
@@ -44090,7 +44164,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -44608,8 +44682,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Le rassemblement se dirige vers les salles inf\xE9rieures, par la voie
-    de la statue."
+  m_text: "Le rassemblement se dirige vers les salles inf\xE9rieures, par la voie de la statue."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -44659,7 +44732,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -45657,8 +45730,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "La galerie est vide. La voix d\u2019Iris r\xE9p\xE8te pourtant : \xAB
-    Je reviens apr\xE8s la Veill\xE9e. \xBB"
+  m_text: "La galerie est vide. La voix d\u2019Iris r\xE9p\xE8te pourtant : \xAB Je reviens apr\xE8s la Veill\xE9e. \xBB"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -45708,7 +45780,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -51903,7 +51975,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:
@@ -52973,6 +53045,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.y
+      value: 0.000032380158
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
+      value: -90.499985
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
+      value: -116.24
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
+      value: 130.52
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525959817822704305, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.z
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5057407205978339686, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3633183404
@@ -52985,10 +53085,66 @@ PrefabInstance:
       propertyPath: m_Name
       value: Prefab_Ghost_Nora_Ardent
       objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.y
+      value: 0.000032380158
+      objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
+      value: -90.499985
+      objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
+      value: -116.24
+      objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
+      value: 130.52
+      objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5764395682554619263, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.z
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6184488170609323915, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
       propertyPath: cycle
       value: 
       objectReference: {fileID: 1170732081}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.y
+      value: 0.000032380158
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.x
+      value: -90.499985
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.y
+      value: -116.24
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[1].m_Value.z
+      value: 130.52
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804317471640039927, guid: c14a9d79cc6e5d6488d617daa984e722, type: 3}
+      propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.z
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -53793,7 +53949,7 @@ MonoBehaviour:
     m_Value: -100
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -55144,7 +55300,7 @@ VisualEffect:
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_AllowInstancing: 1
-  m_ResourceVersion: 1
+  m_ReleaseInstanceOnDisable: 0
   m_PropertySheet:
     m_Float:
       m_Array:

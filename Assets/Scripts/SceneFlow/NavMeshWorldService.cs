@@ -221,7 +221,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
         if (surface == null || agent.agentTypeID != surface.agentTypeID)
         {
             if (agent.enabled) agent.enabled = false;
-            if (logDiagnostics && incompatibleAgentDiagnostics.Add(agent.GetInstanceID()))
+            if (logDiagnostics && incompatibleAgentDiagnostics.Add(agent.GetEntityId().GetHashCode()))
             {
                 Debug.LogWarning("[NavMeshWorld] Agent refuse : type incompatible | actor=" + agent.name +
                                  " | agentType=" + agent.agentTypeID + " | worldType=" +

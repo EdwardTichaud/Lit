@@ -16,7 +16,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IMenuCursorHandler, IPointe
     public int CombatDefenseHitPoints { get; private set; }
     public int CombatDefenseMaxHitPoints { get; private set; }
     public RectTransform SlotRect { get; private set; }
-    public string SelectionKey => Item != null ? $"{Item.GetInstanceID()}:{(HasCombatDefenseHitPoints ? CombatDefenseHitPoints : -1)}" : string.Empty;
+    public string SelectionKey => Item != null ? $"{Item.GetEntityId()}:{(HasCombatDefenseHitPoints ? CombatDefenseHitPoints : -1)}" : string.Empty;
 
     public void Initialize(InventoryPanelController owner, Item item, int quantity)
     {

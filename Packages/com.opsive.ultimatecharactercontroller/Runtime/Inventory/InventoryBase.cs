@@ -858,7 +858,9 @@ namespace Opsive.UltimateCharacterController.Inventory
                 return null;
             }
 
-            var additionalPoolKey = character.GetInstanceID();
+            // Unity 6 removed the runtime instance ID API. The pool only needs a
+            // stable key for this live character, which EntityId provides.
+            var additionalPoolKey = character.GetEntityId().GetHashCode();
             var previousActiveState = characterItemPrefab.gameObject.activeSelf;
             characterItemPrefab.gameObject.SetActive(false);
             var itemGameObject = ObjectPoolBase.Instantiate(characterItemPrefab.gameObject, additionalPoolKey, Vector3.zero, Quaternion.identity, m_ItemPlacement.transform);

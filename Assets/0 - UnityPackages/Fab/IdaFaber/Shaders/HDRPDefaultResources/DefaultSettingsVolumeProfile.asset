@@ -235,6 +235,12 @@ MonoBehaviour:
   enable:
     m_OverrideState: 1
     m_Value: 1
+  directionalOnly:
+    m_OverrideState: 0
+    m_Value: 0
+  halfResolution:
+    m_OverrideState: 0
+    m_Value: 0
   length:
     m_OverrideState: 0
     m_Value: 0.15
@@ -796,6 +802,8 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value:
     - {fileID: 11400000, guid: f84f836b876b06244bc938065726d90c, type: 2}
+    - {fileID: 11400000, guid: c76dfec79442f6b41a0ebdde5394f0bc, type: 2}
+    - {fileID: 11400000, guid: 879ffae44eefa4412bb327928f1a96dd, type: 2}
 --- !u!114 &6199856891717083771
 MonoBehaviour:
   m_ObjectHideFlags: 3

@@ -151,10 +151,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 0100020003000100030000000400050006000500070006000a000b0009000a00090008000e000f000d000e000d000c00120013001100120011001000160017001500160015001400
+  m_IndexBuffer: 0100020003000100030000000400050006000500070006000a000b0009000a00090008000e000f000d000e000d000c00120013001100120011001000160017001500160015001400y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -272,8 +272,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -30.04404, y: -0.3626488, z: -21.08849}
     m_Extent: {x: 2.9336042, y: 0.362648, z: 9.383613}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -585,7 +586,7 @@ PrefabInstance:
       objectReference: {fileID: 116132981}
     - target: {fileID: 9102580289589528248, guid: 8e090c67ec05d2349b73065795aaab1c, type: 3}
       propertyPath: m_VersionIndex
-      value: 1082
+      value: 1085
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

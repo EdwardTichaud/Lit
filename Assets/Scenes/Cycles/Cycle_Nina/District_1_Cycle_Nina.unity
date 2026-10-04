@@ -2981,9 +2981,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: PhysicsBody
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: PhysicsEnemy
       value: 
       objectReference: {fileID: 1127182593}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: visionOrigin
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ActorAnimator
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: ContractEnemy
       value: 
@@ -2993,15 +3005,71 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: SkillsAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: LocomotionEnemy
       value: 
       objectReference: {fileID: 1127182593}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ContractAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: AnimationAnimator
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: AnimationLockPoint
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ActorEnemyLockPoint
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: ContractEnemySkills
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: PhysicsBodyCollider
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: RecoveryEnemySkills
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: SkillsCasterVfxPoint
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: AnimationAnimationRoot
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: PhysicsNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ContractCapsuleCollider
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ContractNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: LocomotionNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: NavigationNavigationAgent
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5473851072604555695, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
+      propertyPath: ContractRigidbodyComponent
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
@@ -3291,8 +3359,7 @@ MonoBehaviour:
   lockDifficulty: 12
   lockpickToolItem: {fileID: 0}
   lockpickToolItemId: outils_de_crochetage
-  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir
-    ce coffre ?
+  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir ce coffre ?
   missingLockpickMessage: Il manque des outils de crochetage.
   lockpickSuccessMessage: "Crochetage r\xE9ussi."
   lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
