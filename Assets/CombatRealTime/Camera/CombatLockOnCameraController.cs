@@ -82,13 +82,18 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.UsesExternalTarget)
+        {
+            if (RealTimeCombatManager.Instance.HasLockedCombatTarget && !RealTimeCombatManager.Instance.IsCinematicSequenceActive) ActivateLockCamera();
+            else RestoreGameplayCamera();
+        }
         if (!active || cinematicFramingSuspended || uccCameraOverrideActive)
         {
             return;
         }
 
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        if (manager == null || manager.PlayerRoot == null || manager.LockedEnemy == null)
+        if (manager == null || manager.PlayerRoot == null || !manager.HasLockedCombatTarget)
         {
             RestoreGameplayCamera();
             return;
@@ -119,7 +124,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         float focusBias = profile != null ? Mathf.Lerp(enemyFocusBias, profile.enemyFocusBias, warningBlend) : enemyFocusBias;
         float maxOrbit = profile != null ? Mathf.Lerp(maximumLockOrbitDegreesPerSecond, profile.recenterDegreesPerSecond, warningBlend) : maximumLockOrbitDegreesPerSecond;
         float axisSharpness = profile != null ? Mathf.Lerp(lockAxisSharpness, profile.focusSharpness, warningBlend) : lockAxisSharpness;
-        Transform target = warningTarget != null ? warningTarget : manager.LockedEnemy.LockPoint;
+        Transform target = warningTarget != null ? warningTarget : manager.LockedTargetPoint;
         adapter.ConfigureLockMotion(maxOrbit, axisSharpness);
         adapter.ConfigureLookPointSharpness(axisSharpness);
         adapter.SetWarningPresentation(profile != null ? profile.fieldOfViewOffset * warningBlend : 0f);
@@ -172,13 +177,13 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         impactLookOffset = Vector3.zero;
         impactFieldOfView = 0f;
         impactShakeElapsed = impactShakeDuration;
-        uccAdapter?.SetImpactPresentation(Vector3.zero, 0f);
-        uccAdapter?.SetWarningPresentation(0f);
+        if (uccAdapter != null) uccAdapter.SetImpactPresentation(Vector3.zero, 0f);
+        if (uccAdapter != null) uccAdapter.SetWarningPresentation(0f);
         warningRequested = false;
         warningBlend = 0f;
         warningTarget = null;
         warningProfile = null;
-        uccAdapter?.DeactivateLock();
+        if (uccAdapter != null) uccAdapter.DeactivateLock();
         active = false;
     }
 

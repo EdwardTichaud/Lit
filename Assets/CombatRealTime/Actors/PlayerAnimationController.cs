@@ -38,9 +38,10 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         lockPoint = transform.Find("EnemyLockPoint");
     }
 
-    private void Awake()
+    protected override void Awake()
     {
         ResolveReferences();
+        base.Awake();
         if (timeDomain == null)
         {
             timeDomain = gameObject.AddComponent<CombatTimeDomain>();
@@ -75,6 +76,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         animator = configuredAnimator;
         lockPoint = configuredLockPoint;
         ResolveReferences();
+        EnsureAnimationEventReceiver();
     }
 
     public override bool ValidateContract(out string error)

@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 928999184455422515}
+  - component: {fileID: 8053469011625355131}
   - component: {fileID: 21717361757298694}
   - component: {fileID: 9112250133946299520}
   - component: {fileID: 4306886721176450377}
@@ -35,6 +36,24 @@ Transform:
   - {fileID: 7145762296775979735}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8053469011625355131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3779883059869037527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!135 &21717361757298694
 SphereCollider:
   m_ObjectHideFlags: 0

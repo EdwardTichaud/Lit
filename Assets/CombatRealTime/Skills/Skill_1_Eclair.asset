@@ -111,8 +111,10 @@ MonoBehaviour:
     airborneInertiaEndSpeedMultiplier: 0.3
   targetLunge:
     enabled: 1
-    approachDurationSeconds: 0.18
-    maximumApproachSpeed: 42
+    passThroughTarget: 1
+    passThroughDistance: 4
+    approachDurationSeconds: 0.25
+    maximumApproachSpeed: 65
     stoppingDistance: 0.85
     contactTolerance: 0.18
     reboundHorizontalImpulse: 16

@@ -29,10 +29,11 @@ public sealed class PlayerInPlaceSampling : IDisposable
     private readonly Transform[] bones;
     private readonly Vector3[] restPositions;
     private readonly Quaternion[] restRotations;
-    public PlayerInPlaceSampling()
+    public PlayerInPlaceSampling() : this(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath)
+        .GetComponent<CharacterAnimationController>().Animator) { }
+
+    public PlayerInPlaceSampling(Animator source)
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath);
-        var source = prefab.GetComponent<CharacterAnimationController>().Animator;
         if (source == null || !source.isHuman || source.avatar == null)
             throw new InvalidOperationException("Lucian's humanoid Animator is required for motion sampling.");
         root = CopyHierarchy(source.transform);

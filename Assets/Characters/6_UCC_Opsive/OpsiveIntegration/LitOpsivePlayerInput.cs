@@ -112,7 +112,7 @@ public class LitOpsivePlayerInput : OpsivePlayerInput
 
         if (Matches(normalized, SprintNames))
         {
-            return hasSprintOverride ? sprintOverride : fallbackToLocalInputRouter && LocalInputRouter.RightShoulderPressed;
+            return hasSprintOverride ? sprintOverride : fallbackToLocalInputRouter && LocalInputRouter.SprintPressed;
         }
 
         return IsCurrentFrame(buttonDownFrames, normalized);

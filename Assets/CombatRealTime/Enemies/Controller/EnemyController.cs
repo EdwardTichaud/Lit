@@ -56,10 +56,11 @@ public sealed partial class EnemyController : CharacterAnimationController, ILit
         return delta.sqrMagnitude > radius * radius;
     }
 
-    private void Awake()
+    protected override void Awake()
     {
         AnimationAwake();
         ActorAwake();
+        base.Awake();
         SkillsAwake();
         PhysicsAwake();
         NavigationAwake();
@@ -110,7 +111,7 @@ public sealed partial class EnemyController : CharacterAnimationController, ILit
         if (!initialized) return;
         BattleWallOnDisable();
         EncounterOnDisable();
-        HideInput();
+        HandleHideInput();
         RecoveryOnDisable();
         BrainOnDisable();
         ActorOnDisable();

@@ -3,6 +3,39 @@ using UnityEngine;
 
 public sealed class LitTacticalStabilityTests
 {
+    [TestCase(30)] [TestCase(60)] [TestCase(120)]
+    public void AimUsesTheSameInterpolationFractionAsUccPosition(int fps)
+    {
+        var aim = new LitTacticalAimHistory();
+        Quaternion start = Quaternion.Euler(50, 0, 0), end = Quaternion.Euler(50, 30, 0);
+        aim.Capture(start, 1, true);
+        aim.Capture(end, 1.02, false);
+        for (int frame = 0; frame < fps; frame++)
+        {
+            double now = 1.02 + frame / (double)fps;
+            float fraction = Mathf.Clamp01((float)((now - 1.02) / .02f));
+            Assert.That(Quaternion.Angle(aim.Evaluate(now, .02f, true, Quaternion.identity),
+                Quaternion.Slerp(start, end, fraction)), Is.LessThan(.05f));
+        }
+    }
+    [Test] public void DuplicatePoseEvaluationDoesNotResetAimInterpolation()
+    {
+        var aim = new LitTacticalAimHistory();
+        Quaternion start = Quaternion.Euler(50, 0, 0), end = Quaternion.Euler(50, 30, 0);
+        aim.Capture(start, 1, true);
+        aim.Capture(end, 1.02, false);
+        aim.Capture(end, 1.02, false);
+        Assert.That(Quaternion.Angle(aim.Evaluate(1.02, .02f, true, Quaternion.identity), start), Is.LessThan(.05f));
+        Assert.That(Quaternion.Angle(aim.Evaluate(1.03, .02f, false, Quaternion.identity), end), Is.LessThan(.05f));
+    }
+    [Test] public void ImmediatePoseDiscardsAimHistoryAfterTeleport()
+    {
+        var aim = new LitTacticalAimHistory();
+        aim.Capture(Quaternion.identity, 1, true);
+        Quaternion destination = Quaternion.Euler(60, 180, 0);
+        aim.Capture(destination, 2, true);
+        Assert.That(Quaternion.Angle(aim.Evaluate(2, .02f, true, Quaternion.identity), destination), Is.LessThan(.05f));
+    }
     [Test] public void InputAccumulatesUntilConsumedExactlyOnce()
     {
         var buffer = new LitTacticalInputBuffer();
@@ -67,16 +100,15 @@ public sealed class LitTacticalStabilityTests
     }
 
     [Test]
-    public void RenderedAimProfileKeepsAResponsivePositiveDefault()
+    public void AimInterpolationClampsBeforeAndAfterTheSimulationInterval()
     {
-        var profile = ScriptableObject.CreateInstance<LitTacticalCameraProfile>();
-        try
-        {
-            Assert.That(profile.renderedAimSharpness, Is.GreaterThan(1f));
-        }
-        finally
-        {
-            Object.DestroyImmediate(profile);
-        }
+        var aim = new LitTacticalAimHistory();
+        Quaternion start = Quaternion.Euler(50, 0, 0), end = Quaternion.Euler(50, 60, 0);
+        aim.Capture(start, 1, true);
+        aim.Capture(end, 1.02, false);
+        Assert.That(Quaternion.Angle(aim.Evaluate(1, .02f, true, Quaternion.identity), start), Is.LessThan(.05f));
+        Assert.That(Quaternion.Angle(aim.Evaluate(2, .02f, true, Quaternion.identity), end), Is.LessThan(.05f));
+        aim.Reset();
+        Assert.That(aim.Evaluate(2, .02f, true, start), Is.EqualTo(start));
     }
 }

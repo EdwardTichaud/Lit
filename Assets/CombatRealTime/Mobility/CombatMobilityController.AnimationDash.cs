@@ -21,14 +21,14 @@ public sealed partial class CombatMobilityController
     {
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         Transform caster = manager != null ? manager.PlayerRoot : null;
-        EnemyController target = manager != null ? manager.LockedEnemy : null;
+        Transform target = manager != null ? manager.LockedTargetPoint : null;
         if (caster == null || target == null)
         {
             return;
         }
         dashCaster = caster;
 
-        Vector3 direction = target.LockPoint.position - caster.position;
+        Vector3 direction = target.position - caster.position;
         direction.y = 0f;
         float distanceToTarget = direction.magnitude;
         if (distanceToTarget <= 0.001f)

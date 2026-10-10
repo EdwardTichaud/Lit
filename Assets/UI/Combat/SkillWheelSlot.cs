@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
-public sealed class SkillWheelSlot : MonoBehaviour
+public sealed class SkillWheelSlot : MonoBehaviour, IPointerEnterHandler
 {
     [SerializeField] private SkillSO skill;
     [SerializeField] private Image iconImage;
@@ -18,6 +19,11 @@ public sealed class SkillWheelSlot : MonoBehaviour
     private float targetScale = 1f;
 
     public SkillSO AssignedSkill => skill;
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        GetComponentInParent<SkillWheel>()?.HoverSlot(this);
+    }
 
     public void SetSkill(SkillSO value)
     {

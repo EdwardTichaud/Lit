@@ -68,7 +68,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
             int applied = combatManager.ApplySkillDamageToLockedEnemy(activeSkill);
             if (applied > 0)
             {
-                CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(activeSkill, combatManager.LockedEnemy);
+                CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(activeSkill, combatManager.LockedTargetPoint, combatManager.PlayerRoot);
             }
         }
         else if (activeEnemyCaster != null)
@@ -83,7 +83,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         if (active || cinematicPlayback == null || cinematicPlayback.IsPlaying || combatManager == null ||
             !combatManager.IsCombatActive || skill == null || !skill.HasCombatCinematic ||
             (casterRole == CombatCinematicCasterRole.Player &&
-             (combatManager.LockedEnemy == null || (combatManager.LockedEnemy.Health != null && combatManager.LockedEnemy.Health.IsDead))) ||
+             (!combatManager.HasLockedCombatTarget || combatManager.LockedCombatTarget.IsDead)) ||
             (casterRole == CombatCinematicCasterRole.Enemy &&
              (combatManager.EngagedEnemy == null || (combatManager.EngagedEnemy.Health != null && combatManager.EngagedEnemy.Health.IsDead))))
         {
@@ -97,7 +97,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
 
         CombatSkillCinematicDefinition definition = skill.Cinematic;
-        if (casterRole == CombatCinematicCasterRole.Player && combatManager.LockedEnemy.IsAttackCommitted)
+        if (casterRole == CombatCinematicCasterRole.Player && combatManager.LockedCombatTarget.IsAttackCommitted)
         {
             Debug.Log("[CombatCinematic] Skill refuse pendant l'attaque ennemie : seuls LightSkill, QTE reussi ou mort interrompent le coup.", this);
             return false;
@@ -219,6 +219,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
 
     private void SuspendEncounter()
     {
+        combatManager?.SuspendCombatTarget(true);
         suspendedEnemies.Clear();
         EnemyController[] behaviours = FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < behaviours.Length; i++)
@@ -231,6 +232,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
 
     private void RestoreEncounter()
     {
+        combatManager?.SuspendCombatTarget(false);
         for (int i = 0; i < suspendedEnemies.Count; i++)
         {
             if (suspendedEnemies[i] != null)

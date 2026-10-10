@@ -114,7 +114,7 @@ public sealed class PlayerModuleTests
         foreach (var component in prefab.GetComponentsInChildren<MonoBehaviour>(true)) Assert.That(component, Is.Not.Null);
         if (character == "Lucian")
         {
-            Assert.That(prefab.GetComponent<PlayerCombatAnimationEvents>(), Is.Not.Null);
+            Assert.That(prefab.GetComponent<AnimationEvents>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<PlayerActionPresentationController>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<PlayerRootMotionRelay>(), Is.Not.Null);
         }

@@ -97,12 +97,12 @@ public sealed class TimeSlowMotionPresentationController : MonoBehaviour
 
     private void PlayEnterFeedback()
     {
-        AudioManager.EnsureInstance()?.PlayUiOneShotClip(settings.enterSfx);
+        if (settings.enterSfx != null) AudioManager.EnsureInstance()?.PlayUiOneShotClip(settings.enterSfx);
     }
 
     private void PlayExitFeedback()
     {
-        AudioManager.EnsureInstance()?.PlayUiOneShotClip(settings.exitSfx);
+        if (settings.exitSfx != null) AudioManager.EnsureInstance()?.PlayUiOneShotClip(settings.exitSfx);
     }
 
     private void ApplyCameraEffect()

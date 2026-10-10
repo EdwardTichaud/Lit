@@ -250,25 +250,32 @@ public static class JuggernautPatternSetup
 
     private static void MakeInPlace(AnimationClip clip)
     {
-        var serializedClip = new SerializedObject(clip);
-        foreach (string property in new[] { "m_LoopBlendOrientation", "m_LoopBlendPositionY", "m_LoopBlendPositionXZ" })
+        // Humanoid RootT/RootQ carry body pose, not just physical displacement.
+        // A legacy flattened copy is never an acceptable reconstruction source.
+        string name = clip.name.Replace("InPlace_", "").Replace("Juggernaut_", "");
+        string sourcePath = ActorAnimationAudit.EnemySource(name);
+        if (name == "Death_v2") sourcePath = ActorAnimationAudit.EnemySource("Death");
+        if (sourcePath == null)
         {
-            var value = serializedClip.FindProperty("m_AnimationClipSettings." + property);
-            if (value == null) throw new InvalidOperationException("Reglage InPlace absent : " + property);
-            value.boolValue = true;
+            var paths = AssetDatabase.FindAssets(name + " t:Model")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(p => System.IO.Path.GetFileNameWithoutExtension(p) == name).ToArray();
+            if (paths.Length != 1) throw new InvalidOperationException("Original source unresolved; no pose flattening allowed: " + clip.name);
+            sourcePath = paths[0];
         }
-        serializedClip.ApplyModifiedPropertiesWithoutUndo();
-        foreach (var binding in AnimationUtility.GetCurveBindings(clip))
+        var source = ActorAnimationAudit.Source(sourcePath);
+        var actor = AssetDatabase.LoadAssetAtPath<GameObject>(JuggernautV2Setup.OriginalPrefab).GetComponent<Animator>();
+        var candidate = ActorClipReconstruction.Candidate(source, clip, actor);
+        try
         {
-            bool rootPose = binding.path == "" && (binding.propertyName.StartsWith("RootT.") ||
-                binding.propertyName.StartsWith("RootQ.") || binding.type == typeof(Transform) &&
-                (binding.propertyName.StartsWith("m_LocalPosition.") || binding.propertyName.StartsWith("m_LocalRotation.")));
-            if (!rootPose) continue;
-            var curve = AnimationUtility.GetEditorCurve(clip, binding);
-            float value = curve.Evaluate(0f);
-            AnimationUtility.SetEditorCurve(clip, binding, AnimationCurve.Constant(0f, clip.length, value));
+            var fidelity = ActorClipReconstruction.Compare(actor,source,candidate);
+            if (fidelity.positionError > .005f || fidelity.angleError > .5f)
+                throw new InvalidOperationException("Pose fidelity failed: " + clip.name);
+            if (EditorJsonUtility.ToJson(clip) == EditorJsonUtility.ToJson(candidate)) return;
+            EditorUtility.CopySerialized(candidate, clip);
+            EditorUtility.SetDirty(clip);
         }
-        EditorUtility.SetDirty(clip);
+        finally { UnityEngine.Object.DestroyImmediate(candidate); }
     }
     private static AnimationEvent Event(string name, float time, float parameter = 0f) =>
         new AnimationEvent { functionName = name, time = time, floatParameter = parameter };

@@ -8,6 +8,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 8008548928658616489}
   - component: {fileID: 3193415297997078368}
   - component: {fileID: 4558717517937491049}
   - component: {fileID: 6243874953481081979}
@@ -338,3 +339,21 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2788656898991144956, guid: 612188a23ca632c44be57eb22b85126a, type: 3}
+--- !u!114 &8008548928658616489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7476577756283911577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  presentation: {fileID: 0}
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 

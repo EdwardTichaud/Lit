@@ -1,5 +1,15 @@
 # Input, UCC et caméra
 
+## Commandes manette (2026-10-10)
+
+LB/L1 eloigne la camera, RB/R1 la rapproche. RT/R2 pilote le sprint dans les
+deux vues ; le sprint automatique au stick en camera tactique est retire.
+LT/L2 maintenu ouvre la roue de combat ; le relachement la ferme. Croix bas
+acquiert le verrou en exploration, puis change de cible en combat. Le callback
+Player/LeftShoulder est filtre hors exploration sur gamepad afin de ne pas
+executer aussi SwitchEnemyLock. Les noms internes LeftShoulder/RightShoulder
+restent historiques ; les bindings .inputactions font autorite.
+
 ## Verrous UCC possedes et restitution des actions
 
 TryAcquireExternalLock(owner, out handle, ...) remplace BeginExternalLock/EndExternalLock. Chaque ExternalLockHandle est lie a son bridge et ne peut etre libere qu'une fois par Dispose. Un handle conserve d'un ancien acteur ou d'une ancienne zone ne libere jamais un verrou nouveau. Les options de suppression d'input sont agregees entre proprietaires, y compris lors d'une acquisition imbriquee.
@@ -518,3 +528,39 @@ automatiquement hors cinematique.
 Le deplacement ennemi ordinaire appartient exclusivement au `NavMeshAgent`, pilote par `CombatEnemyLocomotionController`; aucune IA ne doit faire de fallback par `Transform`. `EnemyNavigationController` attend que `SquadAIManager` ait bake le monde actif, demande un rebuild controle si aucune projection locale n'est disponible et n'autorise un Warp que lorsque la projection est pratiquement confondue avec l'acteur. Le serveur/hote est le seul a appeler le cerveau et cette preparation; les clients ne doivent pas choisir de cible, destination ou impact.
 
 `EnemyCombatBrain` choisit les attaques et maintient une cible/menace, tandis que `CombatEnemyLocomotionController` gere translation NavMesh et presentation Animator. Le suivi de rotation reste ouvert pendant le wind-up mais est bloque par l'Animation Event `LockEnemyAttackDirection` avant la phase engagee : un joueur qui esquive ne peut donc pas etre suivi magiquement par la rotation de fin d'attaque. `EndEnemyAttack` reste l'autorite normale de fin; `EnemyAttackRecoverySafety` est seulement le filet de securite qui libere aussi le cerveau si un clip est mal auteurise.
+
+## Laboratoire Brains AI (2026-10-08)
+
+Iluvilirae_Test utilise PlayerInputs, RealTimeCombatInput et la camera tactique
+UCC de GameplaySessionRoot. L3 sur gamepad appartient a LightSkill en combat :
+LocalPlayerInput ne doit pas ouvrir TacticalInspection et desactiver la carte
+combat sur cette meme pression. L'inspection clavier/souris reste disponible.
+ApplyWorldMoveInput alimente la direction locale et les parametres Animator
+pendant un verrouillage, meme sans camera tactique resolue ; seul le reset du
+rayon d'orbite depend de cette camera. Une demande de reconciliation des inputs
+maintenus ne cree plus de nouvel input host pendant le nettoyage d'une scene.
+## Cadence de presentation mesuree (2026-10-10)
+
+LocomotionPresentationProfile est optionnel et cible l'avatar reel. Dans le
+chemin calibre, le bridge calcule l'activite et la cadence depuis la vitesse
+planaire UCC obtenue, ramenee au temps acteur. Le stick indique l'intention
+et l'allure, sans maximum stick/vitesse ni facteur fixe 0,22. La deceleration
+physique continue de se presenter apres relachement de l'input. Le delta du
+domaine acteur est utilise une seule fois ; pause conserve la presentation.
+
+LocomotionPlaybackRate ne multiplie que Locomotion et CombatLocomotion.
+Animator.speed reste au domaine temporel ; attaques, saut, esquives et Timeline
+ne sont pas retimes. Les vitesses/accelerations UCC ne sont pas recalibrees.
+LitPresentationAnimatorMonitor preserve les reglages du monitor UCC et
+cede seulement ses ecritures HorizontalMovement/ForwardMovement au bridge
+pendant la presentation calibree au sol ; vol/cinematique gardent leur chemin.
+Sans ce monitor specialise, le profil ne s'active pas, pour eviter les doubles
+ecritures de direction observees. La locomotion ne reprend pas un etat d'action.
+
+Ces donnees et bindings sont pour l'instant uniquement dans le laboratoire
+isole. Les courbes Inplace existantes de Lucian, torche, saut et esquives
+ne sont pas reparees sans defaut mesure. Alignement directionnel par correlation
+de phase : un arbre incomplet reste entierement intact. Les courses passent
+le controle de correspondance ; les marches requierent des contacts auteur.
+La correlation n'est pas une validation des 3 cm d'appui. Aucune nouvelle
+correction IK des pieds n'a ete ajoutee.

@@ -8162,6 +8162,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 8038716146808392860}
   - component: {fileID: 7584525173041683099}
   - component: {fileID: 7983505588905401017}
   m_Layer: 0
@@ -10065,3 +10066,21 @@ Transform:
   m_Father: {fileID: 8132571873119232450}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8038716146808392860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7064588541486432289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  presentation: {fileID: 0}
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 

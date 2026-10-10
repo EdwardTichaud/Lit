@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1216f4be9cc9449aac949c16152d9656, type: 3}
+  m_Name: Juggernaut_v2_CombatProfile
+  m_EditorClassIdentifier: Assembly-CSharp::LitBrainsCombatProfile
+  attackStartDistance: 3.6
+  approachStopDistance: 1.7
+  initialAttackDelay: 0.2
+  attackFacingDegrees: 55
+  turnDegreesPerSecond: 540
+  attackInterval: {x: 1.5, y: 1.9}
+  resistance: 100
+  resistanceRecoveryDelay: 1
+  resistanceRecoveryPerSecond: 50
+  hurtSeconds: 0.35
+  interruptionProtectionSeconds: 0.75
+  attacks:
+  - stateName: Attack
+    clip: {fileID: 7400000, guid: afdd35d12c95c6446b5a6380f4ed205b, type: 2}
+    reactionSeconds: 0.233333333
+    strikeSeconds: 0.466666667
+    impactSeconds: 0.566666667
+    recoverySeconds: 0.733333333
+    recoveryDurationSeconds: 0.2
+    preparationAdvanceDistance: 1
+    advanceDistance: 0.9
+    advanceSeconds: 0.2
+    reach: 2.6
+    arcDegrees: 110
+    heightTolerance: 1.8
+  - stateName: Attack_Sweep
+    clip: {fileID: 7400000, guid: 4583fd938bac54240b22eb24d80a6343, type: 2}
+    reactionSeconds: 0.333333333
+    strikeSeconds: 0.566666667
+    impactSeconds: 0.700000000
+    recoverySeconds: 0.900000000
+    recoveryDurationSeconds: 0.2
+    preparationAdvanceDistance: 1
+    advanceDistance: 0.9
+    advanceSeconds: 0.2
+    reach: 2.6
+    arcDegrees: 110
+    heightTolerance: 1.8
+  - stateName: Attack_Followup
+    clip: {fileID: 7400000, guid: a60d893d891f10147a4de3ac16f48ce0, type: 2}
+    reactionSeconds: 0.266666667
+    strikeSeconds: 0.500000000
+    impactSeconds: 0.600000000
+    recoverySeconds: 0.766666667
+    recoveryDurationSeconds: 0.2
+    preparationAdvanceDistance: 1
+    advanceDistance: 0.9
+    advanceSeconds: 0.2
+    reach: 2.6
+    arcDegrees: 110
+    heightTolerance: 1.8

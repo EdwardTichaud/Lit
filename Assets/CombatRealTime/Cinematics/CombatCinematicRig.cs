@@ -49,6 +49,8 @@ public sealed class CombatCinematicContext
     public Transform PlayerRoot { get; }
     public Animator PlayerAnimator { get; }
     public EnemyController TargetEnemy { get; }
+    public Transform TargetRoot { get; }
+    public ICombatTarget Target { get; }
     public Animator TargetAnimator { get; }
     public Transform TargetLockPoint { get; }
     public Action ResolveImpact { get; }
@@ -75,8 +77,10 @@ public sealed class CombatCinematicContext
         PlayerRoot = manager != null ? manager.PlayerRoot : null;
         PlayerAnimator = manager != null ? manager.PlayerAnimator : null;
         TargetEnemy = manager != null ? (manager.EngagedEnemy ?? manager.LockedEnemy) : null;
-        TargetAnimator = TargetEnemy != null ? TargetEnemy.Animator : null;
-        TargetLockPoint = TargetEnemy != null ? TargetEnemy.LockPoint : null;
+        Target = manager != null ? manager.CombatTarget : null;
+        TargetRoot = Target != null ? Target.Root : null;
+        TargetAnimator = Target != null ? Target.Animator : null;
+        TargetLockPoint = Target != null ? Target.LockPoint : null;
         ResolveImpact = resolveImpact;
         CasterRole = casterRole;
         CasterEnemy = casterEnemy;
@@ -140,6 +144,7 @@ public readonly struct CombatCinematicPlacement
 }
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(AnimationEvents))]
 [RequireComponent(typeof(PlayableDirector), typeof(SignalReceiver), typeof(LitTimelineCinemachineBridge))]
 public sealed class CombatCinematicRig : MonoBehaviour
 {
@@ -203,6 +208,18 @@ public sealed class CombatCinematicRig : MonoBehaviour
     // PlayableDirector that runtime playback resolves in Awake.
     public PlayableDirector Director => director != null ? director : GetComponent<PlayableDirector>();
     public SignalReceiver SignalReceiver => signalReceiver;
+    public void PlayCameraShake()
+    {
+        if (!sessionActive) return;
+        foreach (var shake in GetComponentsInChildren<CombatCinematicCameraShake>(true))
+            shake.PlayShake();
+        if (logCameraDiagnostics) Debug.Log("[CombatCinematicRig] CameraShake t=" + Director.time.ToString("0.000"), this);
+    }
+    public void ApplyKnockedOut()
+    {
+        if (context?.Target is ICombatKnockoutReceiver target && !context.Target.IsDead)
+            target.KnockedOut();
+    }
     public IReadOnlyList<CombatCinematicCameraBinding> CameraBindings => cameraBindings;
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
     public bool HasAuthoringStageLayout => authoringStageLayoutVersion >= 3 &&
@@ -334,14 +351,14 @@ public sealed class CombatCinematicRig : MonoBehaviour
             error = "Le rig cinematographique doit etre rebake avec les poses Player et Enemy.";
             return false;
         }
-        if (playbackContext == null || playbackContext.PlayerRoot == null || playbackContext.TargetEnemy == null)
+        if (playbackContext == null || playbackContext.PlayerRoot == null || playbackContext.TargetRoot == null)
         {
             error = "Lucian ou l'ennemi verrouille est introuvable.";
             return false;
         }
 
         Vector3 playerPosition = playbackContext.PlayerRoot.position;
-        Vector3 enemyPosition = playbackContext.TargetEnemy.transform.position;
+        Vector3 enemyPosition = playbackContext.TargetRoot.position;
         Vector3 direction = enemyPosition - playerPosition;
         direction.y = 0f;
         if (direction.sqrMagnitude <= 0.0001f)
@@ -441,7 +458,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         error = null;
         if (timeline == null) timeline = bakedTimeline;
         if (playbackContext == null || playbackContext.PlayerRoot == null || playbackContext.PlayerAnimator == null ||
-            playbackContext.TargetEnemy == null || playbackContext.TargetAnimator == null ||
+            playbackContext.TargetRoot == null || playbackContext.TargetAnimator == null ||
             director == null || signalReceiver == null)
         {
             error = "Contexte, cibles ou composants de rig manquants.";
@@ -591,6 +608,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     public void ResetForPool()
     {
+        foreach (var shake in GetComponentsInChildren<CombatCinematicCameraShake>(true)) shake.ClearShake();
         localPlaybackScale = 1f;
         localPlaybackManualClock = false;
         RequestEnd(CombatCinematicEndReason.Interrupted, false);
@@ -818,7 +836,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         // now the enemy convention, while Lucian may still expose a visual
         // child Animator; neither topology may change the cinematic frame.
         Transform playerAnchor = context.PlayerRoot;
-        Transform target = context.TargetLockPoint != null ? context.TargetLockPoint : context.TargetEnemy.transform;
+        Transform target = context.TargetLockPoint != null ? context.TargetLockPoint : context.TargetRoot;
         Vector3 direction = target.position - playerAnchor.position;
         direction.y = 0f;
         Quaternion playerFacing = direction.sqrMagnitude > 0.0001f
@@ -835,7 +853,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private bool ApplyPlacement(CombatCinematicPlacement placement, out string error)
     {
         error = null;
-        TracePlacement("Application | avant player=" + context.PlayerRoot.position + " enemy=" + context.TargetEnemy.transform.position +
+        TracePlacement("Application | avant player=" + context.PlayerRoot.position + " enemy=" + context.TargetRoot.position +
                         " | rig=" + placement.RigPosition + ".");
         transform.SetPositionAndRotation(placement.RigPosition, placement.RigRotation);
         // Anchors define actor ROOT poses. No Animator-to-root conversion is
@@ -872,7 +890,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
         }
 
-        CharacterAnimationController enemyContract = context.TargetEnemy.GetComponent<CharacterAnimationController>();
+        CharacterAnimationController enemyContract = context.TargetRoot.GetComponent<CharacterAnimationController>();
         if (enemyContract != null && enemyContract.ValidateContract(out _))
         {
             if (!enemyContract.SetActorPose(enemyRootPosition, enemyRootRotation))
@@ -884,7 +902,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
         else
         {
-            EnemyController enemyBehaviour = context.TargetEnemy.GetComponent<EnemyController>();
+            EnemyController enemyBehaviour = context.TargetRoot.GetComponent<EnemyController>();
             if (enemyBehaviour != null && !enemyBehaviour.PlaceForCinematic(
                     enemyRootPosition,
                     enemyRootRotation))
@@ -894,14 +912,15 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
             if (enemyBehaviour == null)
             {
-                context.TargetEnemy.transform.SetPositionAndRotation(enemyRootPosition, enemyRootRotation);
+                if (context.Target != null && !context.Target.PlaceForCinematic(enemyRootPosition, enemyRootRotation))
+                { error = "La cible refuse le placement cinematographique."; return false; }
             }
         }
 
         Physics.SyncTransforms();
         TracePlacement("Application terminee | rig=" + transform.position + " | player=" + context.PlayerRoot.position +
                        " playerAnimator=" + context.PlayerAnimator.transform.position +
-                       " | enemy=" + context.TargetEnemy.transform.position +
+                       " | enemy=" + context.TargetRoot.position +
                        " enemyAnimator=" + context.TargetAnimator.transform.position + ".");
         return true;
     }
@@ -945,7 +964,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void AdvanceEnemyRootFromTimelineMotion()
     {
-        if (context?.TargetEnemy == null || context.TargetAnimator == null) return;
+        if (context?.TargetRoot == null || context.TargetAnimator == null) return;
 
         RestoreEnemyAnimatorRestLocalPose();
         if (skipFirstEnemyRootMotionDelta)
@@ -962,14 +981,14 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return;
         }
 
-        EnemyController behaviour = context.TargetEnemy.GetComponent<EnemyController>();
+        EnemyController behaviour = context.TargetRoot.GetComponent<EnemyController>();
         if (behaviour != null)
         {
             behaviour.ApplyCinematicRootMotion(deltaPosition, deltaRotation);
         }
         else
         {
-            ApplyTransformDelta(context.TargetEnemy.transform, deltaPosition, deltaRotation);
+            ApplyTransformDelta(context.TargetRoot, deltaPosition, deltaRotation);
         }
     }
 
@@ -988,19 +1007,19 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private void BeginContractCinematicMotion()
     {
         context?.PlayerRoot?.GetComponent<CharacterAnimationController>()?.BeginCinematicMotion(sessionToken);
-        context?.TargetEnemy?.GetComponent<CharacterAnimationController>()?.BeginCinematicMotion(sessionToken);
+        context?.TargetRoot?.GetComponent<CharacterAnimationController>()?.BeginCinematicMotion(sessionToken);
     }
 
     private void EndContractCinematicMotion()
     {
         context?.PlayerRoot?.GetComponent<CharacterAnimationController>()?.EndCinematicMotion(sessionToken);
-        context?.TargetEnemy?.GetComponent<CharacterAnimationController>()?.EndCinematicMotion(sessionToken);
+        context?.TargetRoot?.GetComponent<CharacterAnimationController>()?.EndCinematicMotion(sessionToken);
     }
 
     private void SetContractRootMotionRelayEnabled(bool enabled)
     {
         context?.PlayerRoot?.GetComponent<CharacterAnimationController>()?.SetCinematicRootMotionRelayEnabled(enabled);
-        context?.TargetEnemy?.GetComponent<CharacterAnimationController>()?.SetCinematicRootMotionRelayEnabled(enabled);
+        context?.TargetRoot?.GetComponent<CharacterAnimationController>()?.SetCinematicRootMotionRelayEnabled(enabled);
         TracePlacement("Relais root motion cinematographique=" + enabled + ".");
     }
 
@@ -1053,8 +1072,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
         playerAnimatorRestLocalRotation = animatorTransform.localRotation;
 
         hasEnemyAnimatorRestPose = false;
-        if (context.TargetEnemy == null || context.TargetAnimator == null ||
-            context.TargetAnimator.transform == context.TargetEnemy.transform)
+        if (context.TargetRoot == null || context.TargetAnimator == null ||
+            context.TargetAnimator.transform == context.TargetRoot)
         {
             return;
         }
@@ -1080,13 +1099,13 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void RestoreEnemyAnimatorRestLocalPose()
     {
-        if (!hasEnemyAnimatorRestPose || context == null || context.TargetEnemy == null || context.TargetAnimator == null)
+        if (!hasEnemyAnimatorRestPose || context == null || context.TargetRoot == null || context.TargetAnimator == null)
         {
             return;
         }
 
         Transform animatorTransform = context.TargetAnimator.transform;
-        if (animatorTransform == context.TargetEnemy.transform)
+        if (animatorTransform == context.TargetRoot)
         {
             return;
         }

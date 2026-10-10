@@ -17,7 +17,8 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Min(.001f)] public float zoomTime = .12f;
     [Min(.001f)] public float recenterTime = .25f;
     [Min(.001f)] public float transitionTime = .3f;
-    [Min(1f), Tooltip("Vitesse de stabilisation de la visée de rendu entre deux pas physiques. Une valeur élevée conserve un cadrage réactif sans transmettre le micro-jitter de l'interpolation.")]
+    // Legacy serialized field: aim now shares UCC interpolation, with no second damping control.
+    [HideInInspector]
     public float renderedAimSharpness = 28f;
     [Header("Input")]
     public float panSpeed = 10;

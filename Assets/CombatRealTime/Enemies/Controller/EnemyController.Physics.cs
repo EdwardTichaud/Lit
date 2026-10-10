@@ -78,7 +78,7 @@ public sealed partial class EnemyController
     private bool PhysicsAdvanceActive;
     private float PhysicsAdvanceStartedAt, PhysicsAdvanceProgress;
     private Vector3 PhysicsAdvanceDirection;
-    public void BeginEnemyAdvance()
+    public void HandleBeginEnemyAdvance()
     {
         if (PhysicsAdvanceActive || State != CombatEnemyPhysicsState.GroundedAction || PhysicsEnemy == null || PhysicsEnemy.ActiveSkill == null || PhysicsActiveMotionProfile == null || !PhysicsActiveMotionProfile.enableAdvance)
             return;
@@ -88,7 +88,7 @@ public sealed partial class EnemyController
         PhysicsAdvanceDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
     }
 
-    public void EndEnemyAdvance() => PhysicsAdvanceActive = false;
+    public void HandleEndEnemyAdvance() => PhysicsAdvanceActive = false;
     private Vector3 PhysicsAdvanceDelta(Vector3 position)
     {
         if (!PhysicsAdvanceActive || PhysicsActiveMotionProfile == null)
@@ -100,7 +100,7 @@ public sealed partial class EnemyController
         PhysicsAdvanceProgress = progress;
         Vector3 allowed = PhysicsClampPlanarMotionToObstacles(position, requested);
         if (t >= 1f || allowed.sqrMagnitude + .000001f < requested.sqrMagnitude)
-            EndEnemyAdvance();
+            HandleEndEnemyAdvance();
         return allowed;
     }
 
@@ -151,7 +151,7 @@ public sealed partial class EnemyController
     private void PhysicsOnDisable()
     {
         PhysicsEndEnemyRush();
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         PhysicsPendingCompletion = null;
         PhysicsPendingPlanarRootMotion = Vector3.zero;
         PhysicsPendingRootRotation = Quaternion.identity;
@@ -159,7 +159,7 @@ public sealed partial class EnemyController
 
     public void BeginEnemyAction(SkillSO skill)
     {
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         PhysicsResolveReferences();
         if (!IsOperational)
         {
@@ -193,7 +193,7 @@ public sealed partial class EnemyController
             return;
         }
 
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         PhysicsVerticalVelocity = PhysicsActiveMotionProfile.initialUpwardSpeed;
         PhysicsAirborneStartedAt = PhysicsLocalTime;
         PhysicsLandingRequested = false;
@@ -256,7 +256,7 @@ public sealed partial class EnemyController
     public void CompleteEnemyAction(Action completion)
     {
         PhysicsEndEnemyRush();
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         AuditPose("attaque:fin demandee");
         PhysicsPendingCompletion = completion;
         if (State == CombatEnemyPhysicsState.GroundedAction || State == CombatEnemyPhysicsState.Navigation)
@@ -272,7 +272,7 @@ public sealed partial class EnemyController
     public void InterruptEnemyAction(Action completion)
     {
         PhysicsEndEnemyRush();
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         AuditPose("attaque:interrompue");
         PhysicsPendingCompletion = completion;
         if (IsAirborne)
@@ -292,7 +292,7 @@ public sealed partial class EnemyController
     /// </summary>
     public void ForceCompleteEnemyAction(Action completion, string reason)
     {
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         PhysicsResolveReferences();
         PhysicsPendingCompletion = completion;
         PhysicsPendingPlanarRootMotion = Vector3.zero;
@@ -314,7 +314,7 @@ public sealed partial class EnemyController
 
     public void EnterCinematic()
     {
-        EndEnemyAdvance();
+        HandleEndEnemyAdvance();
         PhysicsPendingCompletion = null;
         PhysicsPendingPlanarRootMotion = Vector3.zero;
         PhysicsPendingRootRotation = Quaternion.identity;

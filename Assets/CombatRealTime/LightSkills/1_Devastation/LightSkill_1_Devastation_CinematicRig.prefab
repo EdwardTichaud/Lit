@@ -39,6 +39,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 8056137593426324240}
   - component: {fileID: 5923249742521029347}
   - component: {fileID: 72465625457695880}
   - component: {fileID: 8775905700786398892}
@@ -184,6 +185,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 8033580035532037084}
   - component: {fileID: 521008492812476476}
   - component: {fileID: 2203457120739312251}
   - component: {fileID: 9178706217935180348}
@@ -325,3 +327,39 @@ MonoBehaviour:
   drivePlayerRootMotionFromTimeline: 1
   logCameraDiagnostics: 1
   logPlacementDiagnostics: 1
+--- !u!114 &8056137593426324240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641056579910858047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  presentation: {fileID: 0}
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+--- !u!114 &8033580035532037084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7992036132239899766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  presentation: {fileID: 0}
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 

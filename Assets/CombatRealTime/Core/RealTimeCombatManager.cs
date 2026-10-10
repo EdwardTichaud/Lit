@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
-public sealed class RealTimeCombatManager : MonoBehaviour
+public sealed partial class RealTimeCombatManager : MonoBehaviour
 {
     public static RealTimeCombatManager Instance { get; private set; }
 
@@ -111,13 +111,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>Faces Lucian toward the current manual lock without starting an action.</summary>
     public bool FacePlayerTowardsLockedEnemy()
     {
-        return lockedEnemy != null && FacePlayerTowards(lockedEnemy.LockPoint.position);
+        return LockedTargetPoint != null && FacePlayerTowards(LockedTargetPoint.position);
     }
 
     /// <summary>Faces Lucian toward the enemy currently carrying the encounter, even when camera lock is off.</summary>
     public bool FacePlayerTowardsEngagedEnemy()
     {
-        return engagedEnemy != null && FacePlayerTowards(engagedEnemy.LockPoint.position);
+        return CombatTarget != null && CombatTarget.LockPoint != null && FacePlayerTowards(CombatTarget.LockPoint.position);
     }
 
     /// <summary>Faces Lucian toward a world direction. Used by intentional directional evasions.</summary>
@@ -272,6 +272,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private bool HasValidEngagedEnemy()
     {
+        if (externalTarget != null) return externalTarget.Root != null && externalTarget.Root.gameObject.activeInHierarchy && !externalTarget.IsDead;
         return engagedEnemy != null &&
                engagedEnemy.gameObject.activeInHierarchy &&
                (engagedEnemy.Health == null || !engagedEnemy.Health.IsDead);
@@ -279,6 +280,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private bool HasValidLockedEnemy()
     {
+        if (externalTarget != null) return externalTargetLocked && HasValidEngagedEnemy();
         return lockedEnemy != null &&
                lockedEnemy.gameObject.activeInHierarchy &&
                (lockedEnemy.Health == null || !lockedEnemy.Health.IsDead);
@@ -391,6 +393,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         // action presentation. Leaving that action alive makes exploration
         // interactables (ladders, ghosts, etc.) reject their next use.
         ResolvePlayerReferences();
+        externalTarget?.SetCinematicSuspended(false);
+        externalTarget = null; externalTargetLocked = false;
         combatActive = false;
         combatHealthThresholdController?.AbortActiveSequence("fin de combat");
         playerMobility?.CancelCombatState();
@@ -407,10 +411,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ReactionWindowChanged?.Invoke(default);
         SetEngagedEnemy(null);
         SetLockedEnemy(null);
-        playerLocomotionBridge?.RestoreExplorationStateAfterCombat();
+        if (playerLocomotionBridge != null) playerLocomotionBridge.RestoreExplorationStateAfterCombat();
         combatInput?.SetInputActive(false);
         if (combatInput == null) LocalPlayerInput.SetCombatInputActive(false);
-        playerActionPresentation?.ReturnToExplorationAfterCombat();
+        if (playerActionPresentation != null) playerActionPresentation.ReturnToExplorationAfterCombat();
         CombatStateChanged?.Invoke(false);
         LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat ended");
         ScheduleExplorationOutlineRecovery();
@@ -422,7 +426,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     private void ScheduleExplorationOutlineRecovery()
     {
-        if (!Application.isPlaying || !isActiveAndEnabled) return;
+        if (!Application.isPlaying || !isActiveAndEnabled || !gameObject.activeInHierarchy) return;
         if (explorationOutlineRecoveryRoutine != null)
         {
             StopCoroutine(explorationOutlineRecoveryRoutine);
@@ -561,6 +565,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public bool TrySwitchEnemyLock()
     {
+        if (externalTarget != null) return ToggleExternalLock();
         if (!combatActive || lockedEnemy == null)
         {
             return false;
@@ -829,8 +834,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool TryUseSkill(SkillSO skill)
     {
-        if (!combatActive || IsPlayerDead() || lockedEnemy == null || lockedEnemy.IsFlameDormant || skill == null ||
-            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead) || playerAnimator == null || playerRoot == null)
+        if (!combatActive || IsPlayerDead() || !HasLockedCombatTarget || skill == null ||
+            (lockedEnemy != null && lockedEnemy.IsFlameDormant) || playerAnimator == null || playerRoot == null)
         {
             return false;
         }
@@ -865,10 +870,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         FaceLockedEnemyForAction();
         bool actionStarted = playerActionPresentation != null && playerActionPresentation.TryPlaySkill(skill, stateHash);
+        if (actionStarted && UsesExternalTarget && playerActionPresentation.LastRequestWasBuffered) return true;
         PlayPlayerSkillStartSfx(skill, actionStarted);
         if (actionStarted)
         {
-            playerActionPresentation.BeginTargetLunge(skill, lockedEnemy);
+            playerActionPresentation.BeginTargetLunge(skill, LockedTargetPoint);
             PlayerSkillStarted?.Invoke(skill, lockedEnemy);
         }
         return actionStarted;
@@ -882,6 +888,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         AudioManager.PlayClipAtPoint(skill.PlayerAttackSfx, playerRoot.position);
+    }
+
+    public void NotifyBufferedSkillStarted(SkillSO skill)
+    {
+        PlayPlayerSkillStartSfx(skill, true);
+        playerActionPresentation?.BeginTargetLunge(skill, LockedTargetPoint);
+        PlayerSkillStarted?.Invoke(skill, lockedEnemy);
     }
 
     public bool TryPlayEnemySkillCinematic(EnemyController caster, SkillSO skill)
@@ -924,7 +937,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private void FaceLockedEnemyForAction()
     {
-        if (playerRoot == null || lockedEnemy == null)
+        if (playerRoot == null || !HasLockedCombatTarget)
         {
             return;
         }
@@ -934,7 +947,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
         }
 
-        Transform target = lockedEnemy.LockPoint != null ? lockedEnemy.LockPoint : lockedEnemy.transform;
+        Transform target = LockedTargetPoint;
         playerActionPresentation?.SetActionFacingTarget(target);
     }
 
@@ -945,6 +958,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public int ApplySkillDamageToLockedEnemy(SkillSO skill)
     {
+        if (externalTarget != null) return ApplyExternalSkillDamage(skill);
         if (!combatActive || skill == null || lockedEnemy == null || lockedEnemy.IsFlameDormant ||
             playerRoot == null || (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
         {
@@ -999,6 +1013,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public int ApplyLightSkillDamage(LightSkillSO skill, bool resolveCombatOutcome = true)
     {
+        if (externalTarget != null)
+        {
+            if (!combatActive || IsPlayerDead() || skill == null || externalTarget.IsDead) return 0;
+            int appliedExternal = DeliverExternalImpact(new CombatImpact(skill.Damage, 100, CombatImpactOrigin.LightSkill));
+            if (resolveCombatOutcome) EvaluateCombatOutcome();
+            return appliedExternal;
+        }
         if (!combatActive || IsPlayerDead() || skill == null || engagedEnemy == null ||
             (engagedEnemy.Health != null && engagedEnemy.Health.IsDead))
         {
@@ -1021,6 +1042,14 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>Applies a counter cinematic impact without feeding the enemy retaliation ledger.</summary>
     public int ApplyCounterSkillDamage(CounterSkillSO skill, bool resolveCombatOutcome = true)
     {
+        if (externalTarget != null)
+        {
+            if (!combatActive || IsPlayerDead() || skill == null || externalTarget.IsDead) return 0;
+            int appliedExternal = DeliverExternalImpact(new CombatImpact(skill.Damage, 100, CombatImpactOrigin.Counter));
+            if (appliedExternal > 0) AddClarity(skill.ClarityGain);
+            if (resolveCombatOutcome) EvaluateCombatOutcome();
+            return appliedExternal;
+        }
         if (!combatActive || IsPlayerDead() || skill == null || engagedEnemy == null ||
             (engagedEnemy.Health != null && engagedEnemy.Health.IsDead))
         {
@@ -1122,6 +1151,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>Finalizes the suspended attack without allowing its original Animation Events to resume.</summary>
     public void CompleteCounterAttack()
     {
+        if (externalTarget != null && !externalTarget.IsDead) externalTarget.Animator.Play("Locomotion", 0, 0);
         EnemyController enemy = engagedEnemy;
         if (enemy != null)
         {
@@ -1270,14 +1300,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private bool TryGetLockedEnemyHitDistance(out float distance)
     {
         distance = 0f;
-        if (lockedEnemy == null || playerRoot == null ||
-            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        if (!HasLockedCombatTarget || playerRoot == null)
         {
             return false;
         }
 
         Vector3 playerPosition = playerRoot.position;
-        Vector3 targetPosition = lockedEnemy.LockPoint.position;
+        Vector3 targetPosition = LockedTargetPoint.position;
         playerPosition.y = 0f;
         targetPosition.y = 0f;
         distance = Vector3.Distance(playerPosition, targetPosition);
@@ -1628,7 +1657,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         // Timelines own actor orientation themselves. Outside cinematics, the
         // bridge alone owns the target-relative movement and facing state.
         Transform target = combatActive && !IsCinematicSequenceActive && HasValidLockedEnemy()
-            ? (lockedEnemy.LockPoint != null ? lockedEnemy.LockPoint : lockedEnemy.transform)
+            ? LockedTargetPoint
             : null;
         if (target != null)
         {
@@ -1725,6 +1754,15 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private void EvaluateCombatOutcome()
     {
+        if (externalTarget != null)
+        {
+            if (externalTarget.IsDead || IsPlayerDead())
+            {
+                if (IsPlayerDead()) PlayPlayerDeathAnimation();
+                CombatResolved?.Invoke(!IsPlayerDead());
+            }
+            return; // The standalone owner ends/restarts after its death presentation.
+        }
         bool enemyDead = engagedEnemy != null && engagedEnemy.Health != null && engagedEnemy.Health.IsDead;
         bool playerDead = IsPlayerDead();
         if (!enemyDead && !playerDead)

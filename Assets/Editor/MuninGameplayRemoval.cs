@@ -100,7 +100,7 @@ public static class MuninGameplayRemoval
                 if (!hasParentMarkedForRemoval) UnityEngine.Object.DestroyImmediate(candidate);
             }
 
-            foreach (SpiritBondAnimationEvents events in root.GetComponentsInChildren<SpiritBondAnimationEvents>(true))
+            foreach (SpiritBondAnimationActions events in root.GetComponentsInChildren<SpiritBondAnimationActions>(true))
                 UnityEngine.Object.DestroyImmediate(events);
             foreach (SpiritBondController bond in root.GetComponentsInChildren<SpiritBondController>(true))
                 UnityEngine.Object.DestroyImmediate(bond);

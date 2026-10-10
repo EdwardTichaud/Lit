@@ -116,6 +116,8 @@ public sealed class PlayerTrajectorySettings
 [System.Serializable]
 public sealed class PlayerLocomotionSettings
 {
+    [Tooltip("Optional measured presentation profile. Does not change UCC physics.")]
+    public LocomotionPresentationProfile presentationProfile;
     [Tooltip("Journaliser le franchissement pour diagnostiquer ses interruptions.")] public bool logScriptedTraversalDiagnostics;
     [Min(1), Tooltip("Nombre de ticks entre deux traces de franchissement.")] public int scriptedTraversalDiagnosticTickInterval = 8;
     [Min(0f), Tooltip("Deplacement externe en metres a partir duquel signaler une correction pendant le franchissement.")] public float scriptedTraversalExternalCorrectionDistance = 0.02f;

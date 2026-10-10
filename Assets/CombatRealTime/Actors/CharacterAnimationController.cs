@@ -4,8 +4,17 @@ using Unity.Netcode;
 public enum CombatActorAnimatorContractMode { RootAnimator, LegacyChildAnimator }
 
 /// <summary>Typed animation contract shared by player presentation and the enemy controller.</summary>
+[RequireComponent(typeof(AnimationEvents))]
 public abstract class CharacterAnimationController : NetworkBehaviour
 {
+    protected virtual void Awake()
+    {
+        EnsureAnimationEventReceiver();
+    }
+    protected void EnsureAnimationEventReceiver()
+    {
+        if (Animator != null && Animator.GetComponent<AnimationEvents>() == null) Animator.gameObject.AddComponent<AnimationEvents>();
+    }
     public abstract Transform ActorRoot { get; }
     public abstract Transform AnimationRoot { get; }
     public abstract Animator Animator { get; }

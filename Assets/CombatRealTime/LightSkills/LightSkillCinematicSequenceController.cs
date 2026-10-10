@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Timeline;
 
+[RequireComponent(typeof(AnimationEvents))]
 [DisallowMultipleComponent]
 public sealed class LightSkillCinematicSequenceController : MonoBehaviour, ICombatCinematicParticipant, ICombatCinematicCompletionParticipant
 {
@@ -10,8 +11,8 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
     private RealTimeCombatManager combatManager;
     private LightSkillSO lightSkill;
-    private EnemyController targetEnemy;
-    private EnemyController enemyBehaviour;
+    private ICombatTarget targetEnemy;
+
     private CombatLockOnCameraController lockCamera;
     private System.Action resolveImpact;
     private Coroutine projectileRoutine;
@@ -33,16 +34,15 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     public bool Begin(CombatCinematicContext context)
     {
         if (active || context == null || context.CombatManager == null ||
-            context.Definition is not LightSkillSO skill || context.TargetEnemy == null)
+            context.Definition is not LightSkillSO skill || context.TargetRoot == null)
         {
             return false;
         }
 
         combatManager = context.CombatManager;
         lightSkill = skill;
-        targetEnemy = context.TargetEnemy;
+        targetEnemy = context.Target;
         resolveImpact = context.ResolveImpact;
-        enemyBehaviour = targetEnemy.GetComponent<EnemyController>();
         lockCamera = combatManager.GetComponent<CombatLockOnCameraController>();
         active = true;
         projectileSpawned = false;
@@ -50,7 +50,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         damageResolved = false;
 
         BindSignals();
-        enemyBehaviour?.SetCinematicSuspended(true);
+        targetEnemy?.SetCinematicSuspended(true);
         // LitCameraDirector owns the UCC driver handoff for a Timeline. The lock
         // controller only stops updating its combat framing during the shot.
         lockCamera?.SetCinematicFramingSuspended(true);
@@ -64,7 +64,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
         UnbindSignals();
         StopAndDestroyProjectile();
-        enemyBehaviour?.SetCinematicSuspended(false);
+        targetEnemy?.SetCinematicSuspended(false);
         lockCamera?.SetCinematicFramingSuspended(false);
         combatManager?.SetCinematicSequenceActive(false);
 
@@ -72,7 +72,6 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         combatManager = null;
         lightSkill = null;
         targetEnemy = null;
-        enemyBehaviour = null;
         lockCamera = null;
         resolveImpact = null;
     }
@@ -92,7 +91,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
             context.PlayerRoot != null ? context.PlayerRoot.GetComponent<PlayerActionPresentationController>() : null,
             context.PlayerAnimator,
             lightSkill.PostTimelinePlayerState);
-        ApplyPostTimelineState(context.TargetEnemy, context.TargetAnimator, lightSkill.PostTimelineEnemyState);
+        ApplyPostTimelineState(context.Target, context.TargetAnimator, lightSkill.PostTimelineEnemyState);
     }
 
     public void SpawnProjectile()
@@ -123,7 +122,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     {
         if (!active || impactVfxSpawned || lightSkill == null || lightSkill.ImpactVfxPrefab == null || targetEnemy == null) return;
 
-        Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.transform;
+        Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.Root;
         Vector3 position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(
             target, combatManager != null ? combatManager.PlayerRoot : null, lightSkill.ImpactVfxOffset);
         GameObject impact = Instantiate(lightSkill.ImpactVfxPrefab, position, target.rotation);
@@ -141,18 +140,20 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
     private void BindSignals()
     {
-        BindSignal(lightSkill.SpawnProjectileSignal, SpawnProjectile);
-        BindSignal(lightSkill.LaunchProjectileSignal, LaunchProjectile);
-        BindSignal(lightSkill.SpawnImpactVfxSignal, SpawnImpactVfx);
-        BindSignal(lightSkill.ResolveDamageSignal, ResolveImpact);
+        var events = GetComponent<AnimationEvents>();
+        BindSignal(lightSkill.SpawnProjectileSignal, events.SpawnProjectile);
+        BindSignal(lightSkill.LaunchProjectileSignal, events.LaunchProjectile);
+        BindSignal(lightSkill.SpawnImpactVfxSignal, events.SpawnImpactVfx);
+        BindSignal(lightSkill.ResolveDamageSignal, events.ResolveDamage);
     }
 
     private void UnbindSignals()
     {
-        BindSignal(lightSkill != null ? lightSkill.SpawnProjectileSignal : null, SpawnProjectile, false);
-        BindSignal(lightSkill != null ? lightSkill.LaunchProjectileSignal : null, LaunchProjectile, false);
-        BindSignal(lightSkill != null ? lightSkill.SpawnImpactVfxSignal : null, SpawnImpactVfx, false);
-        BindSignal(lightSkill != null ? lightSkill.ResolveDamageSignal : null, ResolveImpact, false);
+        var events = GetComponent<AnimationEvents>();
+        BindSignal(lightSkill != null ? lightSkill.SpawnProjectileSignal : null, events.SpawnProjectile, false);
+        BindSignal(lightSkill != null ? lightSkill.LaunchProjectileSignal : null, events.LaunchProjectile, false);
+        BindSignal(lightSkill != null ? lightSkill.SpawnImpactVfxSignal : null, events.SpawnImpactVfx, false);
+        BindSignal(lightSkill != null ? lightSkill.ResolveDamageSignal : null, events.ResolveDamage, false);
     }
 
     private void BindSignal(SignalAsset signal, UnityAction action, bool add = true)
@@ -167,7 +168,12 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         }
 
         reaction.RemoveListener(action);
-        if (add) reaction.AddListener(action);
+        if (!add) return;
+        for (int i = 0; i < reaction.GetPersistentEventCount(); i++)
+            if (reaction.GetPersistentTarget(i) == action.Target as UnityEngine.Object &&
+                reaction.GetPersistentMethodName(i) == action.Method.Name &&
+                reaction.GetPersistentListenerState(i) != UnityEventCallState.Off) return;
+        reaction.AddListener(action);
     }
 
     private IEnumerator MoveProjectileToTarget()
@@ -175,7 +181,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         float speed = Mathf.Max(0.01f, lightSkill != null ? lightSkill.ProjectileSpeed : 1f);
         while (active && projectileInstance != null && targetEnemy != null)
         {
-            Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.transform;
+            Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.Root;
             Vector3 destination = CombatImpactFeedbackController.ResolvePlayerImpactPosition(
                 target, combatManager != null ? combatManager.PlayerRoot : null,
                 lightSkill != null ? lightSkill.ImpactVfxOffset : Vector3.zero);
@@ -225,12 +231,12 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     }
 
     private static void ApplyPostTimelineState(
-        EnemyController enemy,
+        ICombatTarget enemy,
         Animator animator,
         LightSkillPostTimelineState state)
     {
         if (state == null || !state.IsConfigured || animator == null || enemy == null ||
-            (enemy.Health != null && enemy.Health.IsDead))
+            enemy.IsDead)
         {
             return;
         }
@@ -238,11 +244,13 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         int stateHash = Animator.StringToHash(state.AnimatorStateName);
         if (!animator.HasState(0, stateHash))
         {
-            Debug.LogWarning("[LightSkill] State de sortie Enemy introuvable : '" + state.AnimatorStateName + "'.", animator);
+            if (!(enemy is LegacyCombatTarget) && animator.HasState(0, Animator.StringToHash("Locomotion")))
+                animator.CrossFade("Locomotion", state.TransitionSeconds, 0);
+            else Debug.LogWarning("[LightSkill] State de sortie Enemy introuvable : '" + state.AnimatorStateName + "'.", animator);
             return;
         }
 
-        enemy.CancelHitRecovery();
+        enemy.Root.GetComponent<EnemyController>()?.CancelHitRecovery();
         animator.CrossFade(stateHash, state.TransitionSeconds, 0, state.NormalizedStartTime);
     }
 

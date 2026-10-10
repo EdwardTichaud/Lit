@@ -14,6 +14,7 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
     private readonly System.Collections.Generic.Stack<TimeManager.TimeRequestHandle> externalPauseHandles =
         new System.Collections.Generic.Stack<TimeManager.TimeRequestHandle>();
+    private float hitStopUntil;
 
     public static CombatImpactFeedbackController EnsureInstance()
     {
@@ -62,15 +63,19 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
     public void PlayImpact(SkillSO skill, EnemyController target)
     {
+        PlayImpact(skill, target != null ? target.LockPoint : null, RealTimeCombatManager.Instance?.PlayerRoot);
+    }
+
+    public void PlayImpact(SkillSO skill, Transform impactPoint, Transform playerRoot)
+    {
         CombatImpactFeedbackProfile profile = skill != null ? skill.ImpactFeedback : null;
-        if (profile == null || !profile.enabled || target == null)
+        if (profile == null || !profile.enabled || impactPoint == null)
         {
             return;
         }
 
         ResolveDependencies();
-        Transform impactPoint = target.LockPoint != null ? target.LockPoint : target.transform;
-        Vector3 impactPosition = ResolvePlayerImpactPosition(impactPoint, RealTimeCombatManager.Instance?.PlayerRoot);
+        Vector3 impactPosition = ResolvePlayerImpactPosition(impactPoint, playerRoot);
         if (profile.additionalImpactVfx != null)
         {
             Instantiate(profile.additionalImpactVfx, impactPosition, impactPoint.rotation, impactPoint);
@@ -105,7 +110,11 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
     private void StartHitStop(CombatImpactFeedbackProfile profile)
     {
         if (profile.useHitStop && profile.hitStopSeconds > 0f)
+        {
+            if (RealTimeCombatManager.Instance?.UsesExternalTarget == true && Time.unscaledTime < hitStopUntil) return;
+            hitStopUntil = Time.unscaledTime + profile.hitStopSeconds;
             TimeManager.EnsureInstance()?.AcquireGlobal(profile.hitStopTimeScale, this, profile.hitStopSeconds);
+        }
     }
 
     private void ResolveDependencies()

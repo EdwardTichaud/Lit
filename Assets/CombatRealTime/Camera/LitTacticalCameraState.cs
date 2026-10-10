@@ -36,6 +36,29 @@ public struct LitTacticalSimulationClock
     public void Reset() { hasFixedStamp = hasRenderStamp = false; }
 }
 
+/// <summary>Aim and position share UCC's fixed-pose interpolation, not two independent clocks.</summary>
+public struct LitTacticalAimHistory
+{
+    private Quaternion previous, current;
+    private double stamp;
+    private bool initialized;
+    public void Reset() => initialized = false;
+    public void Capture(Quaternion rotation, double simulationTime, bool immediate)
+    {
+        if (!initialized || immediate) previous = current = rotation;
+        else if (stamp != simulationTime) { previous = current; current = rotation; }
+        else current = rotation;
+        stamp = simulationTime;
+        initialized = true;
+    }
+    public Quaternion Evaluate(double renderTime, float fixedDelta, bool interpolate, Quaternion fallback)
+    {
+        if (!initialized) return fallback;
+        if (!interpolate || fixedDelta <= 0) return current;
+        return Quaternion.Slerp(previous, current, Mathf.Clamp01((float)((renderTime - stamp) / fixedDelta)));
+    }
+}
+
 /// <summary>Safety retracts immediately; restoration waits for a stable available distance.</summary>
 public struct LitTacticalDistanceRecovery
 {

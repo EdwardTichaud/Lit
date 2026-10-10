@@ -252,7 +252,7 @@ public class Lever : NetworkBehaviour
         SetLeverAnimatorBool(true);
     }
 
-    public void SetLeverAnimatorInactive()
+    public void HandleSetLeverAnimatorInactive()
     {
         SetLeverAnimatorBool(false);
     }

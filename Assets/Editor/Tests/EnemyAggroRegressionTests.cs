@@ -35,7 +35,7 @@ public sealed class EnemyAggroRegressionTests
     [Test]
     public void EnemyImpactUsesSingleSkillEventReceiver()
     {
-        var receiver = typeof(EnemyController);
+        var receiver = typeof(AnimationEvents);
         Assert.That(receiver.GetMethod("EnemyAttack", new[] { typeof(SkillSO) }), Is.Not.Null);
         foreach (string obsolete in new[] { "OpenEnemyAttackHitbox", "CloseEnemyAttackHitbox",
                      "HitPlayer", "HitPlayerIf", "ResolveThresholdFailureImpact",
@@ -444,6 +444,17 @@ public sealed class EnemyAggroRegressionTests
         Assert.That(EnemyController.ShouldPresentLocomotion(.05f, false), Is.False);
         Assert.That(EnemyController.ShouldPresentLocomotion(.05f, true), Is.True);
         Assert.That(EnemyController.ShouldPresentLocomotion(.02f, true), Is.False);
+    }
+
+    [Test]
+    public void PursuitDetoursTryBothSidesBeforeFallingBackBehindTheTarget()
+    {
+        Assert.That(EnemyController.ResolvePursuitDetourAngle(0), Is.Zero);
+        Assert.That(EnemyController.ResolvePursuitDetourAngle(1), Is.EqualTo(35f));
+        Assert.That(EnemyController.ResolvePursuitDetourAngle(2), Is.EqualTo(-35f));
+        Assert.That(EnemyController.ResolvePursuitDetourAngle(8), Is.EqualTo(-145f));
+        Assert.That(EnemyController.ResolvePursuitDetourAngle(9), Is.EqualTo(180f));
+        Assert.That(EnemyController.ResolvePursuitDetourAngle(10), Is.Zero);
     }
     private GameObject container;
     private GameObject actor;

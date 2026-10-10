@@ -82,13 +82,13 @@ public sealed class LightSkillCombatController : MonoBehaviour
         ResolveReferences();
         LightSkillSO skill = LightSkill;
         Trace("Tentative | clarte=" + Clarity + "/" + RequiredClarity +
-              " | combat=" + IsCombatActive + " | verrou=" + (combatManager != null && combatManager.LockedEnemy != null) +
+              " | combat=" + IsCombatActive + " | verrou=" + (combatManager != null && combatManager.HasLockedCombatTarget) +
               " | rig=" + (skill != null && skill.CombatCinematicRigPrefab != null ? skill.CombatCinematicRigPrefab.name : "None") + ".");
         if (cinematicPlaying) return Reject("LightSkill deja en cours.");
         if (skill == null) return Reject("Aucune LightSkill n'est assignee.");
         if (!IsReady) return Reject("Clarte insuffisante.");
         if (combatManager == null || !combatManager.IsCombatActive) return Reject("Combat non actif.");
-        if (combatManager.LockedEnemy == null) return Reject("Aucun ennemi verrouille.");
+        if (!combatManager.HasLockedCombatTarget) return Reject("Aucun ennemi verrouille.");
         if (skill.CombatCinematicRigPrefab == null)
         {
             return Reject("Prefab cinematographique manquant sur la LightSkill.");
@@ -99,15 +99,13 @@ public sealed class LightSkillCombatController : MonoBehaviour
             return Reject("Aucune Timeline n'est assignee a '" + skill.DisplayName + "'.");
         }
 
-        if (combatManager.LockedEnemy.Health != null && combatManager.LockedEnemy.Health.IsDead)
+        if (combatManager.CombatTarget == null || combatManager.CombatTarget.IsDead)
         {
             return Reject("La cible verrouillee est deja vaincue.");
         }
 
         Transform player = combatManager.PlayerRoot;
-        Transform target = combatManager.LockedEnemy.LockPoint != null
-            ? combatManager.LockedEnemy.LockPoint
-            : combatManager.LockedEnemy.transform;
+        Transform target = combatManager.LockedTargetPoint;
         if (player == null || target == null)
         {
             return Reject("La position de depart de cette LightSkill est introuvable.");
@@ -141,6 +139,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
 
         activeLightSkillBond = SpiritBondController.FindForCharacter(combatManager.PlayerRoot.gameObject);
         activeLightSkillBond?.BeginLightSkillFusion();
+        combatManager.SuspendCombatTarget(true);
+        combatManager.SetCinematicSequenceActive(true);
         cinematicPlaying = true;
         impactResolved = false;
         cinematicSkill = skill;
@@ -385,8 +385,10 @@ public sealed class LightSkillCombatController : MonoBehaviour
             playerLockHeld = false;
         }
 
+        combatManager?.SuspendCombatTarget(false);
+        combatManager?.SetCinematicSequenceActive(false);
         InputModeCoordinator.Exit(this);
-        bool combatStillActive = combatManager != null && combatManager.IsCombatActive;
+        bool combatStillActive = gameObject.activeInHierarchy && LocalPlayerInput.HasActiveRuntimeInput && combatManager != null && combatManager.IsCombatActive;
         combatInput?.SetInputActive(combatStillActive);
         LocalPlayerInput.RequestHeldLocomotionReconciliation(reason);
         ScheduleLocomotionHandoff(reason);
@@ -425,7 +427,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         bool movementHeld = LocalInputRouter.MoveValue.sqrMagnitude > 0.0001f;
-        bool sprintHeld = movementHeld && LocalInputRouter.RightShoulderPressed;
+        bool sprintHeld = movementHeld && LocalInputRouter.SprintPressed;
         combatManager?.ResumePlayerLocomotionAfterCinematic(movementHeld, sprintHeld);
         Trace("Handoff locomotion | reason=" + reason + " | move=" + movementHeld + " | sprint=" + sprintHeld + ".");
         locomotionHandoffRoutine = null;
@@ -434,8 +436,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private bool Reject(string reason)
     {
         Debug.LogWarning("[LightSkill] " + reason, this);
-        Transform feedbackTarget = combatManager != null && combatManager.LockedEnemy != null
-            ? combatManager.LockedEnemy.transform
+        Transform feedbackTarget = combatManager != null && combatManager.HasLockedCombatTarget
+            ? combatManager.LockedTargetPoint
             : combatManager != null ? combatManager.PlayerRoot : null;
         CombatDamageWorldFeedback.ShowMessage(
             feedbackTarget,

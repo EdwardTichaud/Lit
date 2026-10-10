@@ -183,6 +183,25 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         return true;
     }
 
+    public bool TryStartFromSuccessfulQte(ICombatTarget target, SkillSO attack)
+    {
+        ResolveReferences();
+        var skill = ResolveDefaultCounterSkill();
+        if (target == null || cinematicPlaying || combatManager == null || !combatManager.UsesExternalTarget ||
+            combatManager.IsCinematicSequenceActive || target != combatManager.CombatTarget || target.IsDead ||
+            !target.IsAttackCommitted || skill == null || skill.CombatCinematicRigPrefab == null || skill.Timeline == null) return false;
+        EndGuard();
+        combatManager.CancelPlayerActionForCinematic();
+        combatManager.SetCinematicSequenceActive(true);
+        combatManager.SuspendCombatTarget(true);
+        playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock);
+        var time = TimeManager.EnsureInstance();
+        counterPauseHandle = time != null ? time.AcquireGlobalPause(this) : default;
+        if (StartCounterSkill(skill)) return true;
+        RestoreCounterEnemies(); ReleaseCounterPause(); combatManager.CancelCounterCinematic(); UnlockPlayer();
+        return false;
+    }
+
     public void EndGuard()
     {
         guardRequested = false;
@@ -214,12 +233,27 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         {
             if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
             string error = "CombatCinematicPlaybackService manquant.";
+            bool staged = skill.CombatCinematicRigPrefab.HasAuthoringStageLayout;
+            var context = new CombatCinematicContext(combatManager, skill, transferTimelineRootMotion: !staged);
+            CombatCinematicPlacement? placement = null;
+            if (staged)
+            {
+                if (!skill.CombatCinematicRigPrefab.TryGetMidpointPlacement(context, out var stage, out error) ||
+                    !ValidateCounterStage(context, stage, out error))
+                {
+                    Debug.LogWarning("[CounterSkill] Placement refuse : " + error, this);
+                    cinematicPlaying = false;
+                    return false;
+                }
+                placement = stage;
+            }
             if (cinematicPlayback == null || !cinematicPlayback.TryPlay(
                     skill.CombatCinematicRigPrefab,
-                    new CombatCinematicContext(combatManager, skill),
+                    context,
                     skill.Timeline,
                     skill.PlayerAnimatorTrackName,
                     skill.EnemyAnimatorTrackName,
+                    placement,
                     OnRuntimeRigCompleted,
                     out error))
             {
@@ -251,6 +285,24 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         return true;
     }
 
+    private static bool ValidateCounterStage(CombatCinematicContext context, CombatCinematicPlacement stage, out string error)
+    {
+        error = null;
+        var agent = context.TargetRoot.GetComponent<UnityEngine.AI.NavMeshAgent>();
+        if (agent != null)
+        {
+            var filter = new UnityEngine.AI.NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
+            if (!UnityEngine.AI.NavMesh.SamplePosition(stage.PlayerPosition, out _, .15f, filter) ||
+                !UnityEngine.AI.NavMesh.SamplePosition(stage.EnemyPosition, out _, .15f, filter))
+            { error = "Le plateau relatif sort du NavMesh."; return false; }
+        }
+        int mask = LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction");
+        if (Physics.Linecast(context.PlayerRoot.position + Vector3.up, stage.PlayerPosition + Vector3.up, mask, QueryTriggerInteraction.Ignore) ||
+            Physics.Linecast(context.TargetRoot.position + Vector3.up, stage.EnemyPosition + Vector3.up, mask, QueryTriggerInteraction.Ignore))
+        { error = "Le placement traverserait un obstacle."; return false; }
+        return true;
+    }
+
     /// <summary>Player Animation Event placed on the authored CounterSkill Timeline contact frame.</summary>
     public void ResolveCounterSkillImpact()
     {
@@ -261,9 +313,9 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
         impactResolved = true;
         int applied = combatManager.ApplyCounterSkillDamage(activeSkill, resolveCombatOutcome: false);
-        if (applied > 0 && activeSkill.ImpactSfx != null && combatManager.EngagedEnemy != null)
+        if (applied > 0 && activeSkill.ImpactSfx != null && combatManager.CombatTarget?.LockPoint != null)
         {
-            AudioManager.PlayClipAtPoint(activeSkill.ImpactSfx, combatManager.EngagedEnemy.LockPoint.position);
+            AudioManager.PlayClipAtPoint(activeSkill.ImpactSfx, combatManager.CombatTarget.LockPoint.position);
         }
     }
 
@@ -295,6 +347,10 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         combatManager?.CompleteCounterAttack();
         RestoreCounterEnemies();
         UnlockPlayer();
+        // Preserve older counter Timelines without a KnockedOut signal.
+        // The receiver is idempotent when the authored signal already fired.
+        if (impactResolved && combatManager?.CombatTarget is ICombatKnockoutReceiver knockedOut)
+            knockedOut.KnockedOut();
         combatManager?.ResolveDeferredCombatOutcome();
         activeSkill = null;
         if (!usingPooledRig) cameraRig?.End();
@@ -345,6 +401,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     private void RestoreCounterEnemies()
     {
+        combatManager?.SuspendCombatTarget(false);
         foreach (EnemyController state in suspendedForCounter)
             if (state != null) state.SetSuspended(false);
         suspendedForCounter.Clear();

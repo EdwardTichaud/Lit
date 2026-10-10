@@ -41,6 +41,10 @@ public sealed class SkillRetreatImpulse
 public sealed class PlayerTargetLungeProfile
 {
     public bool enabled;
+    [Tooltip("Quand active, le lanceur traverse la cible et termine sa course derriere elle. Sinon, il s'arrete devant puis rebondit.")]
+    public bool passThroughTarget;
+    [Min(0f), Tooltip("Distance horizontale finale derriere la cible pour une traversee.")]
+    public float passThroughDistance = 4f;
     [Min(0.01f), Tooltip("Duree maximale de l'approche rapide vers la cible.")]
     public float approachDurationSeconds = 0.18f;
     [Min(0.1f), Tooltip("Vitesse maximale UCC pendant l'approche.")]
@@ -233,6 +237,7 @@ public sealed class PlayerActionPresentationProfile
     [Header("Motion Handoff")]
     [Tooltip("Conditions physiques et Animator a satisfaire avant de rendre l'action a la locomotion.")]
     public MotionHandoffProfile handoff = MotionHandoffProfile.CreateActionDefault();
+    public VisualActionHandoff visualHandoff = new VisualActionHandoff();
     [Header("Facing And Inertia")]
     [Tooltip("UccBody : la capsule UCC conserve l'orientation vers la cible apres l'action. VisualOnly ne tourne que le rig et convient aux poses non dirigees.")]
     public PlayerActionFacingMode facingMode = PlayerActionFacingMode.UccBody;
@@ -251,6 +256,8 @@ public sealed class PlayerActionPresentationProfile
 public class SkillSO : ScriptableObject
 {
     public EnemySkillImpactShape enemyImpact = new EnemySkillImpactShape();
+    [Min(0), Tooltip("Resistance damage for optional impact-aware targets; historical enemies ignore this.")]
+    public float interruptionForce = 20f;
     [Header("EnemyAttack - Result Feedback (No Camera)")]
     public EnemyAttackFeedbackProfile enemyAttackFeedback = new EnemyAttackFeedbackProfile();
     [Header("Identity")]

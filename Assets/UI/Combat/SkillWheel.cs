@@ -10,6 +10,21 @@ public sealed class SkillWheel : MonoBehaviour
 
     public int SlotCount => slots != null ? slots.Length : 0;
     public int SelectedSlotIndex => selectedSlotIndex;
+    public bool IsOpen { get; private set; }
+
+    public void SetOpen(bool open)
+    {
+        IsOpen = open && isActiveAndEnabled;
+        ApplySelection(IsOpen);
+    }
+
+    public void HoverSlot(SkillWheelSlot slot)
+    {
+        if (!IsOpen || slots == null) return;
+        int index = System.Array.IndexOf(slots,slot);
+        if (index >= 0 && slot != null && slot.gameObject.activeInHierarchy && slot.AssignedSkill != null)
+            SetSelectedSlot(index);
+    }
 
     public SkillSO GetSkill(int slotIndex)
     {
@@ -82,7 +97,7 @@ public sealed class SkillWheel : MonoBehaviour
         }
 
         selectedSlotIndex = slotIndex;
-        ApplySelection(true);
+        ApplySelection(IsOpen);
     }
 
     public void ClearSelection()
@@ -109,6 +124,7 @@ public sealed class SkillWheel : MonoBehaviour
 
     private void OnDisable()
     {
+        IsOpen = false;
         UnbindSkillsManager();
         ClearSelection();
     }

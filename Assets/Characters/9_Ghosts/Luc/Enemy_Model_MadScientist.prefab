@@ -174,6 +174,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2195140254183808980}
+  - component: {fileID: 8012382441545578329}
   - component: {fileID: 5543124788027165470}
   - component: {fileID: 7780974084812986336}
   - component: {fileID: 5625418263587499964}
@@ -199,6 +200,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5617903053562312798}
   m_LocalEulerAnglesHint: {x: 80.85, y: 49.753, z: 43.288}
+--- !u!114 &8012382441545578329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 743532073348201575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!33 &5543124788027165470
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -4207,6 +4226,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1702866972060765472}
+  - component: {fileID: 8012622435569175378}
   - component: {fileID: 3634362987184117151}
   - component: {fileID: 8170008773839381790}
   - component: {fileID: 8100414059305065397}
@@ -4257,6 +4277,24 @@ Transform:
   - {fileID: 2663386024477595524}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -52.878, z: 0}
+--- !u!114 &8012622435569175378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7005787142804927576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!54 &3634362987184117151
 Rigidbody:
   m_ObjectHideFlags: 0

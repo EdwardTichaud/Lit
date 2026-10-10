@@ -21,37 +21,9 @@ public static class CombatAnimationLabRootAnimatorEditor
     [MenuItem("Lit/Combat/Update AnimationLab Root Animators")]
     private static void SynchronizeAnimationLab()
     {
-        if (!EditorUtility.DisplayDialog(
-                "Update AnimationLab",
-                "Aligner les previews Player/Enemy et les bindings Timeline sur le contrat Animator racine de Juggernaut_Combat ?",
-                "Mettre a jour", "Annuler"))
-        {
-            return;
-        }
-
-        GameObject juggernaut = PrefabUtility.LoadPrefabContents(JuggernautPrefabPath);
-        try
-        {
-            Animator sourceAnimator = juggernaut.GetComponent<CharacterAnimationController>()?.Animator;
-            if (sourceAnimator == null || sourceAnimator.runtimeAnimatorController == null)
-            {
-                EditorUtility.DisplayDialog("Update AnimationLab", "Juggernaut_Combat ne possede pas d'Animator racine valide.", "OK");
-                return;
-            }
-
-            List<string> report = new List<string>();
-            SynchronizeScene(sourceAnimator, report);
-            SynchronizePrefab(sourceAnimator, report);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            string message = string.Join("\n", report);
-            Debug.Log("[Combat AnimationLab] " + message);
-            EditorUtility.DisplayDialog("Update AnimationLab", message, "OK");
-        }
-        finally
-        {
-            PrefabUtility.UnloadPrefabContents(juggernaut);
-        }
+        // Keep the historical menu as an alias without restoring gameplay
+        // components or the obsolete preview controller into the editor lab.
+        CombatAnimationLabSetup.Reconfigure();
     }
 
     private static void SynchronizeScene(Animator sourceAnimator, List<string> report)

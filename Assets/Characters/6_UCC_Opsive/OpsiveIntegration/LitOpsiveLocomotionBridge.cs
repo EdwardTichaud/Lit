@@ -234,6 +234,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
     private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive && !IsTacticalMovementActive;
     private bool IsTacticalMovementActive => LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _);
+    private Vector3 tacticalFacingDirection;
+    public bool TryGetTacticalSimulationIntent(out Vector2 worldInput, out Vector3 facing)
+    {
+        worldInput = currentWorldMoveInput;
+        facing = tacticalFacingDirection;
+        return locomotion != null && IsDriving && !IsInputSuppressedByUcc &&
+            !IsScriptedTraversalActive && !combatDirectionalEvasionFacing && IsTacticalMovementActive;
+    }
     private string movementTypeBeforeTactical;
     private void SyncTacticalMovementType()
     {
@@ -241,7 +249,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (IsTacticalMovementActive)
         {
             if (movementTypeBeforeTactical == null)
+            {
                 movementTypeBeforeTactical = combatMovementTypeApplied ? movementTypeBeforeCombatLock : locomotion.MovementTypeFullName;
+                tacticalFacingDirection = locomotion.Rotation * Vector3.forward;
+            }
             if (combatLockActive && !combatDirectionalEvasionFacing) return;
             if (locomotion.ActiveMovementType is LitTacticalMovementType) return;
             bool installed = false;
@@ -265,6 +276,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (locomotion.ActiveMovementType is LitTacticalMovementType)
             locomotion.SetMovementType(movementTypeBeforeTactical);
         movementTypeBeforeTactical = null;
+        tacticalFacingDirection = Vector3.zero;
     }
     public string CurrentAnimationPhase => ResolveCurrentAnimationPhase().ToString();
     public LocomotionPresentationState CurrentLocomotionPresentationState => groundedPresentationState;
@@ -1048,6 +1060,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         hasSmoothedCombatFacingDirection = true;
         ForceOrientationLookDirection(direction);
 
+        if (IsTacticalMovementActive && !combatDirectionalEvasionFacing)
+        {
+            tacticalFacingDirection = direction;
+            return true;
+        }
         Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
         if (Quaternion.Angle(locomotion.transform.rotation, targetRotation) > 0.05f)
         {
@@ -2238,10 +2255,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         currentWorldMoveInput = ResolveGroundedFeelWorldMoveInput(targetWorldMoveInput, targetMagnitude);
         float magnitude = currentWorldMoveInput.magnitude;
-        if (combatLockActive && !combatDirectionalEvasionFacing &&
-            LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _))
+        if (combatLockActive && !combatDirectionalEvasionFacing)
         {
-            ResetCombatOrbitRadius();
+            if (LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _)) ResetCombatOrbitRadius();
             if (magnitude > movementDeadZone) ExitCombatIdleForMovement();
             MaintainCombatLockFacing();
             combatLockLocalInput = ResolveLocalMoveInput(new Vector3(currentWorldMoveInput.x, 0, currentWorldMoveInput.y), magnitude);
@@ -2263,8 +2279,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             {
                 lookDirection = ResolveOrientationLookDirection(direction, magnitude);
                 lookSource.SetPlanarLookDirection(lookDirection);
-                if (IsTacticalMovementActive && IsDriving && !IsScriptedTraversalActive && lookDirection.sqrMagnitude > .0001f)
-                    locomotion.SetRotation(Quaternion.LookRotation(lookDirection, Vector3.up), snapAnimator: false);
+                // Ordinary facing is consumed by the UCC MovementType during
+                // simulation. SetRotation here would reset interpolation and
+                // broadcast an immediate transform change on every input frame.
+                if (IsTacticalMovementActive) tacticalFacingDirection = lookDirection;
             }
 
             opsiveInput = ResolveOpsiveMoveInput(direction, magnitude);
@@ -2377,7 +2395,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return Vector2.zero;
         }
 
-        Vector3 localDirection = transform.InverseTransformDirection(worldDirection.normalized);
+        // Input is simulation data, not the interpolated display pose.
+        Quaternion referenceRotation = IsTacticalMovementActive && locomotion != null ? locomotion.Rotation : transform.rotation;
+        Vector3 localDirection = Quaternion.Inverse(referenceRotation) * worldDirection.normalized;
         Vector2 localInput = new Vector2(localDirection.x, localDirection.z);
         if (localInput.sqrMagnitude <= 0.0001f)
         {
@@ -2523,6 +2543,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetLitAnimatorSpeedParameterOverride(true);
         Vector3 velocity = ResolvePlanarVelocity();
         float speed = velocity.magnitude;
+
+        if (TryUpdateMeasuredLocomotionPresentation(velocity, speed)) return;
 
         // In locked combat the visual state follows the held target-relative
         // input, never residual UCC inertia. This keeps the Animator in

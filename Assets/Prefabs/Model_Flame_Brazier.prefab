@@ -5420,34 +5420,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 4984404590862424500}
   searchInChildren: 0
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncFlameReceiverColor: 0
-  deferShadowingToFlameReceiver: 1
-  baseIntensity: 19.708181
-  baseRange: 4.999718
-  emberColor: {r: 1, g: 0.48, b: 0.18, a: 1}
-  flameColor: {r: 1, g: 0.41341248, b: 0.14004749, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 7.5
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 0
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 1
+  movementAmplitude: 0.015
+  movementSpeed: 1.6
 --- !u!1 &3860641841006496626
 GameObject:
   m_ObjectHideFlags: 0

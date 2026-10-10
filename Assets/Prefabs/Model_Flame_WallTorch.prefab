@@ -48,7 +48,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3422605287
+  GlobalObjectIdHash: 1504774135
   InScenePlacedSourceGlobalObjectIdHash: 1504774135
   DeferredDespawnTick: 0
   Ownership: 1
@@ -332,6 +332,14 @@ PrefabInstance:
     - target: {fileID: 652809537018247060, guid: c0632a67512882946b06c1d3e3a4b394, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0.027984513
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278389027223934819, guid: c0632a67512882946b06c1d3e3a4b394, type: 3}
+      propertyPath: m_Shadows.m_NearPlane
+      value: 0.099999994
+      objectReference: {fileID: 0}
+    - target: {fileID: 6411167676801556583, guid: c0632a67512882946b06c1d3e3a4b394, type: 3}
+      propertyPath: m_ShadowDimmer
+      value: 0.75
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

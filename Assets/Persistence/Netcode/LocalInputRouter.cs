@@ -97,6 +97,9 @@ public static class LocalInputRouter
     public static bool CameraOrbitModifierPressed => cameraOrbitModifierPressed;
     public static bool CameraPanModifierPressed => cameraPanModifierPressed;
     public static bool CameraFreeModeActive => cameraFreeModeActive;
+    // The physical gamepad binding is Right Trigger. Keep the historical
+    // RightShoulder alias below for systems authored before the remap.
+    public static bool SprintPressed => rightShoulderPressed;
     public static bool RightShoulderPressed => rightShoulderPressed;
     public static float LastGameplayActivityTime => lastGameplayActivityTime;
     public static uint GameplayActivityVersion => gameplayActivityVersion;
@@ -333,7 +336,7 @@ public static class LocalInputRouter
         }
     }
 
-    internal static void SetRightShoulderPressed(bool value)
+    internal static void SetSprintPressed(bool value)
     {
         rightShoulderPressed = value && !JoinSyncSystem.IsGameplayBlocked;
         if (rightShoulderPressed)
@@ -341,6 +344,8 @@ public static class LocalInputRouter
             NotifyGameplayActivity();
         }
     }
+
+    internal static void SetRightShoulderPressed(bool value) => SetSprintPressed(value);
 
     internal static Vector2 ConsumeCameraPointerDelta()
     {

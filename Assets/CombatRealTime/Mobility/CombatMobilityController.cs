@@ -81,6 +81,8 @@ public sealed partial class CombatMobilityController : MonoBehaviour
 
     private MobilityCommand bufferedCommand;
     private float bufferedCommandExpiresAt;
+    public bool HasPendingCommand => bufferedCommand != MobilityCommand.None && Time.unscaledTime <= bufferedCommandExpiresAt;
+    public void SetInputBufferSeconds(float seconds) => mobilityInputBufferSeconds = Mathf.Max(0, seconds);
     private float dodgeReadyAt;
     private float damageInvulnerableUntil;
     private Coroutine dodgeInvulnerabilityRoutine;

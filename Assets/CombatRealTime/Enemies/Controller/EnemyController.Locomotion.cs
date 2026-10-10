@@ -88,7 +88,16 @@ public sealed partial class EnemyController
     private float LocomotionNextPursuitUpdate;
     private Vector3 LocomotionLastPursuitTarget;
     private float LocomotionLastPursuitRange = -1f;
+    private int LocomotionPursuitDetourIndex;
+    private Vector3 LocomotionLastProgressPosition;
+    private float LocomotionLastProgressAt;
+    private bool LocomotionHasProgressSample;
+    private Vector3 LocomotionLastNavigationDestination;
+    private float LocomotionLastNavigationStoppingDistance;
+    private bool LocomotionHasNavigationDestination;
     public string PursuitFailure { get; private set; }
+    private float LocomotionStuckRecoverySeconds => Mathf.Max(.2f, Configuration.LocomotionStuckRecoverySeconds);
+    private float LocomotionStuckProgressDistance => Mathf.Max(.01f, Configuration.LocomotionStuckProgressDistance);
 
     private float LocomotionLocalTime => LocomotionTimeDomain != null ? LocomotionTimeDomain.LocalTime : Time.time;
     private float LocomotionLocalDeltaTime => LocomotionTimeDomain != null ? LocomotionTimeDomain.DeltaTime : Time.deltaTime;
@@ -135,6 +144,7 @@ public sealed partial class EnemyController
         }
 
         LocomotionApplyLocalNavigationScale();
+        LocomotionRecoverStalledNavigation();
         LocomotionUpdateAnimatorPresentation();
     }
 
@@ -173,7 +183,10 @@ public sealed partial class EnemyController
     {
         LocomotionReturnFacingActive = false;
         if (LocomotionCombatTarget != target)
+        {
             LocomotionLastPursuitRange = -1f;
+            LocomotionPursuitDetourIndex = 0;
+        }
         LocomotionCombatTarget = target;
         LocomotionResolveReferences();
         // NavMesh continues to own translation, but its automatic yaw fights
@@ -215,12 +228,11 @@ public sealed partial class EnemyController
         LocomotionLastPursuitTarget = LocomotionCombatTarget.position;
         LocomotionLastPursuitRange = attackDistance;
         Vector3 radial = away.sqrMagnitude > .0001f ? away.normalized : -transform.forward;
-        Vector3 destination = LocomotionCombatTarget.position + radial * attackDistance;
         LocomotionPursuitPath ??= new NavMeshPath();
         var filter = new NavMeshQueryFilter{agentTypeID = LocomotionNavigationAgent.agentTypeID, areaMask = LocomotionNavigationAgent.areaMask};
-        if (!NavMesh.SamplePosition(destination, out NavMeshHit hit, .35f, filter) || !LocomotionNavigationAgent.CalculatePath(hit.position, LocomotionPursuitPath) || LocomotionPursuitPath.status != NavMeshPathStatus.PathComplete)
+        if (!LocomotionTryFindPursuitPath(radial, attackDistance, filter, out Vector3 destination))
         {
-            PursuitFailure = "destination locale ou chemin complet introuvable";
+            PursuitFailure = "aucune position d'approche atteignable";
             StopNavigation();
             return false;
         }
@@ -236,6 +248,7 @@ public sealed partial class EnemyController
         }
 
         LocomotionNavigationRequested = LocomotionWasNavigating = true;
+        LocomotionRememberNavigation(destination, .05f);
         return true;
     }
 
@@ -343,6 +356,8 @@ public sealed partial class EnemyController
         LocomotionNavigationAgent.stoppingDistance = Mathf.Max(0f, stoppingDistance);
         bool accepted = LocomotionNavigationAgent.SetDestination(destination);
         LocomotionNavigationRequested = true;
+        if (accepted)
+            LocomotionRememberNavigation(destination, LocomotionNavigationAgent.stoppingDistance);
         if (LocomotionLogDiagnostics)
         {
             Debug.Log("[CombatEnemyLocomotion] " + name + " destination=" + destination + " accepted=" + accepted + " path=" + LocomotionNavigationAgent.pathStatus + " pending=" + LocomotionNavigationAgent.pathPending + " remaining=" + LocomotionNavigationAgent.remainingDistance.ToString("F2") + " velocity=" + LocomotionNavigationAgent.velocity + " onNavMesh=" + LocomotionNavigationAgent.isOnNavMesh, this);
@@ -366,6 +381,8 @@ public sealed partial class EnemyController
 
         LocomotionNavigationRequested = false;
         LocomotionWasNavigating = false;
+        LocomotionResetProgressWatch();
+        LocomotionHasNavigationDestination = false;
         if (LocomotionNavigationAgent != null && LocomotionNavigationAgent.isActiveAndEnabled && LocomotionNavigationAgent.isOnNavMesh)
         {
             LocomotionNavigationAgent.isStopped = true;
@@ -529,6 +546,111 @@ public sealed partial class EnemyController
 
     public static bool ShouldPresentLocomotion(float speed, bool wasMoving) => speed > (wasMoving ? .03f : .08f);
     public static float ResolvePlaybackRate(float speed, float localScale, float referenceSpeed) => localScale > .0001f && referenceSpeed > .0001f ? Mathf.Clamp(speed / (localScale * referenceSpeed), 0f, 1.35f) : 0f;
+
+    /// <summary>Alternates approach positions around a target when the direct route is obstructed.</summary>
+    public static float ResolvePursuitDetourAngle(int attempt)
+    {
+        float[] angles = { 0f, 35f, -35f, 70f, -70f, 105f, -105f, 145f, -145f, 180f };
+        return angles[Mathf.Abs(attempt) % angles.Length];
+    }
+
+    private bool LocomotionTryFindPursuitPath(Vector3 radial, float attackDistance, NavMeshQueryFilter filter, out Vector3 destination)
+    {
+        destination = transform.position;
+        float bestScore = float.PositiveInfinity;
+        int attempts = 10;
+        float sampleRadius = Mathf.Max(.75f, LocomotionClearanceSearchRadius);
+        for (int offset = 0; offset < attempts; offset++)
+        {
+            float angle = ResolvePursuitDetourAngle(LocomotionPursuitDetourIndex + offset);
+            Vector3 direction = Quaternion.AngleAxis(angle, Vector3.up) * radial;
+            Vector3 requested = LocomotionCombatTarget.position + direction * attackDistance;
+            if (!NavMesh.SamplePosition(requested, out NavMeshHit hit, sampleRadius, filter) ||
+                !LocomotionNavigationAgent.CalculatePath(hit.position, LocomotionPursuitPath) ||
+                LocomotionPursuitPath.status != NavMeshPathStatus.PathComplete)
+                continue;
+
+            float score = Mathf.Abs(angle) + (hit.position - requested).sqrMagnitude;
+            if (score >= bestScore)
+                continue;
+
+            bestScore = score;
+            destination = hit.position;
+        }
+
+        return bestScore < float.PositiveInfinity &&
+               LocomotionNavigationAgent.CalculatePath(destination, LocomotionPursuitPath) &&
+               LocomotionPursuitPath.status == NavMeshPathStatus.PathComplete;
+    }
+
+    private void LocomotionRememberNavigation(Vector3 destination, float stoppingDistance)
+    {
+        LocomotionLastNavigationDestination = destination;
+        LocomotionLastNavigationStoppingDistance = stoppingDistance;
+        LocomotionHasNavigationDestination = true;
+        LocomotionLastProgressPosition = transform.position;
+        LocomotionLastProgressAt = LocomotionLocalTime;
+        LocomotionHasProgressSample = true;
+    }
+
+    private void LocomotionResetProgressWatch()
+    {
+        LocomotionHasProgressSample = false;
+        LocomotionLastProgressAt = 0f;
+    }
+
+    private void LocomotionRecoverStalledNavigation()
+    {
+        if (!LocomotionNavigationRequested || LocomotionNavigationAgent == null || !LocomotionNavigationAgent.isActiveAndEnabled || !LocomotionNavigationAgent.isOnNavMesh ||
+            LocomotionNavigationAgent.isStopped || LocomotionNavigationAgent.pathPending || !LocomotionNavigationAgent.hasPath ||
+            LocomotionPhysicsMotor != null && LocomotionPhysicsMotor.IsDrivingActionRootMotion)
+        {
+            LocomotionResetProgressWatch();
+            return;
+        }
+
+        float remaining = LocomotionNavigationAgent.remainingDistance;
+        if (remaining <= LocomotionNavigationAgent.stoppingDistance + .2f || LocomotionNavigationAgent.desiredVelocity.sqrMagnitude < .01f)
+        {
+            LocomotionResetProgressWatch();
+            return;
+        }
+
+        if (!LocomotionHasProgressSample)
+        {
+            LocomotionLastProgressPosition = transform.position;
+            LocomotionLastProgressAt = LocomotionLocalTime;
+            LocomotionHasProgressSample = true;
+            return;
+        }
+
+        Vector3 delta = transform.position - LocomotionLastProgressPosition;
+        delta.y = 0f;
+        if (delta.sqrMagnitude >= LocomotionStuckProgressDistance * LocomotionStuckProgressDistance || LocomotionNavigationAgent.velocity.sqrMagnitude >= .01f)
+        {
+            LocomotionLastProgressPosition = transform.position;
+            LocomotionLastProgressAt = LocomotionLocalTime;
+            return;
+        }
+
+        if (LocomotionLocalTime - LocomotionLastProgressAt < LocomotionStuckRecoverySeconds)
+            return;
+
+        LocomotionPursuitDetourIndex++;
+        LocomotionLastPursuitRange = -1f;
+        LocomotionNextPursuitUpdate = 0f;
+        LocomotionNavigationAgent.ResetPath();
+        LocomotionResetProgressWatch();
+
+        if (LocomotionCombatTarget != null)
+        {
+            PursuitFailure = "trajectoire bloquee, contournement";
+            return;
+        }
+
+        if (LocomotionHasNavigationDestination)
+            NavigateTo(LocomotionLastNavigationDestination, LocomotionLastNavigationStoppingDistance);
+    }
     private void LocomotionResolveReferences()
     {
         LocomotionEnemy ??= GetComponent<EnemyController>();

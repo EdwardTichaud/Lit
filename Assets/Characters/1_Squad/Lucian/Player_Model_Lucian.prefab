@@ -128,6 +128,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 351974615931303259}
+  - component: {fileID: 8056016592612253331}
   - component: {fileID: 351974615934727547}
   - component: {fileID: 351974615933728699}
   - component: {fileID: 3391984589806315963}
@@ -153,6 +154,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8668336312069924337}
   m_LocalEulerAnglesHint: {x: 80.85, y: 49.753, z: 43.288}
+--- !u!114 &8056016592612253331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 351974615931529595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!33 &351974615934727547
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -3730,6 +3749,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!114 &-5594194581994094055
 MonoBehaviour:
   m_ObjectHideFlags: 0

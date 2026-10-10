@@ -94,6 +94,9 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 8011539023678600795}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 4717657716337766974}
     - targetCorrespondingSourceObject: {fileID: -525266238417469999, guid: 16791f9f73f842d47b1d9d24f4937277, type: 3}
       insertIndex: -1
@@ -165,3 +168,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8011539023678600795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5374492201104256396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  presentation: {fileID: 0}
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 

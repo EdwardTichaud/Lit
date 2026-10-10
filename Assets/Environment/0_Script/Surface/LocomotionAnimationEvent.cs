@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(AnimationEvents))]
 public class LocomotionAnimationEvent : MonoBehaviour
 {
     private readonly PlayerModuleConfiguration<PlayerFootstepSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerFootstepSettings>();
@@ -47,72 +48,72 @@ public class LocomotionAnimationEvent : MonoBehaviour
         minimumAnimationEventWeight = Mathf.Clamp01(minimumAnimationEventWeight);
     }
 
-    public void PlayFootstep()
+    public void HandlePlayFootstep()
     {
-        PlayFootstep(FootSide.Any);
+        HandlePlayFootstep(FootSide.Any);
     }
 
-    public void PlayFootstep(AnimationEvent animationEvent)
+    public void HandlePlayFootstep(AnimationEvent animationEvent)
     {
         if (ShouldIgnoreAnimationEvent(animationEvent))
         {
             return;
         }
 
-        PlayFootstep(ResolveFootSide(animationEvent));
+        HandlePlayFootstep(ResolveFootSide(animationEvent));
     }
 
-    public void PlayFootstepLeft()
+    public void HandlePlayFootstepLeft()
     {
-        PlayFootstep(FootSide.Left);
+        HandlePlayFootstep(FootSide.Left);
     }
 
-    public void PlayFootstepRight()
+    public void HandlePlayFootstepRight()
     {
-        PlayFootstep(FootSide.Right);
+        HandlePlayFootstep(FootSide.Right);
     }
 
-    public void Footstep()
+    public void HandleFootstep()
     {
-        PlayFootstep();
+        HandlePlayFootstep();
     }
 
-    public void Footstep(int footIndex)
+    public void HandleFootstep(int footIndex)
     {
-        PlayFootstep(footIndex == 0 ? FootSide.Left : FootSide.Right);
+        HandlePlayFootstep(footIndex == 0 ? FootSide.Left : FootSide.Right);
     }
 
-    public void Footstep(string footName)
+    public void HandleFootstep(string footName)
     {
-        PlayFootstep(ParseFootSide(footName));
+        HandlePlayFootstep(ParseFootSide(footName));
     }
 
-    public void OnFootstep(AnimationEvent animationEvent)
+    public void HandleOnFootstep(AnimationEvent animationEvent)
     {
-        PlayFootstep(animationEvent);
+        HandlePlayFootstep(animationEvent);
     }
 
-    public void FootstepLeft()
+    public void HandleFootstepLeft()
     {
-        PlayFootstep(FootSide.Left);
+        HandlePlayFootstep(FootSide.Left);
     }
 
-    public void FootstepRight()
+    public void HandleFootstepRight()
     {
-        PlayFootstep(FootSide.Right);
+        HandlePlayFootstep(FootSide.Right);
     }
 
-    public void LeftFootstep()
+    public void HandleLeftFootstep()
     {
-        PlayFootstep(FootSide.Left);
+        HandlePlayFootstep(FootSide.Left);
     }
 
-    public void RightFootstep()
+    public void HandleRightFootstep()
     {
-        PlayFootstep(FootSide.Right);
+        HandlePlayFootstep(FootSide.Right);
     }
 
-    private void PlayFootstep(FootSide side)
+    private void HandlePlayFootstep(FootSide side)
     {
         if (Time.time < nextFootstepTime)
         {

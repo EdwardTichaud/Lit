@@ -49,10 +49,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             if (!IsBasicAttackPhysicallyHeld()) basicAttackRequiresRelease = false;
             return;
         }
+        if (GetComponent<CombatMobilityController>()?.HasPendingCommand == true) return;
         if (!basicAttackHeld) return;
         var manager = RealTimeCombatManager.Instance;
         if (!IsInputActive || paletteOpen || IsCounterCinematicPlaying || manager == null ||
-            !manager.IsCombatActive || manager.LockedEnemy == null || manager.IsCinematicSequenceActive)
+            !manager.IsCombatActive || !manager.HasLockedCombatTarget || manager.IsCinematicSequenceActive)
         {
             CancelBufferedBasicSkills();
             return;
@@ -387,6 +388,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private bool TryQueueBasicSkill(bool fromHold)
     {
+        if (GetComponent<CombatMobilityController>()?.HasPendingCommand == true) return false;
         if (paletteOpen || IsCounterCinematicPlaying)
         {
             Trace("BasicAttack ignoree: roue ouverte | " + InputDiagnostics + ".");
@@ -394,7 +396,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
 
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        if (manager == null || !manager.IsCombatActive || manager.LockedEnemy == null)
+        if (manager == null || !manager.IsCombatActive || !manager.HasLockedCombatTarget)
         {
             Trace("BasicAttack ignoree: combat ou lock absent | " + InputDiagnostics + ".");
             return false;
@@ -445,6 +447,14 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
         lastBasicSkillContext = basicSkillContext;
         lastBasicAttackQueuedAt = currentTime;
+
+        if (manager.UsesExternalTarget)
+        {
+            // Presentation owns the only pending laboratory attack.
+            if (manager.TryUseSkill(skill)) return true;
+            skillsManager.ResetBasicSkillCombo(basicSkillContext);
+            return false;
+        }
 
         // Aerial attacks must take over the jump pose in the same input frame.
         // Waiting for the generic combo coroutine leaves a frame for UCC's jump
@@ -543,7 +553,9 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
 
         ResolveSkillWheel();
-        SkillSO skill = skillWheel != null ? skillWheel.GetSkill(selectedSlot) : null;
+        if (skillWheel == null || !skillWheel.IsOpen || !skillWheel.isActiveAndEnabled) return;
+        selectedSlot = skillWheel.SelectedSlotIndex;
+        SkillSO skill = skillWheel.GetSkill(selectedSlot);
         if (skill != null)
         {
             SkillsManager skillsManager = FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include);
@@ -557,7 +569,12 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (IsCounterCinematicPlaying) return;
         if (!paletteOpen)
         {
-            RealTimeCombatManager.Instance?.TrySwitchEnemyLock();
+            var manager = RealTimeCombatManager.Instance;
+            if (manager == null) return;
+            if (manager.UsesExternalTarget || manager.HasLockedCombatTarget)
+                manager.TrySwitchEnemyLock();
+            else
+                manager.TryToggleManualLock();
         }
     }
 
@@ -594,14 +611,14 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         while (basicSkillQueue.Count > 0)
         {
             RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-            if (manager == null || !manager.IsCombatActive || manager.LockedEnemy == null)
+            if (manager == null || !manager.IsCombatActive || !manager.HasLockedCombatTarget)
             {
                 basicSkillQueue.Clear();
                 break;
             }
 
             yield return manager.WaitForPlayerActionChainWindow();
-            if (!manager.IsCombatActive || manager.LockedEnemy == null)
+            if (!manager.IsCombatActive || !manager.HasLockedCombatTarget)
             {
                 basicSkillQueue.Clear();
                 break;
@@ -714,6 +731,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         {
             ResolveSkillWheel();
         }
+
+        skillWheel?.SetOpen(visible);
 
         if (skillWheelCanvasGroup == null)
         {

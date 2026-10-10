@@ -383,8 +383,8 @@ public sealed class LitGameplayCameraModeController : MonoBehaviour
             if (Gamepad.current != null)
             {
                 if (inspection) input.pan += Gamepad.current.leftStick.ReadValue() * profile.panSpeed * dt;
-                input.zoom += LitTacticalCameraMath.TriggerZoomDelta(Gamepad.current.leftTrigger.ReadValue(),
-                    Gamepad.current.rightTrigger.ReadValue(), profile.gamepadZoomSpeed, dt);
+                input.zoom += LitTacticalCameraMath.TriggerZoomDelta(Gamepad.current.rightShoulder.ReadValue(),
+                    Gamepad.current.leftShoulder.ReadValue(), profile.gamepadZoomSpeed, dt);
             }
         }
         FrameInput = input;

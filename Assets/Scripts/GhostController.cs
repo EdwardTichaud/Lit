@@ -235,6 +235,7 @@ public interface IGhostInteractionHandler
 
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Narrative/Ghost Controller")]
+[RequireComponent(typeof(AnimationEvents))]
 public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver, IRuntimeOutlineVisibilityGate, IInputModeHandler
 {
     [Header("Data")]

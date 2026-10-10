@@ -646,6 +646,12 @@ public partial class LitOpsiveLocomotionBridge
         }
 
         Quaternion targetRotation = Quaternion.LookRotation(groundedPivotTargetDirection.normalized, Vector3.up);
+        if (IsTacticalMovementActive)
+        {
+            tacticalFacingDirection = groundedPivotTargetDirection.normalized;
+            ForceOrientationLookDirection(tacticalFacingDirection);
+            return;
+        }
         float angle = Quaternion.Angle(transform.rotation, targetRotation);
         if (angle <= 0.05f)
         {
@@ -1040,6 +1046,9 @@ public partial class LitOpsiveLocomotionBridge
 
     private float ResolveGroundedFeelDeltaTime()
     {
+        if (animator != null && timeDomain != null && ModuleSettings.presentationProfile != null &&
+            ModuleSettings.presentationProfile.IsUsable(animator.avatar))
+            return Time.inFixedTimeStep ? timeDomain.FixedDeltaTime : timeDomain.DeltaTime;
         float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
         return Mathf.Max(deltaTime, 0.0001f);
     }

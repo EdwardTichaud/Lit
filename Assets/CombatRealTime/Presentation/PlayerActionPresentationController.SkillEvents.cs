@@ -10,6 +10,8 @@ public sealed partial class PlayerActionPresentationController
     private PlayerBow playerBow;
     private PlayerSword playerSword;
     private PlayerActionPresentationController playerActionPresentation;
+    private int externalImpactToken = -1;
+    private bool resolvingExternalImpactVfx;
     [Header("Input Prompt Animation Events")]
     [SerializeField] private Transform inputPromptAnchor;
     [SerializeField] private Vector3 inputPromptOffset = new Vector3(0f, 1.25f, 0f);
@@ -133,8 +135,8 @@ public sealed partial class PlayerActionPresentationController
     public void HandleInstantiateSkillVFX()
     {
         SkillSO skill = ResolveSelectedSkill();
-        EnemyController target = RealTimeCombatManager.Instance != null
-            ? RealTimeCombatManager.Instance.LockedEnemy
+        Transform target = RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.LockedTargetPoint
             : null;
         if (skill == null || skill.VfxCues == null)
         {
@@ -162,8 +164,8 @@ public sealed partial class PlayerActionPresentationController
     public void HandleInstantiateSkillVFXAtIndex(int cueIndex)
     {
         SkillSO skill = ResolveSelectedSkill();
-        EnemyController target = RealTimeCombatManager.Instance != null
-            ? RealTimeCombatManager.Instance.LockedEnemy
+        Transform target = RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.LockedTargetPoint
             : null;
         if (skill == null || skill.VfxCues == null || cueIndex < 0 || cueIndex >= skill.VfxCues.Count)
         {
@@ -254,12 +256,13 @@ public sealed partial class PlayerActionPresentationController
     public void HandleStopDash() => GetMobility()?.HandleStopDash();
 
 
-    private void PlaySkillVfxCue(SkillVfxCue cue, EnemyController target)
+    private void PlaySkillVfxCue(SkillVfxCue cue, Transform target)
     {
         if (cue == null)
         {
             return;
         }
+        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true && cue.delivery == SkillVfxDelivery.DirectOnTarget && !resolvingExternalImpactVfx) return;
 
         if (cue.delivery == SkillVfxDelivery.PlayerHand || cue.delivery == SkillVfxDelivery.PlayerSword)
         {
@@ -293,7 +296,7 @@ public sealed partial class PlayerActionPresentationController
 
         if (cue.delivery == SkillVfxDelivery.DirectOnTarget)
         {
-            Transform targetPoint = target.LockPoint != null ? target.LockPoint : target.transform;
+            Transform targetPoint = target;
             Vector3 impactPosition = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
             PlaySkillVfxCueAudio(cue, impactPosition);
             if (cue.prefab != null)
@@ -328,7 +331,7 @@ public sealed partial class PlayerActionPresentationController
         }
     }
 
-    private System.Collections.IEnumerator PlayProjectileSkillVfx(SkillVfxCue cue, Transform caster, EnemyController target)
+    private System.Collections.IEnumerator PlayProjectileSkillVfx(SkillVfxCue cue, Transform caster, Transform target)
     {
         GameObject projectile = Instantiate(cue.prefab, caster.position, caster.rotation, caster);
         if (cue.holdAtCasterSeconds > 0f)
@@ -347,7 +350,7 @@ public sealed partial class PlayerActionPresentationController
         }
 
         projectile.transform.SetParent(null, true);
-        Transform targetPoint = target.LockPoint != null ? target.LockPoint : target.transform;
+        Transform targetPoint = target;
         Vector3 startPosition = projectile.transform.position;
         float duration = Mathf.Max(0f, cue.travelDurationSeconds);
         if (duration <= 0f)
@@ -396,12 +399,22 @@ public sealed partial class PlayerActionPresentationController
     /// </summary>
     public void HandleResolveSkillImpact()
     {
-        if (!TryResolveSelectedSkillImpact(out SkillSO skill, out EnemyController target))
+        if (!TryResolveSelectedSkillImpact(out SkillSO skill, out Transform target))
         {
             return;
         }
 
-        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target);
+        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, RealTimeCombatManager.Instance?.PlayerRoot);
+        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true)
+        {
+            resolvingExternalImpactVfx = true;
+            try
+            {
+                foreach (var cue in skill.VfxCues)
+                    if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget) PlaySkillVfxCue(cue, target);
+            }
+            finally { resolvingExternalImpactVfx = false; }
+        }
     }
 
     /// <summary>
@@ -412,7 +425,7 @@ public sealed partial class PlayerActionPresentationController
     {
         SkillSO skill = ResolveSelectedSkill();
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        EnemyController target = manager != null ? manager.LockedEnemy : null;
+        Transform target = manager != null ? manager.LockedTargetPoint : null;
         Transform caster = manager != null ? manager.PlayerRoot : null;
         if (skill == null || manager == null || target == null || caster == null)
         {
@@ -425,7 +438,7 @@ public sealed partial class PlayerActionPresentationController
         }
 
         HandleInstantiateSkillVFX();
-        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target);
+        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, RealTimeCombatManager.Instance?.PlayerRoot);
 
         SkillRetreatImpulse retreat = skill.RetreatImpulse;
         if (!retreat.enabled)
@@ -433,7 +446,7 @@ public sealed partial class PlayerActionPresentationController
             return;
         }
 
-        Vector3 direction = caster.position - target.LockPoint.position;
+        Vector3 direction = caster.position - target.position;
         direction.y = 0f;
         if (direction.sqrMagnitude <= 0.0001f)
         {
@@ -534,11 +547,16 @@ public sealed partial class PlayerActionPresentationController
         HandleHideSword();
     }
 
-    private bool TryResolveSelectedSkillImpact(out SkillSO skill, out EnemyController target)
+    private bool TryResolveSelectedSkillImpact(out SkillSO skill, out Transform target)
     {
         skill = ResolveSelectedSkill();
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        target = manager != null ? manager.LockedEnemy : null;
+        target = manager != null ? manager.LockedTargetPoint : null;
+        if (manager != null && manager.UsesExternalTarget)
+        {
+            if (!actionActive || externalImpactToken == activeToken) return false;
+            externalImpactToken = activeToken;
+        }
         return skill != null && target != null && manager != null
             && !(skill is BasicSkillsSO && basicSkillInterruptedByDamage)
             && manager.ApplySkillDamageToLockedEnemy(skill) > 0;

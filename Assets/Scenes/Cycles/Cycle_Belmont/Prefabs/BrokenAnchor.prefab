@@ -7296,6 +7296,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 8001635886156456903}
   - component: {fileID: 739617814141756082}
   - component: {fileID: 5523210836528485492}
   - component: {fileID: 988919632115976157}
@@ -12826,3 +12827,21 @@ MonoBehaviour:
   hdrpNormalBias: 0.03
   hdrpSlopeBias: 0.1
   enableHdrpContactShadows: 1
+--- !u!114 &8001635886156456903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4254147237030291727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  presentation: {fileID: 0}
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 

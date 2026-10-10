@@ -79,7 +79,7 @@ public sealed class EnemyUnificationTests
         Assert.That(prefab, Is.Not.Null);
         Assert.That(prefab.GetComponents<EnemyController>().Length, Is.EqualTo(1));
         Assert.That(prefab.GetComponents<CharacterInfo>().Length, Is.EqualTo(1));
-        Assert.That(prefab.GetComponent<PlayerCombatAnimationEvents>(), Is.Null);
+        Assert.That(prefab.GetComponent<AnimationEvents>(), Is.Not.Null);
         Assert.That(prefab.GetComponent<PlayerRootMotionRelay>(), Is.Null);
         Assert.That(prefab.GetComponent<Animator>(), Is.Not.Null);
         Assert.That(prefab.GetComponent<CharacterInfo>().SourceData, Is.Not.Null);

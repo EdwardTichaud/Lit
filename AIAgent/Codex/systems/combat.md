@@ -1,5 +1,129 @@
 # Combat
 
+## Regle d'integration des evolutions du combat
+
+Toute amelioration, modification ou correction du systeme de combat doit
+d'abord etre integree dans `Iluvilirae_Test`. Verifier son fonctionnement dans
+ce laboratoire, ainsi que les regressions sur les commandes, les actions et
+la restitution du controle. La validation inclut les tests pertinents et un
+essai jouable dans Unity ; une compilation seule ne suffit pas.
+
+Une fois le comportement valide dans `Iluvilirae_Test`, migrer les changements
+dans le jeu, puis verifier leur integration dans les scenes de gameplay.
+Les composants partages peuvent evoluer pendant cette premiere etape ;
+le laboratoire reste le premier lieu d'integration et de validation.
+
+## Prototype Iluvilirae avec Brains AI
+
+Le socle `LitBrainsEnemy` raccorde Brains AI a la perception Lit et au contrat
+`ICombatTarget`, sans ajouter EnemyController aux prototypes. Les ennemis
+historiques conservent leur comportement. Iluvilirae reste un prototype de
+perception ; `Iluvilirae_Test` est maintenant le laboratoire de combat avec
+le vrai Lucian/UCC, Juggernaut_v2, les inputs PlayerInputs, clarte, garde,
+esquive, palette, LightSkill et contre cinematographique. Reseau, sauvegarde
+et recompenses restent hors de ce laboratoire.
+
+### Acquisition et poursuite Brains AI
+
+`LitBrainsEnemy` distingue le premier reperage de la poursuite. Une cible
+inconnue doit satisfaire le cone, la distance et la ligne de vue de
+`CharacterData.vision`. Une cible connue reste suivie a 360 degres, y compris
+derriere un obstacle : le NavMeshAgent contourne cet obstacle sans placement
+force. La distance reste celle entre les points eyeHeight/targetHeight, avec
+maximumDistance existant (Juggernaut_v2 : 30 m ; Iluvilirae : 14 m).
+
+Mort, inactivite, disparition ou sortie de portee liberent la cible. Changer
+de joueur exige un nouveau reperage normal. La desactivation efface aussi
+la derniere cible et son investigation ; pause, Knocked Out et cinematographie
+conservent le suivi. DetectionReason distingue reperage, poursuite et perte.
+
+Avec ou sans profil, le depart d'une attaque et son impact exigent une ligne
+de vue utilisant les couches d'obstruction de la vision. Un contact bloque
+est consomme, sans degats differes si l'obstacle disparait. L'identifiant
+d'attaque empeche les doubles impacts, y compris pendant les transitions
+Animator. Vitesses, cadence, marqueurs et verrouillage de Strike sont conserves.
+Les ennemis historiques et les sauvegardes ne changent pas.
+
+### Profil fluide de Juggernaut_v2
+
+`LitBrainsCombatProfile` porte portee, orientation, cadence, resistance et
+marqueurs des trois clips. Lit pilote seul Speed/MoveX/MoveY depuis la vitesse
+reelle, dans le point d'extension UpdateAnimator de Brains AI ; aucun second
+pilote LateUpdate. Le NavMeshAgent possede locomotion et avance de frappe.
+Preparation suit la cible a 540 deg/s et avance jusqu'a 1 m pendant le geste.
+Strike verrouille la direction puis charge jusqu'a 0,9 m sur 0,2 s, avec un
+freinage progressif et obstacle physique/NavMesh. L'avance est bornee par
+la distance utile au joueur : aucune poursuite laterale pendant Strike.
+Recovery dure 0,2 s apres son marqueur puis rend la locomotion en 80 ms.
+La detection et le delai d'attaque continuent pendant les actions ; pause
+et cinematographie les suspendent. Delai entre debuts : 1,5–1,9 s ; depart
+possible a 3,6 m et 55 deg, sans passage prealable par Idle. L'attaque
+initiale peut demarrer apres 0,2 s. Pendant le delai, la poursuite continue
+jusqu'a 1,7 m : la zone d'attente 2,2–2,6 m est supprimee. Un chemin
+invalide ou bloque une seconde est recalcule sans teleportation.
+
+Chaque action a une identite et un impact unique. Les marqueurs (secondes,
+issus des poses inspectees, clips a 30 images/s) sont Preparation/Strike/Impact/Recovery :
+Strike 0,233/0,467/0,567/0,733 ; Sweep 0,333/0,567/0,700/0,900 ;
+Followup 0,267/0,500/0,600/0,767. La zone de contact est un secteur auteur,
+avec hauteur et obstacle, visualisable par gizmos ; elle ne simule pas une
+collision physique continue de la lame.
+
+Le contrat optionnel ICombatImpactReceiver ajoute force d'interruption et
+origine aux degats ; ReceiveDamage(int) reste compatible avec le systeme
+historique. Resistance 100 ; petits coups 20/30/50, LightSkill/contre 100.
+Une seconde sans impact lance la recuperation a 50/s. Une rupture joue
+Hurt 0,35 s, puis protege des interruptions 0,75 s ; le contre est prioritaire.
+La reaction deja jouee par une Timeline n'est pas remplacee par Hurt.
+Mort annule la frappe, coupe navigation/colliders puis desactive l'acteur.
+
+### Commandes et presentation du laboratoire
+
+Les demandes repetees de LockDeathAnimation sur le meme etat sont idempotentes :
+elles conservent le temps du clip au lieu de recommencer la chute de Lucian
+a chaque frame. La pose terminale reste verrouillee jusqu'au redemarrage.
+Juggernaut arrete navigation et attaques a zero PV, joue Death, puis se
+desactive apres le delai auteur et la fin effective du clip. Une mort pendant
+une cinematique demarre sa presentation lors de la restitution de l'Animator,
+avec un nouveau delai complet ; elle ne disparait pas pendant la Timeline.
+LucianDeathPlayValidation verifie les vrais acteurs dans Iluvilirae_Test,
+la progression des clips et des os, les interruptions, la restitution apres
+cinematique et le redemarrage. Ses captures utilisent des materiaux neutres.
+
+Les copies CombatLab_BasicSkill_1/2/3 sont raccordees explicitement par
+SkillsManager.SetGroundBasicSkillOverride ; les assets de production restent
+inchanges. La presentation possede la seule attaque suivante en attente :
+son animation, skill d'impact et son de depart changent au debut reel, pas
+lors de la mise en attente. Esquive, blessure, mort, cinematographie et changement
+sol/air eliminent cette attente. Une esquive non annulable reste memorisee
+150 ms maximum et a priorite sur le prochain coup. Le maintien de X est conserve.
+
+Aucun ralenti automatique a l'anticipation dans le laboratoire. Une esquive
+parfaite acceptee utilise 0,85 pendant 150 ms ; les contres gardent leur
+Timeline. Pauses d'impact des trois attaques : 25/35/50 ms, sans accumulation.
+Degats, VFX de contact, son et pause d'impact partent du contact confirme.
+La camera du contre vise les torses et garde 1,8 m de separation des acteurs ;
+les anciens rigs sans cette configuration gardent leur cadrage.
+
+L'assistant Upgrade Lucian Combat Laboratory conserve les profils et copies
+existants, puis reconcilie les evenements depuis les marqueurs auteurs.
+showCombatDiagnostics est desactive par defaut sur l'arene ; il affiche phase,
+vitesse, delai, resistance, dernier contact et facteur temporel. Les outils
+LucianFluidCombatValidation et LucianFluidCombatTests verifient ce socle dans
+un Editor isole avec les vrais acteurs et assets.
+
+Validation du 2026-10-08 : 57 tests EditMode passes, compilation runtime/editeur,
+parcours InputSystem/gamepad simule complet et controles de resistance,
+cadence, impact unique, obstacles, huit directions et buffer de 150 ms.
+Le contre restitue temps/inputs/navigation et reprend un stick maintenu.
+Les poses de Juggernaut ont ete inspectees en rendu neutre pour les marqueurs.
+Le rendu HDRP, les pieds en transition et le ressenti sur manette physique
+restent a confirmer en Play Mode dans l'editeur ; ces tests ne les remplacent pas.
+Revalidation du 2026-10-09 apres elargissement de l'engagement : 57 tests passes,
+parcours gamepad complet et charge depuis 3,5 m avec fermeture de distance
+et budget de deplacement respecte. Les marqueurs de contact restent inchanges.
+Le ressenti et le rendu du nouvel elan ne sont pas valides par le batch.
+
 ## Sessions joueur et continuite
 
 PlayerActionPresentationController est le proprietaire de la generation d'action. RegisterActionCleanup et RegisterActionTermination enregistrent uniquement des ressources de la generation courante. TerminateAction invalide avant nettoyage ; Completed, Interrupted, Failed, OwnerDisabled et Death convergent vers ce chemin. Le remplacement valide l'etat avant de terminer l'action precedente, sans restitution intermediaire de locomotion.
@@ -656,6 +780,10 @@ Tant que la roue est maintenue, elle pousse son focus d'input : `SouthButton`
 est reserve a la confirmation et ne peut pas declencher le fallback
 interaction/saut UCC; la locomotion reste disponible. Cette suppression ciblee
 est relachee uniquement avec `LeftTrigger`.
+La confirmation lit directement le slot selectionne dans SkillWheel, y compris
+apres un survol souris, sans reutiliser l'ancien index d'input. Les survols sont
+ignores roue fermee ; un slot vide ou une roue desactivee ne lance rien. Le
+declenchement passe toujours par TryUseSkill et ses controles de combat.
 Une competence validee revient a `Base Layer.Locomotion` a son
 `recoveryNormalizedTime` configure sur le `SkillSO`; sa duree est aussi un garde-fou pour forcer ce retour si une state sans
 transition ne remonte jamais sa fin. La pose root finale est alors communiquee
@@ -1145,18 +1273,36 @@ sans jamais le teleporter vers une autre hauteur.
 
 ### AnimationLab et bake cinematographique
 
+`Assets/Scenes/Workshop/AnimationLab.unity` est un atelier hors Play, distinct
+du laboratoire de combat Iluvilirae_Test. Le composant CombatAnimationLab
+reference Lucian et Juggernaut_v2 face a face (1,7 m), deux Animators racines,
+un Director, un Brain et une camera d'ensemble. Les copies visuelles n'ont
+ni scripts gameplay, ni IA, ni navigation. Le parent _PreviewActors doit etre
+actif : sa desactivation rendait les acteurs invisibles et inanimables.
+Dans l'Inspector du root AnimationLab, choisir Player/Enemy Clip et utiliser
+le curseur ou Lire les clips en boucle. AnimationMode restitue les poses a
+l'arret, a la fermeture de l'Inspector et avant Play. Pour une Timeline,
+choisir l'asset puis Preparer et ouvrir la Timeline ; utiliser la lecture et
+le curseur natifs. Les pistes Player.Animator/Enemy.Animator sont rebindees
+sur les previews, Cinemachine sur le Brain, les Signals sur un receiver vide
+pour ne pas simuler des effets de combat. Les pistes supplementaires peuvent
+etre liees manuellement dans la fenetre Timeline. Le contenu des assets n'est
+pas modifie par le preview. Le menu Lit/Combat/Reconfigure AnimationLab
+(Editor Preview) reconstruit les copies depuis les prefabs courants ; l'ancien
+menu Update AnimationLab Root Animators pointe desormais sur cette commande.
+
 Les previews cinematographiques suivent le contrat de gameplay : un
 `ActorRoot` porte l'Animator de gameplay et le skeleton n'est qu'un enfant
-visuel. Pour l'ennemi, `Enemy_Preview` dans `AnimationLab` reproduit ainsi
-`Juggernaut_Combat` et utilise `Juggernaut.controller`; `MidPoly` ne porte pas
+visuel. Pour les rigs de bake historiques, `Enemy_Preview` du prefab
+`AnimationLab` reproduit `Juggernaut_Combat` et utilise `Juggernaut.controller`; `MidPoly` ne porte pas
 d'Animator. Les bakers de `LightSkillTimelineAuthoringRig` et
 `CombatSkillTimelineAuthoringRig` resolvent/bindent les `ActorRoot` previews
 avant de copier une Timeline runtime, et les releves de cadrage sont pris sur
 ces roots, jamais sur un mesh enfant. Une validation bloque un bake lorsque le
 preview Animator n'est pas sur son root. Le menu
-`Lit/Combat/Update AnimationLab Root Animators` remet la scene et le prefab
-AnimationLab en conformite avec `Juggernaut_Combat` puis rebinde les pistes
-acteurs des Timelines d'auteur.
+Le prefab historique AnimationLab conserve ses adaptateurs de bake ; le
+nouvel atelier de scene permet la previsualisation sans exiger une SkillSO
+ou lancer les services de combat.
 
 `CombatEnemyLocomotionController` est le pont reutilisable entre la navigation
 et l'Animator ennemi. Il ne deplace jamais un Transform : `NavMeshAgent` garde
@@ -1261,9 +1407,174 @@ Un `SkillSO` peut activer `Player Target Lunge`. Au lancement du skill, son anim
 Les Timelines LightSkill, CounterSkill et Skill restent `Unscaled` pour preserver leur montage. Les paliers n'utilisent pas de Timeline; leur overlay et leur fenetre de 0,5 s restent non scales.
 # Navigation et combat
 
+`Iluvilirae_Test` est le laboratoire autonome Lucian/Juggernaut v2, sans
+Bootstrap ni EnemyController sur v2. Brains AI garde les decisions ennemies.
+`ICombatTarget` expose cible, sante, engagement d'attaque, sequence d'action,
+suspension et placement cinematographique ; `LegacyCombatTarget` conserve
+l'integration des ennemis historiques. RealTimeCombatManager, ses inputs,
+les competences, clarte, camera, presentation, palette, esquive, garde,
+CounterSkill et LightSkill sont reutilises par le laboratoire.
+Le CounterSkill du laboratoire conserve une Timeline commune pour Lucian,
+Juggernaut et la camera. Son rig definit un plateau de 1,7 m : les deux
+ancres sont placees a +/- 0,85 m, face a face. Au declenchement, le plateau
+est centre et oriente depuis la position des acteurs ; les pistes Animator
+utilisent les Scene Offsets et ne transferent pas de root motion au moteur.
+Le placement est refuse si les positions quittent le NavMesh ou traversent
+un obstacle. Les anciens rigs sans plateau auteur conservent leur contrat.
+La camera du laboratoire capture ce repere une fois et evalue sa trajectoire
+depuis le temps de la Timeline, sans retard de lissage par frame. Elle se met
+a jour avant le pont camera du rig. La reaction ennemie commence au contact
+de Counter_Sword (1,2567 s), au lieu de commencer au debut du contre ; le plan
+camera dure jusqu'a la fin de cette reaction (2,4233 s).
+CombatLab_CounterSkill_2 porte quatre signaux CameraShake aux temps auteur
+0,3667 / 0,7667 / 1,2833 / 1,85 s. Le SignalReceiver du rig appelle
+AnimationEvents.CameraShake, qui delegue au plateau de contre et a ses cameras. CombatCinematicCameraShake
+applique une correction Cinemachine au stade Noise, sans deplacer les roots
+ni changer la trajectoire auteur. Amplitude (0,06 m), duree (0,14 s) et
+frequence (28 Hz) sont reglables sur les cameras du prefab du rig. Le temps
+non ralenti permet de fonctionner pendant la pause du combat ; la correction
+expire et est effacee au reset du pool. Les quatre marqueurs partagent le
+signal CombatLab_CameraShake et emettent une fois par lecture.
+Les plans dupliques de la Timeline ont des aliases camera explicites dans
+le rig a camera unique. Validation : compilation, quatre appels observes
+en Play Mode avec correction Cinemachine active pendant la pause, 63 tests
+EditMode passes. Rapports : Library/CounterCameraShakeValidation. Le rendu
+et la force de la secousse restent a ajuster visuellement dans l'Inspector.
+CombatLab_CounterSkill_2 porte un SignalEmitter KnockedOut a 3,50 s.
+Le SignalReceiver du CombatCinematicRig appelle KnockedOut sur la cible
+reelle via ICombatKnockoutReceiver. Le VFX apparait au signal ; le stun
+conserve 2 secondes de temps de jeu apres la liberation de la Timeline.
+La selection du CounterSkill reste conservee : l'asset du laboratoire
+reference encore CombatLab_CounterSkill_1 ; la seconde Timeline est prete
+a etre choisie dans son champ Timeline.
+Les anciennes Timelines sans signal gardent leur stun a la fin d'un contre
+ayant touche. Un impact de type Counter seul ne programme plus de stun. LitBrainsEnemy joue l'etat
+`Knocked Out`, bloque navigation/rotation/attaques puis reprend la locomotion.
+Les autres impacts infligent leurs degats sans ecourter ce stun ; une mort
+est prioritaire. Une pause ou une nouvelle cinematique suspend le decompte.
+L'etat Knocked Out utilise Mixamo_KnockedOut sur 2 secondes, sans
+transition de sortie automatique. Les appels repetes ne relancent ni le
+decompte ni l'effet. Les impacts ne declenchent pas Hurt pendant cet etat.
+La reference publique `LitBrainsEnemy.VFX_KnockedOut` definit l'effet du stun.
+Il est instancie une seule fois sur l'os Head (racine si non humanoide), puis
+desactive et detruit a la fin du stun, a la mort ou a la desactivation.
+Juggernaut_v2 reference Assets/Prefabs/VFX_KnockedOut.prefab par defaut ;
+l'assistant conserve une reference remplacee par le developpeur.
+Validation : 61 tests EditMode passes et parcours Play Mode du signal
+puis de l'ancien contre passes dans le projet isole. Le test du signal
+prolonge uniquement sa queue a 4 s pour observer le VFX avant liberation
+du graphe ; la Timeline auteur termine apres 3,50 s. Animation/VFX,
+degats sans Hurt, immobilite, expiration sans prolongation et mort testes
+sans affichage. Rendu visuel a confirmer en jeu.
+Reglages auteur : CombatLab_CounterRig (ancres, offsets camera, degagement)
+et CombatLab_CounterSkill.playable (clips et contact). L'assistant conserve
+un plateau deja configure et une reaction dont le depart a ete edite.
+Les contacts v2 viennent des Animation Events propres (reaction puis impact),
+avec portee/angle/obstacles et protection d'esquive. Walk/Run directionnels
+suivent la vitesse NavMesh effective. Victoire, defaite, pause et recreation
+nettoient les verrous et les entrees de simulation UCC. Les scenes de perception
+conservent leurs commandes de test. Reseau, sauvegarde et recompenses ne sont
+pas simules. Le menu Upgrade Lucian Combat Laboratory reconstruit explicitement
+la camera, palette et profils depuis GameplaySessionRoot ; pas de carte input
+privee ni de creation automatique lors d'un import.
+
 Les ennemis de combat utilisent `NavMeshWorldService` pour valider leur monde avant toute poursuite ou attaque. Un `EnemyNavigationController` hors monde valide reste inactif et ne compense jamais une projection lointaine.
 
 Le Juggernaut distingue maintenant les phases `Walk` et `Run`: il marche pour
 les repositionnements proches et court au-dela de 8 m. La vitesse NavMesh et
 `LocomotionTier` sont synchronises avec les seuils reels du controller commun,
 afin que la course franchisse bien le seuil Animator de 2,5.
+## Reception commune des animations et signaux (2026-10-09)
+
+`AnimationEvents` remplace `PlayerCombatAnimationEvents` et conserve son GUID,
+ainsi que les noms des callbacks des clips existants. Les personnages du jeu,
+leurs objets Animator et les objets portant un PlayableDirector recoivent ce
+composant. Les packs tiers, demos et `_Recovery` sont exclus de la migration.
+Les callbacks joueur, ennemi historique, Brains AI, pas, SpiritBond, levier,
+projectile, impact, CameraShake et KnockedOut deleguent aux services existants.
+Les services ne conservent plus les anciens noms de reception sur le meme
+objet : un evenement ne peut donc pas appeler deux implementations.
+
+Dans l'Inspector : Actor Owner designe le personnage proprietaire ; Signal
+Target peut imposer la cible d'un signal ; Camera Root designe les cameras a
+secouer. Un Director utilise ses bindings actuels, sans conserver la cible de
+la lecture precedente ; le plateau de contre conserve son contexte de combat.
+Une destination absente ou ambigue est signalee une fois, sans recherche globale.
+Les methodes `Signal...` permettent de choisir dans les UnityEvents les actions
+joueur dont le callback de clip recoit un AnimationEvent. Les controles metier
+(droit d'attaquer, degats uniques, mort, stun) restent dans les services.
+
+L'aperçu hors Play n'exécute aucun gameplay. Preview Only prolonge cette securite
+si AnimationLab est lance accidentellement en Play ; Last Signal fournit le
+retour auteur. SpiritBondAnimationActions conserve les references et reglages
+historiques de SpiritBond, LocomotionAnimationEvent conserve ceux des pas.
+Les assistants de personnages et plateaux, RequireComponent et le branchement
+ObjectFactory de l'editeur installent le recepteur pour les nouvelles creations.
+`Lit/Animation Events/Validate Game Content` controle les prefabs et scenes ;
+ce controle est execute avant build. `Repair Game Content Receivers` complete
+les montages importes, preserve les instances et retire les slots de signaux
+sans asset, qui ne peuvent jamais etre declenches.
+
+Validation de la migration : 70 tests EditMode cibles passes, compilation Unity
+runtime/editeur et parcours Play Mode du contre passes avec vrais acteurs/UCC
+et gamepad simule. Les quatre secousses sont observees aux temps auteur ; stun,
+VFX unique, degats sans Hurt, expiration et restitution des commandes verifies.
+Audit statique de 1 378 assets source et validation native du contenu disponible
+dans le projet de test : aucun recepteur manquant ni reaction invalide.
+Rapports : Library/AnimationEventsMigrationValidation. Cette validation ne
+constitue pas une inspection visuelle HDRP ni un essai sur manette physique.
+Une passe historique plus large garde des echecs hors migration (champs prives
+de reactions et anciens contrats de presentation/Animator/masque de torche).
+## Presentation et reconstruction ciblees (2026-10-10)
+
+Assets/Characters/AnimationPresentation contient l'audit non destructif sur
+les avatars des prefabs, la reconstruction source et les diagnostics Play.
+Les rapports vont uniquement dans Library/ActorAnimationValidation. Les
+semelles sont mesurees sur le mesh skinne ; l'audit Editor utilise le skinning
+CPU car BakeMesh peut rester en bind pose pendant une evaluation manuelle.
+Les mesures anciennes de semelle Editor ne constituent pas une validation
+d'appui ; les positions des os et la fidelite source restent exploitables.
+
+Lit/Animation Presentation/Prevalidate Juggernaut Reconstruction construit
+les candidats sans ecriture, puis Apply Validated Juggernaut Manifest controle
+les empreintes prefab/source/copie avant toute application. Sous-asset ambigu,
+source absente ou perte de pose bloquent l'application. Les clips deja aplatis
+ne sont jamais une source. Evenements et courbes supplementaires des copies
+restent conserves, CopySerialized preserve les GUID. Une seconde application
+est sans changement. Les clips non attribues, notamment KnockedOut, ne sont
+pas reconstruits par approximation ; aucune migration generale des ennemis.
+
+Le Juggernaut conserve NavMeshAgent comme moteur. La reconciliation de hauteur
+est opt-in et agit sur baseOffset avec sol physique, couche Ground/Default,
+pente et distance bornees ; aucune teletransportation ni correction de bassin
+devinee. La conversion preserve la variation corporelle verticale du source.
+
+VisualActionHandoff ajoute une fenetre de recuperation visuelle et une phase
+de destination aux profils existants, sans changer les marqueurs gameplay.
+Seul un raccord explicitement valide peut retimer la recuperation apres son
+marqueur. Annulation remet le multiplicateur a 1. Les trois attaques du
+Juggernaut ne passent pas encore la comparaison de pose des semelles avec
+Idle (environ 5,3 a 6,1 cm au raccord) ; une recuperation dediee/retouche est
+requise. Ce critere de pose est distinct du glissement cumule en Play.
+Les profils de raccord ne sont pas actives dans le jeu ni dans le parcours
+laboratoire par defaut.
+
+Essai explicite : ouvrir Iluvilirae_Test puis Lit/Animation Presentation/Try
+Enemy Recovery Preview in Iluvilirae. Un controller distinct sous le dossier
+Iluvilirae/PresentationPreview et un profil runtime isolent l'experience.
+IK Humanoid natif sur Locomotion et les deux frappes candidates, recuperation
+retimee apres son marqueur et suppression des sorties automatiques concurrentes
+sur ces seuls etats copies. Strike/Followup atteignent environ 2,985 cm d'ecart
+de pose avec Idle ; Sweep reste a 4,14 cm et garde son comportement initial.
+Ce seuil de pose ne valide ni les appuis pendant les cycles ni le fondu entier.
+Preparation/impact non retimes, Root desactive et controller original intact
+verifies en Play isole. Sortir du Play restaure les references, sans transferer
+ces candidats au jeu ; IK et marche directionnelle restent a accepter.
+
+ActorAnimationContractValidator controle les deux acteurs avant build et
+refuse les profils sans supportValidated. ValidateTechnical controle les
+references, Root physique des clips reconstruits et fidelite source, sans
+pretendre valider les appuis. Les audits ne reparent rien automatiquement.
+Les copies et profils candidats sont prepares uniquement dans le projet
+isole Library/ActorAnimationSandbox. Acceptation artistique et parcours
+complet de regression obligatoires avant transfert des profils au jeu.

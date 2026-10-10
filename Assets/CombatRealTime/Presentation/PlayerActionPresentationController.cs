@@ -125,6 +125,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private int deathStateHash;
 
     public bool IsActionActive => actionActive;
+    public bool LastRequestWasBuffered { get; private set; }
     public bool IsChainWindowOpen => chainWindowOpen;
     public bool IsMobilityCancelOpen => mobilityCancelOpen;
     public bool IsRecoveryOpen => recoveryOpen;
@@ -356,6 +357,12 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             return false;
         }
 
+        if (deathAnimationLocked && deathStateHash == stateHash)
+        {
+            KeepDeathAnimationActive();
+            return true;
+        }
+
         deathAnimationLocked = true;
         deathStateHash = stateHash;
         CancelAction();
@@ -411,7 +418,9 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     /// Starts an optional, entirely UCC-driven approach/rebound for a player
     /// Skill. It is deliberately independent from Animator root motion.
     /// </summary>
-    public void BeginTargetLunge(SkillSO skill, EnemyController target)
+    public void BeginTargetLunge(SkillSO skill, EnemyController target) => BeginTargetLunge(skill, target != null ? target.LockPoint : null);
+
+    public void BeginTargetLunge(SkillSO skill, Transform target)
     {
         PlayerTargetLungeProfile profile = skill != null ? skill.TargetLunge : null;
         if (profile == null || !profile.enabled || target == null || locomotionBridge == null || !locomotionBridge.IsDriving)
@@ -443,8 +452,14 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         }
     }
 
-    private IEnumerator RunTargetLunge(PlayerTargetLungeProfile profile, EnemyController target, int lungeToken, int actionToken)
+    private IEnumerator RunTargetLunge(PlayerTargetLungeProfile profile, Transform target, int lungeToken, int actionToken)
     {
+        if (profile.passThroughTarget)
+        {
+            yield return RunTargetPassThrough(profile, target, lungeToken, actionToken);
+            yield break;
+        }
+
         if (!locomotionBridge.BeginScriptedPlanarMotion(this))
         {
             yield break;
@@ -458,7 +473,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         {
             while (lungeToken == targetLungeToken && actionToken == activeToken && actionActive && target != null)
             {
-                Transform targetTransform = target.LockPoint != null ? target.LockPoint : target.transform;
+                Transform targetTransform = target;
                 Vector3 toTarget = Vector3.ProjectOnPlane(targetTransform.position - transform.position, Vector3.up);
                 float distance = toTarget.magnitude;
                 float arrivalDistance = profile.stoppingDistance + profile.contactTolerance;
@@ -508,7 +523,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             yield break;
         }
 
-        Vector3 away = Vector3.ProjectOnPlane(transform.position - target.transform.position, Vector3.up);
+        Vector3 away = Vector3.ProjectOnPlane(transform.position - target.position, Vector3.up);
         if (away.sqrMagnitude <= 0.0001f) away = -transform.forward;
         away.Normalize();
         Vector3 impulse = away * profile.reboundHorizontalImpulse + Vector3.up * profile.reboundVerticalImpulse;
@@ -520,6 +535,200 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             profile.airborneInertiaSeconds,
             profile.airborneInertiaEndSpeedMultiplier,
             this);
+    }
+
+    /// <summary>
+    /// UCC-driven traversal used by mobility skills such as Eclair. The route
+    /// is fixed at launch so a moving target cannot curve the player into a
+    /// wall after the dash has started.
+    /// </summary>
+    private IEnumerator RunTargetPassThrough(PlayerTargetLungeProfile profile, Transform target, int lungeToken, int actionToken)
+    {
+        if (!TryResolvePassThroughDestination(profile, target, out Vector3 destination, out Vector3 facingDirection))
+        {
+            yield break;
+        }
+
+        if (!locomotionBridge.BeginScriptedPlanarMotion(this))
+        {
+            yield break;
+        }
+
+        targetLungeOwnsPlanarMotion = true;
+        int blockedFrames = 0;
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, profile.approachDurationSeconds);
+        try
+        {
+            while (lungeToken == targetLungeToken && actionToken == activeToken && actionActive)
+            {
+                Vector3 remainingVector = Vector3.ProjectOnPlane(destination - transform.position, Vector3.up);
+                float remainingDistance = remainingVector.magnitude;
+                if (remainingDistance <= 0.06f || elapsed >= duration)
+                {
+                    break;
+                }
+
+                Vector3 direction = remainingVector / remainingDistance;
+                locomotionBridge.SetActionFacingDirection(facingDirection.sqrMagnitude > 0.0001f ? facingDirection : direction);
+                float remainingTime = Mathf.Max(0.01f, duration - elapsed);
+                float speed = Mathf.Min(profile.maximumApproachSpeed, remainingDistance / remainingTime);
+                Vector3 before = transform.position;
+                if (!locomotionBridge.DriveScriptedPlanarMotion(this, direction * speed))
+                {
+                    break;
+                }
+
+                yield return null;
+                elapsed += Time.unscaledDeltaTime;
+                float moved = Vector3.ProjectOnPlane(transform.position - before, Vector3.up).magnitude;
+                if (moved < 0.002f) blockedFrames++; else blockedFrames = 0;
+                if (blockedFrames >= 3)
+                {
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            if (targetLungeOwnsPlanarMotion)
+            {
+                locomotionBridge.DriveScriptedPlanarMotion(this, Vector3.zero);
+                locomotionBridge.EndScriptedPlanarMotion(this);
+                targetLungeOwnsPlanarMotion = false;
+            }
+            targetLungeRoutine = null;
+        }
+    }
+
+    private bool TryResolvePassThroughDestination(
+        PlayerTargetLungeProfile profile,
+        Transform target,
+        out Vector3 destination,
+        out Vector3 facingDirection)
+    {
+        destination = transform.position;
+        facingDirection = Vector3.zero;
+        if (target == null || locomotionBridge == null)
+        {
+            return false;
+        }
+
+        Vector3 start = transform.position;
+        Vector3 toTarget = Vector3.ProjectOnPlane(target.position - start, Vector3.up);
+        if (toTarget.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        facingDirection = toTarget.normalized;
+        float requestedDistance = toTarget.magnitude + Mathf.Max(0f, profile.passThroughDistance);
+        float clearDistance = ResolveClearPassThroughDistance(target, facingDirection, requestedDistance);
+        if (clearDistance <= 0.1f)
+        {
+            return false;
+        }
+
+        destination = start + facingDirection * clearDistance;
+        return true;
+    }
+
+    private float ResolveClearPassThroughDistance(Transform target, Vector3 direction, float requestedDistance)
+    {
+        const float obstacleSkin = 0.08f;
+        const float sampleSpacing = 0.2f;
+        float clearDistance = Mathf.Max(0f, requestedDistance);
+        Transform targetRoot = target.GetComponentInParent<EnemyController>()?.transform ?? target;
+
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+        {
+            GetCapsuleWorldPoints(capsule, out Vector3 pointA, out Vector3 pointB, out float radius);
+            RaycastHit[] hits = new RaycastHit[16];
+            int hitCount = Physics.CapsuleCastNonAlloc(
+                pointA,
+                pointB,
+                radius,
+                direction,
+                hits,
+                requestedDistance,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = hits[i];
+                if (!IsPassThroughBlockingCollider(hit.collider, targetRoot))
+                {
+                    continue;
+                }
+
+                clearDistance = Mathf.Min(clearDistance, Mathf.Max(0f, hit.distance - obstacleSkin));
+            }
+        }
+
+        float lastGroundedDistance = 0f;
+        int sampleCount = Mathf.CeilToInt(clearDistance / sampleSpacing);
+        for (int sample = 1; sample <= sampleCount; sample++)
+        {
+            float distance = Mathf.Min(clearDistance, sample * sampleSpacing);
+            if (!HasPassThroughGround(transform.position + direction * distance, targetRoot))
+            {
+                clearDistance = lastGroundedDistance;
+                break;
+            }
+            lastGroundedDistance = distance;
+        }
+
+        return clearDistance;
+    }
+
+    private bool HasPassThroughGround(Vector3 position, Transform targetRoot)
+    {
+        const float probeHeight = 1.5f;
+        const float probeDistance = 3f;
+        RaycastHit[] hits = new RaycastHit[16];
+        int hitCount = Physics.RaycastNonAlloc(
+            position + Vector3.up * probeHeight,
+            Vector3.down,
+            hits,
+            probeDistance,
+            ~0,
+            QueryTriggerInteraction.Ignore);
+        float nearestDistance = float.PositiveInfinity;
+        bool found = false;
+        for (int i = 0; i < hitCount; i++)
+        {
+            RaycastHit hit = hits[i];
+            if (!IsPassThroughBlockingCollider(hit.collider, targetRoot) || hit.normal.y < 0.45f || hit.distance >= nearestDistance)
+            {
+                continue;
+            }
+
+            nearestDistance = hit.distance;
+            found = true;
+        }
+
+        return found;
+    }
+
+    private bool IsPassThroughBlockingCollider(Collider candidate, Transform targetRoot)
+    {
+        return candidate != null &&
+               !candidate.isTrigger &&
+               !candidate.transform.IsChildOf(transform) &&
+               (targetRoot == null || !candidate.transform.IsChildOf(targetRoot));
+    }
+
+    private static void GetCapsuleWorldPoints(CapsuleCollider capsule, out Vector3 pointA, out Vector3 pointB, out float radius)
+    {
+        Transform capsuleTransform = capsule.transform;
+        Vector3 scale = capsuleTransform.lossyScale;
+        radius = capsule.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+        float height = Mathf.Max(capsule.height * Mathf.Abs(scale.y), radius * 2f);
+        Vector3 center = capsuleTransform.TransformPoint(capsule.center);
+        float offset = Mathf.Max(0f, height * .5f - radius);
+        pointA = center + capsuleTransform.up * offset;
+        pointB = center - capsuleTransform.up * offset;
     }
 
     private void LateUpdate()
@@ -546,6 +755,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         bool allowChainInterrupt,
         BasicSkillsSO basicSkill)
     {
+        LastRequestWasBuffered = false;
         if (deathAnimationLocked)
         {
             return false;
@@ -557,7 +767,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         }
 
         profile = profile ?? PlayerActionPresentationProfile.CreateDefault();
-        if (actionActive && allowChainInterrupt && chainWindowOpen && !recoveryOpen)
+        bool laboratory = RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.UsesExternalTarget;
+        if (actionActive && allowChainInterrupt && (chainWindowOpen || laboratory && activeActionIsBasic) && !recoveryOpen)
         {
             if (hasBufferedAction)
             {
@@ -570,6 +781,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             bufferedActionName = debugName;
             bufferedActionIsBasic = allowChainInterrupt;
             bufferedBasicSkill = basicSkill;
+            LastRequestWasBuffered = true;
             Trace("buffered", debugName, profile);
             return true;
         }
@@ -601,6 +813,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         activeFacingMode = profile.facingMode;
         actionActive = true;
         activeActionIsBasic = isBasicAction;
+        if (basicSkill != null)
+            FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.SetAnimationEventSkill(basicSkill);
         if (isBasicAction) basicSkillInterruptedByDamage = false;
         chainWindowOpen = false;
         mobilityCancelOpen = false;
@@ -819,7 +1033,12 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
         MotionHandoffProfile handoff = profile.handoff ?? MotionHandoffProfile.CreateActionDefault();
         float blend = Mathf.Max(profile.exitBlendSeconds, handoff.locomotionBlendSeconds);
-        animator.CrossFade(ResolveCurrentLocomotionDestination(), Mathf.Clamp(blend, 0f, 0.25f), 0);
+        if (profile.visualHandoff != null && profile.visualHandoff.validated)
+        {
+            animator.CrossFadeInFixedTime(ResolveCurrentLocomotionDestination(), profile.visualHandoff.blendSeconds, 0,
+                profile.visualHandoff.destinationPhase * profile.visualHandoff.destinationCycleSeconds);
+        }
+        else animator.CrossFade(ResolveCurrentLocomotionDestination(), Mathf.Clamp(blend, 0f, 0.25f), 0);
         FinishWithoutTransition(token);
     }
 
@@ -861,13 +1080,23 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         string actionName = bufferedActionName;
         bool isBasicAction = bufferedActionIsBasic;
         BasicSkillsSO basicSkill = bufferedBasicSkill;
+        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true && basicSkill != null && locomotionBridge != null &&
+            basicSkill.Context != (locomotionBridge.Grounded ? BasicSkillContext.Grounded : BasicSkillContext.Airborne))
+        {
+            ClearBufferedBasicAction();
+            FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.ResetAllBasicSkillCombos();
+            return false;
+        }
         hasBufferedAction = false;
         bufferedStateHash = 0;
         bufferedProfile = null;
         bufferedActionName = null;
         bufferedActionIsBasic = false;
         bufferedBasicSkill = null;
-        return StartAction(stateHash, profile, actionName, isBasicAction, basicSkill);
+        bool started = StartAction(stateHash, profile, actionName, isBasicAction, basicSkill);
+        if (started && basicSkill != null && RealTimeCombatManager.Instance?.UsesExternalTarget == true)
+            RealTimeCombatManager.Instance.NotifyBufferedSkillStarted(basicSkill);
+        return started;
     }
 
     private void FinishWithoutTransition(int token)

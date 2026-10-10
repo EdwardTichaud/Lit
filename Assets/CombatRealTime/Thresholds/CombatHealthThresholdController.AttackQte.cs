@@ -13,6 +13,7 @@ public sealed partial class CombatHealthThresholdController
     private bool attackQteActive, attackDodgeProtected;
     private bool dodgeAwaitingRelease, counterAwaitingRelease;
     private EnemyController attackQteEnemy;
+    private ICombatTarget externalReactionTarget;
     private Transform attackReactionVictim;
     private SkillSO attackQteSkill;
     private int attackQteActionId;
@@ -73,7 +74,46 @@ public sealed partial class CombatHealthThresholdController
         TraceEnemyReaction("ouverture B/Y sans UI");
     }
 
-    private bool AttackReactionStillValid() => combatManager != null && combatManager.IsCombatActive &&
+    public void OpenEnemyReactionOpportunity(ICombatTarget target, SkillSO skill)
+    {
+        if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
+        if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
+        if (!isActiveAndEnabled || target == null || skill == null || target.IsDead ||
+            combatManager == null || !combatManager.UsesExternalTarget || !combatManager.IsCombatActive ||
+            combatManager.IsCinematicSequenceActive || combatManager.CombatTarget != target || !target.IsAttackCommitted) return;
+        if (externalReactionTarget == target && attackQteActionId == target.ActionSequenceId) return;
+        ClearAttackReaction();
+        externalReactionTarget = target; attackQteSkill = skill; attackQteActionId = target.ActionSequenceId;
+        attackReactionVictim = combatManager.PlayerRoot;
+        attackReactionOpenedAt = reactionClock;
+        dodgeDeadline = reactionClock + Mathf.Max(.05f, dodgeWindowSeconds);
+        counterDeadline = reactionClock + Mathf.Clamp(counterWindowSeconds, .01f, dodgeWindowSeconds);
+        dodgeAwaitingRelease = combatInput != null && combatInput.IsReactionButtonHeld(EnemyAttackReaction.Dodge);
+        counterAwaitingRelease = combatInput != null && combatInput.IsReactionButtonHeld(EnemyAttackReaction.Counter);
+        attackQteActive = true;
+        reactionTimeManager = TimeManager.EnsureInstance();
+        if (reactionTimeManager != null && reactionTimeScale < 1f)
+            reactionSlowMotionHandle = reactionTimeManager.AcquireGlobal(reactionTimeScale, this);
+    }
+
+    private bool externalSuccessSlowMotion;
+    public void ConfigureExternalReactionPresentation()
+    {
+        reactionTimeScale = 1f;
+        externalSuccessSlowMotion = true;
+    }
+
+    public bool IsAttackDodged(ICombatTarget target) => attackDodgeProtected && externalReactionTarget == target && AttackReactionStillValid();
+    public void CloseExternalReactionAtContact(ICombatTarget target)
+    {
+        if (externalReactionTarget == target) CloseAttackQte();
+    }
+
+    private bool AttackReactionStillValid() => externalReactionTarget != null
+        ? combatManager != null && combatManager.IsCombatActive && !combatManager.IsCinematicSequenceActive &&
+          externalReactionTarget.Root != null && !externalReactionTarget.IsDead && externalReactionTarget.IsAttackCommitted &&
+          externalReactionTarget.ActionSequenceId == attackQteActionId && combatManager.CombatTarget == externalReactionTarget
+        : combatManager != null && combatManager.IsCombatActive &&
         !combatManager.IsCinematicSequenceActive && attackQteEnemy != null && attackQteEnemy.isActiveAndEnabled &&
         attackReactionVictim != null && attackReactionVictim.gameObject.activeInHierarchy &&
         combatManager.PlayerRoot == attackReactionVictim && combatManager.EngagedEnemy == attackQteEnemy &&
@@ -83,10 +123,12 @@ public sealed partial class CombatHealthThresholdController
     private void Update()
     {
         UpdateThresholdFlamePause();
+        // A standalone pause freezes the remaining external reaction window.
+        if (externalReactionTarget != null && InputModeCoordinator.CurrentMode == InputMode.UserInterface) return;
         if (attackQteEnemy == null || !attackQteEnemy.IsFlameDormant) reactionClock += Time.unscaledDeltaTime;
-        if (attackQteEnemy == null && !attackQteActive && !attackDodgeProtected) return;
+        if (attackQteEnemy == null && externalReactionTarget == null && !attackQteActive && !attackDodgeProtected) return;
         if (!AttackReactionStillValid()) { ClearAttackReaction(); return; }
-        if (attackQteEnemy.IsFlameDormant)
+        if (attackQteEnemy != null && attackQteEnemy.IsFlameDormant)
         {
             // Preserve eligibility, but do not leave global slow motion running
             // throughout an encounter's local darkness pause.
@@ -111,7 +153,7 @@ public sealed partial class CombatHealthThresholdController
     // True means the press was handled, not that a defence necessarily succeeded.
     public bool TryHandleEnemyReaction(EnemyAttackReaction reaction)
     {
-        if (attackQteEnemy == null || attackQteEnemy.IsFlameDormant || !IsReactionPressEligible(reaction, reactionClock)) return false;
+        if (attackQteEnemy == null && externalReactionTarget == null || attackQteEnemy != null && attackQteEnemy.IsFlameDormant || !IsReactionPressEligible(reaction, reactionClock)) return false;
         EnemyController enemy = attackQteEnemy;
         var skill = attackQteSkill;
         if (reaction == EnemyAttackReaction.Dodge)
@@ -122,12 +164,20 @@ public sealed partial class CombatHealthThresholdController
                 attackDodgeProtected = true;
                 TraceEnemyReaction("roulade acceptee : protection de ce coup uniquement");
                 CloseAttackQte();
+                if (externalSuccessSlowMotion && externalReactionTarget != null)
+                    CombatImpactFeedbackController.Instance?.PlayReactionSlowMotion(.85f, .15f);
             }
-            else TraceEnemyReaction("roulade refusee par la mobilite, aucune protection");
+            else
+            {
+                TraceEnemyReaction("roulade refusee par la mobilite, aucune protection");
+                if (externalSuccessSlowMotion && externalReactionTarget != null) return false;
+            }
             return true; // Never buffer a failed timed dodge into a later action.
         }
         var counter = CounterSkillCombatController.Instance;
-        if (counter == null || !counter.TryStartFromSuccessfulQte(enemy, skill)) return false;
+        if (counter == null || !(externalReactionTarget != null
+            ? counter.TryStartFromSuccessfulQte(externalReactionTarget, skill)
+            : counter.TryStartFromSuccessfulQte(enemy, skill))) return false;
         TraceEnemyReaction("contre cinematique demarre");
         CloseAttackQte();
         return true;
@@ -178,6 +228,7 @@ public sealed partial class CombatHealthThresholdController
         CloseAttackQte();
         attackDodgeProtected = false;
         attackQteEnemy = null;
+        externalReactionTarget = null;
         attackQteSkill = null;
         attackReactionVictim = null;
     }

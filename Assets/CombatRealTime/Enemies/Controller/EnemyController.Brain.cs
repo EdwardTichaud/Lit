@@ -562,7 +562,7 @@ public sealed partial class EnemyController
         BrainEnsureRuntimeReferences();
         BrainAirborneChoiceMade = false;
         BrainAirborneChoice = null;
-        BrainMotor?.EndEnemyAdvance();
+        BrainMotor?.HandleEndEnemyAdvance();
         BrainActionId++;
         BrainPattern = null;
         BrainFinishing = false;

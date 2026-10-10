@@ -1853,7 +1853,7 @@ public class SquadManager : MonoBehaviour
 
         Vector2 rawMoveInput = moveInput;
         Vector2 worldMoveInput = controller.GetWorldSpaceInput(rawMoveInput);
-        bool sprintRequested = LocalInputRouter.RightShoulderPressed;
+        bool sprintRequested = LocalInputRouter.SprintPressed;
         float flightVerticalInput = LocalInputRouter.FlightVerticalValue;
 
         ApplyLocomotionIntent(controller, rawMoveInput, worldMoveInput, sprintRequested, flightVerticalInput);
@@ -1897,7 +1897,7 @@ public class SquadManager : MonoBehaviour
             controller,
             rawMoveInput,
             worldMoveInput,
-            LocalInputRouter.RightShoulderPressed,
+            LocalInputRouter.SprintPressed,
             LocalInputRouter.FlightVerticalValue);
         return true;
     }

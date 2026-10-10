@@ -17,6 +17,14 @@ Emplacement canonique des scripts de session de sauvegarde :
 
 ## Flux principaux
 
+GameFlowService demarre uniquement si Bootstrap est presente parmi les scenes
+de la hierarchie, meme lorsqu'une autre scene est active. Sans Bootstrap,
+l'initialisation automatique ne cree aucun ApplicationRoot et ne redirige pas
+vers le menu. Un GameFlowService place dans une scene autonome se desactive
+avant de publier son singleton ou de s'abonner aux chargements de scenes.
+Pour tester une scene seule, lancer Play avec Bootstrap absente ; pour lancer
+le jeu complet ou Editor Test Startup, garder Bootstrap chargee.
+
 1. Le menu crée ou sélectionne un slot dans `SaveSessionManager`.
 2. Le lancement appelle `GameplayRuntimeReset.PrepareForGameplayStart`.
 3. La scène de jeu est chargée et les stores utilisent le chemin du slot actif.

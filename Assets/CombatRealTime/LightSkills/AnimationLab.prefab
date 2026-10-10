@@ -2305,6 +2305,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7984090257504061111}
+  - component: {fileID: 8052132664400668588}
   - component: {fileID: 9111142501208813963}
   - component: {fileID: 9058773452457398538}
   - component: {fileID: 5966686729521283468}
@@ -2336,6 +2337,24 @@ Transform:
   - {fileID: 3738246668176846972}
   m_Father: {fileID: 2539553842681522877}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8052132664400668588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5081081649438670686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 1
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!320 &9111142501208813963
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -2375,53 +2394,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
   m_Events:
-    m_Signals:
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    m_Events:
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 5966686729521283468}
-          m_TargetAssemblyTypeName: LightSkillTimelinePreviewSignals, Assembly-CSharp
-          m_MethodName: StartSequence
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 5966686729521283468}
-          m_TargetAssemblyTypeName: LightSkillTimelinePreviewSignals, Assembly-CSharp
-          m_MethodName: RearShot
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 5966686729521283468}
-          m_TargetAssemblyTypeName: LightSkillTimelinePreviewSignals, Assembly-CSharp
-          m_MethodName: Impulse
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+    m_Signals: []
+    m_Events: []
 --- !u!114 &5966686729521283468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4865,6 +4839,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7360396255458374567}
+  - component: {fileID: 8066886824205860031}
   - component: {fileID: 972363991334100073}
   - component: {fileID: 3024565556692248677}
   m_Layer: 0
@@ -4889,6 +4864,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7984090257504061111}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8066886824205860031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8514594989196863332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 1
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!114 &972363991334100073
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5804,6 +5797,10 @@ PrefabInstance:
     - target: {fileID: 827987357864528203, guid: a729af1ce72c113439e422b19e81919d, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 900000000000000103, guid: a729af1ce72c113439e422b19e81919d, type: 3}
+      propertyPath: previewOnly
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 963045829911085934, guid: a729af1ce72c113439e422b19e81919d, type: 3}
       propertyPath: m_Enabled
@@ -7149,6 +7146,10 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0.008851172
       objectReference: {fileID: 0}
+    - target: {fileID: 8056016592612253331, guid: a729af1ce72c113439e422b19e81919d, type: 3}
+      propertyPath: previewOnly
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8068374550110915959, guid: a729af1ce72c113439e422b19e81919d, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
@@ -7698,6 +7699,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8068883198660537971, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
+      propertyPath: previewOnly
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5600308843543772466, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
     - {fileID: 5600308843543772466, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
@@ -7711,10 +7716,36 @@ PrefabInstance:
     - {fileID: 6585987432151406195, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6670537791433563459, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3463274819139648324}
   m_SourcePrefab: {fileID: 100100000, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
 --- !u!4 &1264755831306985310 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6314463698388112091, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
   m_PrefabInstance: {fileID: 5056464849357098373}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1927163757169643718 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6670537791433563459, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
+  m_PrefabInstance: {fileID: 5056464849357098373}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3463274819139648324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1927163757169643718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 1
+  lastSignal: 
+  presentation: {fileID: 0}

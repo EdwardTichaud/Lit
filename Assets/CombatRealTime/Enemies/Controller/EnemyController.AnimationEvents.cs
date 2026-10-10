@@ -5,9 +5,9 @@ public sealed partial class EnemyController
     [SerializeField] private Transform inputPromptAnchor;
     [SerializeField] private Vector3 inputPromptOffset = new Vector3(0f, 1.25f, 0f);
     private CombatInputWorldPrompt activeInputPrompt;
-    public void ShowInput(Sprite inputSprite)
+    public void HandleShowInput(Sprite inputSprite)
     {
-        HideInput();
+        HandleHideInput();
 
         Transform anchor = inputPromptAnchor;
         if (anchor == null)
@@ -19,7 +19,7 @@ public sealed partial class EnemyController
         activeInputPrompt = CombatInputWorldPrompt.Show(anchor, inputSprite, inputPromptOffset);
     }
 
-    public void HideInput()
+    public void HandleHideInput()
     {
         if (activeInputPrompt != null)
         {
@@ -28,20 +28,20 @@ public sealed partial class EnemyController
         }
     }
 
-    public void EnemyAttack(SkillSO skill)
+    public void HandleEnemyAttack(SkillSO skill)
     {
         if (IsFlameDormant) return;
-        TraceEnemyEvent(nameof(EnemyAttack));
+        TraceEnemyEvent(nameof(HandleEnemyAttack));
         this.ExecuteEnemyAttack(skill);
     }
 
-    public void LockEnemyAttackDirection()
+    public void HandleLockEnemyAttackDirection()
     {
-        TraceEnemyEvent(nameof(LockEnemyAttackDirection));
+        TraceEnemyEvent(nameof(HandleLockEnemyAttackDirection));
         this.GetComponent<EnemyController>()?.LockAttackDirection();
     }
 
-    public void QTE(string input)
+    public void HandleQTE(string input)
     {
         if (IsFlameDormant) return;
         EnemyController enemy = this;
@@ -49,14 +49,14 @@ public sealed partial class EnemyController
         else CombatHealthThresholdController.Instance?.OpenQte(input);
     }
 
-    public void OpenEnemyReactionOpportunity()
+    public void HandleOpenEnemyReactionOpportunity()
     {
         if (IsFlameDormant) return;
         CombatHealthThresholdController.Instance?.OpenEnemyReactionOpportunity(this);
     }
 
     private int completedActionSequence = -1;
-    public void EndEnemyAttack() => CompleteAction(ActionSequenceId, false);
+    public void HandleEndEnemyAttack() => CompleteAction(ActionSequenceId, false);
 
     private void CompleteAction(int sequence, bool recovery)
     {
@@ -78,10 +78,10 @@ public sealed partial class EnemyController
         });
     }
 
-    public void BeginEnemyRush()
+    public void HandleBeginEnemyRush()
     {
-        TraceEnemyEvent(nameof(BeginEnemyRush));
-        this.BeginEnemyRush(ResolveEnemyDashTarget());
+        TraceEnemyEvent(nameof(HandleBeginEnemyRush));
+        this.HandleBeginEnemyRush(ResolveEnemyDashTarget());
     }
 
     private void TraceEnemyEvent(string eventName)

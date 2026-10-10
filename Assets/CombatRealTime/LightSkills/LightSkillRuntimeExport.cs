@@ -52,10 +52,10 @@ public sealed class LightSkillRuntimeExport : MonoBehaviour, ICombatCinematicPar
         return anchor switch
         {
             LightSkillRuntimeAnchor.Player => context.PlayerRoot,
-            LightSkillRuntimeAnchor.Enemy => context.TargetEnemy != null ? context.TargetEnemy.transform : null,
+            LightSkillRuntimeAnchor.Enemy => context.TargetRoot,
             LightSkillRuntimeAnchor.EnemyLockPoint => context.TargetLockPoint != null
                 ? context.TargetLockPoint
-                : context.TargetEnemy != null ? context.TargetEnemy.transform : null,
+                : context.TargetRoot,
             _ => null
         };
     }

@@ -393,22 +393,22 @@ public sealed partial class EnemyController
         ActorPhysicsMotor.CompleteEnemyAction(onGrounded);
     }
 
-    public void BeginEnemyAirborne()
+    public void HandleBeginEnemyAirborne()
     {
         ActorPhysicsMotor?.PhysicsBeginEnemyAirborne();
     }
 
-    public void RequestEnemyLanding()
+    public void HandleRequestEnemyLanding()
     {
         ActorPhysicsMotor?.PhysicsRequestEnemyLanding();
     }
 
-    public void BeginEnemyRush(Transform target)
+    public void HandleBeginEnemyRush(Transform target)
     {
         ActorPhysicsMotor?.PhysicsBeginEnemyRush(target);
     }
 
-    public void EndEnemyRush()
+    public void HandleEndEnemyRush()
     {
         ActorPhysicsMotor?.PhysicsEndEnemyRush();
     }

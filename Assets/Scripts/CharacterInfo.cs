@@ -3,6 +3,7 @@ using UnityEngine;
 
 /// <summary>Instance data and health; runtime changes never modify the authored asset.</summary>
 [DisallowMultipleComponent]
+[RequireComponent(typeof(AnimationEvents))]
 public class CharacterInfo : MonoBehaviour
 {
     [SerializeField, Tooltip("Fiche source partagee. Les donnees modifiables sont copiees pour cette instance.")]

@@ -237,6 +237,7 @@ public sealed class SkillsManager : MonoBehaviour
 
     private IReadOnlyList<BasicSkillsSO> GetBasicSkillList(BasicSkillContext context)
     {
+        if (context == BasicSkillContext.Grounded && groundBasicSkillOverride != null) return groundBasicSkillOverride;
         // The local character can spawn after this manager. Resolve again at
         // selection time so the combo always comes from the active CharacterData.
         ResolveReferences();
@@ -251,6 +252,14 @@ public sealed class SkillsManager : MonoBehaviour
         // Compatibility for scenes that have not yet migrated their authoring
         // data to CharacterData. New characters should use CharacterData only.
         return context == BasicSkillContext.Airborne ? airBasicSkills : groundBasicSkills;
+    }
+
+    private IReadOnlyList<BasicSkillsSO> groundBasicSkillOverride;
+    public void SetGroundBasicSkillOverride(IReadOnlyList<BasicSkillsSO> skills)
+    {
+        groundBasicSkillOverride = skills;
+        ResetAllBasicSkillCombos();
+        AnimationEventSkill = null;
     }
 
     private static bool HasCharacterBasicSkillConfiguration(CharacterData characterData)

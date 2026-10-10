@@ -151,7 +151,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         rawMoveInput = LocalInputRouter.MoveValue;
-        wantsRun = LocalInputRouter.RightShoulderPressed;
+        wantsRun = LocalInputRouter.SprintPressed;
         flightVerticalInput = LocalInputRouter.FlightVerticalValue;
         if (controller != null)
         {

@@ -12,8 +12,7 @@ public sealed class LitTacticalUccViewType : Adventure
     private bool following = true, initialized, recentering;
     private Vector2 pendingPan;
     private Vector3 lastResolvedPosition;
-    private Quaternion renderedAimRotation;
-    private bool hasRenderedAimRotation;
+    private LitTacticalAimHistory aimHistory;
     private LitTacticalSimulationClock clock;
     private LitTacticalDistanceRecovery distanceRecovery;
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
@@ -67,7 +66,7 @@ public sealed class LitTacticalUccViewType : Adventure
         if (immediate) pivot = targetPivot;
         lastAnchor = GetFollowAnchor();
         distanceRecovery.Reset(zoom);
-        hasRenderedAimRotation = false;
+        aimHistory.Reset();
         initialized = true;
         clock.Reset();
     }
@@ -145,29 +144,12 @@ public sealed class LitTacticalUccViewType : Adventure
         if (!following || owner == null || owner.IsBlending)
             return m_CharacterLocomotion != null && m_CharacterLocomotion.Interpolate ? m_Transform.rotation :
                 owner != null ? owner.BlendRotation(Quaternion.Euler(pitch, yaw, 0)) : Quaternion.Euler(pitch, yaw, 0);
-        // UCC has interpolated the camera AND character before LateRotate.
-        // A physics anchor here creates a sawtooth aim error at every fixed step.
-        // Use the same root-owned target, evaluated in the displayed time domain.
+        // Capture once in Move after collision, then interpolate with the same
+        // fraction as SimulationManager.SmoothMove. Never feed a rendered pose
+        // back into a second aim filter or snap at an arbitrary angle threshold.
         Vector3 displayedAnchor = GetFollowAnchor(true);
-        Vector3 aim = displayedAnchor - m_Transform.position;
-        if (aim.sqrMagnitude < .0001f) return m_Transform.rotation;
-        Quaternion targetRotation = Quaternion.LookRotation(aim, Vector3.up);
-        // SimulationManager interpolates the position between fixed steps.
-        // Rebuilding a full look rotation from that interpolated position in
-        // every LateUpdate transfers tiny physics/interpolation differences
-        // directly to the image. Keep the look target, but filter only that
-        // presentation correction. Large discontinuities (teleport/recenter)
-        // still snap immediately.
-        if (!hasRenderedAimRotation || Quaternion.Angle(renderedAimRotation, targetRotation) > 15f)
-        {
-            renderedAimRotation = targetRotation;
-            hasRenderedAimRotation = true;
-        }
-        else
-        {
-            float blend = 1f - Mathf.Exp(-Mathf.Max(1f, profile.renderedAimSharpness) * Time.unscaledDeltaTime);
-            renderedAimRotation = Quaternion.Slerp(renderedAimRotation, targetRotation, blend);
-        }
+        Quaternion renderedAimRotation = aimHistory.Evaluate(Time.time, Time.fixedDeltaTime,
+            m_CharacterLocomotion != null && m_CharacterLocomotion.Interpolate && !immediateUpdate, m_Transform.rotation);
 
         m_Pitch = Mathf.DeltaAngle(0, renderedAimRotation.eulerAngles.x);
         m_Yaw = Mathf.DeltaAngle(0, renderedAimRotation.eulerAngles.y - m_BaseRotation.eulerAngles.y);
@@ -197,6 +179,9 @@ public sealed class LitTacticalUccViewType : Adventure
             immediateUpdate, profile.collisionClearHoldTime, profile.collisionReturnTime);
         desired = pivot + direction * resolvedDistance;
         lastResolvedPosition = owner.BlendPosition(desired, pivot, CollisionRadius, dt, immediateUpdate);
+        Vector3 aim = GetFollowAnchor() - lastResolvedPosition;
+        if (following && aim.sqrMagnitude > .0001f)
+            aimHistory.Capture(Quaternion.LookRotation(aim, Vector3.up), Time.time, immediateUpdate);
         owner.RecordTacticalMotion(GetFollowAnchor(), GetFollowAnchor(true), requested, lastResolvedPosition, dt, immediateUpdate, false);
         return lastResolvedPosition;
     }

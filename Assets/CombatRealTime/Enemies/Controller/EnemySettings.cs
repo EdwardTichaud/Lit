@@ -26,6 +26,11 @@ public sealed class EnemySettings
     public float LocomotionClearanceSearchRadius = 2f;
     [Range(4, 24), Tooltip("Nombre de positions candidates evaluees autour d'une destination proche d'un obstacle." )]
     public int LocomotionClearanceSearchSamples = 12;
+    [Header("Navigation recovery")]
+    [Min(0.2f), Tooltip("Temps sans progression avant qu'un ennemi relance sa trajectoire autour de sa cible.")]
+    public float LocomotionStuckRecoverySeconds = .8f;
+    [Min(0.01f), Tooltip("Déplacement minimal considéré comme une progression de navigation.")]
+    public float LocomotionStuckProgressDistance = .06f;
     [Tooltip("Poursuite et presentation du deplacement.") ]
      public bool LocomotionLogDiagnostics;
     [Tooltip("Diagnostic de configuration.") ]

@@ -2,6 +2,16 @@
 
 ## Utilisation
 
+Stabilisation de la visee : la rotation visant le joueur est calculee une fois
+par pas UCC depuis la position finale apres collision, puis utilise la meme
+fraction d'interpolation que la position. Le second filtre LateUpdate et son
+seuil de saut de 15 degres sont retires. `renderedAimSharpness` est conserve
+pour la compatibilite des profils, mais n'est plus utilise ni affiche.
+Le suivi amorti, les collisions, L3 et les Timelines restent en place.
+Verifier visuellement marche/course, orbite, obstacles et combat a 30/60/120 FPS.
+Compilation runtime/editor sans erreur. Les tests de stabilite sont executes
+dans un projet Unity isole ; cela ne valide pas le ressenti visuel en Play.
+
 La Main Camera du prefab `Assets/Core/System/GameplaySessionRoot.prefab` porte maintenant `LitGameplayCameraModeController`. Le mode initial reste **ThirdPerson**. En Play, sélectionner la Main Camera du Bootstrap puis utiliser les boutons **Third-person** / **Tactical** de ce composant. L'inspecteur affiche le mode demandé, le mode effectif et l'autorité cinématique. `SetMode(GameplayCameraMode)` est également disponible pour les outils développeur.
 
 Le profil partagé est `Assets/CombatRealTime/Camera/TacticalDefault.asset`. Tous les réglages de cadrage, amortissement, commandes, limites et délais de masquage y sont exposés. Le défilement aux bords est désactivé. Aucune préférence joueur n'est sauvegardée.
@@ -13,8 +23,8 @@ UCC reste le seul pilote de la caméra physique. La vue Adventure sérialisée n
 | Contexte | Commandes |
 | --- | --- |
 | Clavier/souris | Droit maintenu : orbite ; molette : zoom ; C : recentrage. Flèches et glissement milieu : uniquement en caméra libre |
-| Manette, suivi | Stick gauche : personnage (course à forte inclinaison) ; stick droit : orbite ; LT : rapprocher ; RT : éloigner ; RB : roue de compétences ; clic L3 : caméra libre |
-| Manette, inspection libre | Stick gauche : pan ; stick droit : orbite ; gâchettes : zoom ; clic L3 : retour au suivi ; maintien R3 : sortie et recentrage |
+| Manette, suivi | Stick gauche : personnage ; RT : sprint ; stick droit : orbite ; LB : éloigner ; RB : rapprocher ; LT : roue de compétences ; croix bas : verrouiller/changer de cible ; clic L3 : caméra libre hors combat |
+| Manette, inspection libre | Stick gauche : pan ; stick droit : orbite ; LB/RB : zoom ; clic L3 : retour au suivi ; maintien R3 : sortie et recentrage |
 
 La caméra suit et vise le joueur par défaut, y compris lorsqu'une collision modifie sa position réelle. Un pan ne détache jamais ce suivi. L'action dédiée `Camera/TacticalInspection` remplace l'ancien `ToggleFreeCamera` dans l'asset d'entrées et son wrapper généré. Son binding L3 utilise maintenant un simple clic, sans maintien. La vue third-person ignore cette action et conserve le clic L3 de locomotion ; celui-ci est ignoré uniquement en mode tactique. Le second clic L3 réactive le suivi et recentre progressivement. L'inspection n'active que l'ActionMap Camera, utilise également le contexte de suppression de gameplay existant, et bloque les overrides de déplacement UCC. Les gâchettes pilotent le zoom en suivi et en inspection ; le D-pad conserve ses commandes de gameplay hors inspection. La perte de focus, les menus, un changement de personnage, une cinématique ou une désactivation quittent l'inspection.
 
@@ -65,11 +75,11 @@ Les tests à 30/60/120 FPS reproduisent le mélange physique/affichage de l'anci
 
 ### Zoom manette et roue de compétences
 
-En suivi comme en inspection tactique : LT/L2 rapproche, RT/R2 éloigne. La distance demandée est comprise entre 1 et 10 m dans le profil par défaut ; les collisions peuvent toujours rétracter davantage la caméra pour éviter un mur. Le zoom reste amorti et proportionnel à la pression des gâchettes. Les deux gâchettes à pression égale s'annulent. Les menus/roues et Timelines suspendent le zoom.
+En suivi comme en inspection tactique : LB/L1 eloigne, RB/R1 rapproche. La distance demandée est comprise entre 1 et 10 m dans le profil par défaut ; les collisions peuvent toujours rétracter davantage la caméra pour éviter un mur. Le zoom reste amorti et continu pendant le maintien. Les deux shoulders simultanes s'annulent. Les menus/roues et Timelines suspendent le zoom.
 
-La roue de compétences s'ouvre désormais avec RB/R1 maintenu et se ferme au relâchement ; le clavier conserve son raccourci. Les deux assets d'input et le wrapper `PlayerInputs` utilisent ce binding. L'ancien binding de zoom RB passe à RT. Pour ne pas courir en dézoomant, le sprint manette tactique se déclenche à partir de 90 % d'inclinaison du stick gauche (réglage `Tactical Sprint Stick Threshold` sur `LocalPlayerInput`). Le sprint clavier et third-person restent inchangés. L'inspection, les menus et le retour de contexte annulent/restaurent cet intent via le routeur existant. La limite de distance réelle au joueur en inspection libre est également réglée à 10 m.
+La roue de competences s'ouvre avec LT/L2 maintenu et se ferme au relachement ; le clavier conserve son raccourci. Les deux assets d'input utilisent ce binding. RT/R2 pilote le sprint dans les deux vues, sans sprint automatique au stick tactique. Croix bas acquiert le verrou puis change de cible ; le callback d'exploration est filtre en combat pour eviter une double action. L'inspection, les menus et le retour de contexte annulent/restaurent le sprint via le routeur existant. La limite de distance reelle au joueur en inspection libre reste de 10 m.
 
-Vérification de ce raccord : compilation runtime/éditeur sans erreur et 13 tests de calcul réussis, dont le sens des gâchettes et les limites à 30/60/120 étapes par seconde. La roue RB, le sprint et le ressenti du zoom restent à vérifier visuellement en Play avec une manette.
+Deux essais Play avec gamepad virtuel dans Iluvilirae_Test sont passes : sprint RT/relachement, zoom RB sans roue, absence de sprint automatique au stick, verrou croix bas, roue LT, attaques et restitution apres cinematics/pause. Compilation runtime/editeur reussie. Le ressenti du zoom et du sprint et les scenes de gameplay restent a confirmer sur manette physique.
 
 ### Déplacement relatif à la vue tactique
 
@@ -77,7 +87,13 @@ Le stick gauche et le clavier utilisent la base horizontale de la caméra affich
 
 La règle s'applique uniquement lorsque la vue UCC tactique est réellement active et liée à ce personnage, hors contrôle cinématique. Une caméra de rendu momentanément indisponible conserve la dernière base valide ; avant la première base valide, le déplacement demandé est nul. Le changement de personnage efface cette base. En lock, le personnage garde son regard vers la cible, sans correction de rayon autour de l'ennemi ; les animations latérales/arrière utilisent le déplacement réel exprimé dans son repère local. L'inspection L3 et les blocages d'entrée existants restent inchangés.
 
-`LitTacticalMovementType` est installé au runtime pour l'exploration tactique : il conserve les axes injectés et laisse le bridge orienter le personnage avec son amortissement existant. Le type antérieur est restitué à la sortie du mode ; le lock conserve son type UCC spécifique. Les commandes `MoveWorld` des scripts ne sont pas reconverties.
+`LitTacticalMovementType` est installé au runtime pour l'exploration tactique. Le bridge fournit une intention de déplacement monde et de regard ; le MovementType les convertit dans le repère de simulation du moteur UCC, qui applique lui-même la rotation. Le type antérieur est restitué à la sortie du mode ; le lock conserve son type UCC spécifique et utilise le même calcul tactique. Les commandes `MoveWorld` des scripts ne sont pas reconverties depuis la caméra.
+
+### Stabilité du personnage en déplacement tactique
+
+Le suivi caméra étant stabilisé, la rotation du personnage ne doit plus appeler `SetRotation` ou `SetPositionAndRotation` à chaque image de déplacement/pivot tactique : ces commandes immédiates réinitialisent l'interpolation UCC et notifient aussi la caméra. Exploration, pivot au sol et regard de lock transmettent désormais une intention à la simulation UCC. La conversion du déplacement utilise la rotation du moteur plutôt que le Transform interpolé, et compense la rotation que le moteur applique à cette étape pour préserver la direction écran et la magnitude analogique. Les repositionnements explicites, les esquives dédiées et le chemin third-person restent inchangés.
+
+Vérification : compilation runtime/éditeur réussie ; 6 tests de calcul moteur et 14 tests de stabilité caméra réussis dans un projet Unity isolé (20 au total). Contrôle visuel Play encore nécessaire : marche/course, virages et pivot à l'arrêt, déplacements latéraux en lock, bascules de mode et retour de Timeline.
 
 Validation automatisée : les 9 cas de `LitTacticalMovementTests` passent dans le projet Unity isolé (quatre angles caméra, quatre orientations personnage et huit directions, pitch 25–90°, magnitude analogique et rotation avec input maintenu). Le test du type de mouvement intégré est compilé avec le projet. Essais visuels gameplay à effectuer : exploration et lock, changements de cible/mode/personnage, stick partiel et course, L3/menu/Timeline, pentes et obstacles. Aucun essai Play de la scène gameplay n'a été effectué pour cette correction.
 

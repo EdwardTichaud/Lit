@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 // Singleton local qui capture les inputs et les envoie au LocalInputRouter.
 public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, PlayerInputs.ICameraActions, PlayerInputs.ICombatActions
 {
+    private const float RightTriggerSprintThreshold = .35f;
     public static LocalPlayerInput Instance { get; private set; }
     private static bool applicationQuitting;
 
@@ -15,8 +16,6 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     private bool combatInputActive;
     private Coroutine locomotionReconciliationRoutine;
     private int locomotionReconciliationToken;
-    private bool tacticalSprintOwned;
-    [SerializeField, Range(.5f, 1f)] private float tacticalSprintStickThreshold = .9f;
 
     /// <summary>
     /// True only while the persistent input host still owns a live runtime
@@ -126,15 +125,10 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     private void Update()
     {
-        bool tactical = LitGameplayCameraModeController.TacticalGamepadTriggersOwned;
-        if (tactical || tacticalSprintOwned)
-        {
-            var action = playerInputs != null ? playerInputs.asset.FindAction("Player/RightShoulder", false) : null;
-            bool allowed = (InputModeCoordinator.CurrentMode == InputMode.Exploration || InputModeCoordinator.CurrentMode == InputMode.Combat) &&
-                !InputFocusStack.HasAnyFocus() && !GamepadInputContextStack.IsGameplayInputSuppressed && !JoinSyncSystem.IsGameplayBlocked && Application.isFocused;
-            LocalInputRouter.SetRightShoulderPressed(allowed && ReadSprintIntent(action));
-        }
-        tacticalSprintOwned = tactical;
+        var action = playerInputs != null ? playerInputs.asset.FindAction("Player/RightShoulder", false) : null;
+        bool allowed = (InputModeCoordinator.CurrentMode == InputMode.Exploration || InputModeCoordinator.CurrentMode == InputMode.Combat) &&
+            !InputFocusStack.HasAnyFocus() && !GamepadInputContextStack.IsGameplayInputSuppressed && !JoinSyncSystem.IsGameplayBlocked && Application.isFocused;
+        LocalInputRouter.SetSprintPressed(allowed && ReadSprintIntent(action));
         if (combatInputActive)
         {
             LocalInputRouter.SetFlightVerticalValue(0f);
@@ -194,6 +188,9 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnLeftShoulder(InputAction.CallbackContext context)
     {
+        // D-pad down belongs to SwitchEnemyLock while the combat map is active.
+        if (context.control != null && context.control.device is Gamepad &&
+            InputModeCoordinator.CurrentMode != InputMode.Exploration) return;
         if (context.performed && ShouldProcess(context))
         {
             LocalInputRouter.RaiseLeftShoulder(context);
@@ -203,12 +200,9 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     public void OnRightShoulder(InputAction.CallbackContext context)
     {
         bool shouldProcess = ShouldProcess(context);
-        if (context.control != null && context.control.device is Gamepad && LitGameplayCameraModeController.TacticalGamepadTriggersOwned)
-        {
-            LocalInputRouter.SetRightShoulderPressed(false);
-            return;
-        }
-        LocalInputRouter.SetRightShoulderPressed(shouldProcess && context.ReadValueAsButton());
+        // Poll the trigger value as well as the callback. A trigger held while
+        // an ActionMap is restored does not always emit a fresh performed event.
+        LocalInputRouter.SetSprintPressed(shouldProcess && ReadSprintIntent(playerInputs?.Player.RightShoulder));
 
         if (context.performed && shouldProcess)
         {
@@ -456,6 +450,8 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnTacticalInspection(InputAction.CallbackContext context)
     {
+        // L3 is LightSkill in combat. Camera inspection must not disable its map first.
+        if (combatInputActive && context.control != null && context.control.device is Gamepad) return;
         if (context.performed && ShouldProcess(context))
         {
             LocalInputRouter.RaiseTacticalInspection();
@@ -494,12 +490,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     /// </summary>
     public static void RequestHeldLocomotionReconciliation(string reason = null)
     {
-        if (!Application.isPlaying)
+        if (!Application.isPlaying || Instance == null)
         {
             return;
         }
 
-        EnsureInstance();
         Instance?.ScheduleHeldLocomotionReconciliation(reason);
     }
 
@@ -595,7 +590,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
             Vector2 move = moveAction.ReadValue<Vector2>();
             bool sprint = ReadSprintIntent(sprintAction);
-            LocalInputRouter.SetRightShoulderPressed(sprint);
+            LocalInputRouter.SetSprintPressed(sprint);
             LocalInputRouter.SetMoveValue(move);
 
             if (SquadManager.Instance != null && SquadManager.Instance.ReapplyHeldLocomotionIntent())
@@ -616,14 +611,10 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     private bool ReadSprintIntent(InputAction action)
     {
-        if (!LitGameplayCameraModeController.TacticalGamepadTriggersOwned)
-            return action != null && action.enabled && action.ReadValue<float>() > .5f;
-        if (action != null && action.enabled)
-            foreach (var control in action.controls)
-                if (!(control.device is Gamepad) && control is UnityEngine.InputSystem.Controls.ButtonControl button &&
-                    button.isPressed && MainMenuInputSettings.AllowsKeyboardMouse()) return true;
-        return MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null &&
-            Gamepad.current.leftStick.ReadValue().magnitude >= tacticalSprintStickThreshold;
+        bool actionPressed = action != null && action.enabled && action.ReadValue<float>() > RightTriggerSprintThreshold;
+        bool triggerPressed = MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null &&
+                              Gamepad.current.rightTrigger.ReadValue() > RightTriggerSprintThreshold;
+        return actionPressed || triggerPressed;
     }
 
     private static float ReadFlightVerticalInput()

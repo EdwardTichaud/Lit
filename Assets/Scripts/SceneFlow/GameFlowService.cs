@@ -95,26 +95,19 @@ public sealed class GameFlowService : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateApplicationRoot()
     {
-#if UNITY_EDITOR
-        // Always enter the game through the authored Bootstrap scene. Unity's
-        // Play-from-current-scene mode otherwise creates enemies and UI before
-        // GameFlow, its manifests and the loading overlay exist.
-        if (!string.Equals(SceneManager.GetActiveScene().name, BootstrapSceneName, StringComparison.OrdinalIgnoreCase))
+        // A scene launched without Bootstrap is an isolated test, not a game startup.
+        if (!FindBootstrapScene().IsValid())
         {
-            Debug.Log("[GameFlow] Test de scene direct detecte. Redirection vers Bootstrap.");
-            SceneManager.LoadScene(BootstrapSceneName, LoadSceneMode.Single);
             return;
         }
-#endif
 
         if (Instance != null)
         {
             return;
         }
 
-        // En lancement normal, Bootstrap contient deja ApplicationRoot et ce
-        // service. Ce filet de securite ne sert qu'aux tests directs d'une
-        // scene dans l'editeur.
+        // Bootstrap normalement contient deja le service ; le secours n'est
+        // autorise que lorsque cette scene est presente dans la hierarchie.
         if (FindAnyObjectByType<GameFlowService>() != null)
         {
             return;
@@ -131,6 +124,12 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void Awake()
     {
+        if (!FindBootstrapScene().IsValid())
+        {
+            enabled = false;
+            return;
+        }
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -150,7 +149,25 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void Start()
     {
-        TryOpenMenuFromBootstrap(SceneManager.GetActiveScene());
+        if (Instance == this)
+        {
+            TryOpenMenuFromBootstrap(FindBootstrapScene());
+        }
+    }
+
+    private static Scene FindBootstrapScene()
+    {
+        // During Awake a scene can already be in the hierarchy before isLoaded
+        // becomes true. Membership, rather than the active scene, gates startup.
+        for (int index = 0; index < SceneManager.sceneCount; index++)
+        {
+            Scene scene = SceneManager.GetSceneAt(index);
+            if (scene.IsValid() && string.Equals(scene.name, BootstrapSceneName, StringComparison.OrdinalIgnoreCase))
+            {
+                return scene;
+            }
+        }
+        return default;
     }
 
     private void OnDestroy()

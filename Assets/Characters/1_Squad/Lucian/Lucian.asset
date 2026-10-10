@@ -103,7 +103,7 @@ MonoBehaviour:
       groundedInputDeceleration: 6.2
       groundedDirectionChangeAcceleration: 11.2
       groundedDirectionChangeDot: 0.2
-      tuneGroundedSprintSpeedChange: 0
+      tuneGroundedSprintSpeedChange: 1
       groundedSprintSpeedMultiplier: 1.65
       groundedSprintSpeedParameterValue: 2.6
       suppressSpeedChangeAnimatorParameter: 1
