@@ -1,6 +1,65 @@
 # Input, UCC et caméra
 
+## Reglage de rotation au laboratoire (2026-10-10)
+
+ConfigureTurnRates active le facing tactique a vitesse bornee dans
+LitCombatLockMovementType : compensation du blend yaw moteur, comme en
+FreeSprint, pour eviter une restitution de roulade ralentie deux fois.
+Le calcul reste dans la simulation UCC et conserve son arc court ; hors
+laboratoire le chemin tactique initial est conserve jusqu'a migration.
+
+LucianBrainsCombatArena expose les taux marche/sprint/virage/facing et applique
+ConfigureTurnRates au bridge apres binding. Les reglages restent prives a
+l'acteur runtime ; CharacterData conserve ses valeurs production. Premiere
+passe : 720/1080/1440/1440 degres/s, sans nouvelle autorite de yaw. Le profil
+ennemi est egalement clone pour regler 1080 degres/s uniquement au laboratoire.
+
+## Saut interrompu et restitution (2026-10-10)
+
+La presentation Jump_Start suit l'etat destination pendant un fondu : un clip
+sortant ne peut plus appliquer une impulsion tardive. Sortie avant decollage,
+Animator desactive ou absence de progression pendant 1 s locale libere l'etat
+saut actif. Les pauses globales/locales ne consomment pas ce watchdog.
+Une impulsion restant au sol sans evenement de decollage est nettoyee apres
+0,5 s locale. Desactivation : gravite restituee, triggers et flags effaces.
+Aucune vitesse/pose UCC n'est remise a zero ; la chute reste physique.
+Les roulades gardent leur nettoyage par generation PlayerAction ; les verrous
+externes valides ne sont jamais liberes par ce nettoyage.
+
+## Course libre sous lock (2026-10-10)
+
+LitOpsiveLocomotionBridge resout TargetStrafe, FreeSprint ou DirectionalEvasion
+avant la conversion du mouvement. Sans sprint, les axes restent relatifs a la
+cible et le regard revient progressivement vers elle. RT + stick hors dead zone
+autorise FreeSprint : repere camera, yaw vers le mouvement dans la simulation
+LitCombatLockMovementType, animation de course avant InPlace. Le lock camera
+reste actif. Garde, actions, traversees et verrous UCC empechent ce changement.
+La vue tactique ne constitue plus une seconde autorite pendant un lock.
+
+Tout changement de mode efface le rayon d'orbite et le repere de mouvement
+memorise. Squad, laboratoire et NetworkCharacterInput transmettent le sprint
+avant le mouvement ; le client reseau convertit le stick une seule fois avant
+envoi, le serveur recoit l'intention monde et le sprint.
+
+Une roulade directionnelle capture le vecteur monde du mode courant, prend le
+yaw et utilise le clip avant, diagonales comprises. Sans stick, la roulade
+arriere reste disponible. PlayerScriptedDodgeController conserve son facing
+jusqu'a la restitution de la session, puis reconcilie les inputs tenus : reprise
+directe FreeSprint ou retour progressif TargetStrafe, sans snap intermediaire.
+Les anciens alignements optionnels lateral/arriere sont retires.
+
 ## Commandes manette (2026-10-10)
+
+Le polling du sprint ne depend pas directement d'Application.isFocused :
+l'Input System gere le routage du focus et la desactivation des appareils.
+Cela preserve la course en Game View lorsque la manette continue d'etre
+transmise en mode editeur. Les appareils deconnectes/desactives sont ignores,
+et les blocages de mode, focus UI, contexte gamepad et synchronisation reseau
+restent prioritaires.
+Le sprint accepte explicitement les contextes Gamepad Gameplay et Combat.
+IsGameplayInputSuppressed reste reserve au filtrage des actions exploration :
+l'utiliser pour le sprint bloquait toute course en combat. UI, Placement et
+Cinematic restent exclus, sans modifier les autres callbacks exploration.
 
 LB/L1 eloigne la camera, RB/R1 la rapproche. RT/R2 pilote le sprint dans les
 deux vues ; le sprint automatique au stick en camera tactique est retire.
@@ -564,3 +623,10 @@ de phase : un arbre incomplet reste entierement intact. Les courses passent
 le controle de correspondance ; les marches requierent des contacts auteur.
 La correlation n'est pas une validation des 3 cm d'appui. Aucune nouvelle
 correction IK des pieds n'a ete ajoutee.
+
+## Compatibilite camera tactique (2026-10-10)
+
+Sous camera tactique, le stick reste camera-relative meme sous lock ; le
+contrat target-relative concerne le mode third-person. Le MovementType UCC
+consomme le facing tactique, sans corrections immediates SetRotation a chaque
+frame. FreeSprint transmet le regard de mouvement, hors evasion directionnelle.

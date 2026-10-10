@@ -96,6 +96,7 @@ public partial class LitOpsiveLocomotionBridge
 
         Debug.Log(
             $"[Lit/UCC Locomotion] input=({currentWorldMoveInput.x:F2},{currentWorldMoveInput.y:F2}) " +
+            $"lockMode={LockLocomotionMode} facing={smoothedCombatFacingDirection} yawOwner={(IsCombatFreeSprint ? "UCC sprint" : combatDirectionalEvasionFacing ? "Dodge" : "Lock/action")} " +
             $"state='{currentClip}' t={current.normalizedTime:F2} next='{nextClip}' nt={next.normalizedTime:F2} " +
             $"params LitSpeed={litSpeed:F2} Speed={legacySpeed:F2} Forward={forward:F2} IsMoving={moving} " +
             $"rootDelta=({rootDelta.x:F3},{rootDelta.y:F3},{rootDelta.z:F3}) velocity=({velocity.x:F2},{velocity.y:F2},{velocity.z:F2}) " +

@@ -4,6 +4,19 @@ public sealed partial class RealTimeCombatManager
 {
     private ICombatTarget externalTarget;
     private bool externalTargetLocked;
+    private CombatLockIndicator externalLockIndicator;
+
+    private void RefreshExternalLockIndicator()
+    {
+        if (externalLockIndicator != null) externalLockIndicator.SetLocked(false, false);
+        externalLockIndicator = null;
+        if (!combatActive || !externalTargetLocked || externalTarget == null ||
+            externalTarget.IsDead || externalTarget.Root == null) return;
+        externalLockIndicator = externalTarget.Root.GetComponent<CombatLockIndicator>();
+        if (externalLockIndicator == null)
+            externalLockIndicator = externalTarget.Root.gameObject.AddComponent<CombatLockIndicator>();
+        externalLockIndicator.SetLocked(true, false);
+    }
     public bool UsesExternalTarget => externalTarget != null;
     public ICombatTarget CombatTarget => externalTarget ?? (engagedEnemy != null || lockedEnemy != null ? new LegacyCombatTarget(engagedEnemy ?? lockedEnemy) : null);
     public ICombatTarget LockedCombatTarget => externalTarget != null
@@ -28,6 +41,7 @@ public sealed partial class RealTimeCombatManager
         ClarityChanged?.Invoke(clarity, ClarityRank);
         combatActive = playerRoot != null && target != null && target.Root != null && !target.IsDead;
         combatInput?.SetInputActive(combatActive);
+        RefreshExternalLockIndicator();
         RefreshLockedEnemyStrafeBinding();
         CombatStateChanged?.Invoke(combatActive);
     }
@@ -36,6 +50,7 @@ public sealed partial class RealTimeCombatManager
     {
         if (!combatActive || externalTarget == null || externalTarget.IsDead) return false;
         externalTargetLocked = !externalTargetLocked;
+        RefreshExternalLockIndicator();
         RefreshLockedEnemyStrafeBinding();
         return true;
     }

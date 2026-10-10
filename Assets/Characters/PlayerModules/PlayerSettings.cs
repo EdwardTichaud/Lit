@@ -44,8 +44,6 @@ public sealed class PlayerDodgeSettings
 {
     [Tooltip("Impulsion horizontale initiale de l esquive en m/s.")] public float impulseSpeed = 16f;
     [Tooltip("Multiplicateur de duree des esquives. 1 conserve la duree de l action.")] public float durationMultiplier = 1f;
-    [Tooltip("Orienter le personnage vers son deplacement pendant une esquive sans cible verrouillee.")] public bool alignUnlockedDodgeToTravel = true;
-    [Tooltip("Avec cible verrouillee, orienter seulement l esquive avant vers son deplacement.")] public bool alignLockedForwardDodgeToTravel = true;
 }
 
 [System.Serializable]

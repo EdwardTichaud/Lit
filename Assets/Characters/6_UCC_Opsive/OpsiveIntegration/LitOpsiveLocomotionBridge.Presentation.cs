@@ -16,7 +16,7 @@ public partial class LitOpsiveLocomotionBridge
         var localVelocity = transform.InverseTransformDirection(velocity);
         var direction = new Vector2(localVelocity.x, localVelocity.z).normalized;
         float actorSpeed = speed / clockRate;
-        profile.Evaluate(actorSpeed, sprintPressed, combatLockActive ? direction : Vector2.up,
+        profile.Evaluate(actorSpeed, sprintPressed, combatLockActive && !IsCombatFreeSprint ? direction : Vector2.up,
             out float presentationSpeed, out float cadence, !combatLockActive);
         SetAnimatorFloat(LocomotionPresentationProfile.PlaybackParameter, cadence);
         bool moving = actorSpeed > profile.stopSpeed;
@@ -24,8 +24,8 @@ public partial class LitOpsiveLocomotionBridge
         {
             // Continue the physical deceleration, even after input release.
             SetAnimatorFloat(speedParam, speed);
-            SetAnimatorFloat(horizontalMovementParam, moving ? direction.x : 0);
-            SetAnimatorFloat(forwardMovementParam, moving ? direction.y : 0);
+            SetAnimatorFloat(horizontalMovementParam, moving && !IsCombatFreeSprint ? direction.x : 0);
+            SetAnimatorFloat(forwardMovementParam, moving ? (IsCombatFreeSprint ? 1f : direction.y) : 0);
             SetAnimatorFloat(combatMoveMagnitudeParam, moving ? 1 : 0);
             SetAnimatorFloat(locomotionTierParam, presentationSpeed);
             SetAnimatorBool(isMovingParam, moving);

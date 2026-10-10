@@ -67,8 +67,6 @@ public sealed partial class CombatMobilityController : MonoBehaviour
     [Header("Dodge")]
     [SerializeField] private string dodgeForwardState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root";
     [SerializeField] private string dodgeBackwardState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root";
-    [SerializeField] private string dodgeLeftState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root";
-    [SerializeField] private string dodgeRightState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root";
     [SerializeField] private CombatMobilityActionSettings dodge = new CombatMobilityActionSettings
     {
         cooldownSeconds = 0.25f,
@@ -286,18 +284,19 @@ public sealed partial class CombatMobilityController : MonoBehaviour
     private bool TryResolveDodge(RealTimeCombatManager manager, LitOpsiveLocomotionBridge bridge,
         out Vector3 direction, out string state, out CombatDodgeDashProfile dashProfile)
     {
-        Vector2 movementInput = bridge.IsCombatLockActive
-            ? bridge.CombatLockLocalInput
-            : bridge.CurrentWorldMoveInput;
+        Vector2 movementInput = bridge.CurrentWorldMoveInput;
+        var player = manager.PlayerRoot.GetComponent<SquadCharacterController>();
+        if (LocalPlayerContext.LocalCharacterRoot == manager.PlayerRoot && player != null)
+            movementInput = player.ResolveGameplayWorldMoveInput(LocalInputRouter.MoveValue);
         bool hasExplicitDirection = movementInput.sqrMagnitude > 0.0001f;
         if (hasExplicitDirection)
         {
-            direction = new Vector3(bridge.CurrentWorldMoveInput.x, 0f, bridge.CurrentWorldMoveInput.y).normalized;
-            state = ResolveDodgeState(manager.PlayerRoot, direction);
+            direction = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
+            state = dodgeForwardState;
         }
         else
         {
-            direction = ResolveMovementDirection(manager.PlayerRoot, fallbackBackward: true);
+            direction = -manager.PlayerRoot.forward;
             state = dodgeBackwardState;
         }
 
@@ -420,36 +419,4 @@ public sealed partial class CombatMobilityController : MonoBehaviour
         return (jump != null && jump.IsActive) || (bridge != null && !bridge.Grounded);
     }
 
-    private static Vector3 ResolveMovementDirection(Transform player, bool fallbackBackward)
-    {
-        LitOpsiveLocomotionBridge bridge = player != null
-            ? player.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)
-            : null;
-        Vector2 input = bridge != null ? bridge.CurrentWorldMoveInput : Vector2.zero;
-        Vector3 direction = new Vector3(input.x, 0f, input.y);
-        if (direction.sqrMagnitude > 0.0001f)
-        {
-            return direction.normalized;
-        }
-
-        Vector3 fallback = player != null ? player.forward : Vector3.forward;
-        return fallbackBackward ? -fallback : fallback;
-    }
-
-    private string ResolveDodgeState(Transform player, Vector3 worldDirection)
-    {
-        if (player == null)
-        {
-            return dodgeForwardState;
-        }
-
-        float forward = Vector3.Dot(player.forward, worldDirection);
-        float right = Vector3.Dot(player.right, worldDirection);
-        if (Mathf.Abs(forward) >= Mathf.Abs(right))
-        {
-            return forward >= 0f ? dodgeForwardState : dodgeBackwardState;
-        }
-
-        return right >= 0f ? dodgeRightState : dodgeLeftState;
-    }
 }

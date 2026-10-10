@@ -230,7 +230,41 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                Time.unscaledTime - lastExplicitWorldMoveInputTime <= Mathf.Max(0f, memorySeconds);
     }
     public bool IsCombatLockActive => combatLockActive;
+    public enum CombatLocomotionMode { TargetStrafe, FreeSprint, DirectionalEvasion }
+    public CombatLocomotionMode LockLocomotionMode { get; private set; }
+    public bool IsCombatFreeSprint => combatLockActive && LockLocomotionMode == CombatLocomotionMode.FreeSprint;
+    private bool IsTargetStrafe => combatLockActive && LockLocomotionMode == CombatLocomotionMode.TargetStrafe;
+    private Vector2 combatRawMoveInput;
+
+    private void ResolveCombatLocomotionMode(Vector2 input)
+    {
+        var presentation = GetComponent<PlayerActionPresentationController>();
+        bool canSprint = !IsInputSuppressedByUcc && !IsScriptedTraversalActive && !IsCinematicMotionSessionActive &&
+            (presentation == null || !presentation.IsActionActive) &&
+            (LocalPlayerContext.LocalCharacterRoot != transform || CounterSkillCombatController.Instance == null ||
+             !CounterSkillCombatController.Instance.IsGuardHeld);
+        var mode = combatDirectionalEvasionFacing ? CombatLocomotionMode.DirectionalEvasion :
+            combatLockActive && sprintPressed && input.sqrMagnitude > movementDeadZone * movementDeadZone && canSprint
+                ? CombatLocomotionMode.FreeSprint : CombatLocomotionMode.TargetStrafe;
+        if (mode == LockLocomotionMode) return;
+        LockLocomotionMode = mode;
+        ResetCombatOrbitRadius();
+        squadController?.ResetMovementReferenceForCombatMode();
+        hasSmoothedCombatFacingDirection = true;
+        smoothedCombatFacingDirection = locomotion != null ? locomotion.Rotation * Vector3.forward : transform.forward;
+        if (logCombatLockMotionDiagnostics)
+            Debug.Log("[CombatLockMotion] mode=" + mode + " input=" + input + " sprint=" + sprintPressed + " allowed=" + canSprint + " facing=" + smoothedCombatFacingDirection, this);
+    }
+
+    public bool TryGetCombatSprintSimulationIntent(out Vector2 worldInput, out Vector3 facing, out float turnRate)
+    {
+        worldInput = currentWorldMoveInput;
+        facing = new Vector3(worldInput.x, 0f, worldInput.y).normalized;
+        turnRate = orientationSprintTurnRate * (timeDomain != null ? timeDomain.Scale : 1f);
+        return IsCombatFreeSprint && !IsInputSuppressedByUcc && facing.sqrMagnitude > .0001f;
+    }
     public bool IsCombatDirectionalEvasionFacing => combatDirectionalEvasionFacing;
+    public float CombatFacingTurnRate => combatFacingSpeedDegreesPerSecond * (timeDomain != null ? timeDomain.Scale : 1f);
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
     private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive && !IsTacticalMovementActive;
     private bool IsTacticalMovementActive => LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _);
@@ -348,6 +382,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         sprintPressed = pressed;
+        ResolveCombatLocomotionMode(combatRawMoveInput);
         if (playerInput != null)
         {
             playerInput.SetSprintOverride(pressed, IsDriving);
@@ -1428,6 +1463,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             combatIdlePresentationActive = false;
             ResetCombatOrbitRadius();
         }
+        ResolveCombatLocomotionMode(combatRawMoveInput);
 
         SetAnimatorBool("CombatStrafeActive", combatLockActive);
         if (combatLockActive)
@@ -1451,6 +1487,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         combatLockActive = false;
+        LockLocomotionMode = CombatLocomotionMode.TargetStrafe;
+        combatRawMoveInput = Vector2.zero;
+        squadController?.ResetMovementReferenceForCombatMode();
         combatLockTarget = null;
         combatDirectionalEvasionFacing = false;
         hasSmoothedCombatFacingDirection = false;
@@ -1560,10 +1599,18 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool TryResolveCombatLockMove(Vector2 rawInput, out Vector2 worldInput)
     {
         worldInput = Vector2.zero;
-        if (LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _))
+        combatRawMoveInput = rawInput;
+        ResolveCombatLocomotionMode(rawInput);
+        if (IsTacticalMovementActive)
         {
             ResetCombatOrbitRadius();
             return false;
+        }
+        if (IsCombatFreeSprint)
+        {
+            combatLockLocalInput = Vector2.up * Mathf.Clamp01(rawInput.magnitude);
+            ResetCombatOrbitRadius();
+            return false; // SquadCharacterController supplies its camera-relative basis.
         }
         if (!combatLockActive || combatLockTarget == null)
         {
@@ -1655,12 +1702,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// Gives a dodge exclusive yaw authority. A forward dodge can align to its
-    /// travel vector; a locked side/back dodge keeps its entry combat facing.
+    /// Gives a directional dodge exclusive yaw authority until presentation ends.
+    /// Only an undirected backward dodge retains its entry facing.
     /// </summary>
     public void BeginDodgeDirectionFacing(Vector3 worldDirection, bool alignToTravelDirection)
     {
         combatDirectionalEvasionFacing = true;
+        ResolveCombatLocomotionMode(Vector2.zero);
         ResetCombatOrbitRadius();
         if (alignToTravelDirection)
         {
@@ -1683,13 +1731,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         combatDirectionalEvasionFacing = false;
-        MaintainCombatLockFacing();
+        if (LocalPlayerContext.LocalCharacterRoot == transform)
+            sprintPressed = LocalInputRouter.SprintPressed;
+        ResolveCombatLocomotionMode(combatRawMoveInput);
+        LocalPlayerInput.RequestHeldLocomotionReconciliation("Directional evasion finished");
         EnforceGameplayMotionAuthority();
     }
 
     private void MaintainCombatLockFacing()
     {
-        if (IsScriptedTraversalActive || !combatLockActive || combatDirectionalEvasionFacing || combatLockTarget == null)
+        if (IsScriptedTraversalActive || !IsTargetStrafe || combatLockTarget == null || IsInputSuppressedByUcc)
         {
             return;
         }
@@ -2240,6 +2291,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         float localScale = timeDomain != null ? timeDomain.Scale : 1f;
         Vector2 targetWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f) * localScale;
+        ResolveCombatLocomotionMode(worldInput);
         float targetMagnitude = targetWorldMoveInput.magnitude;
         if (targetMagnitude <= movementDeadZone)
         {
@@ -2257,10 +2309,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         float magnitude = currentWorldMoveInput.magnitude;
         if (combatLockActive && !combatDirectionalEvasionFacing)
         {
-            if (LitGameplayCameraModeController.TryGetTacticalMovement(transform, out _)) ResetCombatOrbitRadius();
             if (magnitude > movementDeadZone) ExitCombatIdleForMovement();
-            MaintainCombatLockFacing();
+            if (IsTargetStrafe) MaintainCombatLockFacing();
             combatLockLocalInput = ResolveLocalMoveInput(new Vector3(currentWorldMoveInput.x, 0, currentWorldMoveInput.y), magnitude);
+            if (IsCombatFreeSprint) combatLockLocalInput = Vector2.up * magnitude;
             SetCombatAnimatorInput(combatLockLocalInput);
         }
         if (magnitude <= movementDeadZone)
@@ -2275,7 +2327,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             Vector3 direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
             direction.Normalize();
             Vector3 lookDirection = direction;
-            if (!combatLockActive && orientLookSourceFromMovement && lookSource != null)
+            if ((!combatLockActive || IsCombatFreeSprint) && !combatDirectionalEvasionFacing &&
+                orientLookSourceFromMovement && lookSource != null)
             {
                 lookDirection = ResolveOrientationLookDirection(direction, magnitude);
                 lookSource.SetPlanarLookDirection(lookDirection);
@@ -2553,6 +2606,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (combatLockActive && !combatDirectionalEvasionFacing)
         {
             bool hasCombatMoveIntent = combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone;
+            if (IsCombatFreeSprint) SetCombatAnimatorInput(Vector2.up * (hasCombatMoveIntent ? combatLockLocalInput.magnitude : 0f));
             SetAnimatorFloat(speedParam, hasCombatMoveIntent ? speed : 0f);
             SetAnimatorBool(isMovingParam, hasCombatMoveIntent);
             SetAnimatorFloat(locomotionTierParam, hasCombatMoveIntent ? ResolveLocomotionTier(speed) : 0f);

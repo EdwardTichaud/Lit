@@ -448,11 +448,13 @@ public sealed partial class EnemyController
         }
 
         ActorLockOutline.SetLocked(locked);
-        ActorLockIndicator?.SetLocked(false, false);
-        if (locked && playSound)
+        if (ActorLockIndicator == null)
         {
-            ActorLockIndicator?.PlayLockSound();
+            ActorLockIndicator = GetComponent<CombatLockIndicator>();
+            if (locked && ActorLockIndicator == null)
+                ActorLockIndicator = gameObject.AddComponent<CombatLockIndicator>();
         }
+        ActorLockIndicator?.SetLocked(locked, playSound);
     }
 
     public void PlayHitAnimation()

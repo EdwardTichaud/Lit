@@ -12,6 +12,17 @@ public partial class LitOpsiveLocomotionBridge
 
     private Vector3 smoothedPlanarLookDirection;
     private bool hasSmoothedPlanarLookDirection;
+    public bool UseRateLimitedCombatFacing { get; private set; }
+
+    /// <summary>Tunes this actor's private runtime settings without editing CharacterData.</summary>
+    public void ConfigureTurnRates(float walk, float sprint, float sharpTurn, float combatFacing)
+    {
+        orientationWalkTurnRate = Mathf.Max(1f, walk);
+        orientationSprintTurnRate = Mathf.Max(1f, sprint);
+        orientationSharpTurnRate = Mathf.Max(1f, sharpTurn);
+        combatFacingSpeedDegreesPerSecond = Mathf.Max(1f, combatFacing);
+        UseRateLimitedCombatFacing = true;
+    }
 
     private void ValidateOrientationFeelSettings()
     {

@@ -1,3 +1,102 @@
+## Rotations rapides du laboratoire (2026-10-10)
+
+Retour de roulade tactique : ConfigureTurnRates active aussi la compensation
+du blend yaw UCC pour le facing sous lock. Le facteur moteur 0,14 ne ralentit
+plus une seconde fois le taux configure. Le yaw reste borne et simule par UCC ;
+aucun snap Transform ni changement d'orientation pendant la roulade. Hors
+laboratoire, sans cet opt-in, le facing tactique precedent reste intact.
+Compilation passee ; sortie de roulade a confirmer visuellement.
+
+Iluvilirae_Test expose sur LucianBrainsCombatArena les vitesses de rotation :
+Lucian marche 720, sprint 1080, virage important et facing combat 1440 degres/s ;
+Juggernaut 1080 degres/s. ConfigureTurnRates modifie seulement la copie privee
+des reglages du bridge apres binding CharacterData. Le profil ennemi est clone
+pour le test puis detruit avec l'encounter ; aucun asset production modifie.
+Les verrous directionnels d'attaque/roulade sont conserves. Compilation C#
+passee ; ressenti et demi-tours a confirmer en Play Mode.
+
+## Mobilite apres interruption (2026-10-10)
+
+PlayerScriptedJumpController libere sa presentation si Jump_Start est remplace
+avant impulsion, indisponible/fige pendant 1 s locale, ou si l'Animator est
+desactive. Une impulsion sans decollage est recuperee apres 0,5 s locale au
+sol. OnDisable efface aussi l'etat actif et les triggers ; aucune vitesse UCC
+ni chute physique n'est annulee. Le handoff PlayerAction surveille maintenant
+les remplacements/desactivations Animator pour ne pas ecraser la nouvelle pose.
+Compilation runtime/editor passee. Test Play cible PASSE dans la copie de
+Iluvilirae_Test : saut interrompu -> roulade, roulade interrompue -> nouvelle
+roulade/saut, verrou externe conserve, desactivation du saut nettoyee.
+Rapport : Library/ActorAnimationSandbox/Logs/MobilityRecovery.log.
+Le cas specifique d'interruption pendant le handoff reste a tester ; aucune
+migration de scene/prefab de production effectuee.
+
+## Curseur prefab monde dans Iluvilirae_Test (2026-10-10)
+
+Le laboratoire reference CombatLab_LockCursor.prefab (mesh losange HDRP Unlit,
+sans Canvas ni collider). CombatLockIndicator instancie ce prefab et le suit
+a ActorRoot.position + (0, 3, 0), avec orientation camera. Prefab et offset
+editables sur LucianBrainsCombatArena ; aucune migration des prefabs/scenes
+de production. Le fallback UI existant est conserve hors laboratoire.
+Compilation C# verifiee ; rendu du prefab a confirmer en Play Mode.
+
+## Curseur sur cible generique (2026-10-10)
+
+Correction : BeginExternalEncounter et ToggleExternalLock activent aussi le
+CombatLockIndicator sur ICombatTarget.Root (Juggernaut du laboratoire).
+EndCombat le masque avant restitution. Le premier branchement concernait
+seulement EnemyController et ne couvrait pas le laboratoire.
+
+## Sprint et focus Input System (2026-10-10)
+
+Deux filtres identifies : LocalPlayerInput.Update effacait le sprint parce
+que GamepadInputContextStack.IsGameplayInputSuppressed considere Combat bloque.
+Le sprint autorise explicitement Gameplay et Combat, mais pas UI/Placement/
+Cinematic. Le veto Application.isFocused, concurrent du routage Input System,
+est retire. Focus UI, modes et synchronisation restent prioritaires ; les
+appareils deconnectes/desactives sont exclus de la lecture.
+La trace initiale ForceZeroInput provenait du placement du test lui-meme,
+pas d'un verrou de combat orphelin. Validation Play ciblee PASSEE dans la copie
+Iluvilirae_Test : trigger tenu, bridge sprint=true, SpeedChange UCC actif,
+vitesse physique non nulle, mouvement/facing camera-relative et lock conserve.
+Compilation Unity passee. Rapport :
+Library/ActorAnimationSandbox/Logs/CombatSprintVerified.log.
+
+## Regression du repere tactique (2026-10-10)
+
+Retablissement du deplacement camera-relative en camera tactique, meme sous
+lock : la conversion radiale ajoutee par la passe course ne doit pas remplacer
+ce contrat. Le facing tactique repasse par MovementType/UCC, sans SetRotation
+par frame. FreeSprint alimente le regard par la direction de mouvement.
+La validation visuelle des tremblements reste a effectuer ; aucun test long
+automatique relance.
+
+## Curseur de cible lockee (2026-10-10)
+
+CombatLockIndicator est active par SetLockPresentation, en plus du contour.
+Sans visuel auteur, une fleche screen-space non interactive suit le sommet du
+modele. Elle est masquee hors champ, au delock/desactivation, et detruite avec
+l'acteur. Aucun changement du ciblage, de la camera ou du mouvement.
+
+## Course libre et roulades directionnelles (2026-10-10)
+
+Le bridge centralise TargetStrafe / FreeSprint / DirectionalEvasion. RT + stick
+en lock utilise le repere camera et tourne via UCC vers le deplacement ; sans
+sprint, retour progressif au face-a-face. La camera reste verrouillee.
+Les chemins tactiques concurrents sont exclus sous lock, et le client reseau
+convertit l'intention une fois. Les roulades explicites utilisent le clip avant
+et leur direction capturee jusqu'a la fin effective de la session. Les anciens
+reglages d'alignement de roulade sont retires. Vitesses et autorites physiques
+existantes conservees.
+
+Compilation Unity runtime/editor reussie dans la copie de validation.
+La validation generale avait ete arretee a la demande du developpeur.
+Le blocage du sprint a ensuite ete isole et corrige (filtre Combat), avec un
+test Play cible passe. Les huit directions et roulades completes restent a
+valider ; traces temporaires retirees, aucun test en attente.
+Ne pas presenter District 1, reseau host/client, murs ou BattleWall comme valides
+sans execution. Test disponible via Lit > Combat > Validate Free Sprint in
+Iluvilirae ; rapport Library/CombatFreeSprint.result.
+
 ## Confirmation de la roue de competences (2026-10-10)
 
 SouthButton confirme le slot actuellement selectionne/survole dans la roue

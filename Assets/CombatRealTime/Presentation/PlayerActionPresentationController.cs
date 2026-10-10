@@ -1048,6 +1048,16 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         activeHandoffStartedAt = Time.unscaledTime;
         while (token == activeToken && locomotionBridge != null && locomotionBridge.Grounded)
         {
+            if (animator == null || !animator.isActiveAndEnabled)
+            {
+                RecoverAction(token, "Animator disabled during handoff", profile);
+                yield break;
+            }
+            if (!TryGetActiveAnimatorState(out _))
+            {
+                RecoverAction(token, "Animator state replaced during handoff", profile);
+                yield break;
+            }
             locomotionBridge.ApplyPlanarHandoffDamping(handoff.planarDampingPerSecond);
             if (locomotionBridge.IsMotionHandoffSettled(handoff) ||
                 Time.unscaledTime - activeHandoffStartedAt >= handoff.maximumSettleSeconds)

@@ -202,6 +202,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (externalLockIndicator != null) externalLockIndicator.SetLocked(false, false);
         ReleaseCombatMusicOverride();
         if (Instance == this)
         {
@@ -395,6 +396,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         ResolvePlayerReferences();
         externalTarget?.SetCinematicSuspended(false);
         externalTarget = null; externalTargetLocked = false;
+        RefreshExternalLockIndicator();
         combatActive = false;
         combatHealthThresholdController?.AbortActiveSequence("fin de combat");
         playerMobility?.CancelCombatState();

@@ -126,8 +126,12 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     private void Update()
     {
         var action = playerInputs != null ? playerInputs.asset.FindAction("Player/RightShoulder", false) : null;
+        var context = GamepadInputContextStack.Current;
+        bool locomotionContext = context == GamepadInputContext.Gameplay || context == GamepadInputContext.Combat;
         bool allowed = (InputModeCoordinator.CurrentMode == InputMode.Exploration || InputModeCoordinator.CurrentMode == InputMode.Combat) &&
-            !InputFocusStack.HasAnyFocus() && !GamepadInputContextStack.IsGameplayInputSuppressed && !JoinSyncSystem.IsGameplayBlocked && Application.isFocused;
+            !InputFocusStack.HasAnyFocus() && locomotionContext && !JoinSyncSystem.IsGameplayBlocked;
+        // Input System owns focus/device routing. Application.isFocused can be
+        // false in the Editor while gamepad input still reaches the Game View.
         LocalInputRouter.SetSprintPressed(allowed && ReadSprintIntent(action));
         if (combatInputActive)
         {
@@ -611,8 +615,10 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     private bool ReadSprintIntent(InputAction action)
     {
-        bool actionPressed = action != null && action.enabled && action.ReadValue<float>() > RightTriggerSprintThreshold;
-        bool triggerPressed = MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null &&
+        bool actionPressed = action != null && action.enabled &&
+                             (action.activeControl == null || action.activeControl.device.added && action.activeControl.device.enabled) &&
+                             action.ReadValue<float>() > RightTriggerSprintThreshold;
+        bool triggerPressed = MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null && Gamepad.current.added && Gamepad.current.enabled &&
                               Gamepad.current.rightTrigger.ReadValue() > RightTriggerSprintThreshold;
         return actionPressed || triggerPressed;
     }

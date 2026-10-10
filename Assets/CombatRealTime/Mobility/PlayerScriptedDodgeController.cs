@@ -14,8 +14,6 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
 
     public float impulseSpeed { get => ModuleSettings.impulseSpeed; set => ModuleSettings.impulseSpeed = value; }
     public float durationMultiplier { get => ModuleSettings.durationMultiplier; set => ModuleSettings.durationMultiplier = value; }
-    public bool alignUnlockedDodgeToTravel { get => ModuleSettings.alignUnlockedDodgeToTravel; set => ModuleSettings.alignUnlockedDodgeToTravel = value; }
-    public bool alignLockedForwardDodgeToTravel { get => ModuleSettings.alignLockedForwardDodgeToTravel; set => ModuleSettings.alignLockedForwardDodgeToTravel = value; }
 
     private int dodgeGeneration;
     private Coroutine activeDodgeRoutine;
@@ -43,7 +41,8 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         CancelDodge();
         activeBridge = bridge;
         activeTimeDomain = bridge.GetComponent<CombatTimeDomain>();
-        bool alignToTravel = ShouldAlignToTravel(bridge, profile.statePath);
+        bool alignToTravel = !string.IsNullOrEmpty(profile.statePath) &&
+            profile.statePath.IndexOf("_Dodge_F_", System.StringComparison.OrdinalIgnoreCase) >= 0;
         if (!bridge.BeginScriptedPlanarMotion(this))
         {
             activeBridge = null;
@@ -102,6 +101,12 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         }
 
         if (generation != dodgeGeneration) yield break;
+        // Translation ends on its authored duration, facing stays owned until
+        // the action presentation actually hands control back.
+        activeBridge?.DriveScriptedPlanarMotion(this, Vector3.zero);
+        while (actionPresentation != null && actionPresentation.IsCurrentSession(actionGeneration) && generation == dodgeGeneration)
+            yield return null;
+        if (generation != dodgeGeneration) yield break;
         activeDodgeRoutine = null;
         EndDodge();
     }
@@ -121,10 +126,4 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         activeTimeDomain = null;
     }
 
-    private bool ShouldAlignToTravel(LitOpsiveLocomotionBridge bridge, string statePath)
-    {
-        if (bridge == null || !bridge.IsCombatLockActive) return alignUnlockedDodgeToTravel;
-        return alignLockedForwardDodgeToTravel && !string.IsNullOrEmpty(statePath) &&
-               statePath.IndexOf("_Dodge_F_", System.StringComparison.OrdinalIgnoreCase) >= 0;
-    }
 }

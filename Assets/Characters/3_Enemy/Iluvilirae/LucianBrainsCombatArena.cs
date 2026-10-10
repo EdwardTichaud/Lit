@@ -13,6 +13,8 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     public BasicSkillsSO[] basicSkills;
     public SkillSO[] enemyAttackSkills;
     public Camera arenaCamera;
+    public GameObject lockCursorPrefab;
+    public Vector3 lockCursorOffset = new Vector3(0, 3, 0);
     [Header("Encounter tuning (test only)")]
     public Vector3 playerSpawn = new Vector3(0, 0.1f, 5);
     public Vector3 enemySpawn = new Vector3(0, 0, -4);
@@ -21,6 +23,12 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     [Min(0.1f)] public float enemyMeleeReach = 3.2f;
     public string hurtState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
     public bool showCombatDiagnostics;
+    [Header("Rotation tuning (test only, degrees/second)")]
+    [Min(1f)] public float playerWalkTurnRate = 720f;
+    [Min(1f)] public float playerSprintTurnRate = 1080f;
+    [Min(1f)] public float playerSharpTurnRate = 1440f;
+    [Min(1f)] public float playerCombatFacingRate = 1440f;
+    [Min(1f)] public float enemyTurnRate = 1080f;
     public SquadCharacterController Player { get; private set; }
     public LitBrainsEnemy Enemy { get; private set; }
     public bool EncounterOver => Player != null && Player.CurrentHp <= 0 || Enemy != null && Enemy.IsDead;
@@ -40,6 +48,7 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     private bool enemyContactUsed;
     public bool IsPaused => paused;
     private Transform previousLocalPlayer;
+    private LitBrainsCombatProfile runtimeEnemyProfile;
 
     private void OnEnable()
     {
@@ -128,6 +137,7 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             playerObject.SetActive(false); Destroy(playerObject); enabled = false; return;
         }
         Player.BindCharacterData(info.SourceData, initializeInventory: false);
+        bridge.ConfigureTurnRates(playerWalkTurnRate, playerSprintTurnRate, playerSharpTurnRate, playerCombatFacingRate);
         Player.SetHealth(playerMaxHealth, playerMaxHealth);
         Player.ApplyFlameState(Player.FlameSecondsRemaining, false);
         // This laboratory owns input; no session or network player is launched.
@@ -138,6 +148,18 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
         // Existing AnimationEvents resolves impacts through the shared services.
         LocalPlayerContext.SetLocalCharacter(playerObject.transform, source: "BrainsCombatLab");
         Enemy = Instantiate(enemyPrefab, enemySpawn, Quaternion.identity).GetComponent<LitBrainsEnemy>();
+        if (Enemy.combatProfile != null)
+        {
+            runtimeEnemyProfile = Instantiate(Enemy.combatProfile);
+            runtimeEnemyProfile.turnDegreesPerSecond = Mathf.Max(1f, enemyTurnRate);
+            Enemy.combatProfile = runtimeEnemyProfile;
+        }
+        if (lockCursorPrefab != null)
+        {
+            var indicator = Enemy.GetComponent<CombatLockIndicator>();
+            if (indicator == null) indicator = Enemy.gameObject.AddComponent<CombatLockIndicator>();
+            indicator.ConfigureWorldCursor(lockCursorPrefab, lockCursorOffset);
+        }
         Enemy.detectionTargetOverride = playerObject.transform;
         Enemy.AttackImpact += OnEnemyAttackImpact;
         Enemy.ReactionOpportunity += OnEnemyReactionOpportunity;
@@ -182,8 +204,8 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             return;
         }
         bool gameplay = InputModeCoordinator.CurrentMode == InputMode.Combat && !combat.IsCinematicSequenceActive;
-        Player.Move(gameplay ? LocalInputRouter.MoveValue : Vector2.zero);
         Player.SetSprintModifier(gameplay && LocalInputRouter.SprintPressed);
+        Player.Move(gameplay ? LocalInputRouter.MoveValue : Vector2.zero);
         if (Player.transform.position.y < -5) Player.SetCurrentHp(0);
     }
 
@@ -298,6 +320,8 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             Player.gameObject.SetActive(false); Destroy(Player.gameObject);
         }
         if (Enemy != null) { Enemy.AttackImpact -= OnEnemyAttackImpact; Enemy.ReactionOpportunity -= OnEnemyReactionOpportunity; Enemy.gameObject.SetActive(false); Destroy(Enemy.gameObject); }
+        if (runtimeEnemyProfile != null) Destroy(runtimeEnemyProfile);
+        runtimeEnemyProfile = null;
         Player = null; Enemy = null;
     }
 

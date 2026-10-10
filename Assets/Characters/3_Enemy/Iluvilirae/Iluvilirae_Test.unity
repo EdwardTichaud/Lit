@@ -3007,6 +3007,13 @@ MonoBehaviour:
   enemyMeleeReach: 3.2
   hurtState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   showCombatDiagnostics: 0
+  lockCursorPrefab: {fileID: 1000, guid: b37e8d3d67234ea38d540629884345a0, type: 3}
+  lockCursorOffset: {x: 0, y: 3, z: 0}
+  playerWalkTurnRate: 720
+  playerSprintTurnRate: 1080
+  playerSharpTurnRate: 1440
+  playerCombatFacingRate: 1440
+  enemyTurnRate: 1080
 --- !u!4 &2012495679
 Transform:
   m_ObjectHideFlags: 0

@@ -271,6 +271,24 @@ Un objet transmis doit idéalement permettre de comprendre :
 - où il a été retrouvé ;
 - ce que sa transmission révèle d'une relation familiale.
 
+## Les Gargouilles
+
+Le principe général est que tous les ennemis affrontés dans le jeu sont des
+Gargouilles, y compris les boss. Quelques exceptions narratives sont possibles,
+comme le scientifique fou, un fantôme qui devient ennemi. Ces exceptions ne
+remettent pas en cause ce principe général ; leurs détails restent à définir.
+
+Certaines Gargouilles sont des alliées : leur nature ne détermine pas à elle seule
+leur hostilité envers Lucian et ses compagnons.
+
+Les Gargouilles ennemies ne s'activent que lorsqu'elles se trouvent dans une zone
+d'influence de Flame. Cette influence est une condition nécessaire à leur
+activation ; elle ne signifie pas que toute Gargouille devient hostile.
+
+Leur origine, la raison de leur hostilité ou de leur alliance et les règles
+d'activation des Gargouilles alliées restent à définir. Le comportement d'une
+Gargouille ennemie lorsque l'influence de Flame cesse reste également ouvert.
+
 ## Les fantômes
 
 Les fantômes ne sont pas des monstres. Ce sont des mémoires incomplètes attachées

@@ -159,7 +159,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         pendingMove = controller != null
-            ? controller.GetWorldSpaceInput(rawMoveInput)
+            ? controller.ResolveGameplayWorldMoveInput(rawMoveInput)
             : rawMoveInput;
 
         HandleTriggerMuninRequest();
@@ -198,7 +198,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         pendingMove = controller != null
-            ? controller.GetWorldSpaceInput(value)
+            ? controller.ResolveGameplayWorldMoveInput(value)
             : value;
     }
 

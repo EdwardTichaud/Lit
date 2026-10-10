@@ -1,5 +1,49 @@
 # Combat
 
+## Repere tactique preserve (2026-10-10)
+
+Correction de regression : en camera tactique, le lock conserve le repere
+camera-relative et le yaw simule par UCC. La conversion radiale ne doit pas
+remplacer ce comportement ; elle reste reservee au lock third-person.
+Le rendu des transitions course/strafe reste non valide en jeu.
+
+## Curseur de lock (2026-10-10)
+
+Iluvilirae_Test utilise desormais un prefab monde explicite configure sur
+LucianBrainsCombatArena : CombatLab_LockCursor, offset (0, 3, 0) depuis le root.
+Le visuel suit la cible, fait face a la camera, sans Canvas/projection/collider.
+Il est masque au delock et detruit avec l'acteur. Production non migree ;
+le fallback UI reste inchange pour les autres chemins.
+
+Le chemin ICombatTarget (BeginExternalEncounter/ToggleExternalLock) pilote
+egalement CombatLockIndicator sur son ActorRoot ; EndCombat le masque.
+
+SetLockPresentation pilote le contour et CombatLockIndicator. Ce dernier cree
+une fleche UI non interactive si aucun visualRoot auteur n'existe ; elle suit
+le sommet du SkinnedMeshRenderer avec un offset configurable et garde une
+taille constante a l'ecran. Seule la cible du lock local est affichee, sans
+modifier le gameplay. Hors champ/delock/desactivation : masquage ; destruction
+de l'acteur : liberation du Canvas, Sprite et Texture.
+
+## Mobilite sous lock (2026-10-10)
+
+Marche : orbite cible-relative et face-a-face. RT + mouvement : course libre
+camera-relative, sans abandon du lock. Le bridge resout ces modes pour les
+inputs, la presentation et le yaw UCC ; aucun mouvement direct du Transform
+n'est ajoute. Vitesses, acceleration, sprint CharacterData et collisions restent
+ceux du moteur existant. Les actions prioritaires gardent leurs verrous.
+
+Toutes les roulades dirigees utilisent la presentation avant et leur direction
+monde capturee ; seules les roulades sans direction restent arriere. La fin
+physique de l'impulsion ne restitue pas prematurement le facing : la session
+de presentation doit terminer ou etre annulee. Reprise sprint tenu sans retour
+intermediaire vers la cible. Le laboratoire transmet maintenant RT avant Move.
+
+Validation ciblee disponible : Lit > Combat > Validate Free Sprint in Iluvilirae.
+Le rapport est ecrit dans Library/CombatFreeSprint.result. Le test utilise le
+prefab Lucian, UCC et une manette virtuelle pour huit directions, conservation
+du lock, relachement du trigger et roulade diagonale suivie du sprint.
+
 ## Regle d'integration des evolutions du combat
 
 Toute amelioration, modification ou correction du systeme de combat doit

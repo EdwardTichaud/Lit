@@ -2365,7 +2365,7 @@ public partial class SquadCharacterController : MonoBehaviour
         TraceDistrictMoveIntent(input);
 #endif
         LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
-        if (bridge != null && LitGameplayCameraModeController.TryGetTacticalMovement(bridge.transform, out _))
+        if (bridge != null && !bridge.IsCombatLockActive && LitGameplayCameraModeController.TryGetTacticalMovement(bridge.transform, out _))
         {
             TryForwardMoveToUcc(input, isWorldSpace: false);
             return;
@@ -3280,6 +3280,15 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return camRight * input.x + camForward * input.y;
+    }
+
+    public void ResetMovementReferenceForCombatMode() => ClearStoredMovementReference();
+
+    public Vector2 ResolveGameplayWorldMoveInput(Vector2 input)
+    {
+        var bridge = GetUccLocomotionBridge();
+        return bridge != null && bridge.TryResolveCombatLockMove(input, out var worldInput)
+            ? worldInput : GetWorldSpaceInput(input);
     }
 
     public Vector2 GetWorldSpaceInput(Vector2 input)

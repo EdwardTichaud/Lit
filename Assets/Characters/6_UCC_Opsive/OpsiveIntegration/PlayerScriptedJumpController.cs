@@ -42,6 +42,11 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private float baseGravity;
     private float landingContactStartedAt = -1f;
     private Phase phase;
+    private bool enteredTakeoffState;
+    private float takeoffProgress = float.NaN;
+    private float takeoffStallSeconds;
+    private float groundedAfterImpulseSeconds;
+    private CombatTimeDomain timeDomain;
 
     public bool IsActive => jumpActive;
     public float TargetJumpHeight => jumpHeight;
@@ -67,7 +72,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     {
         EventHandler.UnregisterEvent<bool>(gameObject, GroundedEvent, OnGroundedChanged);
         EventHandler.UnregisterEvent<float>(gameObject, LandEvent, OnLanded);
-        RestoreGravity();
+        ResetPresentation();
     }
 
     /// <summary>Starts the only supported player jump arc. Input is accepted
@@ -83,6 +88,9 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         }
 
         jumpActive = true;
+        enteredTakeoffState = false;
+        takeoffProgress = float.NaN;
+        takeoffStallSeconds = groundedAfterImpulseSeconds = 0f;
         leftGround = false;
         landingRequested = false;
         takeoffImpulseApplied = false;
@@ -103,11 +111,29 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     {
         if (!jumpActive || locomotion == null) return;
 
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            ResetPresentation();
+            return;
+        }
+
         if (!takeoffImpulseApplied)
         {
+            if (!ValidateTakeoffProgress()) return;
             if (HasReachedJumpStartTakeoffTime()) ApplyTakeoffImpulse();
             return;
         }
+
+        // A cancelled impulse or low ceiling may never produce a grounded event.
+        // Restore presentation only; never cancel UCC's velocity or physical fall.
+        if (!landingRequested && locomotion.Grounded)
+        {
+            groundedAfterImpulseSeconds += LocalDeltaTime;
+            if (leftGround) RequestLanding(0f);
+            else if (groundedAfterImpulseSeconds >= 0.5f) ResetPresentation();
+            return;
+        }
+        groundedAfterImpulseSeconds = 0f;
 
         float verticalSpeed = Vector3.Dot(locomotion.Velocity, transform.up);
         if (!landingRequested)
@@ -220,6 +246,8 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private void ResetPresentation()
     {
         RestoreGravity();
+        ResetTrigger("JumpStartTrigger");
+        ResetTrigger("LandingTrigger");
         jumpActive = false;
         leftGround = false;
         landingRequested = false;
@@ -263,14 +291,41 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         if (animator == null) return true;
         int jumpStartHash = Animator.StringToHash("Jump_Start");
         AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
-        AnimatorStateInfo next = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
-        return HasReachedTakeoffTime(current, jumpStartHash) || HasReachedTakeoffTime(next, jumpStartHash);
+        if (animator.IsInTransition(0)) current = animator.GetNextAnimatorStateInfo(0);
+        return HasReachedTakeoffTime(current, jumpStartHash);
     }
 
     private bool HasReachedTakeoffTime(AnimatorStateInfo state, int jumpStartHash)
     {
         return state.shortNameHash == jumpStartHash &&
                state.normalizedTime >= Mathf.Clamp01(jumpStartTakeoffNormalizedTime);
+    }
+
+    private float LocalDeltaTime => timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
+
+    private bool ValidateTakeoffProgress()
+    {
+        int hash = Animator.StringToHash("Jump_Start");
+        var state = animator.GetCurrentAnimatorStateInfo(0);
+        if (animator.IsInTransition(0)) state = animator.GetNextAnimatorStateInfo(0);
+        bool isTakeoff = state.shortNameHash == hash;
+        if (enteredTakeoffState && !isTakeoff)
+        {
+            ResetPresentation();
+            return false;
+        }
+        if (isTakeoff)
+        {
+            enteredTakeoffState = true;
+            takeoffStallSeconds = Mathf.Approximately(takeoffProgress, state.normalizedTime)
+                ? takeoffStallSeconds + Mathf.Max(0f, LocalDeltaTime) : 0f;
+            takeoffProgress = state.normalizedTime;
+        }
+        else takeoffStallSeconds += Mathf.Max(0f, LocalDeltaTime);
+        if (takeoffStallSeconds < 1f) return true;
+        Debug.LogWarning($"[PlayerJump] Takeoff unavailable or stalled on '{name}'; jump presentation released.", this);
+        ResetPresentation();
+        return false;
     }
 
     private void ApplyTakeoffImpulse()
@@ -297,6 +352,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         if (locomotion == null) locomotion = GetComponent<UltimateCharacterLocomotion>();
         if (locomotionBridge == null) locomotionBridge = GetComponent<LitOpsiveLocomotionBridge>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (timeDomain == null) timeDomain = GetComponent<CombatTimeDomain>();
     }
 
     private void SetPhase(Phase value)
