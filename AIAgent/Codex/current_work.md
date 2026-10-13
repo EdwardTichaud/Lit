@@ -1,5 +1,17 @@
 ## Recrutement solo et supports (2026-10-13)
 
+Éclair applique un stun de 1 seconde à son impact confirmé. Sa traversée
+conserve le verrou planaire et son orientation jusqu’à la fin du clip ; les
+collisions cible sont rétablies dès la fin du trajet. Mobilité non annulable,
+récupération à normalizedTime=1, nettoyage par la session d’action existante.
+Compilation et Play ciblé réussis : impact réel, stun 1 s, orientation conservée,
+stick bloqué jusqu’à la fin du clip puis repris, interruption sans verrou résiduel.
+Régression de mobilité réussie (14 cas) : portées, Bond offensif, murs, BattleWall,
+vide, interruption, cible volumineuse et restauration des collisions.
+Logs EclairInertia.log / EclairMobilityRegression.log dans
+Library/ActorAnimationSandbox/Logs. Une MissingReferenceException distincte
+dans EndCombat à la fermeture du laboratoire est consignée, sans correction ici.
+
 La roue directionnelle se ferme désormais sur une nouvelle pression de la
 direction du kit affiché ; une autre direction change de kit. Le maintien
 ne rebascule pas lors du changement d’ActionMap. CombatWheel laisse Move et

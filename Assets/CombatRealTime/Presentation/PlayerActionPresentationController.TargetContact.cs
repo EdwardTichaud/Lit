@@ -137,8 +137,14 @@ public sealed partial class PlayerActionPresentationController
             if (lungeToken == targetLungeToken && contactGeneration == generation)
             {
                 locomotionBridge.DriveScriptedPlanarMotion(this, Vector3.zero);
-                locomotionBridge.EndScriptedPlanarMotion(this);
-                targetLungeOwnsPlanarMotion = false;
+                // The contact collision bypass ends with the travelled route,
+                // but an authored committed strike retains its control/facing
+                // lock until TerminateAction (completion, interruption or death).
+                if (!profile.holdControlsUntilAnimationEnd || !IsCurrentSession(generation))
+                {
+                    locomotionBridge.EndScriptedPlanarMotion(this);
+                    targetLungeOwnsPlanarMotion = false;
+                }
                 targetLungeRoutine = null;
             }
         }

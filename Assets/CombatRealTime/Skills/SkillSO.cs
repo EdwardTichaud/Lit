@@ -45,6 +45,8 @@ public sealed class PlayerTargetLungeProfile
     public bool passThroughTarget;
     [Tooltip("L'Animation Event OpenSkillContactWindow autorise un impact unique au contact physique, au lieu du HitEnemy ponctuel.")]
     public bool resolveImpactAtContact;
+    [Tooltip("Conserve le verrou de locomotion et l'orientation de la traversee jusqu'a la fin de l'animation, meme apres la fin du deplacement scripté.")]
+    public bool holdControlsUntilAnimationEnd;
     [Tooltip("Clip placeholder du state existant, remplace uniquement pour la session de ce skill.")]
     public AnimationClip contactAnimationSlot;
     [Min(0f), Tooltip("Distance horizontale finale derriere la cible pour une traversee.")]

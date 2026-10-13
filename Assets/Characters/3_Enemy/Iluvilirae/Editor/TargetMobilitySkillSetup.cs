@@ -17,7 +17,8 @@ public static class TargetMobilitySkillSetup
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before authoring.");
         var eclair = AssetDatabase.LoadAssetAtPath<SkillSO>(EclairPath);
         if (eclair == null) throw new InvalidOperationException("Eclair is missing.");
-        if (AssetDatabase.LoadAssetAtPath<SkillSO>(BondPath) == null) AssetDatabase.CopyAsset(EclairPath, BondPath);
+        bool newBond = AssetDatabase.LoadAssetAtPath<SkillSO>(BondPath) == null;
+        if (newBond) AssetDatabase.CopyAsset(EclairPath, BondPath);
         var bond = AssetDatabase.LoadAssetAtPath<SkillSO>(BondPath);
         if (!AssetDatabase.IsValidFolder(Folder)) AssetDatabase.CreateFolder("Assets/CombatRealTime/Skills", "TargetMobility");
         var original = AssetDatabase.LoadAssetAtPath<AnimationClip>(SourceClip);
@@ -45,6 +46,19 @@ public static class TargetMobilitySkillSetup
             EditorUtility.SetDirty(skill);
         }
         bond.skillName = "Bond offensif";
+        if (newBond)
+        {
+            bond.stunSeconds = 0f;
+            bond.targetLunge.holdControlsUntilAnimationEnd = false;
+            bond.presentation.recoveryNormalizedTime = .88f;
+            bond.presentation.allowMobilityCancel = true;
+            bond.presentation.allowDodgeAfterRecovery = true;
+        }
+        eclair.stunSeconds = 1f;
+        eclair.targetLunge.holdControlsUntilAnimationEnd = true;
+        eclair.presentation.recoveryNormalizedTime = 1f;
+        eclair.presentation.allowMobilityCancel = false;
+        eclair.presentation.allowDodgeAfterRecovery = false;
         bond.name = "Skill_BondOffensif";
         EditorUtility.SetDirty(clip);
         var previous = EditorSceneManager.GetSceneManagerSetup();

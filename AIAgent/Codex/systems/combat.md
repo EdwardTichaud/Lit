@@ -1755,6 +1755,22 @@ Une reussite lance immediatement l'etat Animator de succes, puis applique `KillE
 ## Eclair et Bond offensif
 
 Eclair : useLaunchRange=true, minimumLaunchDistance=0, maximumLaunchDistance=10.
+Son impact confirmé applique 1 seconde d’étourdissement via le pipeline existant.
+holdControlsUntilAnimationEnd conserve le slot planaire UCC après la traversée,
+avec vitesse demandée nulle : Lucian garde l’orientation de sa charge, sans
+se retourner vers la cible passée derrière lui, et les entrées de déplacement/
+mobilité restent bloquées jusqu’à la fin du clip (recoveryNormalizedTime=1,
+allowMobilityCancel=false). Les collisions avec la cible sont rétablies dès
+la fin de la traversée ; seule la commande de locomotion reste verrouillée.
+TerminateAction libère le slot aussi sur interruption, mort et désactivation.
+Bond offensif conserve sa récupération et ses réglages indépendants.
+Validation : EclairInertiaPlayValidation passe sur l’impact réel, le stun 1 s,
+la direction de traversée, le maintien du stick bloqué pendant le clip, sa
+restitution et l’interruption. TargetMobilityPlayValidation passe ses 14 cas,
+dont murs/sol/BattleWall, grandes cibles et leases de collisions imbriquées.
+Logs EclairInertia.log et EclairMobilityRegression.log dans
+Library/ActorAnimationSandbox/Logs. Une référence détruite dans EndCombat à la
+fermeture du laboratoire survient après les validations ; elle reste hors de ce lot.
 Bond offensif : 2-30 m. Ces bornes inclusives comparent horizontalement les
 ActorRoots avant animation/VFX/audio ; elles ne changent pas la portee des degats.
 Sans override, RequireValidRangeToStart conserve le comportement historique.

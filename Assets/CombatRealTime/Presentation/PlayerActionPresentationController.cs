@@ -442,6 +442,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             contactGeneration = activeToken;
             contactWindowArmed = contactImpactUsed = false;
             var root = RealTimeCombatManager.Instance?.LockedCombatTarget?.Root ?? target;
+            contactTravelDirection = Vector3.ProjectOnPlane(root.position - transform.position, Vector3.up).normalized;
+            if (contactTravelDirection.sqrMagnitude < .0001f) contactTravelDirection = transform.forward;
             targetLungeRoutine = StartCoroutine(RunContactTargetLunge(skill, root, ++targetLungeToken, activeToken));
         }
         else targetLungeRoutine = StartCoroutine(RunTargetLunge(profile, target, ++targetLungeToken, activeToken));

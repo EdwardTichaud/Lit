@@ -36,6 +36,7 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: f134648a13926924095c0c74b0e4604b, type: 2}
   animatorState: Base Layer.Skill_1_Eclair
   damages: 10
+  stunSeconds: 1
   clarityGainOnHit: 1
   presentation:
     movementPolicy: 2
@@ -43,7 +44,7 @@ MonoBehaviour:
     chainNormalizedTime: 1
     chainTransitionNormalizedTime: 0.78
     mobilityCancelNormalizedTime: 0.7
-    recoveryNormalizedTime: 0.88
+    recoveryNormalizedTime: 1
     exitBlendSeconds: 0.1
     handoff:
       minimumContactSeconds: 0
@@ -63,8 +64,8 @@ MonoBehaviour:
       destinationCycleSeconds: 0
     facingMode: 1
     allowMoveAfterRecovery: 1
-    allowDodgeAfterRecovery: 1
-    allowMobilityCancel: 1
+    allowDodgeAfterRecovery: 0
+    allowMobilityCancel: 0
   minimumHitDistance: 0
   maximumHitDistance: 10
   requireValidRangeToStart: 0
@@ -123,6 +124,7 @@ MonoBehaviour:
     enabled: 1
     passThroughTarget: 1
     resolveImpactAtContact: 1
+    holdControlsUntilAnimationEnd: 1
     contactAnimationSlot: {fileID: 7400000, guid: b3c788eedd4bc2946823dd734fdefb9a, type: 2}
     passThroughDistance: 4
     approachDurationSeconds: 0.25
