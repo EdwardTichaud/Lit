@@ -130,6 +130,8 @@ public sealed class InputModeCoordinator : MonoBehaviour
     }
 
     public static bool IsGameplayBlocked => CurrentMode != InputMode.Exploration;
+    public static bool IsLocomotionAllowed => CurrentMode == InputMode.Exploration ||
+        CurrentMode == InputMode.Combat || CurrentMode == InputMode.CombatWheel || IsUserInterfaceMovementPassthroughActive;
     public static bool IsCameraAllowed => CurrentMode == InputMode.Exploration || CurrentMode == InputMode.Dialogue ||
                                           CurrentMode == InputMode.Placement || CurrentMode == InputMode.Combat ||
                                           CurrentMode == InputMode.ThresholdSequence || CurrentMode == InputMode.CombatQTE ||
@@ -212,9 +214,10 @@ public sealed class InputModeCoordinator : MonoBehaviour
             actions.FindActionMap(mapName, false)?.Enable();
         }
 
-        if (IsUserInterfaceMovementPassthroughActive)
+        if (IsUserInterfaceMovementPassthroughActive || mode == InputMode.CombatWheel)
         {
             actions.FindAction("Player/Move", false)?.Enable();
+            if (mode == InputMode.CombatWheel) actions.FindAction("Player/RightShoulder", false)?.Enable();
         }
 
         LocalInputRouter.ResetMove();
@@ -226,7 +229,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
         // shoulder button that stays held when it comes back. Re-read those
         // controls on the next frame so a cinematic/UI handoff cannot leave
         // locomotion permanently at zero.
-        if (mode == InputMode.Exploration || mode == InputMode.Combat || IsUserInterfaceMovementPassthroughActive)
+        if (IsLocomotionAllowed)
         {
             LocalPlayerInput.RequestHeldLocomotionReconciliation("InputMode " + mode);
         }
@@ -253,7 +256,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
                 yield return "Camera";
                 yield break;
             case InputMode.TacticalInspection: yield return "Camera"; yield break;
-            case InputMode.CombatWheel: yield return "CombatWheel"; yield break;
+            case InputMode.CombatWheel: yield return "CombatWheel"; yield return "System"; yield break;
             case InputMode.CombatQTE:
                 yield return "Camera";
                 yield return "CombatQTE";

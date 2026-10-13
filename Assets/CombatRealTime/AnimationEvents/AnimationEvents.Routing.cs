@@ -61,7 +61,31 @@ public sealed partial class AnimationEvents
         if (owner is Behaviour behaviour && !behaviour.isActiveAndEnabled) return;
         action(owner);
     }
-    private void OnDisable() => missingDestinations.Clear();
+    private PlayerActionPresentationController timelineSwordOwner;
+    private int timelineSwordGeneration;
+    private void OnDisable()
+    {
+        HideTimelineSword();
+        missingDestinations.Clear();
+    }
+
+    public void ShowTimelineSword()
+    {
+        if (Preview(nameof(ShowTimelineSword))) return;
+        var player = ResolveLocal<PlayerActionPresentationController>();
+        if (player == null) { Missing(nameof(ShowTimelineSword)); return; }
+        timelineSwordOwner = player;
+        timelineSwordGeneration = player.ActionGeneration;
+        player.HandleShowSword();
+    }
+
+    public void HideTimelineSword()
+    {
+        // Only release the sword shown by this rig/session, never a newer attack.
+        var player = timelineSwordOwner;
+        timelineSwordOwner = null;
+        if (player != null && player.ActionGeneration == timelineSwordGeneration) player.HandleHideSword();
+    }
 
     public void KnockedOut()
     {
@@ -91,6 +115,23 @@ public sealed partial class AnimationEvents
         var rig = GetComponent<CombatCinematicRig>();
         if (rig != null) { rig.PlayCameraShake(); return; }
         Missing(nameof(CameraShake));
+    }
+    public void PlaySfx(AudioClipSO clip)
+    {
+        if (Preview(nameof(PlaySfx)) || clip == null) return;
+        var player = ResolveLocal<PlayerActionPresentationController>();
+        AudioManager.PlayClipAtPoint(clip, player != null ? player.transform.position : transform.position);
+    }
+    public void SpawnTimelineHitVfx(GameObject prefab)
+    {
+        if (Preview(nameof(SpawnTimelineHitVfx))) return;
+        GetComponent<CombatCinematicRig>()?.SpawnHitVfx(prefab);
+    }
+    public void PlayVoice(AudioClipSO clip)
+    {
+        if (Preview(nameof(PlayVoice)) || clip == null) return;
+        var player = ResolveLocal<PlayerActionPresentationController>();
+        AudioManager.EnsureInstance()?.PlayVoiceClip(clip, player != null ? player.transform.position : transform.position);
     }
     public void SpawnProjectile() => Route<LightSkillCinematicSequenceController>(o => o.SpawnProjectile(), nameof(SpawnProjectile));
     public void LaunchProjectile() => Route<LightSkillCinematicSequenceController>(o => o.LaunchProjectile(), nameof(LaunchProjectile));

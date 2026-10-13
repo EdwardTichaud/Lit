@@ -6,7 +6,7 @@ using Ultrabolt.BrainsAI;
 [DefaultExecutionOrder(-50)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AnimationEvents))]
-public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceiver, ICombatKnockoutReceiver
+public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceiver, ICombatKnockoutReceiver, ICombatStunReceiver
 {
     public CharacterData characterData;
     public LitBrainsCombatProfile combatProfile;
@@ -45,6 +45,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
     public bool IsDead => dead;
     public string DetectionReason => detectionReason;
     public bool NavigationReady => navigationReady;
+    public bool IsCinematicSuspended => cinematicSuspended;
 
     private void Awake()
     {
@@ -75,6 +76,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         }
         if (!TryPrepareNavigation()) return;
         UpdateNavigationGrounding();
+        if (TickClashRecovery()) return;
         if (!initialized)
         {
             base.Start();
@@ -85,6 +87,14 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         {
             nextDetection = Time.time + detectionInterval;
             Transform target = detectionTargetOverride != null ? detectionTargetOverride : LocalPlayerContext.LocalCharacterRoot;
+            var taunt = GetComponent<EnemyTaunt>();
+            if (!IsAttackCommitted && taunt != null && taunt.IsActive)
+            {
+                target = taunt.Target.transform;
+                // Provocation establishes a known target; preparation still requires a clear attack path.
+                fov.SetExternalTarget(target);
+            }
+            else if (IsAttackCommitted && CommittedAttackTarget != null) target = CommittedAttackTarget;
             UpdatePerception(target);
         }
         if (combatProfile != null)
@@ -92,6 +102,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
             TickFluidCombat();
             if (IsCounterStunned) { UpdateAnimator(); return; }
             base.Update();
+            ApplyNavigationControl();
             return;
         }
         if (counterStunActive)
@@ -118,6 +129,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         }
         agent.isStopped = false;
         base.Update();
+        ApplyNavigationControl();
     }
 
     protected override void UpdateAnimator()
@@ -135,7 +147,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
             var direction = new Vector2(localVelocity.x, localVelocity.z).normalized;
             // The navigation request selects the gait; only obtained velocity drives activity/cadence.
             if (anim.speed <= 0) return;
-            presentationProfile.Evaluate(speed / anim.speed, agent.speed > walkSpeed + .05f, direction, out float measuredBlend, out float cadence);
+            presentationProfile.Evaluate(speed / anim.speed, requestedNavigationSpeed > walkSpeed + .05f, direction, out float measuredBlend, out float cadence);
             anim.SetFloat("Speed", measuredBlend);
             anim.SetFloat(LocomotionPresentationProfile.PlaybackParameter, cadence);
             if (presentationClock == null) presentationClock = GetComponent<CombatTimeDomain>();
@@ -269,6 +281,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         cinematicSuspended = suspended;
         if (suspended)
         {
+            CancelClashRecovery();
             CancelFluidAttack();
             cinematicAgentPosition = transform.position;
             if (agent.enabled && agent.isOnNavMesh) { agent.ResetPath(); agent.isStopped = true; }

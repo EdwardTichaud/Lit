@@ -76,6 +76,7 @@ public class HubCompanionSwapTrigger : MonoBehaviour
 
     private void OnEnable()
     {
+        if (SoloTeamProgression.IsSolo) { gameObject.SetActive(false); return; }
         if (SquadManager.Instance != null)
         {
             CharacterData runtime = SquadManager.Instance.GetRuntimeCharacter(characterData);

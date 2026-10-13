@@ -183,6 +183,21 @@ public sealed class BattleWallContainment : MonoBehaviour
         }
     }
 
+    public static float LimitPlanarTravel(Transform actor, Vector3 direction, float distance)
+    {
+        direction = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
+        foreach (var wall in ActiveWalls)
+        {
+            if (wall == null || !wall.TryGetPlanarBoundary(actor, out var center, out float radius)) continue;
+            Vector3 offset = Vector3.ProjectOnPlane(actor.position - center, Vector3.up);
+            float dot = Vector3.Dot(offset, direction);
+            float discriminant = dot * dot - offset.sqrMagnitude + radius * radius;
+            if (discriminant < 0) { distance = 0; continue; }
+            distance = Mathf.Min(distance, Mathf.Max(0, -dot + Mathf.Sqrt(discriminant) - .08f));
+        }
+        return distance;
+    }
+
     private static float ResolveActorRadius(Transform actor)
     {
         Collider[] colliders = actor.GetComponentsInChildren<Collider>(false);

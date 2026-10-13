@@ -150,6 +150,16 @@ public sealed class CombatCinematicRig : MonoBehaviour
 {
     [SerializeField] private PlayableDirector director;
     [SerializeField] private SignalReceiver signalReceiver;
+    [Header("Camera Handoff")]
+    [SerializeField, Min(0f)] private float cameraEntryBlendSeconds;
+    [SerializeField, Min(0f)] private float cameraExitBlendSeconds;
+    public float CameraEntryBlendSeconds => cameraEntryBlendSeconds;
+    public float CameraExitBlendSeconds => cameraExitBlendSeconds;
+    public void ConfigureCameraHandoff(float entrySeconds, float exitSeconds)
+    {
+        cameraEntryBlendSeconds = Mathf.Max(0f, entrySeconds);
+        cameraExitBlendSeconds = Mathf.Max(0f, exitSeconds);
+    }
     [SerializeField] private List<CombatCinematicCameraBinding> cameraBindings = new List<CombatCinematicCameraBinding>();
     [SerializeField] private List<CombatCinematicTrackBinding> trackBindings = new List<CombatCinematicTrackBinding>();
     [SerializeField, Tooltip("Releves de cadrage captures dans AnimationLab et compares pendant la lecture runtime.")]
@@ -180,6 +190,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private readonly List<ICombatCinematicParticipant> participants = new List<ICombatCinematicParticipant>();
     private CombatCinematicContext context;
+    private readonly List<GameObject> hitVfxInstances = new List<GameObject>();
     private PlayableAsset bakedTimeline;
     private CinemachineBrain gameplayBrain;
     private CombatLockOnCameraController gameplayLockCamera;
@@ -219,6 +230,21 @@ public sealed class CombatCinematicRig : MonoBehaviour
     {
         if (context?.Target is ICombatKnockoutReceiver target && !context.Target.IsDead)
             target.KnockedOut();
+    }
+    public void SpawnHitVfx(GameObject prefab)
+    {
+        if (!sessionActive || prefab == null || context?.PlayerRoot == null || context.TargetLockPoint == null) return;
+        Vector3 position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(context.TargetLockPoint, context.PlayerRoot);
+        Vector3 direction = context.PlayerRoot.position - context.TargetRoot.position;
+        direction.y = 0;
+        Quaternion rotation = direction.sqrMagnitude > .0001f ? Quaternion.LookRotation(direction) : Quaternion.identity;
+        hitVfxInstances.RemoveAll(instance => instance == null);
+        hitVfxInstances.Add(Instantiate(prefab, position, rotation));
+    }
+    private void ClearHitVfx()
+    {
+        foreach (var instance in hitVfxInstances) if (instance != null) Destroy(instance);
+        hitVfxInstances.Clear();
     }
     public IReadOnlyList<CombatCinematicCameraBinding> CameraBindings => cameraBindings;
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
@@ -439,6 +465,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearHitVfx();
         if (director != null)
         {
             director.played -= OnDirectorPlayed;
@@ -531,7 +558,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         CinemachineCamera expectedOpeningCamera = ResolveOpeningCamera();
         bool useGameplayCameraFallback = expectedOpeningCamera == null && context.AllowGameplayCameraFallback;
         LitTimelineCinemachineBridge cameraBridge = GetComponent<LitTimelineCinemachineBridge>();
-        if (!useGameplayCameraFallback && (cameraBridge == null || !cameraBridge.BeginCameraControlNow(gameplayBrain)))
+        if (!useGameplayCameraFallback && (cameraBridge == null || !cameraBridge.BeginCameraControlNow(gameplayBrain, cameraEntryBlendSeconds, cameraExitBlendSeconds)))
         {
             error = "Impossible de donner le controle de la camera gameplay explicite a la Timeline.";
             AbortStart("Camera gameplay invalide");
@@ -608,6 +635,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     public void ResetForPool()
     {
+        ClearHitVfx();
         foreach (var shake in GetComponentsInChildren<CombatCinematicCameraShake>(true)) shake.ClearShake();
         localPlaybackScale = 1f;
         localPlaybackManualClock = false;

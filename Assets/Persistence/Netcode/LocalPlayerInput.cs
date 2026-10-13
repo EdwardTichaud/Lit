@@ -128,7 +128,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         var action = playerInputs != null ? playerInputs.asset.FindAction("Player/RightShoulder", false) : null;
         var context = GamepadInputContextStack.Current;
         bool locomotionContext = context == GamepadInputContext.Gameplay || context == GamepadInputContext.Combat;
-        bool allowed = (InputModeCoordinator.CurrentMode == InputMode.Exploration || InputModeCoordinator.CurrentMode == InputMode.Combat) &&
+        bool allowed = InputModeCoordinator.IsLocomotionAllowed && InputModeCoordinator.CurrentMode != InputMode.UserInterface &&
             !InputFocusStack.HasAnyFocus() && locomotionContext && !JoinSyncSystem.IsGameplayBlocked;
         // Input System owns focus/device routing. Application.isFocused can be
         // false in the Editor while gamepad input still reaches the Game View.
@@ -216,6 +216,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnLocomotionMode(InputAction.CallbackContext context)
     {
+        if (context.control?.device is Gamepad && (combatInputActive || IsLocalCombatActive())) return;
         // L3 belongs to inspection only while the tactical option is selected.
         if (context.control != null && context.control.name == "leftStickPress" && context.control.device is UnityEngine.InputSystem.Gamepad &&
             Camera.main != null && LitGameplayCameraModeController.KeepsTacticalView(
@@ -438,6 +439,8 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnRecenter(InputAction.CallbackContext context)
     {
+        // R3 tap/hold belongs exclusively to enemy lock in combat.
+        if (context.control?.device is Gamepad && (combatInputActive || IsLocalCombatActive())) return;
         // R3 is reserved for the exploration torch boost. Keyboard C remains
         // the manual camera-recenter control, and combat keeps its own inputs.
         if (!combatInputActive && !IsLocalCombatActive() && context.control != null &&
@@ -525,7 +528,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             Debug.Log("[Locomotion Handoff] Input mode changed | mode=" + mode + ".", this);
         }
 
-        if (mode == InputMode.Exploration || mode == InputMode.Combat || InputModeCoordinator.IsUserInterfaceMovementPassthroughActive)
+        if (InputModeCoordinator.IsLocomotionAllowed)
         {
             ScheduleHeldLocomotionReconciliation("ModeChanged " + mode);
         }
@@ -569,7 +572,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             InputMode mode = InputModeCoordinator.CurrentMode;
             bool allowUiMovement = mode == InputMode.UserInterface &&
                                    InputModeCoordinator.IsUserInterfaceMovementPassthroughActive;
-            if (mode != InputMode.Exploration && mode != InputMode.Combat && !allowUiMovement)
+            if (!InputModeCoordinator.IsLocomotionAllowed)
             {
                 yield break;
             }

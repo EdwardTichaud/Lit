@@ -5,7 +5,8 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 7;
+    public int dataVersion = 8;
+    public SoloTeamSaveData soloTeam;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
     public List<CharacterSaveEntry> characters = new List<CharacterSaveEntry>();

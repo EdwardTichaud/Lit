@@ -20,6 +20,7 @@ MonoBehaviour:
     targetMask:
       serializedVersion: 2
       m_Bits: 4294967295
+  interruptionForce: 20
   enemyAttackFeedback:
     damageVfx: {fileID: 0}
     damageAudio: {fileID: 0}
@@ -32,12 +33,12 @@ MonoBehaviour:
   skillName: Eclair
   description: 
   icon: {fileID: 21300000, guid: 2d089513ae4adfc48a683c362ad9992c, type: 3}
-  animationClip: {fileID: 7400000, guid: b3c788eedd4bc2946823dd734fdefb9a, type: 2}
-  animatorState: Base Layer.AnimationClip_Skill_1_Eclair
+  animationClip: {fileID: 7400000, guid: f134648a13926924095c0c74b0e4604b, type: 2}
+  animatorState: Base Layer.Skill_1_Eclair
   damages: 10
   clarityGainOnHit: 1
   presentation:
-    movementPolicy: 0
+    movementPolicy: 2
     entryBlendSeconds: 0.06
     chainNormalizedTime: 1
     chainTransitionNormalizedTime: 0.78
@@ -54,6 +55,12 @@ MonoBehaviour:
       locomotionBlendSeconds: 0.08
       preLandingProbeDistance: 1.2
       preLandingLeadSeconds: 0.14
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.8, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 0
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
@@ -61,6 +68,9 @@ MonoBehaviour:
   minimumHitDistance: 0
   maximumHitDistance: 10
   requireValidRangeToStart: 0
+  useLaunchRange: 1
+  minimumLaunchDistance: 0
+  maximumLaunchDistance: 10
   cinematic:
     timeline: {fileID: 0}
     combatCinematicRigPrefab: {fileID: 0}
@@ -112,20 +122,22 @@ MonoBehaviour:
   targetLunge:
     enabled: 1
     passThroughTarget: 1
+    resolveImpactAtContact: 1
+    contactAnimationSlot: {fileID: 7400000, guid: b3c788eedd4bc2946823dd734fdefb9a, type: 2}
     passThroughDistance: 4
     approachDurationSeconds: 0.25
     maximumApproachSpeed: 65
     stoppingDistance: 0.85
     contactTolerance: 0.18
-    reboundHorizontalImpulse: 16
-    reboundVerticalImpulse: 8
+    reboundHorizontalImpulse: 0
+    reboundVerticalImpulse: 0
     minimumInputLockSeconds: 0.1
     maximumInputLockSeconds: 2.5
     airborneInertiaSeconds: 0.08
     airborneInertiaEndSpeedMultiplier: 0.25
   enemyRange: 0
   enemyDamageMultiplier: 1
-  acceptedEnemyReactions: 02000000
+  acceptedEnemyReactions: 02000000i
   requireAllEnemyReactions: 0
   playerAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}
   enemyAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}

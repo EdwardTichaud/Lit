@@ -19,6 +19,8 @@ public sealed class SkillsManager : MonoBehaviour
     public event Action<IReadOnlyList<SkillSO>> EquippedSkillsChanged;
 
     private readonly List<SkillSO> knownSkillsView = new List<SkillSO>();
+    private IReadOnlyList<SkillSO> additionalCombatSkills;
+    public void SetAdditionalCombatSkills(IReadOnlyList<SkillSO> skills) { additionalCombatSkills = skills; RefreshSkills(true); }
     public IReadOnlyList<SkillSO> KnownSkills
     {
         get
@@ -27,6 +29,15 @@ public sealed class SkillsManager : MonoBehaviour
             if (playerController != null && playerController.CharacterData != null && playerController.CharacterData.combatSkills != null)
                 knownSkillsView.AddRange(playerController.CharacterData.combatSkills);
             CycleSharedSkills.AppendTo(knownSkillsView);
+            var team = SoloTeamProgression.Resolve();
+            if (team != null)
+                foreach (CombatSkillKit kit in System.Enum.GetValues(typeof(CombatSkillKit)))
+                    foreach (var available in team.GetAvailableSkills(kit))
+                        if (available != null && !knownSkillsView.Contains(available)) knownSkillsView.Add(available);
+            if (additionalCombatSkills != null)
+                foreach (var skill in additionalCombatSkills)
+                    if (skill != null && !knownSkillsView.Contains(skill)) knownSkillsView.Add(skill);
+            knownSkillsView.RemoveAll(skill => !SoloTeamProgression.AllowsSkill(skill));
             return knownSkillsView;
         }
     }

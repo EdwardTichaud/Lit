@@ -180,8 +180,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8069486010096295346}
   - component: {fileID: 4141868226473327349}
+  - component: {fileID: 8069486010096295346}
   - component: {fileID: 2193066076648121980}
   - component: {fileID: 6701026721107321332}
   - component: {fileID: 8801431476909875125}
@@ -211,6 +211,24 @@ Transform:
   - {fileID: 7915817669924682643}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8069486010096295346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8772950008385497211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!320 &2193066076648121980
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -244,6 +262,11 @@ MonoBehaviour:
     m_Signals:
     - {fileID: 11400000, guid: 6b888b79b4cc6d948b6a9b3beac0cd61, type: 2}
     - {fileID: 11400000, guid: 6c4f6fa3a03b4f047a368ba927229998, type: 2}
+    - {fileID: 11400000, guid: 4dba32dc62ab16e488866d3bb1cbd6cc, type: 2}
+    - {fileID: 11400000, guid: 10215f128eea40f4087be03f6ea068db, type: 2}
+    - {fileID: 11400000, guid: 2fbd97d9275e9fc499d782bb09114565, type: 2}
+    - {fileID: 11400000, guid: dc40705a1f2ccec41af89ec1148a9adb, type: 2}
+    - {fileID: 11400000, guid: e2c9b01bccc772744a0f2d40b7696496, type: 2}
     m_Events:
     - m_PersistentCalls:
         m_Calls:
@@ -268,6 +291,76 @@ MonoBehaviour:
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: 
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8069486010096295346}
+          m_TargetAssemblyTypeName: AnimationEvents, Assembly-CSharp
+          m_MethodName: PlaySfx
+          m_Mode: 2
+          m_Arguments:
+            m_ObjectArgument: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
+            m_ObjectArgumentAssemblyTypeName: AudioClipSO, Assembly-CSharp
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8069486010096295346}
+          m_TargetAssemblyTypeName: AnimationEvents, Assembly-CSharp
+          m_MethodName: PlayVoice
+          m_Mode: 2
+          m_Arguments:
+            m_ObjectArgument: {fileID: 11400000, guid: 70d023fb62d4c4341a52853401e828cd, type: 2}
+            m_ObjectArgumentAssemblyTypeName: AudioClipSO, Assembly-CSharp
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8069486010096295346}
+          m_TargetAssemblyTypeName: AnimationEvents, Assembly-CSharp
+          m_MethodName: ShowTimelineSword
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: 
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8069486010096295346}
+          m_TargetAssemblyTypeName: AnimationEvents, Assembly-CSharp
+          m_MethodName: HideTimelineSword
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: 
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8069486010096295346}
+          m_TargetAssemblyTypeName: AnimationEvents, Assembly-CSharp
+          m_MethodName: SpawnTimelineHitVfx
+          m_Mode: 2
+          m_Arguments:
+            m_ObjectArgument: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
             m_StringArgument: 
@@ -300,6 +393,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicRig
   director: {fileID: 2193066076648121980}
   signalReceiver: {fileID: 6701026721107321332}
+  cameraEntryBlendSeconds: 0.25
+  cameraExitBlendSeconds: 0.25
   cameraBindings:
   - timelineCameraKey: CombatLab.CounterCamera:-1519177809
     camera: {fileID: 7859721496500355183}
@@ -320,21 +415,3 @@ MonoBehaviour:
   drivePlayerRootMotionFromTimeline: 1
   logCameraDiagnostics: 1
   logPlacementDiagnostics: 1
---- !u!114 &8069486010096295346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8772950008385497211}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
-  presentation: {fileID: 0}
-  actorOwner: {fileID: 0}
-  signalTarget: {fileID: 0}
-  cameraRoot: {fileID: 0}
-  previewOnly: 0
-  lastSignal: 

@@ -1,5 +1,63 @@
 # Input, UCC et caméra
 
+## Croix directionnelle et kits (2026-10-13)
+
+En combat solo : haut Lucian, droite Vesta, bas Soren, gauche Aurell. Dans la
+roue, X/Y/A/B lancent les slots 0/1/2/3 ; B ne signifie jamais annuler.
+Une nouvelle pression sur la direction du kit affiché ferme la roue ; une
+autre direction change le kit. Le maintien ne rebascule pas au changement de map.
+LT annule ; Start reste disponible via System pour la pause. Le coordinateur
+active CombatWheel + System et les seules actions Player/Move et
+Player/RightShoulder pour marcher/sprinter. CombatSkillKitInput en est l'owner.
+La réconciliation du stick maintenu et le laboratoire acceptent CombatWheel
+comme contexte de locomotion, sans ouvrir les actions habituelles X/Y/A/B.
+Compilation et Play du laboratoire validés : mouvement réel avec stick maintenu,
+seconde pression fermante, réouverture et maintien sans rebascule, isolation
+des boutons de face et restitutions. Log SkillWheelMovementToggle2.log dans
+Library/ActorAnimationSandbox/Logs.
+R3 en combat libre : tap pour verrouiller/changer de cible, hold 0,6 s pour
+deverrouiller. R3 dans la roue est reserve au ciblage de soutien. Le recadrage
+camera R3 et l'ancien binding de fusion sont retires du combat. Hors combat,
+boost de torche R3 et commandes monde de la croix restent inchanges.
+LT en combat solo ouvre le dernier kit si aucune roue n'est ouverte. Les
+interfaces clavier et les loadouts reseau gardent leur voie existante.
+PlayerInputs.inputactions est la source ; le wrapper est regenere par Unity.
+Les champs m_GenerateWrapperCode/m_WrapperCodePath de l'importer sont corriges
+pour retrouver aussi la generation automatique lors des prochains imports.
+
+## Fusion automatique de combat (2026-10-13)
+
+Le callback Melt du combat n'est plus abonne : la fusion est possedee par
+l'entree/sortie du combat, sans commande manuelle et sans verrou de mouvement.
+Le LightSkill ne defusionne plus le personnage quand le combat continue.
+Le boost de torche R3 hors combat est conserve. Le raccord de kits ci-dessus
+branche les roues directionnelles et le verrouillage R3, separement de la fusion.
+
+## Anti-spam contre
+
+TryHandleEnemyReaction applique Counter Retry Delay Seconds (0,4 s par
+defaut) a chaque nouvelle tentative Y, avant de verifier la fenetre ennemie.
+Horloge unscaled : le ralenti ne prolonge pas ce verrou. Aucun buffering de
+contre ni prolongation sur spam ; le cooldown survit aux ouvertures/fermetures
+d'opportunite. Une pression pendant le verrou est consommee (handled=true),
+sans lancer de contre ni de nouvelle garde. Une premiere pression autorisee
+hors fenetre peut lancer la garde normale ; son maintien/relachement reste
+libre. B et les QTE de paliers ne consomment pas ce verrou.
+
+## Raccords camera cinematique (2026-10-11)
+
+LitCameraDirector conserve l'autorite UCC/Cinemachine. Les durées du rig
+cameraEntryBlendSeconds/cameraExitBlendSeconds valent 0 par defaut ; seul
+CombatLab_CounterRig est configure a 0,25 s. Transition SmoothStep en temps
+reel, quaternion Slerp et FOV interpole, destination reevaluee chaque image.
+Le raccord est rendu avant la preparation des matrices HDRP puis la camera
+retrouve sa pose source : aucune interpolation reinjectee dans les moteurs.
+La premiere image, pas le pre-roll, demarre le timer. Retour UCC recalcule
+sur la pose actuelle du joueur, sans prolonger les verrous du combat.
+Generations idempotentes ; nettoyage du raccord sur desactivation/changement
+de scene. Les bakers conservent les reglages et le preview AnimationLab du
+CounterSkill utilise le meme rendu, sans controler la camera gameplay.
+
 ## Reglage de rotation au laboratoire (2026-10-10)
 
 ConfigureTurnRates active le facing tactique a vitesse bornee dans
@@ -340,6 +398,19 @@ la cible.
 Un input strictement gauche ou droite produit une tangente autour de la cible,
 stabilisee par une faible correction radiale UCC. Cette correction ne concerne
 ni les diagonales, ni les actions, ni les evasions.
+
+Dans Iluvilirae_Test seulement, LucianCombatTorsoFacing complete la presentation
+sous lock : l'axe visible est mesure entre LeftUpperArm et RightUpperArm puis
+aligne sur le forward physique via Spine/Chest (40/60 %, 65 degres maximum).
+La correction ne tourne ni root, ni bassin, ni jambes et ne fournit aucun
+deplacement. Entree sur 80 ms du CombatTimeDomain ; aucune ecriture Animator
+de parametre, de vitesse ou d'etat. Seuls CombatIdle et CombatLocomotion sont
+eligibles, sans action proprietaire ni transition vers une action. Sprint
+libre, evasions, exploration et session cinematique sont exclus. OnDisable et
+pause ne laissent pas de correction accumulee ; une pose deja reevaluee par
+l'Animator n'est jamais remplacee par une ancienne pose memorisee.
+Le laboratoire l'installe a chaque rencontre ; alignPlayerCombatTorso permet
+la comparaison avant/apres. Aucun ajout aux prefabs de production.
 
 La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
 `LitUccCameraCharacterBinder` sur la caméra active pour suivre

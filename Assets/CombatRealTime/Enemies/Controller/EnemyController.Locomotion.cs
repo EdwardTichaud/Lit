@@ -677,7 +677,7 @@ public sealed partial class EnemyController
             return;
         LocomotionCaptureNavigationDefaults();
         float scale = LocomotionTimeDomain != null ? LocomotionTimeDomain.Scale : 1f;
-        LocomotionNavigationAgent.speed = Mathf.Max(0.01f, LocomotionRequestedNavigationSpeed) * scale;
+        LocomotionNavigationAgent.speed = Mathf.Max(0.01f, LocomotionRequestedNavigationSpeed) * scale * EnemyEntraveZone.NavigationMultiplier(transform.position);
         LocomotionNavigationAgent.acceleration = LocomotionBaseNavigationAcceleration * scale;
         LocomotionNavigationAgent.angularSpeed = LocomotionBaseNavigationAngularSpeed * scale;
     }

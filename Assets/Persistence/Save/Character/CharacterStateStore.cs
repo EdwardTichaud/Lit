@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
-    private const int SaveDataVersion = 7;
+    private const int SaveDataVersion = 8;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -685,6 +685,7 @@ public class CharacterStateStore : MonoBehaviour
             dataVersion = SaveDataVersion
         };
         List<CharacterData> knownCharacters = BuildKnownCharacters(manager);
+        data.soloTeam = SoloTeamProgression.IsSolo ? SoloTeamProgression.Resolve()?.Capture() : loadedData?.soloTeam;
 
         // Construit la liste de squad + l'etat de chaque personnage.
         if (manager.currentSquad != null)
@@ -944,6 +945,13 @@ public class CharacterStateStore : MonoBehaviour
         if (manager != null)
         {
             List<CharacterData> extra = manager.GetKnownCharacters();
+            var teamCatalog = Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default");
+            if (teamCatalog != null)
+                foreach (CombatSkillKit kit in Enum.GetValues(typeof(CombatSkillKit)))
+                {
+                    var definition = teamCatalog.GetCharacter(kit);
+                    if (definition != null) extra.Add(manager.GetRuntimeCharacter(definition));
+                }
             for (int i = 0; i < extra.Count; i++)
             {
                 CharacterData character = extra[i];

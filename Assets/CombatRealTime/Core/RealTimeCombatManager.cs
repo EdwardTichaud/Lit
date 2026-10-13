@@ -46,6 +46,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     [SerializeField, Range(0f, 0.25f)] private float playerHurtTransitionDuration = 0.05f;
 
     private readonly Dictionary<CombatAttackDefinition, float> cooldowns = new Dictionary<CombatAttackDefinition, float>();
+    private readonly Dictionary<Transform, Dictionary<SkillSO, float>> skillCooldowns = new Dictionary<Transform, Dictionary<SkillSO, float>>();
     private readonly HashSet<RealTimeCombatReaction> receivedReactions = new HashSet<RealTimeCombatReaction>();
     private readonly HashSet<EnemyController> attackModeEnemies = new HashSet<EnemyController>();
     private bool combatActive;
@@ -198,10 +199,12 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         }
         ResolvePlayerReferences();
         RegisterExistingAttackModes();
+        if (GetComponent<CombatSkillKitInput>() == null) gameObject.AddComponent<CombatSkillKitInput>();
     }
 
     private void OnDestroy()
     {
+        RefreshCombatSpiritFusion(false);
         if (externalLockIndicator != null) externalLockIndicator.SetLocked(false, false);
         ReleaseCombatMusicOverride();
         if (Instance == this)
@@ -219,6 +222,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     private void Update()
     {
         ResolvePlayerReferences();
+        RefreshCombatSpiritFusion(combatActive);
         RefreshLockedEnemyStrafeBinding();
 
         // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
@@ -331,6 +335,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             ResolvePlayerReferences();
             StowPlayerTorchForCombat();
             combatActive = true;
+            RefreshCombatSpiritFusion(true);
             clarity = 0f;
             cooldowns.Clear();
             playerController?.HideLocalInteractionPresentation();
@@ -376,6 +381,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         ResolvePlayerReferences();
         StowPlayerTorchForCombat();
         combatActive = true;
+        RefreshCombatSpiritFusion(true);
         clarity = 0f;
         cooldowns.Clear();
         playerController?.HideLocalInteractionPresentation();
@@ -390,6 +396,15 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     public void EndCombat()
     {
+        GetComponent<CombatSkillKitInput>()?.Close();
+        RefreshCombatSpiritFusion(false);
+        if (combatActive)
+        {
+            playerController?.GetComponent<PlayerControlSkills>()?.ClearCombatEffects();
+            playerController?.GetComponentInParent<NetworkCharacterInput>()?.ClearControlEffectsForCombatEnd();
+            playerController?.GetComponent<PlayerProtectionEffects>()?.ResetReserve();
+            playerController?.GetComponentInParent<NetworkCharacterInput>()?.ResetJusticeReserveForCombatEnd();
+        }
         // A pursuit disengagement may end combat while Lucian still owns an
         // action presentation. Leaving that action alive makes exploration
         // interactables (ladders, ghosts, etc.) reject their next use.
@@ -836,16 +851,34 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool TryUseSkill(SkillSO skill)
     {
+        if (!SoloTeamProgression.AllowsSkill(skill)) return false;
+        if (skill != null && skill.IsControlSkill) return TryUseControlSkill(skill);
+        if (skill != null && skill.IsProtectionSkill)
+        {
+            return TryUseProtectionSkill(skill);
+        }
+        if (skill != null && skill.IsHealingSkill) return TryUseHealingSkill(skill);
         if (!combatActive || IsPlayerDead() || !HasLockedCombatTarget || skill == null ||
             (lockedEnemy != null && lockedEnemy.IsFlameDormant) || playerAnimator == null || playerRoot == null)
         {
             return false;
         }
 
-        if (skill.RequireValidRangeToStart && !ValidateLockedEnemySkillRange(skill, true))
+        if (GetSkillCooldownRemaining(skill) > 0f) return false;
+
+        if (skill.useLaunchRange && (LockedCombatTarget?.Root == null || playerRoot == null ||
+            !skill.IsWithinLaunchRange(Vector3.ProjectOnPlane(LockedCombatTarget.Root.position - playerRoot.position, Vector3.up).magnitude)))
         {
             return false;
         }
+        if (!skill.useLaunchRange && skill.RequireValidRangeToStart && !ValidateLockedEnemySkillRange(skill, true))
+        {
+            return false;
+        }
+
+        if (skill.TargetLunge.resolveImpactAtContact && (playerLocomotionBridge == null || !playerLocomotionBridge.IsDriving ||
+            playerLocomotionBridge.IsExternalLockActive && (playerActionPresentation == null ||
+                !playerActionPresentation.OwnsOnlyActionMotionLock(playerLocomotionBridge)))) return false;
 
         if (skill.HasCombatCinematic)
         {
@@ -854,6 +887,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             PlayPlayerSkillStartSfx(skill, cinematicStarted);
             if (cinematicStarted)
             {
+                StartSkillCooldown(skill);
                 PlayerSkillStarted?.Invoke(skill, lockedEnemy);
             }
             return cinematicStarted;
@@ -876,6 +910,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         PlayPlayerSkillStartSfx(skill, actionStarted);
         if (actionStarted)
         {
+            StartSkillCooldown(skill);
             playerActionPresentation.BeginTargetLunge(skill, LockedTargetPoint);
             PlayerSkillStarted?.Invoke(skill, lockedEnemy);
         }
@@ -894,9 +929,24 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     public void NotifyBufferedSkillStarted(SkillSO skill)
     {
+        StartSkillCooldown(skill);
         PlayPlayerSkillStartSfx(skill, true);
         playerActionPresentation?.BeginTargetLunge(skill, LockedTargetPoint);
         PlayerSkillStarted?.Invoke(skill, lockedEnemy);
+    }
+
+    public float GetSkillCooldownRemaining(SkillSO skill)
+    {
+        return skill != null && playerRoot != null && skillCooldowns.TryGetValue(playerRoot, out var actorCooldowns) &&
+            actorCooldowns.TryGetValue(skill, out float readyAt) ? Mathf.Max(0f, readyAt - Time.time) : 0f;
+    }
+
+    private void StartSkillCooldown(SkillSO skill)
+    {
+        if (skill == null || skill.cooldownSeconds <= 0f || playerRoot == null) return;
+        if (!skillCooldowns.TryGetValue(playerRoot, out var actorCooldowns))
+            skillCooldowns[playerRoot] = actorCooldowns = new Dictionary<SkillSO, float>();
+        actorCooldowns[skill] = Time.time + skill.cooldownSeconds;
     }
 
     public bool TryPlayEnemySkillCinematic(EnemyController caster, SkillSO skill)
@@ -967,7 +1017,11 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        if (!TryGetLockedEnemyHitDistance(out float distance) || !skill.IsWithinHitRange(distance))
+        float distance;
+        bool hasDistance = currentSkillContact.HasValue
+            ? (distance = currentSkillContact.Value.Distance) >= 0
+            : TryGetLockedEnemyHitDistance(out distance);
+        if (!hasDistance || !skill.IsWithinHitRange(distance))
         {
             string message = distance < skill.MinimumHitDistance
                 ? "Raté (trop près)"
@@ -980,7 +1034,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int requestedDamage = Mathf.Max(0, Mathf.RoundToInt(skill.Damages));
+        int requestedDamage = EnemyRevelation.ModifyDamage(lockedEnemy.transform, skill.Damages);
         EnemyTacticalResponseController tacticalResponse = lockedEnemy.GetComponent<EnemyTacticalResponseController>();
         int resolvedDamage = tacticalResponse != null
             ? tacticalResponse.ResolveIncomingPlayerDamage(skill, requestedDamage)
@@ -995,12 +1049,13 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int applied = lockedEnemy.ReceiveLightDamage(resolvedDamage, playerController);
+        int applied = lockedEnemy.ReceiveLightDamage(resolvedDamage, playerController, damageModifiersApplied: true);
         if (applied <= 0)
         {
             return 0;
         }
 
+        if (skill.stunSeconds > 0f) lockedEnemy.TryApplySkillStun(skill.stunSeconds);
         AddClarity(skill.ClarityGainOnHit);
         PlayerLightDamageApplied?.Invoke(applied);
         PlayerSkillImpactApplied?.Invoke(skill, applied);
@@ -1058,7 +1113,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int applied = engagedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false, source: playerController);
+        int applied = engagedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false, source: playerController, applyRevelation: true);
         if (applied <= 0)
         {
             return 0;
@@ -1342,11 +1397,10 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
                 ReactionImpactResolved?.Invoke(skill, true);
                 return 0;
             }
-            bool guarded = CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsGuardHeld;
+            bool guarded = PlayerGuardState.IsGuarding(victim);
             var feedback = skill.enemyAttackFeedback;
             bool ownGuardFeedback = feedback != null && (feedback.guardVfx != null || feedback.guardAudio != null);
-            int damage = CounterSkillCombatController.ModifyGuardDamage(attacker.CommittedRetaliationDamage, !ownGuardFeedback);
-            int applied = ApplyPlayerDamage(damage);
+            int applied = CombatProtectionDamage.ApplyAttack(victim, attacker.CommittedRetaliationDamage, "EnemyAttack", guarded, !ownGuardFeedback);
             outcome = guarded ? EnemyAttackOutcome.Guarded : applied > 0 ? EnemyAttackOutcome.Damaged : EnemyAttackOutcome.Avoided;
             ReactionImpactResolved?.Invoke(skill, false);
             if (applied > 0) { PlayerDamaged?.Invoke(applied); EvaluateCombatOutcome(); }
@@ -1354,8 +1408,9 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         }
         var mobility = victim.GetComponentInChildren<CombatMobilityController>(true);
         if (mobility != null && mobility.IsDamageInvulnerable) { outcome = EnemyAttackOutcome.Avoided; return 0; }
-        int remoteApplied = victim.ApplyDamage(attacker.CommittedRetaliationDamage, "EnemyAttack");
-        outcome = remoteApplied > 0 ? EnemyAttackOutcome.Damaged : EnemyAttackOutcome.Avoided;
+        bool remoteGuard = PlayerGuardState.IsGuarding(victim);
+        int remoteApplied = CombatProtectionDamage.ApplyAttack(victim, attacker.CommittedRetaliationDamage, "EnemyAttack", remoteGuard);
+        outcome = remoteGuard ? EnemyAttackOutcome.Guarded : remoteApplied > 0 ? EnemyAttackOutcome.Damaged : EnemyAttackOutcome.Avoided;
         return remoteApplied;
     }
 

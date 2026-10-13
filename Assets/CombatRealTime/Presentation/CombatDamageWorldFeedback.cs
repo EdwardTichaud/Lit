@@ -16,6 +16,22 @@ public sealed class CombatDamageWorldFeedback : MonoBehaviour
     private Vector3 baseScale;
     private float elapsed;
     private Camera targetCamera;
+    private bool persistent;
+    public bool IsPersistent => persistent;
+    public void SetPersistentMessage(string message)
+    {
+        if (!persistent) return;
+        var label = GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null) label.text = message;
+    }
+
+    public static CombatDamageWorldFeedback ShowPersistentMessage(Transform target, string message, Color color, float height)
+    {
+        if (target == null) return null;
+        var feedback = ShowText(target, message, color, height, 24f);
+        feedback.persistent = true;
+        return feedback;
+    }
 
     public static void Show(Transform target, int amount, Color color, float height)
     {
@@ -37,7 +53,7 @@ public sealed class CombatDamageWorldFeedback : MonoBehaviour
         ShowText(target, message, color, height, 30f);
     }
 
-    private static void ShowText(Transform target, string message, Color color, float height, float fontSize)
+    private static CombatDamageWorldFeedback ShowText(Transform target, string message, Color color, float height, float fontSize)
     {
 
         GameObject root = new GameObject(
@@ -85,11 +101,12 @@ public sealed class CombatDamageWorldFeedback : MonoBehaviour
         feedback.startLocalPosition = root.transform.localPosition;
         feedback.baseScale = root.transform.localScale;
         feedback.targetCamera = canvas.worldCamera;
+        return feedback;
     }
 
     private void LateUpdate()
     {
-        elapsed += Time.unscaledDeltaTime;
+        if (!persistent) elapsed += Time.unscaledDeltaTime;
         float normalizedTime = Mathf.Clamp01(elapsed / Duration);
         float rise = Mathf.SmoothStep(0f, RiseDistance, normalizedTime);
         float punch = 1f + Mathf.Sin(Mathf.Clamp01(normalizedTime * 5f) * Mathf.PI) * 0.28f;

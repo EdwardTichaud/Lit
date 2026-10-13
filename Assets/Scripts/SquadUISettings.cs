@@ -78,6 +78,7 @@ public class SquadUISettings : MonoBehaviour
     private readonly Dictionary<ulong, GameObject> playerCrowns = new Dictionary<ulong, GameObject>();
     private WorldInteractionService subscribedService;
     private bool assignmentsDirty;
+    private SoloTeamProgression soloTeam;
     private static readonly int ColorId = Shader.PropertyToID("_Color");
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
@@ -105,6 +106,8 @@ public class SquadUISettings : MonoBehaviour
 
     private void OnDisable()
     {
+        if (soloTeam != null) soloTeam.Changed -= RefreshSoloRoster;
+        soloTeam = null;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
         UnsubscribeAssignments();
     }
@@ -176,6 +179,23 @@ public class SquadUISettings : MonoBehaviour
             SetHealthForUnit(squadUnitUI, character.hp, character.hp);
 
             squadUnitsUI.Add(squadUnitUI);
+            if (SoloTeamProgression.IsSolo)
+            {
+                bool support = !string.Equals(character.characterId, "lucian", System.StringComparison.OrdinalIgnoreCase);
+                Transform hp = squadUnitUI.transform.Find("HP");
+                if (support && hp != null) hp.gameObject.SetActive(false);
+                Transform group = squadUnitUI.transform.Find("GroupTag");
+                if (group != null) group.gameObject.SetActive(false);
+                var nameObject = new GameObject("TeamMemberName", typeof(RectTransform), typeof(TextMeshProUGUI));
+                nameObject.transform.SetParent(squadUnitUI.transform, false);
+                var label = nameObject.GetComponent<TMP_Text>();
+                label.text = character.ResolveDisplayName() + (support ? " · Support" : "");
+                label.fontSize = 18; label.raycastTarget = false;
+                label.alignment = TextAlignmentOptions.MidlineLeft;
+                var rect = nameObject.GetComponent<RectTransform>();
+                rect.anchorMin = rect.anchorMax = new Vector2(1, .5f); rect.pivot = new Vector2(0, .5f);
+                rect.anchoredPosition = new Vector2(8, 0); rect.sizeDelta = new Vector2(210, 45);
+            }
         }
 
         assignmentsDirty = true;
@@ -298,6 +318,11 @@ public class SquadUISettings : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (SoloTeamProgression.IsSolo && soloTeam == null)
+        {
+            soloTeam = SoloTeamProgression.Resolve();
+            if (soloTeam != null) { soloTeam.Changed += RefreshSoloRoster; RefreshSoloRoster(); }
+        }
         if (!IsMultiplayerActive())
         {
             return;
@@ -311,6 +336,20 @@ public class SquadUISettings : MonoBehaviour
         }
 
         UpdatePlayerCrownPositions();
+    }
+
+    private void RefreshSoloRoster()
+    {
+        if (soloTeam == null || !SoloTeamProgression.IsSolo) return;
+        BuildSquadUnits(soloTeam.GetRoster());
+        keepPanelVisibleWhenInactive = true;
+        InitializePanel(false);
+        SetCursorVisible(false);
+        UpdateCrownPosition(0);
+        var controller = LocalPlayerContext.LocalCharacterRoot != null
+            ? LocalPlayerContext.LocalCharacterRoot.GetComponent<SquadCharacterController>() : null;
+        if (controller != null) SetUnitHealth(0, controller.CurrentHp, controller.MaxHp);
+        FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.RefreshSkills(true);
     }
 
     public void SetCursorVisible(bool visible)

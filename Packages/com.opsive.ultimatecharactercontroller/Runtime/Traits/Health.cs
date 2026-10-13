@@ -379,6 +379,9 @@ namespace Opsive.UltimateCharacterController.Traits
                 m_ShieldAttribute.Value -= shieldAmount;
             }
 
+            // Lit protections adjust external hazards after shields and before health is committed.
+            EventHandler.ExecuteEvent<DamageData>(m_GameObject, "OnHealthBeforeDamage", damageData);
+
             // Decrement the health by remaining amount after the shield has taken damage.
             if (m_HealthAttribute != null && m_HealthAttribute.Value > m_HealthAttribute.MinValue) {
                 m_HealthAttribute.Value -= Mathf.Min(damageData.Amount, m_HealthAttribute.Value - m_HealthAttribute.MinValue);

@@ -2969,6 +2969,8 @@ GameObject:
   - component: {fileID: 2012495680}
   - component: {fileID: 2012495689}
   - component: {fileID: 2012495690}
+  - component: {fileID: 2012495691}
+  - component: {fileID: 2012495692}
   m_Layer: 0
   m_Name: Lucian_Juggernaut_CombatLab
   m_TagString: Untagged
@@ -2990,16 +2992,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LucianBrainsCombatArena
   navigation: {fileID: 23800000, guid: 857f76ed611ab204da3d1e8558a61966, type: 2}
   lucianPrefab: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
+  aurellPrefab: {fileID: 2784444758471557209, guid: 5a5cf3fac1df38d43aa073579ad2a155, type: 3}
+  sorenPrefab: {fileID: 2784444758471557209, guid: 7092d6a346b234a4babc605180b95967, type: 3}
+  character: 0
+  migrateAurellMode: 0
+  spawnProtectionAlly: 0
   enemyPrefab: {fileID: 8060176011446918699, guid: 430506b0e6046214f833dced4520771a, type: 3}
   basicSkills:
-  - {fileID: 11400000, guid: efe692932d555ac4e91b347736a912f5, type: 2}
-  - {fileID: 11400000, guid: 52d750717159aa347b69b2ec3755f008, type: 2}
-  - {fileID: 11400000, guid: 2b7acf30028a83646b2cfd1ef8dbf9e1, type: 2}
+  - {fileID: 11400000, guid: 9b9635113b0b36d45b5934c0b2051af7, type: 2}
+  - {fileID: 11400000, guid: 6ca70f7ce54063f4a93b812382496342, type: 2}
+  - {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
+  additionalCombatSkills:
+  - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
+  - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
+  - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852261, type: 2}
+  - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852262, type: 2}
+  - {fileID: 11400000, guid: 77d611af48f14e6da001428e65b9b5b2, type: 2}
+  - {fileID: 11400000, guid: a61bd390e0de4f36949819d560aa5b11, type: 2}
   enemyAttackSkills:
   - {fileID: 11400000, guid: 3574dc0264b01b24ea983ed7db44c598, type: 2}
   - {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
   - {fileID: 11400000, guid: b3a4d6f55f403a4498b9a4d2f11d4fa2, type: 2}
   arenaCamera: {fileID: 1393511126}
+  lockCursorPrefab: {fileID: 1000, guid: b37e8d3d67234ea38d540629884345a0, type: 3}
+  lockCursorOffset: {x: 0, y: 3, z: 0}
+  alignPlayerCombatTorso: 1
   playerSpawn: {x: 0, y: 0.1, z: 5}
   enemySpawn: {x: 0, y: 0, z: -4}
   playerMaxHealth: 100
@@ -3007,8 +3024,6 @@ MonoBehaviour:
   enemyMeleeReach: 3.2
   hurtState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   showCombatDiagnostics: 0
-  lockCursorPrefab: {fileID: 1000, guid: b37e8d3d67234ea38d540629884345a0, type: 3}
-  lockCursorOffset: {x: 0, y: 3, z: 0}
   playerWalkTurnRate: 720
   playerSprintTurnRate: 1080
   playerSharpTurnRate: 1440
@@ -3512,8 +3527,70 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealthThresholdController
   dodgeWindowSeconds: 0.5
   counterWindowSeconds: 0.2
+  counterRetryDelaySeconds: 0.4
   reactionTimeScale: 1
   logEnemyReactions: 0
+--- !u!114 &2012495691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012495677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdd4c3940baaeb34184a48dc227b8613, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatLabClashController
+  enableClashes: 1
+  compatiblePlayerSkills:
+  - {fileID: 11400000, guid: 9b9635113b0b36d45b5934c0b2051af7, type: 2}
+  - {fileID: 11400000, guid: 6ca70f7ce54063f4a93b812382496342, type: 2}
+  - {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
+  compatibleEnemyStates:
+  - Attack
+  - Attack_Followup
+  recoilDistance: 0.6
+  recoilSeconds: 0.18
+  recoverySeconds: 0.15
+  hitVfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  contactAudio: {fileID: 11400000, guid: b1e939b15747f81409aa659a95a1d98d, type: 2}
+  diagnostics: 0
+  playerClips:
+  - source: {fileID: 7400000, guid: 633be3fc5edac7a43a1313fc22f77247, type: 2}
+    replacement: {fileID: 7400000, guid: 015be04822df4ab4c9b8055585bf8a8c, type: 2}
+  - source: {fileID: 7400000, guid: 90065e461f445774282e46bac5ba3899, type: 2}
+    replacement: {fileID: 7400000, guid: 76f25a9c539d1134aba25967f3ddccff, type: 2}
+  - source: {fileID: 7400000, guid: 7bff13e5ed5ecdf4c8060a1e239628fb, type: 2}
+    replacement: {fileID: 7400000, guid: e6b4434562a76a842b975c2732bb3178, type: 2}
+  enemyClips:
+  - source: {fileID: 7400000, guid: afdd35d12c95c6446b5a6380f4ed205b, type: 2}
+    replacement: {fileID: 7400000, guid: 0c3505223bb084844b270d1a486e1c9d, type: 2}
+  - source: {fileID: 7400000, guid: a60d893d891f10147a4de3ac16f48ce0, type: 2}
+    replacement: {fileID: 7400000, guid: c579cd2f0d7d8db46a2955b8c0fa123a, type: 2}
+  labEnemyProfile: {fileID: 11400000, guid: b954198c9d441d34880a7e45f07c88a5, type: 2}
+  authoringVersion: 1
+  playerCenter: {x: 0, y: 1.1, z: 0.8}
+  enemyCenter: {x: 0, y: 1.1, z: 0.8}
+  playerRadius: 0.55
+  enemyRadius: 0.55
+  playerVolume: {fileID: 0}
+  enemyVolume: {fileID: 0}
+--- !u!114 &2012495692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012495677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38284c86eeca477088fe3fe112040903, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SoloTeamTestProfile
+  profile:
+    members: []
+  unlockAllCatalogSkills: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

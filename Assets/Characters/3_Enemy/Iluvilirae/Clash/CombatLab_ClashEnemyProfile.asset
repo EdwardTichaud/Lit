@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1216f4be9cc9449aac949c16152d9656, type: 3}
+  m_Name: CombatLab_ClashEnemyProfile
+  m_EditorClassIdentifier: Assembly-CSharp::LitBrainsCombatProfile
+  attackStartDistance: 3.6
+  approachStopDistance: 1.7
+  initialAttackDelay: 0.2
+  attackFacingDegrees: 55
+  turnDegreesPerSecond: 540
+  attackInterval: {x: 1.5, y: 1.9}
+  resistance: 100
+  resistanceRecoveryDelay: 1
+  resistanceRecoveryPerSecond: 50
+  hurtSeconds: 0.35
+  interruptionProtectionSeconds: 0.75
+  attacks:
+  - stateName: Attack
+    clip: {fileID: 7400000, guid: 0c3505223bb084844b270d1a486e1c9d, type: 2}
+    reactionSeconds: 0.23333333
+    strikeSeconds: 0.46666667
+    impactSeconds: 0.56666666
+    recoverySeconds: 0.73333335
+    recoveryDurationSeconds: 0.2
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.4, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 1.1333337
+    preparationAdvanceDistance: 1
+    advanceDistance: 0.9
+    advanceSeconds: 0.2
+    reach: 2.6
+    arcDegrees: 110
+    heightTolerance: 1.8
+  - stateName: Attack_Sweep
+    clip: {fileID: 7400000, guid: 4583fd938bac54240b22eb24d80a6343, type: 2}
+    reactionSeconds: 0.33333334
+    strikeSeconds: 0.56666666
+    impactSeconds: 0.7
+    recoverySeconds: 0.9
+    recoveryDurationSeconds: 0.2
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.43199995, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 1.1333337
+    preparationAdvanceDistance: 1
+    advanceDistance: 0.9
+    advanceSeconds: 0.2
+    reach: 2.6
+    arcDegrees: 110
+    heightTolerance: 1.8
+  - stateName: Attack_Followup
+    clip: {fileID: 7400000, guid: c579cd2f0d7d8db46a2955b8c0fa123a, type: 2}
+    reactionSeconds: 0.26666668
+    strikeSeconds: 0.5
+    impactSeconds: 0.6
+    recoverySeconds: 0.76666665
+    recoveryDurationSeconds: 0.2
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.4181818, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 1.1333337
+    preparationAdvanceDistance: 1
+    advanceDistance: 0.9
+    advanceSeconds: 0.2
+    reach: 2.6
+    arcDegrees: 110
+    heightTolerance: 1.8

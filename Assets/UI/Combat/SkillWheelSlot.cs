@@ -19,6 +19,10 @@ public sealed class SkillWheelSlot : MonoBehaviour, IPointerEnterHandler
     private float targetScale = 1f;
 
     public SkillSO AssignedSkill => skill;
+    private string shortcut;
+    private bool locked;
+    public void SetLocked(bool value) { locked = value; Refresh(); }
+    public void SetShortcut(string value) { shortcut = value; Refresh(); }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
@@ -29,6 +33,7 @@ public sealed class SkillWheelSlot : MonoBehaviour, IPointerEnterHandler
     {
         ResolveVisualReferences();
         skill = value;
+        locked = false;
         Refresh();
         gameObject.SetActive(skill != null);
     }
@@ -108,7 +113,9 @@ public sealed class SkillWheelSlot : MonoBehaviour, IPointerEnterHandler
 
         if (skillNameText != null)
         {
-            skillNameText.text = skill != null ? skill.SkillName : string.Empty;
+            skillNameText.text = string.IsNullOrEmpty(shortcut)
+                ? (skill != null ? skill.SkillName : string.Empty)
+                : shortcut + "\n" + (locked ? "Verrouillé" : skill != null ? skill.SkillName : "Non equipe");
         }
     }
 }

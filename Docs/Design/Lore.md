@@ -417,19 +417,47 @@ Dans la campagne solo, le joueur contrôle Lucian. Lucian fait pleinement partie
 de cette organisation et connaît déjà les autres Explorateurs. Le joueur, lui,
 découvre progressivement leur passé commun.
 
-Le jeu débute dans un hub où Lucian échange avec les autres Explorateurs. Ce hub
-sert à présenter les personnages, développer progressivement leurs relations et
-introduire la mission avant l'exploration du château.
+Pour se battre, chaque Explorateur doit fusionner avec son ange gardien.
+Lucian fusionne avec Munin automatiquement a l'entree du combat, puis leur
+fusion cesse a sa sortie : ce n'est pas une capacite a activer manuellement.
+En solo, seul Lucian apparait physiquement pendant l'exploration et le combat,
+et les autres Explorateurs rejoignent progressivement l’équipe au fil de
+l’histoire, bien que Lucian les connaisse déjà. Leur arrivée ajoute leur portrait
+de support et le premier skill de leur kit ; les suivants sont déverrouillés
+plus tard. Lucian exécute ces skills sans apparition physique de la recrue.
+En multijoueur, chaque joueur incarne
+son propre personnage : a deux, chacun dispose de deux kits ; a trois, un
+joueur dispose de deux kits et les deux autres d'un chacun. L'attribution
+precise des kits entre joueurs reste a definir, sans creer d'equipiers
+physiques en solo.
+
+Le jeu débute dans un hub où Lucian prépare la mission. Les autres Explorateurs
+rejoignent progressivement l’équipe pendant l’aventure ; en solo leur présence
+de support passe par l’UI et leurs compétences. Leurs relations déjà établies
+se découvrent au fil de l’histoire.
 
 L'histoire des Explorateurs doit rester en arrière-plan pendant une grande partie
 du jeu. Leur rôle principal est de découvrir celle du château, de ses familles,
 de ses croyances et du rituel perpétué sans en comprendre la raison. Ils ne
 deviennent réellement importants que progressivement.
 
-### Lucian — l'Espoir
+### L'équipe jouable et ses complémentarités
+
+L'équipe jouable comprend quatre membres. Leurs styles de combat prolongent leur
+identité : Lucian porte l'offensive, tandis que Vesta soigne et soutient le groupe.
+Le jeu doit rester entièrement faisable seul ; en multijoueur, la complémentarité
+des personnages donne un intérêt supplémentaire à la coordination, sans rendre
+la présence de plusieurs joueurs obligatoire.
+
+### Lucian — l'Espoir et la Lumière
 
 Lucian est le demi-dieu qui incarne l'Espoir. Il est la réincarnation du frère
 décédé de Munin. Le Monde des Rêves l'a divinisé sans effacer cette origine.
+
+Il représente l'Espoir et la Lumière. Il avance quelles que soient les difficultés,
+fonce et attaque pour ouvrir un passage là où la situation semble bloquée. Son
+rôle d'attaquant traduit cet élan : la mobilité, l'initiative et l'offensive sont
+les expressions jouables de sa volonté de continuer.
 
 Il est toujours optimiste, y compris face à l'inconnu et aux situations qui
 semblent sans issue. Son optimisme n'est pas une naïveté : il perçoit et transmet
@@ -441,6 +469,89 @@ Lucian semble jeune et possède des cheveux blancs. Le contraste entre cette
 jeunesse apparente et sa nature demi-divine doit lui donner une présence à la fois
 familière et intemporelle. Son apparence, son attitude et ses paroles doivent
 évoquer la confiance et l'avenir.
+
+Son kit est pour l'instant limite a Bond offensif, Eclair et Rupture. Le
+quatrieme emplacement reste vide. En combat solo, la croix ouvre les kits :
+Lucian en haut, Vesta a droite, Soren en bas, Aurell a gauche. X/Y/A/B lancent
+les quatre emplacements du kit choisi depuis le personnage incarne, sans
+apparition physique des autres membres.
+
+### Vesta — l'Altruisme et la prudence
+
+Vesta est l'une des quatre membres de l'équipe. Elle représente l'Altruisme et la
+prudence. Elle soigne, prend soin de la famille et des proches, et veille à ce que
+les autres puissent continuer leur chemin sans être abandonnés.
+
+Son rôle de soigneuse prolonge cette identité. Là où Lucian avance et ouvre la voie,
+Vesta entretient les forces du groupe, anticipe les difficultés et accompagne les
+plus vulnérables. Sa prudence implique aussi de se préserver pour rester capable
+de prendre soin des autres ; ses soins personnels ne contredisent pas son
+altruisme.
+
+Les quatre skills de soin et de soutien suivants sont attribués à Vesta :
+
+| Skill | Effet | Cooldown |
+| --- | --- | --- |
+| Revitalisation | Soigne 20 % des PV maximum des personnages joueurs vivants dans un rayon de 30 m, Vesta incluse. | 120 s |
+| Soins d'urgence | Soigne Vesta de 50 % de ses PV maximum. | 30 s |
+| Régénération | Maintient un soin de 1 PV par seconde sur un allié explicitement ciblé ; en solo, Lucian peut l'appliquer sur lui-même. En multijoueur, le ciblage d'un autre allié est conservé. | Aucun |
+| Siphon vital | Vole 1 PV par seconde à un ennemi situé entre 0 et 10 m et rend à Vesta les PV effectivement retirés. | Aucun |
+
+Vesta ne maintient qu'un seul de ces effets passifs à la fois : Régénération et
+Siphon vital se remplacent mutuellement. Les soins sont plafonnés aux PV maximum
+et ne réaniment pas un personnage mort. Siphon vital est un outil de survie qui lui
+permet de rester en mesure de soutenir ses proches.
+
+Ces skills appartiennent au kit de Vesta, même lorsqu'ils sont temporairement
+accessibles à Lucian dans le laboratoire de combat. Leur présence dans un test
+technique ne modifie pas l'attribution narrative des pouvoirs.
+
+### Aurell : la Justice
+
+Aurell incarne la Justice. Il protege ses proches, assume une part de leur
+danger et repond a la violence par une riposte proportionnee. Il complete
+l'offensive de Lucian et les soins de Vesta sans remplacer leurs pouvoirs.
+
+- **Intercession** : lien a 20 m, 4 s, 75 % des degats de l'allie transferes.
+  Aurell reduit de 50 % ses degats directs et transferes. Rupture au-dela de
+  30 m ; recharge de 25 s. Sur soi, protection personnelle de 50 %.
+- **Rempart** : aura mobile passive de 6 m, reduction de 30 % pour Aurell et
+  ses allies. Sans recharge ; concentration unique, reutiliser pour desactiver.
+  Avec Intercession, reduction de 65 %. Plusieurs Remparts ne se cumulent pas.
+- **Sommation** : prochaines decisions ennemies dirigees vers Aurell dans un
+  rayon de 15 m pendant 6 s. Recharge de 30 s ; aucun coup engage detourne.
+- **Juste Retour** : frappe a 3 m utilisant exclusivement les degats evites
+  par sa garde ou ses protections. Reserve plafonnee a 50 % de ses PV maximum,
+  consommee au lancement et videe en fin de combat. Recharge de 10 s ; aucun
+  degat de base ni remboursement en cas de rate.
+
+Ses protections couvrent les pieges et chutes, jamais les morts scriptées.
+Le modele de Lucian sert provisoirement dans le laboratoire et ne definit pas
+l'apparence narrative d'Aurell. Cette livraison ne definit pas sa scene de perte.
+
+### Soren : la Lucidité
+
+Soren incarne la Lucidité. Il observe les dangers, identifie les faiblesses et
+crée des ouvertures pour ses proches. Sa prudence ne signifie pas renoncer :
+il rappelle à Lucian que l'Espoir peut regarder la réalité en face. Il complète
+l'offensive de Lucian, la Justice d'Aurell et les soins de Vesta par le contrôle
+à distance et le repositionnement.
+
+- **Flèche de lumière** : son attaque à distance existante, 10 PV à 10–30 m,
+  étourdissement immédiat de 2 s et recharge de 10 s.
+- **Révélation** : marque une cible à 25 m maximum pendant 6 s. Les attaques
+  des joueurs lui infligent 20 % de dégâts supplémentaires ; recharge de 20 s.
+  Les marques ne se cumulent pas et n'amplifient pas le Siphon vital.
+- **Entrave** : zone fixe sous la cible à 20 m maximum, rayon de 4 m, durée
+  de 5 s. Elle réduit la navigation ennemie de 40 %, jamais la vitesse des
+  animations d'attaque ; recharge de 25 s.
+- **Pas de recul** : déplacement de 5 m en 0,25 s dans la direction choisie,
+  ou à l'opposé de la cible sans input. Recharge de 8 s, aucun dégât ni
+  invulnérabilité ; les obstacles et le vide limitent son trajet.
+
+Le modèle et les BasicSkills de Lucian restent des supports temporaires dans
+le laboratoire. L'attribution narrative de la Flèche revient à Soren ; ses
+références techniques de production ne seront migrées qu'après validation.
 
 ### Munin et le sacrifice de Lucian
 

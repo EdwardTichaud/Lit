@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Transmet les inputs locaux au serveur pour un personnage possede.
 [RequireComponent(typeof(NetworkObject))]
-public class NetworkCharacterInput : NetworkBehaviour
+public partial class NetworkCharacterInput : NetworkBehaviour
 {
     [SerializeField] private SquadCharacterController controller;
     [SerializeField, Tooltip("Intervalle d'envoi des inputs (s).")]
@@ -31,6 +31,8 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        var protection = controller != null ? controller.GetComponent<PlayerProtectionEffects>() : null;
+        if (protection != null) protection.enabled = true;
         if (IsOwner)
         {
             RegisterInput();
@@ -39,6 +41,9 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        ClearControlResources();
+        ClearProtectionResources();
+        ClearRegenerationResources();
         UnregisterInput();
     }
 
@@ -54,6 +59,9 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void OnDisable()
     {
+        ClearControlResources();
+        ClearProtectionResources();
+        ClearRegenerationResources();
         if (IsOwner && IsAssignedToLocalClient())
         {
             SubmitMove(Vector2.zero, false, 0f);
@@ -72,6 +80,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void UnregisterInput()
     {
+        healingRequestPending = false;
         LocalInputRouter.Move -= OnMoveChanged;
         LocalInputRouter.Jump -= OnJump;
         LocalInputRouter.LocomotionMode -= OnLocomotionMode;
@@ -95,6 +104,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void Update()
     {
+        TickProtectionNetwork();
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
             rawMoveInput = Vector2.zero;

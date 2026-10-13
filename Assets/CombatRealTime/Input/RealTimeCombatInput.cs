@@ -30,7 +30,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private InputAction paletteConfirmAction;
     private InputAction switchEnemyLockAction;
     private InputAction lightSkillAction;
-    private InputAction companionFusionAction;
     private bool paletteOpen;
     private bool paletteInputSuppressed;
     private bool callbacksSubscribed;
@@ -205,7 +204,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         paletteConfirmAction = null;
         switchEnemyLockAction = null;
         lightSkillAction = null;
-        companionFusionAction = null;
 
         if (actionMap == null)
         {
@@ -229,7 +227,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         paletteConfirmAction = actionMap.FindAction("ConfirmPalette", false);
         switchEnemyLockAction = actionMap.FindAction("SwitchEnemyLock", false);
         lightSkillAction = actionMap.FindAction("LightSkill", false);
-        companionFusionAction = actionMap.FindAction("Melt", false);
         return true;
     }
 
@@ -292,7 +289,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (paletteConfirmAction != null) paletteConfirmAction.performed += OnConfirmPalette;
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed += OnSwitchEnemyLock;
         if (lightSkillAction != null) lightSkillAction.performed += OnLightSkill;
-        if (companionFusionAction != null) companionFusionAction.performed += OnCompanionFusion;
         callbacksSubscribed = true;
     }
 
@@ -328,12 +324,12 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (paletteConfirmAction != null) paletteConfirmAction.performed -= OnConfirmPalette;
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed -= OnSwitchEnemyLock;
         if (lightSkillAction != null) lightSkillAction.performed -= OnLightSkill;
-        if (companionFusionAction != null) companionFusionAction.performed -= OnCompanionFusion;
         callbacksSubscribed = false;
     }
 
     private void OnCounterStarted(InputAction.CallbackContext context)
     {
+        if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
         if (!paletteOpen && !IsCounterCinematicPlaying &&
             CombatHealthThresholdController.Instance != null &&
             CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Counter)) return;
@@ -352,6 +348,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnDodge(InputAction.CallbackContext context)
     {
+        if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
         if (IsCounterCinematicPlaying) return;
         if (!paletteOpen && CombatHealthThresholdController.Instance != null &&
             CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Dodge)) return;
@@ -376,6 +373,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnBasicAttack(InputAction.CallbackContext context)
     {
+        if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
         if (basicAttackRequiresRelease) return;
         basicAttackHeld = TryQueueBasicSkill(false);
     }
@@ -487,6 +485,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
+        if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
         if (paletteOpen || IsCounterCinematicPlaying)
         {
             return;
@@ -499,6 +498,13 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnOpenPalette(InputAction.CallbackContext context)
     {
+        FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.RefreshSkills(true);
+        var kits = GetComponent<CombatSkillKitInput>();
+        if (context.control?.device is Gamepad && kits != null && kits.IsAvailable)
+        {
+            kits.Open(kits.ActiveKit);
+            return;
+        }
         if (IsCounterCinematicPlaying) return;
         CancelBufferedBasicSkills();
         paletteOpen = true;
@@ -517,6 +523,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnClosePalette(InputAction.CallbackContext context)
     {
+        if (GetComponent<CombatSkillKitInput>()?.IsOpen == true) return;
         ClosePalette();
     }
 
@@ -567,6 +574,21 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private void OnSwitchEnemyLock(InputAction.CallbackContext context)
     {
         if (IsCounterCinematicPlaying) return;
+        if (context.control?.device is Gamepad && !paletteOpen)
+        {
+            if (context.interaction is UnityEngine.InputSystem.Interactions.HoldInteraction)
+                RealTimeCombatManager.Instance?.TryReleaseManualLock();
+            else
+                RealTimeCombatManager.Instance?.TryAdvanceManualLock();
+            return;
+        }
+        if (paletteOpen)
+        {
+            ResolveSkillWheel();
+            var skill = skillWheel != null ? skillWheel.GetSkill(skillWheel.SelectedSlotIndex) : null;
+            RealTimeCombatManager.Instance?.TryCycleSupportTarget(skill);
+            return;
+        }
         if (!paletteOpen)
         {
             var manager = RealTimeCombatManager.Instance;
@@ -585,23 +607,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         {
             GetComponent<LightSkillCombatController>()?.TryUseLightSkill();
         }
-    }
-
-    private void OnCompanionFusion(InputAction.CallbackContext context)
-    {
-        if (paletteOpen || IsCounterCinematicPlaying)
-        {
-            return;
-        }
-
-        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        if (manager == null || !manager.IsCombatActive)
-        {
-            return;
-        }
-
-        SpiritBondController.FindForCharacter(manager.PlayerRoot != null ? manager.PlayerRoot.gameObject : null)
-            ?.RequestMeltAnimation();
     }
 
     private IEnumerator PlayBasicSkillCombo(SkillsManager skillsManager)
@@ -712,6 +717,25 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
 
         HideSkillWheel(resolveIfMissing);
+    }
+
+    public SkillSO CurrentWheelSkill => skillWheel != null ? skillWheel.GetSkill(skillWheel.SelectedSlotIndex) : null;
+
+    public bool DisplaySkillKit(string name, SkillSO[] skills)
+    {
+        ResolveSkillWheel();
+        if (skillWheel == null || !skillWheel.isActiveAndEnabled || skillWheel.SlotCount < 4) return false;
+        if (paletteOpen) ClosePalette();
+        skillWheel.ShowKit(name, skills);
+        SetSkillWheelVisible(true);
+        if (skillWheelCanvasGroup != null) skillWheelCanvasGroup.alpha = 1f;
+        return true;
+    }
+
+    public void HideSkillKit()
+    {
+        skillWheel?.EndKitDisplay();
+        SetSkillWheelVisible(false, false);
     }
 
     private void PushPaletteInputSuppression()

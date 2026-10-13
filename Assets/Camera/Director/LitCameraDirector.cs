@@ -1,5 +1,6 @@
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UccCameraController = Opsive.UltimateCharacterController.Camera.CameraController;
 using UccCameraControllerHandler = Opsive.UltimateCharacterController.Camera.CameraControllerHandler;
 
@@ -31,6 +32,27 @@ public sealed class LitCameraDirector : MonoBehaviour
     private bool timelineCinemachineControlActive;
     private CinemachineBlendDefinition timelineOriginalBlend;
     private bool timelineBlendStored;
+    private int cameraSession;
+    private float timelineExitBlendSeconds;
+    private CameraPose blendSource, rawRenderPose, lastDisplayedPose;
+    private bool renderPoseOverridden, hasDisplayedPose;
+    private double blendStartedAt;
+    private float outputBlendSeconds;
+    private bool renderingSubscribed;
+
+    private struct CameraPose
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public float fov;
+        public static CameraPose Capture(Camera camera) => new CameraPose
+        { position = camera.transform.position, rotation = camera.transform.rotation, fov = camera.fieldOfView };
+        public void Apply(Camera camera)
+        {
+            camera.transform.SetPositionAndRotation(position, rotation);
+            camera.fieldOfView = fov;
+        }
+    }
 
     public bool IsCinemachineDriving => activeCinemachineCamera != null && cinemachineBrain != null && cinemachineBrain.enabled;
     public Camera ControlledCamera => controlledCamera;
@@ -82,11 +104,20 @@ public sealed class LitCameraDirector : MonoBehaviour
 
     private void OnDisable()
     {
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnSceneUnloaded;
+        cameraSession++;
+        CancelOutputBlend();
         ReleaseCinemachine();
+        UnsubscribeRendering();
     }
+
+    private void OnEnable() => UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
+    private void OnSceneUnloaded(UnityEngine.SceneManagement.Scene scene) => CancelOutputBlend();
 
     private void OnDestroy()
     {
+        UnsubscribeRendering();
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnSceneUnloaded;
         if (Instance == this)
         {
             Instance = null;
@@ -139,7 +170,11 @@ public sealed class LitCameraDirector : MonoBehaviour
     /// ownership of virtual-camera selection and blending.
     /// </summary>
     public bool BeginTimelineCinemachineControl()
+        => BeginTimelineCinemachineControl(0f, 0f, out _);
+
+    public bool BeginTimelineCinemachineControl(float entrySeconds, float exitSeconds, out int generation)
     {
+        generation = cameraSession;
         ResolveDependencies();
         if (controlledCamera == null)
         {
@@ -152,6 +187,9 @@ public sealed class LitCameraDirector : MonoBehaviour
             return false;
         }
 
+        StartOutputBlend(entrySeconds);
+        timelineExitBlendSeconds = Mathf.Max(0f, exitSeconds);
+        generation = ++cameraSession;
         SuspendUccCameraControl();
         StoreTimelineBlend();
         cinemachineBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
@@ -162,14 +200,115 @@ public sealed class LitCameraDirector : MonoBehaviour
 
     /// <summary>Returns authority to UCC after a Timeline Cinemachine track ends.</summary>
     public void EndTimelineCinemachineControl()
+        => EndTimelineCinemachineControl(cameraSession);
+
+    public void EndTimelineCinemachineControl(int generation)
     {
-        if (!timelineCinemachineControlActive)
+        if (!timelineCinemachineControlActive || generation != cameraSession)
         {
             return;
         }
 
+        StartOutputBlend(timelineExitBlendSeconds);
         timelineCinemachineControlActive = false;
         ReleaseCinemachine();
+    }
+
+    /// <summary>Also used explicitly by the editor preview; no gameplay authority is changed.</summary>
+    public void StartOutputBlend(float seconds)
+    {
+        ResolveDependencies();
+        if (controlledCamera == null) return;
+        blendSource = hasDisplayedPose ? lastDisplayedPose : CameraPose.Capture(controlledCamera);
+        RestoreRenderPose();
+        outputBlendSeconds = Mathf.Max(0f, seconds);
+        // Start on the first displayed frame, not during a potentially costly pre-roll.
+        blendStartedAt = double.NaN;
+        if (outputBlendSeconds > 0f) SubscribeRendering();
+    }
+
+    public void CancelOutputBlend()
+    {
+        outputBlendSeconds = 0f;
+        RestoreRenderPose();
+        hasDisplayedPose = false;
+    }
+
+    public void PrepareOutputPreview()
+    {
+        ResolveDependencies();
+        SubscribeRendering();
+    }
+
+    public void EndOutputPreview()
+    {
+        CancelOutputBlend();
+        UnsubscribeRendering();
+    }
+
+    private void SubscribeRendering()
+    {
+        if (renderingSubscribed) return;
+        renderingSubscribed = true;
+        // HDRP snapshots camera matrices before beginCameraRendering.
+        // Compose before the entire render context so culling and image agree.
+        RenderPipelineManager.beginContextRendering += BeginContextRender;
+        RenderPipelineManager.endContextRendering += EndContextRender;
+        Camera.onPreCull += BeginBuiltinRender;
+        Camera.onPostRender += EndBuiltinRender;
+    }
+
+    private void UnsubscribeRendering()
+    {
+        if (!renderingSubscribed) return;
+        renderingSubscribed = false;
+        RenderPipelineManager.beginContextRendering -= BeginContextRender;
+        RenderPipelineManager.endContextRendering -= EndContextRender;
+        Camera.onPreCull -= BeginBuiltinRender;
+        Camera.onPostRender -= EndBuiltinRender;
+    }
+
+    private void BeginBuiltinRender(Camera camera)
+    { if (GraphicsSettings.currentRenderPipeline == null) BeginRender(default, camera); }
+    private void EndBuiltinRender(Camera camera)
+    { if (GraphicsSettings.currentRenderPipeline == null) EndRender(default, camera); }
+
+    private void BeginContextRender(ScriptableRenderContext context, System.Collections.Generic.List<Camera> cameras)
+    { if (cameras.Contains(controlledCamera)) BeginRender(context, controlledCamera); }
+    private void EndContextRender(ScriptableRenderContext context, System.Collections.Generic.List<Camera> cameras)
+    { if (cameras.Contains(controlledCamera)) EndRender(context, controlledCamera); }
+
+    private void BeginRender(ScriptableRenderContext _, Camera camera)
+    {
+        if (camera != controlledCamera || renderPoseOverridden) return;
+        rawRenderPose = CameraPose.Capture(camera);
+        if (double.IsNaN(blendStartedAt)) blendStartedAt = Time.realtimeSinceStartupAsDouble;
+        float elapsed01 = outputBlendSeconds > 0f
+            ? Mathf.Clamp01((float)(Time.realtimeSinceStartupAsDouble - blendStartedAt) / outputBlendSeconds) : 1f;
+        float weight = Mathf.SmoothStep(0f, 1f, elapsed01);
+        lastDisplayedPose = new CameraPose
+        {
+            position = Vector3.Lerp(blendSource.position, rawRenderPose.position, weight),
+            rotation = Quaternion.Slerp(blendSource.rotation, rawRenderPose.rotation, weight),
+            fov = Mathf.Lerp(blendSource.fov, rawRenderPose.fov, weight)
+        };
+        hasDisplayedPose = true;
+        if (elapsed01 < 1f)
+        {
+            lastDisplayedPose.Apply(camera);
+            renderPoseOverridden = true;
+        }
+        else outputBlendSeconds = 0f;
+    }
+
+    private void EndRender(ScriptableRenderContext _, Camera camera)
+    { if (camera == controlledCamera) RestoreRenderPose(); }
+
+    private void RestoreRenderPose()
+    {
+        if (!renderPoseOverridden) return;
+        if (controlledCamera != null) rawRenderPose.Apply(controlledCamera);
+        renderPoseOverridden = false;
     }
 
     /// <summary>Returns authority to UCC and rebinds it to the local character.</summary>

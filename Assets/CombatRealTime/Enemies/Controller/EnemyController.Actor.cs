@@ -118,14 +118,17 @@ public sealed partial class EnemyController
         return CanSeePlayer;
     }
 
-    public int ReceiveLightDamage(int amount, SquadCharacterController source = null)
+    public int ReceiveLightDamage(int amount, SquadCharacterController source = null, bool damageModifiersApplied = false)
     {
-        return ReceiveDamage(amount, true, source);
+        return ReceiveDamage(amount, true, source, true, !damageModifiersApplied);
     }
 
-    public int ReceiveDamage(int amount, bool canPrepareRetaliation = false, SquadCharacterController source = null)
+    public int ReceivePassiveDamage(int amount, SquadCharacterController source) => ReceiveDamage(amount, true, source, false);
+
+    public int ReceiveDamage(int amount, bool canPrepareRetaliation = false, SquadCharacterController source = null, bool playHitReaction = true, bool applyRevelation = false)
     {
         if (!CombatEnabled) return 0;
+        if (applyRevelation) amount = EnemyRevelation.ModifyDamage(transform, amount);
         if (!BossFilterIncomingDamage(amount, source, out amount)) return 0;
         EnemyController brain = GetComponent<EnemyController>();
         if (brain != null && brain.HasProfile)
@@ -177,7 +180,7 @@ public sealed partial class EnemyController
         // Une attaque deja engagee conserve sa priorite. Interrompre un clip
         // root (par exemple Assomoir) avec Hit coupe son root motion et peut
         // laisser l'ennemi suspendu dans sa pose de saut.
-        if (ActorActiveSkill == null)
+        if (playHitReaction && ActorActiveSkill == null)
         {
             PlayHitAnimation();
         }

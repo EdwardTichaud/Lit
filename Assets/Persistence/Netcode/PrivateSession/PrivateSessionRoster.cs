@@ -16,7 +16,13 @@ public sealed class PrivateSessionRoster : ScriptableObject
         {
             CharacterSaveData saved = JsonUtility.FromJson<CharacterSaveData>(File.ReadAllText(path));
             if (saved == null) throw new InvalidDataException("Sauvegarde de personnages illisible.");
-            if (saved.squadIds != null && saved.squadIds.Count > 0)
+            // A solo v8 roster describes the only physical actor, not the
+            // multiplayer character catalog. Never shrink a private lobby to it.
+            var soloCharacter = Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default")?.GetCharacter(CombatSkillKit.Lucian);
+            bool soloPhysicalRoster = saved.soloTeam != null && saved.squadIds != null &&
+                saved.squadIds.Count == 1 && soloCharacter != null &&
+                (saved.squadIds[0] == soloCharacter.characterId || saved.squadIds[0] == soloCharacter.UniqueId);
+            if (!soloPhysicalRoster && saved.squadIds != null && saved.squadIds.Count > 0)
                 available = available.Where(c => c != null && saved.squadIds.Contains(c.characterId));
         }
         return available.Where(c => c != null && !string.IsNullOrWhiteSpace(c.characterId))

@@ -83,6 +83,7 @@ public static class LucianBrainsCombatSetup
             EditorUtility.SetDirty(arena);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
+            if (arena.GetComponent<CombatLabClashController>() != null) CombatLabClashSetup.Configure();
         }
         finally { if (previous.Any(s => s.isLoaded && s.isActive)) EditorSceneManager.RestoreSceneManagerSetup(previous); }
     }
@@ -154,6 +155,7 @@ public static class LucianBrainsCombatSetup
         try
         {
             var rig = root.GetComponent<CombatCinematicRig>();
+            rig.ConfigureCameraHandoff(.25f, .25f);
             if (!rig.HasAuthoringStageLayout)
             {
                 var player = new GameObject("AuthorPlayerReference").transform;

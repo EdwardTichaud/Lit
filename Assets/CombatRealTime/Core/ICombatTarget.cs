@@ -14,7 +14,12 @@ public interface ICombatTarget
     bool PlaceForCinematic(Vector3 position, Quaternion rotation);
 }
 
-public sealed class LegacyCombatTarget : ICombatTarget
+public interface ICombatStunReceiver
+{
+    bool TryApplySkillStun(float seconds);
+}
+
+public sealed class LegacyCombatTarget : ICombatTarget, ICombatStunReceiver
 {
     private readonly EnemyController enemy;
     public LegacyCombatTarget(EnemyController enemy) { this.enemy = enemy; }
@@ -25,6 +30,7 @@ public sealed class LegacyCombatTarget : ICombatTarget
     public bool IsAttackCommitted => enemy != null && enemy.IsAttackCommitted;
     public int ActionSequenceId => enemy != null ? enemy.ActionSequenceId : 0;
     public int ReceiveDamage(int damage) => enemy != null ? enemy.ReceiveLightDamage(damage) : 0;
+    public bool TryApplySkillStun(float seconds) => enemy != null && enemy.TryApplySkillStun(seconds);
     public void SetCinematicSuspended(bool suspended) { if (enemy != null) enemy.SetCinematicSuspended(suspended); }
     public bool PlaceForCinematic(Vector3 position, Quaternion rotation) => enemy != null && enemy.PlaceForCinematic(position, rotation);
 }

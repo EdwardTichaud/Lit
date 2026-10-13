@@ -875,6 +875,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// </summary>
     public void ClearTransientLocksForSceneTransition()
     {
+        ReleaseTargetCollisionBypasses();
         ResolveReferences();
 
         // Une scene dechargee peut avoir desactive le moteur UCC ou son handler
@@ -1341,6 +1342,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        ReleaseTargetCollisionBypasses();
         RestoreExplorationMovementType();
         RestoreTacticalMovementType();
         CancelObstacleTraversal();

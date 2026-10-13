@@ -52,6 +52,7 @@ public class LitUccDamageBridge : MonoBehaviour
 
     private void OnEnable()
     {
+        EventHandler.RegisterEvent<DamageData>(gameObject, "OnHealthBeforeDamage", OnBeforeExternalDamage);
         ResolveReferences();
         ConfigureCharacterHealthAuthority();
         SubscribeCharacterHealthEvents();
@@ -79,6 +80,7 @@ public class LitUccDamageBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        EventHandler.UnregisterEvent<DamageData>(gameObject, "OnHealthBeforeDamage", OnBeforeExternalDamage);
         UnsubscribeCharacterHealthEvents();
         UnsubscribeSquadHealth();
 
@@ -136,6 +138,14 @@ public class LitUccDamageBridge : MonoBehaviour
         if (applied > 0 && squadController != null)
             squadController.RecordDamageApplied(sanitizedAmount, applied, previousHp, squadController.CurrentHp, source);
         return true;
+    }
+
+    private void OnBeforeExternalDamage(DamageData data)
+    {
+        if (litDamageApplicationDepth > 0 || squadController == null || data == null) return;
+        var shares = CombatProtectionDamage.Resolve(squadController, data.Amount);
+        data.Amount = shares.VictimDamage;
+        if (shares.Protector != null) shares.Protector.ApplyUnprotectedDamage(shares.TransferDamage, "Intercession: UCC hazard");
     }
 
     public bool TrySetAuthorityHealth(int current, int max)

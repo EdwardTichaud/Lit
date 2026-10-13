@@ -43,6 +43,10 @@ public sealed class PlayerTargetLungeProfile
     public bool enabled;
     [Tooltip("Quand active, le lanceur traverse la cible et termine sa course derriere elle. Sinon, il s'arrete devant puis rebondit.")]
     public bool passThroughTarget;
+    [Tooltip("L'Animation Event OpenSkillContactWindow autorise un impact unique au contact physique, au lieu du HitEnemy ponctuel.")]
+    public bool resolveImpactAtContact;
+    [Tooltip("Clip placeholder du state existant, remplace uniquement pour la session de ce skill.")]
+    public AnimationClip contactAnimationSlot;
     [Min(0f), Tooltip("Distance horizontale finale derriere la cible pour une traversee.")]
     public float passThroughDistance = 4f;
     [Min(0.01f), Tooltip("Duree maximale de l'approche rapide vers la cible.")]
@@ -270,6 +274,24 @@ public class SkillSO : ScriptableObject
     [Tooltip("Chemin complet de la state Animator a jouer. Laisser vide pour utiliser le nom du clip.")]
     public string animatorState;
     [Min(0f)] public float damages;
+    [Min(0f), Tooltip("Cooldown en secondes de jeu, par lanceur. Demarre uniquement si l'action est lancee.")]
+    public float cooldownSeconds;
+    public SkillControlProfile control = new SkillControlProfile();
+    public bool IsControlSkill => control != null && control.kind != SkillControlKind.None;
+    public SkillProtectionProfile protection = new SkillProtectionProfile();
+    public bool IsProtectionSkill => protection != null && protection.kind != SkillProtectionKind.None;
+    [Min(0f), Tooltip("Etourdissement immediat apres un impact infligeant des degats. Interrompt les attaques, jamais une cinematique ou un QTE.")]
+    public float stunSeconds;
+    [Header("Healing")]
+    public SkillHealingTarget healingTarget;
+    [Range(0f, 100f), Tooltip("Pourcentage des PV maximum soignes. 0 desactive le soin.")]
+    public float healingPercent;
+    [Min(0f), Tooltip("Rayon 3D autour du lanceur, bornes incluses; ignore pour Self.")]
+    public float healingRadius;
+    [Min(1)] public int regenerationHealthPerTick = 1;
+    [Min(.1f)] public float regenerationTickSeconds = 1f;
+    public bool IsHealingSkill => healingTarget == SkillHealingTarget.AllyRegeneration || healingTarget == SkillHealingTarget.EnemyLifeSteal ||
+        healingTarget != SkillHealingTarget.None && healingPercent > 0f;
     [FormerlySerializedAs("lightChargeOnHit")]
     [Min(0f), Tooltip("Clarte accordee uniquement lorsque cette competence inflige des degats.")]
     public float clarityGainOnHit = 1f;
@@ -282,6 +304,11 @@ public class SkillSO : ScriptableObject
     public float maximumHitDistance = 2.5f;
     [Tooltip("Si active, le skill ne demarre pas hors de sa portee de hit.")]
     public bool requireValidRangeToStart;
+    [Header("Launch Range Override")]
+    [Tooltip("Prioritaire sur Require Valid Range To Start. Ne modifie pas la portee des degats.")]
+    public bool useLaunchRange;
+    [Min(0)] public float minimumLaunchDistance;
+    [Min(0)] public float maximumLaunchDistance = 10f;
 
     [Header("Combat Cinematic (Optional)")]
     [Tooltip("Quand Timeline et Rig sont assignes, cette competence suspend le combat et joue sa Timeline sur place.")]
@@ -324,6 +351,8 @@ public class SkillSO : ScriptableObject
     public float MinimumHitDistance => minimumHitDistance;
     public float MaximumHitDistance => Mathf.Max(minimumHitDistance, maximumHitDistance);
     public bool RequireValidRangeToStart => requireValidRangeToStart;
+    public bool IsWithinLaunchRange(float distance) => !useLaunchRange ||
+        distance >= minimumLaunchDistance && distance <= maximumLaunchDistance;
     public CombatSkillCinematicDefinition Cinematic => cinematic;
     public bool HasCombatCinematic => cinematic != null && cinematic.IsConfigured;
     public IReadOnlyList<SkillVfxCue> VfxCues => vfxCues;

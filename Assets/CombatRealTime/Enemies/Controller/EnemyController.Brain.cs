@@ -44,6 +44,20 @@ public sealed partial class EnemyController
     private CombatPhase BrainPhase;
     private NavMeshPath BrainPath;
     private bool BrainAirborneChoiceMade;
+    private SquadCharacterController BrainTargetBeforeTaunt;
+    private bool BrainTauntApplied;
+
+    public bool TryReceiveTaunt(SquadCharacterController source, float seconds, float radius)
+    {
+        if (!BrainAuthority || !CombatEnabled || !PlayerProtectionEffects.Alive(source) ||
+            Health != null && Health.IsDead || IsCinematicSuspended || BrainProfile == null ||
+            BrainDistance(transform.position, source.transform.position) > radius ||
+            BrainDistance(BrainHome, source.transform.position) > BrainProfile.pursuitRadius) return false;
+        var taunt = GetComponent<EnemyTaunt>();
+        if (taunt == null) taunt = gameObject.AddComponent<EnemyTaunt>();
+        taunt.Set(source, seconds);
+        return true;
+    }
     private EnemyCombatPattern BrainAirborneChoice;
     public SquadCharacterController Target => BrainTarget;
     public bool HasProfile => BrainProfile != null;
@@ -51,7 +65,8 @@ public sealed partial class EnemyController
     public CombatPhase Phase => BrainPhase;
     public int ActionId => BrainActionId;
     public bool IsGuarding => BrainNow < BrainGuardUntil && BrainPattern == null && !BrainSuspended;
-    public bool OwnsPresentation => BrainSuspended || BrainPattern != null || IsGuarding || BrainPhase == CombatPhase.Dead;
+    public bool OwnsPresentation => BrainSuspended || BrainPattern != null || IsGuarding || BrainPhase == CombatPhase.Dead ||
+        BrainPhase == CombatPhase.Stagger && BrainNow < BrainReadyAt;
     private float BrainNow => BrainClock != null ? BrainClock.LocalTime : Time.time;
     private bool BrainAuthority => NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening || (NetworkManager.Singleton.IsServer && IsSpawned);
     private static SquadCharacterController BrainResolvePlayerController(Transform root)
@@ -98,6 +113,13 @@ public sealed partial class EnemyController
             return;
         CancelAction("desactivation");
         BrainTarget = null;
+        BrainTargetBeforeTaunt = null;
+        BrainTauntApplied = false;
+        if (BrainPhase == CombatPhase.Stagger)
+        {
+            BrainReadyAt = 0f;
+            BrainPhase = CombatPhase.Idle;
+        }
         BrainCooldowns.Clear();
         BrainEnemy.CompleteRetaliation();
     }
@@ -158,6 +180,19 @@ public sealed partial class EnemyController
         // Foreign actions include the authored QTE failure retaliation.
         if (BrainEnemy.ActiveSkill != null || BrainMotor == null || !BrainMotor.IsOperational || BrainMotor.State != CombatEnemyPhysicsState.Navigation)
             return;
+        var taunt = GetComponent<EnemyTaunt>();
+        if (taunt != null && taunt.IsActive && BrainDistance(BrainHome, taunt.Target.transform.position) <= BrainProfile.pursuitRadius)
+        {
+            if (!BrainTauntApplied) { BrainTargetBeforeTaunt = BrainTarget; BrainTauntApplied = true; }
+            BrainTarget = taunt.Target;
+            BrainReturning = false;
+            RealTimeCombatManager.Instance?.BeginEnemyAggro(BrainTarget.transform, this);
+        }
+        else if (BrainTauntApplied)
+        {
+            BrainTarget = PlayerProtectionEffects.Alive(BrainTargetBeforeTaunt) ? BrainTargetBeforeTaunt : null;
+            BrainTargetBeforeTaunt = null; BrainTauntApplied = false;
+        }
         // Vision is now a valid combat trigger. The player does not need to
         // land the first hit before this brain can pursue and attack.
         if (BrainTarget == null)
@@ -216,9 +251,15 @@ public sealed partial class EnemyController
             BrainLocomotion.StopNavigation();
             if (IsGuarding)
                 BrainSetPhase(CombatPhase.Observe, "garde");
-            else
+            else if (BrainPhase != CombatPhase.Stagger)
                 BrainSetPhase(CombatPhase.Recovery, "recuperation");
             return;
+        }
+
+        if (BrainPhase == CombatPhase.Stagger)
+        {
+            BrainEnemy.ReturnToIdleAnimation();
+            BrainSetPhase(CombatPhase.Observe, "fin etourdissement");
         }
 
         if (BrainGuardUntil > 0f)
@@ -555,6 +596,24 @@ public sealed partial class EnemyController
         CancelAction("stagger");
         BrainReadyAt = BrainNow + Mathf.Max(0f, seconds);
         BrainSetPhase(CombatPhase.Stagger, "interruption forcee");
+    }
+
+    public bool TryApplySkillStun(float seconds)
+    {
+        BrainEnsureRuntimeReferences();
+        if (seconds <= 0f || !BrainAuthority || !isActiveAndEnabled || !CombatEnabled || IsSuspended ||
+            IsCinematicMotionActive || BrainSuspended || BrainPhase == CombatPhase.Dead ||
+            Health != null && Health.IsDead ||
+            CombatHealthThresholdController.Instance != null && CombatHealthThresholdController.Instance.ShouldSuspendEnemy(this)) return false;
+        if (BrainPhase == CombatPhase.Stagger && BrainNow < BrainReadyAt) return false;
+        CancelAction("skill stun");
+        BrainGuardUntil = 0f;
+        BrainReadyAt = BrainNow + seconds;
+        BrainLocomotion?.StopNavigation();
+        PlayHitAnimation();
+        CancelHitRecovery();
+        BrainSetPhase(CombatPhase.Stagger, "etourdissement skill");
+        return true;
     }
 
     public void CancelAction(string reason)

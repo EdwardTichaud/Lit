@@ -15,6 +15,17 @@ public partial class LitBrainsEnemy
     public GameObject VFX_KnockedOut;
     private GameObject counterStunVfx;
     public LitBrainsAttackProfile ActiveAttack => activeAttack;
+    public Transform CommittedAttackTarget { get; private set; }
+
+    public bool TryReceiveTaunt(SquadCharacterController caster, float seconds, float radius)
+    {
+        if (!CombatProtectionDamage.HasAuthority || dead || cinematicSuspended || !PlayerProtectionEffects.Alive(caster) ||
+            Vector3.ProjectOnPlane(caster.transform.position - transform.position, Vector3.up).magnitude > radius) return false;
+        var taunt = GetComponent<EnemyTaunt>();
+        if (taunt == null) taunt = gameObject.AddComponent<EnemyTaunt>();
+        taunt.Set(caster, seconds); nextDetection = 0;
+        return true;
+    }
     public float ActualSpeed => agent != null && agent.enabled && agent.isOnNavMesh ? agent.velocity.magnitude : 0;
     private LitBrainsAttackProfile activeAttack;
     private float fluidCooldown, resistanceDamage, sinceImpact, protectionRemaining;
@@ -151,6 +162,7 @@ public partial class LitBrainsEnemy
         activeAttack = combatProfile.attacks[selectedAttack];
         if (activeAttack == null || activeAttack.clip == null) return;
         ActionSequenceId++;
+        CommittedAttackTarget = fov.CurrentTarget;
         if (activeAttack.visualHandoff != null && activeAttack.visualHandoff.validated)
             SetActionRecoveryRate(1);
         attackElapsed = 0;
@@ -226,6 +238,7 @@ public partial class LitBrainsEnemy
     private void CancelFluidAttack()
     {
         AttackPhase = LitBrainsAttackPhase.None;
+        CommittedAttackTarget = null;
         activeAttack = null;
         advanceRemaining = 0;
         StopControlConditions["LitBrainsEnemy.Hurt"] = hurtRemaining > 0;
@@ -243,6 +256,7 @@ public partial class LitBrainsEnemy
 
     private void OnDisable()
     {
+        CancelClashRecovery();
         ResetPerception();
         if (IsCounterStunned) hurtRemaining = 0;
         counterStunPending = counterStunActive = false;
@@ -254,9 +268,10 @@ public partial class LitBrainsEnemy
     public int ReceiveImpact(CombatImpact impact)
     {
         if (dead || impact.Damage <= 0) return 0;
-        if (combatProfile == null) return ReceiveDamage(impact.Damage);
+        int damage = impact.Origin != CombatImpactOrigin.Passive && !impact.DamageModifiersApplied ? EnemyRevelation.ModifyDamage(transform, impact.Damage) : impact.Damage;
+        if (combatProfile == null) return ReceiveDamage(damage);
         int before = currentHealth;
-        currentHealth = Mathf.Max(0, currentHealth - impact.Damage);
+        currentHealth = Mathf.Max(0, currentHealth - damage);
         sinceImpact = 0;
         if (currentHealth == 0)
         {
@@ -302,6 +317,26 @@ public partial class LitBrainsEnemy
         anim.ResetTrigger("Hurt");
         anim.CrossFadeInFixedTime("Knocked Out", .04f, 0);
         CreateCounterStunVfx();
+    }
+
+    public bool TryApplySkillStun(float seconds)
+    {
+        if (seconds <= 0f || !isActiveAndEnabled || dead || cinematicSuspended || IsCounterStunned || anim == null || !anim.isActiveAndEnabled) return false;
+        CancelClashRecovery();
+        resistanceDamage = 0f;
+        counterStunPending = false;
+        counterStunActive = true;
+        hurtRemaining = seconds;
+        protectionRemaining = Mathf.Max(protectionRemaining, seconds);
+        ActionSequenceId++;
+        impactActionSequence = ActionSequenceId;
+        CancelFluidAttack();
+        StopFluidMovement();
+        anim.ResetTrigger("Hurt");
+        string state = anim.HasState(0, Animator.StringToHash("Base Layer.Knocked Out")) ? "Knocked Out" : "Hurt";
+        if (anim.HasState(0, Animator.StringToHash("Base Layer." + state))) anim.CrossFadeInFixedTime(state, .06f, 0);
+        CreateCounterStunVfx();
+        return true;
     }
 
     /// <summary>Timeline signal entry point. Damage alone never enters this state.</summary>

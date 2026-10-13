@@ -17,6 +17,7 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlayb
     [SerializeField] private PlayableDirector director;
 
     private bool controlsCamera;
+    private int cameraSession;
     private CinemachineBrain explicitBrain;
     private LitCameraDirector explicitCameraDirector;
     private bool savedBrainUpdateMode;
@@ -88,7 +89,14 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlayb
             return true;
         }
 
-        controlsCamera = LitCameraDirector.EnsureInstance()?.BeginTimelineCinemachineControl() == true;
+        explicitCameraDirector = LitCameraDirector.EnsureInstance();
+        controlsCamera = explicitCameraDirector != null &&
+            explicitCameraDirector.BeginTimelineCinemachineControl(0f, 0f, out cameraSession);
+        if (controlsCamera)
+        {
+            explicitBrain = explicitCameraDirector.CinemachineBrain;
+            BeginManualBrainUpdates();
+        }
         if (!controlsCamera)
         {
             Debug.LogWarning("[TimelineCamera] Impossible de donner le controle de la camera a la Timeline. " +
@@ -99,9 +107,10 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlayb
     }
 
     /// <summary>Uses an explicitly resolved gameplay Brain instead of Camera.main.</summary>
-    public bool BeginCameraControlNow(CinemachineBrain brain)
+    public bool BeginCameraControlNow(CinemachineBrain brain, float entryBlendSeconds = 0f, float exitBlendSeconds = 0f)
     {
         if (!Application.isPlaying || brain == null) return false;
+        if (controlsCamera && explicitBrain == brain) return true;
 
         if (controlsCamera && explicitBrain != null && explicitBrain != brain)
         {
@@ -112,7 +121,7 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlayb
         Camera gameplayCamera = brain.GetComponent<Camera>();
         explicitCameraDirector = LitCameraDirector.EnsureInstance(gameplayCamera);
         controlsCamera = explicitCameraDirector != null &&
-                         explicitCameraDirector.BeginTimelineCinemachineControl();
+                         explicitCameraDirector.BeginTimelineCinemachineControl(entryBlendSeconds, exitBlendSeconds, out cameraSession);
         if (!controlsCamera)
         {
             explicitBrain = null;
@@ -154,7 +163,7 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlayb
             RestoreBrainUpdateMode();
             if (explicitCameraDirector != null)
             {
-                explicitCameraDirector.EndTimelineCinemachineControl();
+                explicitCameraDirector.EndTimelineCinemachineControl(cameraSession);
                 explicitCameraDirector = null;
             }
             explicitBrain = null;

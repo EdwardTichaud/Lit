@@ -1,5 +1,218 @@
 # Combat
 
+## Progression de l’équipe solo (2026-10-13)
+
+SoloTeamProgression, hébergé sur le SquadManager persistant (ou le manager du
+laboratoire autonome), détient les recrutements et les slots déverrouillés.
+Une campagne commence avec Lucian et ses trois skills existants. Vesta/Soren/
+Aurell deviennent des supports UI après RecruitMember : leur slot X est
+automatiquement disponible, les slots suivants nécessitent UnlockSkill.
+Le catalogue reste une définition complète et ne porte aucun état de partie.
+Les quatre directions et positions X/Y/A/B restent fixes ; les slots verrouillés
+sont affichés et refusés aussi par TryUseSkill et les palettes historiques.
+GetOwnedSkill respecte la progression, notamment pour la réserve de Juste Retour.
+
+SoloTeamStoryEvent expose les deux actions aux UnityEvents narratifs existants.
+L’UI affiche nom/portrait/Support sans PV pour les recrues ; une file locale
+d’annonces temporaires informe du recrutement sans capturer les contrôles.
+Vesta.asset est une définition sans prefab ; son portrait est provisoire.
+Le roster physique solo contient uniquement Lucian, y compris Maison et
+restauration. Les anciens swaps/followers sont inactifs dans ce mode.
+
+CharacterSaveData v8 contient soloTeam, distinct du roster réseau. La migration
+sans ce champ reprend uniquement les IDs du catalogue présents dans squadIds,
+avec le premier slot ; Mia/Luna/Link ne sont jamais convertis. Les états historiques
+restent conservés. Une restauration n’annonce pas les recrutements anciens.
+SoloTeamTestProfile fournit un état explicite de laboratoire et refuse toute
+application lorsqu’une sauvegarde de campagne est active. Il est activé dans
+Iluvilirae_Test, dont le personnage par défaut est Lucian : les quatre kits sont
+disponibles immédiatement (15 skills, slot B de Lucian vide), sans compagnon
+physique. RunBatchSceneProfile vérifie cette configuration réellement chargée ;
+le test de recrutement retire le profil uniquement de sa fixture non sauvegardée.
+Les points narratifs
+de recrutement restent à configurer dans les séquences ; aucun lieu n’est inventé.
+Validation : compilation et 21 tests Edit Mode passent (SoloTeamProgressionTests
+et DirectionalSkillKitTests) ; Play Iluvilirae_Test passe avec et sans Domain
+Reload, profil complet activé explicitement après les contrôles de verrouillage.
+Logs SoloTeamFinalTests.xml, SoloTeamPlay.log et SoloTeamPlayNoReload.log dans
+Library/ActorAnimationSandbox/Logs. Parcours campagne, HUD/manette physique et
+host/client restent des validations distinctes non effectuées dans ce lot.
+
+## Kits directionnels solo (2026-10-13)
+
+Une nouvelle pression sur la direction du kit actif ferme la roue, une autre
+direction change le kit. CombatSkillKitInput conserve un verrou de pression
+physique entre les maps pour ignorer leur initialStateCheck sur un D-pad maintenu.
+CombatWheel active uniquement Player/Move et Player/RightShoulder (sprint), en
+plus de ses propres commandes. IsLocomotionAllowed et la réconciliation du
+stick maintenu couvrent ce mode ; Iluvilirae_Test applique également le mouvement.
+Les boutons de face n’activent jamais leurs actions habituelles roue ouverte.
+Les modals et cinématiques gardent leurs règles de blocage.
+
+CombatSkillKitCatalog (Resources/CombatSkillKits/Default) definit les slots
+X/Y/A/B. Haut = Lucian (Bond offensif, Eclair, Rupture, vide) ; droite = Vesta
+(Revitalisation, Soins d'urgence, Regeneration, Siphon vital) ; bas = Soren
+(Fleche, Revelation, Entrave, Pas de recul) ; gauche = Aurell (Intercession,
+Rempart, Sommation, Juste Retour). Quinze skills, pas de quatrieme Lucian invente.
+Une pression ouvre/change le kit ; les diagonales sont ignorees. LT ferme la
+roue ; en combat libre LT ouvre le dernier kit. La map CombatWheel + System
+est exclusive : ni gameplay ni camera pendant la selection. Une tentative
+refusee garde la roue et affiche une raison ; aucun fallback attaque/esquive.
+Les boutons maintenus doivent etre relaches avant de retrouver leurs actions
+de combat normales. Mort, changement d'acteur, modal, cinematic, disable et
+reset d'asset nettoient l'owner ; aucune suppression UCC supplementaire.
+
+Le personnage incarne lance les skills empruntes avec ses PV, cooldowns et
+ressources. Aucun acteur cache n'est cree. La reserve d'Aurell est accessible
+a Lucian pendant le combat ; l'emplacement passif unique est conserve.
+Regeneration peut cibler Lucian lui-meme uniquement hors session reseau ;
+IsValidAlly reste strict et le serveur refuse toujours l'auto-ciblage multi.
+Player_Model ajoute seulement l'etat InPlace Soren_PasDeRecul, avec son clip
+deja auteur ; Juste Retour conserve son override temporaire de BasicSkill_3.
+Lucian.asset ne contient plus que Bond offensif, Eclair et Rupture.
+
+Install : Lit/Input/Install Directional Skill Kits. Verification :
+DirectionalSkillKitTests (Edit Mode), DirectionalSkillKitValidation (Play).
+Onze tests Edit Mode passent. Les parcours Play avec et sans Domain Reload
+passent : quatre kits, exclusivite de face, slot vide, ticks de regeneration,
+reserve/impact auteur de Juste Retour, Pas de recul, Bond offensif, R3 tap/hold,
+LT et restitution apres modal/fin de combat. Logs DirectionalSkillKit*.log/xml
+dans Library/LucianCombatValidation/Logs. Ressenti manette et scenes de jeu
+restent a verifier manuellement.
+Les scripts d'import GLTF/Soren non lies sont isoles puis restaures dans le
+sandbox. Repartition des kits a 2/3 joueurs et host/client non livres ici :
+le reseau conserve ses loadouts et droits existants, sans privilege implicite.
+
+## Soren : lucidite et controle (laboratoire)
+
+Lit > Combat Lab > Configure Soren Lucidity Skills cree CharacterData/prefab/
+controller distincts dans Characters/1_Squad/Soren et trois SkillSO dans
+Resources/CombatControlSkills. La Fleche existante reste partagee (10 PV,
+10-30 m, stun immediat 2 s, cooldown 10 s). Aucune reference de production
+n'est retiree. Iluvilirae_Test expose character = Lucian/Aurell/Soren ;
+Soren est selectionne. Les modes speciaux equipent leur propre kit seulement.
+
+Revelation : 25 m/6 s/+20%/20 s. Ennemi verrouille requis, aucun cumul,
+rafraichissement et generation monotone. Application avant defenses/paliers.
+CombatImpact conserve le flag DamageModifiersApplied pour eviter une seconde
+application ; Passive exclut les ticks de siphon. Degats environnementaux et
+morts explicites ne passent pas par le bonus d'attaque.
+
+Entrave : 20 m/4 m/5 s/-40% navigation/25 s. Projection de sol locale avant
+consommation ; cercle fixe sans collider ni rebuild. Les zones se composent
+par le plus fort ralentissement, pas par multiplication. Les adaptateurs
+Legacy et Brains AI ralentissent les intentions de navigation, conservent
+l'allure demandee et adaptent la cadence a la vitesse reelle. Aucun changement
+d'Animator.speed, de temps local, de sauts, ruees ou timings d'attaque.
+
+Pas de recul : 5 m/0,25 s/8 s, direction monde capturee dans le mode courant ;
+sans input, loin de la cible ou vers l'arriere sans cible. Session externe
+PlayerActionPresentationController et slot planaire UCC propres. Reutilise
+les controles capsule/sol/BattleWall d'Eclair sans ignorer une collision.
+Clip d'evasion InPlace dedie, sans Animation Events d'invulnerabilite. Nettoyage
+identifie, restitution selon l'intention actuelle, aucun Transform deplace
+directement. References rafraichies au lancement (presentation ajoutee apres
+Awake possible). Le serveur valide cible, equipement, cooldown et trajet ;
+les clients affichent les effets confirmes et la pose reseau, pas un second
+moteur physique. Mort/desactivation/desengagement retirent seulement les effets
+du lanceur concerne.
+
+## Fusion automatique avec l'ange gardien (2026-10-13)
+
+Le combat possede la fusion du seul personnage incarne via
+RealTimeCombatManager.SpiritFusion. Entree classique, aggro et laboratoire
+activent le SpiritBond avant les inputs ; fin, desactivation ou destruction
+du manager le liberent. Aucun personnage d'equipier n'est cree en solo.
+Un bond de presentation est ajoute au personnage si son prefab n'en contient
+plus ; cela ne restaure ni Munin jouable ni son ancien gameplay.
+La fusion automatique ne prend pas de verrou moteur/camera et ne depend pas
+d'un AnimationEvent. LightSkill conserve un overlay cinematographique, puis
+retrouve la fusion du combat. Les anciennes commandes de fusion manuelle
+et les confirmations tardives ne peuvent plus inverser cet etat.
+Le raccord local passe les tests Play Iluvilirae_Test avec et sans Domain
+Reload (CombatSpiritFusionValidation). L'assise automatique est neutralisee
+dans ce test seulement ; ses verrous restent independants. Les scripts
+d'auteur Soren/GLTF sont exclus temporairement du sandbox, puis restaures.
+La regression visuelle en scene de jeu et la replication host/client restent
+a valider ; la repartition des kits n'est pas implementee ici.
+
+Direction de design : en solo Lucian seul est visible et accede aux quatre
+kits. A deux joueurs : deux kits chacun. A trois : deux/un/un. Chaque joueur
+incarne un personnage physique independant ; posseder un kit ne fait pas
+apparaitre son personnage en solo. Kits solo/R3 : voir le raccord directionnel
+ci-dessus ; la repartition reseau reste distincte.
+
+## Aurell : protection et justice (laboratoire)
+
+Configuration : Lit > Combat Lab > Configure Aurell Justice Skills.
+CharacterData/prefab distincts dans Characters/1_Squad/Aurell ; quatre SkillSO
+dans Resources/CombatSupportSkills. Iluvilirae_Test expose le selecteur character,
+aurellPrefab et spawnProtectionAlly. Le mode Aurell n'ajoute pas les skills de Lucian.
+La selection d'allie existante dans la palette accepte Intercession et soi.
+
+Intercession : transfert 75%, reduction personnelle 50%, 4 s, lancement 20 m,
+rupture 30 m, cooldown 25 s. Rempart : 30%/6 m, sans cooldown, toggle, exclusif
+avec regeneration/siphon. Les reductions distinctes se multiplient ; une seule
+aura est retenue. Sommation : 15 m/6 s/30 s, appliquee a la prochaine decision.
+Juste Retour : 0-3 m/10 s, reserve seule plafonnee a 50% PV max. Son clip InPlace
+dedie remplace BasicSkill_3 pour une session seulement.
+
+CombatProtectionDamage precompute les parts avant d'ecrire les PV, sans transfert
+recursif ni seconde garde. Les montants evites sont credites une seule fois,
+jamais les montants simplement transferes. PlayerGuardState appartient a la
+victime. SetHealth, couts de PV et morts explicites bypassent les protections.
+Les credits de reserve suivent la perte evitee apres l'arrondi final des parts,
+pas une reduction fractionnaire qui n'aurait sauve aucun PV.
+Le hook OnHealthBeforeDamage dans le package Opsive local permet les dangers
+UCC avant perte de PV ; LitUccDamageBridge ignore les degats deja resolus par
+Lit pour eviter une double reduction.
+
+PlayerProtectionEffects nettoie liens/labels/concentration a mort/desactivation.
+Fin de combat vide seulement la reserve, pas Rempart. Aucun root motion ni
+prise de camera. Juste Retour appartient a une generation de presentation :
+impact unique, aucun degat de secours. NetworkCharacterInput.Protection valide
+skill equipe, cibles et cooldowns serveur ; replique protections/PV/reserve et
+presentation de frappe. Host/client reste a valider avant migration production.
+
+## Clash experimental du laboratoire
+
+Uniquement Iluvilirae_Test : CombatLabClashController expose compatibilite,
+centres/rayons des volumes d'attaque (distincts des capsules), recul, recuperation,
+prefab VFX, audio et diagnostic. Les copies de clips sont dans Iluvilirae/Clash.
+OpenAttackClashWindow precede l'impact de 0,08 s ; CloseAttackClashWindow le suit
+de 0,06 s. BasicSkills Grounded contre Attack et Attack_Followup. Sweep et
+attaques aeriennes/cinematiques exclus. Deux fenetres actives sont requises.
+
+Le balayage relatif des spheres et l'arbitrage en fin de frame neutralisent les
+deux generations avant de livrer les degats collectes. Les checks de contact,
+garde et esquive restent captures a l'Animation Event. Aucun degat deja livre
+n'est annule retroactivement. Aucun fallback production ne passe par ce controleur.
+Le callback ExternalImpactArbitrator est installe au spawn laboratoire puis retire
+au nettoyage. Les feedbacks ordinaires attendent la confirmation effective.
+
+La presentation joueur possede le recul via une session externe avec nettoyage
+enregistre et slot planaire UCC dedie. L'ennemi annule son action et deplace son
+agent avec sondage obstacle/bord NavMesh ; reprise de decision apres recuperation.
+Les verrous externes ne sont jamais liberes. Mort/cinematiques restent prioritaires.
+Reinstallation : Lit > Combat Lab > Configure Attack Clash, sans doublon d'events.
+
+## Audio et epee du CounterSkill laboratoire
+
+CombatLab_CounterHitVfx utilise quatre signaux SpawnTimelineHitVfx(GameObject)
+aux contacts auteur. CombatCinematicRig exige une session active, utilise
+ResolvePlayerImpactPosition (Y joueur + 1,5 m) et gere le nettoyage au pool
+et a la desactivation. Le prefab d'etincelles est fini, non scale, sans
+shockwave. Aucun degat, hitstop ou feedback camera additionnel.
+
+CombatLab_CounterSkill_2 utilise des SignalEmitter distincts pour les slashs,
+la voix et ShowTimelineSword/HideTimelineSword. Les sons de contre existants
+restent inchanges. CounterAudioSetup recree uniquement ses marqueurs, sans
+dupliquer les reactions du receiver runtime. Les AudioClipSO sont externes
+au rig, non loop/non scaled ; PlayVoice utilise le volume voix d'AudioManager.
+L'epee appartient a la generation de presentation qui l'a affichee ; la
+desactivation du receiver nettoie cette visibilite sans toucher une nouvelle
+action. Configuration limitee au laboratoire, pas de migration production.
+
 ## Repere tactique preserve (2026-10-10)
 
 Correction de regression : en camera tactique, le lock conserve le repere
@@ -183,6 +396,105 @@ Validation ciblee : CombatExplorationRecoveryTests ; PlayerActionContinuityRunti
 ## Presentation du joueur modulaire
 
 PlayerCombatAnimationEvents est un routeur sur l Animator. Les handlers sont dans PlayerActionPresentationController.SkillEvents, avec des noms distincts pour ne pas recevoir deux fois les memes evenements. Le dash et son freinage sont dans CombatMobilityController.AnimationDash, avec capture du personnage et annulation propre. PlayerAnimationController ne contient plus de branche physique ennemie; PlayerRootMotionRelay ne consomme que les deltas cinematographiques autorises.
+
+## Skills De Soin
+
+SkillSO.healingTarget (None/Self/PlayersInRadius), healingPercent (0-100) et
+healingRadius pilotent les soins instantanes via RealTimeCombatManager.TryUseSkill.
+Ils ne passent pas par les degats, impacts, Clarte ou un Animation Event d'attaque.
+Aucun clip n'est requis dans cette premiere version, aucune animation concurrente
+n'est interrompue. Le lanceur doit etre vivant, hors action/verrou/cinematique.
+Un lancement sans soin effectif est refuse sans cooldown.
+
+Revitalisation : 20% des PV maximum propres a chaque joueur dans une sphere
+de 30 m inclus, lanceur inclus, cooldown 120 s. Soins d'urgence : 50% du maximum
+du lanceur seul, cooldown 30 s. Montants arrondis au PV superieur, limites aux
+PV manquants; morts, ennemis et objets inactifs exclus. SetCurrentHp conserve
+l'autorite UCC et les notifications UI habituelles. Les cooldowns reutilisent
+le contrat par acteur en secondes globales de jeu, sans reset a EndCombat.
+
+Assets dans Resources/CombatSupportSkills pour resolution identique sur serveur
+et clients. NetworkCharacterInput transporte uniquement le nom d'asset, refuse
+les skills absents de CharacterData.combatSkills, applique le soin/cooldown au
+serveur et diffuse les PV absolus. La confirmation/cooldown de presentation ne
+concerne que le proprietaire du lanceur. Le protocole reste limite a ces soins;
+aucune refonte de l'autorite reseau des degats existants n'est incluse.
+Iluvilirae_Test expose les deux skills via additionalCombatSkills. Leur
+attribution au futur healer et la validation host/client restent necessaires.
+
+### Regeneration Ciblee
+
+SkillHealingTarget.AllyRegeneration utilise regenerationHealthPerTick=1,
+regenerationTickSeconds=1, cooldown=0. Asset Skill_Regeneration dans
+Resources/CombatSupportSkills, disponible dans Iluvilirae_Test sans migration
+CharacterData. Portee d'application 30 m par defaut (healingRadius); pas de
+restriction de distance apres application. Effet indefini jusqu'au transfert,
+deces ou retrait d'un des acteurs. Pas de reanimation; conserve a PV pleins.
+
+Le manager conserve une SupportTarget distincte de la cible ennemie : API
+SetSupportTarget et TryCycleSupportTarget. Roue ouverte avec ce skill selectionne,
+l'action SwitchEnemyLock selectionne explicitement l'allie suivant, et la
+confirmation habituelle lance le skill. Aucun allie choisi par defaut.
+Selection sans changement de yaw/lock/camera. Le lanceur lui-meme est exclu.
+
+Un PlayerRegenerationEffect sur le lanceur gere un seul destinataire. Recast
+identique sans effet; transfert valide retire l'ancien lien et repart avec
+un premier tick apres une seconde. Le timer suit les secondes globales de jeu,
+avec compensation d'une frame longue, sans cooldown, ni timers UI concurrents.
+EndCombat ne retire pas le passif. Desactivation/mort/despawn liberent le lien.
+
+CombatDamageWorldFeedback fournit aussi un texte persistant, reutilisant son
+Canvas world-space et billboard : indicateur de regeneration et +1 PV montant
+a chaque soin effectif, rien a PV pleins. Nettoyage immediate par desactivation
+avant Destroy; plusieurs lanceurs gardent leurs ressources independantes.
+NetworkCharacterInput transmet la cible explicite et fait autoriser/transférer
+le passif par le serveur, puis diffuse indicateur et ticks aux clients. Le
+skill doit etre dans CharacterData.combatSkills pour les casts reseau.
+
+### Siphon Vital
+
+SkillHealingTarget.EnemyLifeSteal reutilise le slot passif de
+PlayerRegenerationEffect, avec EnemyRecipient distinct de l'allie soigne.
+Skill_SiphonVital : 1 PV par tick de 1 s, cooldown 0, healingRadius 10 m.
+Le lancement capture LockedCombatTarget; transfert vers une autre cible ou
+Regeneration retire l'ancien effet sans doublon. Pas de choix automatique,
+pas de besoin de maintenir le lock apres application.
+
+Le rayon 3D est valide a l'application puis a chaque frame. Hors de 10 m ou
+pendant l'autorite cinematique des acteurs, timer suspendu/recale, sans backlog.
+Le retour a portee reprend apres une seconde. Mort et disparition liberent le
+slot; plafond de PV du lanceur, aucune reanimation. Cible a PV pleins du lanceur
+reste drainee, sans afficher de soin inexistant.
+
+EnemyController.ReceivePassiveDamage conserve la resolution de degats,
+la garde, le ledger, l'auteur reel et les paliers, sans rejouer Hit a chaque
+seconde. Brains utilise ReceiveImpact avec interruption nulle. Le soin ne
+depasse jamais le montant effectivement retire : refus/invulnerabilite/palier
+sans degat effectif ne rendent aucun PV. Aucun gain de Clarte.
+Indicateur persistant sur la cible, degats et soins flottants effectifs.
+Reseau : reference ennemie au serveur, validation de CharacterData/portee,
+tick autoritaire, PV joueur et feedbacks diffuses; pas de nouvelle autorite
+de PV ennemis en parallele de leur pipeline existant. Host/client reste a tester.
+
+## Skills De Controle : Fleche De Lumiere
+
+SkillSO.cooldownSeconds et stunSeconds sont optionnels (0 = comportement
+anterieur). La fleche existante utilise 10 s de cooldown et 2 s de stun.
+RealTimeCombatManager compte le cooldown par couple ActorRoot/SkillSO au
+lancement accepte, jamais au refus, et ne l'efface pas au delock/EndCombat.
+GetSkillCooldownRemaining expose le temps restant en secondes globales de jeu.
+
+Apres un impact valide infligeant des degats, ICombatStunReceiver applique le
+stun immediat, y compris pendant une attaque engagee. EnemyController annule
+son action et son mouvement via CancelAction, bloque navigation/decision pendant
+le delai local, puis reprend. LitBrainsEnemy utilise sa reaction Knocked Out
+(Hurt si absente), invalide l'action et son avancee et reprend apres 2 s de jeu.
+Pas de prolongation par impacts repetes; morts, cinematiques et QTE prioritaires.
+Le projectile conserve le contrat auteur existant : effet lance a 1,1667 s,
+impact ResolveSkillImpact a 1,3167 s apres les 0,15 s de voyage visuel. Cette
+passe ne cree pas de nouveau moteur de projectile ou de collision balistique.
+La fleche est disponible dans Iluvilirae_Test; son attribution au futur
+perturbateur reste a faire lorsque son CharacterData sera identifie.
 
 ## References internes EnemyController
 
@@ -1439,6 +1751,39 @@ Une reussite lance immediatement l'etat Animator de succes, puis applique `KillE
 `QTEPanelController` est la presentation unique de scene : il trouve `QTE_Zone`, affiche `QTE_Circle_Slider` a une position aleatoire sure, associe le sprite `A/B/X/Y` et vide son anneau radial. `CombatHealthThresholdController` conserve seul le timer, les inputs et le resultat gameplay; il resout le panneau actif y compris lorsqu'il demarre desactive et journalise les CanvasGroups parents si l'overlay ne peut pas etre vu.
 
 # Skill target lunge
+
+## Eclair et Bond offensif
+
+Eclair : useLaunchRange=true, minimumLaunchDistance=0, maximumLaunchDistance=10.
+Bond offensif : 2-30 m. Ces bornes inclusives comparent horizontalement les
+ActorRoots avant animation/VFX/audio ; elles ne changent pas la portee des degats.
+Sans override, RequireValidRangeToStart conserve le comportement historique.
+
+Les deux profils targetLunge utilisent resolveImpactAtContact : Eclair traverse
+la cible et vise sa position initiale + 4 m sur l'axe d'approche, Bond s'arrete
+devant elle sans impulsion. La duree tient compte de la distance et du plafond de
+vitesse ; l'intention physique passe exclusivement par le slot planaire UCC.
+Le temps local/global est respecte, et un verrou externe incompatible refuse
+le lancement plutot que de jouer une attaque fictive.
+
+contactAnimationSlot reference le clip original du state Skill_1_Eclair.
+Le clip Eclair_Contact est substitue uniquement durant la session. Son unique
+OpenSkillContactWindow est place a 0,08 s, apres le fondu d'entree de 0,06 s.
+HitEnemy/ResolveSkillImpact ponctuels sont absents de cette copie ; VFX de contact
+et degats sont emis une seule fois apres confirmation spatiale, via la resolution
+existante. Les VFX d'attaque et les sons d'origine sont conserves.
+
+LitOpsiveLocomotionBridge.TryAcquireTargetCollisionBypass renvoie un handle
+idempotent : il combine colliders ignores UCC et paires Physics.IgnoreCollision.
+Les scopes imbriques partagent leurs compteurs et preservent l'etat anterieur.
+Aucun collider ennemi n'est desactive. Fin, interruption, desactivation et
+transition de scene rendent les ressources possedees, sans modifier un autre
+verrou. Un trajet qui ne permet pas de ressortir de la capsule cible s'arrete
+devant elle. Les murs, autres acteurs, BattleWall et bords de sol restent prioritaires.
+
+Iluvilirae_Test expose additionalCombatSkills, ajoute aux skills connus/equipes
+du laboratoire uniquement ; CharacterData n'est pas modifie. Le menu
+Lit > Combat Lab > Configure Eclair And Bond Offensif reinstalle sans doublons.
 
 Un `SkillSO` peut activer `Player Target Lunge`. Au lancement du skill, son animation est forcee en `InPlace`; `PlayerActionPresentationController` pilote une approche UCC tres rapide vers `EnemyLockPoint`, sans ecriture directe de Transform ni root motion. A la distance d'arret configuree, il relache le mouvement plan et applique une impulsion UCC arriere et verticale jusqu'a l'atterrissage. Une collision ou une cible non atteinte annule le rebond au lieu de traverser le decor.
 

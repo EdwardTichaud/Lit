@@ -300,6 +300,7 @@ public class SquadAIManager : MonoBehaviour
 
     private void Update()
     {
+        if (SoloTeamProgression.IsSolo) return;
         // NavMesh is owned by the server/local simulation, independently from
         // squad follow availability or a temporarily locked player input.
         if (ShouldDriveFollowers())

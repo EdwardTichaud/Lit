@@ -21,6 +21,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private UnityEngine.Object sessionOwner;
     private bool externallyDriven;
     private string activeActionName;
+    private SkillSO activePresentedSkill;
     public int ActionGeneration => activeToken;
     public bool IsCurrentSession(int generation) => actionActive && generation == activeToken;
     public ActionEndReason LastEndReason { get; private set; }
@@ -50,6 +51,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         recoveryOpen = allowMobility;
         sessionOwner = owner;
         activeActionName = owner.name;
+        activePresentedSkill = null;
         return activeToken;
     }
 
@@ -211,7 +213,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             skill.Presentation,
             skill.SkillName,
             basicSkill != null,
-            basicSkill);
+            basicSkill, skill);
     }
 
     public bool TryPlayCombatState(string stateName, PlayerActionPresentationProfile profile, string debugName)
@@ -266,6 +268,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         // Invalidate before cleanup: callbacks may be reentrant or belong to the outgoing clip.
         activeToken++;
         actionActive = false;
+        activePresentedSkill = null;
         externallyDriven = false;
         sessionOwner = null;
         LastEndReason = reason;
@@ -425,18 +428,32 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         PlayerTargetLungeProfile profile = skill != null ? skill.TargetLunge : null;
         if (profile == null || !profile.enabled || target == null || locomotionBridge == null || !locomotionBridge.IsDriving)
         {
+            if (debugContactMotion) Debug.LogWarning($"[TargetMobility] Start motion refused | {locomotionBridge?.DriveDiagnostic}", this);
             return;
         }
 
-        CancelTargetLunge();
+        CancelTargetLunge(releaseAnimation: false);
         // A target lunge is authored as an in-place animation even if a stale
         // Skill asset still carries an old root-motion presentation setting.
         locomotionBridge.GetComponent<PlayerStateMotionController>()?.Cancel();
-        targetLungeRoutine = StartCoroutine(RunTargetLunge(profile, target, ++targetLungeToken, activeToken));
+        if (profile.resolveImpactAtContact)
+        {
+            contactSkill = skill;
+            contactGeneration = activeToken;
+            contactWindowArmed = contactImpactUsed = false;
+            var root = RealTimeCombatManager.Instance?.LockedCombatTarget?.Root ?? target;
+            targetLungeRoutine = StartCoroutine(RunContactTargetLunge(skill, root, ++targetLungeToken, activeToken));
+        }
+        else targetLungeRoutine = StartCoroutine(RunTargetLunge(profile, target, ++targetLungeToken, activeToken));
     }
 
-    private void CancelTargetLunge()
+    private void CancelTargetLunge(bool releaseAnimation = true)
     {
+        contactCollisionHandle?.Dispose();
+        contactCollisionHandle = null;
+        contactSkill = null;
+        contactWindowArmed = false;
+        if (releaseAnimation) ReleaseContactSkillAnimation();
         targetLungeToken++;
         if (targetLungeRoutine != null)
         {
@@ -753,7 +770,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         PlayerActionPresentationProfile profile,
         string debugName,
         bool allowChainInterrupt,
-        BasicSkillsSO basicSkill)
+        BasicSkillsSO basicSkill, SkillSO presentedSkill = null)
     {
         LastRequestWasBuffered = false;
         if (deathAnimationLocked)
@@ -791,7 +808,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             return false;
         }
 
-        return StartAction(stateHash, profile, debugName, allowChainInterrupt, basicSkill);
+        return StartAction(stateHash, profile, debugName, allowChainInterrupt, basicSkill, presentedSkill);
     }
 
     private bool StartAction(
@@ -799,14 +816,24 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         PlayerActionPresentationProfile profile,
         string debugName,
         bool isBasicAction,
-        BasicSkillsSO basicSkill)
+        BasicSkillsSO basicSkill, SkillSO presentedSkill = null)
     {
         if (!isActiveAndEnabled || deathAnimationLocked || animator == null ||
             !animator.isActiveAndEnabled || !animator.HasState(0, stateHash)) return false;
+        if (!PrepareContactSkillAnimation(presentedSkill, out var contactOverride, out var originalController)) return false;
         TerminateAction(activeToken, ActionEndReason.Interrupted, false);
+        if (contactOverride != null)
+        {
+            contactPreviousController = originalController;
+            contactAnimationOverride = contactOverride;
+            animator.runtimeAnimatorController = contactOverride;
+            // Materialize the override graph before requesting its restart.
+            animator.Update(0f);
+        }
         sessionOwner = this;
         externallyDriven = false;
         activeActionName = debugName;
+        activePresentedSkill = presentedSkill ?? basicSkill;
 
         activeToken++;
         activeStateHash = stateHash;
@@ -830,7 +857,9 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         {
             locomotionBridge?.BeginCombatAirborneHold();
         }
-        animator.CrossFade(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, 0.25f), 0);
+        if (presentedSkill != null && presentedSkill.TargetLunge.resolveImpactAtContact)
+            animator.CrossFadeInFixedTime(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, .25f), 0, 0);
+        else animator.CrossFade(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, 0.25f), 0);
         Trace("enter", debugName, profile);
         actionRoutine = StartCoroutine(TrackAction(activeToken, profile, debugName, isBasicAction));
         return true;
@@ -853,7 +882,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         {
             if (animator == null || !animator.isActiveAndEnabled) break;
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-            if (TryGetActiveAnimatorState(out state))
+            if (TryGetActiveAnimatorState(out state) &&
+                !(activePresentedSkill?.TargetLunge.resolveImpactAtContact == true && state.normalizedTime >= .5f))
             {
                 enteredState = true;
                 break;
@@ -966,6 +996,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private void FaceActionTarget()
     {
+        if (contactSkill != null && targetLungeOwnsPlanarMotion && contactSkill.TargetLunge.passThroughTarget)
+        {
+            locomotionBridge?.SetActionFacingDirection(contactTravelDirection);
+            return;
+        }
         if (deathAnimationLocked || actionFacingTarget == null)
         {
             return;

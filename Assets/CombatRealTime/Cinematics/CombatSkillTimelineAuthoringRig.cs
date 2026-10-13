@@ -19,6 +19,10 @@ public sealed class CombatSkillTimelineAuthoringRig : MonoBehaviour
     [SerializeField] private Transform previewEnemyActorRoot;
     [SerializeField] private CinemachineBrain previewCameraBrain;
     [SerializeField] private SignalReceiver previewSignalReceiver;
+    [SerializeField, Min(0f)] private float cameraEntryBlendSeconds;
+    [SerializeField, Min(0f)] private float cameraExitBlendSeconds;
+    public float CameraEntryBlendSeconds => cameraEntryBlendSeconds;
+    public float CameraExitBlendSeconds => cameraExitBlendSeconds;
 
     public SkillSO Skill => skill;
     public PlayableDirector Director => director;

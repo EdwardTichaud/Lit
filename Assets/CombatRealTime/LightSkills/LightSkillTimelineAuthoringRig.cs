@@ -30,6 +30,10 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
     [SerializeField] private CinemachineBrain previewCameraBrain;
     [SerializeField] private CinemachineCamera previewVirtualCamera;
     [SerializeField] private SignalReceiver previewSignalReceiver;
+    [SerializeField, Min(0f)] private float cameraEntryBlendSeconds;
+    [SerializeField, Min(0f)] private float cameraExitBlendSeconds;
+    public float CameraEntryBlendSeconds => cameraEntryBlendSeconds;
+    public float CameraExitBlendSeconds => cameraExitBlendSeconds;
 
     public LightSkillSO LightSkill => lightSkill;
     public PlayableDirector Director => director;

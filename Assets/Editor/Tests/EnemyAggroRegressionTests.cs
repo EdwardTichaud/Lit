@@ -5,6 +5,53 @@ using UnityEngine;
 
 public sealed class EnemyAggroRegressionTests
 {
+    [Test]
+    public void CounterRetryDeadlineIsNotExtendedBySpamOrNewOpportunity()
+    {
+        WithCounterRetryFixture(controller =>
+        {
+            var consume = typeof(CombatHealthThresholdController).GetMethod("TryConsumeCounterAttempt",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(consume.Invoke(controller, new object[] { 10d }), Is.True);
+            double deadline = ReadReaction<double>(controller, "nextCounterAttemptAt");
+            Assert.That(deadline, Is.EqualTo(10.4d).Within(.000001));
+            foreach (double now in new[] { 10.01d, 10.2d, 10.39d })
+                Assert.That(consume.Invoke(controller, new object[] { now }), Is.False);
+            typeof(CombatHealthThresholdController).GetMethod("ClearAttackReaction",
+                BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
+            controller.ReleaseEnemyReactionButton(EnemyAttackReaction.Counter);
+            Assert.That(ReadReaction<double>(controller, "nextCounterAttemptAt"), Is.EqualTo(deadline));
+            Assert.That(consume.Invoke(controller, new object[] { deadline }), Is.True);
+        });
+    }
+
+    [Test]
+    public void CounterSpamConsumesPressBeforeGuardFallbackButLeavesDodgeAvailable()
+    {
+        WithCounterRetryFixture(controller =>
+        {
+            WriteReaction(controller, "attackQteActive", false);
+            Assert.That(controller.TryHandleEnemyReaction(EnemyAttackReaction.Counter), Is.False,
+                "First press outside the reaction window may start ordinary guard.");
+            double deadline = ReadReaction<double>(controller, "nextCounterAttemptAt");
+            Assert.That(deadline, Is.GreaterThan(Time.unscaledTimeAsDouble));
+            controller.ReleaseEnemyReactionButton(EnemyAttackReaction.Counter);
+            Assert.That(controller.TryHandleEnemyReaction(EnemyAttackReaction.Counter), Is.True,
+                "Repeated press must be consumed before OnCounterStarted can call BeginGuard.");
+            Assert.That(controller.TryHandleEnemyReaction(EnemyAttackReaction.Dodge), Is.False);
+            Assert.That(ReadReaction<double>(controller, "nextCounterAttemptAt"), Is.EqualTo(deadline));
+            Assert.That(ReadReaction<bool>(controller, "qteOpen"), Is.False);
+        });
+    }
+
+    private static void WithCounterRetryFixture(System.Action<CombatHealthThresholdController> test)
+    {
+        var root = new GameObject("Counter retry test");
+        root.SetActive(false);
+        try { test(root.AddComponent<CombatHealthThresholdController>()); }
+        finally { Object.DestroyImmediate(root); }
+    }
+
     [TestCase(-94f)]
     [TestCase(-91f)]
     [TestCase(12f)]

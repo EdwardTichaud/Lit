@@ -3919,6 +3919,8 @@ MonoBehaviour:
   previewCameraBrain: {fileID: 6563474756499325508}
   previewVirtualCamera: {fileID: 972363991334100073}
   previewSignalReceiver: {fileID: 9058773452457398538}
+  cameraEntryBlendSeconds: 0
+  cameraExitBlendSeconds: 0
 --- !u!114 &474266778564364771
 MonoBehaviour:
   m_ObjectHideFlags: 0

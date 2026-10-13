@@ -33,7 +33,11 @@ Dans la campagne solo, le joueur contrôle Lucian. Lucian fait partie des
 Explorateurs, un groupe de demi-dieux incarnant chacun un concept. Lucian incarne
 l'Espoir.
 
-Le jeu débute dans un hub où Lucian échange avec les autres Explorateurs. Ce hub
+Le jeu débute dans un hub avec Lucian seul. Les autres Explorateurs rejoignent
+progressivement son équipe pendant l’aventure : leur portrait et leur premier
+skill deviennent disponibles, puis d’autres compétences sont déverrouillées
+par la progression. En solo ils restent des supports UI et Lucian exécute leurs
+compétences ; ils ne sont pas des personnages physiques contrôlables. Ce hub
 sert à :
 
 - présenter les personnages ;

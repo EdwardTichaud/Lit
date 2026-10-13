@@ -259,8 +259,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
   - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
   combatSkills:
+  - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
   - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
-  - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
   - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
   enemyCombatProfile: {fileID: 0}
   enemySettings:

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d59411c56692a44a9ea6e63096479c7, type: 3}
+  m_Name: Default
+  m_EditorClassIdentifier: Assembly-CSharp::CombatSkillKitCatalog
+  lucianCharacter: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+  vestaCharacter: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+  sorenCharacter: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+  aurellCharacter: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+  lucian:
+  - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
+  - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
+  - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
+  - {fileID: 0}
+  vesta:
+  - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852261, type: 2}
+  - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852262, type: 2}
+  - {fileID: 11400000, guid: 77d611af48f14e6da001428e65b9b5b2, type: 2}
+  - {fileID: 11400000, guid: a61bd390e0de4f36949819d560aa5b11, type: 2}
+  soren:
+  - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
+  - {fileID: 11400000, guid: 90aa80c6988b71c48836f25f68cfbc74, type: 2}
+  - {fileID: 11400000, guid: 6afd5f499a6ea0145bf1285cb9df278e, type: 2}
+  - {fileID: 11400000, guid: dea33cac9ff53484aaf44f7cd8dcd0ae, type: 2}
+  aurell:
+  - {fileID: 11400000, guid: ebc19d551ae3bf7418a3eb85414f2df5, type: 2}
+  - {fileID: 11400000, guid: 91c97fadda955b14fa5f4726f4419ac1, type: 2}
+  - {fileID: 11400000, guid: fd33df178a614f349a394bd30cc86b0b, type: 2}
+  - {fileID: 11400000, guid: 0084e99721186684cacbf63587ebffca, type: 2}

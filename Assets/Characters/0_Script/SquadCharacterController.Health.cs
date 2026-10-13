@@ -15,6 +15,11 @@ public partial class SquadCharacterController
     /// </summary>
     public int ApplyDamage(int amount, string source = null)
     {
+        return CombatProtectionDamage.Apply(this, amount, source);
+    }
+
+    internal int ApplyUnprotectedDamage(int amount, string source = null)
+    {
         int sanitizedAmount = Mathf.Max(0, amount);
         if (sanitizedAmount <= 0)
         {

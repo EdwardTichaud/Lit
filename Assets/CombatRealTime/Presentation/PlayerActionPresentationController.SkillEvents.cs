@@ -262,6 +262,8 @@ public sealed partial class PlayerActionPresentationController
         {
             return;
         }
+        if (ResolveSelectedSkill()?.TargetLunge.resolveImpactAtContact == true &&
+            cue.delivery == SkillVfxDelivery.DirectOnTarget && !resolvingExternalImpactVfx) return;
         if (RealTimeCombatManager.Instance?.UsesExternalTarget == true && cue.delivery == SkillVfxDelivery.DirectOnTarget && !resolvingExternalImpactVfx) return;
 
         if (cue.delivery == SkillVfxDelivery.PlayerHand || cue.delivery == SkillVfxDelivery.PlayerSword)
@@ -399,13 +401,22 @@ public sealed partial class PlayerActionPresentationController
     /// </summary>
     public void HandleResolveSkillImpact()
     {
+        var justice = GetComponent<PlayerJusticeStrike>();
+        if (justice != null && justice.OwnsAction) { justice.ResolveImpact(); return; }
+        if (ResolveSelectedSkill()?.TargetLunge.resolveImpactAtContact == true) return;
         if (!TryResolveSelectedSkillImpact(out SkillSO skill, out Transform target))
         {
             return;
         }
 
+        HandleConfirmedExternalImpact(skill, target);
+    }
+
+    public void HandleConfirmedExternalImpact(SkillSO skill, Transform target)
+    {
+        if (skill == null || target == null) return;
         CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, RealTimeCombatManager.Instance?.PlayerRoot);
-        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true)
+        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true || skill.TargetLunge.resolveImpactAtContact)
         {
             resolvingExternalImpactVfx = true;
             try
@@ -499,6 +510,7 @@ public sealed partial class PlayerActionPresentationController
 
     private SkillSO ResolveSelectedSkill()
     {
+        if (activePresentedSkill != null) return activePresentedSkill;
         if (skillsManager == null)
         {
             skillsManager = FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include);
@@ -564,9 +576,7 @@ public sealed partial class PlayerActionPresentationController
 
     private System.Collections.IEnumerator HideSwordAfterComboEnds()
     {
-        PlayerActionPresentationController presentation = RealTimeCombatManager.Instance != null
-            ? RealTimeCombatManager.Instance.PlayerRoot?.GetComponentInChildren<PlayerActionPresentationController>(true)
-            : null;
+        PlayerActionPresentationController presentation = this;
         while (presentation != null && presentation.IsActionActive)
         {
             yield return null;

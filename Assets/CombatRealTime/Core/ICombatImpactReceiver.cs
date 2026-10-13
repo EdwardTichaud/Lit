@@ -1,17 +1,19 @@
 using UnityEngine;
 
-public enum CombatImpactOrigin { Basic, LightSkill, Counter }
+public enum CombatImpactOrigin { Basic, LightSkill, Counter, Passive }
 
 public readonly struct CombatImpact
 {
     public readonly int Damage;
     public readonly float Interruption;
     public readonly CombatImpactOrigin Origin;
-    public CombatImpact(int damage, float interruption, CombatImpactOrigin origin)
+    public readonly bool DamageModifiersApplied;
+    public CombatImpact(int damage, float interruption, CombatImpactOrigin origin, bool damageModifiersApplied = false)
     {
         Damage = Mathf.Max(0, damage);
         Interruption = Mathf.Max(0f, interruption);
         Origin = origin;
+        DamageModifiersApplied = damageModifiersApplied;
     }
 }
 

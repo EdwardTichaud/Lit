@@ -47,12 +47,15 @@ public sealed class SpiritBondController : MonoBehaviour
     private readonly HashSet<SpiritWeaponManifestation> externalManifestations = new HashSet<SpiritWeaponManifestation>();
     private bool fused;
     private bool cinematicFusion;
+    private bool combatFusion;
+    private bool combatFusionControlled;
     private bool meltPresentationActive;
     private bool meltMovementLockHeld;
     private bool meltStateObserved;
 
     public bool IsFused => fused;
-    /// <summary>True while the player is in the persistent manual Melted state.</summary>
+    public bool IsCombatFused => combatFusion;
+    /// <summary>Persistent fusion outside a LightSkill cinematic.</summary>
     public bool IsMelted => fused && !cinematicFusion;
     public bool IsCinematicFusion => cinematicFusion;
     public event Action<SpiritBondController, bool> FusionStateChanged;
@@ -116,9 +119,10 @@ public sealed class SpiritBondController : MonoBehaviour
         meltPresentationActive = false;
         ReleaseMeltMovementLock();
         RestoreMeltUiPresentation();
-        CameraProfilPlayer.GetOrCreate(LitCameraDirector.Instance)?.Cancel();
+        if (!combatFusionControlled) CameraProfilPlayer.GetOrCreate(LitCameraDirector.Instance)?.Cancel();
 
         cinematicFusion = false;
+        combatFusion = false;
         fused = false;
         RefreshSpiritVisibility();
         holyEffect?.StopEffect();
@@ -126,7 +130,36 @@ public sealed class SpiritBondController : MonoBehaviour
 
     public bool ToggleManualFusion()
     {
+        if (combatFusionControlled) return false;
         return !fused ? MeltTheIce() : Unmelted();
+    }
+
+    /// <summary>
+    /// Combat owns this bond directly. No movement lock, camera takeover or
+    /// dependency on an Animator event may delay entry or leave an exit stuck.
+    /// </summary>
+    public void SetCombatFusion(bool active)
+    {
+        combatFusionControlled = true;
+        if (combatFusion == active && fused == active && !cinematicFusion) return;
+        if (active && combatFusion && fused) return; // Keep a LightSkill overlay intact.
+        ResolveReferences();
+        combatFusion = active;
+        CancelTransition();
+        if (meltPresentationRoutine != null)
+        {
+            StopCoroutine(meltPresentationRoutine);
+            meltPresentationRoutine = null;
+        }
+        meltPresentationActive = false;
+        ReleaseMeltMovementLock();
+        RestoreMeltUiPresentation();
+        cinematicFusion = false;
+        bool changed = fused != active;
+        fused = active;
+        RefreshSpiritVisibility();
+        if (active) PlayHoly(); else StopHoly();
+        if (changed) NotifyFusionStateChanged();
     }
 
     /// <summary>
@@ -135,6 +168,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// </summary>
     public bool RequestMeltAnimation()
     {
+        if (combatFusionControlled) return false;
         if (cinematicFusion)
         {
             return false;
@@ -154,6 +188,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// </summary>
     public bool MeltTheIce()
     {
+        if (combatFusionControlled) return false;
         if (cinematicFusion || fused || meltPresentationActive || IsMeltPlaying())
         {
             return false;
@@ -181,6 +216,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// </summary>
     public bool Unmelted()
     {
+        if (combatFusionControlled) return false;
         if (cinematicFusion || !fused || IsRupturePlaying())
         {
             return false;
@@ -201,6 +237,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// <summary>AnimationEvent: plays Holy at the precise authored frame.</summary>
     public void TriggerHolyEffectFromAnimationEvent()
     {
+        if (combatFusionControlled && !combatFusion) return;
 #if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: Holy start requested by AnimationEvent.", this);
 #endif
@@ -220,6 +257,11 @@ public sealed class SpiritBondController : MonoBehaviour
     /// <summary>AnimationEvent: stops Holy at the precise authored frame.</summary>
     public void StopHolyEffectFromAnimationEvent()
     {
+        if (combatFusionControlled)
+        {
+            StopHoly();
+            return;
+        }
 #if UNITY_EDITOR || DEBUG
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: Holy stop requested by AnimationEvent.", this);
 #endif
@@ -236,6 +278,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// <summary>AnimationEvent: completes the Melt animation's fusion.</summary>
     public void ConfirmMeltFusionFromAnimationEvent()
     {
+        if (combatFusionControlled) return;
         if (cinematicFusion)
         {
             return;
@@ -247,6 +290,7 @@ public sealed class SpiritBondController : MonoBehaviour
     /// <summary>AnimationEvent: completes the Rupture animation's defusion.</summary>
     public void ConfirmRuptureDefusionFromAnimationEvent()
     {
+        if (combatFusionControlled) return;
         if (cinematicFusion)
         {
             return;
@@ -257,13 +301,14 @@ public sealed class SpiritBondController : MonoBehaviour
 
     public void BeginLightSkillFusion()
     {
+        if (combatFusionControlled && !combatFusion) return;
         ResolveReferences();
         CancelTransition();
 
         // A LightSkill always starts from a clean unfused state. If the player
         // was already fused, restore the companion immediately and without a
         // presentation transition before applying the cinematic fusion.
-        if (fused)
+        if (fused && !combatFusion)
         {
             fused = false;
             RefreshSpiritVisibility();
@@ -285,6 +330,15 @@ public sealed class SpiritBondController : MonoBehaviour
         }
 
         cinematicFusion = false;
+        if (combatFusion)
+        {
+            // A skill overlay must not undo the encounter's persistent bond.
+            fused = true;
+            CancelTransition();
+            RefreshSpiritVisibility();
+            StopHoly();
+            return;
+        }
         fused = false;
         CancelTransition();
         PlayHoly();

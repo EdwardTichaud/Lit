@@ -850,6 +850,7 @@ public class Zone : MonoBehaviour
 
     private SquadFollowerAgent GetFollowerAgent(GameObject character)
     {
+        if (SoloTeamProgression.IsSolo) return null;
         if (character == null || !maisonAutoAddNavMeshFollower)
         {
             return character != null ? character.GetComponent<SquadFollowerAgent>() : null;

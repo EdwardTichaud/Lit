@@ -8,6 +8,9 @@ public sealed partial class CombatHealthThresholdController
     [Header("Invisible enemy reactions")]
     [FormerlySerializedAs("attackQteDuration"), SerializeField, Min(.05f)] private float dodgeWindowSeconds = .5f;
     [SerializeField, Min(.01f)] private float counterWindowSeconds = .2f;
+    [SerializeField, Min(.05f), Tooltip("Minimum realtime delay between counter/guard presses, including attempts outside the reaction window. Holding and releasing guard remain available.")]
+    private float counterRetryDelaySeconds = .4f;
+    private double nextCounterAttemptAt;
     [FormerlySerializedAs("attackQteTimeScale"), SerializeField, Range(.01f, 1f)] private float reactionTimeScale = .4f;
     [SerializeField] private bool logEnemyReactions;
     private bool attackQteActive, attackDodgeProtected;
@@ -28,6 +31,7 @@ public sealed partial class CombatHealthThresholdController
     {
         dodgeWindowSeconds = Mathf.Max(.05f, dodgeWindowSeconds);
         counterWindowSeconds = Mathf.Clamp(counterWindowSeconds, .01f, dodgeWindowSeconds);
+        counterRetryDelaySeconds = Mathf.Max(.05f, counterRetryDelaySeconds);
         reactionTimeScale = Mathf.Clamp(reactionTimeScale, .01f, 1f);
     }
 
@@ -153,6 +157,8 @@ public sealed partial class CombatHealthThresholdController
     // True means the press was handled, not that a defence necessarily succeeded.
     public bool TryHandleEnemyReaction(EnemyAttackReaction reaction)
     {
+        if (reaction == EnemyAttackReaction.Counter && !TryConsumeCounterAttempt(Time.unscaledTimeAsDouble))
+            return true; // Consume the press: do not fall through to a new guard action.
         if (attackQteEnemy == null && externalReactionTarget == null || attackQteEnemy != null && attackQteEnemy.IsFlameDormant || !IsReactionPressEligible(reaction, reactionClock)) return false;
         EnemyController enemy = attackQteEnemy;
         var skill = attackQteSkill;
@@ -180,6 +186,14 @@ public sealed partial class CombatHealthThresholdController
             : counter.TryStartFromSuccessfulQte(enemy, skill))) return false;
         TraceEnemyReaction("contre cinematique demarre");
         CloseAttackQte();
+        return true;
+    }
+
+    private bool TryConsumeCounterAttempt(double now)
+    {
+        if (now < nextCounterAttemptAt) return false;
+        // Do not extend the deadline on spam or reset it when a new attack opens.
+        nextCounterAttemptAt = now + Mathf.Max(.05f, counterRetryDelaySeconds);
         return true;
     }
 

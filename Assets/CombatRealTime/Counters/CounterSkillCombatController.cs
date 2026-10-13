@@ -49,6 +49,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public bool IsCinematicPlaying => cinematicPlaying;
     public bool IsGuardHeld => guardHeld;
+    public float GuardDamageMultiplier => guardedDamageMultiplier;
     private PlayerActionPresentationController guardPresentation;
     private int guardGeneration;
     private bool guardRequested;
@@ -143,6 +144,14 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         PlayGuardAnimation();
         PlayGuardStartFeedback();
         guardHeld = true;
+        var actor = combatManager.PlayerRoot.GetComponent<SquadCharacterController>();
+        if (actor != null)
+        {
+            var state = actor.GetComponent<PlayerGuardState>();
+            if (state == null) state = actor.gameObject.AddComponent<PlayerGuardState>();
+            state.Set(true, guardedDamageMultiplier, this);
+            presentation.RegisterActionCleanup(generation, () => { if (state != null && guardGeneration == generation) state.Set(false, guardedDamageMultiplier); });
+        }
     }
 
     public bool TryStartFromSuccessfulQte(EnemyController attacker, SkillSO attack)
@@ -326,9 +335,11 @@ public sealed class CounterSkillCombatController : MonoBehaviour
             return damage;
         }
 
-        if (playFeedback) Instance.PlayGuardedImpactFeedback();
-        return Mathf.Max(0, Mathf.CeilToInt(damage * Instance.guardedDamageMultiplier));
+        var victim = Instance.combatManager?.PlayerRoot?.GetComponent<SquadCharacterController>();
+        return PlayerGuardState.Reduce(victim, damage, playFeedback);
     }
+
+    public void PlayActorGuardedFeedback() => PlayGuardedImpactFeedback();
 
     private void OnDirectorStopped(PlayableDirector stoppedDirector)
     {

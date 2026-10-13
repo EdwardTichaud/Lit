@@ -34,7 +34,7 @@ public sealed class ActorPoseSampler : IDisposable
         t.gameObject.SetActive(original.gameObject.activeSelf);
         return t;
     }
-    public Frame[] Sample(AnimationClip clip, bool rootMotion = false, int sampleCount = 0, bool measureSoles = false, bool applyFootIK = false)
+    public Frame[] Sample(AnimationClip clip, bool rootMotion = false, int sampleCount = 0, bool measureSoles = false, bool applyFootIK = false, Action<Animator> poseCorrection = null)
     {
         if (root != null) UnityEngine.Object.DestroyImmediate(root);
         var map = new Dictionary<Transform,Transform>();
@@ -74,6 +74,7 @@ public sealed class ActorPoseSampler : IDisposable
             for (int i = 0; i <= count; i++)
             {
                 if (i > 0) graph.Evaluate(clip.length / count);
+                poseCorrection?.Invoke(animator);
                 Transform left = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
                 Transform right = animator.GetBoneTransform(HumanBodyBones.RightFoot);
                 Transform lt = animator.GetBoneTransform(HumanBodyBones.LeftToes);

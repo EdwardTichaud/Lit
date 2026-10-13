@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 // Gere la squad: selection, groupes, spawn et synchronisation des personnages.
 public class SquadManager : MonoBehaviour
 {
+    private static bool IsSoloLucian(CharacterData character) => character != null &&
+        string.Equals(character.characterId, "lucian", System.StringComparison.OrdinalIgnoreCase);
     public static SquadManager Instance { get; private set; }
 
     public enum SendHomeResult
@@ -146,6 +148,8 @@ public class SquadManager : MonoBehaviour
         // scene de jeu et ses points de spawn existent. Les personnages
         // doivent attendre cette scene, pas etre crees dans le menu.
         deferSceneInitialization = GameFlowService.IsPreparingGameplayScene;
+        if (SoloTeamProgression.IsSolo) SoloTeamProgression.Resolve();
+        if (SoloTeamProgression.IsSolo) charactersSelectionOn = false;
         EnsureRuntimeSquad();
         InitializeSquadPanel();
     }
@@ -247,7 +251,7 @@ public class SquadManager : MonoBehaviour
         if (ui != null)
         {
             ui.InitializePanel(charactersSelectionOn);
-            ui.BuildSquadUnits(currentSquad);
+            ui.BuildSquadUnits(SoloTeamProgression.IsSolo ? SoloTeamProgression.Resolve().GetRoster() : currentSquad);
         }
 
         if (squadCharacters == null)
@@ -550,6 +554,8 @@ public class SquadManager : MonoBehaviour
 
     public void RegisterHubCompanion(CharacterData character, GameObject instance, Vector3 hubPosition, Quaternion hubRotation, Transform hubParent)
     {
+        if (SoloTeamProgression.IsSolo && !IsSoloLucian(character))
+        { if (instance != null) instance.SetActive(false); return; }
         if (character == null || instance == null)
         {
             return;
@@ -675,6 +681,7 @@ public class SquadManager : MonoBehaviour
 
     private GameObject SpawnCharacterAt(CharacterData character, Vector3 position, Quaternion rotation, bool spawnVfx = true)
     {
+        if (SoloTeamProgression.IsSolo && !IsSoloLucian(character)) return null;
         if (character == null)
         {
             return null;
@@ -708,6 +715,7 @@ public class SquadManager : MonoBehaviour
 
     private GameObject GetOrCreateCharacterInstance(CharacterData character, Transform spawnPoint, int index, bool spawnVfx = true)
     {
+        if (SoloTeamProgression.IsSolo && !IsSoloLucian(character)) return null;
         if (character == null)
         {
             return null;
@@ -912,6 +920,14 @@ public class SquadManager : MonoBehaviour
 
     private void KeepOnlyControlledSoloCharacterForDirectSceneStart()
     {
+        if (SoloTeamProgression.IsSolo)
+        {
+            var lucian = SoloTeamProgression.Resolve()?.Catalog?.GetCharacter(CombatSkillKit.Lucian);
+            if (lucian != null) currentSquad = new List<CharacterData> { GetRuntimeCharacter(lucian) };
+            currentCursorIndex = 0;
+            groupIds.Clear(); squadGroups.Clear();
+            return;
+        }
         if (IsMultiplayerActive()
             || currentSquad == null
             || currentSquad.Count <= 1
@@ -1068,6 +1084,12 @@ public class SquadManager : MonoBehaviour
 
     private void ApplyPendingRoster()
     {
+        if (SoloTeamProgression.IsSolo)
+        {
+            if (pendingLoadData != null) SoloTeamProgression.Resolve()?.Restore(pendingLoadData.soloTeam, pendingLoadData.squadIds);
+            KeepOnlyControlledSoloCharacterForDirectSceneStart();
+            return;
+        }
         if (pendingLoadData == null || pendingCharacterLookup == null)
         {
             return;
@@ -1157,6 +1179,8 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
+            if (SoloTeamProgression.IsSolo && !IsSoloLucian(runtimeCharacter)) continue;
+
             GameObject instance = GetCharacterInstance(runtimeCharacter);
             if (instance == null)
             {
@@ -1196,7 +1220,7 @@ public class SquadManager : MonoBehaviour
             }
             ApplyMuninChargeStateToInstance(instance, entry);
 
-            if (entry.inSquad)
+            if (entry.inSquad || SoloTeamProgression.IsSolo)
             {
                 PlaceCharacter(instance, entry.position, entry.rotation, squadCharactersParent);
             }
@@ -1212,7 +1236,7 @@ public class SquadManager : MonoBehaviour
             }
         }
 
-        currentCursorIndex = pendingLoadData.currentIndex;
+        currentCursorIndex = SoloTeamProgression.IsSolo ? 0 : pendingLoadData.currentIndex;
         ClampCursorIndex();
         UpdateCurrentCharacter();
         UpdateCursorPosition();
@@ -1699,6 +1723,7 @@ public class SquadManager : MonoBehaviour
 
     private void UpdateCurrentCharacter()
     {
+        if (SoloTeamProgression.IsSolo) currentCursorIndex = 0;
         if (IsMultiplayerActive())
         {
             currentCharacter = LocalPlayerUtils.GetControlledCharacter();
@@ -2518,6 +2543,7 @@ public class SquadManager : MonoBehaviour
 
     public SendHomeResult TrySendCharacterHome(GameObject character, InteractableItem homeLootContainer)
     {
+        if (SoloTeamProgression.IsSolo) return SendHomeResult.NotInSquad;
         if (character == null)
         {
             return SendHomeResult.InvalidCharacter;
@@ -2596,6 +2622,7 @@ public class SquadManager : MonoBehaviour
 
     public bool TrySwapWithHubCharacter(CharacterData hubCharacter)
     {
+        if (SoloTeamProgression.IsSolo) return false;
         if (hubCharacter == null)
         {
             return false;
@@ -3050,6 +3077,7 @@ public class SquadManager : MonoBehaviour
 
     private void CommitSingleplayerCharacterSwitchFromCursor()
     {
+        if (SoloTeamProgression.IsSolo) return;
         if (squadCharacters == null || squadCharacters.Count == 0)
         {
             return;
@@ -3191,6 +3219,7 @@ public class SquadManager : MonoBehaviour
 
     public void OpenSquadPanel()
     {
+        if (SoloTeamProgression.IsSolo) return;
         if (charactersSelectionOn)
         {
             InputFocusStack.Push(this);

@@ -197,6 +197,7 @@ public static class LightSkillRuntimeRigBaker
                 cameras,
                 exports);
             ApplyRigBindings(rig, cameras, tracks);
+            rig.ConfigureCameraHandoff(authoringRig.CameraEntryBlendSeconds, authoringRig.CameraExitBlendSeconds);
             rig.ConfigureAuthoringStageLayout(
                 authoringRig.transform,
                 authoringRig.PreviewPlayerAnchor,

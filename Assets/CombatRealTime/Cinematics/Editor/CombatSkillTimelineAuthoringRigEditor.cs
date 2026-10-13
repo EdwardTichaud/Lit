@@ -150,6 +150,7 @@ public static class CombatSkillRuntimeRigBaker
             root.AddComponent<SignalReceiver>();
             root.AddComponent<LitTimelineCinemachineBridge>();
             CombatCinematicRig rig = root.AddComponent<CombatCinematicRig>();
+            rig.ConfigureCameraHandoff(authoring.CameraEntryBlendSeconds, authoring.CameraExitBlendSeconds);
             ApplyCameraBindings(authoring, runtime, root.transform, rig, warnings);
 
             PrefabUtility.SaveAsPrefabAsset(root, prefabPath);

@@ -7,6 +7,8 @@ public sealed class SkillWheel : MonoBehaviour
     [SerializeField] private SkillsManager skillsManager;
 
     private int selectedSlotIndex = -1;
+    private bool displayingKit;
+    private Vector2[] savedPositions;
 
     public int SlotCount => slots != null ? slots.Length : 0;
     public int SelectedSlotIndex => selectedSlotIndex;
@@ -169,6 +171,7 @@ public sealed class SkillWheel : MonoBehaviour
 
     private void ApplySkills(IReadOnlyList<SkillSO> skills)
     {
+        if (displayingKit) return;
         if (slots == null || skills == null)
         {
             return;
@@ -186,6 +189,51 @@ public sealed class SkillWheel : MonoBehaviour
         }
 
         SetSelectedSlot(selectedSlotIndex);
+    }
+
+    public void ShowKit(string name, SkillSO[] skills)
+    {
+        ResolveSlots();
+        if (savedPositions == null)
+        {
+            savedPositions = new Vector2[SlotCount];
+            for (int i = 0; i < SlotCount; i++)
+                if (slots[i] != null && slots[i].transform is RectTransform rect) savedPositions[i] = rect.anchoredPosition;
+        }
+        displayingKit = true;
+        var positions = new[] { new Vector2(-180, 0), new Vector2(0, 180), new Vector2(0, -180), new Vector2(180, 0) };
+        var buttons = new[] { "X", "Y", "A", "B" };
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i] == null) continue;
+            SetSkill(i, skills != null && i < Mathf.Min(4, skills.Length) ? skills[i] : null);
+            slots[i].SetShortcut(i < 4 ? name + " — " + buttons[i] : string.Empty);
+            if (i < 4)
+            {
+                slots[i].gameObject.SetActive(true);
+                if (slots[i].transform is RectTransform rect) rect.anchoredPosition = positions[i];
+            }
+        }
+        SetSelectedSlot(0);
+    }
+
+    public void EndKitDisplay()
+    {
+        if (!displayingKit) return;
+        displayingKit = false;
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i] == null) continue;
+            slots[i].SetShortcut(string.Empty);
+            if (savedPositions != null && i < savedPositions.Length && slots[i].transform is RectTransform rect)
+                rect.anchoredPosition = savedPositions[i];
+        }
+        BindSkillsManager();
+    }
+
+    public void SetKitSlotLocked(int slot, bool locked)
+    {
+        if (displayingKit && slot >= 0 && slot < SlotCount && slots[slot] != null) slots[slot].SetLocked(locked);
     }
 
     private int FindFirstVisibleSlot()

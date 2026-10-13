@@ -1077,6 +1077,16 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""SelectSkillKit"",
+                    ""type"": ""Value"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000001"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -1099,17 +1109,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""Counter"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""a9b2809b-ace0-48d4-8c97-bc84da9d4578"",
-                    ""path"": ""<Gamepad>/rightStickPress"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""Melt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -1171,8 +1170,8 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""ef6c57dd-a706-4f87-9be9-60b8521f6e8d"",
-                    ""path"": ""<Gamepad>/dpad/down"",
-                    ""interactions"": """",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": ""tap(duration=0.6);hold(duration=0.6)"",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""SwitchEnemyLock"",
@@ -1187,6 +1186,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""LightSkill"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000002"",
+                    ""path"": ""<Gamepad>/dpad"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""SelectSkillKit"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1656,6 +1666,66 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""SelectSkillKit"",
+                    ""type"": ""Value"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000003"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""SkillX"",
+                    ""type"": ""Button"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000005"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""SkillY"",
+                    ""type"": ""Button"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000007"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""SkillA"",
+                    ""type"": ""Button"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000009"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""SkillB"",
+                    ""type"": ""Button"",
+                    ""id"": ""4a773080-13c0-4000-8000-00000000000b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""CycleSupportTarget"",
+                    ""type"": ""Button"",
+                    ""id"": ""4a773080-13c0-4000-8000-00000000000d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -1672,19 +1742,74 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""368b3d14-8fe8-4dd8-8f1b-9e84d5adffb8"",
-                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000004"",
+                    ""path"": ""<Gamepad>/dpad"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
-                    ""action"": ""Confirm"",
+                    ""action"": ""SelectSkillKit"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""5d35e9aa-a63d-4d59-bf7b-121718178ad2"",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000006"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""SkillX"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4a773080-13c0-4000-8000-000000000008"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""SkillY"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4a773080-13c0-4000-8000-00000000000a"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""SkillA"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4a773080-13c0-4000-8000-00000000000c"",
                     ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""SkillB"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4a773080-13c0-4000-8000-00000000000e"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""CycleSupportTarget"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4a773080-13c0-4000-8000-00000000000f"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
@@ -1834,6 +1959,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_RealTimeCombat_ConfirmPalette = m_RealTimeCombat.FindAction("ConfirmPalette", throwIfNotFound: true);
         m_RealTimeCombat_SwitchEnemyLock = m_RealTimeCombat.FindAction("SwitchEnemyLock", throwIfNotFound: true);
         m_RealTimeCombat_LightSkill = m_RealTimeCombat.FindAction("LightSkill", throwIfNotFound: true);
+        m_RealTimeCombat_SelectSkillKit = m_RealTimeCombat.FindAction("SelectSkillKit", throwIfNotFound: true);
         // CombatQTE
         m_CombatQTE = asset.FindActionMap("CombatQTE", throwIfNotFound: true);
         m_CombatQTE_Y = m_CombatQTE.FindAction("Y", throwIfNotFound: true);
@@ -1865,6 +1991,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_CombatWheel_Navigate = m_CombatWheel.FindAction("Navigate", throwIfNotFound: true);
         m_CombatWheel_Confirm = m_CombatWheel.FindAction("Confirm", throwIfNotFound: true);
         m_CombatWheel_Cancel = m_CombatWheel.FindAction("Cancel", throwIfNotFound: true);
+        m_CombatWheel_SelectSkillKit = m_CombatWheel.FindAction("SelectSkillKit", throwIfNotFound: true);
+        m_CombatWheel_SkillX = m_CombatWheel.FindAction("SkillX", throwIfNotFound: true);
+        m_CombatWheel_SkillY = m_CombatWheel.FindAction("SkillY", throwIfNotFound: true);
+        m_CombatWheel_SkillA = m_CombatWheel.FindAction("SkillA", throwIfNotFound: true);
+        m_CombatWheel_SkillB = m_CombatWheel.FindAction("SkillB", throwIfNotFound: true);
+        m_CombatWheel_CycleSupportTarget = m_CombatWheel.FindAction("CycleSupportTarget", throwIfNotFound: true);
         // System
         m_System = asset.FindActionMap("System", throwIfNotFound: true);
         m_System_Pause = m_System.FindAction("Pause", throwIfNotFound: true);
@@ -2542,6 +2674,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_RealTimeCombat_ConfirmPalette;
     private readonly InputAction m_RealTimeCombat_SwitchEnemyLock;
     private readonly InputAction m_RealTimeCombat_LightSkill;
+    private readonly InputAction m_RealTimeCombat_SelectSkillKit;
     /// <summary>
     /// Provides access to input actions defined in input action map "RealTimeCombat".
     /// </summary>
@@ -2593,6 +2726,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "RealTimeCombat/LightSkill".
         /// </summary>
         public InputAction @LightSkill => m_Wrapper.m_RealTimeCombat_LightSkill;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/SelectSkillKit".
+        /// </summary>
+        public InputAction @SelectSkillKit => m_Wrapper.m_RealTimeCombat_SelectSkillKit;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2649,6 +2786,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LightSkill.started += instance.OnLightSkill;
             @LightSkill.performed += instance.OnLightSkill;
             @LightSkill.canceled += instance.OnLightSkill;
+            @SelectSkillKit.started += instance.OnSelectSkillKit;
+            @SelectSkillKit.performed += instance.OnSelectSkillKit;
+            @SelectSkillKit.canceled += instance.OnSelectSkillKit;
         }
 
         /// <summary>
@@ -2690,6 +2830,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LightSkill.started -= instance.OnLightSkill;
             @LightSkill.performed -= instance.OnLightSkill;
             @LightSkill.canceled -= instance.OnLightSkill;
+            @SelectSkillKit.started -= instance.OnSelectSkillKit;
+            @SelectSkillKit.performed -= instance.OnSelectSkillKit;
+            @SelectSkillKit.canceled -= instance.OnSelectSkillKit;
         }
 
         /// <summary>
@@ -3331,6 +3474,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_CombatWheel_Navigate;
     private readonly InputAction m_CombatWheel_Confirm;
     private readonly InputAction m_CombatWheel_Cancel;
+    private readonly InputAction m_CombatWheel_SelectSkillKit;
+    private readonly InputAction m_CombatWheel_SkillX;
+    private readonly InputAction m_CombatWheel_SkillY;
+    private readonly InputAction m_CombatWheel_SkillA;
+    private readonly InputAction m_CombatWheel_SkillB;
+    private readonly InputAction m_CombatWheel_CycleSupportTarget;
     /// <summary>
     /// Provides access to input actions defined in input action map "CombatWheel".
     /// </summary>
@@ -3354,6 +3503,30 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "CombatWheel/Cancel".
         /// </summary>
         public InputAction @Cancel => m_Wrapper.m_CombatWheel_Cancel;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatWheel/SelectSkillKit".
+        /// </summary>
+        public InputAction @SelectSkillKit => m_Wrapper.m_CombatWheel_SelectSkillKit;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatWheel/SkillX".
+        /// </summary>
+        public InputAction @SkillX => m_Wrapper.m_CombatWheel_SkillX;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatWheel/SkillY".
+        /// </summary>
+        public InputAction @SkillY => m_Wrapper.m_CombatWheel_SkillY;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatWheel/SkillA".
+        /// </summary>
+        public InputAction @SkillA => m_Wrapper.m_CombatWheel_SkillA;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatWheel/SkillB".
+        /// </summary>
+        public InputAction @SkillB => m_Wrapper.m_CombatWheel_SkillB;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatWheel/CycleSupportTarget".
+        /// </summary>
+        public InputAction @CycleSupportTarget => m_Wrapper.m_CombatWheel_CycleSupportTarget;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -3389,6 +3562,24 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Cancel.started += instance.OnCancel;
             @Cancel.performed += instance.OnCancel;
             @Cancel.canceled += instance.OnCancel;
+            @SelectSkillKit.started += instance.OnSelectSkillKit;
+            @SelectSkillKit.performed += instance.OnSelectSkillKit;
+            @SelectSkillKit.canceled += instance.OnSelectSkillKit;
+            @SkillX.started += instance.OnSkillX;
+            @SkillX.performed += instance.OnSkillX;
+            @SkillX.canceled += instance.OnSkillX;
+            @SkillY.started += instance.OnSkillY;
+            @SkillY.performed += instance.OnSkillY;
+            @SkillY.canceled += instance.OnSkillY;
+            @SkillA.started += instance.OnSkillA;
+            @SkillA.performed += instance.OnSkillA;
+            @SkillA.canceled += instance.OnSkillA;
+            @SkillB.started += instance.OnSkillB;
+            @SkillB.performed += instance.OnSkillB;
+            @SkillB.canceled += instance.OnSkillB;
+            @CycleSupportTarget.started += instance.OnCycleSupportTarget;
+            @CycleSupportTarget.performed += instance.OnCycleSupportTarget;
+            @CycleSupportTarget.canceled += instance.OnCycleSupportTarget;
         }
 
         /// <summary>
@@ -3409,6 +3600,24 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Cancel.started -= instance.OnCancel;
             @Cancel.performed -= instance.OnCancel;
             @Cancel.canceled -= instance.OnCancel;
+            @SelectSkillKit.started -= instance.OnSelectSkillKit;
+            @SelectSkillKit.performed -= instance.OnSelectSkillKit;
+            @SelectSkillKit.canceled -= instance.OnSelectSkillKit;
+            @SkillX.started -= instance.OnSkillX;
+            @SkillX.performed -= instance.OnSkillX;
+            @SkillX.canceled -= instance.OnSkillX;
+            @SkillY.started -= instance.OnSkillY;
+            @SkillY.performed -= instance.OnSkillY;
+            @SkillY.canceled -= instance.OnSkillY;
+            @SkillA.started -= instance.OnSkillA;
+            @SkillA.performed -= instance.OnSkillA;
+            @SkillA.canceled -= instance.OnSkillA;
+            @SkillB.started -= instance.OnSkillB;
+            @SkillB.performed -= instance.OnSkillB;
+            @SkillB.canceled -= instance.OnSkillB;
+            @CycleSupportTarget.started -= instance.OnCycleSupportTarget;
+            @CycleSupportTarget.performed -= instance.OnCycleSupportTarget;
+            @CycleSupportTarget.canceled -= instance.OnCycleSupportTarget;
         }
 
         /// <summary>
@@ -3907,6 +4116,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLightSkill(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSkillKit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSkillKit(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "CombatQTE" which allows adding and removing callbacks.
@@ -4088,6 +4304,48 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCancel(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSkillKit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSkillKit(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SkillX" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSkillX(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SkillY" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSkillY(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SkillA" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSkillA(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SkillB" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSkillB(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CycleSupportTarget" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCycleSupportTarget(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "System" which allows adding and removing callbacks.
