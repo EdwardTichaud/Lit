@@ -154,7 +154,7 @@ MonoBehaviour:
     anyFlags: 2
     allFlags: 0
   completionFlags: 0
-  cycleSceneName: District_1_Enigme_Ghost_Nina
+  cycleSceneName: District_1_Cycle_Nina
   dialogueSeconds: 4
   dialogues:
   - id: nina

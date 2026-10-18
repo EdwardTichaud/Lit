@@ -10,6 +10,7 @@ public sealed partial class RealTimeCombatManager
     {
         ResolvePlayerReferences();
         if (!(allowSelf && target == playerController && PlayerProtectionEffects.Alive(target)) &&
+            !PlayerRegenerationEffect.IsValidRegenerationRecipient(playerController, target) &&
             !PlayerRegenerationEffect.IsValidAlly(playerController, target)) return false;
         supportTarget = target;
         return true;
@@ -24,7 +25,7 @@ public sealed partial class RealTimeCombatManager
         foreach (var actor in FindObjectsByType<SquadCharacterController>(FindObjectsInactive.Exclude))
             if (PlayerRegenerationEffect.IsValidAlly(playerController, actor) &&
                 Vector3.Distance(playerController.transform.position, actor.transform.position) <= (intercession ? skill.protection.radius : skill.healingRadius)) allies.Add(actor);
-        if (intercession) allies.Add(playerController);
+        if (intercession || PlayerRegenerationEffect.IsValidRegenerationRecipient(playerController, playerController)) allies.Add(playerController);
         allies.Sort((a, b) => a.GetEntityId().CompareTo(b.GetEntityId()));
         if (allies.Count == 0) { supportTarget = null; return false; }
         supportTarget = allies[(allies.IndexOf(supportTarget) + 1) % allies.Count];
@@ -32,15 +33,15 @@ public sealed partial class RealTimeCombatManager
         return true;
     }
 
-    private bool TryUseHealingSkill(SkillSO skill)
+    private bool TryUseHealingSkill(SkillSO skill, PlayerAttackContext targeting = null)
     {
         ResolvePlayerReferences();
         if (IsCinematicSequenceActive || !SkillHealing.CanCast(playerController) || GetSkillCooldownRemaining(skill) > 0f) return false;
         bool passive = skill.healingTarget == SkillHealingTarget.AllyRegeneration;
-        var recipient = supportTarget;
-        if (passive && PlayerRegenerationEffect.IsValidRegenerationRecipient(playerController, playerController)) recipient = playerController;
+        var recipient = targeting != null ? targeting.Ally : supportTarget;
+        if (targeting == null && passive && PlayerRegenerationEffect.IsValidRegenerationRecipient(playerController, playerController)) recipient = playerController;
         bool drain = skill.healingTarget == SkillHealingTarget.EnemyLifeSteal;
-        var enemyTarget = drain ? LockedCombatTarget : null;
+        var enemyTarget = drain ? (targeting != null ? targeting.Target : LockedCombatTarget) : null;
         if (drain && (!PlayerRegenerationEffect.IsValidEnemy(playerController, enemyTarget) ||
             Vector3.Distance(playerController.transform.position, enemyTarget.Root.position) > skill.healingRadius)) return false;
         if (passive && (!PlayerRegenerationEffect.IsValidRegenerationRecipient(playerController, recipient) ||

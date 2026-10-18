@@ -17,7 +17,7 @@ public sealed class TimeAuthorityAudit : IPreprocessBuildWithReport
 {
     private const string TimeManagerPath = "Assets/Scripts/Time/TimeManager.cs";
     private static readonly Regex IllegalWrite = new Regex(
-        @"\bTime\s*\.\s*(?:timeScale|fixedDeltaTime)\s*(?:=|\+=|-=|\*=|/=)",
+        @"\bTime\s*\.\s*(?:timeScale|fixedDeltaTime)\s*(?:=(?!=|>)|\+=|-=|\*=|/=)",
         RegexOptions.Compiled);
 
     public int callbackOrder => -1000;

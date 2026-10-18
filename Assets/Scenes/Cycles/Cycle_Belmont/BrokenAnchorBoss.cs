@@ -75,6 +75,7 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
         if (firing != null) StopCoroutine(firing);
         firing = null;
         UnbindTorchEvents();
+        EndLocalCombatPresentation();
     }
 
     public override void OnDestroy()
@@ -181,6 +182,7 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
                 Vector3 destination = target.position + Vector3.up;
                 yield return WaitForEncounterSeconds(telegraphSeconds);
                 if (!IsBossEngaged || IsBossResolved) break;
+                if (!IsValidTarget(target)) continue;
                 Fire(origin, destination);
             }
             yield return WaitForEncounterSeconds(salvoIntervalSeconds);
@@ -196,13 +198,24 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
             foreach (ulong id in manager.ConnectedClientsIds)
             {
                 Transform candidate = NetcodePlayerUtils.GetPlayerTransform(id);
-                if (candidate == null) continue;
+                if (!IsValidTarget(candidate)) continue;
                 float distance = (candidate.position - Enemy.transform.position).sqrMagnitude;
                 if (distance < nearestDistance) { nearest = candidate; nearestDistance = distance; }
             }
-            if (nearest != null) return nearest;
+            return nearest;
         }
-        return LocalPlayerContext.LocalCharacterRoot;
+        Transform local = LocalPlayerContext.LocalCharacterRoot;
+        return IsValidTarget(local) ? local : null;
+    }
+    private bool IsValidTarget(Transform root)
+    {
+        if (root == null || !root.gameObject.activeInHierarchy || !EnemyEncounterActors.IsAvailable(EncounterActor)) return false;
+        var player = root.GetComponent<SquadCharacterController>();
+        if (player == null) player = root.GetComponentInChildren<SquadCharacterController>();
+        if (player == null || player.CurrentHp <= 0) return false;
+        Vector3 offset = root.position - EncounterActor.EncounterRoot.position;
+        float range = Definition != null ? Definition.EngagementDistance : 8f;
+        return offset.sqrMagnitude <= range * range;
     }
     private void Fire(Vector3 origin, Vector3 destination)
     {

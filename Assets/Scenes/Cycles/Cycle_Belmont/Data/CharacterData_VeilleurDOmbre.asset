@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: CharacterData_VeilleurDOmbre
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
+      presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -232,8 +235,6 @@ MonoBehaviour:
     dodge:
       impulseSpeed: 16
       durationMultiplier: 1
-      alignUnlockedDodgeToTravel: 1
-      alignLockedForwardDodgeToTravel: 1
   uniqueId: 5e4ae7843326865429ea76887770d9bb
   characterId: shadow_warden_belmont
   characterName: "Veilleur d\u2019Ombre"
@@ -242,7 +243,8 @@ MonoBehaviour:
   skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
-  enemyCombatProfile: {fileID: 11400000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d05, type: 2}
+  chargedSkill: {fileID: 0}
+  enemyCombatProfile: {fileID: 11400000, guid: 1105fce3864fb1048bce995964465f71, type: 2}
   enemySettings:
     ArenaCreateBattleWall: 1
     LocomotionPositioning:
@@ -265,6 +267,8 @@ MonoBehaviour:
     LocomotionNavMeshEdgeClearance: 0.45
     LocomotionClearanceSearchRadius: 2
     LocomotionClearanceSearchSamples: 12
+    LocomotionStuckRecoverySeconds: 0.8
+    LocomotionStuckProgressDistance: 0.06
     LocomotionLogDiagnostics: 0
     ContractLogDiagnostics: 1
     RecoveryExtraRecoverySeconds: 1

@@ -69,7 +69,7 @@ public sealed class SoloTeamProgression : MonoBehaviour
         var skill = Catalog != null ? Catalog.GetSkill(kit, 0) : null;
         string direction = kit switch { CombatSkillKit.Vesta => "droite", CombatSkillKit.Soren => "bas",
             CombatSkillKit.Aurell => "gauche", _ => "haut" };
-        SoloTeamAnnouncement.Show($"{kit} rejoint l’équipe\n{skill?.SkillName ?? "Compétence"} — croix {direction}, bouton X");
+        SoloTeamAnnouncement.Show($"{kit} rejoint l’équipe\n{skill?.SkillName ?? "Compétence"} — croix {direction}, puis gauche");
         return true;
     }
 

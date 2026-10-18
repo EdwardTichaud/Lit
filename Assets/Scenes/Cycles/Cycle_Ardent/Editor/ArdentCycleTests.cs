@@ -69,9 +69,22 @@ public sealed class ArdentCycleTests
         var go=new GameObject("False choir isolated test");go.SetActive(false);
         try
         {
-            var enemy=go.AddComponent<EnemyController>();enemy.GetComponent<CharacterInfo>().SetCharacterData(AssetDatabase.LoadAssetAtPath<CharacterData>(ArdentCycleValidation.Root+"/Data/CharacterData_FalseChoir.asset"));
-            var boss=go.AddComponent<FalseChoirBoss>();typeof(BossEncounterBehaviour).GetField("definition",Private).SetValue(boss,AssetDatabase.LoadAssetAtPath<BossDefinitionSO>(ArdentCycleValidation.Root+"/Data/BossDefinition_FalseChoir.asset"));typeof(BossEncounterBehaviour).GetField("enemy",Private).SetValue(boss,enemy);
+            var data=AssetDatabase.LoadAssetAtPath<CharacterData>(ArdentCycleValidation.Root+"/Data/CharacterData_FalseChoir.asset");
+            var definition=AssetDatabase.LoadAssetAtPath<BossDefinitionSO>(ArdentCycleValidation.Root+"/Data/BossDefinition_FalseChoir.asset");
+            Assert.That(data,Is.Not.Null,"Missing authored FalseChoir CharacterData; do not substitute fixture assets.");
+            Assert.That(definition,Is.Not.Null,"Missing authored FalseChoir BossDefinition.");
+            var prefab=data.ResolveWorldPrefab();
+            Assert.That(prefab,Is.Not.Null,"Missing authored FalseChoir world prefab.");
+            var actor=Object.Instantiate(prefab,go.transform);
+            var enemy=actor.GetComponent<EnemyController>();var boss=actor.GetComponent<FalseChoirBoss>();
+            Assert.That(enemy,Is.Not.Null,"The authored prefab must retain its legacy encounter actor.");
+            Assert.That(boss,Is.Not.Null);Assert.That(boss.Definition,Is.SameAs(definition));
+            enemy.Health.SetCharacterData(data);enemy.Health.InitializeMaxHealthFromCharacterData();
+            typeof(EnemyController).GetField("requiresFlameInfluence",Private).SetValue(enemy,false);
             typeof(FalseChoirBoss).GetMethod("Awake",Private).Invoke(boss,null);
+            actor.SetActive(true);
+            go.SetActive(true);
+            Assert.That(enemy.IsEncounterAvailable,Is.True,"The encounter test requires an active, living actor.");
             Assert.That(boss.TryReveal(0),Is.False);
             typeof(BossEncounterBehaviour).GetMethod("EngageAuthoritatively",Private).Invoke(boss,null);
             Assert.That(boss.FilterIncomingDamage(25,null,out var damage),Is.False);Assert.That(damage,Is.Zero);
@@ -79,7 +92,8 @@ public sealed class ArdentCycleTests
             Assert.That(boss.TryReveal(0),Is.True);Assert.That(boss.TryReveal(0),Is.False);
             Assert.That(boss.FilterIncomingDamage(25,null,out damage),Is.True);Assert.That(damage,Is.EqualTo(25));Assert.That(enemy.Health.CurrentHp,Is.EqualTo(300),"A relay never inflicts automatic damage.");
             Assert.That(boss.CooldownRemaining,Is.InRange(11.5,12.1));
-            typeof(FalseChoirBoss).GetField("offlineExposed",Private).SetValue(boss,Time.unscaledTimeAsDouble-.01);
+            double exposureEnds=(double)typeof(FalseChoirBoss).GetField("offlineExposed",Private).GetValue(boss);
+            typeof(BossEncounterBehaviour).GetField("offlineEncounterClock",Private).SetValue(boss,exposureEnds+.01d);
             typeof(FalseChoirBoss).GetMethod("Update",Private).Invoke(boss,null);
             Assert.That(boss.ActiveRelay,Is.EqualTo(1));Assert.That(boss.IsExposed,Is.False);Assert.That(boss.TryReveal(1),Is.False);
             enemy.Health.ForceDefeat();Assert.That(boss.IsBossResolved,Is.True);Assert.That(boss.CurrentSegments,Is.Zero);Assert.That(boss.TryReveal(1),Is.False);

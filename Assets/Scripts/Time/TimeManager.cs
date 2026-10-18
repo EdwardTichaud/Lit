@@ -39,12 +39,16 @@ public sealed class TimeManager : MonoBehaviour
     private int nextRequestId = 1;
     private float initialFixedDeltaTime;
     private float effectiveGlobalScale = 1f;
+    private bool networkSimulationActive;
     private TimeSlowMotionPresentationController slowMotionPresentationController;
 
     public float GlobalScale => effectiveGlobalScale;
     public float BaseGlobalScale => baseGlobalScale;
     /// <summary>Read-only global scale for presentation systems such as audio.</summary>
     public static float CurrentGlobalScale => Instance != null ? Instance.effectiveGlobalScale : 1f;
+    /// <summary>A listening NGO session shares gameplay time, including a host with no remote peers yet.</summary>
+    public static bool IsNetworkSimulationActive =>
+        Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening;
 
     public static TimeManager EnsureInstance()
     {
@@ -83,6 +87,7 @@ public sealed class TimeManager : MonoBehaviour
 
     private void Update()
     {
+        if (networkSimulationActive != IsNetworkSimulationActive) Recompute();
         bool changed = false;
         List<int> expired = null;
         foreach (KeyValuePair<int, Request> pair in requests)
@@ -181,6 +186,14 @@ public sealed class TimeManager : MonoBehaviour
 
     private TimeRequestHandle Acquire(float scale, object owner, CombatTimeDomain domain, bool pause, float durationRealtime)
     {
+        // Global time and CombatTimeDomain both drive simulation, not just presentation.
+        // A local menu must not pause a listening host/client's shared world either.
+        if (IsNetworkSimulationActive)
+        {
+            Recompute();
+            return default;
+        }
+
         if (owner == null)
         {
             Debug.LogWarning("[TimeManager] Requete ignoree : owner obligatoire pour garantir la restitution.", this);
@@ -204,8 +217,11 @@ public sealed class TimeManager : MonoBehaviour
 
     private void Recompute()
     {
+        networkSimulationActive = IsNetworkSimulationActive;
+        // Discard solo leases on entry: they must not resume after disconnect.
+        if (networkSimulationActive) requests.Clear();
         bool globalPause = false;
-        float globalScale = baseGlobalScale;
+        float globalScale = networkSimulationActive ? 1f : baseGlobalScale;
         foreach (Request request in requests.Values)
         {
             if (request.domain != null) continue;
@@ -227,6 +243,7 @@ public sealed class TimeManager : MonoBehaviour
 
     private void RecomputeDomains()
     {
+        bool online = IsNetworkSimulationActive;
         registeredDomains.RemoveWhere(domain => domain == null);
         foreach (CombatTimeDomain domain in registeredDomains)
         {
@@ -234,6 +251,7 @@ public sealed class TimeManager : MonoBehaviour
             float scale = 1f;
             foreach (Request request in requests.Values)
             {
+                if (online) continue;
                 if (request.domain != domain) continue;
                 pause |= request.pause;
                 scale = Mathf.Min(scale, request.scale);

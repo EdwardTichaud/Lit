@@ -5409,8 +5409,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8061687410296185595}
   - component: {fileID: 4674947708430456666}
+  - component: {fileID: 8061687410296185595}
   - component: {fileID: 1186768606815635417}
   - component: {fileID: 5905227017397167372}
   - component: {fileID: 3470235572636951309}
@@ -5420,6 +5420,10 @@ GameObject:
   - component: {fileID: 462460123797761288}
   - component: {fileID: 6052637200855533076}
   - component: {fileID: 1593202554068474222}
+  - component: {fileID: 2922044680634934546}
+  - component: {fileID: 6055931747257366881}
+  - component: {fileID: 7098844160676735056}
+  - component: {fileID: 4661513750719148634}
   m_Layer: 0
   m_Name: Prefab_FalseChoir
   m_TagString: Untagged
@@ -5447,6 +5451,24 @@ Transform:
   - {fileID: 9147592915118123704}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8061687410296185595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5897523970581850453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!95 &1186768606815635417
 Animator:
   serializedVersion: 7
@@ -5628,6 +5650,7 @@ MonoBehaviour:
   ContractCapsuleCollider: {fileID: 3470235572636951309}
   ContractNavigationAgent: {fileID: 2341105303687193239}
   ContractAnimator: {fileID: 1186768606815635417}
+  requiresFlameInfluence: 1
   LocomotionNavigationAgent: {fileID: 2341105303687193239}
   NavigationNavigationAgent: {fileID: 2341105303687193239}
   PhysicsNavigationAgent: {fileID: 0}
@@ -5658,6 +5681,282 @@ MonoBehaviour:
   revealSeconds: 8
   relayCooldownSeconds: 12
   visualDecoys: []
+--- !u!114 &2922044680634934546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5897523970581850453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2321a77d70dd4ab491ed7caf3cc3ea84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Combat.Migration.Network.CombatNetworkActorRuntime
+  ShowTopMostFoldoutHeaderGroup: 1
+  actorCinematicPlayback: {fileID: 0}
+  networkCounterSkill: {fileID: 0}
+  networkClarityForS: 100
+  basicBufferSeconds: 0.85
+  networkDodgeWindowSeconds: 0.5
+  networkCounterPreImpactSeconds: 0.5
+  networkCounterRetrySeconds: 0.4
+  catalog: {fileID: 11400000, guid: b852a187335cd174e82d2b9165d3d5ea, type: 2}
+--- !u!114 &6055931747257366881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5897523970581850453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 1
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!114 &7098844160676735056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5897523970581850453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkAnimator
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkAnimatorExpanded: 0
+  AuthorityMode: 0
+  m_Animator: {fileID: 1186768606815635417}
+  TransitionStateInfoList: []
+  AnimatorParameterEntries:
+    ParameterEntries:
+    - name: Melt
+      NameHash: -1744386119
+      Synchronize: 1
+      ParameterType: 9
+    - name: Rupture
+      NameHash: 497895566
+      Synchronize: 1
+      ParameterType: 9
+    - name: LitSpeed
+      NameHash: -1656198971
+      Synchronize: 1
+      ParameterType: 1
+    - name: Speed
+      NameHash: -823668238
+      Synchronize: 1
+      ParameterType: 1
+    - name: HorizontalMovement
+      NameHash: 1636990184
+      Synchronize: 1
+      ParameterType: 1
+    - name: ForwardMovement
+      NameHash: 1694618174
+      Synchronize: 1
+      ParameterType: 1
+    - name: Pitch
+      NameHash: -430009891
+      Synchronize: 1
+      ParameterType: 1
+    - name: Yaw
+      NameHash: 782987860
+      Synchronize: 1
+      ParameterType: 1
+    - name: Height
+      NameHash: -220078023
+      Synchronize: 1
+      ParameterType: 1
+    - name: Moving
+      NameHash: 949806512
+      Synchronize: 1
+      ParameterType: 4
+    - name: Aiming
+      NameHash: 1191575797
+      Synchronize: 1
+      ParameterType: 4
+    - name: MovementSetID
+      NameHash: -2131844982
+      Synchronize: 1
+      ParameterType: 3
+    - name: AbilityIndex
+      NameHash: 858842042
+      Synchronize: 1
+      ParameterType: 3
+    - name: AbilityChange
+      NameHash: 475518880
+      Synchronize: 1
+      ParameterType: 9
+    - name: AbilityIntData
+      NameHash: 2089811493
+      Synchronize: 1
+      ParameterType: 3
+    - name: AbilityFloatData
+      NameHash: 1975974142
+      Synchronize: 1
+      ParameterType: 1
+    - name: IsMoving
+      NameHash: 120489994
+      Synchronize: 1
+      ParameterType: 4
+    - name: MoveStartTrigger
+      NameHash: 1501999987
+      Synchronize: 1
+      ParameterType: 9
+    - name: LadderPassageTrigger
+      NameHash: 1121264604
+      Synchronize: 1
+      ParameterType: 9
+    - name: MoveStopTrigger
+      NameHash: -398384747
+      Synchronize: 1
+      ParameterType: 9
+    - name: LocomotionTier
+      NameHash: -466941804
+      Synchronize: 1
+      ParameterType: 1
+    - name: Turn
+      NameHash: -2146256263
+      Synchronize: 1
+      ParameterType: 1
+    - name: TurnInPlace
+      NameHash: 942136600
+      Synchronize: 1
+      ParameterType: 4
+    - name: Flame
+      NameHash: -989908123
+      Synchronize: 1
+      ParameterType: 4
+    - name: JumpTrigger
+      NameHash: 113680519
+      Synchronize: 1
+      ParameterType: 9
+    - name: ObstacleTraversal
+      NameHash: 641854391
+      Synchronize: 1
+      ParameterType: 9
+    - name: IsAirborne
+      NameHash: -459509701
+      Synchronize: 1
+      ParameterType: 4
+    - name: LandingType
+      NameHash: 1134185143
+      Synchronize: 1
+      ParameterType: 3
+    - name: JumpFromMovement
+      NameHash: 505874614
+      Synchronize: 1
+      ParameterType: 4
+    - name: RollTrigger
+      NameHash: 504407055
+      Synchronize: 1
+      ParameterType: 9
+    - name: JumpPhase
+      NameHash: 504900853
+      Synchronize: 1
+      ParameterType: 3
+    - name: IsSitting
+      NameHash: 209758592
+      Synchronize: 1
+      ParameterType: 4
+    - name: FlightState
+      NameHash: 953507668
+      Synchronize: 1
+      ParameterType: 3
+    - name: FlightSpeed
+      NameHash: -1805618343
+      Synchronize: 1
+      ParameterType: 1
+    - name: FlightVertical
+      NameHash: 1807772921
+      Synchronize: 1
+      ParameterType: 1
+    - name: FlightBoost
+      NameHash: -853366073
+      Synchronize: 1
+      ParameterType: 4
+    - name: FlightStartTrigger
+      NameHash: 1209346335
+      Synchronize: 1
+      ParameterType: 9
+    - name: Taunt
+      NameHash: 1980192711
+      Synchronize: 1
+      ParameterType: 9
+    - name: JumpStartTrigger
+      NameHash: 129022743
+      Synchronize: 1
+      ParameterType: 9
+    - name: LandingTrigger
+      NameHash: 1664840701
+      Synchronize: 1
+      ParameterType: 9
+    - name: JumpPresentationActive
+      NameHash: -1414312267
+      Synchronize: 1
+      ParameterType: 4
+    - name: CombatStrafeActive
+      NameHash: -1113866669
+      Synchronize: 1
+      ParameterType: 4
+    - name: CombatMoveMagnitude
+      NameHash: 572493663
+      Synchronize: 1
+      ParameterType: 1
+    - name: CombatLocomotionPlaybackRate
+      NameHash: 1807811340
+      Synchronize: 1
+      ParameterType: 1
+  AnimatorParametersExpanded: 0
+--- !u!114 &4661513750719148634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5897523970581850453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bb8d1f638a24855bd9d466103c45d0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatTimeDomain
+  animator: {fileID: 0}
 --- !u!1 &5944152205192895780
 GameObject:
   m_ObjectHideFlags: 0
@@ -10675,21 +10974,3 @@ Transform:
   - {fileID: 5931215870256206150}
   m_Father: {fileID: 1084663132392601582}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8061687410296185595
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5897523970581850453}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
-  presentation: {fileID: 0}
-  actorOwner: {fileID: 0}
-  signalTarget: {fileID: 0}
-  cameraRoot: {fileID: 0}
-  previewOnly: 0
-  lastSignal: 

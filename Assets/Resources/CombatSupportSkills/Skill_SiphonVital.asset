@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
   m_Name: Skill_SiphonVital
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
+  targetingMode: 2
   skillName: Siphon vital
   description: "Vole 1 PV par seconde a l'ennemi cible, entre 0 et 10 m, et soigne le lanceur du montant effectivement retire. Remplace le passif maintenu."
   damages: 0

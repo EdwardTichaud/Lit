@@ -266,6 +266,9 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnToggleTorch(InputAction.CallbackContext context)
     {
+        // The laboratory reserves West for free attacks, without changing
+        // the shared exploration bindings or the keyboard torch command.
+        if (context.control?.device is Gamepad && RealTimeCombatManager.Instance?.CanReceiveFreeAttackInput == true) return;
         if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseToggleTorch(context);
@@ -471,7 +474,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         LocalInputRouter.ResetCamera();
     }
 
-    public static void SetCombatInputActive(bool active)
+    public static void SetCombatInputActive(bool active, bool preserveHeldActions = false)
     {
         if (!Application.isPlaying)
         {
@@ -486,7 +489,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         EnsureInstance();
         if (Instance != null)
         {
-            Instance.ApplyCombatInputActive(active);
+            Instance.ApplyCombatInputActive(active, preserveHeldActions);
         }
     }
 
@@ -505,7 +508,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         Instance?.ScheduleHeldLocomotionReconciliation(reason);
     }
 
-    private void ApplyCombatInputActive(bool active)
+    private void ApplyCombatInputActive(bool active, bool preserveHeldActions = false)
     {
         if (playerInputs == null)
         {
@@ -518,7 +521,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         // cannot remain disabled after a valid manual lock.
 
         combatInputActive = active;
-        InputModeCoordinator.SetBaseMode(active ? InputMode.Combat : InputMode.Exploration);
+        InputModeCoordinator.SetBaseMode(active ? InputMode.Combat : InputMode.Exploration, preserveHeldActions);
     }
 
     private void OnCoordinatorModeChanged(InputMode mode)

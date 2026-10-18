@@ -8,12 +8,15 @@ public readonly struct CombatImpact
     public readonly float Interruption;
     public readonly CombatImpactOrigin Origin;
     public readonly bool DamageModifiersApplied;
-    public CombatImpact(int damage, float interruption, CombatImpactOrigin origin, bool damageModifiersApplied = false)
+    public readonly SquadCharacterController Source;
+    public CombatImpact(int damage, float interruption, CombatImpactOrigin origin, bool damageModifiersApplied = false,
+        SquadCharacterController source = null)
     {
         Damage = Mathf.Max(0, damage);
         Interruption = Mathf.Max(0f, interruption);
         Origin = origin;
         DamageModifiersApplied = damageModifiersApplied;
+        Source = source;
     }
 }
 

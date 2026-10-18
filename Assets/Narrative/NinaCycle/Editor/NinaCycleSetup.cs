@@ -10,7 +10,8 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class NinaCycleSetup
 {
-    public const string ScenePath = "Assets/Scenes/District_1/District_1_Enigme_Ghost_Nina.unity";
+    public const string ScenePath = "Assets/Scenes/Cycles/Cycle_Nina/District_1_Cycle_Nina.unity";
+    public const string DefinitionPath = "Assets/Scenes/Cycles/Cycle_Nina/NinaCycle.asset";
     private const string DataPath = "Assets/Narrative/NinaCycle/Data";
     static NinaCycleSetup() => EditorApplication.update += Poll;
     private static void Poll()
@@ -26,13 +27,13 @@ public static class NinaCycleSetup
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null)
             throw new InvalidOperationException("La scÃ¨ne Nina existe dÃ©jÃ . Elle ne sera pas Ã©crasÃ©e.");
         EnsureFolder(DataPath);
-        EnsureFolder("Assets/Resources/Narrative");
-        var definition = Asset<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        EnsureFolder("Assets/Scenes/Cycles/Cycle_Nina");
+        var definition = Asset<CycleDefinition>(DefinitionPath);
         var existence = Knowledge("ExistenceDesChimeres", "Existence des chimÃ¨res", "Des Ãªtres vivants ont Ã©tÃ© fusionnÃ©s artificiellement par le Scientifique fou.");
         var dilemma = Knowledge("DilemmeEdouard", "Dilemme Ã‰douard", "Ã‰douard a dÃ©couvert que Nina Ã©tait issue de la fusion d'une enfant et d'un chien. Comment lui venir en aide sans lui infliger davantage de souffrance ?");
         definition.cycleId = "district1.nina";
         definition.completionFlags = 0;
-        definition.cycleSceneName = "District_1_Enigme_Ghost_Nina";
+        definition.cycleSceneName = Path.GetFileNameWithoutExtension(ScenePath);
         definition.knowledgeOnEnemyDefeat = Array.Empty<KnowledgeSO>();
         definition.playCinematicAfterDefeat = true;
         definition.dialogues = new[]

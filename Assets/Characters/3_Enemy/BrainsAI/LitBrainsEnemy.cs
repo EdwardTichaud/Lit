@@ -6,14 +6,16 @@ using Ultrabolt.BrainsAI;
 [DefaultExecutionOrder(-50)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AnimationEvents))]
+[RequireComponent(typeof(LitBrainsAnimationEvents))]
 public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceiver, ICombatKnockoutReceiver, ICombatStunReceiver
 {
     public CharacterData characterData;
+    [SerializeField] public Transform lockPoint;
     public LitBrainsCombatProfile combatProfile;
     public LocomotionPresentationProfile presentationProfile;
     [Tooltip("Reconcile baked navigation height with the physical ground through NavMeshAgent.baseOffset. Opt-in per actor.")]
     public bool reconcileNavigationGroundHeight;
-    [Tooltip("Optional test target. Empty uses Lit's controlled player.")]
+    [Tooltip("Optional test target. Empty selects a living registered player actor.")]
     public Transform detectionTargetOverride;
     [Min(0.02f)] public float detectionInterval = 0.1f;
     [Min(0.1f)] public float navMeshAttachmentTolerance = 0.5f;
@@ -29,20 +31,20 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
     private float locomotionBlend;
     private CombatTimeDomain presentationClock;
     private bool cinematicSuspended;
-    private Vector3 cinematicAgentPosition;
+    private bool cinematicReattachPending;
     private int observedAttackState;
     private int impactActionSequence = -1;
     public int ActionSequenceId { get; private set; }
     public event System.Action<AnimationEvent> AttackImpact;
     public event System.Action<AnimationEvent> ReactionOpportunity;
     public Transform Root => transform;
-    public Transform LockPoint => transform;
+    public Transform LockPoint => lockPoint != null ? lockPoint : transform;
     public Animator Animator => anim != null ? anim : GetComponent<Animator>();
     public bool IsAttackCommitted => (combatProfile == null || AttackPhase != LitBrainsAttackPhase.None) &&
         Animator != null && (Animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") ||
         Animator.IsInTransition(0) && Animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
-    public int CurrentHealth => currentHealth;
-    public bool IsDead => dead;
+    public int CurrentHealth => Health != null ? Health.CurrentHp : currentHealth;
+    public bool IsDead => Health != null ? Health.IsDead : dead;
     public string DetectionReason => detectionReason;
     public bool NavigationReady => navigationReady;
     public bool IsCinematicSuspended => cinematicSuspended;
@@ -55,38 +57,58 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         // Additive scenes can arrive before their NavMesh is ready.
         agent.enabled = false;
         anim.applyRootMotion = false;
-        currentHealth = characterData != null ? Mathf.Max(1, characterData.hp) : 100;
         fov.useExternalDetection = true;
         fov.enabled = false;
+        ConfigureCharacterData(characterData);
     }
 
     protected override void Start() { } // Initialize the package only after attachment.
 
     protected override void Update()
     {
+        if (Health == null || Health.SourceData != characterData) ConfigureCharacterData(characterData);
+        BindNavigationWorld();
+        if (!HasSimulationAuthority) { SuspendNavigation(); return; }
+        // Flame loss freezes the committed action; it must not take the cancellation gate below.
+        if (IsFlameDormant) return;
+        TryFinishThresholdRetaliation();
         if (cinematicSuspended) return;
         if (initialized && Time.deltaTime <= 0) return;
         if (dead)
         {
+            if (GetComponent<EnemyDeathPresentation>() != null) { EnsureDeathPose(); return; }
             var state = anim.GetCurrentAnimatorStateInfo(0);
-            bool deathFinished = !anim.HasState(0, Animator.StringToHash("Base Layer.Death")) ||
-                state.IsName("Death") && !anim.IsInTransition(0) && state.normalizedTime >= 1f;
+            bool deathFinished = !HasCombatState(CombatDeathState) ||
+                state.IsName(CombatDeathState) && !anim.IsInTransition(0) && state.normalizedTime >= 1f;
             if (Time.time >= deathUntil && deathFinished) gameObject.SetActive(false);
             return;
         }
+        if (!EncounterAllowsDecisions)
+        {
+            CancelFluidAttack();
+            StopFluidMovement();
+            ResetPerception();
+            SuspendNavigation();
+            return;
+        }
+        if (chargedAirborne) { PlayChargedFloatHit(); return; }
+        if (UsesProductionPatterns && ProductionMotionActive) { TickFluidCombat(); return; }
         if (!TryPrepareNavigation()) return;
+        if (ThresholdStageSuspendsActions) { StopFluidMovement(); UpdateAnimator(); return; }
         UpdateNavigationGrounding();
         if (TickClashRecovery()) return;
         if (!initialized)
         {
+            EnsureProductionHome();
             base.Start();
             initialized = true;
             ResetFluidCombat();
         }
+        if (TickProductionEncounter()) return;
         if (Time.time >= nextDetection)
         {
             nextDetection = Time.time + detectionInterval;
-            Transform target = detectionTargetOverride != null ? detectionTargetOverride : LocalPlayerContext.LocalCharacterRoot;
+            Transform target = ResolvePerceptionTarget();
             var taunt = GetComponent<EnemyTaunt>();
             if (!IsAttackCommitted && taunt != null && taunt.IsActive)
             {
@@ -111,7 +133,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
             if (hurtRemaining > 0) { StopFluidMovement(); UpdateAnimator(); return; }
             counterStunActive = false;
             ClearCounterStunVfx();
-            anim.CrossFadeInFixedTime("Locomotion", .06f, 0);
+            anim.CrossFadeInFixedTime(CombatLocomotionState, .06f, 0);
         }
         bool reacting = Time.time < reactionUntil;
         StopControlConditions["LitBrainsEnemy.Hurt"] = reacting;
@@ -134,6 +156,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
 
     protected override void UpdateAnimator()
     {
+        if (UsesProductionPatterns) { if (!dead && !cinematicSuspended && anim != null) UpdateProductionAnimator(); return; }
         if (dead || cinematicSuspended || !navigationReady || anim == null || !agent.enabled || !agent.isOnNavMesh) return;
         ObserveAttackState();
         bool moving = anim.GetCurrentAnimatorStateInfo(0).IsTag("Moveable") &&
@@ -185,7 +208,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
 
     public void HandleOpenBrainsReactionOpportunity(AnimationEvent source)
     {
-        if (dead || IsCounterStunned || cinematicSuspended || source == null || !source.animatorStateInfo.IsTag("Attack")) return;
+        if (!HasSimulationAuthority || !EncounterAllowsDecisions || dead || IsCounterStunned || cinematicSuspended || source == null || !source.animatorStateInfo.IsTag("Attack")) return;
         if (combatProfile != null && !AcceptFluidEvent(source)) return;
         ObserveAttackState();
         ReactionOpportunity?.Invoke(source);
@@ -198,9 +221,17 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         return before - currentHealth;
     }
 
+    public void NotifyPlayerContact(Transform source)
+    {
+        if (!HasSimulationAuthority || !EncounterAllowsDecisions || dead || cinematicSuspended || source == null || fov == null) return;
+        if (UsesProductionPatterns && !IsWithinPursuitBounds(source)) return;
+        productionEngaged = true;
+        if (!IsAttackCommitted || fov.CurrentTarget == null) fov.SetExternalTarget(source);
+    }
+
     public void HandleResolveBrainsAttackImpact(AnimationEvent source)
     {
-        if (dead || IsCounterStunned || cinematicSuspended || source == null || !source.animatorStateInfo.IsTag("Attack")) return;
+        if (!HasSimulationAuthority || !EncounterAllowsDecisions || dead || IsCounterStunned || cinematicSuspended || source == null || !source.animatorStateInfo.IsTag("Attack")) return;
         if (combatProfile != null && !AcceptFluidEvent(source)) return;
         if (!TryConfirmAttackImpact()) return;
         AttackImpact?.Invoke(source);
@@ -226,7 +257,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
             var vision = characterData.vision;
             float distance = Vector3.Distance(transform.position + Vector3.up * vision.eyeHeight,
                 target.position + Vector3.up * vision.targetHeight);
-            detected = distance > Mathf.Epsilon && distance <= vision.maximumDistance;
+            detected = UsesProductionPatterns ? IsWithinPursuitBounds(target) : distance > Mathf.Epsilon && distance <= vision.maximumDistance;
             detectionReason = detected ? "poursuite : cible connue" : "perdue : hors portee";
         }
         else
@@ -235,6 +266,16 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
             detectionReason = detected ? "reperee : " + reason : "non reperee : " + reason;
         }
         fov.SetExternalTarget(detected ? target : null);
+        if (detected) productionEngaged = true;
+        var manager = RealTimeCombatManager.Instance;
+        if (detected && manager != null && manager.AllowsFreeAttacks && target == manager.PlayerRoot)
+            manager.TryEngageFromEnemyPerception(target, this);
+        else if (detected && HasSimulationAuthority)
+        {
+            var actor = target.GetComponentInParent<SquadCharacterController>();
+            var world = manager != null ? manager.GetComponent<CombatWorldRuntime>() : FindAnyObjectByType<CombatWorldRuntime>();
+            if (actor != null && world != null) world.TryEngageActor(actor, this);
+        }
     }
 
     private bool HasAttackLineOfSight()
@@ -269,8 +310,15 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         if (fov == null) return;
         bool investigate = fov.canInvestigate;
         fov.canInvestigate = false;
-        fov.SetExternalTarget(null);
-        fov.ResolveInvestigation(float.PositiveInfinity);
+        // Package status callbacks reset the path; they are invalid while the
+        // agent is suspended in flight or being destroyed during scene teardown.
+        if (!initialized || agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            fov.SetExternalTarget(null);
+            fov.ResolveInvestigation(float.PositiveInfinity);
+            perceptionResetPending = false;
+        }
+        else perceptionResetPending = true;
         fov.ResetLastKnownPosition();
         fov.canInvestigate = investigate;
     }
@@ -281,9 +329,9 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         cinematicSuspended = suspended;
         if (suspended)
         {
+            ReleaseChargedHold();
             CancelClashRecovery();
             CancelFluidAttack();
-            cinematicAgentPosition = transform.position;
             if (agent.enabled && agent.isOnNavMesh) { agent.ResetPath(); agent.isStopped = true; }
             agent.enabled = false;
         }
@@ -297,20 +345,27 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         {
             anim.ResetTrigger("Attack"); anim.ResetTrigger("Hurt");
             observedAttackState = 0;
-            if (!PlaceForCinematic(transform.position, transform.rotation))
-                transform.position = cinematicAgentPosition;
-            TryPrepareNavigation();
+            if (chargedAirborne) return;
+            cinematicReattachPending = true;
+            if (!TryPrepareNavigation()) SuspendNavigation();
             if (counterStunPending) BeginCounterStun();
-            else if (counterStunActive) anim.CrossFadeInFixedTime("Knocked Out", .04f, 0);
-            else anim.CrossFade("Locomotion", .1f, 0);
+            else if (counterStunActive) PlayCombatKnockout();
+            else anim.CrossFade(CombatLocomotionState, .1f, 0);
         }
     }
 
     public bool PlaceForCinematic(Vector3 position, Quaternion rotation)
     {
+        var world = NavMeshWorldService.Instance;
+        if (world != null && !world.IsReady) { SuspendNavigation(); return false; }
         var filter = new NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
-        if (!NavMesh.SamplePosition(position, out var hit, 2f, filter)) return false;
-        if (agent.enabled && agent.isOnNavMesh && !agent.Warp(hit.position)) return false;
+        float tolerance = Mathf.Max(.01f, Mathf.Min(.15f, navMeshAttachmentTolerance));
+        if (!NavMesh.SamplePosition(position, out var hit, tolerance, filter) ||
+            world != null && !world.TryValidatePosition(position, agent.areaMask, out _) ||
+            Mathf.Abs(hit.position.y - position.y) > tolerance ||
+            Vector3.ProjectOnPlane(hit.position - position, Vector3.up).magnitude > tolerance)
+        { SuspendNavigation(); return false; }
+        SuspendNavigation();
         Vector3 pose = hit.position;
         if (reconcileNavigationGroundHeight || presentationProfile != null && presentationProfile.IsUsable(anim.avatar) && presentationProfile.alignNavMeshGround)
             pose.y += agent.baseOffset;
@@ -320,6 +375,9 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
 
     private bool TryPrepareNavigation()
     {
+        BindNavigationWorld();
+        if (!HasSimulationAuthority || dead || cinematicSuspended || chargedAirborne || ProductionMotionActive || !EncounterAllowsDecisions) return false;
+        if (cinematicReattachPending && !HasChargedLandingGround()) { SuspendNavigation(); return false; }
         var world = NavMeshWorldService.Instance;
         if (world != null && !world.IsReady)
         {
@@ -330,21 +388,47 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         }
         if (agent.enabled && agent.isOnNavMesh)
         {
+            if (perceptionResetPending) ResetPerception();
             navigationReady = true;
+            cinematicReattachPending = false;
             fov.enabled = true;
             return true;
         }
+        if (world != null && !chargedLandingAttachment)
+        {
+            navigationReady = world.TryRegisterAgent(agent, transform.position);
+            if (navigationReady) cinematicReattachPending = false;
+            if (navigationReady && perceptionResetPending) ResetPerception();
+            fov.enabled = navigationReady;
+            return navigationReady;
+        }
         agent.enabled = false;
         var filter = new NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
-        if (!NavMesh.SamplePosition(transform.position, out var hit, navMeshAttachmentTolerance, filter))
+        float attachmentTolerance = chargedLandingAttachment ? .15f : navMeshAttachmentTolerance;
+        Vector3 attachmentPosition = chargedLandingAttachment ? transform.position - Vector3.up * agent.baseOffset : transform.position;
+        if (chargedLandingAttachment && !HasChargedLandingGround())
+        { navigationReady = false; fov.enabled = false; ReportChargedLandingFailure(attachmentPosition); return false; }
+        if (!NavMesh.SamplePosition(attachmentPosition, out var hit, attachmentTolerance, filter) ||
+            chargedLandingAttachment && (Mathf.Abs(hit.position.y - attachmentPosition.y) > .15f ||
+                Vector3.ProjectOnPlane(hit.position - attachmentPosition, Vector3.up).magnitude > .15f))
         {
+            if (chargedLandingAttachment) ReportChargedLandingFailure(attachmentPosition);
             navigationReady = false;
             fov.enabled = false;
             return false;
         }
-        transform.position = hit.position;
-        agent.enabled = true;
+        if (!chargedLandingAttachment) transform.position = hit.position;
+        if (world != null)
+        {
+            Vector3 pose = transform.position;
+            navigationReady = world.TryRegisterAgent(agent, attachmentPosition);
+            if (navigationReady) transform.position = pose;
+        }
+        else agent.enabled = true;
         navigationReady = agent.isOnNavMesh;
+        if (navigationReady) cinematicReattachPending = false;
+        if (navigationReady && perceptionResetPending) ResetPerception();
+        if (navigationReady) chargedLandingAttachment = false;
         fov.enabled = navigationReady;
         return navigationReady;
     }
@@ -352,42 +436,21 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
     /// <summary>Test-only health entry point, deliberately independent from Lit's combat.</summary>
     public void TakeDamage(int amount)
     {
-        if (combatProfile != null)
-        {
-            ReceiveImpact(new CombatImpact(amount, 20f, CombatImpactOrigin.Basic));
-            return;
-        }
-        if (dead || amount <= 0) return;
-        currentHealth = Mathf.Max(0, currentHealth - amount);
-        anim.ResetTrigger("Attack");
-        if (agent.enabled && agent.isOnNavMesh) { agent.ResetPath(); agent.isStopped = true; agent.velocity = Vector3.zero; }
-        if (currentHealth == 0)
-        {
-            counterStunPending = counterStunActive = false;
-            ClearCounterStunVfx();
-            dead = true;
-            StopAllCoroutines();
-            fov.canInvestigate = false;
-            fov.SetExternalTarget(null);
-            fov.enabled = false;
-            anim.ResetTrigger("Hurt");
-            BeginDeathPresentation();
-            agent.enabled = false;
-            foreach (var collider in GetComponentsInChildren<Collider>()) collider.enabled = false;
-        }
-        else if (!IsCounterStunned)
-        {
-            reactionUntil = Time.time + 0.8f;
-            anim.SetTrigger("Hurt");
-        }
+        ReceiveImpact(new CombatImpact(amount, 20f, CombatImpactOrigin.Basic));
     }
 
     private void BeginDeathPresentation()
     {
         anim.SetBool("Dead", true);
-        if (cinematicSuspended) return;
-        if (anim.HasState(0, Animator.StringToHash("Base Layer.Death")))
-            anim.CrossFadeInFixedTime("Base Layer.Death", .08f, 0, 0f);
+        if (cinematicSuspended || GetComponent<EnemyDeathPresentation>() != null && IsDeathPosePending) return;
+        if (GetComponent<EnemyDeathPresentation>() != null)
+        {
+            productionMotionActive = false;
+            productionMotionSkill = null;
+        }
+        productionDeathPoseStarted = true;
+        if (HasCombatState(CombatDeathState))
+            anim.CrossFadeInFixedTime(CombatDeathState, .08f, 0, 0f);
         deathUntil = Time.time + deathDisplaySeconds;
     }
 

@@ -19,14 +19,16 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
     private Coroutine activeDodgeRoutine;
     private LitOpsiveLocomotionBridge activeBridge;
     private CombatTimeDomain activeTimeDomain;
+    private float invulnerabilityStart, invulnerabilityEnd;
 
     public bool IsActive => activeDodgeRoutine != null;
+    public bool IsDamageInvulnerable => IsActive && Time.unscaledTime >= invulnerabilityStart && Time.unscaledTime < invulnerabilityEnd;
 
     public bool TryStartDodge(
         LitOpsiveLocomotionBridge bridge,
         PlayerActionPresentationController actionPresentation,
         Vector3 worldDirection,
-        CombatDodgeDashProfile profile)
+        CombatDodgeDashProfile profile, float invulnerabilityDelay = 0, float invulnerabilitySeconds = 0)
     {
         if (!isActiveAndEnabled || bridge == null || actionPresentation == null || profile == null ||
             profile.durationSeconds <= 0f || impulseSpeed <= 0f)
@@ -71,6 +73,8 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         }
         activeDodgeRoutine = StartCoroutine(RunDodge(actionPresentation, actionGeneration, generation,
             profile.durationSeconds * durationMultiplier));
+        invulnerabilityStart = Time.unscaledTime + Mathf.Max(0, invulnerabilityDelay);
+        invulnerabilityEnd = invulnerabilityStart + Mathf.Max(0, invulnerabilitySeconds);
         return true;
     }
 
@@ -113,6 +117,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
 
     private void EndDodge()
     {
+        invulnerabilityStart = invulnerabilityEnd = 0;
         if (activeBridge == null) return;
 
         if (activeBridge.IsScriptedPlanarMotionActive)

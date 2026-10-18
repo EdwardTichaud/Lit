@@ -51,6 +51,7 @@ public static class AurellSkillSetup
             retour.presentation.entryBlendSeconds = .08f; retour.presentation.exitBlendSeconds = .08f;
             retour.description = "Depense la reserve de degats evites. Aucun degat de base. Reserve maximale : 50% des PV max.";
             var kit = new[] { intercession, rempart, sommation, retour };
+            foreach (var skill in kit) SkillTargetingAuthoring.ConfigureIfMissing(skill);
             foreach (var skill in kit) EditorUtility.SetDirty(skill);
             if (AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath) == null)
                 AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);

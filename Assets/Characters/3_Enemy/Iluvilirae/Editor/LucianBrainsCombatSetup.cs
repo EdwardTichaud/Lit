@@ -22,6 +22,7 @@ public static class LucianBrainsCombatSetup
         {
             var scene = EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
             var arena = UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>();
+            if (arena.freeAttacks == null) arena.freeAttacks = new FreeAttackProfile();
             var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
             var sourceCamera = source.GetComponentInChildren<LitGameplayCameraModeController>(true);
             if (sourceCamera == null) throw new InvalidOperationException("Gameplay camera source missing.");
@@ -70,6 +71,7 @@ public static class LucianBrainsCombatSetup
             }
             ConfigureCounter(root.GetComponent<CounterSkillCombatController>(), source);
             ConfigureFluidLaboratory(arena, root);
+            SkillTargetingAuthoring.MigrateLoadedLab(arena);
             arena.enemyAttackSkills = new[] { "Strike", "Sweep", "Followup" }
                 .Select(name => AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_" + name + ".asset")).ToArray();
             if (arena.enemyAttackSkills.Any(skill => skill == null)) throw new InvalidOperationException("Juggernaut authored attack definitions missing.");
@@ -326,6 +328,7 @@ public static class LucianBrainsCombatSetup
 
     private static void ConfigureFluidLaboratory(LucianBrainsCombatArena arena, GameObject root)
     {
+        EnemyCounterTimingValidation.Validate(AssetDatabase.LoadAssetAtPath<LitBrainsCombatProfile>(FluidProfilePath));
         if (arena.basicSkills == null) throw new InvalidOperationException("Missing basic skills.");
         for (int i = 0; i < arena.basicSkills.Length; i++)
         {

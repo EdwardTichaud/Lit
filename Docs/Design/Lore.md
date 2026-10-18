@@ -459,6 +459,11 @@ fonce et attaque pour ouvrir un passage là où la situation semble bloquée. So
 rôle d'attaquant traduit cet élan : la mobilité, l'initiative et l'offensive sont
 les expressions jouables de sa volonté de continuer.
 
+Son quatrième skill, **Impact de lumière**, convertit cet élan en attaque de
+zone : Lucian plonge au sol et projette une onde de dix mètres de diamètre.
+Depuis les airs, les dégâts et le recul sont renforcés ; il peut enchaîner ce
+skill pendant le rebond de Saut de rupture.
+
 Il est toujours optimiste, y compris face à l'inconnu et aux situations qui
 semblent sans issue. Son optimisme n'est pas une naïveté : il perçoit et transmet
 la possibilité d'un avenir meilleur. Sa présence inspire naturellement la
@@ -505,6 +510,11 @@ permet de rester en mesure de soutenir ses proches.
 Ces skills appartiennent au kit de Vesta, même lorsqu'ils sont temporairement
 accessibles à Lucian dans le laboratoire de combat. Leur présence dans un test
 technique ne modifie pas l'attribution narrative des pouvoirs.
+
+Vesta dispose maintenant d'un CharacterData et d'un prefab jouable propres.
+Dans Iluvilirae_Test, son modele, ses BasicSkills et sa locomotion reprennent
+temporairement la base technique de Lucian, sans lui attribuer ses skills
+offensifs ni sa LightSkill. Son apparence definitive reste a produire.
 
 ### Aurell : la Justice
 

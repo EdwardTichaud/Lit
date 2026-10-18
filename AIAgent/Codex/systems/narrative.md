@@ -1,5 +1,21 @@
 # Narration et connaissances
 
+## Audits auteur de zone
+
+Etienne conserve ses trois Flames identifiees dans la scene du cycle, pas dans
+son environnement. L'audit controle toujours leurs IDs, lumiere et etat initial.
+Une interaction peut aussi relever d'une Flame d'une autre scene obligatoire
+du meme ZoneManifest : CycleZoneFlameScope ouvre ces scenes en lecture seule,
+ignore les sources inactives et ferme uniquement celles qu'il a ouvertes.
+L'audit n'accepte pas une Flame d'une zone etrangere deja ouverte dans l'editeur.
+Le Ghost d'Etienne reste actuellement hors couverture reelle. Une Flame commune
+locale initialement eteinte est approuvee ; l'auteur se charge de son placement.
+Aucune scene Etienne modifiee automatiquement ; couverture a revalider ensuite.
+Le ruban d'Ardent est couvert par un rayon canonique de 11,25 m sur sa Flame
+locale ; lumiere et influence suivent le reglage central existant.
+Les VFX de Scar gardent leur renderer auteur ; seules les proprietes exposees
+par le graphe sont renseignees, sans recherche d'un objet nomme Skinned Renderer.
+
 ## Transition Ghost/Enemy et disparition apres dialogue
 
 GhostController.SetGameplayMode applique Ghost, Introduction ou Enemy. Pour une

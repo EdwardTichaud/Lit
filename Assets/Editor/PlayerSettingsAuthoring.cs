@@ -45,7 +45,7 @@ internal static class PlayerSettingsAuthoring
         if (block.name == "jump") return 1;
         if (block.name == "dodge" || block.name == "dash") return 2;
         if (block.name == "equipment") return 3;
-        if (block.name == "trajectories" || field.name.EndsWith("Param", StringComparison.Ordinal)) return 4;
+        if (block.name == "trajectories" || block.name == "combatPresentation" || field.name.EndsWith("Param", StringComparison.Ordinal)) return 4;
         if (block.name == "interactions") return 5;
         if (block.name == "face" || block.name == "footsteps") return 6;
         return 0;

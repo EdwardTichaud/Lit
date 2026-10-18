@@ -1,0 +1,28 @@
+diff --git "a/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Grid_01.shader" "b/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Grid_01.shader"
+--- "a/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Grid_01.shader"
++++ "b/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Grid_01.shader"
+@@ -4291,1 +4291,2 @@
+-			#pragma multi_compile_fragment SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
++			#pragma multi_compile_fragment PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
++			#pragma multi_compile_fragment DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
+diff --git "a/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Billboard_01.shader" "b/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Billboard_01.shader"
+--- "a/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Billboard_01.shader"
++++ "b/Assets/0 - UnityPackages/UnityAssets/Vefects/Free Fire HDRP/_ Extra/Resources/Shaders/SH_Vefects_Extra_Billboard_01.shader"
+@@ -4286,1 +4286,2 @@
+-			#pragma multi_compile_fragment SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
++			#pragma multi_compile_fragment PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
++			#pragma multi_compile_fragment DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
+diff --git "a/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Environment/Shaders/SH_Vefects_Grid_01.shader" "b/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Environment/Shaders/SH_Vefects_Grid_01.shader"
+--- "a/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Environment/Shaders/SH_Vefects_Grid_01.shader"
++++ "b/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Environment/Shaders/SH_Vefects_Grid_01.shader"
+@@ -4469,1 +4469,2 @@
+-			#pragma multi_compile_fragment SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
++			#pragma multi_compile_fragment PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
++			#pragma multi_compile_fragment DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
+diff --git "a/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Character/Shaders/SH_Vefects_URP_VFX_Character_Showoff.shader" "b/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Character/Shaders/SH_Vefects_URP_VFX_Character_Showoff.shader"
+--- "a/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Character/Shaders/SH_Vefects_URP_VFX_Character_Showoff.shader"
++++ "b/Assets/0 - UnityPackages/Fab/Vefects/Easy Shockwaves VFX HDRP/Demo/Resources/Character/Shaders/SH_Vefects_URP_VFX_Character_Showoff.shader"
+@@ -4427,1 +4427,2 @@
+-			#pragma multi_compile_fragment SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
++			#pragma multi_compile_fragment PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
++			#pragma multi_compile_fragment DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH

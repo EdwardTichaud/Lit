@@ -140,7 +140,9 @@ public sealed partial class EnemyController
         if (network != null && network.IsListening && !network.IsServer)
             return;
         SkillSO skill = authoredSkill != null ? authoredSkill : SkillsEnemy != null ? SkillsEnemy.ActiveSkill : null;
-        if (!isActiveAndEnabled || manager == null || manager.IsCinematicSequenceActive || SkillsEnemy == null || !SkillsEnemy.isActiveAndEnabled || SkillsEnemy.Health != null && SkillsEnemy.Health.IsDead || skill == null || SkillsEnemy.ActiveSkill != skill || !SkillsSkills.Contains(skill))
+        if (!isActiveAndEnabled || manager == null || SkillsEnemy == null || !SkillsEnemy.isActiveAndEnabled ||
+            SkillsEnemy.IsCinematicSuspended || Lit.Combat.Migration.Network.CombatCinematicReservations.ContainsParticipant(SkillsEnemy.transform) ||
+            SkillsEnemy.Health != null && SkillsEnemy.Health.IsDead || skill == null || SkillsEnemy.ActiveSkill != skill || !SkillsSkills.Contains(skill))
             return;
         if (SkillsResolvedAttackSequence == SkillsEnemy.ActionSequenceId)
             return;
@@ -170,6 +172,7 @@ public sealed partial class EnemyController
                     if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget)
                         SkillsPlayVfxCue(cue, victim.transform);
                 PlayOutcomeFeedback(skill, victim.transform, outcome);
+                victim.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>()?.PublishEnemyImpact(transform, skill, applied, outcome);
             }
 
             if (manager.PlayerRoot != null && (victim.transform == manager.PlayerRoot || victim.transform.IsChildOf(manager.PlayerRoot)))

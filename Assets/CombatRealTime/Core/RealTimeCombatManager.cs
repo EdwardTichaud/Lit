@@ -50,6 +50,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     private readonly HashSet<RealTimeCombatReaction> receivedReactions = new HashSet<RealTimeCombatReaction>();
     private readonly HashSet<EnemyController> attackModeEnemies = new HashSet<EnemyController>();
     private bool combatActive;
+    private bool endingCombat;
     private bool enemyAggroAnnounced;
     private bool reactionWindowOpen;
     private bool reactionSucceeded;
@@ -227,7 +228,8 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
         // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
         // suspended then, so it must not be interpreted as a normal combat disengagement.
-        if (combatActive && !IsCinematicSequenceActive && !HasValidEngagedEnemy())
+        if (AllowsFreeAttacks) RefreshWorldEngagements();
+        if (!AllowsFreeAttacks && combatActive && !IsCinematicSequenceActive && !HasValidEngagedEnemy() && !FinishingFreeDashAfterDefeat)
         {
             if (logCombatDisengageDiagnostics)
             {
@@ -246,7 +248,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         // a committed attack, an animation state or a temporarily unavailable
         // NavMesh must never trap the player in combat after they have left
         // the authored pursuit zone.
-        if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null &&
+        if (!AllowsFreeAttacks && combatActive && !IsCinematicSequenceActive && engagedBehaviour != null &&
             !engagedBehaviour.IsFlameDormant && !engagedBehaviour.HasActiveBattleWall &&
             playerRoot != null && engagedBehaviour.IsPositionOutsidePursuitZone(playerRoot.position))
         {
@@ -261,7 +263,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
-        if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null && !engagedBehaviour.IsFlameDormant && engagedBehaviour.ShouldEndCombatForPursuit)
+        if (!AllowsFreeAttacks && combatActive && !IsCinematicSequenceActive && engagedBehaviour != null && !engagedBehaviour.IsFlameDormant && engagedBehaviour.ShouldEndCombatForPursuit)
         {
             if (logCombatDisengageDiagnostics)
             {
@@ -285,7 +287,8 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     private bool HasValidLockedEnemy()
     {
-        if (externalTarget != null) return externalTargetLocked && HasValidEngagedEnemy();
+        if (AllowsFreeAttacks) return SkillTargetingContract.Alive(LockedCombatTarget);
+        if (externalTarget != null) return externalTargetLocked && SkillTargetingContract.Alive(externalTarget);
         return lockedEnemy != null &&
                lockedEnemy.gameObject.activeInHierarchy &&
                (lockedEnemy.Health == null || !lockedEnemy.Health.IsDead);
@@ -320,6 +323,12 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool BeginEnemyAggro(Transform player, EnemyController enemy)
     {
+        if (AllowsFreeAttacks && enemy != null)
+        {
+            var world = GetComponent<CombatWorldRuntime>();
+            return world != null ? world.TryEngageActor(player != null ? player.GetComponent<SquadCharacterController>() : null,
+                new LegacyCombatTarget(enemy)) : BeginContactEncounter(player, new LegacyCombatTarget(enemy));
+        }
         if (player == null || enemy == null || !enemy.CombatEnabled ||
             (enemy.Health != null && enemy.Health.IsDead))
         {
@@ -394,11 +403,25 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         return true;
     }
 
-    public void EndCombat()
+    public void EndCombat() => EndCombatInternal(false);
+
+    private void EndCombatInternal(bool preserveCurrentAction)
+    {
+        if (endingCombat) return;
+        endingCombat = true;
+        try
+        {
+            if (cinematicReservation != null) OnCinematicReservationLost();
+            FinishCombatExit(preserveCurrentAction);
+        }
+        finally { endingCombat = false; }
+    }
+
+    private void FinishCombatExit(bool preserveCurrentAction)
     {
         GetComponent<CombatSkillKitInput>()?.Close();
         RefreshCombatSpiritFusion(false);
-        if (combatActive)
+        if (combatActive && playerController != null)
         {
             playerController?.GetComponent<PlayerControlSkills>()?.ClearCombatEffects();
             playerController?.GetComponentInParent<NetworkCharacterInput>()?.ClearControlEffectsForCombatEnd();
@@ -410,11 +433,17 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         // interactables (ladders, ghosts, etc.) reject their next use.
         ResolvePlayerReferences();
         externalTarget?.SetCinematicSuspended(false);
-        externalTarget = null; externalTargetLocked = false;
+        externalTarget = null; externalTargetLocked = false; worldLockedTarget = null;
         RefreshExternalLockIndicator();
         combatActive = false;
         combatHealthThresholdController?.AbortActiveSequence("fin de combat");
-        playerMobility?.CancelCombatState();
+        if (!preserveCurrentAction) playerMobility?.CancelCombatState();
+        foreach (var target in worldThreats.Values)
+        {
+            var enemy = target?.Root != null ? target.Root.GetComponent<EnemyController>() : null;
+            if (enemy != null) { enemy.EndBattleWall(); SetEnemyAttackMode(enemy, false); }
+        }
+        worldThreats.Clear();
         enemyAggroAnnounced = false;
         IsCinematicSequenceActive = false;
         CloseReactionWindow(notify: false);
@@ -428,11 +457,16 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         ReactionWindowChanged?.Invoke(default);
         SetEngagedEnemy(null);
         SetLockedEnemy(null);
-        if (playerLocomotionBridge != null) playerLocomotionBridge.RestoreExplorationStateAfterCombat();
-        combatInput?.SetInputActive(false);
+        if (playerLocomotionBridge != null)
+        {
+            if (preserveCurrentAction) playerLocomotionBridge.ClearCombatLockTarget();
+            else playerLocomotionBridge.RestoreExplorationStateAfterCombat();
+        }
+        combatInput?.SetInputActive(false, preserveHeldActions: preserveCurrentAction);
         if (combatInput == null) LocalPlayerInput.SetCombatInputActive(false);
-        if (playerActionPresentation != null) playerActionPresentation.ReturnToExplorationAfterCombat();
+        if (!preserveCurrentAction && playerActionPresentation != null) playerActionPresentation.ReturnToExplorationAfterCombat();
         CombatStateChanged?.Invoke(false);
+        if (AllowsFreeAttacks) RefreshCombatMusicOverride();
         LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat ended");
         ScheduleExplorationOutlineRecovery();
     }
@@ -485,6 +519,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     public bool TryToggleManualLock()
     {
         ResolvePlayerReferences();
+        if (AllowsFreeAttacks) return ToggleWorldLock(false);
         if (playerRoot == null)
         {
             return false;
@@ -582,6 +617,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     public bool TrySwitchEnemyLock()
     {
+        if (AllowsFreeAttacks) return ToggleWorldLock(true);
         if (externalTarget != null) return ToggleExternalLock();
         if (!combatActive || lockedEnemy == null)
         {
@@ -851,13 +887,38 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool TryUseSkill(SkillSO skill)
     {
+        PlayerAttackContext targeting = null;
+        LastSkillTargetingFailure = null;
+        if (AllowsFreeAttacks)
+        {
+            ResolvePlayerReferences();
+            if (!CanUseFreeSkill || Time.timeScale <= 0) return RefuseSkillTargeting("Action indisponible dans le contexte courant.");
+            if (!TryResolveSkillTargeting(skill, 0, out targeting, out string reason)) return RefuseSkillTargeting(reason);
+        }
+        if (AllowsFreeAttacks && GetComponent<CombatWorldRuntime>() != null &&
+            Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+            return TryRequestNetworkSkill(skill, targeting);
+        if (skill is ChargedSkillSO charged) return TryUseChargedSkill(charged);
         if (!SoloTeamProgression.AllowsSkill(skill)) return false;
-        if (skill != null && skill.IsControlSkill) return TryUseControlSkill(skill);
+        if (skill != null && skill.IsGroundImpactSkill) return TryUseGroundImpact(skill);
+        if (skill != null && skill.IsControlSkill) return TryUseControlSkill(skill, targeting);
         if (skill != null && skill.IsProtectionSkill)
         {
-            return TryUseProtectionSkill(skill);
+            return TryUseProtectionSkill(skill, targeting);
         }
-        if (skill != null && skill.IsHealingSkill) return TryUseHealingSkill(skill);
+        if (skill != null && skill.IsHealingSkill) return TryUseHealingSkill(skill, targeting);
+        if (AllowsFreeAttacks && skill != null)
+        {
+            if (!skill.HasCombatCinematic) return TryUseFreeSkill(skill, targeting);
+            if (GetSkillCooldownRemaining(skill) > 0) return false;
+            string error = null;
+            if (combatSkillCinematicController == null || !combatSkillCinematicController.TryPlayPlayerSkill(skill, targeting, out error))
+                return RefuseSkillTargeting(combatSkillCinematicController == null ? "Controleur cinematique absent." : error);
+            StartSkillCooldown(skill);
+            PlayPlayerSkillStartSfx(skill, true);
+            PlayerSkillStarted?.Invoke(skill, targeting.TargetRoot.GetComponent<EnemyController>());
+            return true;
+        }
         if (!combatActive || IsPlayerDead() || !HasLockedCombatTarget || skill == null ||
             (lockedEnemy != null && lockedEnemy.IsFlameDormant) || playerAnimator == null || playerRoot == null)
         {
@@ -931,12 +992,17 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     {
         StartSkillCooldown(skill);
         PlayPlayerSkillStartSfx(skill, true);
-        playerActionPresentation?.BeginTargetLunge(skill, LockedTargetPoint);
+        playerActionPresentation?.BeginTargetLunge(skill, ActionTargetPoint);
         PlayerSkillStarted?.Invoke(skill, lockedEnemy);
     }
 
     public float GetSkillCooldownRemaining(SkillSO skill)
     {
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            var runtime = playerRoot != null ? playerRoot.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() : null;
+            if (runtime != null) return runtime.GetSkillCooldownRemaining(skill);
+        }
         return skill != null && playerRoot != null && skillCooldowns.TryGetValue(playerRoot, out var actorCooldowns) &&
             actorCooldowns.TryGetValue(skill, out float readyAt) ? Mathf.Max(0f, readyAt - Time.time) : 0f;
     }
@@ -1010,6 +1076,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public int ApplySkillDamageToLockedEnemy(SkillSO skill)
     {
+        if (CurrentAttackContext != null) return ResolveFreeAttackImpact(skill, out _);
         if (externalTarget != null) return ApplyExternalSkillDamage(skill);
         if (!combatActive || skill == null || lockedEnemy == null || lockedEnemy.IsFlameDormant ||
             playerRoot == null || (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
@@ -1070,6 +1137,13 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public int ApplyLightSkillDamage(LightSkillSO skill, bool resolveCombatOutcome = true)
     {
+        if (cinematicTarget != null)
+        {
+            if (IsPlayerDead() || skill == null || cinematicTarget.IsDead) return 0;
+            int cinematicApplied = DeliverExternalImpact(cinematicTarget, new CombatImpact(skill.Damage, 100, CombatImpactOrigin.LightSkill));
+            if (resolveCombatOutcome) EvaluateCombatOutcome();
+            return cinematicApplied;
+        }
         if (externalTarget != null)
         {
             if (!combatActive || IsPlayerDead() || skill == null || externalTarget.IsDead) return 0;
@@ -1099,6 +1173,14 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     /// <summary>Applies a counter cinematic impact without feeding the enemy retaliation ledger.</summary>
     public int ApplyCounterSkillDamage(CounterSkillSO skill, bool resolveCombatOutcome = true)
     {
+        if (cinematicTarget != null)
+        {
+            if (IsPlayerDead() || skill == null || cinematicTarget.IsDead) return 0;
+            int cinematicApplied = DeliverExternalImpact(cinematicTarget, new CombatImpact(skill.Damage, 100, CombatImpactOrigin.Counter));
+            if (cinematicApplied > 0) AddClarity(skill.ClarityGain);
+            if (resolveCombatOutcome) EvaluateCombatOutcome();
+            return cinematicApplied;
+        }
         if (externalTarget != null)
         {
             if (!combatActive || IsPlayerDead() || skill == null || externalTarget.IsDead) return 0;
@@ -1318,6 +1400,9 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
     {
+        if (CurrentAttackContext != null)
+            return skill != null && CurrentAttackContext.TargetAlive && skill.IsWithinHitRange(
+                Vector3.ProjectOnPlane(CurrentAttackContext.TargetRoot.position - playerRoot.position, Vector3.up).magnitude);
         if (!combatActive || skill == null ||
             !TryGetLockedEnemyHitDistance(out float distance))
         {
@@ -1379,9 +1464,20 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         outcome = EnemyAttackOutcome.Miss;
         var network = Unity.Netcode.NetworkManager.Singleton;
         if (network != null && network.IsListening && !network.IsServer) return 0;
-        if (victim == null || victim.CurrentHp <= 0 || attacker == null || attacker.IsFlameDormant || !attacker.isActiveAndEnabled ||
+        if (victim == null || victim.CurrentHp <= 0 || attacker == null || skill == null || attacker.IsFlameDormant || !attacker.isActiveAndEnabled ||
             attacker.ActionSequenceId != actionId || attacker.ActiveSkill != skill ||
-            attacker.Health != null && attacker.Health.IsDead || IsCinematicSequenceActive) return 0;
+            attacker.Health != null && attacker.Health.IsDead || attacker.IsCinematicSuspended ||
+            Lit.Combat.Migration.Network.CombatCinematicReservations.ContainsParticipant(attacker.transform) ||
+            Lit.Combat.Migration.Network.CombatCinematicReservations.ContainsParticipant(victim.transform) ||
+            victim.GetComponent<LitOpsiveLocomotionBridge>()?.IsCinematicMotionSessionActive == true) return 0;
+
+        var networkVictim = victim.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+        var enemyIdentity = attacker.GetComponent<Unity.Netcode.NetworkObject>();
+        if (networkVictim != null && enemyIdentity != null &&
+            (networkVictim.ServerResolveReactionAtContact(enemyIdentity, actionId) || networkVictim.IsProtectedFromEnemyAction(enemyIdentity, actionId)))
+        { outcome = EnemyAttackOutcome.Avoided; return 0; }
+        if (victim.GetComponent<PlayerScriptedDodgeController>()?.IsDamageInvulnerable == true)
+        { outcome = EnemyAttackOutcome.Avoided; return 0; }
 
         if (victim == playerController)
         {
@@ -1713,7 +1809,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
         // Timelines own actor orientation themselves. Outside cinematics, the
         // bridge alone owns the target-relative movement and facing state.
-        Transform target = combatActive && !IsCinematicSequenceActive && HasValidLockedEnemy()
+        Transform target = (combatActive || AllowsFreeAttacks) && !IsCinematicSequenceActive && HasValidLockedEnemy()
             ? LockedTargetPoint
             : null;
         if (target != null)
@@ -1752,8 +1848,9 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     {
         if (playerRoot == null || damagedActor == null ||
             (damagedActor != playerRoot && !damagedActor.IsChildOf(playerRoot))) return;
-        combatInput?.CancelBufferedBasicSkills();
-        playerActionPresentation?.InterruptBasicSkillForDamage();
+        bool charging = playerActionPresentation != null && playerActionPresentation.IsChargingSkill;
+        combatInput?.CancelBufferedBasicSkills(preserveChargedHold: charging);
+        if (!charging) playerActionPresentation?.InterruptBasicSkillForDamage();
         FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.ResetAllBasicSkillCombos();
     }
 
@@ -1786,21 +1883,23 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     private void PlayPlayerHurtAnimation()
     {
-        if (playerAnimator == null || string.IsNullOrWhiteSpace(playerHurtAnimatorState))
+        string state = AllowsFreeAttacks && playerController != null && playerController.CharacterData != null
+            ? CombatActorPresentation.DamageReactionState(playerController) : playerHurtAnimatorState;
+        if (playerAnimator == null || string.IsNullOrWhiteSpace(state))
         {
             return;
         }
 
-        int stateHash = Animator.StringToHash(playerHurtAnimatorState);
+        int stateHash = Animator.StringToHash(state);
         if (!playerAnimator.HasState(0, stateHash))
         {
-            Debug.LogWarning("[RealTimeCombat] State de hurt introuvable : " + playerHurtAnimatorState, playerAnimator);
+            Debug.LogWarning("[RealTimeCombat] State de hurt introuvable : " + state, playerAnimator);
             return;
         }
 
         if (playerActionPresentation != null)
         {
-            playerActionPresentation.TryReplaceWithDamageReaction(playerHurtAnimatorState,
+            playerActionPresentation.TryReplaceWithDamageReaction(state,
                 PlayerActionPresentationProfile.CreateDefault());
         }
         else
@@ -1811,6 +1910,11 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
 
     private void EvaluateCombatOutcome()
     {
+        if (AllowsFreeAttacks && GetComponent<CombatWorldRuntime>() != null)
+        {
+            RefreshWorldEngagements();
+            return;
+        }
         if (externalTarget != null)
         {
             if (externalTarget.IsDead || IsPlayerDead())
@@ -1938,7 +2042,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
     private void RefreshCombatMusicOverride()
     {
         attackModeEnemies.RemoveWhere(enemy => enemy == null || !enemy.gameObject.activeInHierarchy || (enemy.Health != null && enemy.Health.IsDead));
-        if (attackModeEnemies.Count > 0)
+        if (attackModeEnemies.Count > 0 || AllowsFreeAttacks && combatActive && SkillTargetingContract.Alive(externalTarget))
         {
             if (combatMusicOverrideToken != 0)
             {

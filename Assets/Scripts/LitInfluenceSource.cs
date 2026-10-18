@@ -74,6 +74,10 @@ public class LitInfluenceSource
     private readonly HashSet<Renderer> activeMaterialRenderers = new HashSet<Renderer>();
     private readonly HashSet<Renderer> scannedMaterialRenderers = new HashSet<Renderer>();
     private readonly List<Renderer> materialRendererRemovalBuffer = new List<Renderer>();
+    // Discovery completes before receiver callbacks run, so these buffers are
+    // local to a scan and never retain hierarchy results between scans.
+    private readonly List<MonoBehaviour> behaviourBuffer = new List<MonoBehaviour>(16);
+    private readonly List<Renderer> rendererBuffer = new List<Renderer>(16);
     private float nextScanTime;
 
     public LitInfluenceSource()
@@ -301,18 +305,21 @@ public class LitInfluenceSource
 
     private void AddReceivers(Collider hit)
     {
-        AddReceivers(hit.GetComponentsInParent<MonoBehaviour>(true));
-        AddReceivers(hit.GetComponentsInChildren<MonoBehaviour>(true));
+        hit.GetComponentsInParent(true, behaviourBuffer);
+        AddReceivers(behaviourBuffer);
+        hit.GetComponentsInChildren(true, behaviourBuffer);
+        AddReceivers(behaviourBuffer);
+        behaviourBuffer.Clear();
     }
 
-    private void AddReceivers(MonoBehaviour[] behaviours)
+    private void AddReceivers(List<MonoBehaviour> behaviours)
     {
         if (behaviours == null)
         {
             return;
         }
 
-        for (int i = 0; i < behaviours.Length; i++)
+        for (int i = 0; i < behaviours.Count; i++)
         {
             if (behaviours[i] is ILitInfluenceReceiver receiver)
             {
@@ -328,18 +335,21 @@ public class LitInfluenceSource
             return;
         }
 
-        AddMaterialRenderers(hit.GetComponentsInParent<Renderer>(true));
-        AddMaterialRenderers(hit.GetComponentsInChildren<Renderer>(true));
+        hit.GetComponentsInParent(true, rendererBuffer);
+        AddMaterialRenderers(rendererBuffer);
+        hit.GetComponentsInChildren(true, rendererBuffer);
+        AddMaterialRenderers(rendererBuffer);
+        rendererBuffer.Clear();
     }
 
-    private void AddMaterialRenderers(Renderer[] renderers)
+    private void AddMaterialRenderers(List<Renderer> renderers)
     {
         if (renderers == null)
         {
             return;
         }
 
-        for (int i = 0; i < renderers.Length; i++)
+        for (int i = 0; i < renderers.Count; i++)
         {
             Renderer renderer = renderers[i];
             if (renderer != null)
@@ -474,6 +484,7 @@ internal static class FlameInfluenceMaterialRuntime
     private static readonly Vector4[] legacyFlameTransitionData = new Vector4[LegacyShaderInfluenceCount];
     private static readonly float[] legacyFlameInfluenceDistances = new float[LegacyShaderInfluenceCount];
     private static MaterialPropertyBlock propertyBlock;
+    private static readonly List<Material> materialBuffer = new List<Material>(8);
     private static FlameInfluenceMaterialUpdater updater;
     private static bool phase2BLegacyBenchmarkMode;
 
@@ -488,6 +499,7 @@ internal static class FlameInfluenceMaterialRuntime
         completedTransitionRenderers.Clear();
         staleRenderers.Clear();
         propertyBlock = null;
+        materialBuffer.Clear();
         updater = null;
         phase2BLegacyBenchmarkMode = false;
     }
@@ -1149,15 +1161,15 @@ internal static class FlameInfluenceMaterialRuntime
         hasFlameRadius = false;
         hasTransitionProgress = false;
 
-        Material[] materials = renderer != null ? renderer.sharedMaterials : null;
-        if (materials == null)
+        if (renderer == null)
         {
             return false;
         }
 
-        for (int i = 0; i < materials.Length; i++)
+        renderer.GetSharedMaterials(materialBuffer);
+        for (int i = 0; i < materialBuffer.Count; i++)
         {
-            Material material = materials[i];
+            Material material = materialBuffer[i];
             if (material == null)
             {
                 continue;
@@ -1174,10 +1186,12 @@ internal static class FlameInfluenceMaterialRuntime
                 && hasFlameRadius
                 && hasTransitionProgress)
             {
+                materialBuffer.Clear();
                 return true;
             }
         }
 
+        materialBuffer.Clear();
         return hasAgeCenter
             || hasAgeAmount
             || hasFlameCenter

@@ -44,6 +44,9 @@ public sealed class EnemyDeathPresentationTests
         {
             var health = root.AddComponent<CharacterInfo>();
             var enemy = root.AddComponent<EnemyController>();
+            // Edit Mode does not run the MonoBehaviour Awake lifecycle.
+            typeof(EnemyController).GetMethod("ActorAwake", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(enemy, null);
             Assert.That(root.GetComponent<EnemyDeathPresentation>(), Is.Not.Null);
 
             health.SetHealth(1, 1);

@@ -20,7 +20,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
   - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
   - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 305ed9fad85b34f4d8327bcc27b7ae23, type: 2}
   vesta:
   - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852261, type: 2}
   - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852262, type: 2}

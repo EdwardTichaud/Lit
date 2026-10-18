@@ -33,6 +33,13 @@ l’environnement HDRP du joueur local.
 - `FlameGuidanceArcRenderer` lit le personnage local; près d’une Ancient Flame,
   il trace un arc or vers l’Ancient Flame éteinte la plus proche et un arc blanc
   vers la Flame commune éteinte la plus proche.
+- Guidage et boussole reutilisent le registre des Flames actives, reconstruit
+  une fois apres reset runtime, au lieu de rescanner les objets charges a chaque
+  recherche. Les scans d'influence reutilisent leurs buffers de composants et
+  de materiaux. Mesures et limites : `performance.md`.
+- `FlickeringLight` anime les ombres en jeu. En edition, l'animation demande
+  l'option explicite `Preview In Edit Mode` pour eviter les deplacements et
+  recalculs d'ombres pendant l'authoring.
 - Un changement actualise visibilité temporelle, affichages et propriété shader.
 - Une `TemporalZone` peut appliquer explicitement un autre âge à ses objets.
 

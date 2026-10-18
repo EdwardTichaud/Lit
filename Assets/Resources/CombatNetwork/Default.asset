@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99c0b60d0e454adea5b6cb14c416d026, type: 3}
+  m_Name: Default
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Combat.Migration.Network.CombatNetworkSkillCatalog
+  entries:
+  - skill: {fileID: 11400000, guid: 0084e99721186684cacbf63587ebffca, type: 2}
+    assetGuid: 0084e99721186684cacbf63587ebffca
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 22e933684f7d2d24fb48aced6564441d, type: 2}
+    assetGuid: 22e933684f7d2d24fb48aced6564441d
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 305ed9fad85b34f4d8327bcc27b7ae23, type: 2}
+    assetGuid: 305ed9fad85b34f4d8327bcc27b7ae23
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 6afd5f499a6ea0145bf1285cb9df278e, type: 2}
+    assetGuid: 6afd5f499a6ea0145bf1285cb9df278e
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 6ca70f7ce54063f4a93b812382496342, type: 2}
+    assetGuid: 6ca70f7ce54063f4a93b812382496342
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
+    assetGuid: 72b63b75a81ec9142abda45ecf1e0dd4
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 77d611af48f14e6da001428e65b9b5b2, type: 2}
+    assetGuid: 77d611af48f14e6da001428e65b9b5b2
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852261, type: 2}
+    assetGuid: 874ddaec180f49cba23ab405f0852261
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852262, type: 2}
+    assetGuid: 874ddaec180f49cba23ab405f0852262
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
+    assetGuid: 87b9a877500e6ad4da19a318ecce0850
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
+    assetGuid: 8e3bbfaf21cbb1041b08c96e68037647
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
+    assetGuid: 8f1aa2c3f4074d8fbe4697f51f3e0e10
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 90aa80c6988b71c48836f25f68cfbc74, type: 2}
+    assetGuid: 90aa80c6988b71c48836f25f68cfbc74
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
+    assetGuid: 9125f3af4fd08b244b22941a76c9e2d3
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 91c97fadda955b14fa5f4726f4419ac1, type: 2}
+    assetGuid: 91c97fadda955b14fa5f4726f4419ac1
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: 9b9635113b0b36d45b5934c0b2051af7, type: 2}
+    assetGuid: 9b9635113b0b36d45b5934c0b2051af7
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: a61bd390e0de4f36949819d560aa5b11, type: 2}
+    assetGuid: a61bd390e0de4f36949819d560aa5b11
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
+    assetGuid: d8019012b40ae1b46af8bfcbec7cb88d
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: dea33cac9ff53484aaf44f7cd8dcd0ae, type: 2}
+    assetGuid: dea33cac9ff53484aaf44f7cd8dcd0ae
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: ebc19d551ae3bf7418a3eb85414f2df5, type: 2}
+    assetGuid: ebc19d551ae3bf7418a3eb85414f2df5
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  - skill: {fileID: 11400000, guid: fd33df178a614f349a394bd30cc86b0b, type: 2}
+    assetGuid: fd33df178a614f349a394bd30cc86b0b
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
+  cinematics:
+  - definition: {fileID: 11400000, guid: c0aab7bfa7220944e8d2083b3e06c6fd, type: 2}
+    assetGuid: c0aab7bfa7220944e8d2083b3e06c6fd
+  - definition: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
+    assetGuid: e2f7ffb12bf4485f8d3e13aed6ee4dc3

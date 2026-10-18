@@ -1,26 +1,85 @@
 # Input, UCC et caméra
 
+## Performance des parametres Animator (2026-10-17)
+
+Le pont UCC et la facade squad consultent un cache de metadonnees par composant
+au lieu de recreer `animator.parameters` a chaque parametre ecrit. L'Animator,
+le controller et la base d'override, le nombre de parametres et les revisions
+d'authoring/session invalident ce cache. Aucun moteur, input, timing ni valeur
+d'animation n'est modifie. Preuves et limites : `performance.md`.
+
+## Presentation des participants reseau (2026-10-17)
+
+La garde et la roulade sont admises par le serveur sur l'acteur assigne, avec
+horodatage B/Y. Le client ne lance pas de moteur concurrent pour leur replication.
+Les fondus cosmetiques, leurs generations et le flottement passif d'Ascension
+suivent l'acteur ; leur nettoyage n'interrompt pas une action plus recente.
+Une preparation/cinematique perdant son ownership restitue son cadrage local.
+
+Les QTE de paliers passent par ForParticipant sur la presentation emettrice.
+Les contacts de Counter/Light/Skill cinematographiques rejoignent le rig de cet
+acteur et non le singleton du joueur local. Les non-participants n'acquierent
+ni camera, ni map d'input, ni ralentissement. Recette en jeu encore differee.
+
+## Restitution des engagements confirmes
+
+Le client restitue camera/inputs/interactions apres une fin d'engagement recue
+pendant une cinematique ou un dash, sans relancer la perception cote client.
+La session encore legitime n'est pas annulee ; une nouvelle menace invalide
+l'attente. La mort de la cible de lock nettoie le binding de strafe meme sans
+autorite serveur. Aucun raccord de camera ni fenetre de contre n'est modifie.
+
+## Impulsion de Rupture et Impact de lumiere
+
+Rupture est une evasion depuis le corps-a-corps : ennemi verrouille obligatoire
+a 3 m maximum, y compris au laboratoire (mode SkillSO LockedTarget). Son event de recul utilise
+l'oppose de la direction capturee de session, et non une position cible relue
+tardivement. Il ne soumet qu'une impulsion par generation et conserve le recul
+si le contact est manque apres un lancement valide. Degats et stun restent
+conditionnes au contact. Aucune ecriture de Transform ni collision desactivee.
+
+LitUccActionTakeoffAbility est une ability concurrente manuelle UCC, sans
+parametre Animator. Pendant 0,08 s elle soumet une intention verticale dans
+UpdatePosition avant les collisions, comme Jump, sans ecrire le Transform ni
+forcer artificiellement Grounded. La session de presentation annule cette
+ability et son propre handle d'impulsion lors d'un remplacement/interruption.
+Le handle ne desactive pas le handler UCC quand une session possede deja le
+verrou d'input : IsDriving reste vrai pour permettre Rupture -> Impact de lumiere.
+La plongee d'Impact utilise UCC et attend le sol reel ; elle ne restaure aucune
+position et laisse gravite/collisions actives. Les verrous externes restent prioritaires.
+
 ## Croix directionnelle et kits (2026-10-13)
 
 En combat solo : haut Lucian, droite Vesta, bas Soren, gauche Aurell. Dans la
-roue, X/Y/A/B lancent les slots 0/1/2/3 ; B ne signifie jamais annuler.
-Une nouvelle pression sur la direction du kit affiché ferme la roue ; une
-autre direction change le kit. Le maintien ne rebascule pas au changement de map.
-LT annule ; Start reste disponible via System pour la pause. Le coordinateur
-active CombatWheel + System et les seules actions Player/Move et
+roue, gauche/haut/bas/droite lancent les slots stables 0/1/2/3. B (EstButton)
+ferme toutes les roues sans skill ni esquive ; X/Y/A ne lancent plus de skills.
+La croix choisit un personnage uniquement lorsque la roue est fermée ; dans
+la roue elle lance ses skills (haut puis haut = Éclair). Pour changer de kit,
+faire B puis une direction. Le maintien ne relance pas au changement de map.
+Start reste disponible via System pour la pause. Le coordinateur
+active CombatWheel + Camera + System et les seules actions Player/Move et
 Player/RightShoulder pour marcher/sprinter. CombatSkillKitInput en est l'owner.
 La réconciliation du stick maintenu et le laboratoire acceptent CombatWheel
 comme contexte de locomotion, sans ouvrir les actions habituelles X/Y/A/B.
 Compilation et Play du laboratoire validés : mouvement réel avec stick maintenu,
-seconde pression fermante, réouverture et maintien sans rebascule, isolation
-des boutons de face et restitutions. Log SkillWheelMovementToggle2.log dans
+sélection puis lancement directionnel, retour B et maintien sans rebascule, isolation
+des boutons de face et restitutions. Logs TwoStepSkillWheel.log et
+TwoStepSkillWheelAllKits.log / TwoStepSkillWheelDomainReload.log (retour B testé
+sur chaque kit, avec et sans Domain Reload) dans
 Library/ActorAnimationSandbox/Logs.
 R3 en combat libre : tap pour verrouiller/changer de cible, hold 0,6 s pour
 deverrouiller. R3 dans la roue est reserve au ciblage de soutien. Le recadrage
 camera R3 et l'ancien binding de fusion sont retires du combat. Hors combat,
 boost de torche R3 et commandes monde de la croix restent inchanges.
-LT en combat solo ouvre le dernier kit si aucune roue n'est ouverte. Les
+LT n'ouvre plus la roue : son ancien binding OpenPalette est vide dans l'asset
+et le wrapper. La croix directionnelle reste l'entree manette des kits.
+CombatWheel autorise la camera : le stick droit continue l'orbite habituelle,
+sans reactiver les commandes normales d'attaque. Les
 interfaces clavier et les loadouts reseau gardent leur voie existante.
+Recette WheelCameraValidationFinal.log : compilation, bindings asset/wrapper,
+LT ignore, ouverture croix, input/calcul d'orbite et retour B reussis dans le
+laboratoire isole. Le test batch sans focus appelle explicitement ReadInput
+et le calcul de vue UCC ; il ne valide pas le ressenti visuel au premier plan.
 PlayerInputs.inputactions est la source ; le wrapper est regenere par Unity.
 Les champs m_GenerateWrapperCode/m_WrapperCodePath de l'importer sont corriges
 pour retrouver aussi la generation automatique lors des prochains imports.
@@ -697,7 +756,155 @@ correction IK des pieds n'a ete ajoutee.
 
 ## Compatibilite camera tactique (2026-10-10)
 
+Presentation jambes (2026-10-13) : le bridge installe PlayerMovingLegsOverlay
+sur l'acteur au demarrage. Moving Legs est une couche Override masquee uniquement
+aux jambes, pilotee par la vitesse planaire UCC (pas par le stick seul).
+Les parametres MovingLegs* sont independants des parametres de l'action du torse.
+CombatStrafeActive selectionne la locomotion directionnelle existante.
+Fondu court a l'arret ; poids nul hors sol, pendant un verrou UCC/cinematique
+ou apres la mort. Aucun root motion, input ni velocite n'est ajoute par cette
+presentation. Les controllers historiques non equipes restent inchanges.
+
 Sous camera tactique, le stick reste camera-relative meme sous lock ; le
 contrat target-relative concerne le mode third-person. Le MovementType UCC
 consomme le facing tactique, sans corrections immediates SetRotation a chaque
 frame. FreeSprint transmet le regard de mouvement, hors evasion directionnelle.
+# Maintien X et ascension chargee (2026-10-14)
+
+RealTimeCombatInput mesure le maintien avec Time.unscaledTime. La boucle de
+BasicSkills maintenue est retiree ; les pressions discretes conservent le combo.
+La preparation passe par une session externe de PlayerActionPresentationController
+et un handle UCC libere sur sortie, sans changer de map.
+Sous maintien X, la fin de Basic transfere directement vers cette session,
+sans restitution intermediaire a la locomotion. ChargedWindup est un clip
+statique sans events qui conserve la pose finale de BasicSkill_1 ; aucun
+Animator.speed = 0 ni verrou supplementaire a restaurer.
+Cette session est protegee : les degats non mortels ne retirent plus le maintien
+X ni la pose, et les annulations de mobilite/garde/action ordinaire sont fermees.
+Les roues ne s'ouvrent pas pendant le chargement. La Basic initiale est egalement
+protegee si son maintien de charge est valide, ainsi que le passage vers la
+preparation ; une Basic sans charge reste interruptible. Relacher X reste
+une annulation volontaire. Mort,
+cinematique prioritaire et sorties techniques nettoient toujours leurs handles.
+IsChargingSkill utilise l'input proprietaire, son maintien valide et les generations
+de Basic/preparation. Les recepteurs de degats ne relisent pas les controles physiques
+hors phase d'input. La lecture physique reste dans le polling/callback de relachement.
+Recette renforcee passee : ChargedHoldArmorVerified.log dans la copie isolee.
+La preparation demande au LitCameraDirector un cadrage de charge : FOV reduit
+et petit decalage derriere l'acteur, configures dans ChargedSkillSO. Composition
+au rendu, puis restauration de la pose source, sans reinjection dans UCC.
+Le handle camera est libere au relachement, lancement ou interruption ; les
+cinematiques restent prioritaires et la restitution utilise le cadrage courant.
+LitUccActionTakeoffAbility accepte une duree optionnelle (.08 s par defaut pour
+les impulsions existantes) ; Ascension utilise .55 s et la collision UCC normale.
+Un maintien aerien distinct survit a la restitution apres la montee, mais pas a
+une action non basique, une cinematique ou une desactivation. Les BasicSkills
+aeriennes conservent leurs propres handles de gravite bornes (clip +1 s local).
+Chaque liberation cible uniquement son handle, idempotent. Les holds orphelins
+expirent ou sont retires a la desactivation du proprietaire. Une traversee qui
+suspend la gravite memorise sa valeur de base, pas la suspension d'un hold.
+
+ChargedFloat est une presentation passive sans session ni verrou supplementaire.
+Elle cede a tout Basic aerien ; la restitution normale peut reprendre le float
+dans sa fenetre restante. Fin du hold : fondu vers Falling, seulement si la pose
+passive possede encore l'Animator. Mort, cinematiques et autres actions restent
+prioritaires. Les deux poses de flottement ne deplacent jamais les ActorRoots.
+
+## Contre anime du laboratoire (2026-10-15)
+
+RealTimeCombatInput transmet CallbackContext.time pour Y. La phase du clip
+est lue sur l'etat entrant/courant de l'ennemi ; seule la frame non encore
+evaluee peut etre projetee depuis la derniere lecture Animator. L'age reel
+de l'evenement est converti avec les echelles globale et Animator, sans double
+ralenti. La fenetre termine au contact, pas .2 s apres la telegraphie initiale.
+La demande eligible est arbitree avant impact/clash, une seule fois pour sa
+generation. Menu et changements de contexte ne transportent pas cette demande.
+Pas de nouvelle map, de buffer de contre precoce, d'UI ou de controle camera.
+La roulade conserve son timer reel ; les QTE de paliers restent independants.
+## Attaques sans lock du laboratoire (2026-10-15)
+
+Recette : 8 orientations de frappe a l'arret, 8 directions de stick avec sprint
+et 8 attaques aeriennes ont termine leur session sans lock. Le test mesure la
+vitesse UCC avant la frappe courue, verifie l'intention camera-relative capturee
+et l'absence de verrou residuel. Les captures des trois modes ont ete inspectees,
+sans les assimiler a un jugement manuel de fluidite ou de confort.
+La reprise physique confirme restitution apres projection, Basic aerienne manuelle,
+retour au sol et absence de verrou/collision ignoree residuels. Les dashs libres
+s'arretent avant le mur et le vide de la fixture ; les distances mesurees figurent
+dans current_work. Le clash cadence a 60 pas/s restitue egalement UCC apres recul.
+La recette ne remplace ni le ressenti gamepad ni les essais reseau/multi-FPS.
+
+Lors d'un premier contact accepte dans le laboratoire, SetInputActive demande
+une transition continue au coordinateur. Seulement Exploration -> Combat sans
+contexte prioritaire : les actions deja actives des maps conservees ne sont pas
+desactivees et les valeurs Move/Camera ne sont pas remises a zero. Ainsi X tenu,
+charge, buffers, sprint et direction restent valides, sans rejouer la pression.
+Dialogue, menu, pause, roue et cinematique ne beneficient pas de cette exception.
+L'abonnement aux callbacks reste idempotent. Le premier contact ne change pas
+le lock, le facing, les annulations autorisees ou la restitution UCC des actions.
+
+Opt-in FreeAttackProfile exclusivement dans Iluvilirae_Test.
+Les BasicSkills ne dependent plus du lock ou de l'engagement dans ce mode.
+Chaque session capture le stick dans le repere de la camera du laboratoire ;
+aucun input utilise le repere d'un ennemi non verrouille. La rotation demandee
+est bornee par le profil et le temps local, au plus une fois par frame.
+
+En Exploration, RealTimeCombatInput active seulement BasicAttack et
+SelectSkillKit. Le coordinateur conserve l'autorite des autres maps/contextes ;
+menus, dialogues et traversees ne sont pas contournes. La roue peut executer
+les skills libres sans fabriquer un etat de combat. Le lock, la camera et son
+curseur ne changent jamais lors d'une acquisition temporaire.
+Dans ce prototype, West est reserve a l'attaque libre : le callback de torche
+manette partageant ce bouton est ignore dans ce contexte uniquement. La
+commande clavier de torche et les bindings de production sont conserves.
+Les dashs sans cible gardent UCC, gravite, capsule, controles de sol et collisions.
+Toute interruption invalide le contexte avec sa generation et libere seulement
+les mouvements et bypass appartenant a cette session.
+
+SkillSO.targetingMode remplace les associations du profil de scene. La resolution
+commune capture direction/cible/allie/zone au demarrage effectif ; un buffer ne
+conserve pas une ancienne intention. Les skills a ennemi obligatoire peuvent
+acquerir devant le joueur sans lock ; un lock invalide n'est jamais remplace
+silencieusement. Les cinematics ordinaires recoivent cette victime explicitement.
+Un rig sans CinemachineShot auteur ne prend pas la camera, meme si une piste
+Cinemachine vide subsiste. Aucun changement des entrees CounterSkill/LightSkill.
+# Integration combat production (2026-10-16)
+
+CombatWorldRuntime suit LocalPlayerContext.LocalCharacterChanged pour nettoyer
+les references de l'ancien personnage avant de relier le nouveau. En jeu normal,
+SquadManager ou NetworkCharacterInput applique le mouvement ; le laboratoire
+n'appelle plus Player.Move lui-meme. Le forwarding de secours ne concerne
+qu'un acteur autonome sans pilote squad/reseau, sans nouveau moteur physique.
+La roue solo conserve les kits debloques ; en multi une direction ouvre le kit
+du personnage, puis une nouvelle pression directionnelle choisit son skill.
+Le raccord d'engagement preserve les commandes et contextes en cours. Camera,
+input modal et UI restent locaux au participant ; les decisions serveur ne
+doivent jamais relier temporairement le manager local a un acteur distant.
+La replication et la recette multijoueur complete restent des blocages de livraison.
+
+## Continuation du raccord combat (2026-10-16)
+
+La croix directionnelle garde son verrou de maintien au changement de map.
+Un vrai relachement, une autre direction ou le retrait du peripherique sont
+traites sans confondre canceled de desactivation et relachement physique.
+Les tests utilisent les vrais callbacks Dynamic des deux maps en Edit Mode.
+
+Les commandes reseau du nouveau runtime sont soumises a l'acteur et confirmees
+par le serveur ; aucun cooldown de presentation n'est consomme sur simple envoi.
+Une Basic externe peut conserver un PlayerAttackContext de sa propre generation
+pour reutiliser la rotation fluide, sans relire le lock. Les observateurs suivent
+la pose serveur. Les effets d'impact d'un autre joueur ne prennent pas la camera
+locale. Charge reseau non migree : aucune preparation/camera speculative locale.
+# Continuation reseau des actions (2026-10-17)
+
+Le maintien X en reseau transmet pression/relachement au runtime de l'acteur.
+Seul le serveur confirme preparation et lancement ; le cadrage de charge ne
+s'applique qu'au proprietaire. La roulade reseau transmet une direction monde
+et reutilise le moteur UCC/script de roulade existant. La garde peut reprendre
+dans les fenetres autorisees de la presentation acteur.
+Une restitution ou anomalie d'un acteur distant ne purge plus les buffers ni
+ne reinjecte le mouvement du joueur local. Les maintiens aeriens sont restitues
+sur sortie technique de monde ; un autre participant ne perd pas son flottement
+parce que le manager local affiche une cinematique.
+Cette passe ne constitue pas une validation host/client ou un test de ressenti.
+

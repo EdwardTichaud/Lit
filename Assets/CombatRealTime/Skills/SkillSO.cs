@@ -12,6 +12,22 @@ public sealed class SkillVfxCue
     public SkillVfxDelivery delivery = SkillVfxDelivery.DirectOnTarget;
     [Min(0f)] public float holdAtCasterSeconds;
     [Min(0f)] public float travelDurationSeconds = 0.25f;
+    [Min(0f), Tooltip("Hauteur de l'arc par metre horizontal. 0 conserve une trajectoire droite.")]
+    public float projectileArcHeightPerMeter;
+    [Min(0f)] public float projectileMaximumArcHeight = 4f;
+
+    public float GetProjectileArcHeight(Vector3 start, Vector3 destination) =>
+        Mathf.Min(Vector3.ProjectOnPlane(destination - start, Vector3.up).magnitude * Mathf.Max(0, projectileArcHeightPerMeter),
+            Mathf.Max(0, projectileMaximumArcHeight));
+
+    public Vector3 EvaluateProjectilePosition(Vector3 start, Vector3 destination, float progress)
+    {
+        float t = Mathf.Clamp01(progress);
+        return Vector3.Lerp(start, destination, t) + Vector3.up * (4f * GetProjectileArcHeight(start, destination) * t * (1f - t));
+    }
+
+    public Vector3 EvaluateProjectileTangent(Vector3 start, Vector3 destination, float progress) =>
+        destination - start + Vector3.up * (4f * GetProjectileArcHeight(start, destination) * (1f - 2f * Mathf.Clamp01(progress)));
 }
 
 [Serializable]
@@ -251,6 +267,10 @@ public sealed class PlayerActionPresentationProfile
     public bool allowDodgeAfterRecovery = true;
     [Tooltip("Autorise les actions de mobilite a interrompre ce skill a partir de Mobility Cancel Normalized Time.")]
     public bool allowMobilityCancel = true;
+    [Tooltip("Autorise une reaction aux degats a remplacer l'animation. Sans effet sur les PV ou la priorite de la mort.")]
+    public bool allowDamageInterruption = true;
+    [Tooltip("Bloque les commandes de deplacement pendant la session, sans bloquer les impulsions physiques du skill.")]
+    public bool lockMovementDuringAnimation;
 
     public static PlayerActionPresentationProfile CreateDefault()
     {
@@ -271,6 +291,10 @@ public class SkillSO : ScriptableObject
     [TextArea] public string description;
     public Sprite icon;
 
+    [Header("Targeting (Iluvilirae_Test)")]
+    [Tooltip("Contrat explicite. Le nouveau resolveur est active uniquement dans le laboratoire.")]
+    public SkillTargetingMode targetingMode = SkillTargetingMode.Unconfigured;
+
     [Header("Combat")]
     public AnimationClip animationClip;
     [Tooltip("Chemin complet de la state Animator a jouer. Laisser vide pour utiliser le nom du clip.")]
@@ -278,6 +302,8 @@ public class SkillSO : ScriptableObject
     [Min(0f)] public float damages;
     [Min(0f), Tooltip("Cooldown en secondes de jeu, par lanceur. Demarre uniquement si l'action est lancee.")]
     public float cooldownSeconds;
+    public PlayerGroundImpactProfile groundImpact = new PlayerGroundImpactProfile();
+    public bool IsGroundImpactSkill => groundImpact != null && groundImpact.enabled;
     public SkillControlProfile control = new SkillControlProfile();
     public bool IsControlSkill => control != null && control.kind != SkillControlKind.None;
     public SkillProtectionProfile protection = new SkillProtectionProfile();

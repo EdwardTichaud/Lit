@@ -28,7 +28,7 @@ public sealed class CycleTests
     [Test]
     public void ScarDisappearanceUsesItsNamedRewardStep()
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         var dialogue = definition.FindDialogue("scar");
         Assert.That(dialogue.disappearAfterCompletion, Is.True);
         Assert.That(dialogue.disappearanceDelay, Is.Zero);
@@ -251,7 +251,7 @@ public sealed class CycleTests
     [Test]
     public void NinaConfigurationUsesGenericDialoguesAndKeepsPersistentKey()
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         Assert.That(definition.ValidateConfiguration(), Is.Empty);
         Assert.That(definition.StateKey, Is.EqualTo("narrative.district1.nina"));
         Assert.That(definition.legacyMigrationVersion, Is.EqualTo(1));

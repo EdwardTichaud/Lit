@@ -49,6 +49,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public bool IsCinematicPlaying => cinematicPlaying;
     public bool IsGuardHeld => guardHeld;
+    public CounterSkillSO ConfiguredCounterSkill => ResolveDefaultCounterSkill();
     public float GuardDamageMultiplier => guardedDamageMultiplier;
     private PlayerActionPresentationController guardPresentation;
     private int guardGeneration;
@@ -74,6 +75,8 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     private void Update()
     {
+        if (cinematicPlaying && !CombatLocalCinematicPolicy.AllowsLocalExecution)
+        { AbortForActionTermination(); return; }
         if ((guardRequested || guardHeld) && (combatManager == null || !combatManager.IsCombatActive ||
             combatManager.IsCinematicSequenceActive || cinematicPlaying)) EndGuard();
         if ((guardRequested || guardHeld) && combatManager != null && combatManager.PlayerRoot != null)
@@ -116,6 +119,34 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         TryBeginGuard();
     }
 
+    public bool TryBeginGuardForActor(SquadCharacterController actor, out int generation)
+    {
+        generation = 0;
+        if (!isActiveAndEnabled || !CombatProtectionDamage.HasAuthority || actor == null || actor.CurrentHp <= 0 ||
+            !actor.isActiveAndEnabled || Time.timeScale <= 0) return false;
+        if (Unity.Netcode.NetworkManager.Singleton?.IsListening == true)
+        {
+            var runtime = actor.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+            if (runtime?.IsAssignedPlayer != true || !runtime.ConsumeNetworkGuardPress()) return false;
+        }
+        var presentation = actor.GetComponent<PlayerActionPresentationController>();
+        var bridge = actor.GetComponent<LitOpsiveLocomotionBridge>();
+        var guard = actor.GetComponent<PlayerGuardState>();
+        var animator = actor.GetComponent<CharacterAnimationController>()?.Animator;
+        if (presentation == null || !presentation.CanCancelToMobility || bridge == null || !bridge.IsDriving ||
+            guard == null || animator == null || !animator.isActiveAndEnabled || bridge.IsCinematicMotionSessionActive ||
+            bridge.IsScriptedTraversalActive || bridge.IsInputSuppressedByUcc && !presentation.OwnsOnlyActionMotionLock(bridge)) return false;
+        string state = presentation.CanPlayState(guardAnimatorState) ? guardAnimatorState : guardFallbackAnimatorState;
+        if (!presentation.CanPlayState(state) || !presentation.CancelActionForMobility() || bridge.IsInputSuppressedByUcc) return false;
+        generation = presentation.BeginExternalPresentation(this, allowMobility: true);
+        if (generation == 0) return false;
+        presentation.RegisterActionCleanup(generation, () => { if (guard != null) guard.Set(false, guardedDamageMultiplier); });
+        actor.GetComponent<PlayerStateMotionController>()?.SetActionPolicy(Animator.StringToHash(state), PlayerActionMovementPolicy.VisualOnly);
+        animator.CrossFadeInFixedTime(state, guardAnimationBlendSeconds, 0, 0);
+        guard.Set(true, guardedDamageMultiplier);
+        return true;
+    }
+
     private void TryBeginGuard()
     {
         ResolveReferences();
@@ -156,6 +187,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public bool TryStartFromSuccessfulQte(EnemyController attacker, SkillSO attack)
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) return false;
         ResolveReferences();
         CounterSkillSO skill = ResolveDefaultCounterSkill();
         if (cinematicPlaying || combatManager == null || skill == null || skill.Timeline == null ||
@@ -167,6 +199,8 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         }
 
         CombatReactionTelegraphController.Instance?.Clear();
+        if (!combatManager.TryBeginCinematicTarget(this, new LegacyCombatTarget(attacker), AbortForActionTermination))
+        { combatManager.CancelCounterCinematic(); return false; }
         CombatWarningPresentationController.Instance?.ClearImmediate();
         combatManager.CancelPlayerActionForCinematic();
         playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock);
@@ -174,6 +208,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         counterPauseHandle = manager != null ? manager.AcquireGlobalPause(this) : default;
         foreach (EnemyController state in FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude))
         {
+            if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening && state != attacker) continue;
             if (state.IsSuspended) continue;
             suspendedForCounter.Add(state);
             state.SetSuspended(true);
@@ -194,11 +229,13 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     public bool TryStartFromSuccessfulQte(ICombatTarget target, SkillSO attack)
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) return false;
         ResolveReferences();
         var skill = ResolveDefaultCounterSkill();
         if (target == null || cinematicPlaying || combatManager == null || !combatManager.UsesExternalTarget ||
-            combatManager.IsCinematicSequenceActive || target != combatManager.CombatTarget || target.IsDead ||
+            combatManager.IsCinematicSequenceActive || target.IsDead ||
             !target.IsAttackCommitted || skill == null || skill.CombatCinematicRigPrefab == null || skill.Timeline == null) return false;
+        if (!combatManager.TryBeginCinematicTarget(this, target, AbortForActionTermination)) return false;
         EndGuard();
         combatManager.CancelPlayerActionForCinematic();
         combatManager.SetCinematicSequenceActive(true);
@@ -248,7 +285,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
             if (staged)
             {
                 if (!skill.CombatCinematicRigPrefab.TryGetMidpointPlacement(context, out var stage, out error) ||
-                    !ValidateCounterStage(context, stage, out error))
+                    !ValidateParticipantStage(context, stage, out error))
                 {
                     Debug.LogWarning("[CounterSkill] Placement refuse : " + error, this);
                     cinematicPlaying = false;
@@ -294,7 +331,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         return true;
     }
 
-    private static bool ValidateCounterStage(CombatCinematicContext context, CombatCinematicPlacement stage, out string error)
+    internal static bool ValidateParticipantStage(CombatCinematicContext context, CombatCinematicPlacement stage, out string error)
     {
         error = null;
         var agent = context.TargetRoot.GetComponent<UnityEngine.AI.NavMeshAgent>();
@@ -315,6 +352,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     /// <summary>Player Animation Event placed on the authored CounterSkill Timeline contact frame.</summary>
     public void ResolveCounterSkillImpact()
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) { AbortForActionTermination(); return; }
         if (!cinematicPlaying || impactResolved || activeSkill == null || combatManager == null)
         {
             return;
@@ -413,6 +451,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private void RestoreCounterEnemies()
     {
         combatManager?.SuspendCombatTarget(false);
+        combatManager?.EndCinematicTarget(this);
         foreach (EnemyController state in suspendedForCounter)
             if (state != null) state.SetSuspended(false);
         suspendedForCounter.Clear();

@@ -21,6 +21,10 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     private bool projectileSpawned;
     private bool impactVfxSpawned;
     private bool damageResolved;
+    private Transform playerRoot;
+    private Animator playerAnimator;
+    private bool ownsLocalPresentation;
+    private bool ownsTargetSuspension;
 
     private void Reset() => signalReceiver = GetComponent<SignalReceiver>();
 
@@ -33,28 +37,32 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
     public bool Begin(CombatCinematicContext context)
     {
-        if (active || context == null || context.CombatManager == null ||
+        if (active || context == null || context.PlayerRoot == null ||
             context.Definition is not LightSkillSO skill || context.TargetRoot == null)
         {
             return false;
         }
 
         combatManager = context.CombatManager;
+        playerRoot = context.PlayerRoot;
+        playerAnimator = context.PlayerAnimator;
+        ownsLocalPresentation = context.ControlsLocalCamera && combatManager != null && combatManager.PlayerRoot == playerRoot;
+        ownsTargetSuspension = context.AppliesGameplayEffects;
         lightSkill = skill;
         targetEnemy = context.Target;
         resolveImpact = context.ResolveImpact;
-        lockCamera = combatManager.GetComponent<CombatLockOnCameraController>();
+        lockCamera = ownsLocalPresentation ? combatManager.GetComponent<CombatLockOnCameraController>() : null;
         active = true;
         projectileSpawned = false;
         impactVfxSpawned = false;
         damageResolved = false;
 
         BindSignals();
-        targetEnemy?.SetCinematicSuspended(true);
+        if (ownsTargetSuspension) targetEnemy?.SetCinematicSuspended(true);
         // LitCameraDirector owns the UCC driver handoff for a Timeline. The lock
         // controller only stops updating its combat framing during the shot.
         lockCamera?.SetCinematicFramingSuspended(true);
-        combatManager.SetCinematicSequenceActive(true);
+        if (ownsLocalPresentation) combatManager.SetCinematicSequenceActive(true);
         return true;
     }
 
@@ -64,9 +72,9 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
         UnbindSignals();
         StopAndDestroyProjectile();
-        targetEnemy?.SetCinematicSuspended(false);
+        if (ownsTargetSuspension) targetEnemy?.SetCinematicSuspended(false);
         lockCamera?.SetCinematicFramingSuspended(false);
-        combatManager?.SetCinematicSequenceActive(false);
+        if (ownsLocalPresentation) combatManager?.SetCinematicSequenceActive(false);
 
         active = false;
         combatManager = null;
@@ -74,6 +82,9 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         targetEnemy = null;
         lockCamera = null;
         resolveImpact = null;
+        playerRoot = null;
+        playerAnimator = null;
+        ownsLocalPresentation = ownsTargetSuspension = false;
     }
 
     /// <summary>
@@ -98,9 +109,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     {
         if (!active || projectileSpawned || lightSkill == null || lightSkill.ProjectileVfxPrefab == null) return;
 
-        Transform caster = combatManager != null && combatManager.PlayerAnimator != null
-            ? combatManager.PlayerAnimator.transform
-            : combatManager != null ? combatManager.PlayerRoot : null;
+        Transform caster = playerAnimator != null ? playerAnimator.transform : playerRoot;
         if (caster == null) return;
 
         Transform spawn = FindTransform(caster, lightSkill.ProjectileSpawnTransformPath) ?? caster;
@@ -124,7 +133,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
         Transform target = targetEnemy.LockPoint != null ? targetEnemy.LockPoint : targetEnemy.Root;
         Vector3 position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(
-            target, combatManager != null ? combatManager.PlayerRoot : null, lightSkill.ImpactVfxOffset);
+            target, playerRoot, lightSkill.ImpactVfxOffset);
         GameObject impact = Instantiate(lightSkill.ImpactVfxPrefab, position, target.rotation);
         Destroy(impact, 10f);
         impactVfxSpawned = true;

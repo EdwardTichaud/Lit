@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-public sealed class RealTimeCombatInput : MonoBehaviour
+public sealed partial class RealTimeCombatInput : MonoBehaviour
 {
     [SerializeField] private InputActionAsset actions;
     [SerializeField] private string actionMapName = "RealTimeCombat";
@@ -43,6 +43,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void Update()
     {
+        RefreshFreeAttackBindings();
         if (basicAttackRequiresRelease)
         {
             if (!IsBasicAttackPhysicallyHeld()) basicAttackRequiresRelease = false;
@@ -52,21 +53,17 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (!basicAttackHeld) return;
         var manager = RealTimeCombatManager.Instance;
         if (!IsInputActive || paletteOpen || IsCounterCinematicPlaying || manager == null ||
-            !manager.IsCombatActive || !manager.HasLockedCombatTarget || manager.IsCinematicSequenceActive)
+            !manager.HasAttackInputContext || manager.IsCinematicSequenceActive)
         {
             CancelBufferedBasicSkills();
             return;
         }
         if (!IsBasicAttackPhysicallyHeld())
         {
-            basicAttackHeld = false;
+            CancelChargedHold();
             return;
         }
-        if (basicSkillQueue.Count == 0 && basicComboRoutine == null &&
-            manager.CanAcceptBasicSkillInput && manager.CanChainBasicSkill)
-        {
-            if (!TryQueueBasicSkill(true)) CancelBufferedBasicSkills();
-        }
+        TickChargedHold(manager);
     }
 
     private bool IsBasicAttackPhysicallyHeld()
@@ -74,7 +71,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (basicAttackAction == null) return false;
         // Read controls even while the action map is disabled by a cinematic.
         foreach (var control in basicAttackAction.controls)
-            if (control.EvaluateMagnitude() > .5f) return true;
+            if (control.device != null && control.device.added && control.EvaluateMagnitude() > .5f) return true;
         return false;
     }
 
@@ -107,6 +104,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         LocalPlayerInput.EnsureInstance();
         ResolveActions();
         Subscribe();
+        InputModeCoordinator.ModeChanged += RefreshFreeAttackMode;
         if (enableOnStart)
         {
             LocalPlayerInput.SetCombatInputActive(true);
@@ -115,6 +113,13 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnDisable()
     {
+        InputModeCoordinator.ModeChanged -= RefreshFreeAttackMode;
+        if (explorationAttackEnabled)
+        {
+            basicAttackAction?.Disable();
+            actionMap?.FindAction("SelectSkillKit", false)?.Disable();
+        }
+        explorationAttackEnabled = false;
         Unsubscribe();
         ClosePalette(resolveIfMissing: false);
         LocalInputRouter.PopInteractionAndJumpSuppression(this);
@@ -123,7 +128,9 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         LocalPlayerInput.SetCombatInputActive(false);
     }
 
-    public void SetInputActive(bool active)
+    public void SetInputActive(bool active) => SetInputActive(active, false);
+
+    public void SetInputActive(bool active, bool preserveHeldActions)
     {
         if (active)
         {
@@ -136,7 +143,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             // scene. Revalide les callbacks au lock, lorsque la map partagee
             // est necessairement disponible.
             Subscribe();
-            LocalPlayerInput.SetCombatInputActive(true);
+            LocalPlayerInput.SetCombatInputActive(true, preserveHeldActions);
             GamepadInputContextStack.Push(this, GamepadInputContext.Combat);
             Trace("Combat input active | " + InputDiagnostics + ".");
             return;
@@ -147,8 +154,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         LocalInputRouter.PopInteractionAndJumpSuppression(this);
         CounterSkillCombatController.Instance?.EndGuard();
         GamepadInputContextStack.Pop(this);
-        LocalPlayerInput.SetCombatInputActive(false);
-        ClearBasicSkillCombo();
+        LocalPlayerInput.SetCombatInputActive(false, preserveHeldActions);
+        if (!preserveHeldActions) ClearBasicSkillCombo();
         Trace("Combat input inactive | " + InputDiagnostics + ".");
     }
 
@@ -330,18 +337,30 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private void OnCounterStarted(InputAction.CallbackContext context)
     {
         if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (!paletteOpen && network != null && network.IsListening)
+        {
+            RealTimeCombatManager.Instance?.PlayerRoot?.GetComponent<NetworkCharacterInput>()?.SubmitProtectionGuard(true, context.time);
+            return;
+        }
         if (!paletteOpen && !IsCounterCinematicPlaying &&
             CombatHealthThresholdController.Instance != null &&
-            CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Counter)) return;
+            CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Counter, context.time)) return;
         if (!paletteOpen && !IsCounterCinematicPlaying)
         {
-            CancelBufferedBasicSkills();
+            CancelBufferedBasicSkills(preserveChargedHold: true);
             CounterSkillCombatController.Instance?.BeginGuard();
         }
     }
 
     private void OnCounterCanceled(InputAction.CallbackContext context)
     {
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening)
+        {
+            RealTimeCombatManager.Instance?.PlayerRoot?.GetComponent<NetworkCharacterInput>()?.SubmitProtectionGuard(false, context.time);
+            return;
+        }
         CombatHealthThresholdController.Instance?.ReleaseEnemyReactionButton(EnemyAttackReaction.Counter);
         CounterSkillCombatController.Instance?.EndGuard();
     }
@@ -350,6 +369,19 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     {
         if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
         if (IsCounterCinematicPlaying) return;
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (!paletteOpen && network != null && network.IsListening)
+        {
+            var root = RealTimeCombatManager.Instance?.PlayerRoot;
+            var player = root != null ? root.GetComponent<SquadCharacterController>() : null;
+            var runtime = root != null ? root.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() : null;
+            if (player != null && runtime != null)
+            {
+                Vector2 movement = player.ResolveGameplayWorldMoveInput(LocalInputRouter.MoveValue);
+                runtime.RequestDodge(new Vector3(movement.x, 0, movement.y), context.time);
+            }
+            return;
+        }
         if (!paletteOpen && CombatHealthThresholdController.Instance != null &&
             CombatHealthThresholdController.Instance.TryHandleEnemyReaction(EnemyAttackReaction.Dodge)) return;
 
@@ -375,16 +407,18 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     {
         if (GetComponent<CombatSkillKitInput>()?.AllowsDefaultAction(context) == false) return;
         if (basicAttackRequiresRelease) return;
-        basicAttackHeld = TryQueueBasicSkill(false);
+        bool accepted = TryQueueBasicSkill();
+        BeginChargedHold(accepted);
     }
 
     private void OnBasicAttackCanceled(InputAction.CallbackContext context)
     {
         basicAttackHeld = false;
+        CancelChargedHold();
         if (!IsBasicAttackPhysicallyHeld()) basicAttackRequiresRelease = false;
     }
 
-    private bool TryQueueBasicSkill(bool fromHold)
+    private bool TryQueueBasicSkill()
     {
         if (GetComponent<CombatMobilityController>()?.HasPendingCommand == true) return false;
         if (paletteOpen || IsCounterCinematicPlaying)
@@ -394,7 +428,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
 
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        if (manager == null || !manager.IsCombatActive || !manager.HasLockedCombatTarget)
+        if (manager == null || !manager.HasAttackInputContext)
         {
             Trace("BasicAttack ignoree: combat ou lock absent | " + InputDiagnostics + ".");
             return false;
@@ -432,7 +466,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
 
         float currentTime = Time.unscaledTime;
-        if (!fromHold && currentTime - lastBasicAttackQueuedAt > basicComboResetDelaySeconds)
+        if (currentTime - lastBasicAttackQueuedAt > basicComboResetDelaySeconds)
         {
             skillsManager.ResetBasicSkillCombo(basicSkillContext);
         }
@@ -498,6 +532,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnOpenPalette(InputAction.CallbackContext context)
     {
+        if (RealTimeCombatManager.Instance?.PlayerRoot?.GetComponentInChildren<PlayerActionPresentationController>()?.IsChargingSkill == true) return;
         FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.RefreshSkills(true);
         var kits = GetComponent<CombatSkillKitInput>();
         if (context.control?.device is Gamepad && kits != null && kits.IsAvailable)
@@ -616,14 +651,14 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         while (basicSkillQueue.Count > 0)
         {
             RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-            if (manager == null || !manager.IsCombatActive || !manager.HasLockedCombatTarget)
+            if (manager == null || !manager.HasAttackInputContext)
             {
                 basicSkillQueue.Clear();
                 break;
             }
 
             yield return manager.WaitForPlayerActionChainWindow();
-            if (!manager.IsCombatActive || !manager.HasLockedCombatTarget)
+            if (!manager.HasAttackInputContext)
             {
                 basicSkillQueue.Clear();
                 break;
@@ -667,6 +702,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     {
         if (!preserveHold)
         {
+            CancelChargedHold();
             basicAttackHeld = false;
             basicAttackRequiresRelease = true;
         }
@@ -680,9 +716,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
     }
 
-    public void CancelBufferedBasicSkills()
+    public void CancelBufferedBasicSkills() => CancelBufferedBasicSkills(false);
+
+    public void CancelBufferedBasicSkills(bool preserveChargedHold)
     {
-        ClearBasicSkillCombo();
+        ClearBasicSkillCombo(preserveHold: preserveChargedHold && heldChargedSkill != null);
         RealTimeCombatManager.Instance?.PlayerRoot?
             .GetComponentInChildren<PlayerActionPresentationController>(true)?.ClearBufferedBasicAction();
     }

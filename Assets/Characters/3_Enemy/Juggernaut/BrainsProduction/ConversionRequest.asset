@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 996786c0a1fc4018a56f485636b77315, type: 3}
+  m_Name: ConversionRequest
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::ProductionBrainsEnemyConversionRequest
+  character: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
+  sourceController: {fileID: 9100000, guid: 16953135bd952ee4b84667029bec18b3, type: 2}
+  requiresFlameInfluence: 1
+  reviewedProfile: {fileID: 11400000, guid: bc75aebe3dba82e4ebdb047552d2c5e3, type: 2}
+  reviewedController: {fileID: 9100000, guid: 5d105e9a4f6972a4c8c2b9f4d85f877c, type: 2}

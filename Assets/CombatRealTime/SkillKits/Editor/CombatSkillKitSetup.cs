@@ -24,7 +24,8 @@ public static class CombatSkillKitSetup
         serialized.FindProperty("vestaCharacter").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Vesta/Vesta.asset");
         serialized.FindProperty("sorenCharacter").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Soren/Soren.asset");
         serialized.FindProperty("aurellCharacter").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Aurell/Aurell.asset");
-        Set(serialized, "lucian", "Assets/CombatRealTime/Skills/Skill_BondOffensif.asset", "Assets/CombatRealTime/Skills/Skill_1_Eclair.asset", "Assets/CombatRealTime/Skills/Skill_4_JumpKick_Rupture.asset", null);
+        Set(serialized, "lucian", "Assets/CombatRealTime/Skills/Skill_BondOffensif.asset", "Assets/CombatRealTime/Skills/Skill_1_Eclair.asset", "Assets/CombatRealTime/Skills/Skill_4_JumpKick_Rupture.asset",
+            AssetDatabase.LoadAssetAtPath<SkillSO>(GroundImpactSkillSetup.SkillPath) != null ? GroundImpactSkillSetup.SkillPath : null);
         Set(serialized, "vesta", "Assets/Resources/CombatSupportSkills/Skill_Revitalisation.asset", "Assets/Resources/CombatSupportSkills/Skill_SoinsUrgence.asset", "Assets/Resources/CombatSupportSkills/Skill_Regeneration.asset", "Assets/Resources/CombatSupportSkills/Skill_SiphonVital.asset");
         Set(serialized, "soren", "Assets/CombatRealTime/Skills/Skill_2_Fleche de lumière.asset", "Assets/Resources/CombatControlSkills/Skill_Revelation.asset", "Assets/Resources/CombatControlSkills/Skill_Entrave.asset", "Assets/Resources/CombatControlSkills/Skill_PasDeRecul.asset");
         Set(serialized, "aurell", "Assets/Resources/CombatSupportSkills/Skill_Intercession.asset", "Assets/Resources/CombatSupportSkills/Skill_Rempart.asset", "Assets/Resources/CombatSupportSkills/Skill_Sommation.asset", "Assets/Resources/CombatSupportSkills/Skill_JusteRetour.asset");

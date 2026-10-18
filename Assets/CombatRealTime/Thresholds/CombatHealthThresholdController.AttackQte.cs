@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.InputSystem.LowLevel;
 
 public enum EnemyAttackReaction { Dodge, Counter }
 
@@ -7,7 +8,8 @@ public sealed partial class CombatHealthThresholdController
 {
     [Header("Invisible enemy reactions")]
     [FormerlySerializedAs("attackQteDuration"), SerializeField, Min(.05f)] private float dodgeWindowSeconds = .5f;
-    [SerializeField, Min(.01f)] private float counterWindowSeconds = .2f;
+    [SerializeField, Min(.01f), Tooltip("Realtime in production; clip seconds immediately before impact when the laboratory supplies EnemyReactionTiming.")]
+    private float counterWindowSeconds = .2f;
     [SerializeField, Min(.05f), Tooltip("Minimum realtime delay between counter/guard presses, including attempts outside the reaction window. Holding and releasing guard remain available.")]
     private float counterRetryDelaySeconds = .4f;
     private double nextCounterAttemptAt;
@@ -15,6 +17,11 @@ public sealed partial class CombatHealthThresholdController
     [SerializeField] private bool logEnemyReactions;
     private bool attackQteActive, attackDodgeProtected;
     private bool dodgeAwaitingRelease, counterAwaitingRelease;
+    private EnemyReactionTiming externalCounterTiming;
+    private bool animationCounterActive, pendingAnimationCounter;
+    private int pendingCounterActionId;
+    private double pendingCounterPhase, pendingCounterTimestamp;
+    private readonly System.Collections.Generic.HashSet<string> invalidCounterTimings = new System.Collections.Generic.HashSet<string>();
     private EnemyController attackQteEnemy;
     private ICombatTarget externalReactionTarget;
     private Transform attackReactionVictim;
@@ -45,6 +52,7 @@ public sealed partial class CombatHealthThresholdController
 
     public void OpenEnemyReactionOpportunity(EnemyController enemy)
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) return;
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
         var network = Unity.Netcode.NetworkManager.Singleton;
@@ -78,8 +86,11 @@ public sealed partial class CombatHealthThresholdController
         TraceEnemyReaction("ouverture B/Y sans UI");
     }
 
-    public void OpenEnemyReactionOpportunity(ICombatTarget target, SkillSO skill)
+    public void OpenEnemyReactionOpportunity(ICombatTarget target, SkillSO skill) => OpenEnemyReactionOpportunity(target, skill, null);
+
+    public void OpenEnemyReactionOpportunity(ICombatTarget target, SkillSO skill, EnemyReactionTiming timing)
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) return;
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
         if (!isActiveAndEnabled || target == null || skill == null || target.IsDead ||
@@ -95,6 +106,14 @@ public sealed partial class CombatHealthThresholdController
         dodgeAwaitingRelease = combatInput != null && combatInput.IsReactionButtonHeld(EnemyAttackReaction.Dodge);
         counterAwaitingRelease = combatInput != null && combatInput.IsReactionButtonHeld(EnemyAttackReaction.Counter);
         attackQteActive = true;
+        externalCounterTiming = timing;
+        animationCounterActive = timing != null && timing.IsValid && timing.ActionId == attackQteActionId;
+        if (timing != null && !animationCounterActive)
+        {
+            string reason = timing.ValidationError ?? "generation d'attaque differente";
+            string key = (timing.Clip != null ? timing.Clip.GetEntityId().ToString() : "null") + reason;
+            if (invalidCounterTimings.Add(key)) Debug.LogWarning("[EnemyReaction] Contre desactive uniquement pour ce clip : " + reason, this);
+        }
         reactionTimeManager = TimeManager.EnsureInstance();
         if (reactionTimeManager != null && reactionTimeScale < 1f)
             reactionSlowMotionHandle = reactionTimeManager.AcquireGlobal(reactionTimeScale, this);
@@ -110,23 +129,28 @@ public sealed partial class CombatHealthThresholdController
     public bool IsAttackDodged(ICombatTarget target) => attackDodgeProtected && externalReactionTarget == target && AttackReactionStillValid();
     public void CloseExternalReactionAtContact(ICombatTarget target)
     {
-        if (externalReactionTarget == target) CloseAttackQte();
+        if (externalReactionTarget != target) return;
+        ResolvePendingAnimationCounter();
+        CloseAttackQte();
     }
 
-    private bool AttackReactionStillValid() => externalReactionTarget != null
-        ? combatManager != null && combatManager.IsCombatActive && !combatManager.IsCinematicSequenceActive &&
+    private bool AttackReactionStillValid() => CombatLocalCinematicPolicy.AllowsLocalExecution && (externalReactionTarget != null
+        ? (!(externalReactionTarget is Object owner) || owner != null) &&
+          combatManager != null && combatManager.IsCombatActive && !combatManager.IsCinematicSequenceActive &&
           externalReactionTarget.Root != null && !externalReactionTarget.IsDead && externalReactionTarget.IsAttackCommitted &&
-          externalReactionTarget.ActionSequenceId == attackQteActionId && combatManager.CombatTarget == externalReactionTarget
+          externalReactionTarget.ActionSequenceId == attackQteActionId && combatManager.CombatTarget == externalReactionTarget &&
+          (externalCounterTiming == null || attackReactionVictim != null && combatManager.PlayerRoot == attackReactionVictim && attackReactionVictim.gameObject.activeInHierarchy)
         : combatManager != null && combatManager.IsCombatActive &&
         !combatManager.IsCinematicSequenceActive && attackQteEnemy != null && attackQteEnemy.isActiveAndEnabled &&
         attackReactionVictim != null && attackReactionVictim.gameObject.activeInHierarchy &&
         combatManager.PlayerRoot == attackReactionVictim && combatManager.EngagedEnemy == attackQteEnemy &&
         attackQteEnemy.ActiveSkill == attackQteSkill && attackQteEnemy.ActionSequenceId == attackQteActionId &&
-        (attackQteEnemy.Health == null || !attackQteEnemy.Health.IsDead);
+        (attackQteEnemy.Health == null || !attackQteEnemy.Health.IsDead));
 
     private void Update()
     {
         UpdateThresholdFlamePause();
+        if (IsNetworkThresholdEngine) return;
         // A standalone pause freezes the remaining external reaction window.
         if (externalReactionTarget != null && InputModeCoordinator.CurrentMode == InputMode.UserInterface) return;
         if (attackQteEnemy == null || !attackQteEnemy.IsFlameDormant) reactionClock += Time.unscaledDeltaTime;
@@ -145,7 +169,21 @@ public sealed partial class CombatHealthThresholdController
             if (reactionTimeManager != null) reactionSlowMotionHandle = reactionTimeManager.AcquireGlobal(Mathf.Clamp(reactionTimeScale, .01f, 1f), this);
         }
         if (combatInput != null && !combatInput.IsInputActive) CloseAttackQte();
-        if (attackQteActive && reactionClock >= dodgeDeadline) CloseAttackQte();
+        if (attackQteActive && reactionClock >= dodgeDeadline)
+        {
+            if (externalCounterTiming == null) CloseAttackQte();
+            else attackQteActive = false; // B expires independently of clip-owned Y.
+        }
+        if (animationCounterActive && (!externalCounterTiming.TryGetCurrentPhase(out double phase) ||
+            phase >= externalCounterTiming.ImpactSeconds)) animationCounterActive = false;
+        if (!attackQteActive && !animationCounterActive) ReleaseReactionSlowMotion();
+    }
+
+    private void LateUpdate()
+    {
+        if (IsNetworkThresholdEngine) return;
+        ResolvePendingAnimationCounter();
+        externalCounterTiming?.Capture();
     }
 
     public void ReleaseEnemyReactionButton(EnemyAttackReaction reaction)
@@ -155,10 +193,25 @@ public sealed partial class CombatHealthThresholdController
     }
 
     // True means the press was handled, not that a defence necessarily succeeded.
-    public bool TryHandleEnemyReaction(EnemyAttackReaction reaction)
+    public bool TryHandleEnemyReaction(EnemyAttackReaction reaction) => TryHandleEnemyReaction(reaction, InputState.currentTime);
+
+    public bool TryHandleEnemyReaction(EnemyAttackReaction reaction, double inputTimestamp)
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) { ClearAttackReaction(); return false; }
+        if (externalReactionTarget != null && InputModeCoordinator.CurrentMode == InputMode.UserInterface) return false;
         if (reaction == EnemyAttackReaction.Counter && !TryConsumeCounterAttempt(Time.unscaledTimeAsDouble))
             return true; // Consume the press: do not fall through to a new guard action.
+        if (reaction == EnemyAttackReaction.Counter && externalCounterTiming != null)
+        {
+            if (InputModeCoordinator.CurrentMode != InputMode.Combat || !animationCounterActive || counterAwaitingRelease || !AttackReactionStillValid() ||
+                !externalCounterTiming.TryGetPhase(inputTimestamp, out double phase) ||
+                !externalCounterTiming.ContainsCounterPhase(phase, counterWindowSeconds, reactionTimeScale)) return false;
+            pendingAnimationCounter = true;
+            pendingCounterActionId = attackQteActionId;
+            pendingCounterPhase = phase;
+            pendingCounterTimestamp = inputTimestamp;
+            return true;
+        }
         if (attackQteEnemy == null && externalReactionTarget == null || attackQteEnemy != null && attackQteEnemy.IsFlameDormant || !IsReactionPressEligible(reaction, reactionClock)) return false;
         EnemyController enemy = attackQteEnemy;
         var skill = attackQteSkill;
@@ -188,6 +241,31 @@ public sealed partial class CombatHealthThresholdController
         CloseAttackQte();
         return true;
     }
+
+    /// <summary>Called before laboratory contact/clash resolution as well as in LateUpdate.</summary>
+    public void ResolvePendingAnimationCounter()
+    {
+        if (!pendingAnimationCounter) return;
+        pendingAnimationCounter = false;
+        if (InputModeCoordinator.CurrentMode != InputMode.Combat ||
+            combatInput != null && !combatInput.IsInputActive || externalCounterTiming == null ||
+            pendingCounterActionId != attackQteActionId || !AttackReactionStillValid() ||
+            !externalCounterTiming.TryGetPhase(InputState.currentTime, out _) ||
+            !externalCounterTiming.ContainsCounterPhase(pendingCounterPhase, counterWindowSeconds, reactionTimeScale)) return;
+        var counter = CounterSkillCombatController.Instance;
+        if (counter != null && counter.TryStartFromSuccessfulQte(externalReactionTarget, attackQteSkill))
+        {
+            TraceEnemyReaction("contre anime accepte | pression=" + pendingCounterTimestamp + " | phase=" + pendingCounterPhase);
+            CloseAttackQte();
+        }
+        else if (combatInput != null && combatInput.IsReactionButtonHeld(EnemyAttackReaction.Counter))
+            counter?.BeginGuard();
+    }
+
+    public bool IsExternalCounterWindowOpen => InputModeCoordinator.CurrentMode == InputMode.Combat &&
+        animationCounterActive && !counterAwaitingRelease && AttackReactionStillValid() &&
+        externalCounterTiming != null && externalCounterTiming.TryGetPhase(InputState.currentTime, out double phase) &&
+        externalCounterTiming.ContainsCounterPhase(phase, counterWindowSeconds, reactionTimeScale);
 
     private bool TryConsumeCounterAttempt(double now)
     {
@@ -227,6 +305,7 @@ public sealed partial class CombatHealthThresholdController
     private void CloseAttackQte()
     {
         attackQteActive = false;
+        animationCounterActive = pendingAnimationCounter = false;
         ReleaseReactionSlowMotion();
     }
 
@@ -243,6 +322,7 @@ public sealed partial class CombatHealthThresholdController
         attackDodgeProtected = false;
         attackQteEnemy = null;
         externalReactionTarget = null;
+        externalCounterTiming = null;
         attackQteSkill = null;
         attackReactionVictim = null;
     }

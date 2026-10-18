@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: Lucian
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
+      presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -248,8 +251,6 @@ MonoBehaviour:
     dodge:
       impulseSpeed: 16
       durationMultiplier: 1
-      alignUnlockedDodgeToTravel: 1
-      alignLockedForwardDodgeToTravel: 1
   uniqueId: 0f3452bd8cf87c440ab2208e8ebc72ce
   characterId: lucian
   characterName: Lucian
@@ -262,8 +263,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
   - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
   - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
+  - {fileID: 11400000, guid: 305ed9fad85b34f4d8327bcc27b7ae23, type: 2}
+  chargedSkill: {fileID: 11400000, guid: 22e933684f7d2d24fb48aced6564441d, type: 2}
   enemyCombatProfile: {fileID: 0}
   enemySettings:
+    ArenaCreateBattleWall: 0
     LocomotionPositioning:
       preferredDistance: 2.6
       minimumRetreatDistance: 1.2
@@ -284,6 +288,8 @@ MonoBehaviour:
     LocomotionNavMeshEdgeClearance: 0.45
     LocomotionClearanceSearchRadius: 2
     LocomotionClearanceSearchSamples: 12
+    LocomotionStuckRecoverySeconds: 0.8
+    LocomotionStuckProgressDistance: 0.06
     LocomotionLogDiagnostics: 0
     ContractLogDiagnostics: 1
     RecoveryExtraRecoverySeconds: 1
@@ -331,15 +337,16 @@ MonoBehaviour:
     introductionLine: 
     introductionSeconds: 2.5
     interactionDistance: 2.5
+    requiredKnowledge: {fileID: 0}
   enemyDeathOptions:
     enabled: 0
     dialogueLine: 
     dialogueSeconds: 4
     voiceLine: {fileID: 0}
   groundBasicSkills:
-  - {fileID: 11400000, guid: 1ddf0c3cda96bc1418077fee3b0f4d9d, type: 2}
-  - {fileID: 11400000, guid: c43a7367eab25894d943ab01335bd6de, type: 2}
-  - {fileID: 11400000, guid: 33c43d8aa19cfa74bb2947ab1f8e6def, type: 2}
+  - {fileID: 11400000, guid: 9b9635113b0b36d45b5934c0b2051af7, type: 2}
+  - {fileID: 11400000, guid: 6ca70f7ce54063f4a93b812382496342, type: 2}
+  - {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
   airBasicSkills:
   - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
   stats:

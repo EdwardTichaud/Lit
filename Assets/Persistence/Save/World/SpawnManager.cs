@@ -153,6 +153,14 @@ public class SpawnManager : MonoBehaviour
                 continue;
             }
 
+            if (ShouldSkipSoloRosterSnapshot(snapshot))
+            {
+                PersistentWorldDebug.Log(
+                    $"solo support snapshot preserved without spawning persistentId='{snapshot.PersistentId}' prefab='{snapshot.RuntimePrefabId}'",
+                    this);
+                continue;
+            }
+
             if (LegacyBuildingSystem.ShouldSkipRuntimeSnapshot(snapshot))
             {
                 PersistentWorldDebug.Log(
@@ -418,6 +426,29 @@ public class SpawnManager : MonoBehaviour
         {
             networkObject.Spawn(true);
         }
+    }
+
+    internal static bool ShouldSkipSoloRosterSnapshot(PersistentObjectSnapshot snapshot)
+    {
+        string prefabId = snapshot?.RuntimePrefabId;
+        if (!SoloTeamProgression.IsSolo || string.IsNullOrWhiteSpace(prefabId) ||
+            !prefabId.StartsWith(PersistentWorldSceneInstaller.CharacterPrefabPrefix, StringComparison.Ordinal)) return false;
+        string id = prefabId.Substring(PersistentWorldSceneInstaller.CharacterPrefabPrefix.Length);
+        if (!NetcodeCharacterIdentity.TryResolveCharacterData(id, out CharacterData character) || character == null) return false;
+        return IsSoloSupportCharacter(character);
+    }
+
+    internal static bool IsSoloSupportCharacter(CharacterData character)
+    {
+        if (character == null || character.isEnemy) return false;
+        var catalog = Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default");
+        if (catalog == null) return false;
+        foreach (var kit in new[] { CombatSkillKit.Vesta, CombatSkillKit.Soren, CombatSkillKit.Aurell })
+        {
+            var support = catalog.GetCharacter(kit);
+            if (support != null && (character == support || !string.IsNullOrEmpty(character.UniqueId) && character.UniqueId == support.UniqueId)) return true;
+        }
+        return false; // World NPCs and unknown snapshots retain their normal persistence path.
     }
 
     private bool TryInstantiateSnapshotObject(

@@ -24,7 +24,8 @@ MonoBehaviour:
   hurtSeconds: 0.35
   interruptionProtectionSeconds: 0.75
   attacks:
-  - stateName: Attack
+  - skill: {fileID: 11400000, guid: 3574dc0264b01b24ea983ed7db44c598, type: 2}
+    stateName: Attack
     clip: {fileID: 7400000, guid: 0c3505223bb084844b270d1a486e1c9d, type: 2}
     reactionSeconds: 0.23333333
     strikeSeconds: 0.46666667
@@ -43,7 +44,8 @@ MonoBehaviour:
     reach: 2.6
     arcDegrees: 110
     heightTolerance: 1.8
-  - stateName: Attack_Sweep
+  - skill: {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
+    stateName: Attack_Sweep
     clip: {fileID: 7400000, guid: 4583fd938bac54240b22eb24d80a6343, type: 2}
     reactionSeconds: 0.33333334
     strikeSeconds: 0.56666666
@@ -62,7 +64,8 @@ MonoBehaviour:
     reach: 2.6
     arcDegrees: 110
     heightTolerance: 1.8
-  - stateName: Attack_Followup
+  - skill: {fileID: 11400000, guid: b3a4d6f55f403a4498b9a4d2f11d4fa2, type: 2}
+    stateName: Attack_Followup
     clip: {fileID: 7400000, guid: c579cd2f0d7d8db46a2955b8c0fa123a, type: 2}
     reactionSeconds: 0.26666668
     strikeSeconds: 0.5

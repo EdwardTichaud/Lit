@@ -7,7 +7,7 @@ public static class CycleMigration
     [MenuItem("Lit/Narrative/Migrer Nina vers les etapes nommees")]
     public static void MigrateNina()
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         if (definition == null || definition.HasSteps) return;
         Undo.RecordObject(definition, "Migrate Nina steps");
         ConfigureNina(definition);

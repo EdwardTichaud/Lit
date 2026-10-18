@@ -202,12 +202,12 @@ public sealed class SkillWheel : MonoBehaviour
         }
         displayingKit = true;
         var positions = new[] { new Vector2(-180, 0), new Vector2(0, 180), new Vector2(0, -180), new Vector2(180, 0) };
-        var buttons = new[] { "X", "Y", "A", "B" };
+        var buttons = new[] { "Gauche", "Haut", "Bas", "Droite" };
         for (int i = 0; i < SlotCount; i++)
         {
             if (slots[i] == null) continue;
             SetSkill(i, skills != null && i < Mathf.Min(4, skills.Length) ? skills[i] : null);
-            slots[i].SetShortcut(i < 4 ? name + " — " + buttons[i] : string.Empty);
+            slots[i].SetShortcut(i < 4 ? name + " — " + buttons[i] + "\nB : Retour" : string.Empty);
             if (i < 4)
             {
                 slots[i].gameObject.SetActive(true);

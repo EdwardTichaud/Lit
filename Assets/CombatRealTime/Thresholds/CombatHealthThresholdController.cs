@@ -27,10 +27,12 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private RealTimeCombatInput combatInput;
     private QTEPanelController qtePanel;
 
-    private readonly Dictionary<EnemyController, HashSet<CombatHealthThresholdStage>> resolvedStages =
-        new Dictionary<EnemyController, HashSet<CombatHealthThresholdStage>>();
-    private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
+    private readonly Dictionary<Transform, HashSet<CombatHealthThresholdStage>> resolvedStages =
+        new Dictionary<Transform, HashSet<CombatHealthThresholdStage>>();
+    private readonly List<CombatHealthThresholdTarget> suspendedEnemies = new List<CombatHealthThresholdTarget>();
     private readonly HashSet<CharacterData> invalidDataReported = new HashSet<CharacterData>();
+    private readonly Dictionary<Transform, CombatHealthThresholdStage> retryEligibleStages = new Dictionary<Transform, CombatHealthThresholdStage>();
+    private readonly HashSet<string> participantWarnings = new HashSet<string>();
 
     private const bool LogDiagnostics = true;
     private static readonly float[] StageAngles = { 0f, 15f, -15f, 30f, -30f, 45f, -45f };
@@ -41,7 +43,12 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private InputAction qteBAction;
     private InputAction qteAAction;
     private InputAction qteXAction;
-    private EnemyController activeEnemy;
+    private CombatHealthThresholdTarget activeEnemy;
+    private Transform thresholdPlayer;
+    private SquadCharacterController thresholdSource;
+    private bool thresholdOwnershipHeld;
+    private int thresholdPreparedFrame;
+    public SquadCharacterController ThresholdParticipant => thresholdSource;
     private CombatHealthThresholdStage activeStage;
     private ThresholdSequence activeSequence;
     private SequenceState state;
@@ -74,10 +81,22 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void UpdateThresholdFlamePause()
     {
+        if (state == SequenceState.Pending && pendingRoutine == null && Time.frameCount > thresholdPreparedFrame)
+        {
+            AbortActiveSequence("notification de degats de palier absente");
+            return;
+        }
+        if (state != SequenceState.Idle && (activeEnemy == null || !activeEnemy.IsAvailable ||
+            activeEnemy.IsDead && !thresholdKillApplied || combatManager == null ||
+            (!NetworkThresholdListening && !combatManager.IsCombatActive) || !HasValidThresholdParticipant()))
+        {
+            AbortActiveSequence("acteur ou combat de palier invalide");
+            return;
+        }
         bool paused = activeEnemy != null && activeEnemy.IsFlameDormant &&
             (state == SequenceState.PlayingSequence || state == SequenceState.SuccessPresentation);
-        CombatTimeDomain next = paused && combatManager != null && combatManager.PlayerRoot != null
-            ? combatManager.PlayerRoot.GetComponent<CombatTimeDomain>() : null;
+        CombatTimeDomain next = paused && thresholdPlayer != null
+            ? thresholdPlayer.GetComponent<CombatTimeDomain>() : null;
         if (next == thresholdFlamePausedPlayer) return;
         thresholdFlamePausedPlayer?.SetIntrinsicPause(this, false);
         thresholdFlamePausedPlayer = next;
@@ -103,17 +122,35 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     /// <summary>Prevents a second hit or a new retaliation from racing an armed stage.</summary>
     public bool BlocksEnemyActions(EnemyController enemy)
     {
-        return enemy != null && enemy == activeEnemy &&
+        if (!IsNetworkThresholdEngine && FindNetworkThresholdEngine(enemy) is CombatHealthThresholdController engine)
+            return engine.BlocksEnemyActions(enemy);
+        ReleaseInvalidPendingParticipant();
+        return activeEnemy != null && activeEnemy.Matches(enemy) &&
                (state == SequenceState.Pending || state == SequenceState.PlayingSequence ||
                 state == SequenceState.SuccessPresentation);
     }
 
-    public bool HasPendingStage(EnemyController enemy) => enemy != null && enemy == activeEnemy && state == SequenceState.Pending;
+    public bool HasPendingStage(EnemyController enemy) => !IsNetworkThresholdEngine && FindNetworkThresholdEngine(enemy) is CombatHealthThresholdController engine
+        ? engine.HasPendingStage(enemy) : BlocksEnemyActions(enemy) && state == SequenceState.Pending;
     public bool ShouldSuspendEnemy(EnemyController enemy) => BlocksEnemyActions(enemy) &&
+        (!HasPendingStage(enemy) || !enemy.IsAttackCommitted);
+
+    public bool BlocksEnemyActions(LitBrainsEnemy enemy)
+    {
+        if (!IsNetworkThresholdEngine && FindNetworkThresholdEngine(enemy) is CombatHealthThresholdController engine)
+            return engine.BlocksEnemyActions(enemy);
+        ReleaseInvalidPendingParticipant();
+        return activeEnemy != null && activeEnemy.Matches(enemy) &&
+            (state == SequenceState.Pending || state == SequenceState.PlayingSequence || state == SequenceState.SuccessPresentation);
+    }
+    public bool HasPendingStage(LitBrainsEnemy enemy) => !IsNetworkThresholdEngine && FindNetworkThresholdEngine(enemy) is CombatHealthThresholdController engine
+        ? engine.HasPendingStage(enemy) : BlocksEnemyActions(enemy) && state == SequenceState.Pending;
+    public bool ShouldSuspendEnemy(LitBrainsEnemy enemy) => BlocksEnemyActions(enemy) &&
         (!HasPendingStage(enemy) || !enemy.IsAttackCommitted);
 
     private void Awake()
     {
+        if (IsNetworkThresholdEngine) { ResolveReferences(); return; }
         if (Instance != null && Instance != this)
         {
             Destroy(this);
@@ -146,17 +183,31 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     /// Called before CharacterInfo receives damage. Returns the amount that may
     /// pass through; an armed stage clamps exactly to its threshold.
     /// </summary>
-    public bool TryPrepareDamage(EnemyController enemy, int requestedDamage, out int allowedDamage)
+    public bool TryPrepareDamage(EnemyController enemy, int requestedDamage, out int allowedDamage, SquadCharacterController source = null)
+        => TryPrepareDamage(CombatHealthThresholdTarget.From(enemy), requestedDamage, out allowedDamage, source);
+
+    public bool TryPrepareDamage(LitBrainsEnemy enemy, int requestedDamage, out int allowedDamage, SquadCharacterController source = null)
+        => TryPrepareDamage(CombatHealthThresholdTarget.From(enemy), requestedDamage, out allowedDamage, source);
+
+    private bool TryPrepareDamage(CombatHealthThresholdTarget enemy, int requestedDamage, out int allowedDamage, SquadCharacterController source)
     {
+        if (IsNetworkThresholdEngine) ResolveReferences();
+        if (NetworkThresholdListening && !IsNetworkThresholdEngine && source != null)
+        {
+            var engine = source.GetComponent<CombatHealthThresholdController>();
+            if (engine != null && engine != this) return engine.TryPrepareDamage(enemy, requestedDamage, out allowedDamage, source);
+        }
         allowedDamage = Mathf.Max(0, requestedDamage);
-        if (enemy == null || requestedDamage <= 0 || state != SequenceState.Idle)
+        ReleaseInvalidPendingParticipant();
+        if (!isActiveAndEnabled || !CombatProtectionDamage.HasAuthority || enemy == null || !enemy.IsAvailable ||
+            requestedDamage <= 0 || state != SequenceState.Idle)
         {
             return false;
         }
 
         CharacterInfo health = enemy.Health;
         CharacterData data = ResolveCharacterData(enemy);
-        if (health == null || data == null || !data.isEnemy || !data.enableCombatHealthThresholds || health.IsDead)
+        if (health == null || health.MaxHp < 2 || data == null || !data.isEnemy || !data.enableCombatHealthThresholds || enemy.IsDead)
         {
             return false;
         }
@@ -168,24 +219,86 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
 
         int thresholdHp = Mathf.Clamp(Mathf.CeilToInt(health.MaxHp * (next.healthPercent / 100f)), 1, health.MaxHp - 1);
-        if (health.CurrentHp <= thresholdHp || health.CurrentHp - requestedDamage > thresholdHp)
+        bool retry = ThresholdRetryStages.TryGetValue(enemy.Root, out var retryStage) && retryStage == next;
+        if ((!retry && health.CurrentHp <= thresholdHp) || health.CurrentHp - requestedDamage > thresholdHp)
         {
             return false;
         }
 
+        if (!CanExecuteThresholdParticipant(source, out string participantIssue))
+        {
+            if (participantWarnings.Add(participantIssue))
+                Debug.LogWarning("[CombatThreshold] " + participantIssue + " Damage is not clamped; no substitute participant is selected.", this);
+            return false;
+        }
         activeEnemy = enemy;
+        thresholdSource = source;
+        thresholdPlayer = source.transform;
         activeStage = next;
         state = SequenceState.Pending;
-        allowedDamage = health.CurrentHp - thresholdHp;
-        Trace("Palier arme | enemy='" + enemy.name + "' | hp=" + health.CurrentHp + " -> " + thresholdHp +
+        thresholdPreparedFrame = Time.frameCount;
+        ThresholdRetryStages.Remove(enemy.Root);
+        // Retry abandoned stages below the threshold only for a valid new impact source.
+        // Callers must notify a prepared threshold even when allowedDamage is zero.
+        allowedDamage = retry && health.CurrentHp <= thresholdHp
+            ? Mathf.Min(requestedDamage, Mathf.Max(0, health.CurrentHp - 1)) : health.CurrentHp - thresholdHp;
+        Trace("Palier arme | enemy='" + enemy.Name + "' | hp=" + health.CurrentHp + " -> " + thresholdHp +
               " | stage=" + next.healthPercent + "%.");
         return true;
     }
 
-    /// <summary>Called only after the clamped health change has been committed.</summary>
-    public void NotifyThresholdDamageApplied(EnemyController enemy)
+    private bool CanExecuteThresholdParticipant(SquadCharacterController source, out string issue)
     {
-        if (state != SequenceState.Pending || enemy == null || enemy != activeEnemy || activeStage == null)
+        if (NetworkThresholdListening) return CanExecuteNetworkThresholdParticipant(source, out issue);
+        // Local input must never authorize a network participant.
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution)
+        {
+            issue = nameof(CombatLocalCinematicPolicy);
+            return false;
+        }
+        if (source == null) { issue = "Threshold damage requires an explicit source actor."; return false; }
+        if (!source.isActiveAndEnabled || source.CurrentHp <= 0 || source.CharacterData != null && source.CharacterData.isEnemy)
+        { issue = "Threshold source actor is not an active living player."; return false; }
+        if (combatManager == null || combatManager.PlayerRoot != source.transform)
+        { issue = "Remote threshold participant execution is unavailable on this local combat manager."; return false; }
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening)
+        {
+            var identity = source.GetComponentInParent<Unity.Netcode.NetworkObject>();
+            if (!network.IsServer || identity == null || !identity.IsSpawned ||
+                !network.ConnectedClients.ContainsKey(identity.OwnerClientId))
+            { issue = "Threshold source actor has no connected authoritative network identity."; return false; }
+        }
+        issue = null;
+        return true;
+    }
+
+    private bool HasValidThresholdParticipant() => thresholdSource != null && thresholdPlayer != null &&
+        thresholdSource.transform == thresholdPlayer && CanExecuteThresholdParticipant(thresholdSource, out _);
+
+    private void ReleaseInvalidPendingParticipant()
+    {
+        if (state == SequenceState.Pending && activeStage != null && !HasValidThresholdParticipant())
+            AbortActiveSequence("participant de palier indisponible avant lancement");
+    }
+
+    /// <summary>Called after committing prepared damage, including a zero-damage retry.</summary>
+    public void NotifyThresholdDamageApplied(EnemyController enemy, SquadCharacterController source = null)
+        => NotifyThresholdDamageApplied((Component)enemy, source);
+
+    public void NotifyThresholdDamageApplied(LitBrainsEnemy enemy, SquadCharacterController source = null)
+        => NotifyThresholdDamageApplied((Component)enemy, source);
+
+    private void NotifyThresholdDamageApplied(Component enemy, SquadCharacterController source)
+    {
+        if (NetworkThresholdListening && !IsNetworkThresholdEngine && source != null)
+        {
+            var engine = source.GetComponent<CombatHealthThresholdController>();
+            if (engine != null && engine != this) { engine.NotifyThresholdDamageApplied(enemy, source); return; }
+        }
+        ReleaseInvalidPendingParticipant();
+        if (state != SequenceState.Pending || activeEnemy == null || !activeEnemy.Matches(enemy) || activeStage == null ||
+            source == null || source != thresholdSource)
         {
             return;
         }
@@ -198,34 +311,58 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private bool failureImpactResolved;
 
     public void NotifyFailureRetaliationImpact(EnemyController enemy, SkillSO skill, int applied)
+        => NotifyFailureRetaliationImpact((Component)enemy, skill, applied);
+
+    public void NotifyFailureRetaliationImpact(LitBrainsEnemy enemy, SkillSO skill, int applied)
+        => NotifyFailureRetaliationImpact((Component)enemy, skill, applied);
+
+    private void NotifyFailureRetaliationImpact(Component enemy, SkillSO skill, int applied)
     {
-        if (state != SequenceState.FailureRetaliation || enemy == null || enemy != activeEnemy ||
+        if (!IsNetworkThresholdEngine && FindNetworkThresholdEngine(enemy) is CombatHealthThresholdController engine)
+        { engine.NotifyFailureRetaliationImpact(enemy, skill, applied); return; }
+        if (state != SequenceState.FailureRetaliation || activeEnemy == null || !activeEnemy.Matches(enemy) ||
             activeStage == null || failureImpactResolved || GetCurrentStep()?.failureRetaliationSkill != skill) return;
         failureImpactResolved = true;
-        if (applied > 0) combatManager?.ApplyThresholdFailureKnockback(enemy, 3f);
+        if (applied > 0)
+        {
+            if (NetworkThresholdListening) StartCoroutine(NetworkThresholdFailureKnockback(sessionToken, 3f));
+            else combatManager?.ApplyThresholdFailureKnockback(activeEnemy.Target, 3f);
+        }
         Trace("Impact de riposte palier | enemy='" + enemy.name + "' | damage=" + applied + ".");
     }
 
     /// <summary>Allows the existing EndEnemyAttack event to finish a failed QTE attack.</summary>
     public bool TryCompleteFailureRetaliation(EnemyController enemy)
+        => TryCompleteFailureRetaliation((Component)enemy);
+
+    public bool TryCompleteFailureRetaliation(LitBrainsEnemy enemy)
+        => TryCompleteFailureRetaliation((Component)enemy);
+
+    private bool TryCompleteFailureRetaliation(Component enemy)
     {
-        if (state != SequenceState.FailureRetaliation || enemy == null || enemy != activeEnemy)
+        if (!IsNetworkThresholdEngine && FindNetworkThresholdEngine(enemy) is CombatHealthThresholdController engine)
+            return engine.TryCompleteFailureRetaliation(enemy);
+        if (state != SequenceState.FailureRetaliation || activeEnemy == null || !activeEnemy.Matches(enemy))
         {
             return false;
         }
 
-        RequestFailureRetaliationCompletion(enemy);
+        RequestFailureRetaliationCompletion(activeEnemy);
         return true;
     }
 
     public void AbortActiveSequence(string reason)
     {
-        ClearAttackReaction();
         if (state == SequenceState.Idle)
         {
+            ClearAttackReaction();
             return;
         }
 
+        if (state == SequenceState.Pending && activeEnemy != null && activeEnemy.Root != null &&
+            !activeEnemy.IsDead && activeStage != null)
+            ThresholdRetryStages[activeEnemy.Root] = activeStage;
+        if (thresholdOwnershipHeld) ClearAttackReaction();
         sessionToken++;
         if (pendingRoutine != null) StopCoroutine(pendingRoutine);
         if (qteRoutine != null) StopCoroutine(qteRoutine);
@@ -238,11 +375,11 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         SetQteInputEnabled(false);
         ReleaseQteSlowMotion();
         qteOpen = false;
-        qtePanel?.HideImmediate();
+        if (thresholdOwnershipHeld && !NetworkThresholdListening) qtePanel?.HideImmediate();
 
         state = SequenceState.Idle;
 
-        ClearPlayerThresholdVisualState();
+        if (thresholdOwnershipHeld) ClearPlayerThresholdVisualState();
         RestoreCombatOwnership();
         Trace("Session annulee | reason=" + reason + ".");
         ClearActive();
@@ -251,12 +388,22 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private IEnumerator BeginWhenCombatIsAvailable(int token)
     {
         yield return null;
+        double pendingStartedAt = Time.unscaledTimeAsDouble;
         while (token == sessionToken && state == SequenceState.Pending)
         {
+            if (NetworkThresholdListening && Time.unscaledTimeAsDouble - pendingStartedAt > 15)
+            {
+                AbortActiveSequence("reservation/placement reseau indisponible apres 15s ; palier reessayable au prochain contact");
+                yield break;
+            }
             ResolveReferences();
+            if (!HasValidThresholdParticipant())
+            {
+                AbortActiveSequence("participant de palier indisponible avant lancement");
+                yield break;
+            }
             if (combatManager == null || activeEnemy == null || activeStage == null ||
-                !combatManager.IsCombatActive || combatManager.EngagedEnemy != activeEnemy ||
-                (activeEnemy.Health != null && activeEnemy.Health.IsDead))
+                (!NetworkThresholdListening && !combatManager.IsThresholdTargetEngaged(activeEnemy.Target)) || activeEnemy.IsDead)
             {
                 AbortActiveSequence("combat ou cible invalide");
                 yield break;
@@ -264,7 +411,8 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
             // Let an already-authored enemy action complete, but do not allow
             // the AI to arm another one while the stage is pending.
-            if (!activeEnemy.IsFlameDormant && !activeEnemy.IsAttackCommitted && !combatManager.IsCinematicSequenceActive && !attackQteActive)
+            if (!activeEnemy.IsFlameDormant && !activeEnemy.IsAttackCommitted &&
+                (NetworkThresholdListening || !combatManager.IsCinematicSequenceActive && !attackQteActive))
             {
                 if (TryResolveStagePose(out Vector3 playerPosition, out Quaternion playerRotation, out Quaternion enemyRotation, out string poseIssue))
                 {
@@ -283,6 +431,12 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private bool StartSequence(int token, Vector3 playerPosition, Quaternion playerRotation, Quaternion enemyRotation)
     {
+        if (token != sessionToken || state != SequenceState.Pending) return true;
+        if (!HasValidThresholdParticipant())
+        {
+            AbortActiveSequence("participant de palier indisponible avant reservation");
+            return true;
+        }
         activeSequence = activeStage != null ? activeStage.sequence : null;
         if (token != sessionToken || activeSequence == null || !activeSequence.IsComplete)
         {
@@ -290,12 +444,25 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return true;
         }
 
-        combatManager.CancelPlayerActionForCinematic();
+        if (NetworkThresholdListening)
+        {
+            if (!TryAcquireNetworkThreshold()) return false;
+        }
+        else if (!combatManager.TryBeginCinematicTarget(this, activeEnemy.Target,
+                () => AbortActiveSequence("reservation de palier interrompue")))
+        {
+            Trace("Palier en attente de reservation de la cible.");
+            return false;
+        }
+        thresholdOwnershipHeld = true;
+        if (!NetworkThresholdActive) combatManager.CancelPlayerActionForCinematic();
         SuspendEncounter();
-        combatManager.SetCinematicSequenceActive(true);
+        if (!NetworkThresholdActive) combatManager.SetCinematicSequenceActive(true);
         // A threshold is in-place and owns no virtual camera. Keep UCC's look
         // input alive while its movement lock still rejects locomotion.
-        playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock, disableGameplayInput: false);
+        playerLockHeld = NetworkThresholdActive ? TryLockNetworkThresholdPlayer() :
+            combatManager.TryLockPlayerForCinematic(this, out playerLock, disableGameplayInput: false);
+        if (!playerLockHeld) { AbortActiveSequence("verrou de palier refuse"); return true; }
         if (!ApplyStagePose(playerPosition, playerRotation, enemyRotation, out string placementError))
         {
             RestoreCombatOwnership();
@@ -304,7 +471,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        Animator playerAnimator = combatManager.PlayerAnimator;
+        Animator playerAnimator = ThresholdAnimator;
         string qteStateName = activeSequence.PlayerQteStateName;
         int qteStateHash = Animator.StringToHash(qteStateName);
         string successStateName = activeSequence.SuccessPlayerStateName;
@@ -334,19 +501,23 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         state = SequenceState.PlayingSequence;
         openedQteCount = 0;
         completedQteCount = 0;
-        InputModeCoordinator.Enter(this, InputMode.ThresholdSequence);
-        combatInput?.SetCinematicInputSuspended(true);
+        if (!NetworkThresholdActive)
+        {
+            InputModeCoordinator.Enter(this, InputMode.ThresholdSequence);
+            combatInput?.SetCinematicInputSuspended(true);
+        }
         PreparePlayerThresholdVisualState();
         playerAnimator.CrossFade(qteStateHash, GetCurrentStep().playerQteEntryBlendSeconds, 0, 0f);
+        PublishNetworkThresholdPresentation(false);
         qteEventWatchdogRoutine = StartCoroutine(WatchForQteEvent(token, 1));
-        Trace("Sequence palier lancee | enemy='" + activeEnemy.name + "' | stage=" + activeStage.healthPercent + "% | state='" + qteStateName + "' | qtes=" + expectedQteCount + " | steps=" + activeSequence.StepCount + ".");
+        Trace("Sequence palier lancee | enemy='" + activeEnemy.Name + "' | stage=" + activeStage.healthPercent + "% | state='" + qteStateName + "' | qtes=" + expectedQteCount + " | steps=" + activeSequence.StepCount + ".");
         return true;
     }
 
     private IEnumerator ExpireQte(int token, float duration)
     {
         float elapsed = 0f;
-        while (elapsed < duration)
+        while (NetworkThresholdActive ? networkThresholdSession.Poll() != CombatNetworkQteResult.Expired : elapsed < duration)
         {
             if (token != sessionToken || !qteOpen || state != SequenceState.PlayingSequence)
             {
@@ -355,7 +526,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
             if (activeEnemy != null && activeEnemy.IsFlameDormant) { yield return null; continue; }
             elapsed += Time.unscaledDeltaTime;
-            qtePanel?.SetProgress(elapsed / duration);
+            if (!NetworkThresholdActive) qtePanel?.SetProgress(elapsed / duration);
             yield return null;
         }
 
@@ -383,10 +554,10 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     public bool AcceptsQteEvent(AnimationEvent source)
     {
         if (source == null || !source.isFiredByAnimator || state != SequenceState.PlayingSequence ||
-            combatManager == null || combatManager.PlayerAnimator == null) return false;
+            ThresholdAnimator == null) return false;
         var step = GetCurrentStep();
         if (step == null || source.animatorClipInfo.clip != step.qtePresentationClip) return false;
-        var animator = combatManager.PlayerAnimator;
+        var animator = ThresholdAnimator;
         var current = animator.GetCurrentAnimatorStateInfo(0);
         var next = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
         // Do not accept an event from a previous step fading out of the same generic state.
@@ -421,8 +592,8 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
-        ResolveQteInput();
-        if (qteMap == null)
+        if (!NetworkThresholdActive) ResolveQteInput();
+        if (!NetworkThresholdActive && qteMap == null)
         {
             FailQte("ActionMap CombatQTE indisponible");
             return;
@@ -433,6 +604,13 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         qteOpen = true;
         if (qteEventWatchdogRoutine != null) StopCoroutine(qteEventWatchdogRoutine);
         qteEventWatchdogRoutine = null;
+        if (NetworkThresholdActive)
+        {
+            if (!OpenNetworkThresholdWindow(parsed)) { FailQte("fenetre reseau refusee"); return; }
+            if (qteRoutine != null) StopCoroutine(qteRoutine);
+            qteRoutine = StartCoroutine(ExpireQte(sessionToken, GetCurrentQteDuration()));
+            return;
+        }
         InputModeCoordinator.Enter(this, InputMode.CombatQTE);
         SetQteInputEnabled(true);
         InputAction expected = GetQteAction(parsed);
@@ -465,7 +643,8 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         qteEventWatchdogRoutine = null;
         SetQteInputEnabled(false);
         ReleaseQteSlowMotion();
-        qtePanel?.ResolveFailure();
+        if (NetworkThresholdActive) ResolveNetworkThresholdWindow(false);
+        else qtePanel?.ResolveFailure();
         state = SequenceState.FailureRetaliation;
         failureImpactResolved = false;
         MarkActiveStageResolved();
@@ -483,10 +662,11 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
 
         SkillSO skill = failedStep.failureRetaliationSkill;
-        bool started = skill != null && activeEnemy.TryStartThresholdFailureRetaliation(skill);
+        bool started = skill != null && HasValidThresholdParticipant() &&
+            activeEnemy.TryStartThresholdFailureRetaliation(skill, thresholdSource);
         if (!started)
         {
-            Debug.LogWarning("[CombatThreshold] Riposte de palier indisponible pour '" + activeEnemy.name +
+            Debug.LogWarning("[CombatThreshold] Riposte de palier indisponible pour '" + activeEnemy.Name +
                              "' (skill='" + (skill != null ? skill.name : "None") + "). Reprise du combat.", this);
             FinishFailureRetaliation();
             return;
@@ -507,7 +687,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
     }
 
-    private void RequestFailureRetaliationCompletion(EnemyController enemy)
+    private void RequestFailureRetaliationCompletion(CombatHealthThresholdTarget enemy)
     {
         if (failureCompletionRequested || enemy == null)
         {
@@ -515,20 +695,25 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
 
         failureCompletionRequested = true;
-        enemy.CompleteEnemyAttackWhenGrounded(() =>
+        int token = sessionToken;
+        enemy.CompleteFailureRetaliation(combatManager, () =>
         {
-            combatManager?.CompleteEnemyAttack(enemy);
-            enemy.ReturnToIdleAnimation();
-            enemy.GetComponent<EnemyController>()?.NotifyAttackCompleted();
-            FinishFailureRetaliation();
+            if (token == sessionToken && state == SequenceState.FailureRetaliation && activeEnemy == enemy)
+                FinishFailureRetaliation();
         });
     }
 
     private void FinishFailureRetaliation()
     {
         ClearPlayerThresholdVisualState();
-        combatManager?.ResumePlayerLocomotionAfterCinematic(false, false);
-        LocalPlayerInput.RequestHeldLocomotionReconciliation("riposte de palier terminee");
+        if (HasValidThresholdParticipant())
+        {
+            if (!NetworkThresholdListening)
+            {
+                combatManager.ResumePlayerLocomotionAfterCinematic(false, false);
+                LocalPlayerInput.RequestHeldLocomotionReconciliation("riposte de palier terminee");
+            }
+        }
         ClearActive();
     }
 
@@ -540,7 +725,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
-        Animator animator = combatManager.PlayerAnimator;
+        Animator animator = ThresholdAnimator;
         string successStateName = activeSequence.SuccessPlayerStateName;
         int stateHash = Animator.StringToHash(successStateName);
         if (animator == null || !animator.HasState(0, stateHash))
@@ -557,6 +742,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
         state = SequenceState.SuccessPresentation;
         animator.CrossFade(stateHash, GetCurrentStep().successEntryBlendSeconds, 0, 0f);
+        PublishNetworkThresholdPresentation(true);
         StartSuccessResolutionDelay();
         Trace("QTE reussi | animation='" + successStateName + "' | resolution=" +
               GetCurrentStep().successResolutionDelaySeconds.ToString("F2") + "s.");
@@ -595,7 +781,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void BeginIntermediateStepSuccessPresentation()
     {
-        Animator animator = combatManager != null ? combatManager.PlayerAnimator : null;
+        Animator animator = ThresholdAnimator;
         AnimationClip successClip = GetCurrentSuccessClip();
         int successStateHash = Animator.StringToHash(activeSequence.SuccessPlayerStateName);
         if (animator == null || successClip == null || !animator.HasState(0, successStateHash))
@@ -606,6 +792,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
         state = SequenceState.SuccessPresentation;
         animator.CrossFade(successStateHash, GetCurrentStep().successEntryBlendSeconds, 0, 0f);
+        PublishNetworkThresholdPresentation(true);
         if (successRoutine != null) StopCoroutine(successRoutine);
         successRoutine = StartCoroutine(AdvanceAfterIntermediateStepSuccess(sessionToken, successClip.length));
         Trace("QTE reussi | etape=" + (currentStepIndex + 1) + "/" + activeSequence.StepCount +
@@ -635,7 +822,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
         Animator animator = boundPlayerAnimator != null
             ? boundPlayerAnimator
-            : (combatManager != null ? combatManager.PlayerAnimator : null);
+            : ThresholdAnimator;
         int qteStateHash = Animator.StringToHash(activeSequence.PlayerQteStateName);
         if (animator == null || !animator.HasState(0, qteStateHash))
         {
@@ -645,6 +832,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
         state = SequenceState.PlayingSequence;
         animator.CrossFade(qteStateHash, GetCurrentStep().playerQteEntryBlendSeconds, 0, 0f);
+        PublishNetworkThresholdPresentation(false);
         qteEventWatchdogRoutine = StartCoroutine(WatchForQteEvent(token, openedQteCount + 1));
         Trace("Etape suivante lancee | step=" + (currentStepIndex + 1) + "/" + activeSequence.StepCount +
               " | qte='" + boundQteClip.name + "'.");
@@ -654,7 +842,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     {
         Animator animator = boundPlayerAnimator != null
             ? boundPlayerAnimator
-            : (combatManager != null ? combatManager.PlayerAnimator : null);
+            : ThresholdAnimator;
         int combatIdleHash = Animator.StringToHash("CombatIdle");
         ThresholdSequenceStep step = GetCurrentStep();
         float blend = step != null ? step.successExitBlendSeconds : 0.16f;
@@ -664,6 +852,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
 
         animator.CrossFade(combatIdleHash, blend, 0, 0f);
+        PublishNetworkThresholdExit(blend);
         Trace("Sortie animation de succes | destination=CombatIdle | blend=" + blend.ToString("F2") + "s.");
         yield return WaitForThresholdSeconds(Mathf.Max(0f, blend));
     }
@@ -671,6 +860,11 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private void ResolveSuccessResultAtDelay()
     {
         if (successResultResolved || activeSequence == null) return;
+        if (!HasValidThresholdParticipant())
+        {
+            AbortActiveSequence("participant de palier indisponible avant resolution");
+            return;
+        }
 
         successResultResolved = true;
         MarkActiveStageResolved();
@@ -680,13 +874,13 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
-        EnemyController enemy = activeEnemy;
+        CombatHealthThresholdTarget enemy = activeEnemy;
         thresholdKillApplied = enemy != null && combatManager != null &&
-                              combatManager.CompleteThresholdKill(enemy, endCombatImmediately: false);
+                              enemy.ForceDefeat();
         if (!thresholdKillApplied)
         {
             Debug.LogWarning("[CombatThreshold] KillEnemy n'a pas pu mettre fin aux PV de '" +
-                             (enemy != null ? enemy.name : "None") + "'. Le combat reprendra a la fin de l'animation.", this);
+                             (enemy != null ? enemy.Name : "None") + "'. Le combat reprendra a la fin de l'animation.", this);
         }
         else
         {
@@ -702,20 +896,26 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
+        if (!HasValidThresholdParticipant())
+        {
+            AbortActiveSequence("participant de palier indisponible en fin de presentation");
+            return;
+        }
         ResolveSuccessResultAtDelay();
         ThresholdSequenceStep finalStep = GetCurrentStep();
         CombatHealthThresholdSuccessResult result = finalStep != null
             ? finalStep.successResult
             : CombatHealthThresholdSuccessResult.ResumeCombat;
-        EnemyController enemy = activeEnemy;
+        CombatHealthThresholdTarget enemy = activeEnemy;
         bool killApplied = thresholdKillApplied;
         ClearPlayerThresholdVisualState();
         RestoreCombatOwnership();
         ClearActive();
 
+        if (NetworkThresholdListening) return;
         if (result == CombatHealthThresholdSuccessResult.KillEnemy && killApplied && enemy != null)
         {
-            combatManager?.FinishThresholdKillPresentation(enemy);
+            combatManager?.FinishThresholdKillPresentation(enemy.Target);
             return;
         }
 
@@ -726,26 +926,54 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private void RestoreCombatOwnership()
     {
         RestoreEncounter();
-        combatManager?.SetCinematicSequenceActive(false);
+        if (!thresholdOwnershipHeld) return;
+        thresholdOwnershipHeld = false;
+        if (NetworkThresholdActive)
+        {
+            ReleaseNetworkThreshold();
+            if (playerLockHeld) { playerLock?.Dispose(); playerLockHeld = false; }
+            return;
+        }
+        combatManager?.EndCinematicTarget(this);
+        if (combatManager != null && thresholdPlayer != null && combatManager.PlayerRoot == thresholdPlayer)
+            combatManager.SetCinematicSequenceActive(false);
         if (playerLockHeld)
         {
             playerLock?.Dispose();
             playerLockHeld = false;
         }
         InputModeCoordinator.Exit(this);
-        if (combatManager != null && combatManager.IsCombatActive) combatInput?.SetCinematicInputSuspended(false);
+        // Never redirect cleanup/input to an actor that replaced the captured participant.
+        if (combatManager == null || thresholdPlayer == null || combatManager.PlayerRoot != thresholdPlayer) return;
+        if (combatManager.IsCombatActive) combatInput?.SetCinematicInputSuspended(false);
         else combatInput?.SetInputActive(false);
     }
 
     private void SuspendEncounter()
     {
         suspendedEnemies.Clear();
-        EnemyController[] behaviours = FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
-        for (int i = 0; i < behaviours.Length; i++)
+        if (!SoloTeamProgression.IsSolo)
         {
-            if (behaviours[i] == null) continue;
-            behaviours[i].SetCinematicSuspended(true);
-            suspendedEnemies.Add(behaviours[i]);
+            if (activeEnemy != null)
+            {
+                activeEnemy.SetCinematicSuspended(true);
+                suspendedEnemies.Add(activeEnemy);
+            }
+            return;
+        }
+        foreach (var enemy in FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude))
+        {
+            var target = CombatHealthThresholdTarget.From(enemy);
+            if (target == null) continue;
+            target.SetCinematicSuspended(true);
+            suspendedEnemies.Add(target);
+        }
+        foreach (var enemy in FindObjectsByType<LitBrainsEnemy>(FindObjectsInactive.Exclude))
+        {
+            var target = CombatHealthThresholdTarget.From(enemy);
+            if (target == null) continue;
+            target.SetCinematicSuspended(true);
+            suspendedEnemies.Add(target);
         }
     }
 
@@ -758,7 +986,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         suspendedEnemies.Clear();
     }
 
-    private CombatHealthThresholdStage GetNextValidStage(EnemyController enemy, CharacterData data)
+    private CombatHealthThresholdStage GetNextValidStage(CombatHealthThresholdTarget enemy, CharacterData data)
     {
         if (data.combatHealthThresholdStages == null || data.combatHealthThresholdStages.Count == 0) return null;
         HashSet<CombatHealthThresholdStage> resolved = GetResolvedStages(enemy);
@@ -786,31 +1014,31 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         return candidate;
     }
 
-    private HashSet<CombatHealthThresholdStage> GetResolvedStages(EnemyController enemy)
+    private HashSet<CombatHealthThresholdStage> GetResolvedStages(CombatHealthThresholdTarget enemy)
     {
-        if (!resolvedStages.TryGetValue(enemy, out HashSet<CombatHealthThresholdStage> resolved))
+        if (IsNetworkThresholdEngine && Instance != null && Instance != this) return Instance.GetResolvedStages(enemy);
+        if (!resolvedStages.TryGetValue(enemy.Root, out HashSet<CombatHealthThresholdStage> resolved))
         {
             resolved = new HashSet<CombatHealthThresholdStage>();
-            resolvedStages.Add(enemy, resolved);
+            resolvedStages.Add(enemy.Root, resolved);
         }
         return resolved;
     }
 
     private void MarkActiveStageResolved()
     {
-        if (activeEnemy != null && activeStage != null) GetResolvedStages(activeEnemy).Add(activeStage);
+        if (activeEnemy != null && activeEnemy.Root != null && activeStage != null)
+        {
+            GetResolvedStages(activeEnemy).Add(activeStage);
+            ThresholdRetryStages.Remove(activeEnemy.Root);
+        }
     }
 
-    private static CharacterData ResolveCharacterData(EnemyController enemy)
-    {
-        CharacterInfo info = enemy != null
-            ? enemy.GetComponent<CharacterInfo>() ?? enemy.GetComponentInChildren<CharacterInfo>(true)
-            : null;
-        return info != null ? info.CharacterData : null;
-    }
+    private static CharacterData ResolveCharacterData(CombatHealthThresholdTarget enemy) => enemy?.Data;
 
     private void ClearActive()
     {
+        ReleaseNetworkThreshold();
         RestorePlayerThresholdAnimationBindings();
         pendingRoutine = null;
         qteRoutine = null;
@@ -825,7 +1053,10 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         failureCompletionRequested = false;
         successResultResolved = false;
         thresholdKillApplied = false;
+        state = SequenceState.Idle;
         activeEnemy = null;
+        thresholdPlayer = null;
+        thresholdSource = null;
         UpdateThresholdFlamePause();
         activeStage = null;
         activeSequence = null;
@@ -878,6 +1109,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void SetQteInputEnabled(bool enabled)
     {
+        if (NetworkThresholdListening) return;
         if (qteMap == null) return;
         if (!enabled) qteMap.Disable();
         // Enable is intentionally left to InputModeCoordinator: it is the
@@ -894,11 +1126,11 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         playerRotation = Quaternion.identity;
         enemyRotation = Quaternion.identity;
         issue = "references acteur manquantes";
-        Transform playerRoot = combatManager != null ? combatManager.PlayerRoot : null;
+        Transform playerRoot = thresholdPlayer;
         if (playerRoot == null || activeEnemy == null) return false;
 
-        Vector3 enemyPosition = activeEnemy.transform.position;
-        Vector3 forward = Vector3.ProjectOnPlane(activeEnemy.transform.forward, Vector3.up);
+        Vector3 enemyPosition = activeEnemy.Root.position;
+        Vector3 forward = Vector3.ProjectOnPlane(activeEnemy.Root.forward, Vector3.up);
         if (forward.sqrMagnitude < 0.0001f)
         {
             forward = Vector3.ProjectOnPlane(playerRoot.position - enemyPosition, Vector3.up);
@@ -1031,7 +1263,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     {
         rootPosition = default;
         issue = "sol introuvable";
-        float rayStart = Mathf.Max(activeEnemy.transform.position.y, playerRoot.position.y) + 4f;
+        float rayStart = Mathf.Max(activeEnemy.Root.position.y, playerRoot.position.y) + 4f;
         if (!Physics.Raycast(new Vector3(horizontalCandidate.x, rayStart, horizontalCandidate.z), Vector3.down,
                 out RaycastHit groundHit, 12f, GetStageSettings().stageGroundMask, QueryTriggerInteraction.Ignore))
         {
@@ -1061,13 +1293,13 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     {
         Transform candidate = collider.transform;
         return candidate == playerRoot || candidate.IsChildOf(playerRoot) ||
-               candidate == activeEnemy.transform || candidate.IsChildOf(activeEnemy.transform);
+               candidate == activeEnemy.Root || candidate.IsChildOf(activeEnemy.Root);
     }
 
     private bool ApplyStagePose(Vector3 playerPosition, Quaternion playerRotation, Quaternion enemyRotation, out string error)
     {
         error = null;
-        Transform playerRoot = combatManager != null ? combatManager.PlayerRoot : null;
+        Transform playerRoot = thresholdPlayer;
         if (playerRoot == null || activeEnemy == null)
         {
             error = "acteurs absents";
@@ -1084,10 +1316,10 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        CharacterAnimationController enemyContract = activeEnemy.GetComponent<CharacterAnimationController>();
+        CharacterAnimationController enemyContract = activeEnemy.Root.GetComponent<CharacterAnimationController>();
         bool enemyPlaced = enemyContract != null
-            ? enemyContract.SetActorPose(activeEnemy.transform.position, enemyRotation)
-            : activeEnemy.TryGetComponent(out EnemyController behaviour) && behaviour.PlaceForCinematic(activeEnemy.transform.position, enemyRotation);
+            ? enemyContract.SetActorPose(activeEnemy.Root.position, enemyRotation)
+            : activeEnemy.PlaceForCinematic(activeEnemy.Root.position, enemyRotation);
         if (!enemyPlaced)
         {
             error = "rotation cinematographique de l'ennemi refusee";
@@ -1095,13 +1327,19 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         }
 
         Physics.SyncTransforms();
-        Trace("Pose palier appliquee | player=" + playerPosition + " | enemy=" + activeEnemy.transform.position + " | distance=" +
-              Vector3.Distance(new Vector3(playerPosition.x, 0f, playerPosition.z), new Vector3(activeEnemy.transform.position.x, 0f, activeEnemy.transform.position.z)).ToString("F3") + ".");
+        Trace("Pose palier appliquee | player=" + playerPosition + " | enemy=" + activeEnemy.Root.position + " | distance=" +
+              Vector3.Distance(new Vector3(playerPosition.x, 0f, playerPosition.z), new Vector3(activeEnemy.Root.position.x, 0f, activeEnemy.Root.position.z)).ToString("F3") + ".");
         return true;
     }
 
     private void OnQteButton(CombatThresholdQteInput input, InputAction.CallbackContext context)
     {
+        if (NetworkThresholdListening) return;
+        if (IsSequenceActive && !HasValidThresholdParticipant())
+        {
+            AbortActiveSequence("participant de palier indisponible pendant QTE");
+            return;
+        }
         if (activeEnemy != null && activeEnemy.IsFlameDormant) return;
         if (context.phase != InputActionPhase.Performed || !qteOpen || state != SequenceState.PlayingSequence) return;
         if (waitingForExpectedRelease) return;
@@ -1111,6 +1349,11 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
+        CompleteQteSuccess();
+    }
+
+    private void CompleteQteSuccess()
+    {
         qteOpen = false;
         if (qteRoutine != null) StopCoroutine(qteRoutine);
         qteRoutine = null;
@@ -1118,8 +1361,12 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         qteEventWatchdogRoutine = null;
         SetQteInputEnabled(false);
         ReleaseQteSlowMotion();
-        qtePanel?.ResolveSuccess();
-        InputModeCoordinator.Enter(this, InputMode.ThresholdSequence);
+        if (NetworkThresholdActive) ResolveNetworkThresholdWindow(true);
+        else
+        {
+            qtePanel?.ResolveSuccess();
+            InputModeCoordinator.Enter(this, InputMode.ThresholdSequence);
+        }
         completedQteCount++;
         if (HasRemainingQtesInCurrentStep())
         {
@@ -1186,6 +1433,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private void ResolveReferences()
     {
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
+        if (combatManager == null && IsNetworkThresholdEngine) combatManager = RealTimeCombatManager.Instance;
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
         if (qtePanel == null) qtePanel = QTEPanelController.Instance;
         if (qtePanel == null) qtePanel = UnityEngine.Object.FindAnyObjectByType<QTEPanelController>(FindObjectsInactive.Include);
@@ -1206,6 +1454,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
     private void AcquireQteSlowMotion()
     {
         ReleaseQteSlowMotion();
+        if (NetworkThresholdListening) return;
         TimeManager manager = TimeManager.EnsureInstance();
         if (manager == null)
         {
@@ -1248,7 +1497,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void PreparePlayerThresholdVisualState()
     {
-        Transform playerRoot = combatManager != null ? combatManager.PlayerRoot : null;
+        Transform playerRoot = thresholdPlayer;
         LitOpsiveLocomotionBridge bridge = playerRoot != null
             ? playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)
             : null;
@@ -1257,7 +1506,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void ClearPlayerThresholdVisualState()
     {
-        Transform playerRoot = combatManager != null ? combatManager.PlayerRoot : null;
+        Transform playerRoot = thresholdPlayer;
         LitOpsiveLocomotionBridge bridge = playerRoot != null
             ? playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)
             : null;
@@ -1428,7 +1677,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
 
     private void TransitionPlayerToThresholdIdle()
     {
-        Animator animator = combatManager != null ? combatManager.PlayerAnimator : null;
+        Animator animator = ThresholdAnimator;
         int combatIdleHash = Animator.StringToHash("CombatIdle");
         if (animator == null || !animator.HasState(0, combatIdleHash))
         {
@@ -1439,6 +1688,7 @@ public sealed partial class CombatHealthThresholdController : MonoBehaviour
         ThresholdSequenceStep step = GetCurrentStep();
         float blend = step != null ? step.failureIdleBlendSeconds : 0.10f;
         animator.CrossFade(combatIdleHash, blend, 0, 0f);
+        PublishNetworkThresholdExit(blend);
         Trace("QTE echoue | transition fluide vers CombatIdle | blend=" + blend.ToString("F2") + "s.");
     }
 

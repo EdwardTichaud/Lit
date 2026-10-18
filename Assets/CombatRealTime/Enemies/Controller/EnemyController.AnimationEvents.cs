@@ -44,6 +44,7 @@ public sealed partial class EnemyController
     public void HandleQTE(string input)
     {
         if (IsFlameDormant) return;
+        if (Unity.Netcode.NetworkManager.Singleton?.IsListening == true) { HandleOpenEnemyReactionOpportunity(); return; }
         EnemyController enemy = this;
         if (enemy != null) CombatHealthThresholdController.Instance?.OpenAttackQte(enemy, input);
         else CombatHealthThresholdController.Instance?.OpenQte(input);
@@ -52,6 +53,20 @@ public sealed partial class EnemyController
     public void HandleOpenEnemyReactionOpportunity()
     {
         if (IsFlameDormant) return;
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening)
+        {
+            if (!network.IsServer || Target == null || ActiveSkill == null) return;
+            EnemyReactionTiming timing = null;
+            int count = 0;
+            float impact = 0;
+            if (ActiveSkill.AnimationClip != null)
+                foreach (var entry in ActiveSkill.AnimationClip.events)
+                    if (entry.functionName == "EnemyAttack" && entry.objectReferenceParameter == ActiveSkill) { count++; impact = entry.time; }
+            if (count == 1) timing = new EnemyReactionTiming(Animator, ActiveSkill.AnimationClip, ActiveSkill.AnimatorState, impact, ActionSequenceId);
+            Target.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>()?.ServerOpenEnemyReaction(GetComponent<Unity.Netcode.NetworkObject>(), timing);
+            return;
+        }
         CombatHealthThresholdController.Instance?.OpenEnemyReactionOpportunity(this);
     }
 
@@ -62,6 +77,7 @@ public sealed partial class EnemyController
     {
         if (IsFlameDormant || !BrainAuthority || sequence != ActionSequenceId || ActiveSkill == null || (sequence == completedActionSequence && !recovery)) return;
         completedActionSequence = sequence;
+        Target?.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>()?.ServerEndEnemyReaction(GetComponent<Unity.Netcode.NetworkObject>(), sequence);
         CombatHealthThresholdController.Instance?.EndEnemyReactionAction(this);
         if (IsAutonomousActionActive)
         {

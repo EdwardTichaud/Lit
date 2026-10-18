@@ -7,6 +7,49 @@ using Unity.Cinemachine;
 
 public sealed class LitTacticalCameraTests
 {
+    [Test] public void IgnoreObstaclesBypassesBoomAndPanByDefault()
+    {
+        var root = new GameObject("Developer camera");
+        var profile = ScriptableObject.CreateInstance<LitTacticalCameraProfile>();
+        try
+        {
+            var controller = root.AddComponent<LitGameplayCameraModeController>();
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(LitGameplayCameraModeController).GetField("profile", flags).SetValue(controller, profile);
+            typeof(LitGameplayCameraModeController).GetField("effectiveMode", flags).SetValue(controller, GameplayCameraMode.Tactical);
+            Assert.That(profile.obstacleMode, Is.EqualTo(TacticalObstacleMode.IgnoreObstacles));
+            Assert.That(controller.IgnoringObstacles, Is.True);
+            Assert.That(controller.ConstrainPose(Vector3.zero, Vector3.one * 10, .3f), Is.EqualTo(Vector3.one * 10));
+            Assert.That(controller.ConstrainPan(Vector3.zero, Vector3.one * 10, .3f), Is.EqualTo(Vector3.one * 10));
+            controller.BeginExternalControl();
+            Assert.That(controller.IgnoringObstacles, Is.False);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(profile); }
+    }
+
+    [TestCase("BeginExternalControl")]
+    [TestCase("OnDisable")]
+    [TestCase("OnDestroy")]
+    [TestCase("ResetPoseTracking")]
+    public void ContextReleaseRestoresOriginalNearPlane(string method)
+    {
+        var root = new GameObject("Near clip lifecycle");
+        try
+        {
+            var camera = root.AddComponent<Camera>();
+            var controller = root.AddComponent<LitGameplayCameraModeController>();
+            camera.nearClipPlane = .23f;
+            var clip = new LitTacticalNearClip(camera);
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+            typeof(LitGameplayCameraModeController).GetField("nearClip", flags).SetValue(controller, clip);
+            clip.Apply(20, 19, 5, .5f, .15f, .1f);
+            Assert.That(camera.nearClipPlane, Is.GreaterThan(.23f));
+            typeof(LitGameplayCameraModeController).GetMethod(method, flags).Invoke(controller, null);
+            Assert.That(camera.nearClipPlane, Is.EqualTo(.23f));
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
     [Test] public void TacticalMotorPreservesLocalAxesAndDoesNotCompeteForFacing()
     {
         var type = new LitTacticalMovementType();
@@ -49,13 +92,17 @@ public sealed class LitTacticalCameraTests
     [TestCase(TacticalObstacleMode.VisibilityMask, true, false, TacticalObstacleMode.Sliding)]
     [TestCase(TacticalObstacleMode.VisibilityMask, false, true, TacticalObstacleMode.Sliding)]
     [TestCase(TacticalObstacleMode.VisibilityMask, true, true, TacticalObstacleMode.Sliding)]
+    [TestCase(TacticalObstacleMode.IgnoreObstacles, false, false, TacticalObstacleMode.IgnoreObstacles)]
+    [TestCase(TacticalObstacleMode.IgnoreObstacles, true, false, TacticalObstacleMode.IgnoreObstacles)]
+    [TestCase(TacticalObstacleMode.IgnoreObstacles, false, true, TacticalObstacleMode.Sliding)]
+    [TestCase(TacticalObstacleMode.IgnoreObstacles, true, true, TacticalObstacleMode.Sliding)]
     public void ObstacleResolutionRestoresSlidingOutsideFollow(TacticalObstacleMode requested, bool free, bool cinematic, TacticalObstacleMode expected)
         => Assert.That(LitTacticalCameraProfile.ResolveObstacleMode(requested, free, cinematic), Is.EqualTo(expected));
 
-    [Test] public void ProfileKeepsSlidingAsDefault()
+    [Test] public void ProfileUsesIgnoreObstaclesAsDefault()
     {
         var profile = ScriptableObject.CreateInstance<LitTacticalCameraProfile>();
-        try { Assert.That(profile.obstacleMode, Is.EqualTo(TacticalObstacleMode.Sliding)); }
+        try { Assert.That(profile.obstacleMode, Is.EqualTo(TacticalObstacleMode.IgnoreObstacles)); }
         finally { Object.DestroyImmediate(profile); }
     }
 

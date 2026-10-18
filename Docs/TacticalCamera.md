@@ -2,6 +2,18 @@
 
 ## Utilisation
 
+### Option développeur : IgnoreObstacles et plan proche adaptatif
+
+Le profil `TacticalDefault` et les nouveaux profils utilisent par défaut **Obstacle Mode → IgnoreObstacles** pour conserver la distance de caméra sans rétraction ni glissement. Ce mode ignore aussi les collisions du pan en L3 ; les limites de distance, les volumes de limites et le sondage du sol restent actifs. Il ne masque aucun renderer. La scène `Iluvilirae_Test` utilise déjà ce profil sur `CombatLab_GameplayCamera` et démarre en mode tactique : elle bénéficie directement de ce réglage, avec la découpe adaptative activée. Les autres profils explicitement configurés ne sont pas migrés.
+
+En suivi, `Adaptive Near Clip` coupe le premier plan jusqu'à environ **5 m devant le joueur** dans l'axe de la caméra affichée. Les volumes corporels stables du joueur et de la cible verrouillée devant la caméra limitent la coupe, avec **0,5 m** de sécurité. La coupe avance sur **0,15 s** et recule immédiatement pour protéger les personnages. Sans volume exploitable, le plan proche initial est conservé. La capture de volumes exclut les triggers, les modèles animés et les corps de ragdoll ; elle ne dépend pas de leurs renderer bounds. Le joueur utilise en priorité les colliders du moteur UCC.
+
+Le plan proche est calculé avant le rendu HDRP depuis la pose finale affichée, sans modifier la pose UCC, le FOV ni le plan lointain. Il est restitué en L3, hors suivi, en third-person, à la prise de contrôle cinématique, à la perte du personnage et à la désactivation. Les changements de mode ou d'obstacles et les téléportations annulent l'état précédent. L'inspecteur de la MainCamera affiche ses valeurs initiale/effective en mètres et l'état de la découpe.
+
+**Limites :** la coupe est globale : sol, objets et effets proches peuvent disparaître. Un mur situé après le plan proche peut toujours cacher le personnage. Aucun intérieur de mur ni arrière-plan n'est reconstruit. Ces réglages restent réservés à la comparaison développeur, sans option joueur persistante.
+
+Validation : compilation runtime/éditeur réussie ; **38 tests passent** en projet Unity isolé (18 de découpe/restauration/résolution des modes, 14 de stabilité caméra, 6 de calcul moteur). Les tests d'intégration de contexte et de contournement des contraintes sont inclus et compilés dans `LitTacticalCameraTests`, mais n'ont pas été exécutés dans le projet gameplay. Les essais visuels dans la scène gameplay (obstacle de la vidéo, zoom 1–20 m, L3, lock, Timeline, HDRP/TAA et 30/60/120 FPS) restent nécessaires ; ils ne sont pas remplacés par les tests isolés.
+
 Stabilisation de la visee : la rotation visant le joueur est calculee une fois
 par pas UCC depuis la position finale apres collision, puis utilise la meme
 fraction d'interpolation que la position. Le second filtre LateUpdate et son
@@ -44,10 +56,11 @@ Pour une pièce existante : placer `LitCameraOcclusionGroup` sur un parent des c
 
 Dans `TacticalDefault.asset`, régler **Obstacle Mode** :
 
-- **Sliding** (défaut) : collisions, glissement et rétraction habituels. Aucun renderer n'est caché.
+- **Sliding** : collisions, glissement et rétraction habituels. Aucun renderer n'est caché.
+- **IgnoreObstacles** (défaut) : pas de collision caméra ni masque ; découpe proche adaptative en suivi uniquement, conservant 5 m devant le joueur.
 - **VisibilityMask** : en suivi, conserver le cadrage à travers les groupes compatibles et ouvrir un cercle autour du joueur, plus un second autour de l'ennemi verrouillé si son groupe l'occulte. Les obstacles non configurés ou incompatibles restent solides pour la caméra.
 
-Le choix peut changer en Play sans réinitialiser yaw, zoom ou personnage. L'inspecteur de la MainCamera affiche le choix demandé et effectif. L3/caméra libre impose **Sliding** et retire immédiatement la découpe ; revenir au suivi restitue le choix du profil. Une Timeline, la sortie du mode tactique, une désactivation ou le déchargement des groupes restitue les propriétés. Le relais UCC/Cinemachine n'est pas modifié.
+Le choix peut changer en Play sans réinitialiser yaw, zoom ou personnage. L'inspecteur de la MainCamera affiche le choix demandé et effectif. L3/caméra libre remplace **VisibilityMask** par **Sliding**, mais conserve **IgnoreObstacles** sans découpe proche adaptative ; revenir au suivi restitue les effets du profil. Une Timeline, la sortie du mode tactique, une désactivation ou le déchargement des groupes restitue les propriétés. Le relais UCC/Cinemachine n'est pas modifié.
 
 Les réglages initiaux sont `Mask Radius = 0.16` (fraction de hauteur de l'écran), `Mask Feather = 0.025`, `Mask Fade Time = 0.12 s`, détection `0.05 s`, délai de restitution `0.15 s`. Le cercle reste rond quel que soit le format d'image. Les ouvertures se combinent par union, ne découpent que la géométrie devant la cible, et sont désactivées pour une cible derrière la caméra. L'ancrage du joueur est celui du suivi UCC, sans os animé.
 

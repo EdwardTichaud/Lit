@@ -43,6 +43,7 @@ public static class TargetMobilitySkillSetup
             skill.targetLunge.passThroughTarget = skill == eclair;
             skill.targetLunge.passThroughDistance = 4;
             skill.targetLunge.reboundHorizontalImpulse = skill.targetLunge.reboundVerticalImpulse = 0;
+            SkillTargetingAuthoring.ConfigureIfMissing(skill);
             EditorUtility.SetDirty(skill);
         }
         bond.skillName = "Bond offensif";

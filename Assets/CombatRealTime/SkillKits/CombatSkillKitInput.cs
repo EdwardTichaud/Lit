@@ -1,8 +1,7 @@
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>Solo kit selection; the existing actor executes skills, never a hidden teammate.</summary>
+/// <summary>Solo support kits or the multiplayer actor's own kit; never spawns teammates.</summary>
 [DisallowMultipleComponent]
 public sealed class CombatSkillKitInput : MonoBehaviour
 {
@@ -10,24 +9,63 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     private RealTimeCombatInput combatInput;
     private RealTimeCombatManager manager;
     private InputAction selectKit, wheelSelectKit, cancel, support;
-    private readonly InputAction[] buttons = new InputAction[4];
     private bool subscribed, cancelNeedsRelease, faceNeedsRelease;
     private int consumedFrame = -1;
     private Transform openedActor;
+    private bool openedSolo;
+    private SoloTeamProgression subscribedTeam;
     private InputControl heldSelectControl;
     private CombatSkillKit heldSelectedKit;
     public bool IsOpen { get; private set; }
     public CombatSkillKit ActiveKit { get; private set; }
     public bool IsSolo => SoloTeamProgression.IsSolo;
-    public bool IsAvailable => isActiveAndEnabled && IsSolo && catalog != null;
+    public bool IsAvailable => isActiveAndEnabled && catalog != null &&
+        (IsSolo || TryResolveKit(ActiveKit, out _));
 
     public static SkillSO GetOwnedSkill(SquadCharacterController actor, CombatSkillKit kit, int slot)
     {
         var manager = RealTimeCombatManager.Instance;
         var input = manager != null ? manager.GetComponent<CombatSkillKitInput>() : null;
-        return actor != null && manager != null && manager.IsCombatActive && manager.PlayerRoot == actor.transform &&
-            input != null && input.IsAvailable && SoloTeamProgression.Resolve()?.IsUnlocked(kit, slot) == true
+        return actor != null && manager != null && (manager.IsCombatActive || manager.AllowsFreeAttacks) && manager.PlayerRoot == actor.transform &&
+            input != null && input.IsAvailable && input.IsSlotAvailable(kit, slot)
                 ? input.catalog.GetSkill(kit, slot) : null;
+    }
+
+    private bool TryResolveKit(CombatSkillKit requested, out CombatSkillKit kit)
+    {
+        var actor = manager != null && manager.PlayerRoot != null
+            ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true) : null;
+        return TryResolveActorKit(catalog, actor != null ? actor.CharacterData : null, IsSolo, requested, out kit);
+    }
+
+    private static bool TryResolveActorKit(CombatSkillKitCatalog source, CharacterData character, bool solo,
+        CombatSkillKit requested, out CombatSkillKit kit)
+    {
+        kit = requested;
+        if (source == null) return false;
+        if (solo) return source.GetSkills(requested) != null;
+        if (character == null) return false;
+        foreach (CombatSkillKit candidate in System.Enum.GetValues(typeof(CombatSkillKit)))
+        {
+            if (source.IsCharacter(character, candidate))
+            { kit = candidate; return true; }
+        }
+        return false;
+    }
+
+    private bool IsSlotAvailable(CombatSkillKit kit, int slot)
+    {
+        if (catalog == null || catalog.GetSkill(kit, slot) == null) return false;
+        return IsSolo ? SoloTeamProgression.Resolve()?.IsUnlocked(kit, slot) == true :
+            TryResolveKit(kit, out var owned) && owned == kit;
+    }
+
+    private SkillSO[] GetAvailableSkills(CombatSkillKit kit)
+    {
+        var result = new SkillSO[4];
+        for (int i = 0; i < result.Length; i++)
+            if (IsSlotAvailable(kit, i)) result[i] = catalog.GetSkill(kit, i);
+        return result;
     }
 
     private void OnEnable()
@@ -36,8 +74,8 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         combatInput = GetComponent<RealTimeCombatInput>();
         catalog = Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default");
         InputModeCoordinator.ModeChanged += OnModeChanged;
-        var team = SoloTeamProgression.Resolve();
-        if (team != null) team.Changed += OnTeamChanged;
+        subscribedTeam = SoloTeamProgression.Resolve();
+        if (subscribedTeam != null) subscribedTeam.Changed += OnTeamChanged;
         TrySubscribe();
     }
 
@@ -50,10 +88,11 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         }
         if (!subscribed) TrySubscribe();
         var pad = Gamepad.current;
-        if (heldSelectControl != null && heldSelectControl.EvaluateMagnitude() <= .5f) heldSelectControl = null;
+        RefreshSelectionRelease();
         if (faceNeedsRelease && !AnyFaceHeld(pad)) faceNeedsRelease = false;
-        if (cancelNeedsRelease && (pad == null || !pad.leftTrigger.isPressed)) cancelNeedsRelease = false;
-        if (IsOpen && (!IsSolo || manager == null || !manager.isActiveAndEnabled || !manager.IsCombatActive ||
+        if (cancelNeedsRelease && (pad == null || !pad.buttonEast.isPressed)) cancelNeedsRelease = false;
+        if (IsOpen && (IsSolo != openedSolo || !TryResolveKit(ActiveKit, out var owned) || owned != ActiveKit ||
+            manager == null || !manager.isActiveAndEnabled || !manager.IsCombatActive && !manager.AllowsFreeAttacks ||
             manager.PlayerRoot != openedActor ||
             manager.PlayerRoot == null || manager.PlayerRoot.GetComponent<SquadCharacterController>()?.CurrentHp <= 0)) Close();
     }
@@ -67,17 +106,13 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         wheelSelectKit = wheel.FindAction("SelectSkillKit", false);
         cancel = wheel.FindAction("Cancel", false);
         support = wheel.FindAction("CycleSupportTarget", false);
-        var names = new[] { "SkillX", "SkillY", "SkillA", "SkillB" };
-        for (int i = 0; i < 4; i++) buttons[i] = wheel.FindAction(names[i], false);
-        if (selectKit == null || wheelSelectKit == null || cancel == null || support == null ||
-            System.Array.Exists(buttons, action => action == null)) return;
+        if (selectKit == null || wheelSelectKit == null || cancel == null || support == null) return;
         selectKit.performed += OnSelect;
         wheelSelectKit.performed += OnSelect;
         selectKit.canceled += OnSelectionReleased;
         wheelSelectKit.canceled += OnSelectionReleased;
         cancel.performed += OnCancel;
         support.performed += OnSupport;
-        foreach (var button in buttons) button.performed += OnSkill;
         subscribed = true;
     }
 
@@ -85,9 +120,8 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     {
         Close();
         InputModeCoordinator.ModeChanged -= OnModeChanged;
-        var team = GetComponent<SoloTeamProgression>();
-        if (team == null && SquadManager.Instance != null) team = SquadManager.Instance.GetComponent<SoloTeamProgression>();
-        if (team != null) team.Changed -= OnTeamChanged;
+        if (subscribedTeam != null) subscribedTeam.Changed -= OnTeamChanged;
+        subscribedTeam = null;
         Unsubscribe();
         faceNeedsRelease = false;
         heldSelectControl = null;
@@ -103,7 +137,6 @@ public sealed class CombatSkillKitInput : MonoBehaviour
             wheelSelectKit.canceled -= OnSelectionReleased;
             cancel.performed -= OnCancel;
             support.performed -= OnSupport;
-            foreach (var button in buttons) button.performed -= OnSkill;
         }
         subscribed = false;
     }
@@ -119,60 +152,74 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         if (!CombatSkillKitCatalog.TryDirection(context.ReadValue<Vector2>(), out var kit)) return;
         // Enabling the destination map can replay the still-held D-pad. Only
         // a physical release/new press (or another direction) is a new request.
-        if (heldSelectControl == context.control && heldSelectedKit == kit) return;
-        heldSelectControl = context.control;
-        heldSelectedKit = kit;
-        if (IsOpen && ActiveKit == kit) Close();
+        if (!TryConsumeSelection(context.control, kit)) return;
+        if (IsOpen)
+        {
+            if (CombatSkillKitCatalog.TrySkillDirection(context.ReadValue<Vector2>(), out int slot)) TryUseSlot(slot);
+        }
         else Open(kit);
+    }
+
+    private bool TryConsumeSelection(InputControl control, CombatSkillKit direction)
+    {
+        if (control == null || !control.device.added) return false;
+        RefreshSelectionRelease();
+        if (heldSelectControl == control && heldSelectedKit == direction) return false;
+        heldSelectControl = control;
+        heldSelectedKit = direction;
+        return true;
     }
 
     private void OnSelectionReleased(InputAction.CallbackContext context)
     {
         // Map disabling also emits canceled, but must not count as a release.
-        if (context.control != null && context.control.EvaluateMagnitude() <= .5f) heldSelectControl = null;
+        if (heldSelectControl != null && context.control == heldSelectControl) RefreshSelectionRelease();
+    }
+
+    private void RefreshSelectionRelease()
+    {
+        if (heldSelectControl != null && (!heldSelectControl.device.added ||
+            heldSelectControl.EvaluateMagnitude() <= .5f)) heldSelectControl = null;
     }
 
     public bool Open(CombatSkillKit kit)
     {
-        var team = SoloTeamProgression.Resolve();
-        if (team == null || !team.IsRecruited(kit)) { Feedback("Ce membre n’a pas encore rejoint l’équipe"); return false; }
-        if (!IsAvailable || manager == null || !manager.isActiveAndEnabled || !manager.IsCombatActive || manager.IsCinematicSequenceActive ||
+        if (!TryResolveKit(kit, out kit)) return false;
+        if (IsSolo && SoloTeamProgression.Resolve()?.IsRecruited(kit) != true)
+        { Feedback("Ce membre n’a pas encore rejoint l’équipe"); return false; }
+        if (!IsAvailable || manager == null || !manager.isActiveAndEnabled || !manager.IsCombatActive && !manager.AllowsFreeAttacks || manager.IsCinematicSequenceActive ||
             CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsCinematicPlaying ||
-            (InputModeCoordinator.CurrentMode != InputMode.Combat && InputModeCoordinator.CurrentMode != InputMode.CombatWheel)) return false;
+            (InputModeCoordinator.CurrentMode != InputMode.Combat && InputModeCoordinator.CurrentMode != InputMode.CombatWheel &&
+                !(manager.AllowsFreeAttacks && InputModeCoordinator.CurrentMode == InputMode.Exploration))) return false;
         var actor = manager.PlayerRoot != null ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true) : null;
         if (actor == null || !actor.isActiveAndEnabled || actor.CurrentHp <= 0) return false;
+        if (actor.GetComponent<PlayerActionPresentationController>()?.IsChargingSkill == true) return false;
         if (IsOpen && ActiveKit == kit) return true;
-        if (!combatInput.DisplaySkillKit(kit.ToString(), team.GetAvailableSkills(kit))) return false;
-        ApplyLockedSlots(kit, team);
+        if (combatInput == null || !combatInput.DisplaySkillKit(kit.ToString(), GetAvailableSkills(kit))) return false;
+        ApplyLockedSlots(kit);
         ActiveKit = kit;
         if (!IsOpen)
         {
             combatInput.CancelBufferedBasicSkills();
             CounterSkillCombatController.Instance?.EndGuard();
             faceNeedsRelease = AnyFaceHeld(Gamepad.current);
-            cancelNeedsRelease = Gamepad.current != null && Gamepad.current.leftTrigger.isPressed;
+            cancelNeedsRelease = Gamepad.current != null && Gamepad.current.buttonEast.isPressed;
             IsOpen = true;
             openedActor = manager.PlayerRoot;
+            openedSolo = IsSolo;
             InputModeCoordinator.Enter(this, InputMode.CombatWheel);
         }
         return true;
     }
 
-    private void OnSkill(InputAction.CallbackContext context)
-    {
-        if (!IsOpen || faceNeedsRelease || InputModeCoordinator.CurrentMode != InputMode.CombatWheel) return;
-        int slot = System.Array.IndexOf(buttons, context.action);
-        TryUseSlot(slot);
-    }
-
     public bool TryUseSlot(int slot)
     {
         if (!IsOpen || !IsAvailable || InputModeCoordinator.CurrentMode != InputMode.CombatWheel || manager == null) return false;
-        if (!manager.IsCombatActive || manager.IsCinematicSequenceActive ||
+        if (!manager.IsCombatActive && !manager.AllowsFreeAttacks || manager.IsCinematicSequenceActive ||
             CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsCinematicPlaying) return false;
-        if (manager.PlayerRoot != openedActor || !manager.isActiveAndEnabled) { Close(); return false; }
-        var team = SoloTeamProgression.Resolve();
-        if (team == null || !team.IsUnlocked(ActiveKit, slot))
+        if (manager.PlayerRoot != openedActor || !manager.isActiveAndEnabled || IsSolo != openedSolo ||
+            !TryResolveKit(ActiveKit, out var owned) || owned != ActiveKit) { Close(); return false; }
+        if (!IsSlotAvailable(ActiveKit, slot))
         { Feedback(catalog.GetSkill(ActiveKit, slot) == null ? "Emplacement vide" : "Compétence verrouillée"); return false; }
         var skill = catalog.GetSkill(ActiveKit, slot);
         consumedFrame = Time.frameCount;
@@ -186,14 +233,17 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         {
             skills?.SetAnimationEventSkill(previous);
             float cooldown = manager.GetSkillCooldownRemaining(skill);
-            Feedback(cooldown > 0 ? $"Recharge : {cooldown:0.#} s" : "Skill indisponible : cible, portee ou action en cours");
+            Feedback(cooldown > 0 ? $"Recharge : {cooldown:0.#} s" : manager.LastSkillTargetingFailure ?? "Skill indisponible : cible, portee ou action en cours");
         }
         return accepted;
     }
 
     private void OnCancel(InputAction.CallbackContext context)
     {
-        if (!cancelNeedsRelease) Close();
+        if (!IsOpen || cancelNeedsRelease || InputModeCoordinator.CurrentMode != InputMode.CombatWheel) return;
+        consumedFrame = Time.frameCount;
+        faceNeedsRelease = AnyFaceHeld(Gamepad.current);
+        Close();
     }
 
     private void OnSupport(InputAction.CallbackContext context)
@@ -225,18 +275,18 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         if (IsOpen && mode != InputMode.CombatWheel) Close();
     }
 
-    private void ApplyLockedSlots(CombatSkillKit kit, SoloTeamProgression team)
+    private void ApplyLockedSlots(CombatSkillKit kit)
     {
         var wheel = FindAnyObjectByType<SkillWheel>(FindObjectsInactive.Include);
         for (int i = 0; i < 4; i++)
-            wheel?.SetKitSlotLocked(i, catalog.GetSkill(kit, i) != null && !team.IsUnlocked(kit, i));
+            wheel?.SetKitSlotLocked(i, catalog.GetSkill(kit, i) != null && !IsSlotAvailable(kit, i));
     }
     private void OnTeamChanged()
     {
-        if (!IsOpen) return;
+        if (!IsOpen || !IsSolo) return;
         var team = SoloTeamProgression.Resolve();
         if (team == null || !team.IsRecruited(ActiveKit)) { Close(); return; }
-        combatInput.DisplaySkillKit(ActiveKit.ToString(), team.GetAvailableSkills(ActiveKit));
-        ApplyLockedSlots(ActiveKit, team);
+        combatInput.DisplaySkillKit(ActiveKit.ToString(), GetAvailableSkills(ActiveKit));
+        ApplyLockedSlots(ActiveKit);
     }
 }

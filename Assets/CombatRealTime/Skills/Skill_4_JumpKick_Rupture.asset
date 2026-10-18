@@ -35,6 +35,7 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: 8a0a8d6b1b6feb24683287416aef46f2, type: 2}
   animatorState: Base Layer.Skill_4_JumpKick_Rupture
   damages: 15
+  stunSeconds: 1
   clarityGainOnHit: 1
   presentation:
     movementPolicy: 2
@@ -42,7 +43,7 @@ MonoBehaviour:
     chainNormalizedTime: 1
     chainTransitionNormalizedTime: 1
     mobilityCancelNormalizedTime: 0.7
-    recoveryNormalizedTime: 0.96
+    recoveryNormalizedTime: 1
     exitBlendSeconds: 0.1
     handoff:
       minimumContactSeconds: 0
@@ -56,8 +57,14 @@ MonoBehaviour:
       preLandingLeadSeconds: 0.14
     facingMode: 1
     allowMoveAfterRecovery: 1
-    allowDodgeAfterRecovery: 1
-    allowMobilityCancel: 1
+    allowDodgeAfterRecovery: 0
+    allowMobilityCancel: 0
+    allowDamageInterruption: 0
+    lockMovementDuringAnimation: 1
+  targetingMode: 7
+  useLaunchRange: 1
+  minimumLaunchDistance: 0
+  maximumLaunchDistance: 3
   minimumHitDistance: 0
   maximumHitDistance: 3.25
   requireValidRangeToStart: 1

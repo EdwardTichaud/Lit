@@ -1031,8 +1031,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8042427873171094604}
   - component: {fileID: 1540775231359556178}
+  - component: {fileID: 8042427873171094604}
   - component: {fileID: 5545541408349660141}
   - component: {fileID: 5545541408349660142}
   - component: {fileID: 5545541408349660143}
@@ -1060,6 +1060,24 @@ Transform:
   - {fileID: 4887593163214760033}
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8042427873171094604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2322614124138243873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!95 &5545541408349660141
 Animator:
   serializedVersion: 7
@@ -1344,8 +1362,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8042039068537332620}
   - component: {fileID: 1962244032958566552}
+  - component: {fileID: 8042039068537332620}
   - component: {fileID: 3754094688540085027}
   - component: {fileID: 810000000000000001}
   - component: {fileID: 810000000000000002}
@@ -1361,6 +1379,11 @@ GameObject:
   - component: {fileID: 6062841937014225081}
   - component: {fileID: 410000000000000003}
   - component: {fileID: 5055366391145990297}
+  - component: {fileID: 6951612675227300572}
+  - component: {fileID: 8868621787766275264}
+  - component: {fileID: 252141622148537241}
+  - component: {fileID: 5427115876292573108}
+  - component: {fileID: 6053998901621181222}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -1385,6 +1408,24 @@ Transform:
   - {fileID: 410000000000000002}
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8042039068537332620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!114 &3754094688540085027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1431,8 +1472,8 @@ MonoBehaviour:
   playerActionPresentation: {fileID: 0}
   playerMobility: {fileID: 810000000000000007}
   combatInput: {fileID: 810000000000000002}
-  combatSkillCinematicController: {fileID: 0}
-  combatHealthThresholdController: {fileID: 0}
+  combatSkillCinematicController: {fileID: 8868621787766275264}
+  combatHealthThresholdController: {fileID: 5055366391145990297}
   lockedEnemy: {fileID: 0}
   engagedEnemy: {fileID: 0}
   lockRange: 6
@@ -1445,6 +1486,7 @@ MonoBehaviour:
   logCombatDisengageDiagnostics: 1
   playerHurtAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   playerHurtTransitionDuration: 0.05
+  supportTarget: {fileID: 0}
 --- !u!114 &810000000000000002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1483,8 +1525,6 @@ MonoBehaviour:
   mobilityInputBufferSeconds: 0.12
   dodgeForwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
   dodgeBackwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
-  dodgeLeftState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root
-  dodgeRightState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root
   dodge:
     cooldownSeconds: 0.25
     entryBlendSeconds: 0.05
@@ -1802,7 +1842,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LightSkillCombatController
   combatManager: {fileID: 810000000000000001}
   combatInput: {fileID: 810000000000000002}
-  cinematicPlayback: {fileID: 0}
+  cinematicPlayback: {fileID: 6062841937014225081}
   lightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
   logLightSkillDiagnostics: 1
   cinematicCompletionGraceSeconds: 1.5
@@ -1848,13 +1888,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CounterSkillCombatController
   combatManager: {fileID: 810000000000000001}
   director: {fileID: 810000000000000005}
-  cinematicPlayback: {fileID: 0}
+  cinematicPlayback: {fileID: 6062841937014225081}
   counterVirtualCamera: {fileID: 7926320162611101663}
   cameraRig: {fileID: 7088912455650331963}
   impactFeedback: {fileID: 810000000000000004}
   availableSkills:
-  - {fileID: 11400000, guid: 8418564374f398941bb11ff9df6a6dba, type: 2}
-  defaultCounterSkill: {fileID: 11400000, guid: 8418564374f398941bb11ff9df6a6dba, type: 2}
+  - {fileID: 11400000, guid: c0aab7bfa7220944e8d2083b3e06c6fd, type: 2}
+  defaultCounterSkill: {fileID: 11400000, guid: c0aab7bfa7220944e8d2083b3e06c6fd, type: 2}
   guardedDamageMultiplier: 0.4
   guardAnimatorState: Base Layer.RealTimeCombat_RootMotion.Guard_Block
   guardFallbackAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root
@@ -1924,8 +1964,135 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealthThresholdController
   dodgeWindowSeconds: 0.5
   counterWindowSeconds: 0.2
+  counterRetryDelaySeconds: 0.4
   reactionTimeScale: 0.4
   logEnemyReactions: 0
+--- !u!114 &6951612675227300572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fa3e5e4a4eb4e939f7fef4a340f9e0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillsManager
+  playerController: {fileID: 0}
+  equippedSkills:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  groundBasicSkills: []
+  airBasicSkills: []
+--- !u!114 &8868621787766275264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 361aaed9744fcee4687d8a3a7f487105, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatSkillCinematicController
+  combatManager: {fileID: 810000000000000001}
+  combatInput: {fileID: 810000000000000002}
+  cinematicPlayback: {fileID: 6062841937014225081}
+  completionGraceSeconds: 1.5
+--- !u!114 &252141622148537241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72c2e6b985fc7ff43a28dcd6282133e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatSkillKitInput
+--- !u!114 &5427115876292573108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdd4c3940baaeb34184a48dc227b8613, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatLabClashController
+  enableClashes: 1
+  compatiblePlayerSkills:
+  - {fileID: 11400000, guid: 9b9635113b0b36d45b5934c0b2051af7, type: 2}
+  - {fileID: 11400000, guid: 6ca70f7ce54063f4a93b812382496342, type: 2}
+  - {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
+  compatibleEnemyStates:
+  - Attack
+  - Attack_Followup
+  - Juggernaut_Followup
+  - Juggernaut_Strike
+  recoilDistance: 0.6
+  recoilSeconds: 0.18
+  recoverySeconds: 0.15
+  hitVfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  contactAudio: {fileID: 11400000, guid: b1e939b15747f81409aa659a95a1d98d, type: 2}
+  diagnostics: 0
+  playerClips:
+  - source: {fileID: 7400000, guid: 633be3fc5edac7a43a1313fc22f77247, type: 2}
+    replacement: {fileID: 7400000, guid: 015be04822df4ab4c9b8055585bf8a8c, type: 2}
+  - source: {fileID: 7400000, guid: 90065e461f445774282e46bac5ba3899, type: 2}
+    replacement: {fileID: 7400000, guid: 76f25a9c539d1134aba25967f3ddccff, type: 2}
+  - source: {fileID: 7400000, guid: 7bff13e5ed5ecdf4c8060a1e239628fb, type: 2}
+    replacement: {fileID: 7400000, guid: e6b4434562a76a842b975c2732bb3178, type: 2}
+  enemyClips:
+  - source: {fileID: 7400000, guid: afdd35d12c95c6446b5a6380f4ed205b, type: 2}
+    replacement: {fileID: 7400000, guid: 0c3505223bb084844b270d1a486e1c9d, type: 2}
+  - source: {fileID: 7400000, guid: a60d893d891f10147a4de3ac16f48ce0, type: 2}
+    replacement: {fileID: 7400000, guid: c579cd2f0d7d8db46a2955b8c0fa123a, type: 2}
+  labEnemyProfile: {fileID: 11400000, guid: b954198c9d441d34880a7e45f07c88a5, type: 2}
+  authoringVersion: 1
+  playerCenter: {x: 0, y: 1.1, z: 0.8}
+  enemyCenter: {x: 0, y: 1.1, z: 0.8}
+  playerRadius: 0.55
+  enemyRadius: 0.55
+  playerVolume: {fileID: 0}
+  enemyVolume: {fileID: 0}
+--- !u!114 &6053998901621181222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4085240a798b97a4d898f52bd2dbf07e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatWorldRuntime
+  freeAttacks:
+    enabled: 1
+    diagnostics: 0
+    acquisitionCone: 60
+    maximumCorrection: 25
+    turnDegreesPerSecond: 1440
+    freeDashDistance: 10
+    contactCenter: {x: 0, y: 1, z: 1.15}
+    contactRadius: 1.05
+    heightTolerance: 1.8
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  gameplayCamera: {fileID: 2772786180465480446}
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0
@@ -2018,6 +2185,8 @@ MonoBehaviour:
   impactOffset: {x: -1.35, y: 1.1, z: -2.45}
   impactMoveStartNormalized: 0.35
   moveSharpness: 8
+  actorClearance: 0
+  fixedStageFraming: 0
 --- !u!1 &3473681246835330875
 GameObject:
   m_ObjectHideFlags: 0
@@ -3520,6 +3689,11 @@ MonoBehaviour:
   showOutlines: 1
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   thickness: 4
+  scaleThicknessWithCameraDistance: 1
+  nearDistance: 3
+  farDistance: 16
+  nearThickness: 4
+  farThickness: 1.5
   alphaThreshold: 0.1
 --- !u!1 &7527676561694138771
 GameObject:
@@ -4260,39 +4434,3 @@ Transform:
   - {fileID: 2020268470604883354}
   m_Father: {fileID: 1540775231359556178}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8042427873171094604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2322614124138243873}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
-  presentation: {fileID: 0}
-  actorOwner: {fileID: 0}
-  signalTarget: {fileID: 0}
-  cameraRoot: {fileID: 0}
-  previewOnly: 0
-  lastSignal: 
---- !u!114 &8042039068537332620
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
-  presentation: {fileID: 0}
-  actorOwner: {fileID: 0}
-  signalTarget: {fileID: 0}
-  cameraRoot: {fileID: 0}
-  previewOnly: 0
-  lastSignal: 

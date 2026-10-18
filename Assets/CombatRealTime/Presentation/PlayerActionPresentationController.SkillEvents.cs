@@ -11,12 +11,13 @@ public sealed partial class PlayerActionPresentationController
     private PlayerSword playerSword;
     private PlayerActionPresentationController playerActionPresentation;
     private int externalImpactToken = -1;
+    private int retreatImpulseToken = -1;
     private bool resolvingExternalImpactVfx;
     [Header("Input Prompt Animation Events")]
     [SerializeField] private Transform inputPromptAnchor;
     [SerializeField] private Vector3 inputPromptOffset = new Vector3(0f, 1.25f, 0f);
 
-    public void HandleQTE(string input) => CombatHealthThresholdController.Instance?.OpenQte(input);
+    public void HandleQTE(string input) => CombatHealthThresholdController.ForParticipant(this)?.OpenQte(input);
     private Coroutine hideSwordAfterComboRoutine;
     private CombatInputWorldPrompt activeInputPrompt;
 
@@ -104,6 +105,7 @@ public sealed partial class PlayerActionPresentationController
     /// </summary>
     public void HandleResolveLightSkillImpact()
     {
+        if (GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>()?.TryHandleNetworkCinematicImpact() == true) return;
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         if (manager == null)
         {
@@ -116,6 +118,7 @@ public sealed partial class PlayerActionPresentationController
     /// <summary>Player Animation Event: resolves the selected CounterSkill Timeline on its contact frame.</summary>
     public void HandleResolveCounterSkillImpact()
     {
+        if (GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>()?.TryHandleNetworkCinematicImpact() == true) return;
         CounterSkillCombatController.Instance?.ResolveCounterSkillImpact();
     }
 
@@ -126,6 +129,7 @@ public sealed partial class PlayerActionPresentationController
     /// </summary>
     public void HandleResolveCinematicSkillImpact()
     {
+        if (GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>()?.TryHandleNetworkCinematicImpact() == true) return;
         RealTimeCombatManager.Instance?.CombatSkillCinematicController?.ResolveCinematicSkillImpact();
     }
 
@@ -136,7 +140,7 @@ public sealed partial class PlayerActionPresentationController
     {
         SkillSO skill = ResolveSelectedSkill();
         Transform target = RealTimeCombatManager.Instance != null
-            ? RealTimeCombatManager.Instance.LockedTargetPoint
+            ? RealTimeCombatManager.Instance.ActionTargetPoint
             : null;
         if (skill == null || skill.VfxCues == null)
         {
@@ -165,7 +169,7 @@ public sealed partial class PlayerActionPresentationController
     {
         SkillSO skill = ResolveSelectedSkill();
         Transform target = RealTimeCombatManager.Instance != null
-            ? RealTimeCombatManager.Instance.LockedTargetPoint
+            ? RealTimeCombatManager.Instance.ActionTargetPoint
             : null;
         if (skill == null || skill.VfxCues == null || cueIndex < 0 || cueIndex >= skill.VfxCues.Count)
         {
@@ -264,7 +268,8 @@ public sealed partial class PlayerActionPresentationController
         }
         if (ResolveSelectedSkill()?.TargetLunge.resolveImpactAtContact == true &&
             cue.delivery == SkillVfxDelivery.DirectOnTarget && !resolvingExternalImpactVfx) return;
-        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true && cue.delivery == SkillVfxDelivery.DirectOnTarget && !resolvingExternalImpactVfx) return;
+        if ((RealTimeCombatManager.Instance?.UsesExternalTarget == true || RealTimeCombatManager.Instance?.CurrentAttackContext != null) &&
+            cue.delivery == SkillVfxDelivery.DirectOnTarget && !resolvingExternalImpactVfx) return;
 
         if (cue.delivery == SkillVfxDelivery.PlayerHand || cue.delivery == SkillVfxDelivery.PlayerSword)
         {
@@ -272,12 +277,12 @@ public sealed partial class PlayerActionPresentationController
             if (cue.delivery == SkillVfxDelivery.PlayerSword)
             {
                 ResolvePlayerSword();
-                handPoint = playerSword != null ? playerSword.transform : RealTimeCombatManager.Instance?.PlayerRoot;
+                handPoint = playerSword != null ? playerSword.transform : transform;
             }
             else
             {
                 ResolvePlayerBow();
-                handPoint = playerBow != null ? playerBow.transform : RealTimeCombatManager.Instance?.PlayerRoot;
+                handPoint = playerBow != null ? playerBow.transform : transform;
             }
             if (handPoint != null)
             {
@@ -309,7 +314,7 @@ public sealed partial class PlayerActionPresentationController
             return;
         }
 
-        Transform caster = RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.PlayerRoot : null;
+        Transform caster = transform;
         if (cue.delivery == SkillVfxDelivery.ProjectileFromPlayerHand)
         {
             ResolvePlayerBow();
@@ -325,6 +330,19 @@ public sealed partial class PlayerActionPresentationController
         }
     }
 
+    public void PlayExternalSkillVfx(int generation, SkillSO skill, int index)
+    {
+        if (!externallyDriven || !IsCurrentSession(generation) || activePresentedSkill != skill) return;
+        var target = AttackContext?.Target;
+        Transform point = target?.LockPoint != null ? target.LockPoint : target?.Root;
+        for (int i = 0; i < skill.VfxCues.Count; i++)
+        {
+            var cue = skill.VfxCues[i];
+            if ((index >= 0 && i != index) || cue == null || cue.delivery == SkillVfxDelivery.DirectOnTarget) continue;
+            PlaySkillVfxCue(cue, point);
+        }
+    }
+
     private static void PlaySkillVfxCueAudio(SkillVfxCue cue, Vector3 position)
     {
         if (cue.audioClip != null)
@@ -335,13 +353,18 @@ public sealed partial class PlayerActionPresentationController
 
     private System.Collections.IEnumerator PlayProjectileSkillVfx(SkillVfxCue cue, Transform caster, Transform target)
     {
+        var context = attackContext;
+        int generation = activeToken;
+        bool scoped = RealTimeCombatManager.Instance?.AllowsFreeAttacks == true;
+        if (scoped && (context == null || !context.TargetAlive || !IsCurrentSession(generation))) yield break;
         GameObject projectile = Instantiate(cue.prefab, caster.position, caster.rotation, caster);
+        if (scoped) RegisterActionCleanup(generation, () => { if (projectile != null) Destroy(projectile); });
         if (cue.holdAtCasterSeconds > 0f)
         {
             yield return new WaitForSeconds(cue.holdAtCasterSeconds);
         }
 
-        if (projectile == null || target == null)
+        if (projectile == null || target == null || scoped && (!IsCurrentSession(generation) || attackContext != context || !context.TargetAlive))
         {
             if (projectile != null)
             {
@@ -364,24 +387,29 @@ public sealed partial class PlayerActionPresentationController
         }
 
         float elapsed = 0f;
-        while (projectile != null && target != null && elapsed < duration)
+        while (projectile != null && target != null && elapsed < duration &&
+            (!scoped || IsCurrentSession(generation) && attackContext == context && context.TargetAlive))
         {
             elapsed += Time.deltaTime;
             Vector3 destination = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
-            Vector3 direction = destination - projectile.transform.position;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            Vector3 direction = cue.EvaluateProjectileTangent(startPosition, destination, progress);
             if (direction.sqrMagnitude > 0.0001f)
             {
                 projectile.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
             }
 
-            projectile.transform.position = Vector3.Lerp(startPosition, destination, Mathf.Clamp01(elapsed / duration));
+            projectile.transform.position = cue.EvaluateProjectilePosition(startPosition, destination, progress);
             yield return null;
         }
 
+        if (scoped && (!IsCurrentSession(generation) || attackContext != context || !context.TargetAlive))
+        { if (projectile != null) Destroy(projectile); yield break; }
         if (projectile != null && target != null)
         {
             projectile.transform.position = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
-            projectile.transform.rotation = targetPoint.rotation;
+            // Keep the descending tangent on arrival instead of snapping to enemy yaw.
+            if (cue.projectileArcHeightPerMeter <= 0f) projectile.transform.rotation = targetPoint.rotation;
             projectile.transform.SetParent(targetPoint, true);
         }
     }
@@ -401,6 +429,8 @@ public sealed partial class PlayerActionPresentationController
     /// </summary>
     public void HandleResolveSkillImpact()
     {
+        if (activePresentedSkill is ChargedSkillSO) return;
+        if (ResolveSelectedSkill()?.IsGroundImpactSkill == true) return;
         var justice = GetComponent<PlayerJusticeStrike>();
         if (justice != null && justice.OwnsAction) { justice.ResolveImpact(); return; }
         if (ResolveSelectedSkill()?.TargetLunge.resolveImpactAtContact == true) return;
@@ -416,16 +446,22 @@ public sealed partial class PlayerActionPresentationController
     {
         if (skill == null || target == null) return;
         CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, RealTimeCombatManager.Instance?.PlayerRoot);
-        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true || skill.TargetLunge.resolveImpactAtContact)
+        if (RealTimeCombatManager.Instance?.AllowsFreeAttacks == true || RealTimeCombatManager.Instance?.UsesExternalTarget == true || skill.TargetLunge.resolveImpactAtContact)
         {
-            resolvingExternalImpactVfx = true;
-            try
-            {
-                foreach (var cue in skill.VfxCues)
-                    if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget) PlaySkillVfxCue(cue, target);
-            }
-            finally { resolvingExternalImpactVfx = false; }
+            PlayConfirmedSkillContactVfx(skill, target);
         }
+    }
+
+    public void PlayConfirmedSkillContactVfx(SkillSO skill, Transform target)
+    {
+        if (skill == null || target == null) return;
+        resolvingExternalImpactVfx = true;
+        try
+        {
+            foreach (var cue in skill.VfxCues)
+                if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget) PlaySkillVfxCue(cue, target);
+        }
+        finally { resolvingExternalImpactVfx = false; }
     }
 
     /// <summary>
@@ -436,20 +472,33 @@ public sealed partial class PlayerActionPresentationController
     {
         SkillSO skill = ResolveSelectedSkill();
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        Transform target = manager != null ? manager.LockedTargetPoint : null;
+        Transform target = manager != null ? manager.ActionTargetPoint : null;
         Transform caster = manager != null ? manager.PlayerRoot : null;
-        if (skill == null || manager == null || target == null || caster == null)
+        if (skill == null || manager == null || target == null && manager.CurrentAttackContext == null || caster == null)
         {
             return;
         }
 
-        if (!TryResolveSelectedSkillImpact(out skill, out target))
+        if (manager.CurrentAttackContext != null)
         {
+            // Escape motion belongs to the action, not to damage acceptance.
+            if (TryResolveSelectedSkillImpact(out skill, out target)) HandleConfirmedExternalImpact(skill, target);
+            HandleConfirmedSkillRetreat(skill, target);
             return;
         }
-
+        if (!TryResolveSelectedSkillImpact(out skill, out target)) return;
         HandleInstantiateSkillVFX();
         CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, RealTimeCombatManager.Instance?.PlayerRoot);
+
+        HandleConfirmedSkillRetreat(skill, target);
+    }
+
+    public void HandleConfirmedSkillRetreat(SkillSO skill, Transform target)
+    {
+        if (!actionActive || activePresentedSkill != skill || retreatImpulseToken == activeToken) return;
+        var context = AttackContext;
+        if (target == null && context == null) return;
+        Transform caster = transform;
 
         SkillRetreatImpulse retreat = skill.RetreatImpulse;
         if (!retreat.enabled)
@@ -457,7 +506,7 @@ public sealed partial class PlayerActionPresentationController
             return;
         }
 
-        Vector3 direction = caster.position - target.position;
+        Vector3 direction = context != null ? -context.Direction : caster.position - target.position;
         direction.y = 0f;
         if (direction.sqrMagnitude <= 0.0001f)
         {
@@ -468,6 +517,7 @@ public sealed partial class PlayerActionPresentationController
         LitOpsiveLocomotionBridge bridge = caster.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
         if (bridge != null)
         {
+            retreatImpulseToken = activeToken;
             // Les forces trop elevees peuvent faire franchir a la capsule UCC
             // un obstacle entre deux mises a jour de simulation. Chaque skill
             // conserve son recul auteurise, mais dans une limite sure.
@@ -480,7 +530,8 @@ public sealed partial class PlayerActionPresentationController
                 retreat.minimumInputLockSeconds,
                 retreat.maximumInputLockSeconds,
                 retreat.airborneInertiaSeconds,
-                retreat.airborneInertiaEndSpeedMultiplier);
+                retreat.airborneInertiaEndSpeedMultiplier,
+                this);
         }
     }
 
@@ -563,7 +614,10 @@ public sealed partial class PlayerActionPresentationController
     {
         skill = ResolveSelectedSkill();
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        target = manager != null ? manager.LockedTargetPoint : null;
+        target = manager != null ? manager.ActionTargetPoint : null;
+        if (manager != null && manager.CurrentAttackContext != null)
+            return skill != null && !(skill is BasicSkillsSO && basicSkillInterruptedByDamage) &&
+                manager.ResolveFreeAttackImpact(skill, out target) > 0;
         if (manager != null && manager.UsesExternalTarget)
         {
             if (!actionActive || externalImpactToken == activeToken) return false;

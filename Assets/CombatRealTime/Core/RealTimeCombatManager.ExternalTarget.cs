@@ -12,36 +12,37 @@ public sealed partial class RealTimeCombatManager
     {
         if (externalLockIndicator != null) externalLockIndicator.SetLocked(false, false);
         externalLockIndicator = null;
-        if (!combatActive || !externalTargetLocked || externalTarget == null ||
-            externalTarget.IsDead || externalTarget.Root == null) return;
-        externalLockIndicator = externalTarget.Root.GetComponent<CombatLockIndicator>();
+        var target = LockedCombatTarget;
+        if (!SkillTargetingContract.Alive(target)) return;
+        externalLockIndicator = target.Root.GetComponent<CombatLockIndicator>();
         if (externalLockIndicator == null)
-            externalLockIndicator = externalTarget.Root.gameObject.AddComponent<CombatLockIndicator>();
+            externalLockIndicator = target.Root.gameObject.AddComponent<CombatLockIndicator>();
         externalLockIndicator.SetLocked(true, false);
     }
-    public bool UsesExternalTarget => externalTarget != null;
-    public ICombatTarget CombatTarget => externalTarget ?? (engagedEnemy != null || lockedEnemy != null ? new LegacyCombatTarget(engagedEnemy ?? lockedEnemy) : null);
-    public ICombatTarget LockedCombatTarget => externalTarget != null
+    public bool UsesExternalTarget => externalTarget != null || worldLockedTarget != null;
+    public ICombatTarget CombatTarget => cinematicTarget ?? worldLockedTarget ?? externalTarget ?? (engagedEnemy != null || lockedEnemy != null ? new LegacyCombatTarget(engagedEnemy ?? lockedEnemy) : null);
+    public ICombatTarget LockedCombatTarget => worldLockedTarget ?? (externalTarget != null
         ? (externalTargetLocked ? externalTarget : null)
-        : (lockedEnemy != null ? new LegacyCombatTarget(lockedEnemy) : null);
-    public Transform LockedTargetPoint => externalTarget != null
+        : (lockedEnemy != null ? new LegacyCombatTarget(lockedEnemy) : null));
+    public Transform LockedTargetPoint => worldLockedTarget != null
+        ? (SkillTargetingContract.Alive(worldLockedTarget) ? worldLockedTarget.LockPoint : null) : externalTarget != null
         ? (externalTargetLocked && !externalTarget.IsDead ? externalTarget.LockPoint : null)
         : (lockedEnemy != null && (lockedEnemy.Health == null || !lockedEnemy.Health.IsDead) ? lockedEnemy.LockPoint : null);
     public bool HasLockedCombatTarget => LockedTargetPoint != null;
 
     /// <summary>Standalone encounter: shares player services, without attaching a legacy enemy brain.</summary>
-    public void BeginExternalEncounter(Transform player, ICombatTarget target)
+    public void BeginExternalEncounter(Transform player, ICombatTarget target, bool startEngaged = true)
     {
         EndCombat();
         externalTarget = target;
-        externalTargetLocked = true;
+        externalTargetLocked = startEngaged;
         playerRoot = player;
         playerLoadout = null; playerHealth = null; playerController = null;
         playerAnimator = null; playerActionPresentation = null; playerLocomotionBridge = null;
         ResolvePlayerReferences();
         clarity = 0;
         ClarityChanged?.Invoke(clarity, ClarityRank);
-        combatActive = playerRoot != null && target != null && target.Root != null && !target.IsDead;
+        combatActive = startEngaged && playerRoot != null && target != null && target.Root != null && !target.IsDead;
         RefreshCombatSpiritFusion(combatActive);
         combatInput?.SetInputActive(combatActive);
         RefreshExternalLockIndicator();
@@ -60,6 +61,7 @@ public sealed partial class RealTimeCombatManager
 
     public bool TryAdvanceManualLock()
     {
+        if (AllowsFreeAttacks) return ToggleWorldLock(true);
         if (externalTarget == null)
             return HasLockedCombatTarget ? TrySwitchEnemyLock() : TryToggleManualLock();
         if (!combatActive || externalTarget.IsDead) return false;
@@ -71,6 +73,7 @@ public sealed partial class RealTimeCombatManager
 
     public bool TryReleaseManualLock()
     {
+        if (AllowsFreeAttacks) return HasLockedCombatTarget && ToggleWorldLock(false);
         if (externalTarget == null) return lockedEnemy != null && TryToggleManualLock();
         if (!externalTargetLocked) return false;
         externalTargetLocked = false;
@@ -107,15 +110,28 @@ public sealed partial class RealTimeCombatManager
         AddClarity(skill.ClarityGainOnHit);
         PlayerLightDamageApplied?.Invoke(applied);
         PlayerSkillImpactApplied?.Invoke(skill, applied);
-        if (deferred) playerActionPresentation?.HandleConfirmedExternalImpact(skill, externalTarget.LockPoint);
+        if (deferred)
+        {
+            playerActionPresentation?.HandleConfirmedExternalImpact(skill, externalTarget.LockPoint);
+            playerActionPresentation?.HandleConfirmedSkillRetreat(skill, externalTarget.LockPoint);
+        }
         EvaluateCombatOutcome();
         return applied;
     }
 
     private int DeliverExternalImpact(CombatImpact impact)
     {
-        if (!(externalTarget is LegacyCombatTarget) && impact.Origin != CombatImpactOrigin.Passive && !impact.DamageModifiersApplied)
-            impact = new CombatImpact(EnemyRevelation.ModifyDamage(externalTarget.Root, impact.Damage), impact.Interruption, impact.Origin, true);
-        return externalTarget is ICombatImpactReceiver receiver ? receiver.ReceiveImpact(impact) : externalTarget.ReceiveDamage(impact.Damage);
+        return DeliverExternalImpact(CombatTarget, impact);
+    }
+
+    private int DeliverExternalImpact(ICombatTarget target, CombatImpact impact)
+    {
+        if (target == null || target.IsDead) return 0;
+        if (!(target is LegacyCombatTarget) && impact.Origin != CombatImpactOrigin.Passive && !impact.DamageModifiersApplied)
+            impact = new CombatImpact(EnemyRevelation.ModifyDamage(target.Root, impact.Damage), impact.Interruption, impact.Origin, true,
+                impact.Source != null ? impact.Source : playerController);
+        else if (impact.Source == null)
+            impact = new CombatImpact(impact.Damage, impact.Interruption, impact.Origin, impact.DamageModifiersApplied, playerController);
+        return target is ICombatImpactReceiver receiver ? receiver.ReceiveImpact(impact) : target.ReceiveDamage(impact.Damage);
     }
 }

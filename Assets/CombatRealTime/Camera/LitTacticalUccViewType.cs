@@ -18,6 +18,14 @@ public sealed class LitTacticalUccViewType : Adventure
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
     public Vector3 Pivot => pivot;
     public bool Following => following;
+    public void ResetObstacleRecovery()
+    {
+        float current = Vector3.Distance(pivot, lastResolvedPosition);
+        distanceRecovery.Reset(current);
+        // Preserve only the current distance, not old contact/hold history.
+        // Mark a retracted pose for a smooth return when collisions are switched off.
+        distanceRecovery.Resolve(current, zoom, 0, false, 0, profile != null ? profile.collisionReturnTime : .15f);
+    }
     public override bool UseSmoothOffset => false; // Never rotate the world orbit with combatant yaw.
     private Vector3 GetFollowAnchor(bool rendered = false)
     {

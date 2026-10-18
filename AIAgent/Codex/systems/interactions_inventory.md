@@ -1,5 +1,10 @@
 # Interactions et inventaire
 
+Le fallback d'influence de `InteractableItem`, utilise aussi pour les VFX des
+objets inactifs, lit le registre actif de `Flame` dans un buffer reutilise.
+Il garde les tests de portee/collider et evite une recherche globale dans chaque
+LateUpdate. Voir `performance.md` pour le diagnostic cible.
+
 ## Rôle
 
 Détecter une cible monde, afficher son Outline, exécuter son interaction et
@@ -184,3 +189,21 @@ verifie le style commun, le libelle historique, la visibilite et la preservation
 du prefab source ; test ajoute et compile, non execute dans Unity.
 En Play : verifier Monter/Descendre aux deux bouts d'une ladder, Ecouter sur un
 fantome, lire une stele, les quatre triggers, puis eloignement/changement de scene.
+# Integration combat commun (2026-10-16)
+
+Les engagements de la facade locale masquent les interactions de ce joueur,
+pas de tous les joueurs du serveur. Plusieurs menaces maintiennent ce blocage
+jusqu'a la derniere mort/fuite. La restitution relance la detection locale sans
+annuler une action legitime encore active. Les dialogues, traversees, menus et
+verrous d'UI conservent leurs proprietaires. La validation reseau de ces regles
+reste a effectuer avant de declarer la migration multijoueur livree.
+
+## Engagement individuel et rencontres (2026-10-16)
+
+Le registre serveur de combat distingue les participants. L'UI, la musique et
+la presentation d'interaction sont rattachees au personnage local confirme,
+pas a l'etat global d'un boss ni au lock d'un autre joueur. La derniere menace
+terminee restitue les interactions selon les verrous encore legitimes.
+Les gates Ghost/introduction/connaissance du ScientifiqueFou restent obligatoires ;
+la migration n'active pas un ennemi dormant lors d'un scan de combat.
+La recette visuelle/narrative complete en production reste a valider.

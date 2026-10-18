@@ -13,7 +13,7 @@ using UnityEngine;
 [InitializeOnLoad]
 internal static class ZoneManifestBuildSettingsSync
 {
-    private const string ScenesRoot = "Assets/Scenes";
+    private const string ScenesRoot = "Assets";
 
     static ZoneManifestBuildSettingsSync()
     {
@@ -109,17 +109,25 @@ internal static class ZoneManifestBuildSettingsSync
         }
     }
 
-    private static string FindScenePath(string sceneName)
+    internal static string FindScenePath(string sceneName)
     {
         string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", new[] { ScenesRoot });
+        string match = null;
         foreach (string sceneGuid in sceneGuids)
         {
             string path = AssetDatabase.GUIDToAssetPath(sceneGuid);
             if (string.Equals(Path.GetFileNameWithoutExtension(path), sceneName, StringComparison.OrdinalIgnoreCase))
             {
-                return path;
+                if (match != null)
+                {
+                    Debug.LogWarning($"[ZoneManifest] Plusieurs scenes portent le nom '{sceneName}' : {match}, {path}. Ajout automatique refuse.");
+                    return null;
+                }
+                match = path;
             }
         }
+
+        if (match != null) return match;
 
         Debug.LogWarning($"[ZoneManifest] La scene '{sceneName}' est introuvable sous {ScenesRoot}.");
         return null;

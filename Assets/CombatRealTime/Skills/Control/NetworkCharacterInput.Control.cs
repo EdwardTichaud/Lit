@@ -11,6 +11,8 @@ public partial class NetworkCharacterInput
         null : Resources.Load<SkillSO>("CombatControlSkills/" + asset);
     public bool TryRequestControlSkill(SkillSO skill, ICombatTarget enemy, Vector3 direction)
     {
+        var runtime = GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+        if (runtime != null) return runtime.TryRequestSkill(skill, enemy?.Root != null ? enemy.Root.GetComponentInParent<NetworkObject>() : null, direction);
         if (!IsSpawned || !IsOwner || controlPending && Time.unscaledTime < controlPendingUntil || skill == null || !skill.IsControlSkill || LoadControl(skill.name) != skill) return false;
         NetworkObjectReference target = default;
         if (skill.control.kind != SkillControlKind.PasDeRecul)
@@ -28,7 +30,8 @@ public partial class NetworkCharacterInput
     {
         var skill = LoadControl(asset);
         bool accepted = false;
-        if (skill != null && skill.IsControlSkill && controller != null && controller.CharacterData != null &&
+        if (GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() == null &&
+            skill != null && skill.IsControlSkill && controller != null && controller.CharacterData != null &&
             controller.CharacterData.combatSkills.Contains(skill) && SkillHealing.CanCast(controller) &&
             (!controlReadyAt.TryGetValue(skill, out float ready) || Time.time >= ready) &&
             !float.IsNaN(direction.x) && !float.IsNaN(direction.y) && !float.IsNaN(direction.z) &&

@@ -1,21 +1,254 @@
 # Combat
 
+## Raccords communs de fin de migration (2026-10-17)
+
+Les paliers reseau utilisent le moteur ThresholdSequence existant sur l'acteur
+ayant porte le contact, avec reservation differee apres l'impact. Le serveur
+decide du resultat ; seul le proprietaire recoit prompt et map CombatQTE.
+Les autres joueurs conservent leur camera et leurs commandes. Presentation
+d'observateurs et nettoyage sont identifies par generation. Aucun ralenti reseau.
+
+Le clash commun parcourt les paires compatibles equipees de volumes auteur,
+jamais les capsules corporelles ni une paire derivee du lock. Les impacts Basic
+reseau passent dans l'arbitrage avant degats. Recul via les moteurs existants ;
+replication cosmetique seulement chez les observateurs. Les clones de clips
+production compatibles recoivent les fenetres, pas les originaux.
+
+ProductionEncounterMigration conserve les executants specialises des rencontres.
+Les deux GiantJuggernaut ont des profils distincts derives de leurs skills
+reellement equipes (Jump et Assomoir), avec provenance dans le rapport auteur.
+Ces raccords de code ne constituent pas une validation de leur comportement en jeu.
+
+## Charge et mobilite partagees pendant migration (2026-10-17)
+
+ICombatChargedTarget raccorde Brains et EnemyController a la meme projection/
+flottement joueur. Le moteur physique existant de chaque ennemi reste seul
+proprietaire de la verticale, des collisions et du retour au sol. La projection
+invalide le coup engage et ses evenements ; aucun second coup automatique.
+Les actions Brains de production au sol peuvent etre interrompues par cette
+projection apres confirmation physique du sol, meme avec leur agent suspendu.
+Le clip Rupture n'est plus bouclant ; son impact reste a 0,8333333 s.
+Les sessions externes de presentation configurent le SkillSO et ses fenetres
+d'annulation/recuperation, sans relire le lock aux impacts. Les VFX utilisent
+l'acteur lanceur, y compris pour un acteur distant, pas le joueur local du manager.
+Compilation et verifications auteur restent distinctes des tests en jeu differes.
+
+## Continuation auteur et migration (2026-10-17)
+
+La BasicSkill aerienne possede un seul HitEnemy a 0,533333 s, avec les deux
+evenements VFX existants conserves. Les recepteurs solo/reseau gardent leur
+exclusion mutuelle et l'unicite du contact par generation.
+La conversion Brains du Juggernaut reel a ete appliquee/repetee dans la copie
+isolee. Apres conversion, Analyze retrouve le controller source dans la requete
+persistante uniquement si personnage, profil et controller de destination
+correspondent exactement. Une nouvelle generation repart de cette source,
+jamais du controller deja converti. Les autres rencontres restent non basculees.
+
+## Finalisation de migration (2026-10-17)
+
+Une fin d'engagement confirmee pendant une cinematique ou la fin d'un dash est
+mise en attente, puis restituee meme sur un client qui n'execute pas la perception.
+Une nouvelle menace ou un changement d'acteur invalide cette attente. Le lock
+d'une cible morte est nettoye independamment de l'autorite de perception.
+La restitution conserve une session d'action encore legitime.
+
+Les impacts Brains de production collectent les victimes reelles du volume auteur,
+sans compter deux fois un acteur ayant plusieurs colliders. Le montant est capture
+au lancement par generation depuis le maximum de degats recus de l'engagement ;
+un impact tardif ne recalcule pas ce montant. La riposte de palier conserve son
+calcul auteur distinct. Tests Unity de continuite d'impact : 3 passes.
+
+Les impacts historiques ne consultent plus le drapeau cinematique global du
+manager pour bloquer tous les combats : ils verifient leur attaquant, leur victime
+et les participants effectivement reserves. Les reservations refusent un
+proprietaire Behaviour desactive ; leur nettoyage persistant existe seulement
+en Play Mode, jamais lors d'une inspection Edit Mode.
+
+Le rapport combat_migration_report.md distingue les chemins implementes des
+recettes executees. Aucun resultat d'auteur ni test avec doubles reseau ne
+declenche la bascule globale des prefabs de production.
+
+## Continuation de migration (2026-10-16)
+
+CombatWorldRuntime possede un CombatEngagementLedger par acteur. Le serveur
+notifie les seules interfaces du participant local via un snapshot complet de
+menaces ; changer de cible ennemie ne transfere ni verrou manuel ni victime
+d'action. Les impacts transportent leur SquadCharacterController Source jusque
+dans les adaptateurs historiques et les paliers. Les reactions visuelles aux
+degats viennent de CharacterData.playerSettings.combatPresentation.
+
+IEnemyEncounterActor separe les gates de rencontre du cerveau. Les boss speciaux
+et l'introduction/mort du ScientifiqueFou restent sur leur implementation auteur ;
+aucune detection globale ne les active par defaut. La conversion Brains conserve
+les patterns/SkillSO source, les evenements physiques et le point de lock, sans
+remplacer un ennemi de production par une identite de laboratoire.
+
+Les paliers capturent l'auteur du coup franchissant le seuil et refusent une
+substitution par le joueur local. Perte du participant avant lancement : nettoyage
+et nouvelle eligibilite au prochain impact valide. Le QTE d'un participant distant
+n'est pas encore executable : diagnostic, aucun clamp permanent ni faux succes.
+Migration globale et recettes de production restent bloquees, voir rapport.
+
+## Migration hors laboratoire (2026-10-16)
+
+CombatWorldRuntime sur BattleManager partage configuration, liaison du joueur
+local, impacts et reactions ennemies entre session et laboratoire. Son profil
+est explicitement configure, jamais deduit du nom de scene. Aucun actor spawn
+ni ecriture de Transform de poursuite dans ce composant. SquadManager et
+NetworkCharacterInput restent les pilotes production ; seul un acteur autonome
+sans ces pilotes recoit le forwarding de locomotion de la fixture commune.
+Les threats par acteur local, le lock manuel et les participants cinematographiques
+sont distincts. Mort/fuite d'une menace ne termine pas les autres engagements.
+Une fin normale conserve l'action en cours et ses ressources ; changement
+de personnage ou sortie technique nettoient l'ancien acteur.
+La migration editeur explicite est auditee dans combat_migration_report.md :
+ses ecritures auteur ne signifient pas que tous les ennemis/reseau sont valides.
+Les reservations de cinematiques bloquent les paires concurrentes et conservent
+la victime capturee aux impacts, independamment des changements de lock.
+Le clash utilise un binding acteur/ennemi explicite ; le prototype reste limite
+aux clips compatibles et a une paire par acteur, sans inventer d'autres fenetres.
+
+## Preparation du ChargedSkill : protection d'interruption
+
+La pose de preparation du laboratoire est la derniere pose de BasicSkill_1 :
+ChargedSkillSetup genere ChargedWindup depuis la fin de ClashBasic_0, avec
+courbes constantes et aucun event. Pas de gel global de l'Animator. La fin
+de Basic sous maintien transfere directement la presentation a la charge,
+sans demander Idle/locomotion entre les deux sessions.
+ChargedFinalPose.log valide compilation, courbes finales constantes et recette
+Play du maintien X avec degats, relachement, remplacement prioritaire et mort.
+
+La preparation est identifiee par son token de session. La protection commence
+des la Basic initiale acceptee si X est toujours tenu pour un ChargedSkill,
+et couvre le passage a la preparation. Les BasicSkills ordinaires sont exclues.
+Elle interdit Hurt et annulations ordinaires, sans invulnerabilite : les PV et
+feedbacks de degats restent appliques. InterruptBasicComboOnDamage preserve le
+maintien charge et n'annule pas la Basic initiale de ce chargement. Mobilite, garde, nouvelles
+attaques et roues ne la remplacent pas. Relachement X, fin de combat, mort et
+prises de controle prioritaires gardent leur nettoyage normal. La protection
+n'est jamais conservee par une ancienne generation ni une autre action.
+L'acteur conserve une liaison vers l'input proprietaire du maintien. La sante
+ne relit pas directement le controle physique, dont le buffer depend de la phase
+d'update ; callbacks et polling d'input restent responsables du relachement.
+ChargedHoldArmorVerified.log valide des degats pendant Basic initiale et preparation,
+la pose apres impact, puis les sorties volontaires/prioritaires et la mort.
+Compilation et recette Play ciblee reussies dans Iluvilirae_Test isole :
+ChargedPreparationArmor.log (degats reels, refus ordinaires, relachement,
+presentation prioritaire et mort avec restitution UCC/camera).
+
+## Vesta jouable au laboratoire
+
+Vesta.asset conserve son GUID/identite et son portrait auteur. Il reference
+Vesta.prefab et Vesta_Model.controller distincts : base UCC, modele, locomotion
+et BasicSkills de Lucian temporaires. combatSkills contient exclusivement
+Revitalisation, Soins d'urgence, Regeneration et Siphon vital, dans l'ordre
+du catalogue. Aucune LightSkill de Lucian n'est equipee par copie implicite.
+Le prefab comporte presentation d'actions, domaine de temps, mobilite,
+PlayerRegenerationEffect et relais NetworkCharacterInput existants.
+
+Iluvilirae_Test ajoute Vesta au selecteur (enum append, indices existants
+preserves) et la selectionne par defaut. spawnProtectionAlly cree aussi
+HealingAlly_Laboratory pour tester les soins cibles. Les valeurs des quatre
+skills et le slot de concentration unique sont inchanges. La campagne solo
+continue de materialiser seulement Lucian ; prefab disponible ne signifie
+pas compagnon physique recrute automatiquement.
+Installateur idempotent : Lit > Combat Lab > Configure Vesta Healing Skills.
+Play valide soins sur Vesta et son allie, cooldowns, regeneration explicite,
+remplacement par siphon reel et nettoyage. Host/client non execute ici.
+
+## Impact de lumiere : quatrieme skill de Lucian
+
+Prototype limite a Iluvilirae_Test. Skill_ImpactDeLumiere utilise un profil
+GroundImpact unique : rayon 5 m (diametre 10), 20 degats au sol / 40 en l'air,
+recul 1,5 m / 3 m, cooldown 12 s, descente UCC 25 m/s. Ces valeurs sont auteur.
+Le bonus aerien est capture au lancement ; aucun impact avant contact sol.
+Les paliers et la restitution restent independants de la copie d'animation.
+Le contact physique, pas un ancien HitEnemy du clip, autorise un impact unique
+par session et ennemi. Revelation, defenses, paliers et affichage des degats
+passent par les recepteurs existants. L'onde est un anneau visuel temporaire,
+sans shake, ralenti ni collider. Les ennemis sur un autre niveau sont exclus.
+
+Seul Saut de rupture peut etre remplace pendant sa session. Les verrous
+appartenant a son action et a son impulsion sont restitues, jamais ceux d'une
+cinematique/traversee. Interruption ou absence de contact invalide l'impact,
+libere le mouvement propre a la session et conserve la chute UCC.
+Rupture soumet son decollage pendant 0,08 s via une ability UCC concurrente
+qui ecrit LocalDesiredMovement avant les collisions, comme Jump. Les verrous
+d'impulsion sont attribues a la presentation sans desactiver le handler UCC.
+Le remplacement annule aussi l'inertie propre a cette impulsion ; aucune
+position n'est restauree et aucun autre proprietaire de verrou n'est libere.
+Le recul Brains utilise son NavMeshAgent sans annuler une attaque engagee.
+Le recul EnemyController passe par NavMesh en navigation et par un delta
+additif borne/collision-aware dans son moteur physique pendant une action,
+sans annuler le coup ni prendre la verticale.
+
+Lucian_ImpactLab.prefab, controller et CharacterData sont des copies dediees.
+Le clip provisoire est une copie InPlace de Rupture sans Animation Events,
+remplacable dans le SkillSO/controller du laboratoire. Le catalogue reference
+le nouveau skill dans le slot droite de Lucian : seize skills au total.
+Installateur : Lit > Combat Lab > Configure Impact de lumiere.
+Lancement reseau refuse explicitement tant que son RPC serveur n'est pas livre.
+
+## Saut de rupture : animation protégée
+
+Depuis le 2026-10-16, Saut de rupture exige une cible ennemie compatible a
+0-3 m horizontalement (LockedTarget + portee de lancement explicite). Le lock
+manuel est obligatoire, meme au laboratoire : aucune acquisition temporaire.
+La portee d'impact reste 3.25 m, les degats 15 PV et le stun confirme 1 s.
+L'event conserve son timing : recul UCC oppose a la direction capturee au
+lancement, une seule impulsion par generation. Dans le flux du laboratoire,
+un ennemi qui evite le contact apres le depart ne supprime plus l'evasion ;
+seuls les degats/feedback exigent un contact valide. Annulation et synergie
+avec Impact de lumiere conservent leurs nettoyages existants.
+Compilation et Play cible reussis dans Iluvilirae_Test isole : refus hors
+melee/sans cible sans cout, impact/stun unique, recul confirme aussi sur coup
+manque, restitution du mouvement et nettoyage mort. Log RuptureEscapeValidationFinal.log.
+Apres exigence du lock, RuptureLockedValidation.log valide le refus sans lock
+et hors portee sans cout, puis le lancement verrouille et les memes nettoyages.
+
+Saut de rupture applique stunSeconds=1 sur son impact confirmé, par le même
+contrat de stun qu'Éclair (legacy et ICombatStunReceiver). Un lancement ou
+une attaque ratée n'assomme pas la cible ; la mort conserve sa priorité.
+RuptureArmorPlayValidation vérifie aussi l'impact unique, l'absence de stun
+avant le contact, l'immobilisation et la récupération à 1 seconde, IA active.
+Compilation/Play réussis : Library/ActorAnimationSandbox/Logs/RuptureStun2.log.
+
+Saut de rupture ignore le remplacement par Hurt pendant sa session d'animation,
+via presentation.allowDamageInterruption=false. Les PV et feedbacks de dégâts
+restent inchangés ; aucune invulnérabilité. Mobilité non annulable et récupération
+à normalizedTime=1 empêchent esquive/garde/autre skill de couper le clip.
+lockMovementDuringAnimation acquiert un verrou d'input UCC dès le lancement
+jusqu'à la fin de session, avant comme après l'impulsion de recul. Le saut,
+la gravité, le recul et les collisions restent physiques. Le nettoyage de
+génération libère uniquement ce verrou, aussi en cas de mort ou désactivation.
+Le handler UCC reste actif au lancement pour autoriser l'impulsion de recul ;
+le verrou externe suffit à neutraliser le stick. Play ciblé validé avec stick
+maintenu, recul conservé, reprise du mouvement et nettoyage à la mort.
+Log : Library/ActorAnimationSandbox/Logs/RuptureMovementFinal.log.
+La mort, les interruptions techniques et la désactivation gardent leurs nettoyages.
+Le flag est true par défaut : les autres skills conservent leurs réactions.
+Validation ciblée : RuptureArmorPlayValidation.RunBatch dans Iluvilirae_Test.
+Compilation et Play passent : trois impacts de 7 PV pendant le clip, pas de
+Hurt ni d'annulation mobilité, réaction normale restituée puis mort prioritaire.
+Log : Library/ActorAnimationSandbox/Logs/RuptureArmor2.log.
+
 ## Progression de l’équipe solo (2026-10-13)
 
 SoloTeamProgression, hébergé sur le SquadManager persistant (ou le manager du
 laboratoire autonome), détient les recrutements et les slots déverrouillés.
 Une campagne commence avec Lucian et ses trois skills existants. Vesta/Soren/
-Aurell deviennent des supports UI après RecruitMember : leur slot X est
+Aurell deviennent des supports UI après RecruitMember : leur premier slot (gauche) est
 automatiquement disponible, les slots suivants nécessitent UnlockSkill.
 Le catalogue reste une définition complète et ne porte aucun état de partie.
-Les quatre directions et positions X/Y/A/B restent fixes ; les slots verrouillés
+Les quatre positions gauche/haut/bas/droite restent fixes ; les slots verrouillés
 sont affichés et refusés aussi par TryUseSkill et les palettes historiques.
 GetOwnedSkill respecte la progression, notamment pour la réserve de Juste Retour.
 
 SoloTeamStoryEvent expose les deux actions aux UnityEvents narratifs existants.
 L’UI affiche nom/portrait/Support sans PV pour les recrues ; une file locale
 d’annonces temporaires informe du recrutement sans capturer les contrôles.
-Vesta.asset est une définition sans prefab ; son portrait est provisoire.
+Vesta.asset reference desormais son prefab jouable propre ; son modele reprend
+temporairement celui de Lucian et son portrait auteur reste conserve.
 Le roster physique solo contient uniquement Lucian, y compris Maison et
 restauration. Les anciens swaps/followers sont inactifs dans ce mode.
 
@@ -26,7 +259,7 @@ restent conservés. Une restauration n’annonce pas les recrutements anciens.
 SoloTeamTestProfile fournit un état explicite de laboratoire et refuse toute
 application lorsqu’une sauvegarde de campagne est active. Il est activé dans
 Iluvilirae_Test, dont le personnage par défaut est Lucian : les quatre kits sont
-disponibles immédiatement (15 skills, slot B de Lucian vide), sans compagnon
+disponibles immédiatement (16 skills avec Impact de lumiere au laboratoire), sans compagnon
 physique. RunBatchSceneProfile vérifie cette configuration réellement chargée ;
 le test de recrutement retire le profil uniquement de sa fixture non sauvegardée.
 Les points narratifs
@@ -40,8 +273,9 @@ host/client restent des validations distinctes non effectuées dans ce lot.
 
 ## Kits directionnels solo (2026-10-13)
 
-Une nouvelle pression sur la direction du kit actif ferme la roue, une autre
-direction change le kit. CombatSkillKitInput conserve un verrou de pression
+Roue fermée : la croix choisit le kit. Roue ouverte : gauche/haut/bas/droite
+lancent les slots 0/1/2/3 du kit, sans changer de personnage. B ferme toutes
+les roues sans lancer de skill ni d'esquive. CombatSkillKitInput conserve un verrou de pression
 physique entre les maps pour ignorer leur initialStateCheck sur un D-pad maintenu.
 CombatWheel active uniquement Player/Move et Player/RightShoulder (sprint), en
 plus de ses propres commandes. IsLocomotionAllowed et la réconciliation du
@@ -50,13 +284,15 @@ Les boutons de face n’activent jamais leurs actions habituelles roue ouverte.
 Les modals et cinématiques gardent leurs règles de blocage.
 
 CombatSkillKitCatalog (Resources/CombatSkillKits/Default) definit les slots
-X/Y/A/B. Haut = Lucian (Bond offensif, Eclair, Rupture, vide) ; droite = Vesta
+stables gauche/haut/bas/droite (anciens X/Y/A/B, masques de sauvegarde inchangés).
+Haut = Lucian (Bond offensif, Eclair, Rupture, Impact de lumiere) ; droite = Vesta
 (Revitalisation, Soins d'urgence, Regeneration, Siphon vital) ; bas = Soren
 (Fleche, Revelation, Entrave, Pas de recul) ; gauche = Aurell (Intercession,
-Rempart, Sommation, Juste Retour). Quinze skills, pas de quatrieme Lucian invente.
-Une pression ouvre/change le kit ; les diagonales sont ignorees. LT ferme la
-roue ; en combat libre LT ouvre le dernier kit. La map CombatWheel + System
-est exclusive : ni gameplay ni camera pendant la selection. Une tentative
+Rempart, Sommation, Juste Retour). Seize skills, quatrieme Lucian configure au laboratoire.
+Une pression ouvre le kit puis la suivante lance un skill ; les diagonales
+sont ignorées. B ferme la roue ; en combat libre LT ouvre le dernier kit.
+La map CombatWheel + System conserve marche/sprint mais exclut les actions
+de face habituelles pendant la sélection. Une tentative
 refusee garde la roue et affiche une raison ; aucun fallback attaque/esquive.
 Les boutons maintenus doivent etre relaches avant de retrouver leurs actions
 de combat normales. Mort, changement d'acteur, modal, cinematic, disable et
@@ -88,7 +324,7 @@ le reseau conserve ses loadouts et droits existants, sans privilege implicite.
 Lit > Combat Lab > Configure Soren Lucidity Skills cree CharacterData/prefab/
 controller distincts dans Characters/1_Squad/Soren et trois SkillSO dans
 Resources/CombatControlSkills. La Fleche existante reste partagee (10 PV,
-10-30 m, stun immediat 2 s, cooldown 10 s). Aucune reference de production
+0-30 m sans distance minimale, stun immediat 2 s, cooldown 10 s). Aucune reference de production
 n'est retiree. Iluvilirae_Test expose character = Lucian/Aurell/Soren ;
 Soren est selectionne. Les modes speciaux equipent leur propre kit seulement.
 
@@ -98,12 +334,15 @@ CombatImpact conserve le flag DamageModifiersApplied pour eviter une seconde
 application ; Passive exclut les ticks de siphon. Degats environnementaux et
 morts explicites ne passent pas par le bonus d'attaque.
 
-Entrave : 20 m/4 m/5 s/-40% navigation/25 s. Projection de sol locale avant
+Entrave : 20 m/4 m/5 s/-60% navigation/25 s (40% de vitesse restante). Projection de sol locale avant
 consommation ; cercle fixe sans collider ni rebuild. Les zones se composent
 par le plus fort ralentissement, pas par multiplication. Les adaptateurs
 Legacy et Brains AI ralentissent les intentions de navigation, conservent
 l'allure demandee et adaptent la cadence a la vitesse reelle. Aucun changement
 d'Animator.speed, de temps local, de sauts, ruees ou timings d'attaque.
+Asset et SorenSkillSetup partagent le réglage 60%. SorenPlayValidation vérifie
+x0,4 (3,6 → 1,44), la frontière, le non-cumul et l'expiration. Compilation/Play
+réussis : Library/ActorAnimationSandbox/Logs/Entrave60Percent.log.
 
 Pas de recul : 5 m/0,25 s/8 s, direction monde capturee dans le mode courant ;
 sans input, loin de la cible ou vers l'arriere sans cible. Session externe
@@ -480,6 +719,13 @@ de PV ennemis en parallele de leur pipeline existant. Host/client reste a tester
 
 SkillSO.cooldownSeconds et stunSeconds sont optionnels (0 = comportement
 anterieur). La fleche existante utilise 10 s de cooldown et 2 s de stun.
+Sa distance minimale est supprimée (0 m), portée maximale conservée à 30 m.
+Compilation/Play de LucianBorrowedArrowStunValidation réussis à 3 m : dégâts
+et stun 2 s ; contrôles de bornes 0/30/30,01 m validés. Log ArrowNoMinimumRange.log.
+LucianBorrowedArrowStunValidation revalide ce contrat depuis le kit Soren
+emprunté par Lucian : pas de stun au lancement, impact unique, immobilisation
+pendant 2 s et reprise. Compilation/Play réussis, log ArrowStunLucian2.log
+dans Library/ActorAnimationSandbox/Logs. Réglage existant préservé.
 RealTimeCombatManager compte le cooldown par couple ActorRoot/SkillSO au
 lancement accepte, jamais au refus, et ne l'efface pas au delock/EndCombat.
 GetSkillCooldownRemaining expose le temps restant en secondes globales de jeu.
@@ -492,7 +738,17 @@ le delai local, puis reprend. LitBrainsEnemy utilise sa reaction Knocked Out
 Pas de prolongation par impacts repetes; morts, cinematiques et QTE prioritaires.
 Le projectile conserve le contrat auteur existant : effet lance a 1,1667 s,
 impact ResolveSkillImpact a 1,3167 s apres les 0,15 s de voyage visuel. Cette
-passe ne cree pas de nouveau moteur de projectile ou de collision balistique.
+trajectoire visuelle est désormais parabolique : hauteur de 0,2 m par mètre
+horizontal, plafonnée à 4 m, orientation suivant la tangente ascendante puis
+descendante. L'arrivée conserve cette orientation plutôt que le yaw ennemi.
+La cible est réévaluée pendant le vol. Timing d'impact et tests de portée /
+obstruction restent inchangés : pas de nouveau moteur de collision balistique.
+Les autres cues restent droites (projectileArcHeightPerMeter=0 par défaut).
+Validation : 29 tests Edit Mode passent, dont arcs à 3/15/30 m et trajet
+droit par défaut. Play confirme les tangentes montante/descendante du vrai
+projectile et le maintien des dégâts/stun. Logs ArrowParabolaTests.xml et
+ArrowParabolaPlay.log dans Library/ActorAnimationSandbox/Logs. Rendu interactif
+et ressenti manette à confirmer.
 La fleche est disponible dans Iluvilirae_Test; son attribution au futur
 perturbateur reste a faire lorsque son CharacterData sera identifie.
 
@@ -583,7 +839,122 @@ les appels Lit; son callback reste le chemin des degats UCC natifs. Le gestionna
 de combat n'affiche pas une seconde fois les degats de squad et ne conserve que
 le fallback CombatHealth. Montant nul, invulnerabilite ou esquive : aucun nombre.
 
+## Attaques libres du laboratoire (2026-10-15)
+
+Recette automatisee : FreeAttackPlayValidation.RunAcceptanceBatch ouvre une copie
+isolee d'Iluvilirae_Test sans sauvegarder les assets. RunRemainingAcceptanceBatch
+permet une reprise des seuls cas clash/projection/obstacles. La fixture controle
+les poses via UCC et espace les capsules ennemies ; les regles de contact et les
+clips restent ceux du jeu. Les resultats ne sont pas une acceptation manuelle.
+78 tests cibles passent dans FreeAttackAcceptanceTestsFinal.xml. Le test existant
+de deconnexion manette/charge echoue en Edit Mode sur son callback et reste hors
+du filtre final, sans etre declare valide. Les logs Play consignent separement
+les scenarios executes et les parcours interrompus par leur limite.
+La reprise physique valide projection sans lock, Basic aerienne apres restitution,
+atterrissage et arret des deux dashs devant mur/vide sur plateforme de test.
+RunClashAcceptanceBatch isole le contact a pas fixe 1/60 : deux fenetres valides,
+neutralisation sans PV et nettoyage reussis. Un essai non cadence a touche Lucian
+avant sa fenetre : il reste consigne et n'est pas transforme en clash retroactif.
+Logs FreeAttackAcceptancePhysical.log et FreeAttackAcceptanceClash.log dans la
+copie isolee. Aucun reglage gameplay change pour obtenir ces resultats.
+Pas de validation manuelle du ressenti, de campagne multi-FPS ni de test reseau.
+
+Le laboratoire prepare maintenant l'adaptateur externe sans engagement initial
+ni lock. Une perception reelle conserve le droit de demarrer l'aggro. Depuis
+une attaque, seule une resolution de contact acceptee passe par
+TryEngageFromPlayerContact : session/generation/acteur valides, sans cible
+substituee. Le resultat Legacy distingue contact accepte et PV retires : une
+garde/absorption a zero engage, contrairement a une esquive ou une protection
+cinematique. Le clash est arbitre avant l'execution du contact.
+
+L'entree commune notifie IA, musique, interactions et BattleWall existants,
+sans EndCombat, changement de lock, reset de cooldown ou remplacement d'action.
+EncounterAggroStarted appartient au passage non engage -> engage ; les autres
+contacts ne rejouent pas EN GARDE. Production : anciennes entrees conservees.
+Impacts simples, zone et Juste Retour utilisent cette entree dans le laboratoire.
+Le contexte capture reste seul proprietaire des destinations ciblees ; les
+projectiles visuels sont bornes par la generation et nettoyes a sa terminaison.
+
+Validation de continuite : compilation et 56 tests Edit Mode reussis ; court
+Play isole reussi (entree au premier contact, session stable, introduction unique,
+lock/unlock stable, attaques/dashs libres, obstacle et callback perime refuse).
+Garde/absorption Legacy, paliers, maintien physique de X a l'entree, ressenti
+course/roulade et host/client restent a verifier manuellement. Aucune fenetre
+de contre ou de QTE de palier modifiee.
+
+Iluvilirae_Test active un FreeAttackProfile de scene pour ses personnages.
+Le manager distingue engagement, lock manuel et PlayerAttackContext de session.
+Le profil est refuse hors de cette scene. SkillSO.targetingMode porte le contrat
+unique ; les metadonnees sont migrees sans activer le nouveau flux en production.
+Le profil ne contient plus de liste d'associations ni de deduction par classe.
+Non configure provoque un refus lisible. Les installateurs preservent les modes
+deja renseignes ; Migrate/Validate Skill Targeting couvre les kits du laboratoire.
+
+Au demarrage effectif du coup, input camera-relative (facing sans input),
+acquisition dans 60 degres avec correction <=25, priorite angle puis distance,
+ligne de vue decor. L'intention est capturee avant les verrous d'input, jamais
+au buffering. UCC oriente progressivement, sans homing ni modification du lock.
+Les portees de lancement servent aux dashs ; les portees de hit restent distinctes.
+
+Chaque contact ponctuel interroge le volume offensif du profil (sphere locale,
+pas la capsule corporelle). Preference a la cible capturee si reellement touchee,
+puis meilleur contact pour une attaque libre. Les actions ciblees ne changent
+pas de victime. Les skills cibles a distance utilisent un corridor offensif
+etroit de leur portee ; les attaques de zone gardent leur resolution existante.
+Defenses, Revelation, paliers, feedback, autorite serveur et clash restent dans
+leurs chemins communs. Generation/consommation rejettent doublons et callbacks
+perimes ; un contact manque ne produit aucun degat de rattrapage.
+
+Eclair et Bond offensif acquierent une cible facultative dans leur portee de
+lancement ; a defaut, dash directionnel fixe de 10 m, sans acquisition tardive.
+Le trajet est borne par sol, obstacles et BattleWall. Aucun acteur n'est ignore
+en dash libre. Le bypass d'Eclair ne concerne que sa cible capturee. Cooldown
+consomme au demarrage valide, meme dans le vide ; trajet nul refuse sans cout.
+Ascension reste lancable dans le vide ; sa projection exige un contact revalide.
+Rupture exige desormais une cible au corps-a-corps (0-3 m au lancement).
+
+TryResolveSkillTargeting couvre attaques, soins, protections, controle et skills
+cinematiques ordinaires avant tout cout/effet. Direction, cible, beneficiaire
+allie et origine de zone sont captures dans PlayerAttackContext ; un rebind de
+generation ne recalcule pas la pose cible. Les supports gardent leurs executants,
+selection explicite, conditions d'auto-soin, concentration et regles de cumul.
+Ennemi obligatoire/facultatif : lock compatible prioritaire, sinon acquisition
+temporaire. Un lock invalide refuse le lancement cible, sans changer de victime.
+Les portees/rayons restent dans leurs definitions specialisees existantes.
+
+CombatSkillCinematicController accepte explicitement ce contexte et sa victime,
+valide rig/tracks/camera auteur avant annulation de l'action et avant cooldown.
+Placement, bindings, suspension et impact utilisent cette victime, pas le lock.
+Sans plan camera auteur, aucune prise de controle camera. Fin/interruption
+restitue uniquement les suspensions acquises. Mort/disparition de la victime
+obligatoire nettoie la session sans substitution. Les entrees specialisees des
+CounterSkills, LightSkills et paliers ne sont pas migrees.
+
+Validation du contrat : 27 assets auteur valides, compilation et 50 tests Edit
+Mode reussis. Court Play automatise dans Iluvilirae_Test isole : acquisition
+obligatoire sans lock, refus non configure, Basic au contact, Eclair cible et
+dashs libres/obstacle/interruption valides. Les cinematics ordinaires avec cible
+temporaire, supports en situation complete et host/client restent a valider en
+jeu ; ne pas confondre ces controles avec une acceptation manuelle du ressenti.
+
 ## Reactions invisibles aux attaques
+
+Exception laboratoire (2026-10-15) : LucianBrainsCombatArena transmet un
+EnemyReactionTiming avec le clip/etat, l'instant d'impact et ActionSequenceId.
+L'evenement existant arme B ; Y utilise [impact-.2, impact[ en temps de clip.
+La lecture tient compte de l'etat suivant pendant un fondu et de la vitesse
+Animator reelle, sans chronometre d'animation parallele. Le ralenti .4 etire
+donc ces .2 s en environ .5 s reelle. B reste a .5 s reelle, independant de Y.
+Les surcharges sans contexte gardent les regles de production ci-dessous.
+
+L'input Y capture son horodatage Input System et sa phase eligible ; la
+demande est traitee avant le contact et avant l'arbitrage de clash. Aucun
+impact deja applique n'est retire. Une fermeture, generation differente,
+sortie d'etat, destruction, pause menu ou cinematique prioritaire invalide
+la demande. Antispam .4 s reelle inchange, aucun auto-contre au maintien.
+Le validateur Lit > Combat Lab > Validate Fair Counter Timings verifie les
+evenements reels sans reecrire les clips. Un timing runtime invalide retire
+seulement l'option contre de l'action avec un avertissement unique.
 
 OpenEnemyReactionOpportunity() ouvre simultanement les fenetres B (0.5 s) et Y
 (0.2 s) en temps reel. Les trois reglages dodgeWindowSeconds,
@@ -1983,3 +2354,55 @@ pretendre valider les appuis. Les audits ne reparent rien automatiquement.
 Les copies et profils candidats sont prepares uniquement dans le projet
 isole Library/ActorAnimationSandbox. Acceptation artistique et parcours
 complet de regression obligatoires avant transfert des profils au jeu.
+
+## Locomotion des jambes pendant une action (2026-10-13)
+
+La couche Moving Legs des controllers joueur couvre seulement les jambes.
+Elle reutilise les arbres marche/course et strafe, avec parametres dedies et
+clips sans events : aucun impact, bruit de pas ou callback n'est double.
+Le torse conserve la garde/attaque en cours pendant un deplacement autorise.
+Les actions qui verrouillent le mouvement (Eclair, Rupture, etc.) gardent leur
+animation complete ; la couche est alors a zero, comme en vol ou a la mort.
+MovingLegsAnimatorSetup est idempotent et couvre aussi Lucian_ImpactLab quand
+cette copie existe. Les nouvelles copies de controllers doivent garder cette
+couche ou etre equipees par Lit/Animation/Install Moving Legs Overlay.
+Controle de poses isole disponible via MovingLegsPoseValidation.RunBatch ;
+le ressenti des appuis et les transitions doivent etre controles en Play.
+# ChargedSkill personnel (laboratoire, 2026-10-14)
+
+CharacterData.chargedSkill est une reference unique optionnelle, hors roue.
+X lance une BasicSkill immediate ; son maintien ne repete plus les BasicSkills.
+Au sol, Lucian attend la fin complete de cette BasicSkill, puis entre dans une
+preparation InPlace si X reste tenu. Le seuil de 2 s utilise le temps reel depuis
+la pression ; relacher ou perdre la session annule la charge. Une nouvelle
+pression est obligatoire apres lancement/refus. Les autres personnages restent
+sans ChargedSkill.
+
+Ascension lumineuse : 0-3 m, un contact auteur ChargedSkillContact(0), 10 PV,
+montee de 3 m en .55 s, maintien 1.2 s apres la montee, cooldown 8 s.
+Le premier contact confirme projette la cible et interrompt son attaque :
+exception explicite, sans priorite sur mort/cinematique. La fin de montee rend
+les commandes pour les BasicSkills aeriennes manuelles. Aucun coup aerien
+automatique, aucun degat de secours. ChargedFloat (Lucian) et ChargedFloatHit
+(victime) sont des boucles InPlace sans Animation Events. La pose passive
+n'est pas une action : un Basic aerien la remplace, puis elle reprend si le
+maintien est encore actif. Les fondus durent .08 s.
+UCC possede le deplacement joueur ; Rigidbody cinematique et capsule possedent
+la reaction aerienne du LitBrainsEnemy, NavMesh suspendu jusqu'au sol valide.
+Le maintien est borne et les callbacks sont filtres par generation.
+Configuration : Lit > Combat Lab > Configure Ascension lumineuse. Assets et
+controller Lucian_ImpactLab uniquement, aucune migration de production.
+ChargedWindup remplace l'Idle de preparation ; geste d'anticipation InPlace
+sans events. La camera accompagne uniquement cette preparation : -10 degres
+de FOV et .6 m derriere Lucian, entree/sortie .25 s reel, via LitCameraDirector.
+Ces valeurs sont configurables sur ChargedSkillSO. Relachement, lancement et
+interruption liberent le cadrage. Les holds aeriens UCC sont identifies et
+bornes en temps local ; un nettoyage ancien ne peut retirer celui du Basic
+suivant. Une cinematique memorise la gravite de base, pas la suspension aerienne.
+Apres Ascension, le hold des Basics aeriens est plafonne au temps de flottement
+restant. A expiration, la gravite reprend meme si leur animation continue ;
+aucune nouvelle Basic ne peut remettre la descente en suspension avant le sol.
+L'entree ChargedSkill utilise un fondu fixe avec temps de clip explicite zero,
+y compris lorsqu'il remplace une ancienne instance du meme etat Animator.
+Projection reseau refusee explicitement tant que sa commande serveur dediee
+n'est pas livree ; aucun client ne declare ses montants ou sa destination.

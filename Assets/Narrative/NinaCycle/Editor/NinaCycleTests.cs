@@ -7,6 +7,19 @@ public sealed class NinaCycleTests
     private const System.Reflection.BindingFlags Private = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
 
     [Test]
+    public void NinaDefinitionLookupPreservesAuthoredAssetIdentity()
+    {
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
+        Assert.NotNull(definition, "Nina editor tools must resolve the existing authored definition.");
+        Assert.AreEqual("db3b01997ab4dae40b9843a98bba1c5e", AssetDatabase.AssetPathToGUID(NinaCycleSetup.DefinitionPath));
+        Assert.AreEqual("district1.nina", definition.cycleId);
+        Assert.AreEqual(System.IO.Path.GetFileNameWithoutExtension(NinaCycleSetup.ScenePath), definition.cycleSceneName,
+            "Completion and reload must resolve the manifest's current scene without changing cycle identity.");
+        Assert.NotNull(AssetDatabase.LoadAssetAtPath<SceneAsset>(NinaCycleSetup.ScenePath),
+            "The creation guard must recognize the existing authored Nina scene.");
+    }
+
+    [Test]
     public void ScientistUsesGhostInteractionBeforeCombat()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Characters/9_Ghosts/Luc/Enemy_Model_MadScientist.prefab");
@@ -38,6 +51,19 @@ public sealed class NinaCycleTests
             Assert.IsTrue(ghost.enabled);
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void ScarEffectsUseTheAuthoredBodyRenderer()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Characters/9_Ghosts/Scar/Ghost_Model_Scar.prefab");
+        var effects = prefab.GetComponentsInChildren<INab.VFXAssets.UniformMeshSample>(true);
+        Assert.That(effects, Is.Not.Empty);
+        foreach (var effect in effects)
+        {
+            Assert.That(effect.meshRenderer, Is.InstanceOf<UnityEngine.SkinnedMeshRenderer>());
+            Assert.That(effect.meshRenderer.transform.IsChildOf(prefab.transform), Is.True);
+        }
     }
 
     [Test]
@@ -93,7 +119,7 @@ public sealed class NinaCycleTests
     [Test]
     public void CicatriceIsScarRewardRatherThanAStartingSkill()
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         var lucian = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset");
         SkillSO cicatrice = definition.FindStep("scar_reward").rewards[0].skill;
         Assert.NotNull(cicatrice);
@@ -164,8 +190,8 @@ public sealed class NinaCycleTests
         }
     }
 
-    [TestCase("  Une blessure persistante.  ", "COMPÃ‰TENCE APPRISE\n<size=140%>Cicatrice</size>\n\nUne blessure persistante.")]
-    [TestCase(" ", "COMPÃ‰TENCE APPRISE\n<size=140%>Cicatrice</size>")]
+    [TestCase("  Une blessure persistante.  ", "COMP\u00c9TENCE APPRISE\n<size=140%>Cicatrice</size>\n\nUne blessure persistante.")]
+    [TestCase(" ", "COMP\u00c9TENCE APPRISE\n<size=140%>Cicatrice</size>")]
     public void SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription(string description, string expected)
     {
         var root = new UnityEngine.GameObject("Skill notification test");
@@ -212,7 +238,7 @@ public sealed class NinaCycleTests
     [TestCase(2, true, true, true)]
     public void NinaDeadRequiresAllCycleKnowledgeOnly(int state, bool dilemma, bool existence, bool expected)
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         Assert.AreEqual(expected, definition.FindDialogue("nina").condition.Matches(state,
             knowledge => knowledge == definition.FindStep("chimeras_known").knowledge ? existence : dilemma));
     }
@@ -220,7 +246,7 @@ public sealed class NinaCycleTests
     [Test]
     public void LetterRevealsDilemmaOnlyWhenRead()
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         var letter = AssetDatabase.LoadAssetAtPath<Item>("Assets/Narrative/NinaCycle/Data/Item_Parchment_Edouard.asset");
         Assert.NotNull(definition);
         Assert.NotNull(letter);
@@ -233,7 +259,7 @@ public sealed class NinaCycleTests
     [Test]
     public void NinaBloodAndScarUseTheNamedNinaDialogueStep()
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         var scar = definition.FindDialogue("scar");
         Assert.AreEqual(0, scar.condition.anyFlags);
         Assert.AreEqual(1, scar.condition.requirements.conditions.Length);

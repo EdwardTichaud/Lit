@@ -199,6 +199,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private bool actionBoxVisible;
     private readonly List<ActionBoxEntry> actionBoxEntries = new List<ActionBoxEntry>();
     private readonly HashSet<EntityId> activeLitInfluenceSourceIds = new HashSet<EntityId>();
+    private readonly List<Flame> activeFlamesBuffer = new List<Flame>(32);
 
     private readonly NetworkList<NetItemStack> netLootItems = new NetworkList<NetItemStack>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -1018,10 +1019,10 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         // d'etre cree ou que le prochain scan physique n'a pas encore eu lieu.
         Collider targetCollider = GetInteractionDetectionCollider();
         Vector3 probePoint = targetCollider != null ? targetCollider.bounds.center : transform.position;
-        Flame[] flames = UnityEngine.Object.FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
-        for (int i = 0; i < flames.Length; i++)
+        Flame.CopyActiveInfluenceFlames(activeFlamesBuffer);
+        for (int i = 0; i < activeFlamesBuffer.Count; i++)
         {
-            if (flames[i] != null && flames[i].ProvidesLitInfluenceTo(targetCollider, probePoint))
+            if (activeFlamesBuffer[i].ProvidesLitInfluenceTo(targetCollider, probePoint))
             {
                 return true;
             }

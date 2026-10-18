@@ -197,11 +197,7 @@ public sealed partial class EnemyController
         // land the first hit before this brain can pursue and attack.
         if (BrainTarget == null)
         {
-            Transform visiblePlayerRoot = LocalPlayerContext.LocalCharacterRoot;
-            if (visiblePlayerRoot == null && RealTimeCombatManager.Instance != null)
-            {
-                visiblePlayerRoot = RealTimeCombatManager.Instance.PlayerRoot;
-            }
+            Transform visiblePlayerRoot = BrainEnemy.VisiblePlayerRoot;
 
             SquadCharacterController visiblePlayer = BrainResolvePlayerController(visiblePlayerRoot);
             bool canDetect = visiblePlayer != null && (BrainEnemy.CanSeePlayer || BrainReturning && BrainEnemy.CanSenseNearby(visiblePlayer.transform, BrainProfile.returnReengageDistance));
@@ -348,7 +344,7 @@ public sealed partial class EnemyController
     {
         if (!CombatEnabled || !BrainAuthority || amount <= 0 || BrainProfile == null)
             return;
-        if (source == null)
+        if (source == null && (Unity.Netcode.NetworkManager.Singleton == null || !Unity.Netcode.NetworkManager.Singleton.IsListening))
         {
             Transform localPlayer = LocalPlayerContext.LocalCharacterRoot;
             source = BrainResolvePlayerController(localPlayer);
@@ -656,7 +652,10 @@ public sealed partial class EnemyController
             BrainEnemy.CompleteRetaliation();
             RealTimeCombatManager.Instance?.SetEnemyAttackMode(BrainEnemy, false);
             if (RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.EngagedEnemy == BrainEnemy)
-                RealTimeCombatManager.Instance.EndCombat();
+            {
+                if (RealTimeCombatManager.Instance.AllowsFreeAttacks) RealTimeCombatManager.Instance.RefreshWorldEngagements();
+                else RealTimeCombatManager.Instance.EndCombat();
+            }
             BrainTarget = null;
             BrainConsecutiveUses = 0;
             BrainPreviousPattern = null;

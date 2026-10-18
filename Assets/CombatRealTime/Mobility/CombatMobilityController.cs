@@ -82,6 +82,34 @@ public sealed partial class CombatMobilityController : MonoBehaviour
     public bool HasPendingCommand => bufferedCommand != MobilityCommand.None && Time.unscaledTime <= bufferedCommandExpiresAt;
     public void SetInputBufferSeconds(float seconds) => mobilityInputBufferSeconds = Mathf.Max(0, seconds);
     private float dodgeReadyAt;
+    private readonly Dictionary<SquadCharacterController, float> actorDodgeReadyAt = new Dictionary<SquadCharacterController, float>();
+
+    public bool TryDodgeActor(SquadCharacterController actor, Vector3 worldDirection)
+    {
+        if (!isActiveAndEnabled || !CombatProtectionDamage.HasAuthority || actor == null || actor.CurrentHp <= 0 || !actor.isActiveAndEnabled || Time.timeScale <= 0 ||
+            !float.IsFinite(worldDirection.x) || !float.IsFinite(worldDirection.y) || !float.IsFinite(worldDirection.z) ||
+            actorDodgeReadyAt.TryGetValue(actor, out float ready) && Time.unscaledTime < ready) return false;
+        var bridge = actor.GetComponent<LitOpsiveLocomotionBridge>();
+        var presentation = actor.GetComponent<PlayerActionPresentationController>();
+        var motor = actor.GetComponent<PlayerScriptedDodgeController>();
+        bool directional = worldDirection.sqrMagnitude > .0001f;
+        string state = directional ? dodgeForwardState : dodgeBackwardState;
+        var profile = dodge.FindDashProfile(state);
+        if (bridge == null || !bridge.IsDriving || !bridge.Grounded || bridge.IsScriptedTraversalActive || bridge.IsCinematicMotionSessionActive ||
+            IsDodgeBlockedByJump(actor.transform, bridge) ||
+            presentation == null || !presentation.CanCancelToMobility || !presentation.CanPlayState(state) || motor == null ||
+            !motor.isActiveAndEnabled || motor.impulseSpeed <= 0 || profile == null || profile.durationSeconds <= 0 ||
+            bridge.IsExternalLockActive && !presentation.OwnsOnlyActionMotionLock(bridge)) return false;
+        Vector3 direction = directional ? Vector3.ProjectOnPlane(worldDirection, Vector3.up).normalized : -actor.transform.forward;
+        if (direction.sqrMagnitude < .0001f || !presentation.CancelActionForMobility()) return false;
+        actor.GetComponent<PlayerGuardState>()?.Set(false, .5f);
+        presentation.ClearActionFacingTarget();
+        if (!presentation.TryPlayCombatState(state, MobilityPresentation(dodge, PlayerActionMovementPolicy.ExistingScripted), "Dodge")) return false;
+        if (!motor.TryStartDodge(bridge, presentation, direction, profile, dodgeStartupSeconds, dodgeInvulnerabilitySeconds))
+        { presentation.CancelAction(); return false; }
+        actorDodgeReadyAt[actor] = Time.unscaledTime + dodge.cooldownSeconds;
+        return true;
+    }
     private float damageInvulnerableUntil;
     private Coroutine dodgeInvulnerabilityRoutine;
     [SerializeField] private bool logMobilityRejections;
@@ -128,6 +156,7 @@ public sealed partial class CombatMobilityController : MonoBehaviour
 
     private void OnDisable()
     {
+        actorDodgeReadyAt.Clear();
         CancelCombatState();
     }
 
@@ -170,21 +199,21 @@ public sealed partial class CombatMobilityController : MonoBehaviour
     public void RequestDodge()
     {
         ResolveReferences();
-        combatInput?.CancelBufferedBasicSkills();
+        combatInput?.CancelBufferedBasicSkills(preserveChargedHold: true);
         TryExecute(MobilityCommand.Dodge, true);
     }
 
     public bool TryDodgeImmediate()
     {
         ResolveReferences();
-        combatInput?.CancelBufferedBasicSkills();
+        combatInput?.CancelBufferedBasicSkills(preserveChargedHold: true);
         return TryExecute(MobilityCommand.Dodge, false);
     }
 
     public void RequestJump()
     {
         ResolveReferences();
-        combatInput?.CancelBufferedBasicSkills();
+        combatInput?.CancelBufferedBasicSkills(preserveChargedHold: true);
         TryExecute(MobilityCommand.Jump, true);
     }
 
@@ -365,7 +394,12 @@ public sealed partial class CombatMobilityController : MonoBehaviour
         }
 
         actionPresentation.ClearActionFacingTarget();
-        PlayerActionPresentationProfile profile = new PlayerActionPresentationProfile
+        return actionPresentation.TryPlayCombatState(stateName, MobilityPresentation(settings, movementPolicy), debugName);
+    }
+
+    private static PlayerActionPresentationProfile MobilityPresentation(CombatMobilityActionSettings settings, PlayerActionMovementPolicy movementPolicy)
+    {
+        return new PlayerActionPresentationProfile
         {
             entryBlendSeconds = settings.entryBlendSeconds,
             chainNormalizedTime = 0.05f,
@@ -380,7 +414,6 @@ public sealed partial class CombatMobilityController : MonoBehaviour
             allowMobilityCancel = true
         };
 
-        return actionPresentation.TryPlayCombatState(stateName, profile, debugName);
     }
 
     private IEnumerator GrantDodgeInvulnerability()

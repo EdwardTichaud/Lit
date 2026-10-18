@@ -14,9 +14,33 @@ using Unity.Netcode;
 public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 {
     private static readonly HashSet<Flame> activeInfluenceFlames = new HashSet<Flame>();
+    private static bool influenceRegistryInitialized;
     public static IEnumerable<Flame> ActiveInfluenceFlames => activeInfluenceFlames;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetInfluenceRegistry() => activeInfluenceFlames.Clear();
+    private static void ResetInfluenceRegistry()
+    {
+        activeInfluenceFlames.Clear();
+        influenceRegistryInitialized = false;
+    }
+
+    // Rebuild once when scene reload is disabled: existing Flames might not
+    // receive OnEnable after SubsystemRegistration clears the static registry.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void InitializeInfluenceRegistry()
+    {
+        if (influenceRegistryInitialized) return;
+        foreach (Flame flame in FindObjectsByType<Flame>(FindObjectsInactive.Exclude))
+            if (flame.isActiveAndEnabled) activeInfluenceFlames.Add(flame);
+        influenceRegistryInitialized = true;
+    }
+
+    public static void CopyActiveInfluenceFlames(List<Flame> destination)
+    {
+        if (Application.isPlaying) InitializeInfluenceRegistry();
+        destination.Clear();
+        foreach (Flame flame in activeInfluenceFlames)
+            if (flame != null && flame.isActiveAndEnabled) destination.Add(flame);
+    }
     [Header("State")]
     [SerializeField, Tooltip("Etat de la flamme au demarrage.")]
     private bool isLit = false;

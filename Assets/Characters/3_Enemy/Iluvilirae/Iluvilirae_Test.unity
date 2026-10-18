@@ -2971,6 +2971,9 @@ GameObject:
   - component: {fileID: 2012495690}
   - component: {fileID: 2012495691}
   - component: {fileID: 2012495692}
+  - component: {fileID: 2012495695}
+  - component: {fileID: 2012495694}
+  - component: {fileID: 2012495693}
   m_Layer: 0
   m_Name: Lucian_Juggernaut_CombatLab
   m_TagString: Untagged
@@ -2991,13 +2994,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LucianBrainsCombatArena
   navigation: {fileID: 23800000, guid: 857f76ed611ab204da3d1e8558a61966, type: 2}
-  lucianPrefab: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
+  lucianPrefab: {fileID: 2784444758471557209, guid: e6050cdae45f2fd4985bcd61214878d7, type: 3}
   aurellPrefab: {fileID: 2784444758471557209, guid: 5a5cf3fac1df38d43aa073579ad2a155, type: 3}
   sorenPrefab: {fileID: 2784444758471557209, guid: 7092d6a346b234a4babc605180b95967, type: 3}
+  vestaPrefab: {fileID: 2784444758471557209, guid: d39b76f9e9afbe74c890382dd3e2e185, type: 3}
   character: 0
   migrateAurellMode: 0
   spawnProtectionAlly: 0
-  enemyPrefab: {fileID: 8060176011446918699, guid: 430506b0e6046214f833dced4520771a, type: 3}
+  enemyPrefab: {fileID: 8060176011446918699, guid: 1d129c740ebfe404d8857fe9826daf4b, type: 3}
   basicSkills:
   - {fileID: 11400000, guid: 9b9635113b0b36d45b5934c0b2051af7, type: 2}
   - {fileID: 11400000, guid: 6ca70f7ce54063f4a93b812382496342, type: 2}
@@ -3013,6 +3017,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3574dc0264b01b24ea983ed7db44c598, type: 2}
   - {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
   - {fileID: 11400000, guid: b3a4d6f55f403a4498b9a4d2f11d4fa2, type: 2}
+  freeAttacks:
+    enabled: 1
+    diagnostics: 0
+    acquisitionCone: 60
+    maximumCorrection: 25
+    turnDegreesPerSecond: 1440
+    freeDashDistance: 10
+    contactCenter: {x: 0, y: 1, z: 1.15}
+    contactRadius: 1.05
+    heightTolerance: 1.8
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   arenaCamera: {fileID: 1393511126}
   lockCursorPrefab: {fileID: 1000, guid: b37e8d3d67234ea38d540629884345a0, type: 3}
   lockCursorOffset: {x: 0, y: 3, z: 0}
@@ -3020,8 +3037,6 @@ MonoBehaviour:
   playerSpawn: {x: 0, y: 0.1, z: 5}
   enemySpawn: {x: 0, y: 0, z: -4}
   playerMaxHealth: 100
-  enemyDamage: 10
-  enemyMeleeReach: 3.2
   hurtState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   showCombatDiagnostics: 0
   playerWalkTurnRate: 720
@@ -3093,7 +3108,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2122c45159d145e6a1bd3a1780673465, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatLockOnCameraController
-  controlledCamera: {fileID: 0}
+  controlledCamera: {fileID: 1393511126}
   cameraController: {fileID: 0}
   enemyFocusBias: 0.74
   playerLookHeight: 1.25
@@ -3123,9 +3138,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ea155c4657a44fe8a0b1d4eb7e4ef20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightSkillCombatController
-  combatManager: {fileID: 0}
-  combatInput: {fileID: 0}
-  cinematicPlayback: {fileID: 0}
+  combatManager: {fileID: 2012495688}
+  combatInput: {fileID: 2012495687}
+  cinematicPlayback: {fileID: 2012495684}
   lightSkill: {fileID: 0}
   logLightSkillDiagnostics: 1
   cinematicCompletionGraceSeconds: 1.5
@@ -3155,9 +3170,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d80b700db72408e9fd31ca38180f276, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CounterSkillCombatController
-  combatManager: {fileID: 0}
+  combatManager: {fileID: 2012495688}
   director: {fileID: 0}
-  cinematicPlayback: {fileID: 0}
+  cinematicPlayback: {fileID: 2012495684}
   counterVirtualCamera: {fileID: 0}
   cameraRig: {fileID: 0}
   impactFeedback: {fileID: 0}
@@ -3185,13 +3200,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70b104f2a5e142c1928ebe40cf12fe84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatMobilityController
-  combatInput: {fileID: 0}
+  combatInput: {fileID: 2012495687}
   actionPresentation: {fileID: 0}
   mobilityInputBufferSeconds: 0.15
   dodgeForwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
   dodgeBackwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
-  dodgeLeftState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root
-  dodgeRightState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root
   dodge:
     cooldownSeconds: 0.25
     entryBlendSeconds: 0.05
@@ -3473,10 +3486,10 @@ MonoBehaviour:
   playerLocomotionBridge: {fileID: 0}
   playerAnimator: {fileID: 0}
   playerActionPresentation: {fileID: 0}
-  playerMobility: {fileID: 0}
-  combatInput: {fileID: 0}
-  combatSkillCinematicController: {fileID: 0}
-  combatHealthThresholdController: {fileID: 0}
+  playerMobility: {fileID: 2012495686}
+  combatInput: {fileID: 2012495687}
+  combatSkillCinematicController: {fileID: 2012495695}
+  combatHealthThresholdController: {fileID: 2012495690}
   lockedEnemy: {fileID: 0}
   engagedEnemy: {fileID: 0}
   lockRange: 6
@@ -3489,6 +3502,7 @@ MonoBehaviour:
   logCombatDisengageDiagnostics: 1
   playerHurtAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   playerHurtTransitionDuration: 0.05
+  supportTarget: {fileID: 0}
 --- !u!114 &2012495689
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3550,6 +3564,8 @@ MonoBehaviour:
   compatibleEnemyStates:
   - Attack
   - Attack_Followup
+  - Juggernaut_Followup
+  - Juggernaut_Strike
   recoilDistance: 0.6
   recoilSeconds: 0.18
   recoverySeconds: 0.15
@@ -3586,11 +3602,65 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 38284c86eeca477088fe3fe112040903, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoloTeamTestProfile
   profile:
     members: []
   unlockAllCatalogSkills: 1
+--- !u!114 &2012495693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012495677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4085240a798b97a4d898f52bd2dbf07e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatWorldRuntime
+  freeAttacks:
+    enabled: 1
+    diagnostics: 0
+    acquisitionCone: 60
+    maximumCorrection: 25
+    turnDegreesPerSecond: 1440
+    freeDashDistance: 10
+    contactCenter: {x: 0, y: 1, z: 1.15}
+    contactRadius: 1.05
+    heightTolerance: 1.8
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  gameplayCamera: {fileID: 1393511126}
+--- !u!114 &2012495694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012495677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72c2e6b985fc7ff43a28dcd6282133e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatSkillKitInput
+--- !u!114 &2012495695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012495677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 361aaed9744fcee4687d8a3a7f487105, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatSkillCinematicController
+  combatManager: {fileID: 2012495688}
+  combatInput: {fileID: 2012495687}
+  cinematicPlayback: {fileID: 2012495684}
+  completionGraceSeconds: 1.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

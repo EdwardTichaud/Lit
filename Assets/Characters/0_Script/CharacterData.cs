@@ -97,6 +97,8 @@ public class CharacterData : ScriptableObject
 
     /// <summary>Competences de combat temps reel connues par le personnage.</summary>
     public List<SkillSO> combatSkills = new List<SkillSO>();
+    [Tooltip("Unique attaque chargee personnelle, independante des skills de roue. Optionnelle.")]
+    public ChargedSkillSO chargedSkill;
     public EnemyCombatProfileSO enemyCombatProfile;
     [Tooltip("Reglages communs du controleur ennemi. Chaque instance recoit sa propre copie au lancement.")]
     public EnemySettings enemySettings = new EnemySettings();

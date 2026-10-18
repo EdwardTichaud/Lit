@@ -56,8 +56,12 @@ public static class CombatLabClashSetup
                 enemyMappings.Add(new CombatLabClashController.ClipReplacement { source = source, replacement = attack.clip });
             }
             clash.enemyClips = enemyMappings.ToArray();
+            EnemyCounterTimingValidation.Validate(clash.labEnemyProfile);
             if (clash.hitVfx == null) clash.hitVfx = AssetDatabase.LoadAssetAtPath<GameObject>(IluviliraeSetup.Folder + "/CombatLab_CounterHitVfx.prefab");
             if (clash.contactAudio == null) clash.contactAudio = AssetDatabase.LoadAssetAtPath<AudioClipSO>("Assets/Audio/AudioClips/ActionBindings/SFX_Combat_GuardedImpact.asset");
+            foreach (var prefab in new[] { arena.lucianPrefab, arena.aurellPrefab, arena.sorenPrefab, arena.vestaPrefab }.Where(prefab => prefab != null).Distinct())
+                CombatClashAuthoring.EnsurePrefab(prefab, clash, false);
+            CombatClashAuthoring.EnsurePrefab(arena.enemyPrefab, clash, true);
             EditorUtility.SetDirty(clash.labEnemyProfile);
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();

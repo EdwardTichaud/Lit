@@ -3,6 +3,7 @@ using UnityEngine;
 
 public partial class SquadCharacterController
 {
+    private readonly AnimatorParameterLookup animatorParameterLookup = new AnimatorParameterLookup();
     private void SetAnimatorBoolIfValid(string parameterName, bool value)
     {
         if (HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Bool))
@@ -21,23 +22,6 @@ public partial class SquadCharacterController
 
     private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType expectedType)
     {
-        if (animator == null || string.IsNullOrWhiteSpace(parameterName))
-        {
-            return false;
-        }
-
-        AnimatorControllerParameter[] parameters = animator.parameters;
-        for (int i = 0; i < parameters.Length; i++)
-        {
-            AnimatorControllerParameter parameter = parameters[i];
-            if (parameter != null &&
-                string.Equals(parameter.name, parameterName, StringComparison.Ordinal) &&
-                parameter.type == expectedType)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return animatorParameterLookup.Has(animator, parameterName, expectedType);
     }
 }

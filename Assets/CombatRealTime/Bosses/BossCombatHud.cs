@@ -19,9 +19,16 @@ public sealed class BossCombatHud : MonoBehaviour
     }
     private void LateUpdate()
     {
-        IBossEncounterBehaviour boss = combat != null && combat.IsCombatActive && combat.EngagedEnemy != null
-            ? combat.EngagedEnemy.BossEncounter : null;
-        bool visible = boss != null && boss.IsBossEngaged && !boss.IsBossResolved && boss.Definition != null && boss.Definition.ShowBossBar;
+        var target = combat != null && combat.IsCombatActive ? combat.CombatTarget : null;
+        var actor = target?.Root != null ? EnemyEncounterActors.Resolve(target.Root) : null;
+        IBossEncounterBehaviour boss = actor != null ? actor.BossEncounter : null;
+        if (boss == null && combat != null && combat.IsCombatActive && combat.EngagedEnemy != null)
+        {
+            actor = EnemyEncounterActors.Resolve(combat.EngagedEnemy);
+            boss = combat.EngagedEnemy.BossEncounter;
+        }
+        bool visible = boss != null && boss.IsBossEngaged && !boss.IsBossResolved && boss.Definition != null && boss.Definition.ShowBossBar &&
+            EnemyEncounterActors.IsPresenting(actor, combat, combat.PlayerRoot);
         if (!visible)
         {
             if (root != null && root.activeSelf) root.SetActive(false);

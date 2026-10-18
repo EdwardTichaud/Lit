@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="NetworkQteSmokeTests.cs" />
+    <Compile Include="../../Migration/Network/Tests~/EngineStubs.cs" />
+    <Compile Include="../../Migration/Network/CombatCommandContracts.cs" />
+    <Compile Include="../../Migration/Network/CombatCommandAuthority.cs" />
+    <Compile Include="../../Migration/Network/CombatCinematicReservations.cs" />
+    <Compile Include="../CombatLocalCinematicPolicy.cs" />
+    <Compile Include="../CombatNetworkQteSession.cs" />
+  </ItemGroup>
+</Project>

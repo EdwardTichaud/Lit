@@ -4,6 +4,8 @@ using System.Collections.Generic;
 [System.Serializable]
 public sealed class PlayerSettings
 {
+    [Tooltip("Presentation des reactions propres a ce personnage.")]
+    public PlayerCombatPresentationSettings combatPresentation = new PlayerCombatPresentationSettings();
     [Tooltip("Controle, locomotion, orientation, vol et franchissement via UCC.")] public PlayerLocomotionSettings locomotion = new PlayerLocomotionSettings();
     [Tooltip("Configuration du module LitUccInteractionBridge, independante des autres modules.")] public PlayerInteractionSettings interactions = new PlayerInteractionSettings();
     [Tooltip("Configuration du module RealTimeCombatLoadout, independante des autres modules.")] public PlayerEquipmentSettings equipment = new PlayerEquipmentSettings();
@@ -13,6 +15,14 @@ public sealed class PlayerSettings
     [Tooltip("Impulsion et freinage des dash declenches par les clips.")] public PlayerDashSettings dash = new PlayerDashSettings();
     [Tooltip("Saut et atterrissage")] public PlayerJumpSettings jump = new PlayerJumpSettings();
     [Tooltip("Esquive et mouvements d action")] public PlayerDodgeSettings dodge = new PlayerDodgeSettings();
+}
+
+[System.Serializable]
+public sealed class PlayerCombatPresentationSettings
+{
+    public const string DefaultDamageReactionState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
+    [Tooltip("Etat visuel de reaction aux degats. Vide : aucune reaction animee.")]
+    public string damageReactionAnimatorState = DefaultDamageReactionState;
 }
 
 [System.Serializable]

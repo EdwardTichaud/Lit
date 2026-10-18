@@ -47,12 +47,6 @@ public sealed class DeadWeightBoss : BossEncounterBehaviour
     {
         if (Enemy == null || Enemy.Health == null || Enemy.Health.IsDead ||
             !NavMesh.SamplePosition(Enemy.transform.position, out _, 1.5f, NavMesh.AllAreas)) return false;
-        if (NetworkManager != null && NetworkManager.IsListening && IsServer)
-        {
-            foreach (ulong id in NetworkManager.ConnectedClientsIds)
-                if (base.CanEngage(NetcodePlayerUtils.GetPlayerTransform(id))) return true;
-            return false;
-        }
         return base.CanEngage(player);
     }
 

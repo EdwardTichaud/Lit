@@ -9,12 +9,19 @@ public partial class NetworkCharacterInput
     private float protectionPendingUntil, nextProtectionSync;
     private int lastProtectionHp = -1;
     private bool protectionRemoteGuard;
+    private int protectionGuardGeneration;
 
     private static SkillSO LoadProtection(string name) => string.IsNullOrEmpty(name) || name.Length > 128 || name.Contains("/") || name.Contains("\\")
         ? null : Resources.Load<SkillSO>("CombatSupportSkills/" + name);
 
     public bool TryRequestProtectionSkill(SkillSO skill, SquadCharacterController ally, ICombatTarget enemy)
     {
+        var runtime = GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+        if (runtime != null)
+        {
+            Transform recipient = skill != null && skill.protection.kind == SkillProtectionKind.JusteRetour ? enemy?.Root : ally != null ? ally.transform : null;
+            return runtime.TryRequestSkill(skill, recipient != null ? recipient.GetComponentInParent<NetworkObject>() : null, transform.forward);
+        }
         if (!IsOwner || !IsSpawned || protectionPending || skill == null || !skill.IsProtectionSkill || LoadProtection(skill.name) != skill) return false;
         var identity = skill.protection.kind == SkillProtectionKind.JusteRetour ? enemy?.Root?.GetComponentInParent<NetworkObject>() :
             ally != null ? ally.GetComponentInParent<NetworkObject>() : GetComponent<NetworkObject>();
@@ -28,7 +35,8 @@ public partial class NetworkCharacterInput
     {
         var skill = LoadProtection(assetName);
         bool accepted = false;
-        if (skill != null && skill.IsProtectionSkill && controller != null && controller.CharacterData != null &&
+        if (GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() == null &&
+            skill != null && skill.IsProtectionSkill && controller != null && controller.CharacterData != null &&
             controller.CharacterData.combatSkills.Contains(skill) && SkillHealing.CanCast(controller) &&
             (!protectionReadyAt.TryGetValue(skill, out float ready) || Time.time >= ready) && target.TryGet(out var identity))
         {
@@ -69,6 +77,12 @@ public partial class NetworkCharacterInput
     private void TickProtectionNetwork()
     {
         if (protectionPending && Time.unscaledTime >= protectionPendingUntil) protectionPending = false;
+        if (GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() != null)
+        {
+            if (IsServer && protectionRemoteGuard && (controller == null || controller.CurrentHp <= 0 ||
+                controller.GetComponent<PlayerActionPresentationController>()?.IsCurrentSession(protectionGuardGeneration) != true)) ClearRemoteProtectionGuard();
+            return;
+        }
         if (!IsSpawned || !IsServer || controller == null || Time.unscaledTime < nextProtectionSync) return;
         nextProtectionSync = Time.unscaledTime + .1f;
         if (controller.CurrentHp != lastProtectionHp)
@@ -103,10 +117,14 @@ public partial class NetworkCharacterInput
         PlayerProtectionEffects.Get(controller).ApplyRemoteState(LoadProtection(aura), LoadProtection(link),
             ally.TryGet(out var identity) ? identity.GetComponentInChildren<SquadCharacterController>() : null, remaining, reserve);
     }
-    public void SubmitProtectionGuard(bool held)
+    public void SubmitProtectionGuard(bool held, double inputTimestamp = double.NaN)
     {
-        if (IsSpawned && IsOwner && !IsServer) ProtectionGuardServerRpc(held);
+        if (!IsSpawned || !IsOwner) return;
+        var runtime = GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+        if (runtime != null) ProtectionGuardServerRpc(held, runtime.CaptureNetworkInputTime(inputTimestamp));
+        else if (!IsServer) ProtectionGuardServerRpc(held, NetworkManager.ServerTime.Time);
     }
+    internal void ClearActorCombatGuard() => ClearRemoteProtectionGuard();
     public void ResetJusticeReserveForCombatEnd()
     {
         if (!IsSpawned || !IsOwner) return;
@@ -115,9 +133,20 @@ public partial class NetworkCharacterInput
     [ServerRpc]
     private void ResetJusticeReserveServerRpc() => controller?.GetComponent<PlayerProtectionEffects>()?.ResetReserve();
     [ServerRpc]
-    private void ProtectionGuardServerRpc(bool held)
+    private void ProtectionGuardServerRpc(bool held, double pressedAt)
     {
         if (controller == null) return;
+        var runtime = GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+        if (runtime != null)
+        {
+            if (!held) { ClearRemoteProtectionGuard(); return; }
+            if (runtime.TryServerCounterReaction(pressedAt)) { ClearRemoteProtectionGuard(); return; }
+            if (protectionRemoteGuard) return;
+            var counter = CounterSkillCombatController.Instance;
+            if (counter != null) protectionRemoteGuard = counter.TryBeginGuardForActor(controller, out protectionGuardGeneration);
+            if (protectionRemoteGuard) runtime.PublishGuardPresentation(protectionGuardGeneration);
+            return;
+        }
         bool allowed = held && SkillHealing.CanCast(controller);
         var state = controller.GetComponent<PlayerGuardState>();
         if (state == null) state = controller.gameObject.AddComponent<PlayerGuardState>();
@@ -126,6 +155,9 @@ public partial class NetworkCharacterInput
     }
     private void ClearRemoteProtectionGuard()
     {
+        int generation = protectionGuardGeneration; protectionGuardGeneration = 0;
+        var presentation = controller != null ? controller.GetComponent<PlayerActionPresentationController>() : null;
+        if (generation != 0 && presentation != null && presentation.IsCurrentSession(generation)) presentation.EndExternalPresentation(generation);
         if (protectionRemoteGuard && controller != null) controller.GetComponent<PlayerGuardState>()?.Set(false, .4f);
         protectionRemoteGuard = false;
     }

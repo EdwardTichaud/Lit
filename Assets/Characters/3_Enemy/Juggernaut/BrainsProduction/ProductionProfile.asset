@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1216f4be9cc9449aac949c16152d9656, type: 3}
+  m_Name: ProductionProfile
+  m_EditorClassIdentifier: Assembly-CSharp::LitBrainsCombatProfile
+  locomotionState: Base Layer.CombatLocomotion
+  hurtState: Base Layer.Hit
+  knockoutState: Base Layer.Hit
+  deathState: Base Layer.Death
+  hurtBlendSeconds: 0.06
+  productionSourceProfile: {fileID: 11400000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d05, type: 2}
+  executeProductionPatterns: 1
+  idleState: Base Layer.CombatIdle
+  guardState: Guard
+  attackStartDistance: 2.2
+  approachStopDistance: 2.6
+  initialAttackDelay: 0.2
+  attackFacingDegrees: 25
+  turnDegreesPerSecond: 720
+  attackInterval: {x: 2.4, y: 3}
+  resistance: 0
+  resistanceRecoveryDelay: 1
+  resistanceRecoveryPerSecond: 50
+  hurtSeconds: 1.0500001
+  interruptionProtectionSeconds: 0
+  attacks:
+  - skill: {fileID: 11400000, guid: 3574dc0264b01b24ea983ed7db44c598, type: 2}
+    stateName: Base Layer.Juggernaut_Strike
+    clip: {fileID: 7400000, guid: d4008691307a28b429864335036d45cb, type: 2}
+    reactionSeconds: 0.55
+    strikeSeconds: 0.77
+    impactSeconds: 0.88
+    recoverySeconds: 1.7233334
+    recoveryDurationSeconds: 0.3
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.8, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 0
+    preparationAdvanceDistance: 0
+    advanceDistance: 0.4
+    advanceSeconds: 0.18
+    reach: 3.1
+    arcDegrees: 100
+    heightTolerance: 1.8
+  - skill: {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+    stateName: Base Layer.Juggernaut_Assomoir
+    clip: {fileID: 7400000, guid: 4ba0618976869914cbc3501f4bd903a7, type: 2}
+    reactionSeconds: 1.1666666
+    strikeSeconds: 1.116
+    impactSeconds: 1.7
+    recoverySeconds: 2.2
+    recoveryDurationSeconds: 0.3
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.8, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 0
+    preparationAdvanceDistance: 0
+    advanceDistance: 0
+    advanceSeconds: 0.18
+    reach: 6
+    arcDegrees: 110
+    heightTolerance: 1.8
+  - skill: {fileID: 11400000, guid: b3a4d6f55f403a4498b9a4d2f11d4fa2, type: 2}
+    stateName: Base Layer.Juggernaut_Followup
+    clip: {fileID: 7400000, guid: 3f979b55b1725e34d84dd449484658f1, type: 2}
+    reactionSeconds: 0.55
+    strikeSeconds: 0.77
+    impactSeconds: 0.88
+    recoverySeconds: 1.7233334
+    recoveryDurationSeconds: 0.3
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.8, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 0
+    preparationAdvanceDistance: 0
+    advanceDistance: 0.5
+    advanceSeconds: 0.2
+    reach: 3.1
+    arcDegrees: 100
+    heightTolerance: 1.8
+  - skill: {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
+    stateName: Base Layer.Juggernaut_Sweep
+    clip: {fileID: 7400000, guid: 51664d70cdb141d458200b371026a7be, type: 2}
+    reactionSeconds: 0.62500006
+    strikeSeconds: 0.87500006
+    impactSeconds: 1
+    recoverySeconds: 1.9583335
+    recoveryDurationSeconds: 0.3
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.8, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 0
+    preparationAdvanceDistance: 0
+    advanceDistance: 0
+    advanceSeconds: 0.2
+    reach: 3.6
+    arcDegrees: 240
+    heightTolerance: 1.8

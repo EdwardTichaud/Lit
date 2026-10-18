@@ -182,7 +182,7 @@ namespace INab.VFXAssets
 
         public static void SetupRenderer(Renderer renderer, VisualEffect visualEffect)
         {
-            if (visualEffect == null)
+            if (visualEffect == null || renderer == null)
             {
                 return;
             }
@@ -196,16 +196,19 @@ namespace INab.VFXAssets
 
             if (renderer is SkinnedMeshRenderer)
             {
-                visualEffect.SetSkinnedMeshRenderer(SkinnedMeshProperty, renderer as SkinnedMeshRenderer);
+                if (visualEffect.HasSkinnedMeshRenderer(SkinnedMeshProperty))
+                    visualEffect.SetSkinnedMeshRenderer(SkinnedMeshProperty, renderer as SkinnedMeshRenderer);
                 useSkinnedMesh = true;
             }
             else
             {
                 var filter = renderer.GetComponent<MeshFilter>();
 
-                visualEffect.SetMesh(MeshProperty, filter.sharedMesh);
+                if (filter != null && visualEffect.HasMesh(MeshProperty))
+                    visualEffect.SetMesh(MeshProperty, filter.sharedMesh);
             }
-            visualEffect.SetBool(UseSkinnedMeshProperty, useSkinnedMesh);
+            if (visualEffect.HasBool(UseSkinnedMeshProperty))
+                visualEffect.SetBool(UseSkinnedMeshProperty, useSkinnedMesh);
 
         }
 

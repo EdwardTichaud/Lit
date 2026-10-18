@@ -5,21 +5,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>Supprime le residu d'un prefab VFX retire du projet mais encore reference par MainMenu.</summary>
-[InitializeOnLoad]
 internal static class MainMenuMissingPrefabRepair
 {
     private const string MainMenuScenePath = "Assets/Scenes/MainMenu/MainMenu.unity";
-
-    static MainMenuMissingPrefabRepair()
-    {
-        // Script recompilation also occurs while Unity is entering Play Mode.
-        // Opening or saving a scene is an editor-only operation and Unity
-        // explicitly rejects it in that state.
-        if (!EditorApplication.isPlayingOrWillChangePlaymode)
-        {
-            EditorApplication.delayCall += RepairMissingPrefab;
-        }
-    }
 
     [MenuItem("Lit/Scenes/Repair MainMenu Missing Prefab")]
     private static void RepairMissingPrefab()

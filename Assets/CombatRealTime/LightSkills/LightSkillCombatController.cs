@@ -32,17 +32,26 @@ public sealed class LightSkillCombatController : MonoBehaviour
                                       combatManager.PlayerLoadout.EquippedLightSkill != null
         ? combatManager.PlayerLoadout.EquippedLightSkill
         : lightSkill;
-    public float Clarity => combatManager != null ? combatManager.Clarity : 0f;
+    private Lit.Combat.Migration.Network.CombatNetworkActorRuntime NetworkActor =>
+        Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening && combatManager?.PlayerRoot != null
+            ? combatManager.PlayerRoot.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() : null;
+    public float Clarity => NetworkActor != null ? NetworkActor.NetworkClarity : combatManager != null ? combatManager.Clarity : 0f;
     public float RequiredClarity => LightSkill != null && combatManager != null
-        ? combatManager.GetLightSkillRequiredClarity(LightSkill.RequiredRank)
+        ? NetworkActor != null ? NetworkActor.NetworkClarityForS * RealTimeCombatManager.GetLightSkillClarityMultiplier(LightSkill.RequiredRank) : combatManager.GetLightSkillRequiredClarity(LightSkill.RequiredRank)
         : 1f;
     public bool IsReady => LightSkill != null && combatManager != null && Clarity >= RequiredClarity;
     public bool IsCombatActive => combatManager != null && combatManager.IsCombatActive;
-    public bool IsCinematicPlaying => cinematicPlaying;
+    public bool IsCinematicPlaying => cinematicPlaying || NetworkActor != null && NetworkActor.HasNetworkCinematic;
 
     private void Awake()
     {
         ResolveReferences();
+    }
+
+    private void Update()
+    {
+        if (cinematicPlaying && !CombatLocalCinematicPolicy.AllowsLocalExecution)
+            AbortForActionTermination();
     }
 
     private void OnEnable()
@@ -79,6 +88,15 @@ public sealed class LightSkillCombatController : MonoBehaviour
 
     public bool TryUseLightSkill()
     {
+        ResolveReferences();
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            var networkTarget = combatManager?.LockedCombatTarget?.Root;
+            var identity = networkTarget != null ? networkTarget.GetComponentInParent<Unity.Netcode.NetworkObject>() : null;
+            return NetworkActor != null && NetworkActor.RequestLightCinematic(identity);
+        }
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution)
+            return Reject(CombatLocalCinematicPolicy.NetworkExecutionUnavailable);
         ResolveReferences();
         LightSkillSO skill = LightSkill;
         Trace("Tentative | clarte=" + Clarity + "/" + RequiredClarity +
@@ -132,8 +150,11 @@ public sealed class LightSkillCombatController : MonoBehaviour
               " | player=" + placement.PlayerPosition + " rot=" + placement.PlayerRotation.eulerAngles +
               " | enemy=" + placement.EnemyPosition + " rot=" + placement.EnemyRotation.eulerAngles + ".");
 
+        if (!combatManager.TryBeginCinematicTarget(this, combatManager.LockedCombatTarget, AbortForActionTermination))
+            return Reject("Participants deja reserves ou autorite cinematographique indisponible.");
         if (!combatManager.TrySpendClarity(RequiredClarity))
         {
+            combatManager.EndCinematicTarget(this);
             return Reject("Clarte insuffisante.");
         }
 
@@ -178,6 +199,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     /// </summary>
     public void ResolveLightSkillImpact()
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) { AbortForActionTermination(); return; }
         if (!cinematicPlaying || impactResolved || combatManager == null || cinematicSkill == null)
         {
             return;
@@ -218,7 +240,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
             cinematicPlayback.StopActive();
             return;
         }
-        if (resolveImpact && !impactResolved)
+        if (resolveImpact && !impactResolved && CombatLocalCinematicPolicy.AllowsLocalExecution)
         {
             impactResolved = true;
             combatManager?.ApplyLightSkillDamage(cinematicSkill, resolveCombatOutcome: false);
@@ -386,6 +408,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         combatManager?.SuspendCombatTarget(false);
+        combatManager?.EndCinematicTarget(this);
         combatManager?.SetCinematicSequenceActive(false);
         InputModeCoordinator.Exit(this);
         bool combatStillActive = gameObject.activeInHierarchy && LocalPlayerInput.HasActiveRuntimeInput && combatManager != null && combatManager.IsCombatActive;

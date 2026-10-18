@@ -22,7 +22,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private bool externallyDriven;
     private string activeActionName;
     private SkillSO activePresentedSkill;
+    private PlayerAttackContext attackContext;
+    private int attackFacingFrame = -1;
+    public PlayerAttackContext AttackContext => actionActive && attackContext != null && attackContext.Generation == activeToken ? attackContext : null;
     public int ActionGeneration => activeToken;
+    public bool IsBasicSkillAction => actionActive && activeActionIsBasic;
     public bool IsCurrentSession(int generation) => actionActive && generation == activeToken;
     public ActionEndReason LastEndReason { get; private set; }
 
@@ -40,9 +44,10 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         return true;
     }
 
-    public int BeginExternalPresentation(UnityEngine.Object owner, bool allowMobility = false)
+    public int BeginExternalPresentation(UnityEngine.Object owner, bool allowMobility = false, bool preserveAirborneHold = false)
     {
         if (deathAnimationLocked || owner == null) return 0;
+        if (!preserveAirborneHold) ReleaseChargedPlayerHold();
         TerminateAction(activeToken, ActionEndReason.Interrupted, false);
         activeToken++;
         actionActive = true;
@@ -58,6 +63,35 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     public void EndExternalPresentation(int generation)
     {
         if (externallyDriven) TerminateAction(generation, ActionEndReason.Completed);
+    }
+
+    public bool SetExternalAttackContext(int generation, PlayerAttackContext context)
+    {
+        if (!externallyDriven || !IsCurrentSession(generation) || context == null || context.Generation != generation) return false;
+        attackContext = context;
+        attackFacingFrame = -1;
+        return true;
+    }
+
+    public bool ConfigureExternalSkill(int generation, SkillSO skill)
+    {
+        if (!externallyDriven || !IsCurrentSession(generation) || skill == null) return false;
+        activePresentedSkill = skill;
+        activeActionIsBasic = skill is BasicSkillsSO;
+        activeActionName = skill.SkillName;
+        activeAllowsMobilityCancel = skill.Presentation.allowMobilityCancel;
+        activeFacingMode = skill.Presentation.facingMode;
+        chainWindowOpen = mobilityCancelOpen = recoveryOpen = false;
+        return true;
+    }
+
+    public void UpdateExternalSkillProgress(int generation, float normalizedTime)
+    {
+        if (!externallyDriven || !IsCurrentSession(generation) || activePresentedSkill == null) return;
+        var profile = activePresentedSkill.Presentation;
+        chainWindowOpen = normalizedTime >= profile.chainNormalizedTime;
+        recoveryOpen = normalizedTime >= profile.recoveryNormalizedTime;
+        mobilityCancelOpen = activeAllowsMobilityCancel && normalizedTime >= profile.mobilityCancelNormalizedTime;
     }
 
     public bool CanPlayState(string stateName) => isActiveAndEnabled && !deathAnimationLocked &&
@@ -113,6 +147,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private bool activeAllowsMobilityCancel;
     private bool activeRequestsAirborneLanding;
     private bool activeHoldsAirborne;
+    private int activeAirborneHoldHandle;
     private MotionHandoffProfile activeAirborneLandingHandoff;
     private bool activeLandingRequested;
     private float activeHandoffStartedAt;
@@ -127,23 +162,26 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private int deathStateHash;
 
     public bool IsActionActive => actionActive;
+    public bool IsDamageReactionSuppressed => IsChargingSkill || (actionActive && activePresentedSkill != null &&
+        !activePresentedSkill.Presentation.allowDamageInterruption);
     public bool LastRequestWasBuffered { get; private set; }
     public bool IsChainWindowOpen => chainWindowOpen;
     public bool IsMobilityCancelOpen => mobilityCancelOpen;
     public bool IsRecoveryOpen => recoveryOpen;
-    public bool CanStartAction => !deathAnimationLocked && (!actionActive || recoveryOpen);
-    public bool CanAcceptBasicSkillInput => !deathAnimationLocked && !hasBufferedAction;
+    public bool CanStartAction => !deathAnimationLocked && !IsChargingSkill && (!actionActive || recoveryOpen);
+    public bool CanAcceptBasicSkillInput => !deathAnimationLocked && !IsChargingSkill && !hasBufferedAction;
     public string BasicSkillInputBlockReason
     {
         get
         {
             if (deathAnimationLocked) return "animation de mort verrouillee";
+            if (IsChargingSkill) return "ChargedSkill en cours de chargement";
             if (hasBufferedAction) return "un BasicSkill est deja bufferise";
             return null;
         }
     }
-    public bool CanChainBasicSkill => !deathAnimationLocked && !hasBufferedAction && (!actionActive || recoveryOpen || chainWindowOpen);
-    public bool CanCancelToMobility => !deathAnimationLocked &&
+    public bool CanChainBasicSkill => !deathAnimationLocked && !IsChargingSkill && !hasBufferedAction && (!actionActive || recoveryOpen || chainWindowOpen);
+    public bool CanCancelToMobility => !deathAnimationLocked && !IsChargingSkill &&
                                        (!actionActive || (activeAllowsMobilityCancel && (mobilityCancelOpen || recoveryOpen)));
     public bool IsDeathAnimationLocked => deathAnimationLocked;
     public bool OwnsOnlyActionMotionLock(LitOpsiveLocomotionBridge bridge) =>
@@ -205,7 +243,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         return true;
     }
 
-    public bool TryPlaySkill(SkillSO skill, int stateHash)
+    public bool TryPlaySkill(SkillSO skill, int stateHash, PlayerAttackContext targeting = null)
     {
         BasicSkillsSO basicSkill = skill as BasicSkillsSO;
         return skill != null && TryPlay(
@@ -213,7 +251,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             skill.Presentation,
             skill.SkillName,
             basicSkill != null,
-            basicSkill, skill);
+            basicSkill, skill, targeting);
     }
 
     public bool TryPlayCombatState(string stateName, PlayerActionPresentationProfile profile, string debugName)
@@ -224,6 +262,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     public bool TryReplaceWithDamageReaction(string stateName, PlayerActionPresentationProfile profile)
     {
+        if (IsDamageReactionSuppressed) return false;
         if (!CanPlayState(stateName) || externallyDriven && !activeAllowsMobilityCancel ||
             locomotionBridge != null && (locomotionBridge.IsScriptedTraversalActive ||
             locomotionBridge.IsCinematicMotionSessionActive)) return false;
@@ -270,6 +309,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         actionActive = false;
         activePresentedSkill = null;
         externallyDriven = false;
+        attackContext = null;
         sessionOwner = null;
         LastEndReason = reason;
         var cleanups = sessionCleanup.ToArray();
@@ -312,7 +352,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             IsActiveState(animator.GetCurrentAnimatorStateInfo(0)) && next == 0;
         Debug.LogWarning($"[PlayerAction] Recovery actor={name} session={generation} action={activeActionName} " +
             $"reason={reason} current={current} next={next} resources={sessionCleanup.Count}", this);
-        RealTimeCombatManager.Instance?.GetComponent<RealTimeCombatInput>()?.CancelBufferedBasicSkills();
+        if (RealTimeCombatManager.Instance?.PlayerRoot == transform)
+            RealTimeCombatManager.Instance.GetComponent<RealTimeCombatInput>()?.CancelBufferedBasicSkills();
         TerminateAction(generation, ActionEndReason.Failed);
         if (actionActive || !stillOwnsPose || deathAnimationLocked || animator == null ||
             locomotionBridge == null || !locomotionBridge.Grounded || locomotionBridge.IsInputSuppressedByUcc ||
@@ -413,6 +454,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private void OnDisable()
     {
+        ReleaseChargedPlayerHold();
         SkillEventsOnDisable();
         TerminateAction(activeToken, ActionEndReason.OwnerDisabled);
     }
@@ -426,7 +468,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     public void BeginTargetLunge(SkillSO skill, Transform target)
     {
         PlayerTargetLungeProfile profile = skill != null ? skill.TargetLunge : null;
-        if (profile == null || !profile.enabled || target == null || locomotionBridge == null || !locomotionBridge.IsDriving)
+        if (profile == null || !profile.enabled || target == null && AttackContext == null || locomotionBridge == null || !locomotionBridge.IsDriving)
         {
             if (debugContactMotion) Debug.LogWarning($"[TargetMobility] Start motion refused | {locomotionBridge?.DriveDiagnostic}", this);
             return;
@@ -441,8 +483,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             contactSkill = skill;
             contactGeneration = activeToken;
             contactWindowArmed = contactImpactUsed = false;
-            var root = RealTimeCombatManager.Instance?.LockedCombatTarget?.Root ?? target;
-            contactTravelDirection = Vector3.ProjectOnPlane(root.position - transform.position, Vector3.up).normalized;
+            var root = AttackContext != null ? AttackContext.TargetRoot : RealTimeCombatManager.Instance?.LockedCombatTarget?.Root ?? target;
+            contactTravelDirection = AttackContext != null ? AttackContext.Direction : Vector3.ProjectOnPlane(root.position - transform.position, Vector3.up).normalized;
             if (contactTravelDirection.sqrMagnitude < .0001f) contactTravelDirection = transform.forward;
             targetLungeRoutine = StartCoroutine(RunContactTargetLunge(skill, root, ++targetLungeToken, activeToken));
         }
@@ -455,6 +497,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         contactCollisionHandle = null;
         contactSkill = null;
         contactWindowArmed = false;
+        externalContactResolver = null;
+        externalFreeDashDistance = 0;
         if (releaseAnimation) ReleaseContactSkillAnimation();
         targetLungeToken++;
         if (targetLungeRoutine != null)
@@ -764,7 +808,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             TerminateAction(activeToken, ActionEndReason.OwnerDisabled);
             return;
         }
-        if (actionActive && !externallyDriven) FaceActionTarget();
+        if (actionActive && (!externallyDriven || AttackContext != null)) FaceActionTarget();
     }
 
     private bool TryPlay(
@@ -772,7 +816,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         PlayerActionPresentationProfile profile,
         string debugName,
         bool allowChainInterrupt,
-        BasicSkillsSO basicSkill, SkillSO presentedSkill = null)
+        BasicSkillsSO basicSkill, SkillSO presentedSkill = null, PlayerAttackContext targeting = null)
     {
         LastRequestWasBuffered = false;
         if (deathAnimationLocked)
@@ -810,7 +854,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             return false;
         }
 
-        return StartAction(stateHash, profile, debugName, allowChainInterrupt, basicSkill, presentedSkill);
+        return StartAction(stateHash, profile, debugName, allowChainInterrupt, basicSkill, presentedSkill, targeting);
     }
 
     private bool StartAction(
@@ -818,11 +862,20 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         PlayerActionPresentationProfile profile,
         string debugName,
         bool isBasicAction,
-        BasicSkillsSO basicSkill, SkillSO presentedSkill = null)
+        BasicSkillsSO basicSkill, SkillSO presentedSkill = null, PlayerAttackContext targeting = null)
     {
         if (!isActiveAndEnabled || deathAnimationLocked || animator == null ||
             !animator.isActiveAndEnabled || !animator.HasState(0, stateHash)) return false;
+        var combatManager = RealTimeCombatManager.Instance;
+        var nextSkill = presentedSkill ?? basicSkill;
+        var nextAttack = targeting;
+        if (combatManager != null && combatManager.AllowsFreeAttacks && nextSkill != null)
+        {
+            if (nextAttack == null && !combatManager.TryResolveSkillTargeting(nextSkill, 0, out nextAttack, out _)) return false;
+            if (nextAttack.Skill != nextSkill || !combatManager.ValidateFreeAttackContext(nextAttack)) return false;
+        }
         if (!PrepareContactSkillAnimation(presentedSkill, out var contactOverride, out var originalController)) return false;
+        if (!isBasicAction) ReleaseChargedPlayerHold();
         TerminateAction(activeToken, ActionEndReason.Interrupted, false);
         if (contactOverride != null)
         {
@@ -842,6 +895,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         activeFacingMode = profile.facingMode;
         actionActive = true;
         activeActionIsBasic = isBasicAction;
+        attackContext = nextAttack?.WithGeneration(activeToken);
+        if (attackContext != null) actionFacingTarget = null;
         if (basicSkill != null)
             FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include)?.SetAnimationEventSkill(basicSkill);
         if (isBasicAction) basicSkillInterruptedByDamage = false;
@@ -850,16 +905,31 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         recoveryOpen = false;
         activeAllowsMobilityCancel = profile.allowMobilityCancel;
         activeRequestsAirborneLanding = basicSkill != null && basicSkill.RequestsLandingDuringAnimation;
-        activeHoldsAirborne = basicSkill != null && basicSkill.HoldsAirborneDuringAnimation;
+        if (locomotionBridge != null && locomotionBridge.Grounded) chargedDescentRequired = false;
+        activeHoldsAirborne = basicSkill != null && basicSkill.HoldsAirborneDuringAnimation && !chargedDescentRequired;
         activeAirborneLandingHandoff = basicSkill != null ? basicSkill.AirborneLandingHandoff : null;
         activeLandingRequested = false;
         activeHandoffStartedAt = 0f;
         locomotionBridge?.GetComponent<PlayerStateMotionController>()?.SetActionPolicy(stateHash, profile.movementPolicy);
+        if (profile.lockMovementDuringAnimation && locomotionBridge != null)
+        {
+            // Keep the UCC handler alive so authored impulses can still start.
+            // The scoped external lock itself already zeros player input.
+            if (!locomotionBridge.TryAcquireExternalLock(this, out var inputLock, disableGameplayInput: false))
+            {
+                TerminateAction(activeToken, ActionEndReason.Failed);
+                return false;
+            }
+            RegisterActionCleanup(activeToken, inputLock.Dispose);
+        }
         if (activeHoldsAirborne)
         {
-            locomotionBridge?.BeginCombatAirborneHold();
+            float holdDuration = ResolveAirborneHoldDuration((basicSkill.AnimationClip != null ? basicSkill.AnimationClip.length : 1f) + 1f);
+            activeAirborneHoldHandle = locomotionBridge != null && holdDuration > 0f
+                ? locomotionBridge.AcquireCombatAirborneHold(this, holdDuration) : 0;
+            activeHoldsAirborne = activeAirborneHoldHandle != 0;
         }
-        if (presentedSkill != null && presentedSkill.TargetLunge.resolveImpactAtContact)
+        if (presentedSkill is ChargedSkillSO || presentedSkill != null && presentedSkill.TargetLunge.resolveImpactAtContact)
             animator.CrossFadeInFixedTime(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, .25f), 0, 0);
         else animator.CrossFade(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, 0.25f), 0);
         Trace("enter", debugName, profile);
@@ -911,6 +981,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
                 yield break;
             }
             FaceActionTarget();
+            if ((AttackContext?.Mode == SkillTargetingMode.RequiredTarget || AttackContext?.Mode == SkillTargetingMode.LockedTarget) && !AttackContext.TargetAlive)
+            {
+                RecoverAction(token, "Required skill target disappeared", profile);
+                yield break;
+            }
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
             if (!TryGetActiveAnimatorState(out state))
             {
@@ -918,7 +993,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
                 yield break;
             }
 
-            bool cinematic = RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.IsCinematicSequenceActive;
+            bool cinematic = Lit.Combat.Migration.Network.CombatCinematicReservations.ContainsParticipant(transform);
             float actionDelta = domain != null ? domain.DeltaTime : Time.deltaTime;
             stalledSeconds = !cinematic && Mathf.Approximately(previousNormalizedTime, state.normalizedTime)
                 ? stalledSeconds + Mathf.Max(0f, actionDelta) : 0f;
@@ -930,6 +1005,12 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             }
 
             RequestAirborneLandingIfDue();
+
+            if (activePresentedSkill?.IsGroundImpactSkill == true && !groundImpactResolved)
+            {
+                yield return null;
+                continue;
+            }
 
             if (!chainWindowOpen && state.normalizedTime >= chainTime)
             {
@@ -952,8 +1033,18 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
                 }
             }
 
-            if (state.normalizedTime >= completionTime)
+            float requiredCompletion = isBasicAction && RealTimeCombatManager.Instance?.GetComponent<RealTimeCombatInput>()?.RequiresFullBasicPlayback == true
+                ? 1f : completionTime;
+            if (state.normalizedTime >= requiredCompletion)
             {
+                if (isBasicAction && IsChargingSkill)
+                {
+                    var input = chargedHoldInput;
+                    TerminateAction(token, ActionEndReason.Completed, false);
+                    input?.ContinueChargedHoldAfterBasic(this);
+                    if (!actionActive) RequestLocomotionHandoff();
+                    yield break;
+                }
                 recoveryOpen = true;
                 Trace("recovery", debugName, profile);
                 if (StartBufferedAction(token))
@@ -998,6 +1089,17 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private void FaceActionTarget()
     {
+        if (AttackContext != null)
+        {
+            if (attackFacingFrame == Time.frameCount) return;
+            attackFacingFrame = Time.frameCount;
+            var manager = RealTimeCombatManager.Instance;
+            var domain = GetComponent<CombatTimeDomain>();
+            Vector3 facing = Vector3.RotateTowards(transform.forward, AttackContext.Direction,
+                (manager != null ? manager.FreeAttackTurnRate : 1440f) * Mathf.Deg2Rad * (domain != null ? domain.DeltaTime : Time.deltaTime), 0);
+            locomotionBridge?.SetActionFacingDirection(facing);
+            return;
+        }
         if (contactSkill != null && targetLungeOwnsPlanarMotion && contactSkill.TargetLunge.passThroughTarget)
         {
             locomotionBridge?.SetActionFacingDirection(contactTravelDirection);
@@ -1157,9 +1259,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         {
             return;
         }
+        if (TryShowChargedFloat()) return;
 
         locomotionBridge?.RequestRunStartResponse();
-        LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat action ended");
+        if (LocalPlayerContext.LocalCharacterRoot == transform)
+            LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat action ended");
     }
 
     private void RequestAirborneLandingIfDue()
@@ -1186,7 +1290,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         }
 
         activeHoldsAirborne = false;
-        locomotionBridge?.EndCombatAirborneHold();
+        locomotionBridge?.ReleaseCombatAirborneHold(activeAirborneHoldHandle);
+        activeAirborneHoldHandle = 0;
     }
 
     private string ResolveLocomotionDestination(bool movementHeld, bool sprintHeld)

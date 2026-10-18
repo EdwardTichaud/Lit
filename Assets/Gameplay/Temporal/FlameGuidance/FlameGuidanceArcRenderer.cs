@@ -41,6 +41,7 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
     private Flame targetAncientFlame;
     private Flame targetCommonFlame;
     private float nextTargetRefreshTime;
+    private readonly List<Flame> sceneFlames = new List<Flame>(32);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeInstance()
@@ -127,6 +128,8 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
         nextTargetRefreshTime = Time.unscaledTime + Mathf.Max(0.05f, targetRefreshInterval);
 
         localCharacter = ResolveLocalCharacter();
+        if (localCharacter != null) Flame.CopyActiveInfluenceFlames(sceneFlames);
+        else sceneFlames.Clear();
         sourceAncientFlame = FindNearbyAncientFlame(localCharacter);
         if (!IsUsableFlame(sourceAncientFlame))
         {
@@ -173,7 +176,6 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
 
         if (closest == null)
         {
-            Flame[] sceneFlames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
             EvaluateNearbyAncientFlames(sceneFlames, characterPosition, ref closest, ref closestSqr);
         }
 
@@ -221,7 +223,6 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
 
         if (closest == null)
         {
-            Flame[] sceneFlames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
             EvaluateUnlitFlames(sceneFlames, source, sourcePosition, ancientOnly: true, ref closest, ref closestSqr);
         }
 
@@ -232,7 +233,6 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
     {
         Flame closest = null;
         float closestSqr = float.PositiveInfinity;
-        Flame[] sceneFlames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
         EvaluateUnlitFlames(sceneFlames, null, sourcePosition, ancientOnly: false, ref closest, ref closestSqr);
         return closest;
     }

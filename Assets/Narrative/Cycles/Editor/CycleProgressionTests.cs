@@ -147,7 +147,7 @@ public sealed class CycleProgressionTests
     [TestCase(8)] [TestCase(31)]
     public void LegacyNinaRewardMigratesWithoutRewritingIdentity(int flags)
     {
-        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         service.RegisterDefinition(nina);
         rules.SetInt(nina.StateKey, flags);
         service.Refresh();
@@ -163,7 +163,7 @@ public sealed class CycleProgressionTests
     [TestCase(4)] [TestCase(16)] [TestCase(20)]
     public void OldNinaVisitBitsRemainUnchanged(int flags)
     {
-        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         service.RegisterDefinition(nina);
         rules.SetInt(nina.StateKey, flags);
         service.Refresh();
@@ -182,7 +182,7 @@ public sealed class CycleProgressionTests
     [TestCase(31, "scar_reward")]
     public void NinaLegacyStatesMigrateOnceToNamedSteps(int flags, string expectedStep)
     {
-        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/NinaCycle.asset");
+        var nina = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);
         service.RegisterDefinition(nina);
         rules.SetInt(nina.StateKey, flags);
         service.Refresh();

@@ -10,6 +10,8 @@ public sealed class FlickeringLight : MonoBehaviour
 {
     [SerializeField] private Light targetLight;
     [SerializeField] private bool searchInChildren = true;
+    [SerializeField, Tooltip("Anime la lumiere en mode edition. Desactive par defaut pour eviter les mises a jour d'ombres pendant l'authoring.")]
+    private bool previewInEditMode;
 
     [Header("Shadow movement")]
     [Tooltip("Maximum local offset, in metres, applied to the GameObject carrying the Light.")]
@@ -19,6 +21,7 @@ public sealed class FlickeringLight : MonoBehaviour
     private Transform movedTransform;
     private Vector3 authoredLocalPosition;
     private bool hasAuthoredPosition;
+    private bool hasAppliedMovement;
     private float noiseSeedX;
     private float noiseSeedZ;
 
@@ -61,6 +64,7 @@ public sealed class FlickeringLight : MonoBehaviour
 
     private void OnValidate()
     {
+        if (!Application.IsPlaying(gameObject) && !previewInEditMode) RestoreAuthoredPosition();
         movementAmplitude = Mathf.Max(0f, movementAmplitude);
         movementSpeed = Mathf.Max(0.1f, movementSpeed);
         CacheTarget();
@@ -98,7 +102,12 @@ public sealed class FlickeringLight : MonoBehaviour
 
     private void ApplyMovement(float timeValue)
     {
-        if (movedTransform == null)
+        if (!Application.IsPlaying(gameObject) && !previewInEditMode)
+        {
+            RestoreAuthoredPosition();
+            return;
+        }
+        if (movedTransform == null || targetLight == null || !targetLight.isActiveAndEnabled)
             return;
 
         if (!hasAuthoredPosition)
@@ -107,12 +116,14 @@ public sealed class FlickeringLight : MonoBehaviour
         float offsetX = SampleSignedNoise(noiseSeedX, timeValue, movementSpeed) * movementAmplitude;
         float offsetZ = SampleSignedNoise(noiseSeedZ, timeValue, movementSpeed * 1.17f) * movementAmplitude;
         movedTransform.localPosition = authoredLocalPosition + new Vector3(offsetX, 0f, offsetZ);
+        hasAppliedMovement = true;
     }
 
     private void RestoreAuthoredPosition()
     {
-        if (movedTransform != null && hasAuthoredPosition)
+        if (movedTransform != null && hasAuthoredPosition && hasAppliedMovement)
             movedTransform.localPosition = authoredLocalPosition;
+        hasAppliedMovement = false;
     }
 
     private static float SampleSignedNoise(float seed, float timeValue, float speed)

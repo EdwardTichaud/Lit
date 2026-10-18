@@ -41,6 +41,9 @@ public sealed partial class EnemyController
     public override Animator Animator => ActorAnimator != null ? ActorAnimator : ResolveAnimatorInHierarchy();
     public override Transform LockPoint => ActorResolveLockPoint();
     public bool CanSeePlayer { get; private set; }
+    public Transform VisiblePlayerRoot { get; private set; }
+    private readonly System.Collections.Generic.List<Unity.Netcode.NetworkObject> visionActors =
+        new System.Collections.Generic.List<Unity.Netcode.NetworkObject>();
 
     public float PlayerVisibilityDistance { get; private set; }
 
@@ -106,12 +109,37 @@ public sealed partial class EnemyController
     public bool RefreshPlayerVisibility()
     {
         Transform player = LocalPlayerContext.LocalCharacterRoot;
-        if (player == null)
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening)
+        {
+            player = null;
+            var authority = network.GetComponent<Lit.Combat.Migration.Network.CombatCommandAuthority>();
+            if (network.IsServer && authority != null)
+            {
+                authority.CopyRegisteredActors(visionActors);
+                float nearest = float.PositiveInfinity;
+                ulong selectedId = ulong.MaxValue;
+                foreach (var identity in visionActors)
+                {
+                    var runtime = identity.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+                    var candidate = identity.GetComponent<SquadCharacterController>();
+                    if (candidate == null || candidate.CurrentHp <= 0 || runtime == null || !runtime.IsAssignedPlayer ||
+                        HasProfile && BrainDistance(BrainHome, candidate.transform.position) > BrainProfile.pursuitRadius ||
+                        !TryEvaluate(candidate.transform, out _, out _, out _) &&
+                        !(BrainReturning && CanSenseNearby(candidate.transform, BrainProfile.returnReengageDistance))) continue;
+                    float distanceSquared = (candidate.transform.position - transform.position).sqrMagnitude;
+                    if (distanceSquared > nearest || distanceSquared == nearest && identity.NetworkObjectId >= selectedId) continue;
+                    player = candidate.transform; nearest = distanceSquared; selectedId = identity.NetworkObjectId;
+                }
+            }
+        }
+        if (player == null && (network == null || !network.IsListening))
         {
             player = RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.PlayerRoot : null;
         }
 
         CanSeePlayer = TryEvaluate(player, out float distance, out float angle, out string reason);
+        VisiblePlayerRoot = player;
         PlayerVisibilityDistance = distance;
         PlayerVisibilityAngle = angle;
         PlayerVisibilityReason = player == null ? "joueur absent" : reason;
@@ -126,8 +154,15 @@ public sealed partial class EnemyController
     public int ReceivePassiveDamage(int amount, SquadCharacterController source) => ReceiveDamage(amount, true, source, false);
 
     public int ReceiveDamage(int amount, bool canPrepareRetaliation = false, SquadCharacterController source = null, bool playHitReaction = true, bool applyRevelation = false)
+        => ReceiveDamageCore(amount, canPrepareRetaliation, source, playHitReaction, applyRevelation, out _);
+
+    public int ReceivePlayerContactDamage(int amount, SquadCharacterController source, out bool accepted)
+        => ReceiveDamageCore(amount, true, source, true, false, out accepted);
+
+    private int ReceiveDamageCore(int amount, bool canPrepareRetaliation, SquadCharacterController source, bool playHitReaction, bool applyRevelation, out bool accepted)
     {
-        if (!CombatEnabled) return 0;
+        accepted = false;
+        if (!CombatProtectionDamage.HasAuthority || !CombatEnabled) return 0;
         if (applyRevelation) amount = EnemyRevelation.ModifyDamage(transform, amount);
         if (!BossFilterIncomingDamage(amount, source, out amount)) return 0;
         EnemyController brain = GetComponent<EnemyController>();
@@ -139,9 +174,11 @@ public sealed partial class EnemyController
             return 0;
         }
 
+        accepted = true;
         int allowedDamage = amount;
-        bool thresholdReached = thresholds != null && thresholds.TryPrepareDamage(this, amount, out allowedDamage);
+        bool thresholdReached = thresholds != null && thresholds.TryPrepareDamage(this, amount, out allowedDamage, source);
         int applied = ActorHealth != null ? ActorHealth.ApplyDamage(thresholdReached ? allowedDamage : amount) : Mathf.Max(0, thresholdReached ? allowedDamage : amount);
+        if (thresholdReached) thresholds.NotifyThresholdDamageApplied(this, source);
         if (applied <= 0)
         {
             return 0;
@@ -164,7 +201,6 @@ public sealed partial class EnemyController
 
         if (thresholdReached)
         {
-            thresholds.NotifyThresholdDamageApplied(this);
             return applied;
         }
 

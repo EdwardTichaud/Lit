@@ -21,6 +21,7 @@ public enum LocomotionPresentationState
 public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 {
     private readonly PlayerModuleConfiguration<PlayerLocomotionSettings> moduleConfiguration = new PlayerModuleConfiguration<PlayerLocomotionSettings>();
+    private readonly AnimatorParameterLookup animatorParameterLookup = new AnimatorParameterLookup();
     private PlayerLocomotionSettings ModuleSettings => moduleConfiguration.Resolve(this, data => data.locomotion);
     private const string SpeedChangeInputName = "Change Speeds";
     private const string CrouchInputName = "Crouch";
@@ -147,7 +148,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool scriptedTraversalGroundingPrepared;
     private bool previousScriptedTraversalStickToGround;
     private bool previousScriptedTraversalForceStickToGround;
-    private int combatAirborneHoldCount;
+    private readonly System.Collections.Generic.Dictionary<int, (Behaviour owner, float deadline)> combatAirborneHolds = new System.Collections.Generic.Dictionary<int, (Behaviour, float)>();
+    private readonly System.Collections.Generic.List<int> expiredAirborneHolds = new System.Collections.Generic.List<int>();
+    private int nextAirborneHold;
+    private int combatAirborneHoldCount => combatAirborneHolds.Count;
     private bool combatAirborneHoldPreviousUseGravity;
     private int externalLockCount;
     private bool externalLockInputDisabled;
@@ -519,6 +523,17 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private ExternalLockHandle planarMotionLock;
     private ExternalLockHandle impulseLock;
 
+    public bool HasOnlyExternalLocksOwnedBy(params object[] owners)
+    {
+        foreach (var handle in externalLocks)
+        {
+            bool matches = false;
+            foreach (var owner in owners) if (owner != null && ReferenceEquals(handle.Owner, owner)) matches = true;
+            if (!matches) return false;
+        }
+        return !IsScriptedTraversalActive && !IsCinematicMotionSessionActive;
+    }
+
     public bool TryAcquireExternalLock(object owner, out ExternalLockHandle handle,
         bool disableGameplayInput = true, bool stopActiveAbilities = false, bool progressiveStop = false)
     {
@@ -590,6 +605,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return true;
     }
 
+    public bool DriveCombatDescent(float speed)
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || locomotion.Grounded) return false;
+        float vertical = Vector3.Dot(locomotion.Velocity, transform.up);
+        locomotion.AddForce(transform.up * (-Mathf.Max(0f, speed) - vertical), 1, false);
+        return true;
+    }
+
     /// <summary>
     /// Applies a small, collision-safe planar deceleration while a presentation
     /// is finishing. It never changes vertical velocity, position or rotation.
@@ -653,15 +677,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// <summary>
     /// Suspends UCC gravity for an aerial combat action. Horizontal movement
     /// remains owned by UCC; only the vertical component is neutralized.
-    /// Calls are reference counted so a queued replacement action cannot
-    /// restore gravity while it still owns the hold.
+    /// Each owner has an independently released, time-bounded handle. An old
+    /// action cannot restore gravity while another valid hold remains.
     /// </summary>
-    public bool BeginCombatAirborneHold()
+    public int AcquireCombatAirborneHold(Behaviour owner, float maximumSeconds)
     {
         ResolveReferences();
-        if (!IsDriving || locomotion == null || locomotion.Grounded)
+        if (owner == null || !owner.isActiveAndEnabled || !IsDriving || locomotion == null || locomotion.Grounded || scriptedTraversalGravityPrepared)
         {
-            return false;
+            return 0;
         }
 
         if (combatAirborneHoldCount == 0)
@@ -670,21 +694,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         }
 
-        combatAirborneHoldCount++;
+        int handle = ++nextAirborneHold;
+        combatAirborneHolds.Add(handle, (owner, (timeDomain != null ? timeDomain.LocalTime : Time.time) + Mathf.Max(.1f, maximumSeconds)));
         MaintainCombatAirborneHold();
-        return true;
+        return handle;
     }
 
-    /// <summary>Releases one aerial combat hold and lets UCC resume gravity.</summary>
-    public void EndCombatAirborneHold()
+    /// <summary>Releases only the matching hold; duplicate and stale releases are harmless.</summary>
+    public void ReleaseCombatAirborneHold(int handle)
     {
-        if (combatAirborneHoldCount <= 0)
-        {
-            combatAirborneHoldCount = 0;
-            return;
-        }
-
-        combatAirborneHoldCount--;
+        if (handle == 0 || !combatAirborneHolds.Remove(handle)) return;
         if (combatAirborneHoldCount > 0 || locomotion == null)
         {
             return;
@@ -694,6 +713,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             locomotion.UseGravity = combatAirborneHoldPreviousUseGravity;
         }
+        RestoreUccAirborneHold();
 
         // Gravity resumes from the last authored air pose rather than from a
         // downward force accumulated during the suspended frames.
@@ -702,31 +722,35 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void MaintainCombatAirborneHold()
     {
+        expiredAirborneHolds.Clear();
+        float now = timeDomain != null ? timeDomain.LocalTime : Time.time;
+        foreach (var entry in combatAirborneHolds)
+            if (entry.Value.owner == null || !entry.Value.owner.isActiveAndEnabled || now >= entry.Value.deadline)
+                expiredAirborneHolds.Add(entry.Key);
+        foreach (int handle in expiredAirborneHolds) ReleaseCombatAirborneHold(handle);
         if (combatAirborneHoldCount <= 0 || locomotion == null)
         {
+            return;
+        }
+
+        if (scriptedTraversalGravityPrepared)
+        {
+            RestoreUccAirborneHold();
             return;
         }
 
         locomotion.UseGravity = false;
         locomotion.GravityAccumulation = 0f;
 
-        // A jump ability can still carry an upward or downward velocity for a
-        // frame after the skill starts. Remove only that vertical component;
-        // planar UCC movement remains untouched.
-        Vector3 up = locomotion.Up.sqrMagnitude > 0f ? locomotion.Up.normalized : transform.up;
-        float verticalSpeed = Vector3.Dot(locomotion.Velocity, up);
-        if (Mathf.Abs(verticalSpeed) > 0.001f)
-        {
-            locomotion.AddForce(-up * verticalSpeed, 1, false);
-        }
+        // Constrain the vertical intention once inside UCC's simulation. Feeding
+        // the previous velocity back in Update/LateUpdate amplifies stale forces.
+        MaintainUccAirborneHold();
     }
 
     private void ClearCombatAirborneHolds()
     {
-        while (combatAirborneHoldCount > 0)
-        {
-            EndCombatAirborneHold();
-        }
+        var handles = new System.Collections.Generic.List<int>(combatAirborneHolds.Keys);
+        foreach (int handle in handles) ReleaseCombatAirborneHold(handle);
     }
 
     public bool IsProgressiveStopComplete(float velocityThreshold)
@@ -1244,7 +1268,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             }
 
             impulseLock?.Dispose();
-            if (TryAcquireExternalLock(this, out impulseLock, disableGameplayInput: false))
+            if (TryAcquireExternalLock(actionOwner != null ? (object)actionOwner : this, out impulseLock, disableGameplayInput: false))
                 externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockAfter(lockInputForSeconds, impulseLock));
             AttachImpulseToAction(actionOwner, impulseLock);
         }
@@ -1272,6 +1296,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         bool scaleByMass = forceMode != ForceMode.VelocityChange && forceMode != ForceMode.Acceleration;
+        if (actionOwner != null && Vector3.Dot(worldImpulse, transform.up) > 0f)
+            PrepareActionTakeoff(actionOwner, Vector3.Dot(worldImpulse, transform.up));
         locomotion.AddForce(worldImpulse, 1, scaleByMass);
 
         if (externalImpulseLockRoutine != null)
@@ -1281,7 +1307,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             impulseLock?.Dispose();
         }
 
-        if (!TryAcquireExternalLock(this, out impulseLock, disableGameplayInput: true, stopActiveAbilities: false))
+        if (!TryAcquireExternalLock(actionOwner != null ? (object)actionOwner : this, out impulseLock,
+            disableGameplayInput: actionOwner == null, stopActiveAbilities: false))
         {
             return true;
         }
@@ -1313,6 +1340,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         });
     }
 
+    private void Start()
+    {
+        // Presentation attaches after the UCC input/physics stack has initialized.
+        EnsureComponent<PlayerMovingLegsOverlay>();
+    }
+
     private void Awake()
     {
         ResolveReferences();
@@ -1342,6 +1375,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        RestoreActionTakeoff();
         ReleaseTargetCollisionBypasses();
         RestoreExplorationMovementType();
         RestoreTacticalMovementType();
@@ -1995,7 +2029,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
-        previousLocomotionUseGravity = locomotion.UseGravity;
+        // A traversal must restore the baseline, not another owner's temporary suspension.
+        previousLocomotionUseGravity = combatAirborneHoldCount > 0 ? combatAirborneHoldPreviousUseGravity : locomotion.UseGravity;
         locomotion.UseGravity = false;
         locomotion.GravityAccumulation = 0f;
         scriptedTraversalGravityPrepared = true;
@@ -2010,7 +2045,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (locomotion != null)
         {
-            locomotion.UseGravity = previousLocomotionUseGravity;
+            locomotion.UseGravity = combatAirborneHoldCount > 0 ? false : previousLocomotionUseGravity;
             locomotion.GravityAccumulation = 0f;
         }
 
@@ -3054,21 +3089,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private bool HasAnimatorParameter(string parameter, AnimatorControllerParameterType type)
     {
-        if (animator == null || string.IsNullOrWhiteSpace(parameter))
-        {
-            return false;
-        }
-
-        AnimatorControllerParameter[] parameters = animator.parameters;
-        for (int i = 0; i < parameters.Length; i++)
-        {
-            if (parameters[i].type == type && parameters[i].name == parameter)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return animatorParameterLookup.Has(animator, parameter, type);
     }
 
     private void WarnOnce(ref bool flag, string message)

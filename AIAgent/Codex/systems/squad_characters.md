@@ -1,5 +1,16 @@
 # Squad et personnages
 
+## Contrat solo / combat migre
+
+En solo Lucian est le seul membre physique de l'equipe ; Vesta, Soren et Aurell
+restent des identites de progression dont les kits debloques sont executes par
+Lucian. Aucun acteur de support cache. Le chargement de snapshots applique la
+meme politique que le spawn initial, sans retirer les deblocages des sauvegardes.
+Le filtre de snapshots reconnait seulement Vesta/Soren/Aurell via le catalogue ;
+les PNJ non ennemis et identites inconnues gardent leur parcours normal.
+En multi, chaque joueur conserve son personnage attribue et son propre kit.
+La migration preserve GUID, characterId, statistiques et inventaires existants.
+
 ## Configuration des modules joueur
 
 CharacterData.playerSettings contient les blocs de locomotion, saut, esquive/dash, equipement, interactions, visage, pas et trajectoires. Chaque module copie uniquement son bloc via PlayerModuleConfiguration; les references aux ressources restent partagees. Les quatre prefabs ont leur fiche assignee avant activation. CharacterHealth/LitUccDamageBridge gardent l autorite actuelle des PV; les abonnes ne changent pas de modele de sauvegarde.
@@ -86,3 +97,13 @@ groupes, le follow et les données runtime de chaque membre.
 - Le personnage local n’est pas toujours `SquadManager.currentCharacter` en
   multijoueur; utiliser `LocalPlayerContext`.
 - `SquadCharacterController` est réparti sur plusieurs fichiers `partial`.
+## Soutiens solo et migration combat (2026-10-16)
+
+Le catalogue CombatSkillKitCatalog.IsCharacter compare reference/GUID/characterId,
+jamais le nom affiche. La regeneration solo sur Lucian fonctionne aussi avec un
+clone runtime ou un nom localise ; un PNJ appele Lucian ne devient pas un joueur.
+La selection d'allie inclut Lucian comme beneficiaire solo autorise. Intercession
+conserve sa possibilite d'utilisation sur soi ; en reseau, les kits restent propres
+au personnage attribue. Aucun compagnon physique n'est ajoute pour porter un effet.
+Le migrateur prepare sur Lucian les modules necessaires aux kits empruntes, et les
+modules de garde/protection sur les quatre prefabs, sans debloquer de competence.

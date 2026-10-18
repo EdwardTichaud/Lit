@@ -11265,8 +11265,8 @@ MonoBehaviour:
   flameId: district1.ardent.common.Flame_Commune_28_-18
   flameObject: {fileID: 1696210074}
   flameLight: {fileID: 873013195}
-  overridePrimaryLightRange: 0
-  primaryLightRange: 6
+  overridePrimaryLightRange: 1
+  primaryLightRange: 11.25
   activateWhenLitTargets:
   - {fileID: 1696210074}
   configureRevealSource: 1
@@ -11283,7 +11283,7 @@ MonoBehaviour:
   interactionTrigger: {fileID: 432776704}
   litInfluence:
     enabled: 1
-    radius: 9.297738
+    radius: 11.25
     transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:

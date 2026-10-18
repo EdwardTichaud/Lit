@@ -13,7 +13,10 @@ public sealed class LitTacticalCameraEditor : Editor
         EditorGUILayout.LabelField("Authority", controller.ExternalControl ? "Cinematic (pending gameplay mode)" : controller.EffectiveMode.ToString());
         EditorGUILayout.LabelField("Obstacles — requested", controller.RequestedObstacleMode.ToString());
         EditorGUILayout.LabelField("Obstacles — effective", controller.EffectiveObstacleMode.ToString());
-        EditorGUILayout.HelpBox("VisibilityMask only in follow. Free camera and cinematics restore the mask. Incompatible groups retain collisions/sliding.", MessageType.Info);
+        EditorGUILayout.LabelField("Near clip — initial (m)", controller.InitialNearClip.ToString("F3"));
+        EditorGUILayout.LabelField("Near clip — effective (m)", controller.EffectiveNearClip.ToString("F3"));
+        EditorGUILayout.LabelField("Adaptive near clip", controller.AdaptiveNearClipActive ? "Follow only" : "Inactive");
+        EditorGUILayout.HelpBox("IgnoreObstacles keeps camera distance, including L3. Adaptive near clip is follow-only and cuts ALL foreground geometry; walls can still hide the player. VisibilityMask is follow-only; incompatible groups retain collisions.", MessageType.Info);
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("Third-person")) controller.SetMode(GameplayCameraMode.ThirdPerson);

@@ -1120,7 +1120,7 @@ public sealed class GameFlowService : MonoBehaviour
         }
     }
 
-    private static void RestoreLocalGameplayInputAfterSessionStart()
+    private void RestoreLocalGameplayInputAfterSessionStart()
     {
         // Un client multijoueur reste volontairement bloque jusqu'a la fin de
         // JoinSyncSystem. En local, une nouvelle session ne doit jamais
@@ -1131,12 +1131,28 @@ public sealed class GameFlowService : MonoBehaviour
             return;
         }
 
+        AdmitNetworkCombatActors(networkManager);
         InputFocusStack.Clear();
         GamepadInputContextStack.Clear();
         LocalInputRouter.ClearInteractionAndJumpSuppressions();
         LocalPlayerInput.SetCombatInputActive(false);
         SquadManager.Instance?.ResetInputLocksForNewSession();
         LocalInputRouter.RaiseCameraRecenter();
+    }
+
+    private void AdmitNetworkCombatActors(NetworkManager network)
+    {
+        if (network == null || !network.IsListening || !network.IsServer) return;
+        foreach (var runtime in FindObjectsByType<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>(FindObjectsInactive.Exclude))
+        {
+            if (!runtime.IsSpawned || !runtime.IsServer) continue;
+            bool belongsToWorld = loadedZoneSceneNames.Contains(runtime.gameObject.scene.name);
+            var actor = runtime.GetComponent<SquadCharacterController>();
+            if (!belongsToWorld && actor != null)
+                foreach (var client in network.ConnectedClientsList)
+                    if (NetcodePlayerUtils.GetPlayerTransform(client.ClientId) == actor.transform) { belongsToWorld = true; break; }
+            if (belongsToWorld) runtime.AdmitToCurrentWorld();
+        }
     }
 
     /// <summary>

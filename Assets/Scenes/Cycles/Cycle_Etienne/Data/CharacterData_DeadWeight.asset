@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: CharacterData_DeadWeight
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
+      presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -232,8 +235,6 @@ MonoBehaviour:
     dodge:
       impulseSpeed: 16
       durationMultiplier: 1
-      alignUnlockedDodgeToTravel: 1
-      alignLockedForwardDodgeToTravel: 1
   uniqueId: 3f1763db91d012647bee05ae6d94b51b
   characterId: dead_weight_etienne
   characterName: Le Poids mort
@@ -242,7 +243,8 @@ MonoBehaviour:
   skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
-  enemyCombatProfile: {fileID: 11400000, guid: 0a4718febbf91f744822d319b5733837, type: 2}
+  chargedSkill: {fileID: 0}
+  enemyCombatProfile: {fileID: 11400000, guid: ddcdfd78ba0f89b4fa34379f581bcbe9, type: 2}
   enemySettings:
     ArenaCreateBattleWall: 0
     LocomotionPositioning:
@@ -265,6 +267,8 @@ MonoBehaviour:
     LocomotionNavMeshEdgeClearance: 0.45
     LocomotionClearanceSearchRadius: 2
     LocomotionClearanceSearchSamples: 12
+    LocomotionStuckRecoverySeconds: 0.8
+    LocomotionStuckProgressDistance: 0.06
     LocomotionLogDiagnostics: 0
     ContractLogDiagnostics: 1
     RecoveryExtraRecoverySeconds: 1

@@ -307,7 +307,9 @@ public static class LucianBrainsCombatSmoke
                     before = arena.Enemy.CurrentHealth;
                     Next(24); break;
                 case 24:
-                    // The authored animation event opens the real reaction window.
+                    if (!arena.GetComponent<CombatHealthThresholdController>().IsExternalCounterWindowOpen) return;
+                    InputSystem.QueueStateEvent(pad, new GamepadState().WithButton(GamepadButton.North));
+                    Next(25);
                     break;
                 case 25:
                     if (elapsed < .1) return;
@@ -405,8 +407,7 @@ public static class LucianBrainsCombatSmoke
     {
         Debug.Log("Reaction event diagnostics: " + ReactionDiagnostics());
         arena.Enemy.ReactionOpportunity -= QueueCounter;
-        InputSystem.QueueStateEvent(pad, new GamepadState().WithButton(GamepadButton.North));
-        Next(25);
+        // Arming B is intentionally earlier than the last 0.2 clip seconds for Y.
     }
 
     private static void Next(int next) { stage = next; started = EditorApplication.timeSinceStartup; }

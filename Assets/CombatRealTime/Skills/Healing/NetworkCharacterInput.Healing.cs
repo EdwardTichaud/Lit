@@ -11,6 +11,12 @@ public partial class NetworkCharacterInput
 
     public bool TryRequestHealingSkill(SkillSO skill, SquadCharacterController ally = null, ICombatTarget enemy = null)
     {
+        var runtime = GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+        if (runtime != null)
+        {
+            Transform recipient = skill != null && skill.healingTarget == SkillHealingTarget.EnemyLifeSteal ? enemy?.Root : ally != null ? ally.transform : null;
+            return runtime.TryRequestSkill(skill, recipient != null ? recipient.GetComponentInParent<NetworkObject>() : null, transform.forward);
+        }
         if (!IsSpawned || !IsOwner || healingRequestPending || skill == null || !skill.IsHealingSkill) return false;
         if (Resources.Load<SkillSO>("CombatSupportSkills/" + skill.name) != skill) return false;
         NetworkObjectReference target = default;
@@ -36,7 +42,8 @@ public partial class NetworkCharacterInput
     {
         var skill = string.IsNullOrEmpty(assetName) || assetName.Length > 128 || assetName.Contains("/") || assetName.Contains("\\")
             ? null : Resources.Load<SkillSO>("CombatSupportSkills/" + assetName);
-        bool allowed = skill != null && skill.IsHealingSkill && controller != null && controller.CharacterData != null &&
+        bool allowed = GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>() == null &&
+            skill != null && skill.IsHealingSkill && controller != null && controller.CharacterData != null &&
             controller.CharacterData.combatSkills != null && controller.CharacterData.combatSkills.Contains(skill) &&
             SkillHealing.CanCast(controller) && (!healingReadyAt.TryGetValue(skill, out float ready) || Time.time >= ready);
         bool drain = allowed && skill.healingTarget == SkillHealingTarget.EnemyLifeSteal;

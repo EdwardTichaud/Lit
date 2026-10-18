@@ -38,7 +38,7 @@ public sealed class SoloTeamProgressionTests
         Assert.That(team.UnlockSkill(CombatSkillKit.Soren, 2), Is.False);
         Assert.That(team.GetAvailableSkills(CombatSkillKit.Soren)[1], Is.Null);
         Assert.That(team.GetAvailableSkills(CombatSkillKit.Soren)[2], Is.Not.Null);
-        Assert.That(team.UnlockSkill(CombatSkillKit.Lucian, 3), Is.False);
+        Assert.That(team.UnlockSkill(CombatSkillKit.Lucian, 3), Is.True);
         Assert.That(team.UnlockSkill(CombatSkillKit.Soren, -1), Is.False);
     }
 
@@ -78,12 +78,13 @@ public sealed class SoloTeamProgressionTests
     [Test] public void SnapshotDoesNotAliasMutableStateAndCatalogDoesNotChange()
     {
         var before = team.Catalog.GetSkill(CombatSkillKit.Aurell, 3);
+        var vestaPrefab = team.Catalog.GetCharacter(CombatSkillKit.Vesta).worldPrefab;
         var snapshot = team.Capture();
         team.RecruitMember(CombatSkillKit.Aurell);
         Assert.That(snapshot.members.Find(m => m.kit == CombatSkillKit.Aurell).recruited, Is.False);
         Assert.That(team.Catalog.GetSkill(CombatSkillKit.Aurell, 3), Is.SameAs(before));
         Assert.That(team.IsUnlocked(CombatSkillKit.Aurell, 3), Is.False);
-        Assert.That(team.Catalog.GetCharacter(CombatSkillKit.Vesta).worldPrefab, Is.Null);
+        Assert.That(team.Catalog.GetCharacter(CombatSkillKit.Vesta).worldPrefab, Is.SameAs(vestaPrefab));
     }
 
     [Test] public void SoloSpawnAndHubSwapCannotMaterializeRecruits()

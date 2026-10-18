@@ -29,8 +29,8 @@ public static class SorenSkillSetup
             revelation.control.range = 25; revelation.control.durationSeconds = 6; revelation.control.strength = .2f;
             revelation.description = "Marque la cible pendant 6 s : +20% de degats d'attaques joueurs. Portee 25 m.";
             var entrave = Skill("Entrave", "Entrave", SkillControlKind.Entrave, 25);
-            entrave.control.range = 20; entrave.control.radius = 4; entrave.control.durationSeconds = 5; entrave.control.strength = .4f;
-            entrave.description = "Zone fixe de 4 m sous la cible : navigation ennemie ralentie de 40% pendant 5 s. Portee 20 m.";
+            entrave.control.range = 20; entrave.control.radius = 4; entrave.control.durationSeconds = 5; entrave.control.strength = .6f;
+            entrave.description = "Zone fixe de 4 m sous la cible : navigation ennemie ralentie de 60% pendant 5 s. Portee 20 m.";
             var retreat = Skill("PasDeRecul", "Pas de recul", SkillControlKind.PasDeRecul, 8);
             retreat.control.distance = 5; retreat.control.durationSeconds = .25f;
             retreat.animatorState = "Base Layer.Soren_PasDeRecul";
@@ -63,6 +63,7 @@ public static class SorenSkillSetup
             state.motion = clip; state.tag = "RealTimeCombatInPlace"; state.speed = clip.length / retreat.control.durationSeconds;
             EditorUtility.SetDirty(state); EditorUtility.SetDirty(controller);
             var kit = new[] { arrow, revelation, entrave, retreat };
+            foreach (var skill in kit) SkillTargetingAuthoring.ConfigureIfMissing(skill);
             foreach (var skill in new[] { revelation, entrave, retreat }) EditorUtility.SetDirty(skill);
             if (AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath) == null) AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);
             var data = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath);

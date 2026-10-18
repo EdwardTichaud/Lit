@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: CharacterData_FalseChoir
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
+      presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -232,8 +235,6 @@ MonoBehaviour:
     dodge:
       impulseSpeed: 16
       durationMultiplier: 1
-      alignUnlockedDodgeToTravel: 1
-      alignLockedForwardDodgeToTravel: 1
   uniqueId: b9519f78d85825049bbe2a8bc65dba71
   characterId: false_choir_ardent
   characterName: "Le Faux Ch\u0153ur"
@@ -242,7 +243,8 @@ MonoBehaviour:
   skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
-  enemyCombatProfile: {fileID: 11400000, guid: 2b290b3d3df6f2f43aef78dcf8b56be9, type: 2}
+  chargedSkill: {fileID: 0}
+  enemyCombatProfile: {fileID: 11400000, guid: 64b8de3c0e4eb594eba86eede7b4bbe0, type: 2}
   enemySettings:
     ArenaCreateBattleWall: 1
     LocomotionPositioning:
@@ -265,6 +267,8 @@ MonoBehaviour:
     LocomotionNavMeshEdgeClearance: 0.45
     LocomotionClearanceSearchRadius: 2
     LocomotionClearanceSearchSamples: 12
+    LocomotionStuckRecoverySeconds: 0.8
+    LocomotionStuckProgressDistance: 0.06
     LocomotionLogDiagnostics: 0
     ContractLogDiagnostics: 1
     RecoveryExtraRecoverySeconds: 1

@@ -376,6 +376,8 @@ public class NetcodeBootstrap : MonoBehaviour
             return;
         }
 
+        NetcodeRuntimeUtilities.GetOrAdd<Lit.Combat.Migration.Network.CombatCommandAuthority>(manager.gameObject);
+
         if (manager.NetworkConfig == null)
         {
             manager.NetworkConfig = new NetworkConfig();

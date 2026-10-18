@@ -45,6 +45,7 @@ public static class EtienneCycleValidation
 
         Scene previous = SceneManager.GetActiveScene();
         var opened = new List<Scene>();
+        CycleZoneFlameScope zoneCoverage = null;
         try
         {
             Scene Load(string path)
@@ -86,8 +87,10 @@ public static class EtienneCycleValidation
             var brake = controller.GetComponentInChildren<EtienneEmergencyBrake>(true);
             if (brake == null || brake.cycle != controller || brake.boss == null || brake.boss.Enemy != boss || !HasVisibleOutline(brake.gameObject))
                 issues.Add("Frein absent, mal relié ou sans outline visible.");
-            var flames = env.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Flame>(true)).ToArray();
             var allCycleFlames = objects.Select(g => g.GetComponent<Flame>()).Where(f => f != null).ToArray();
+            // The authored flames now live in the cycle scene, independently of its environment.
+            var requiredFlameIds = new[] { "district1.puits.galerie", "district1.puits.poste", "district1.puits.belvedere" };
+            var flames = allCycleFlames.Where(flame => requiredFlameIds.Contains(flame.FlameId)).ToArray();
             if (allCycleFlames.Any(f => new SerializedObject(f).FindProperty("isLit").boolValue))
                 issues.Add("Toutes les Flames du cycle doivent commencer eteintes.");
             if (allCycleFlames.Any(f => string.IsNullOrWhiteSpace(f.FlameId)) ||
@@ -96,13 +99,18 @@ public static class EtienneCycleValidation
             if (flames.Length != 3 || flames.Any(f => new SerializedObject(f).FindProperty("isLit").boolValue || new SerializedObject(f).FindProperty("ancientFlame").boolValue || f.flameLight == null))
                 issues.Add("Trois Flames communes initialement éteintes avec lumière sont requises.");
             foreach (Transform target in documents.Select(d => d.transform).Concat(new[]{ghost != null ? ghost.transform : null, brake != null ? brake.transform : null}).Where(t => t != null))
-                if (!flames.Any(f => {
+                if (!allCycleFlames.Any(f => {
                     var state = new SerializedObject(f);
                     var influence = state.FindProperty("litInfluence");
                     Vector3 center = f.transform.TransformPoint(influence.FindPropertyRelative("center").vector3Value);
                     return influence.FindPropertyRelative("enabled").boolValue &&
                         Vector3.Distance(target.position, center) <= influence.FindPropertyRelative("radius").floatValue;
-                })) issues.Add("Interaction hors de la couverture potentielle des Flames : " + target.name);
+                }))
+                {
+                    zoneCoverage ??= new CycleZoneFlameScope(AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset"));
+                    if (!zoneCoverage.Flames.Any(flame => CycleZoneFlameScope.Covers(flame, target.position, false)))
+                        issues.Add("Interaction hors de la couverture potentielle des Flames de la zone complete : " + target.name);
+                }
             var gate = env.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<CycleActivationId>(true)).SingleOrDefault(a => a.activationId == "district1.etienne.flooded_conduits_access");
             if (gate == null || gate.target == null || gate.activeWhenSet) issues.Add("La sortie persistante doit s'effacer après la récompense.");
             var memory = controller.sequences.FirstOrDefault(s => s.id == "last_relief");
@@ -128,6 +136,7 @@ public static class EtienneCycleValidation
         }
         finally
         {
+            zoneCoverage?.Dispose();
             foreach (var scene in opened.AsEnumerable().Reverse()) if (scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true);
             if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
         }

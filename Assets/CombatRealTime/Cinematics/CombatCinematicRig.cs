@@ -60,6 +60,8 @@ public sealed class CombatCinematicContext
     public bool TransferTimelineRootMotion { get; }
     public bool AllowMissingTimelineBindings { get; }
     public CombatCinematicTimeMode TimeMode { get; }
+    public bool ControlsLocalCamera { get; }
+    public bool AppliesGameplayEffects { get; }
 
     public CombatCinematicContext(
         RealTimeCombatManager manager,
@@ -70,14 +72,19 @@ public sealed class CombatCinematicContext
         bool allowGameplayCameraFallback = false,
         bool transferTimelineRootMotion = true,
         bool allowMissingTimelineBindings = false,
-        CombatCinematicTimeMode timeMode = CombatCinematicTimeMode.Unscaled)
+        CombatCinematicTimeMode timeMode = CombatCinematicTimeMode.Unscaled,
+        ICombatTarget explicitTarget = null,
+        Transform explicitPlayer = null,
+        Animator explicitPlayerAnimator = null,
+        bool controlsLocalCamera = true,
+        bool appliesGameplayEffects = true)
     {
         CombatManager = manager;
         Definition = definition;
-        PlayerRoot = manager != null ? manager.PlayerRoot : null;
-        PlayerAnimator = manager != null ? manager.PlayerAnimator : null;
-        TargetEnemy = manager != null ? (manager.EngagedEnemy ?? manager.LockedEnemy) : null;
-        Target = manager != null ? manager.CombatTarget : null;
+        PlayerRoot = explicitPlayer != null ? explicitPlayer : manager != null ? manager.PlayerRoot : null;
+        PlayerAnimator = explicitPlayerAnimator != null ? explicitPlayerAnimator : manager != null ? manager.PlayerAnimator : null;
+        Target = explicitTarget ?? (manager != null ? manager.CombatTarget : null);
+        TargetEnemy = explicitTarget != null ? explicitTarget.Root?.GetComponent<EnemyController>() : manager != null ? (manager.EngagedEnemy ?? manager.LockedEnemy) : null;
         TargetRoot = Target != null ? Target.Root : null;
         TargetAnimator = Target != null ? Target.Animator : null;
         TargetLockPoint = Target != null ? Target.LockPoint : null;
@@ -88,6 +95,8 @@ public sealed class CombatCinematicContext
         TransferTimelineRootMotion = transferTimelineRootMotion;
         AllowMissingTimelineBindings = allowMissingTimelineBindings;
         TimeMode = timeMode;
+        ControlsLocalCamera = controlsLocalCamera;
+        AppliesGameplayEffects = appliesGameplayEffects;
     }
 }
 
@@ -189,6 +198,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private bool logPlacementDiagnostics = true;
 
     private readonly List<ICombatCinematicParticipant> participants = new List<ICombatCinematicParticipant>();
+    private readonly Dictionary<CinemachineCamera, bool> observerCameraStates = new Dictionary<CinemachineCamera, bool>();
     private CombatCinematicContext context;
     private readonly List<GameObject> hitVfxInstances = new List<GameObject>();
     private PlayableAsset bakedTimeline;
@@ -218,9 +228,52 @@ public sealed class CombatCinematicRig : MonoBehaviour
     // this accessor lazy so authoring validation observes the same baked
     // PlayableDirector that runtime playback resolves in Awake.
     public PlayableDirector Director => director != null ? director : GetComponent<PlayableDirector>();
+    public PlayableAsset RuntimeTimeline => bakedTimeline != null ? bakedTimeline : Director != null ? Director.playableAsset : null;
+    public bool HasAuthoredCamera
+    {
+        get
+        {
+            if (RuntimeTimeline == null) return false;
+            foreach (var output in RuntimeTimeline.outputs)
+                if (output.sourceObject is CinemachineTrack track && !track.mutedInHierarchy)
+                    foreach (var clip in track.GetClips()) if (clip.asset is CinemachineShot) return true;
+            return false;
+        }
+    }
+
+    public bool ValidateSkillPlayback(CombatCinematicContext candidate, string playerTrack, string enemyTrack, out string error)
+    {
+        error = null;
+        if (candidate?.PlayerRoot == null || candidate.PlayerAnimator == null || candidate.TargetRoot == null ||
+            candidate.TargetAnimator == null || RuntimeTimeline == null || Director == null || GetComponent<SignalReceiver>() == null)
+        { error = "Rig baked, acteurs ou Animators indisponibles."; return false; }
+        bool player = false, enemy = false;
+        foreach (var output in RuntimeTimeline.outputs)
+        {
+            if (output.sourceObject is TrackAsset muted && muted.mutedInHierarchy) continue;
+            if (output.sourceObject is AnimationTrack)
+            {
+                player |= output.streamName == playerTrack;
+                enemy |= output.streamName == enemyTrack;
+            }
+            if (output.sourceObject is CinemachineTrack cameraTrack)
+                foreach (var clip in cameraTrack.GetClips())
+                    if (clip.asset is CinemachineShot shot && ResolveCamera(shot.VirtualCamera.exposedName.ToString()) == null)
+                    { error = "Camera auteur absente du rig : " + shot.VirtualCamera.exposedName; return false; }
+        }
+        if (!player || !enemy) { error = "Pistes Animator Player/Enemy absentes ou incompatibles."; return false; }
+        if (HasAuthoredCamera && candidate.ControlsLocalCamera)
+        {
+            var camera = candidate.CombatManager != null ? candidate.CombatManager.GetComponent<CombatLockOnCameraController>()?.ControlledCamera : null;
+            if (camera == null || camera.GetComponent<CinemachineBrain>() == null)
+            { error = "Camera gameplay/CinemachineBrain indisponible."; return false; }
+        }
+        return true;
+    }
     public SignalReceiver SignalReceiver => signalReceiver;
     public void PlayCameraShake()
     {
+        if (context != null && !context.ControlsLocalCamera) return;
         if (!sessionActive) return;
         foreach (var shake in GetComponentsInChildren<CombatCinematicCameraShake>(true))
             shake.PlayShake();
@@ -228,9 +281,19 @@ public sealed class CombatCinematicRig : MonoBehaviour
     }
     public void ApplyKnockedOut()
     {
-        if (context?.Target is ICombatKnockoutReceiver target && !context.Target.IsDead)
+        if (context != null && context.AppliesGameplayEffects && context.Target is ICombatKnockoutReceiver target && !context.Target.IsDead)
             target.KnockedOut();
     }
+    public bool TryResolveParticipantImpact(AnimationEvent source = null)
+    {
+        if (!sessionActive || context == null) return false;
+        if (source != null && !IsActiveActorClip(source)) return false;
+        context.ResolveImpact?.Invoke();
+        return true;
+    }
+
+    private bool IsActiveActorClip(AnimationEvent source) => source.animatorClipInfo.clip != null &&
+        CombatCinematicPlaybackService.IsActivePlayerClip(director, context.PlayerAnimator, source.animatorClipInfo.clip);
     public void SpawnHitVfx(GameObject prefab)
     {
         if (!sessionActive || prefab == null || context?.PlayerRoot == null || context.TargetLockPoint == null) return;
@@ -499,6 +562,12 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
 
         context = playbackContext;
+        if (!context.ControlsLocalCamera)
+            foreach (var camera in GetComponentsInChildren<CinemachineCamera>(true))
+            {
+                observerCameraStates[camera] = camera.enabled;
+                camera.enabled = false;
+            }
         sessionToken++;
         sessionActive = true;
         stopRaised = false;
@@ -556,7 +625,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         TraceActorTrackAuthority(timeline, playerAnimatorTrack, enemyAnimatorTrack);
 
         CinemachineCamera expectedOpeningCamera = ResolveOpeningCamera();
-        bool useGameplayCameraFallback = expectedOpeningCamera == null && context.AllowGameplayCameraFallback;
+        bool useGameplayCameraFallback = !context.ControlsLocalCamera || expectedOpeningCamera == null && context.AllowGameplayCameraFallback;
         LitTimelineCinemachineBridge cameraBridge = GetComponent<LitTimelineCinemachineBridge>();
         if (!useGameplayCameraFallback && (cameraBridge == null || !cameraBridge.BeginCameraControlNow(gameplayBrain, cameraEntryBlendSeconds, cameraExitBlendSeconds)))
         {
@@ -600,7 +669,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
 
-        CinemachineCamera activeCamera = gameplayBrain.ActiveVirtualCamera as CinemachineCamera;
+        CinemachineCamera activeCamera = gameplayBrain != null ? gameplayBrain.ActiveVirtualCamera as CinemachineCamera : null;
         if (!useGameplayCameraFallback && (expectedOpeningCamera == null || activeCamera != expectedOpeningCamera))
         {
             error = "Pre-roll Cinemachine invalide : attendue='" +
@@ -659,6 +728,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
         transform.SetParent(null, false);
         transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         gameObject.SetActive(false);
+        foreach (var entry in observerCameraStates) if (entry.Key != null) entry.Key.enabled = entry.Value;
+        observerCameraStates.Clear();
     }
 
     private void ClearTimelineBindings()
@@ -750,6 +821,12 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
             else if (output.sourceObject is CinemachineTrack cameraTrack)
             {
+                if (!context.ControlsLocalCamera)
+                {
+                    director.ClearGenericBinding(output.sourceObject);
+                    cameraTrackBound = true;
+                    continue;
+                }
                 if (gameplayBrain != null)
                 {
                     director.SetGenericBinding(output.sourceObject, gameplayBrain);
@@ -809,6 +886,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private CinemachineBrain ResolveGameplayBrain()
     {
+        if (context != null && !context.ControlsLocalCamera) return null;
         gameplayLockCamera = context != null && context.CombatManager != null
             ? context.CombatManager.GetComponent<CombatLockOnCameraController>()
             : null;

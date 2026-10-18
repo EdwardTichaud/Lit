@@ -2,8 +2,13 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCinematicBlocker
+public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCinematicBlocker, IEnemyEncounterActor, IEnemyEncounterDeathPresentation
 {
+    private ICombatTarget encounterTarget;
+    public Transform EncounterRoot => transform;
+    public ICombatTarget EncounterTarget => encounterTarget ?? (encounterTarget = new LegacyCombatTarget(this));
+    public bool IsEncounterAvailable => isActiveAndEnabled && CombatEnabled && Health != null && !Health.IsDead;
+
     private enum EncounterState : byte { Dormant, Dialogue, Active }
 
     private EnemyEncounterOptions EncounterOptions => Health != null && Health.CharacterData != null
@@ -139,6 +144,18 @@ public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCi
             return;
         }
         SetState(EncounterState.Active);
+        // The participant is the actor who completed the introduction, not the host.
+        var participantRoot = Online ? NetcodePlayerUtils.GetPlayerTransform(client) : LocalPlayerContext.LocalCharacterRoot;
+        var participant = participantRoot != null ? participantRoot.GetComponent<SquadCharacterController>() : null;
+        if (participant == null && participantRoot != null) participant = participantRoot.GetComponentInChildren<SquadCharacterController>();
+        if (participant != null && participant.CurrentHp > 0)
+        {
+            BrainTarget = participant;
+            BrainReturning = false;
+            BrainObserveUntil = 0f;
+            BrainReadyAt = BrainNow;
+            EnemyEncounterActors.TryEngageIntroducedPlayer(this, participant);
+        }
         if (!Online) BeginLocalCombat();
     }
 
@@ -148,6 +165,7 @@ public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCi
     {
         bool startedOnline = Online;
         var manager = NetworkManager.Singleton;
+        if (startedOnline && manager.LocalClientId != client) return;
         void Closed(bool completed)
         {
             if (this == null || !isActiveAndEnabled || startedOnline != Online || manager != NetworkManager.Singleton) return;
@@ -245,6 +263,9 @@ public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCi
 
     private void BeginLocalCombat()
     {
+        // Production presentation is driven by the attributed world engagement snapshot.
+        // A replicated introduction gate must not start combat on every observer.
+        if (Online || RealTimeCombatManager.Instance?.AllowsFreeAttacks == true) return;
         Transform player = LocalPlayerUtils.GetControlledCharacter() != null
             ? LocalPlayerUtils.GetControlledCharacter().transform : null;
         if (player != null) RealTimeCombatManager.Instance?.BeginCombat(player, this);

@@ -39,6 +39,32 @@ public sealed class LitCameraDirector : MonoBehaviour
     private double blendStartedAt;
     private float outputBlendSeconds;
     private bool renderingSubscribed;
+    private Transform chargeActor;
+    private int chargeFramingGeneration;
+    private bool chargeFramingActive;
+    private float chargeFramingWeight, chargeFovReduction, chargeBehindOffset, chargeBlendSeconds;
+    private double chargeLastRenderAt;
+
+    public bool IsChargeFramingActive => chargeFramingActive;
+
+    public int BeginChargeFraming(Transform actor, float fovReduction, float behindOffset, float blendSeconds)
+    {
+        ResolveDependencies();
+        if (actor == null || controlledCamera == null || hasUccState) return 0;
+        chargeActor = actor;
+        chargeFramingActive = true;
+        chargeFovReduction = Mathf.Clamp(fovReduction, 0f, 30f);
+        chargeBehindOffset = Mathf.Max(0f, behindOffset);
+        chargeBlendSeconds = Mathf.Max(.01f, blendSeconds);
+        chargeLastRenderAt = Time.realtimeSinceStartupAsDouble;
+        SubscribeRendering();
+        return ++chargeFramingGeneration;
+    }
+
+    public void EndChargeFraming(int generation)
+    {
+        if (generation != 0 && generation == chargeFramingGeneration) chargeFramingActive = false;
+    }
 
     private struct CameraPose
     {
@@ -106,13 +132,16 @@ public sealed class LitCameraDirector : MonoBehaviour
     {
         UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnSceneUnloaded;
         cameraSession++;
+        chargeFramingActive = false;
+        chargeFramingWeight = 0f;
         CancelOutputBlend();
         ReleaseCinemachine();
         UnsubscribeRendering();
     }
 
     private void OnEnable() => UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
-    private void OnSceneUnloaded(UnityEngine.SceneManagement.Scene scene) => CancelOutputBlend();
+    private void OnSceneUnloaded(UnityEngine.SceneManagement.Scene scene)
+    { chargeFramingActive = false; chargeFramingWeight = 0f; CancelOutputBlend(); }
 
     private void OnDestroy()
     {
@@ -282,18 +311,34 @@ public sealed class LitCameraDirector : MonoBehaviour
     {
         if (camera != controlledCamera || renderPoseOverridden) return;
         rawRenderPose = CameraPose.Capture(camera);
+        CameraPose destination = rawRenderPose;
+        double now = Time.realtimeSinceStartupAsDouble;
+        if (chargeActor == null || !chargeActor.gameObject.activeInHierarchy || hasUccState) chargeFramingActive = false;
+        chargeFramingWeight = Mathf.MoveTowards(chargeFramingWeight, chargeFramingActive ? 1f : 0f,
+            (float)(now - chargeLastRenderAt) / Mathf.Max(.01f, chargeBlendSeconds));
+        chargeLastRenderAt = now;
+        float chargeWeight = Mathf.SmoothStep(0f, 1f, chargeFramingWeight);
+        if (chargeActor != null && chargeWeight > 0f && !hasUccState)
+        {
+            Vector3 offset = -chargeActor.forward * (chargeBehindOffset * chargeWeight);
+            if (offset.sqrMagnitude > .0001f && Physics.SphereCast(destination.position, .15f, offset.normalized,
+                out RaycastHit obstruction, offset.magnitude, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                offset = offset.normalized * Mathf.Max(0f, obstruction.distance - .05f);
+            destination.position += offset;
+            destination.fov = Mathf.Clamp(destination.fov - chargeFovReduction * chargeWeight, 20f, 100f);
+        }
         if (double.IsNaN(blendStartedAt)) blendStartedAt = Time.realtimeSinceStartupAsDouble;
         float elapsed01 = outputBlendSeconds > 0f
             ? Mathf.Clamp01((float)(Time.realtimeSinceStartupAsDouble - blendStartedAt) / outputBlendSeconds) : 1f;
         float weight = Mathf.SmoothStep(0f, 1f, elapsed01);
         lastDisplayedPose = new CameraPose
         {
-            position = Vector3.Lerp(blendSource.position, rawRenderPose.position, weight),
-            rotation = Quaternion.Slerp(blendSource.rotation, rawRenderPose.rotation, weight),
-            fov = Mathf.Lerp(blendSource.fov, rawRenderPose.fov, weight)
+            position = Vector3.Lerp(blendSource.position, destination.position, weight),
+            rotation = Quaternion.Slerp(blendSource.rotation, destination.rotation, weight),
+            fov = Mathf.Lerp(blendSource.fov, destination.fov, weight)
         };
         hasDisplayedPose = true;
-        if (elapsed01 < 1f)
+        if (elapsed01 < 1f || chargeWeight > 0f)
         {
             lastDisplayedPose.Apply(camera);
             renderPoseOverridden = true;
@@ -388,6 +433,8 @@ public sealed class LitCameraDirector : MonoBehaviour
 
     private void SuspendUccCameraControl()
     {
+        chargeFramingActive = false;
+        chargeFramingWeight = 0f;
         if (uccCameraController != null)
             uccCameraController.GetComponent<LitGameplayCameraModeController>()?.BeginExternalControl();
         if (!hasUccState)

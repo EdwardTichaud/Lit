@@ -25,6 +25,9 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private int sessionToken;
     private Coroutine watchdog;
+    private PlayerAttackContext targeting;
+    private readonly List<ICombatTarget> ownedTargetSuspensions = new List<ICombatTarget>();
+    public PlayerAttackContext Targeting => active ? targeting : null;
 
     public bool IsPlaying => active;
     public SkillSO ActiveSkill => activeSkill;
@@ -50,6 +53,34 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         return TryPlay(skill, CombatCinematicCasterRole.Player, null);
     }
 
+    public bool TryPlayPlayerSkill(SkillSO skill, PlayerAttackContext resolved, out string error)
+    {
+        error = null;
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening)
+        {
+            ResolveReferences();
+            var actor = combatManager?.PlayerRoot?.GetComponent<Lit.Combat.Migration.Network.CombatNetworkActorRuntime>();
+            var identity = resolved?.Target?.Root != null ? resolved.Target.Root.GetComponentInParent<Unity.Netcode.NetworkObject>() : null;
+            if (actor != null && resolved != null && resolved.Skill == skill && actor.TryRequestSkill(skill, identity, resolved.Direction)) return true;
+            error = "Commande cinematique ciblee refusee ou acteur reseau absent.";
+            return false;
+        }
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution)
+        { error = CombatLocalCinematicPolicy.NetworkExecutionUnavailable; return false; }
+        ResolveReferences();
+        if (combatManager == null || !combatManager.AllowsFreeAttacks || resolved == null || resolved.Skill != skill ||
+            !resolved.TargetAlive || !combatManager.ValidateFreeAttackContext(resolved) || !skill.HasCombatCinematic)
+        { error = "Contexte cible/skill cinematique invalide."; return false; }
+        var rig = skill.Cinematic.CombatCinematicRigPrefab;
+        var candidate = new CombatCinematicContext(combatManager, skill, explicitTarget: resolved.Target);
+        if (!rig.ValidateSkillPlayback(candidate, skill.Cinematic.PlayerAnimatorTrackName, skill.Cinematic.EnemyAnimatorTrackName, out error)) return false;
+        if (resolved.Target.IsAttackCommitted) { error = "La victime execute une attaque protegee."; return false; }
+        if (!TryPlay(skill, CombatCinematicCasterRole.Player, null, resolved))
+        { error = "Lecture cinematique indisponible ou refusee."; return false; }
+        return true;
+    }
+
     public bool TryPlayEnemySkill(EnemyController caster, SkillSO skill)
     {
         return TryPlay(skill, CombatCinematicCasterRole.Enemy, caster);
@@ -57,6 +88,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
 
     public void ResolveCinematicSkillImpact()
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) { AbortForActionTermination(); return; }
         if (!active || impactResolved || activeSkill == null || combatManager == null)
         {
             return;
@@ -65,10 +97,10 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         impactResolved = true;
         if (activeCasterRole == CombatCinematicCasterRole.Player)
         {
-            int applied = combatManager.ApplySkillDamageToLockedEnemy(activeSkill);
+            int applied = targeting != null ? combatManager.ApplyTargetedCinematicSkillImpact(activeSkill, targeting) : combatManager.ApplySkillDamageToLockedEnemy(activeSkill);
             if (applied > 0)
             {
-                CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(activeSkill, combatManager.LockedTargetPoint, combatManager.PlayerRoot);
+                CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(activeSkill, targeting != null ? targeting.TargetPoint : combatManager.LockedTargetPoint, combatManager.PlayerRoot);
             }
         }
         else if (activeEnemyCaster != null)
@@ -77,12 +109,13 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
     }
 
-    private bool TryPlay(SkillSO skill, CombatCinematicCasterRole casterRole, EnemyController caster)
+    private bool TryPlay(SkillSO skill, CombatCinematicCasterRole casterRole, EnemyController caster, PlayerAttackContext resolved = null)
     {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution) return false;
         ResolveReferences();
         if (active || cinematicPlayback == null || cinematicPlayback.IsPlaying || combatManager == null ||
-            !combatManager.IsCombatActive || skill == null || !skill.HasCombatCinematic ||
-            (casterRole == CombatCinematicCasterRole.Player &&
+            (!combatManager.IsCombatActive && resolved == null) || skill == null || !skill.HasCombatCinematic ||
+            (casterRole == CombatCinematicCasterRole.Player && resolved == null &&
              (!combatManager.HasLockedCombatTarget || combatManager.LockedCombatTarget.IsDead)) ||
             (casterRole == CombatCinematicCasterRole.Enemy &&
              (combatManager.EngagedEnemy == null || (combatManager.EngagedEnemy.Health != null && combatManager.EngagedEnemy.Health.IsDead))))
@@ -97,11 +130,12 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
 
         CombatSkillCinematicDefinition definition = skill.Cinematic;
-        if (casterRole == CombatCinematicCasterRole.Player && combatManager.LockedCombatTarget.IsAttackCommitted)
+        if (casterRole == CombatCinematicCasterRole.Player && (resolved != null ? resolved.Target.IsAttackCommitted : combatManager.LockedCombatTarget.IsAttackCommitted))
         {
             Debug.Log("[CombatCinematic] Skill refuse pendant l'attaque ennemie : seuls LightSkill, QTE reussi ou mort interrompent le coup.", this);
             return false;
         }
+        if (!combatManager.TryBeginCinematicTarget(this, resolved?.Target ?? combatManager.LockedCombatTarget, AbortForActionTermination)) return false;
         active = true;
         playbackStarted = false;
         impactResolved = false;
@@ -109,11 +143,13 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         activeCasterRole = casterRole;
         activeEnemyCaster = caster;
         sessionToken++;
+        targeting = resolved?.WithGeneration(sessionToken);
 
         combatManager.CancelPlayerActionForCinematic();
         SuspendEncounter();
         combatManager.SetCinematicSequenceActive(true);
         playerLockHeld = combatManager.TryLockPlayerForCinematic(this, out playerLock);
+        if (resolved != null && !playerLockHeld) { EndSession(CombatCinematicEndReason.Failed); return false; }
         InputModeCoordinator.Enter(this, InputMode.Cinematic);
         combatInput?.SetCinematicInputSuspended(true);
 
@@ -122,7 +158,10 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
             skill,
             ResolveCinematicSkillImpact,
             casterRole,
-            caster);
+            caster,
+            allowGameplayCameraFallback: resolved != null && !definition.CombatCinematicRigPrefab.HasAuthoredCamera,
+            allowMissingTimelineBindings: resolved != null,
+            explicitTarget: targeting?.Target);
         if (!cinematicPlayback.TryPlay(
                 definition.CombatCinematicRigPrefab,
                 context,
@@ -149,6 +188,12 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
     private void OnRuntimeRigCompleted(CombatCinematicRig rig)
     {
         EndSession(rig != null ? rig.LastEndReason : CombatCinematicEndReason.Interrupted);
+    }
+
+    private void LateUpdate()
+    {
+        if (active && !CombatLocalCinematicPolicy.AllowsLocalExecution) { AbortForActionTermination(); return; }
+        if (active && targeting != null && !targeting.TargetAlive) AbortForActionTermination();
     }
 
     private void EndSession(CombatCinematicEndReason reason)
@@ -183,6 +228,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
 
         RestoreEncounter();
+        combatManager?.EndCinematicTarget(this);
         combatManager?.SetCinematicSequenceActive(false);
         if (playerLockHeld)
         {
@@ -215,10 +261,31 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         impactResolved = false;
         activeSkill = null;
         activeEnemyCaster = null;
+        targeting = null;
     }
 
     private void SuspendEncounter()
     {
+        if (targeting != null)
+        {
+            ownedTargetSuspensions.Clear();
+            if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+            {
+                bool suspended = targeting.TargetRoot.GetComponent<LitBrainsEnemy>()?.IsCinematicSuspended == true ||
+                    targeting.TargetRoot.GetComponent<EnemyController>()?.IsCinematicSuspended == true;
+                if (!suspended)
+                {
+                    targeting.Target.SetCinematicSuspended(true);
+                    ownedTargetSuspensions.Add(targeting.Target);
+                }
+                return;
+            }
+            foreach (var enemy in FindObjectsByType<LitBrainsEnemy>(FindObjectsInactive.Exclude))
+                if (!enemy.IsCinematicSuspended && !enemy.IsDead) { enemy.SetCinematicSuspended(true); ownedTargetSuspensions.Add(enemy); }
+            foreach (var enemy in FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude))
+                if (!enemy.IsCinematicSuspended && enemy.Health?.IsDead != true) { enemy.SetCinematicSuspended(true); ownedTargetSuspensions.Add(new LegacyCombatTarget(enemy)); }
+            return;
+        }
         combatManager?.SuspendCombatTarget(true);
         suspendedEnemies.Clear();
         EnemyController[] behaviours = FindObjectsByType<EnemyController>(FindObjectsInactive.Exclude);
@@ -232,6 +299,15 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
 
     private void RestoreEncounter()
     {
+        if (targeting != null)
+        {
+            foreach (var enemy in ownedTargetSuspensions)
+                if (SkillTargetingContract.Alive(enemy)) enemy.SetCinematicSuspended(false);
+            ownedTargetSuspensions.Clear();
+            if (combatManager.IsCombatActive && targeting.TargetAlive)
+                targeting.TargetRoot.GetComponent<LitBrainsEnemy>()?.NotifyPlayerContact(combatManager.PlayerRoot);
+            return;
+        }
         combatManager?.SuspendCombatTarget(false);
         for (int i = 0; i < suspendedEnemies.Count; i++)
         {
@@ -249,7 +325,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         if (definition == null || combatManager == null) return;
 
         ApplyState(combatManager.PlayerAnimator, definition.PostTimelinePlayerState);
-        ApplyState(combatManager.EngagedEnemy != null ? combatManager.EngagedEnemy.Animator : null, definition.PostTimelineEnemyState);
+        ApplyState(targeting != null ? targeting.TargetAlive ? targeting.Target.Animator : null : combatManager.EngagedEnemy != null ? combatManager.EngagedEnemy.Animator : null, definition.PostTimelineEnemyState);
     }
 
     private static void ApplyState(Animator animator, CombatCinematicPostTimelineState state)
@@ -263,6 +339,13 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         }
 
         animator.CrossFade(stateHash, state.TransitionSeconds, 0, state.NormalizedStartTime);
+    }
+
+    internal static void ApplyParticipantExit(SkillSO skill, Animator player, ICombatTarget target)
+    {
+        if (skill == null || !skill.HasCombatCinematic) return;
+        ApplyState(player, skill.Cinematic.PostTimelinePlayerState);
+        if (target != null && !target.IsDead) ApplyState(target.Animator, skill.Cinematic.PostTimelineEnemyState);
     }
 
     private void StartWatchdog(int token, UnityEngine.Playables.PlayableAsset timeline)

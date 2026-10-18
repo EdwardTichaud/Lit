@@ -9,13 +9,17 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
     [SerializeField, Min(0f)] private float minimumDeathDelay = 3f;
     [SerializeField, Min(0.1f)] private float dissolveSeconds = 2.8f;
     private EnemyController enemy;
+    private IEnemyEncounterActor actor;
+    private CharacterInfo Health => actor?.Health;
+    private Animator Animator => actor?.EncounterTarget?.Animator;
     private Coroutine routine;
     private GhostDissolveController dissolve;
     private readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
     private readonly List<Material> temporaryMaterials = new List<Material>();
     private CharacterInfo observedHealth;
+    public bool HasCompletedPresentation { get; private set; }
 
-    private void Awake() => enemy = GetComponent<EnemyController>();
+    private void Awake() { enemy = GetComponent<EnemyController>(); actor = EnemyEncounterActors.Resolve(this); }
 
     private void OnEnable()
     {
@@ -33,7 +37,8 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 
     private void BindHealth()
     {
-        CharacterInfo next = enemy != null ? enemy.Health : null;
+        if (!EnemyEncounterActors.IsAlive(actor)) actor = EnemyEncounterActors.Resolve(this);
+        CharacterInfo next = Health;
         if (observedHealth == next) return;
         UnbindHealth();
         observedHealth = next;
@@ -53,29 +58,31 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 
     private void BeginIfDead()
     {
-        if (routine == null && enemy != null && enemy.Health != null && enemy.Health.IsDead)
+        if (routine == null && Health != null && Health.IsDead)
             routine = StartCoroutine(Disappear());
     }
 
     private IEnumerator Disappear()
     {
         GetComponent<EnemyController>()?.StopNavigation();
-        enemy.PlayDeathAnimation();
+        enemy?.PlayDeathAnimation();
+        var pose = actor as IEnemyDeathPose;
         float started = Time.unscaledTime;
         // Give grounding and the death state time to take ownership of the Animator.
         yield return null;
-        while (enemy.Health.IsDead)
+        while (Health != null && Health.IsDead)
         {
-            bool speaking = enemy.IsDeathPresentationPlaying;
-            Animator animator = enemy.Animator;
+            pose?.EnsureDeathPose();
+            bool speaking = (actor as IEnemyEncounterDeathPresentation)?.IsDeathPresentationPlaying == true;
+            Animator animator = Animator;
             bool animationPlaying = animator != null && animator.runtimeAnimatorController != null && animator.isActiveAndEnabled &&
                 (animator.IsInTransition(0) || animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f);
             // An invalid/stalled animation must not leave an immortal corpse.
             if (Time.unscaledTime - started >= Mathf.Max(12f, minimumDeathDelay)) animationPlaying = false;
-            if (Time.unscaledTime - started >= minimumDeathDelay && !speaking && !animationPlaying) break;
+            if (Time.unscaledTime - started >= minimumDeathDelay && !speaking && !animationPlaying && pose?.IsDeathPosePending != true) break;
             yield return null;
         }
-        if (!enemy.Health.IsDead) { routine = null; yield break; }
+        if (Health == null || !Health.IsDead) { routine = null; yield break; }
 
         PrepareDissolveMaterials();
         // A dedicated controller owns corpse disappearance; do not trigger authored
@@ -84,14 +91,23 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
         if (dissolve == null) dissolve = gameObject.AddComponent<GhostDissolveController>();
         dissolve.CollectRenderers();
         float elapsed = 0f;
-        while (elapsed < dissolveSeconds && enemy.Health.IsDead)
+        while (elapsed < dissolveSeconds && Health != null && Health.IsDead)
         {
             elapsed += Time.unscaledDeltaTime;
             dissolve.SetDissolveAmount(1f - Mathf.SmoothStep(0f, 1f, elapsed / dissolveSeconds));
             yield return null;
         }
+        if (Health == null || !Health.IsDead) { routine = null; RestorePresentation(); yield break; }
+        HasCompletedPresentation = true;
+        var finalDeath = GetComponent<IEnemyFinalDeathHandler>();
+        if (finalDeath != null)
+        {
+            while (Health != null && Health.IsDead && !finalDeath.TryCompleteDeath()) yield return null;
+            routine = null;
+            if (Health != null && !Health.IsDead) RestorePresentation();
+            yield break;
+        }
         routine = null;
-        if (!enemy.Health.IsDead) { RestorePresentation(); yield break; }
         // Retain the object/health identity for world persistence and NGO. Every
         // peer with the replicated dead health performs the same local presentation.
         gameObject.SetActive(false);
@@ -130,6 +146,7 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 
     private void OnDisable()
     {
+        HasCompletedPresentation = false;
         UnbindHealth();
         if (routine != null) StopCoroutine(routine);
         routine = null;

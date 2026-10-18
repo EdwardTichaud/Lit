@@ -215,8 +215,7 @@ public sealed class SceneMarker : MonoBehaviour
         for (int i = 0; i < transform.childCount; i++)
         {
             Transform child = transform.GetChild(i);
-            CharacterInfo info = child.GetComponent<CharacterInfo>();
-            if (info != null && info.SourceData == characterData)
+            if (IsValidBakedCharacterInstance(child.gameObject))
             {
                 return child.gameObject;
             }
@@ -233,7 +232,9 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         CharacterInfo info = instance.GetComponent<CharacterInfo>();
-        return info != null && info.SourceData == characterData;
+        var brainsEnemy = instance.GetComponent<LitBrainsEnemy>();
+        return info != null && info.SourceData == characterData ||
+            brainsEnemy != null && brainsEnemy.characterData == characterData;
     }
 
     public static bool TryGetRegisteredMarker(string id, out SceneMarker marker)
@@ -257,15 +258,32 @@ public sealed class SceneMarker : MonoBehaviour
         }
         characterInfo.SetCharacterData(data);
 
-        if (data.isEnemy)
+        var brainsEnemy = instance.GetComponent<LitBrainsEnemy>();
+        if (data.isEnemy && brainsEnemy != null)
+        {
+            brainsEnemy.ConfigureCharacterData(data);
+            bool cloneValid = brainsEnemy.ValidateRuntimeContract(out string cloneReport);
+            var sourceBrain = sourcePrefab != null ? sourcePrefab.GetComponent<LitBrainsEnemy>() : null;
+            string sourceReport = "no source prefab";
+            bool sourceValid = sourcePrefab == null || sourceBrain != null && sourceBrain.ValidateRuntimeContract(out sourceReport);
+            if (!cloneValid || !sourceValid)
+            {
+                Debug.LogError("[SceneMarker] Brains enemy runtime invalid | CharacterData='" + data.name +
+                    "' | source={" + sourceReport + "} | clone={" + cloneReport + "}.", instance);
+                brainsEnemy.enabled = false;
+                DisableIncompleteEnemyCombat(instance);
+                var navigation = instance.GetComponent<NavMeshAgent>();
+                if (navigation != null) navigation.enabled = false;
+            }
+        }
+        else if (data.isEnemy)
         {
             CharacterInfo health = instance.GetComponent<CharacterInfo>();
             if (health == null)
             {
                 health = instance.AddComponent<CharacterInfo>();
             }
-            int maxHp = data.ResolveMaxHp();
-            health.SetHealth(maxHp, maxHp);
+            health.InitializeMaxHealthFromCharacterData();
 
             EnemyController contract = instance.GetComponent<EnemyController>();
             // A baked scene instance may predate the validator component while
@@ -336,6 +354,13 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         bool resetEnemyPose = characterData != null && characterData.isEnemy;
+        var brainsEnemy = runtimeInstance.GetComponent<LitBrainsEnemy>();
+        if (brainsEnemy != null)
+        {
+            var navigation = runtimeInstance.GetComponent<NavMeshAgent>();
+            if (navigation != null) navigation.enabled = false;
+            brainsEnemy.ConfigureCharacterData(characterData);
+        }
         if (resetEnemyPose)
         {
             // La sauvegarde conserve la vie et l'etat actif, mais jamais la

@@ -5420,6 +5420,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 4984404590862424500}
   searchInChildren: 0
+  previewInEditMode: 0
   movementAmplitude: 0.015
   movementSpeed: 1.6
 --- !u!1 &3860641841006496626

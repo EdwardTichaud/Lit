@@ -150,6 +150,7 @@ public sealed partial class EnemyController
 
     private void PhysicsOnDisable()
     {
+        ReleaseChargedHold();
         PhysicsEndEnemyRush();
         HandleEndEnemyAdvance();
         PhysicsPendingCompletion = null;
@@ -314,6 +315,7 @@ public sealed partial class EnemyController
 
     public void EnterCinematic()
     {
+        ReleaseChargedHold(); chargedReaction = false;
         HandleEndEnemyAdvance();
         PhysicsPendingCompletion = null;
         PhysicsPendingPlanarRootMotion = Vector3.zero;
@@ -345,7 +347,7 @@ public sealed partial class EnemyController
 
     public void ApplyActionRootMotion(Vector3 worldDeltaPosition, Quaternion deltaRotation)
     {
-        if (ScriptedOnly)
+        if (ScriptedOnly || chargedReaction)
             return;
         if (!IsDrivingActionRootMotion)
         {
@@ -419,6 +421,8 @@ public sealed partial class EnemyController
             planarDelta = planarDelta.normalized * maximumFixedDistance;
         }
 
+        planarDelta += GroundImpactActionDelta(position);
+
         Quaternion rotation = PhysicsPendingRootRotation * PhysicsBody.rotation;
         PhysicsPendingRootRotation = Quaternion.identity;
         if (State == CombatEnemyPhysicsState.GroundedAction)
@@ -439,7 +443,11 @@ public sealed partial class EnemyController
         if (PhysicsRushActive && airborneTimedOut)
             PhysicsEndEnemyRush();
         Vector3 motionDelta;
-        if (PhysicsRushActive)
+        if (TryChargedReactionDelta(position, out var chargedDelta))
+        {
+            motionDelta = chargedDelta;
+        }
+        else if (PhysicsRushActive)
         {
             motionDelta = PhysicsResolveRushDelta(position);
             PhysicsVerticalVelocity = PhysicsLocalFixedDeltaTime > 0f ? motionDelta.y / PhysicsLocalFixedDeltaTime : 0f;
@@ -507,6 +515,8 @@ public sealed partial class EnemyController
 
     private void PhysicsFinishRecovery(string reason = "sol confirme")
     {
+        chargedReaction = false;
+        chargedRiseLeft = chargedFloatLeft = 0;
         Action completion = PhysicsPendingCompletion;
         PhysicsPendingCompletion = null;
         PhysicsVerticalVelocity = 0f;
@@ -826,6 +836,8 @@ public sealed partial class EnemyController
         }
 
         State = nextState;
+        if (nextState == CombatEnemyPhysicsState.Navigation || nextState == CombatEnemyPhysicsState.Cinematic)
+            groundImpactActionRemaining = 0;
         if (PhysicsLogStateChanges)
         {
             Debug.Log("[CombatEnemyPhysicsMotor] " + name + " -> " + nextState + " (" + reason + ")", this);

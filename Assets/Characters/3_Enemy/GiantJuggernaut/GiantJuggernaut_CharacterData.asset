@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: GiantJuggernaut_CharacterData
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
+      presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -232,8 +235,6 @@ MonoBehaviour:
     dodge:
       impulseSpeed: 16
       durationMultiplier: 1
-      alignUnlockedDodgeToTravel: 1
-      alignLockedForwardDodgeToTravel: 1
   uniqueId: 0f40027d56bb41c8ab255aeacc3d7669
   characterId: giant_juggernaut
   characterName: Giant Juggernaut
@@ -242,8 +243,10 @@ MonoBehaviour:
   skills: []
   combatSkills:
   - {fileID: 11400000, guid: 868c6bf11c102084591a5986869d6755, type: 2}
-  enemyCombatProfile: {fileID: 11400000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d05, type: 2}
+  chargedSkill: {fileID: 0}
+  enemyCombatProfile: {fileID: 11400000, guid: 4fa484a1b8998d4418da9c932425401d, type: 2}
   enemySettings:
+    ArenaCreateBattleWall: 0
     LocomotionPositioning:
       preferredDistance: 2.6
       minimumRetreatDistance: 1.2
@@ -264,6 +267,8 @@ MonoBehaviour:
     LocomotionNavMeshEdgeClearance: 0.45
     LocomotionClearanceSearchRadius: 2
     LocomotionClearanceSearchSamples: 12
+    LocomotionStuckRecoverySeconds: 0.8
+    LocomotionStuckProgressDistance: 0.06
     LocomotionLogDiagnostics: 0
     ContractLogDiagnostics: 1
     RecoveryExtraRecoverySeconds: 1

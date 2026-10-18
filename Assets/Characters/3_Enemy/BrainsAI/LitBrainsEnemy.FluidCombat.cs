@@ -19,7 +19,7 @@ public partial class LitBrainsEnemy
 
     public bool TryReceiveTaunt(SquadCharacterController caster, float seconds, float radius)
     {
-        if (!CombatProtectionDamage.HasAuthority || dead || cinematicSuspended || !PlayerProtectionEffects.Alive(caster) ||
+        if (!HasSimulationAuthority || !EncounterAllowsDecisions || dead || cinematicSuspended || !PlayerProtectionEffects.Alive(caster) ||
             Vector3.ProjectOnPlane(caster.transform.position - transform.position, Vector3.up).magnitude > radius) return false;
         var taunt = GetComponent<EnemyTaunt>();
         if (taunt == null) taunt = gameObject.AddComponent<EnemyTaunt>();
@@ -47,7 +47,7 @@ public partial class LitBrainsEnemy
 
     private void TickFluidCombat()
     {
-        float dt = Time.deltaTime;
+        float dt = UsesProductionPatterns ? ProductionDelta : Time.deltaTime;
         fluidCooldown = Mathf.Max(0, fluidCooldown - dt);
         protectionRemaining = Mathf.Max(0, protectionRemaining - dt);
         sinceImpact += dt;
@@ -61,9 +61,10 @@ public partial class LitBrainsEnemy
             counterStunActive = false;
             ClearCounterStunVfx();
             anim.ResetTrigger("Hurt");
-            anim.CrossFadeInFixedTime("Locomotion", .06f, 0);
+            anim.CrossFadeInFixedTime(CombatLocomotionState, .06f, 0);
         }
         if (hurtRemaining > 0) { StopFluidMovement(); return; }
+        if (UsesProductionPatterns && ProductionMotionActive) { TickProductionAction(dt); return; }
         if (AttackPhase == LitBrainsAttackPhase.None) return;
         attackElapsed += dt;
         bool inAttack = IsAttackCommitted;
@@ -85,7 +86,7 @@ public partial class LitBrainsEnemy
                 CancelFluidAttack();
                 // Fixed blend duration; destination phase is expressed in cycle seconds.
                 float cycle = handoff != null && handoff.validated ? handoff.destinationCycleSeconds : 0;
-                anim.CrossFadeInFixedTime("Locomotion", blend, 0, phase * cycle);
+                anim.CrossFadeInFixedTime(CombatLocomotionState, blend, 0, phase * cycle);
                 return;
             }
         }
@@ -113,12 +114,13 @@ public partial class LitBrainsEnemy
         if (activeAttack?.clip != null && attackElapsed > activeAttack.clip.length + .4f)
         {
             CancelFluidAttack();
-            anim.CrossFadeInFixedTime("Locomotion", .08f, 0);
+            anim.CrossFadeInFixedTime(CombatLocomotionState, .08f, 0);
         }
     }
 
     protected override void Alerted()
     {
+        if (UsesProductionPatterns) { if (!ThresholdStageBlocksActions) HandleProductionApproach(); return; }
         if (combatProfile == null) { base.Alerted(); return; }
         if (fov.CurrentTarget == null) return;
         if (AttackPhase != LitBrainsAttackPhase.None || hurtRemaining > 0) return;
@@ -150,6 +152,7 @@ public partial class LitBrainsEnemy
 
     protected override void HandleAttack()
     {
+        if (ThresholdStageBlocksActions) return;
         if (!HasAttackLineOfSight()) return;
         if (combatProfile == null) { base.HandleAttack(); return; }
         if (!canAttack || fluidCooldown > 0 || AttackPhase != LitBrainsAttackPhase.None || hurtRemaining > 0 ||
@@ -158,11 +161,17 @@ public partial class LitBrainsEnemy
         if (delta.magnitude > combatProfile.attackStartDistance || Vector3.Angle(transform.forward, delta) > combatProfile.attackFacingDegrees ||
             Physics.Linecast(transform.position + Vector3.up, fov.CurrentTarget.position + Vector3.up,
                 LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction"), QueryTriggerInteraction.Ignore)) return;
-        selectedAttack = Random.Range(0, combatProfile.attacks.Length);
+        CommitFluidAttack(Random.Range(0, combatProfile.attacks.Length), fov.CurrentTarget);
+    }
+
+    private void CommitFluidAttack(int index, Transform target, bool thresholdRetaliation = false)
+    {
+        selectedAttack = index;
         activeAttack = combatProfile.attacks[selectedAttack];
         if (activeAttack == null || activeAttack.clip == null) return;
         ActionSequenceId++;
-        CommittedAttackTarget = fov.CurrentTarget;
+        CaptureProductionAttackDamage(activeAttack.skill, thresholdRetaliation);
+        CommittedAttackTarget = target;
         if (activeAttack.visualHandoff != null && activeAttack.visualHandoff.validated)
             SetActionRecoveryRate(1);
         attackElapsed = 0;
@@ -171,7 +180,12 @@ public partial class LitBrainsEnemy
         advanceRemaining = activeAttack.preparationAdvanceDistance;
         fluidCooldown = Random.Range(combatProfile.attackInterval.x, combatProfile.attackInterval.y);
         anim.SetInteger("Attack ID", selectedAttack + 1);
-        anim.SetTrigger("Attack");
+        if (UsesProductionPatterns)
+        {
+            BeginProductionMotion(activeAttack.skill);
+            anim.CrossFadeInFixedTime(activeAttack.stateName, .08f, 0, 0f);
+        }
+        else anim.SetTrigger("Attack");
     }
 
     private void TurnToFluidTarget()
@@ -180,7 +194,7 @@ public partial class LitBrainsEnemy
         Vector3 delta = Vector3.ProjectOnPlane(fov.CurrentTarget.position - transform.position, Vector3.up);
         agent.updateRotation = false;
         if (delta.sqrMagnitude > .001f)
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(delta), combatProfile.turnDegreesPerSecond * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(delta), combatProfile.turnDegreesPerSecond * (UsesProductionPatterns ? ProductionDelta : Time.deltaTime));
     }
 
     private void StopFluidMovement()
@@ -213,11 +227,13 @@ public partial class LitBrainsEnemy
             advanceRemaining = Mathf.Min(advanceRemaining, Mathf.Max(0, Vector3.Dot(fov.CurrentTarget.position - transform.position, strikeForward) - combatProfile.approachStopDistance));
         advanceInitial = advanceRemaining;
         advanceElapsed = 0;
+        if (UsesProductionPatterns) advanceRemaining = 0;
     }
 
     public void HandleBeginBrainsRecovery(AnimationEvent source)
     {
         if (!AcceptFluidEvent(source)) return;
+        if (UsesProductionPatterns) { AttackPhase = LitBrainsAttackPhase.Recovery; RequestProductionMotionEnd(false); return; }
         AttackPhase = LitBrainsAttackPhase.Recovery;
         recoveryElapsed = 0;
         advanceRemaining = 0;
@@ -225,8 +241,9 @@ public partial class LitBrainsEnemy
             SetActionRecoveryRate(activeAttack.visualHandoff.RecoveryRate(activeAttack.clip, activeAttack.recoveryDurationSeconds));
     }
 
-    private bool AcceptFluidEvent(AnimationEvent source) => combatProfile != null && !dead && !cinematicSuspended &&
-        source != null && activeAttack != null && source.animatorStateInfo.shortNameHash == Animator.StringToHash(activeAttack.stateName);
+    private bool AcceptFluidEvent(AnimationEvent source) => HasSimulationAuthority && EncounterAllowsDecisions && combatProfile != null && !dead && !cinematicSuspended &&
+        source != null && activeAttack != null && (source.animatorStateInfo.shortNameHash == Animator.StringToHash(activeAttack.stateName) ||
+        source.animatorStateInfo.fullPathHash == Animator.StringToHash(activeAttack.stateName));
 
     private bool TryCommitFluidImpact()
     {
@@ -237,6 +254,14 @@ public partial class LitBrainsEnemy
 
     private void CancelFluidAttack()
     {
+        ClearProductionCommittedDamage();
+        if (UsesProductionPatterns && productionMotionActive && !productionEndRequested)
+        {
+            productionPattern = null;
+            RequestProductionMotionEnd(true);
+        }
+        bool completeThreshold = thresholdFailureRetaliation;
+        thresholdFailureRetaliation = false;
         AttackPhase = LitBrainsAttackPhase.None;
         CommittedAttackTarget = null;
         activeAttack = null;
@@ -244,6 +269,7 @@ public partial class LitBrainsEnemy
         StopControlConditions["LitBrainsEnemy.Hurt"] = hurtRemaining > 0;
         if (anim != null) anim.ResetTrigger("Attack");
         SetActionRecoveryRate(1);
+        if (completeThreshold) CombatHealthThresholdController.Instance?.TryCompleteFailureRetaliation(this);
     }
 
     private void SetActionRecoveryRate(float rate)
@@ -256,6 +282,12 @@ public partial class LitBrainsEnemy
 
     private void OnDisable()
     {
+        ResetProductionEngagementDamage();
+        brains.Remove(this);
+        StopAllCoroutines();
+        productionMotionActive = productionAirborne = productionEngaged = productionReturning = false;
+        productionPattern = null;
+        ClearChargedReaction();
         CancelClashRecovery();
         ResetPerception();
         if (IsCounterStunned) hurtRemaining = 0;
@@ -263,33 +295,41 @@ public partial class LitBrainsEnemy
         ClearCounterStunVfx();
         CancelFluidAttack();
         StopFluidMovement();
+        BindNavigationWorld(null);
+        SuspendNavigation();
+        TryFinishThresholdRetaliation();
     }
 
-    public int ReceiveImpact(CombatImpact impact)
+    public int ReceiveImpact(CombatImpact impact) => ReceiveImpact(impact, out _);
+
+    public int ReceiveImpact(CombatImpact impact, out bool accepted)
     {
-        if (dead || impact.Damage <= 0) return 0;
+        accepted = false;
+        if (!HasSimulationAuthority || IsDead || !isActiveAndEnabled || ThresholdStageBlocksActions || !EncounterAllowsDamage) return 0;
         int damage = impact.Origin != CombatImpactOrigin.Passive && !impact.DamageModifiersApplied ? EnemyRevelation.ModifyDamage(transform, impact.Damage) : impact.Damage;
-        if (combatProfile == null) return ReceiveDamage(damage);
+        if (!FilterEncounterDamage(damage, impact.Source, out damage)) return 0;
+        damage = ResolveProductionGuard(damage, impact.Source);
+        accepted = true;
+        if (damage <= 0) return 0;
         int before = currentHealth;
-        currentHealth = Mathf.Max(0, currentHealth - damage);
-        sinceImpact = 0;
-        if (currentHealth == 0)
+        int applied = ApplyHealthDamage(damage, out bool thresholdReached, impact.Source);
+        RecordProductionAppliedDamage(applied);
+        if (applied <= 0 || thresholdReached) return applied;
+        if (UsesProductionPatterns && impact.Origin == CombatImpactOrigin.Passive) return applied;
+        if (UsesProductionPatterns && ProductionMotionActive && impact.Origin != CombatImpactOrigin.Counter) return applied;
+        if (combatProfile == null)
         {
-            counterStunPending = counterStunActive = false;
-            ClearCounterStunVfx();
-            CancelFluidAttack();
-            dead = true;
-            StopAllCoroutines();
-            fov.canInvestigate = false;
-            fov.SetExternalTarget(null);
-            fov.enabled = false;
-            anim.ResetTrigger("Hurt");
-            BeginDeathPresentation();
+            anim.ResetTrigger("Attack");
             StopFluidMovement();
-            agent.enabled = false;
-            foreach (var collider in GetComponentsInChildren<Collider>()) collider.enabled = false;
+            if (!IsDead && !IsCounterStunned)
+            {
+                reactionUntil = Time.time + .8f;
+                anim.SetTrigger("Hurt");
+            }
+            return applied;
         }
-        else if (!IsCounterStunned && (impact.Origin == CombatImpactOrigin.Counter || protectionRemaining <= 0))
+        sinceImpact = 0;
+        if (currentHealth > 0 && !IsCounterStunned && (impact.Origin == CombatImpactOrigin.Counter || protectionRemaining <= 0))
         {
             resistanceDamage += impact.Interruption;
             if (impact.Origin == CombatImpactOrigin.Counter || resistanceDamage >= combatProfile.resistance)
@@ -300,7 +340,11 @@ public partial class LitBrainsEnemy
                 CancelFluidAttack();
                 StopFluidMovement();
                 anim.ResetTrigger("Hurt");
-                if (!cinematicSuspended) anim.CrossFadeInFixedTime("Hurt", .04f, 0);
+                if (!cinematicSuspended)
+                {
+                    if (chargedAirborne) PlayChargedFloatHit();
+                    else PlayCombatHurt();
+                }
             }
         }
         return before - currentHealth;
@@ -315,13 +359,13 @@ public partial class LitBrainsEnemy
         CancelFluidAttack();
         StopFluidMovement();
         anim.ResetTrigger("Hurt");
-        anim.CrossFadeInFixedTime("Knocked Out", .04f, 0);
+        PlayCombatKnockout();
         CreateCounterStunVfx();
     }
 
     public bool TryApplySkillStun(float seconds)
     {
-        if (seconds <= 0f || !isActiveAndEnabled || dead || cinematicSuspended || IsCounterStunned || anim == null || !anim.isActiveAndEnabled) return false;
+        if (!HasSimulationAuthority || !EncounterAllowsDamage || seconds <= 0f || !isActiveAndEnabled || dead || cinematicSuspended || IsCounterStunned || anim == null || !anim.isActiveAndEnabled) return false;
         CancelClashRecovery();
         resistanceDamage = 0f;
         counterStunPending = false;
@@ -333,8 +377,7 @@ public partial class LitBrainsEnemy
         CancelFluidAttack();
         StopFluidMovement();
         anim.ResetTrigger("Hurt");
-        string state = anim.HasState(0, Animator.StringToHash("Base Layer.Knocked Out")) ? "Knocked Out" : "Hurt";
-        if (anim.HasState(0, Animator.StringToHash("Base Layer." + state))) anim.CrossFadeInFixedTime(state, .06f, 0);
+        PlayCombatKnockout();
         CreateCounterStunVfx();
         return true;
     }
@@ -344,7 +387,7 @@ public partial class LitBrainsEnemy
 
     public void ApplyKnockedOut()
     {
-        if (dead || IsCounterStunned) return;
+        if (!HasSimulationAuthority || !EncounterAllowsDamage || dead || IsCounterStunned) return;
         resistanceDamage = 0;
         counterStunPending = true;
         CancelFluidAttack();

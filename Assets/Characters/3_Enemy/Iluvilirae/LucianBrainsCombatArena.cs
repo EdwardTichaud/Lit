@@ -3,7 +3,7 @@ using UnityEngine.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
-public enum CombatLabCharacter { Lucian, Aurell, Soren }
+public enum CombatLabCharacter { Lucian, Aurell, Soren, Vesta }
 
 /// <summary>Standalone combat laboratory. Uses Lucian's UCC and action presentation, never EnemyController.</summary>
 [DefaultExecutionOrder(100)]
@@ -15,6 +15,7 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     [Header("Justice prototype")]
     public GameObject aurellPrefab;
     public GameObject sorenPrefab;
+    public GameObject vestaPrefab;
     public CombatLabCharacter character;
     [SerializeField, HideInInspector, FormerlySerializedAs("useAurell")] private bool migrateAurellMode;
     public bool useAurell { get => character == CombatLabCharacter.Aurell; set { if (value) character = CombatLabCharacter.Aurell; else if (useAurell) character = CombatLabCharacter.Lucian; } }
@@ -25,6 +26,8 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     public BasicSkillsSO[] basicSkills;
     public SkillSO[] additionalCombatSkills;
     public SkillSO[] enemyAttackSkills;
+    [Header("Free attacks (laboratory only)")]
+    public FreeAttackProfile freeAttacks = new FreeAttackProfile();
     public Camera arenaCamera;
     public GameObject lockCursorPrefab;
     public Vector3 lockCursorOffset = new Vector3(0, 3, 0);
@@ -34,8 +37,8 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     public Vector3 playerSpawn = new Vector3(0, 0.1f, 5);
     public Vector3 enemySpawn = new Vector3(0, 0, -4);
     [Min(1)] public int playerMaxHealth = 100;
-    [Min(1)] public int enemyDamage = 10;
-    [Min(0.1f)] public float enemyMeleeReach = 3.2f;
+    public int enemyDamage => Mathf.RoundToInt(Enemy?.ActiveAttack?.skill != null ? Enemy.ActiveAttack.skill.Damages :
+        enemyAttackSkills != null && enemyAttackSkills.Length > 0 && enemyAttackSkills[0] != null ? enemyAttackSkills[0].Damages : 0f);
     public string hurtState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
     public bool showCombatDiagnostics;
     [Header("Rotation tuning (test only, degrees/second)")]
@@ -59,8 +62,6 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     private SkillsManager skills;
     private bool paused, started;
     private int pauseChangedFrame = -1;
-    private int attackState;
-    private bool enemyContactUsed;
     public bool IsPaused => paused;
     private Transform previousLocalPlayer;
     private LitBrainsCombatProfile runtimeEnemyProfile;
@@ -140,7 +141,13 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     {
         SetPaused(false);
         ReleaseActors();
-        var selected = character == CombatLabCharacter.Soren ? sorenPrefab : useAurell ? aurellPrefab : lucianPrefab;
+        var selected = character switch
+        {
+            CombatLabCharacter.Aurell => aurellPrefab,
+            CombatLabCharacter.Soren => sorenPrefab,
+            CombatLabCharacter.Vesta => vestaPrefab,
+            _ => lucianPrefab
+        };
         if (selected == null) { Debug.LogError("[Combat Lab] Selected character prefab is missing: " + character, this); return; }
         var playerObject = Instantiate(selected, playerSpawn, Quaternion.Euler(0, 180, 0));
         if (alignPlayerCombatTorso && playerObject.GetComponent<LucianCombatTorsoFacing>() == null)
@@ -168,10 +175,10 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
         foreach (var listener in playerObject.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;
         // Existing AnimationEvents resolves impacts through the shared services.
         LocalPlayerContext.SetLocalCharacter(playerObject.transform, source: "BrainsCombatLab");
-        if (useAurell && spawnProtectionAlly)
+        if ((useAurell || character == CombatLabCharacter.Vesta) && spawnProtectionAlly)
         {
             var allyObject = Instantiate(lucianPrefab, playerSpawn + Vector3.right * 3, Quaternion.Euler(0, 180, 0));
-            allyObject.name = "ProtectionAlly_Laboratory";
+            allyObject.name = character == CombatLabCharacter.Vesta ? "HealingAlly_Laboratory" : "ProtectionAlly_Laboratory";
             ProtectionAlly = allyObject.GetComponent<SquadCharacterController>();
             ProtectionAlly.BindCharacterData(allyObject.GetComponent<CharacterInfo>().SourceData, initializeInventory: false);
             ProtectionAlly.SetHealth(100, 100);
@@ -196,12 +203,11 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             indicator.ConfigureWorldCursor(lockCursorPrefab, lockCursorOffset);
         }
         Enemy.detectionTargetOverride = playerObject.transform;
-        Enemy.AttackImpact += OnEnemyAttackImpact;
-        Enemy.ReactionOpportunity += OnEnemyReactionOpportunity;
         enemyAnimator = Enemy.GetComponent<Animator>();
-        attackState = 0; enemyContactUsed = false;
         LastContact = "Approchez-vous de Juggernaut";
-        combat.BeginExternalEncounter(Player.transform, Enemy);
+        combat.ConfigureFreeAttacks(freeAttacks, arenaCamera);
+        combat.BeginExternalEncounter(Player.transform, Enemy, startEngaged: !combat.AllowsFreeAttacks);
+        GetComponent<CombatWorldRuntime>()?.RefreshEnemies();
         GetComponent<CombatLabClashController>()?.Bind(this, combat);
         if (Enemy.combatProfile != null)
         {
@@ -240,10 +246,6 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             else { bridge.ClearCombatLockTarget(); presentation.ClearActionFacingTarget(); }
             return;
         }
-        bool gameplay = (InputModeCoordinator.CurrentMode == InputMode.Combat ||
-            InputModeCoordinator.CurrentMode == InputMode.CombatWheel) && !combat.IsCinematicSequenceActive;
-        Player.SetSprintModifier(gameplay && LocalInputRouter.SprintPressed);
-        Player.Move(gameplay ? LocalInputRouter.MoveValue : Vector2.zero);
         if (Player.transform.position.y < -5) Player.SetCurrentHp(0);
     }
 
@@ -278,59 +280,11 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     }
     public bool TryDodge() => !EncounterOver && mobility != null && mobility.TryDodgeImmediate();
 
-    private void OnEnemyReactionOpportunity(AnimationEvent source)
-    {
-        int index = source.animatorStateInfo.IsName("Attack_Sweep") ? 1 : source.animatorStateInfo.IsName("Attack_Followup") ? 2 : 0;
-        if (enemyAttackSkills != null && index < enemyAttackSkills.Length)
-            GetComponent<CombatHealthThresholdController>()?.OpenEnemyReactionOpportunity(Enemy, enemyAttackSkills[index]);
-    }
-
-    private void OnEnemyAttackImpact(AnimationEvent source)
-    {
-        if (enemyContactUsed && attackState == source.animatorStateInfo.fullPathHash) return;
-        attackState = source.animatorStateInfo.fullPathHash;
-        enemyContactUsed = true;
-        ResolveEnemyContact();
-    }
-
-    public void ResolveEnemyContact()
-    {
-        var victim = Enemy != null && Enemy.CommittedAttackTarget != null ? Enemy.CommittedAttackTarget.GetComponent<SquadCharacterController>() : Player;
-        var attack = Enemy != null ? Enemy.ActiveAttack : null;
-        var reactions = GetComponent<CombatHealthThresholdController>();
-        bool timedDodge = reactions != null && reactions.IsAttackDodged((ICombatTarget)Enemy);
-        reactions?.CloseExternalReactionAtContact(Enemy);
-        if (EncounterOver || combat == null || combat.IsCinematicSequenceActive || paused ||
-            victim == null || !HasContact(Enemy.transform, victim.transform, attack != null ? attack.reach : enemyMeleeReach,
-                attack != null ? attack.arcDegrees : 140, attack != null ? attack.heightTolerance : float.PositiveInfinity))
-        { LastContact = "Juggernaut : attaque évitée"; return; }
-        if (victim == Player && (mobility.IsDamageInvulnerable || timedDodge)) { LastContact = "Esquive réussie"; return; }
-        bool blocked = PlayerGuardState.IsGuarding(victim) &&
-            Vector3.Dot(victim.transform.forward, Vector3.ProjectOnPlane(Enemy.transform.position - victim.transform.position, Vector3.up).normalized) > 0;
-        var targetPresentation = victim.GetComponent<PlayerActionPresentationController>();
-        System.Action apply = () => {
-            if (victim == null || victim.CurrentHp <= 0 || EncounterOver || combat.IsCinematicSequenceActive) return;
-            int applied = CombatProtectionDamage.ApplyAttack(victim, enemyDamage, "Juggernaut_v2 laboratory", blocked);
-            if (applied > 0 && victim.CurrentHp > 0 && !blocked)
-                targetPresentation?.TryReplaceWithDamageReaction(hurtState, PlayerActionPresentationProfile.CreateDefault());
-            LastContact = blocked ? "Garde : " + applied + " dégâts" : "Juggernaut touche : " + applied;
-        };
-        if (GetComponent<CombatLabClashController>()?.QueueEnemyImpact(apply) == true) return;
-        apply();
-    }
+    public void ResolveEnemyContact() => GetComponent<CombatWorldRuntime>()?.ResolveEnemyContact(Enemy);
 
     public static bool HasContact(Transform attacker, Transform target, float reach, float arc, float heightTolerance = float.PositiveInfinity)
     {
-        if (attacker == null || target == null || Mathf.Abs(target.position.y - attacker.position.y) > heightTolerance) return false;
-        Vector3 delta = Vector3.ProjectOnPlane(target.position - attacker.position, Vector3.up);
-        if (delta.magnitude > reach || Vector3.Angle(attacker.forward, delta) > arc * 0.5f) return false;
-        return !Physics.Linecast(attacker.position + Vector3.up, target.position + Vector3.up,
-            LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction"), QueryTriggerInteraction.Ignore);
-    }
-
-    private void LateUpdate()
-    {
-        if (Enemy != null && !Enemy.IsAttackCommitted) { attackState = 0; enemyContactUsed = false; }
+        return CombatWorldRuntime.HasContact(attacker, target, reach, arc, heightTolerance);
     }
 
     private void DrawCombatDiagnostics()
@@ -374,7 +328,7 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             }
             Player.gameObject.SetActive(false); Destroy(Player.gameObject);
         }
-        if (Enemy != null) { Enemy.AttackImpact -= OnEnemyAttackImpact; Enemy.ReactionOpportunity -= OnEnemyReactionOpportunity; Enemy.gameObject.SetActive(false); Destroy(Enemy.gameObject); }
+        if (Enemy != null) { Enemy.gameObject.SetActive(false); Destroy(Enemy.gameObject); }
         if (runtimeEnemyProfile != null) Destroy(runtimeEnemyProfile);
         runtimeEnemyProfile = null;
         if (ProtectionAlly != null) { ProtectionAlly.gameObject.SetActive(false); Destroy(ProtectionAlly.gameObject); ProtectionAlly = null; }

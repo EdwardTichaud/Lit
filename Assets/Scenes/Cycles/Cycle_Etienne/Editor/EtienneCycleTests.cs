@@ -117,12 +117,25 @@ public sealed class EtienneCycleTests
         var go = new GameObject("Poids mort isolated test");go.SetActive(false);
         try
         {
-            var enemy = go.AddComponent<EnemyController>();
-            enemy.GetComponent<CharacterInfo>().SetCharacterData(AssetDatabase.LoadAssetAtPath<CharacterData>(EtienneCycleValidation.Root + "/Data/CharacterData_DeadWeight.asset"));
-            var boss = go.AddComponent<DeadWeightBoss>();
-            typeof(BossEncounterBehaviour).GetField("definition", Private).SetValue(boss, AssetDatabase.LoadAssetAtPath<BossDefinitionSO>(EtienneCycleValidation.Root + "/Data/BossDefinition_DeadWeight.asset"));
-            typeof(BossEncounterBehaviour).GetField("enemy", Private).SetValue(boss, enemy);
+            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(EtienneCycleValidation.Root + "/Data/CharacterData_DeadWeight.asset");
+            var definition = AssetDatabase.LoadAssetAtPath<BossDefinitionSO>(EtienneCycleValidation.Root + "/Data/BossDefinition_DeadWeight.asset");
+            Assert.That(data, Is.Not.Null, "Missing authored DeadWeight CharacterData; do not substitute fixture assets.");
+            Assert.That(definition, Is.Not.Null, "Missing authored DeadWeight BossDefinition.");
+            var prefab = data.ResolveWorldPrefab();
+            Assert.That(prefab, Is.Not.Null, "Missing authored DeadWeight world prefab.");
+            var actor = Object.Instantiate(prefab, go.transform);
+            var enemy = actor.GetComponent<EnemyController>();
+            var boss = actor.GetComponent<DeadWeightBoss>();
+            Assert.That(enemy, Is.Not.Null, "The authored prefab must retain its legacy encounter actor.");
+            Assert.That(boss, Is.Not.Null);
+            Assert.That(boss.Definition, Is.SameAs(definition));
+            enemy.Health.SetCharacterData(data);
+            enemy.Health.InitializeMaxHealthFromCharacterData();
+            typeof(EnemyController).GetField("requiresFlameInfluence", Private).SetValue(enemy, false);
             typeof(DeadWeightBoss).GetMethod("Awake", Private).Invoke(boss, null);
+            actor.SetActive(true);
+            go.SetActive(true);
+            Assert.That(enemy.IsEncounterAvailable, Is.True, "The encounter test requires an active, living actor.");
             Assert.That(boss.TryApplyEmergencyBrake(), Is.False);
             typeof(BossEncounterBehaviour).GetMethod("EngageAuthoritatively", Private).Invoke(boss, null);
             int hp = enemy.Health.CurrentHp;
@@ -131,7 +144,10 @@ public sealed class EtienneCycleTests
             Assert.That(boss.IsBrakeHolding, Is.True);
             Assert.That(boss.BrakeCooldownRemaining, Is.InRange(11.5,12.1));
             Assert.That(enemy.Health.CurrentHp, Is.EqualTo(hp));
-            typeof(DeadWeightBoss).GetField("offlineStunUntil", Private).SetValue(boss, Time.timeAsDouble - 1);
+            double stunEnds = (double)typeof(DeadWeightBoss).GetField("offlineStunUntil", Private).GetValue(boss);
+            double now = (double)typeof(BossEncounterBehaviour).GetProperty("EncounterTime", Private).GetValue(boss);
+            Assert.That(stunEnds - now, Is.EqualTo(4d).Within(.01d));
+            typeof(BossEncounterBehaviour).GetField("offlineEncounterClock", Private).SetValue(boss, stunEnds + .01d);
             Assert.That(boss.IsBrakeHolding, Is.False);
             Assert.That(boss.TryApplyEmergencyBrake(), Is.False, "Ending the stun does not end the cooldown.");
             Assert.That(boss.FilterIncomingDamage(20, null, out int damage), Is.True);Assert.That(damage, Is.EqualTo(20));

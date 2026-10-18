@@ -22,10 +22,9 @@ public sealed class PlayerRegenerationEffect : MonoBehaviour
     public static bool IsValidRegenerationRecipient(SquadCharacterController owner, SquadCharacterController target)
     {
         if (IsValidAlly(owner, target)) return true;
-        var network = NetworkManager.Singleton;
         return owner != null && owner == target && owner.isActiveAndEnabled && owner.CurrentHp > 0 &&
-            (network == null || !network.IsListening) && owner.CharacterData != null && !owner.CharacterData.isEnemy &&
-            string.Equals(owner.CharacterData.characterName, "Lucian", StringComparison.OrdinalIgnoreCase);
+            SoloTeamProgression.IsSolo && owner.CharacterData != null && !owner.CharacterData.isEnemy &&
+            Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default")?.IsCharacter(owner.CharacterData, CombatSkillKit.Lucian) == true;
     }
 
     public static bool IsValidEnemy(SquadCharacterController owner, ICombatTarget target) =>
@@ -121,7 +120,7 @@ public sealed class PlayerRegenerationEffect : MonoBehaviour
         var root = target.Root;
         var legacy = root.GetComponent<EnemyController>();
         int stolen = legacy != null ? legacy.ReceivePassiveDamage(requested, caster) :
-            target is ICombatImpactReceiver receiver ? receiver.ReceiveImpact(new CombatImpact(requested, 0, CombatImpactOrigin.Passive)) : target.ReceiveDamage(requested);
+            target is ICombatImpactReceiver receiver ? receiver.ReceiveImpact(new CombatImpact(requested, 0, CombatImpactOrigin.Passive, source: caster)) : target.ReceiveDamage(requested);
         if (stolen <= 0) return;
         if (caster == null || !caster.isActiveAndEnabled || caster.CurrentHp <= 0) { Clear(); return; }
         int healing = Mathf.Min(stolen, Mathf.Max(0, caster.MaxHp - caster.CurrentHp));

@@ -23,7 +23,12 @@ public sealed class PlayerControlSkills : MonoBehaviour
         return skill != null ? skill : actor.gameObject.AddComponent<PlayerControlSkills>();
     }
     public Vector3 ResolveDirection(Transform target)
+        => ResolveDirection(caster, bridge, target);
+
+    public static Vector3 ResolveDirection(SquadCharacterController caster, LitOpsiveLocomotionBridge bridge, Transform target)
     {
+        if (caster == null) return Vector3.back;
+        var transform = caster.transform;
         Vector2 input = bridge != null ? bridge.CurrentWorldMoveInput : Vector2.zero;
         if (LocalPlayerContext.LocalCharacterRoot == transform && LocalInputRouter.RawMoveValue.sqrMagnitude > .0064f)
         {
@@ -34,7 +39,7 @@ public sealed class PlayerControlSkills : MonoBehaviour
         var away = target != null ? Vector3.ProjectOnPlane(transform.position - target.position, Vector3.up) : -transform.forward;
         return away.sqrMagnitude > .0001f ? away.normalized : -transform.forward;
     }
-    public bool TryActivate(SkillSO skill, ICombatTarget target, Vector3 direction = default)
+    public bool TryActivate(SkillSO skill, ICombatTarget target, Vector3 direction = default, Vector3? zoneOrigin = null)
     {
         ResolveReferences();
         if (!CombatProtectionDamage.HasAuthority || !SkillHealing.CanCast(caster) || skill == null || !skill.IsControlSkill) return false;
@@ -47,7 +52,9 @@ public sealed class PlayerControlSkills : MonoBehaviour
             if (mark == null) mark = target.Root.gameObject.AddComponent<EnemyRevelation>();
             mark.Apply(caster, skill.control.durationSeconds, skill.control.strength); return true;
         }
-        if (!EnemyEntraveZone.TryFindGround(target.Root, out var point)) return false;
+        Vector3 point;
+        if (zoneOrigin.HasValue) point = zoneOrigin.Value;
+        else if (!EnemyEntraveZone.TryFindGround(target.Root, out point)) return false;
         EnemyEntraveZone.Create(caster, point, skill); return true;
     }
     public bool TryMove(SkillSO skill, Vector3 direction)

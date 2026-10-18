@@ -4,10 +4,13 @@ public partial class LitBrainsEnemy
 {
     private float clashRemaining, clashMotionRemaining, clashDistance, clashDuration;
     private Vector3 clashDirection;
+    public bool IsClashRecovering => clashRemaining > 0;
     public bool IsClashGrounded
     {
         get
         {
+            if (chargedAirborne || cinematicSuspended || dead) return false;
+            if (ProductionMotionActive) return CanLaunchGroundedProductionAction();
             if (agent == null || !agent.enabled || !agent.isOnNavMesh || agent.isOnOffMeshLink) return false;
             // Package rays start exactly at the feet and can miss a coplanar collider.
             foreach (var hit in Physics.RaycastAll(transform.position + Vector3.up * .3f,
@@ -20,7 +23,21 @@ public partial class LitBrainsEnemy
 
     public bool BeginClashRecovery(Vector3 direction, float distance, float duration, float recovery)
     {
-        if (dead || cinematicSuspended || !navigationReady || !agent.enabled || !agent.isOnNavMesh) return false;
+        if (ProductionMotionActive)
+        {
+            if (!HasSimulationAuthority || !EncounterAllowsDecisions || !IsClashGrounded || agent == null) return false;
+            var filter = new UnityEngine.AI.NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
+            if (!UnityEngine.AI.NavMesh.SamplePosition(transform.position, out var local, .15f, filter) ||
+                Vector3.Distance(local.position, transform.position) > .15f) return false;
+            // Grounded action hands back to the same validated navigation adapter; never warp.
+            productionMotionActive = productionAirborne = productionAdvance = productionRush = productionEndRequested = productionAbort = false;
+            productionMotionSkill = null;
+            productionPattern = null;
+            CancelFluidAttack();
+            if (!TryPrepareNavigation()) return false;
+        }
+        if (!HasSimulationAuthority || !EncounterAllowsDecisions || dead || cinematicSuspended || !navigationReady || !agent.enabled || !agent.isOnNavMesh) return false;
+        ActionSequenceId++;
         CancelFluidAttack();
         clashDirection = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
         clashDistance = distance;
@@ -29,14 +46,15 @@ public partial class LitBrainsEnemy
         clashRemaining = clashDuration + recovery;
         StopControlConditions["LitBrainsEnemy.Clash"] = true;
         StopFluidMovement();
-        anim.CrossFadeInFixedTime("Hurt", .08f, 0);
+        PlayCombatHurt();
         return true;
     }
 
     private bool TickClashRecovery()
     {
         if (clashRemaining <= 0) return false;
-        float dt = Time.deltaTime;
+        var clock = GetComponent<CombatTimeDomain>();
+        float dt = clock != null ? clock.DeltaTime : Time.deltaTime;
         StopFluidMovement();
         float before = clashMotionRemaining / clashDuration;
         clashMotionRemaining = Mathf.Max(0, clashMotionRemaining - dt);

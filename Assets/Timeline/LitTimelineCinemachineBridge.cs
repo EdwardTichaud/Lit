@@ -27,7 +27,8 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour, ITimelinePlayb
     public void OnTimelinePlaybackStarted(PlayableDirector playback)
     {
         if (playback == null || playback != GetComponent<PlayableDirector>()) return;
-        if (!playback.playableAsset.outputs.Any(output => output.sourceObject is CinemachineTrack)) return;
+        if (!playback.playableAsset.outputs.Any(output => output.sourceObject is CinemachineTrack track && !track.mutedInHierarchy &&
+            track.GetClips().Any(clip => clip.asset is CinemachineShot))) return;
         director = playback;
         if (!BeginCameraControlNow())
             throw new System.InvalidOperationException("Timeline : la caméra de gameplay ne peut pas être confiée à Cinemachine.");

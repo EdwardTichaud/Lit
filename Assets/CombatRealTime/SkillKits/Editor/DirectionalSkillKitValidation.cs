@@ -9,6 +9,8 @@ using UnityEngine.InputSystem.LowLevel;
 public static class DirectionalSkillKitValidation
 {
     private const string Key = "Lit.DirectionalSkillKit.Validation";
+    private const string CameraKey = "Lit.DirectionalSkillKit.CameraValidation";
+    private static Quaternion wheelCameraStart;
     private const string SceneProfileKey = "Lit.DirectionalSkillKit.SceneProfile";
     private static int stage;
     private static double started, at;
@@ -16,9 +18,20 @@ public static class DirectionalSkillKitValidation
     private static Vector3 retreatStart;
     private static Vector3 wheelMoveStart;
     private static int beforeEnemyHealth;
+    private static int cancelKitIndex;
     static DirectionalSkillKitValidation() => EditorApplication.update += Tick;
     public static void RunBatch() => Begin(false);
     public static void RunBatchSceneProfile() => Begin(true);
+    public static void RunWheelCameraBatch()
+    {
+        if (!Application.isBatchMode) throw new InvalidOperationException("Use an isolated batch Editor.");
+        var tests = new DirectionalSkillKitTests();
+        tests.WheelOpensOnlyFromDirectionalPadAndKeepsCameraWithoutCombatActions();
+        tests.WheelCancelUsesBAndFacesNeverCastSkills();
+        Debug.Log("[SkillKits] WHEEL INPUT ASSERTIONS PASS | asset/wrapper bindings and modal maps");
+        SessionState.SetBool(CameraKey, true);
+        Begin(true);
+    }
     private static void Begin(bool useSceneProfile)
     {
         if (!Application.isBatchMode) throw new InvalidOperationException("Use an isolated batch Editor.");
@@ -64,6 +77,50 @@ public static class DirectionalSkillKitValidation
             var kits = arena.GetComponent<CombatSkillKitInput>();
             var player = arena.Player;
             double elapsed = EditorApplication.timeSinceStartup - at;
+            if (SessionState.GetBool(CameraKey, false))
+            {
+                switch (stage)
+                {
+                    case 0:
+                        arena.Enemy.SetCinematicSuspended(true);
+                        pad = InputSystem.AddDevice<Gamepad>();
+                        Send(new GamepadState { leftTrigger = 1 }); Next(1); break;
+                    case 1 when elapsed > .2:
+                        Require(!kits.IsOpen, "LT opened the wheel.");
+                        Send(new GamepadState()); Next(2); break;
+                    case 2 when elapsed > .2:
+                        Send(new GamepadState().WithButton(GamepadButton.DpadUp)); Next(3); break;
+                    case 3 when elapsed > .2:
+                        Require(kits.IsOpen && InputModeCoordinator.IsCameraAllowed &&
+                            LocalPlayerInput.FindSharedActionMap("Camera").enabled, "Directional wheel blocks camera.");
+                        wheelCameraStart = arena.arenaCamera.transform.rotation;
+                        Send(new GamepadState { rightStick = Vector2.right }); Next(4); break;
+                    case 4 when elapsed > .6:
+                        Require(kits.IsOpen && LocalInputRouter.CameraOrbitValue.x > .1f, "Right stick did not reach camera while wheel open.");
+                        if (Quaternion.Angle(wheelCameraStart, arena.arenaCamera.transform.rotation) <= 1)
+                        {
+                            // A hidden batch editor intentionally rejects unfocused camera input.
+                            // Exercise its existing orbit calculation without weakening that guard.
+                            Require(!Application.isFocused, "Focused camera did not rotate while wheel open.");
+                            var cameraMode = arena.arenaCamera.GetComponent<LitGameplayCameraModeController>();
+                            var view = arena.arenaCamera.GetComponent<Opsive.UltimateCharacterController.Camera.CameraController>().ActiveViewType;
+                            Quaternion before = view.Rotate(0, 0, true);
+                            typeof(LitGameplayCameraModeController).GetMethod("ReadInput", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                                .Invoke(cameraMode, null);
+                            Require(cameraMode.FrameInput.orbit.x > 0 && Quaternion.Angle(before, view.Rotate(0, 0, false)) > .001f,
+                                "Unfocused batch orbit calculation rejected right stick.");
+                            Debug.Log("[SkillKits] Headless orbit path verified; visible focused feel not assessed.");
+                        }
+                        Send(new GamepadState().WithButton(GamepadButton.East)); Next(5); break;
+                    case 5 when elapsed > .2:
+                        Require(!kits.IsOpen && InputModeCoordinator.IsCameraAllowed, "Wheel cancel did not restore gameplay.");
+                        Debug.Log("[SkillKits] WHEEL CAMERA PASS | LT ignored | D-pad opens | right stick camera input/orbit | B closes");
+                        SessionState.SetBool(CameraKey, false); SessionState.SetBool(Key, false);
+                        InputSystem.RemoveDevice(pad); EditorApplication.Exit(0); break;
+                }
+                EditorApplication.QueuePlayerLoopUpdate();
+                return;
+            }
             switch (stage)
             {
                 case 0:
@@ -94,7 +151,7 @@ public static class DirectionalSkillKitValidation
                     int count = 0;
                     foreach (CombatSkillKit kit in Enum.GetValues(typeof(CombatSkillKit)))
                         for (int i = 0; i < 4; i++) if (catalog.GetSkill(kit, i) != null) count++;
-                    Require(count == 15 && catalog.GetSkill(CombatSkillKit.Lucian, 3) == null, "Lucian must have three skills and an empty B slot.");
+                    Require(count == 16 && catalog.GetSkill(CombatSkillKit.Lucian, 3).IsGroundImpactSkill, "Lucian fourth slot must contain Ground Impact.");
                     Require(!CombatSkillKitCatalog.TryDirection(Vector2.one, out _), "Diagonal selects a kit.");
                     arena.Enemy.enabled = false;
                     player.SetHealth(50, 100);
@@ -118,8 +175,10 @@ public static class DirectionalSkillKitValidation
                     Send(new GamepadState().WithButton(GamepadButton.DpadUp)); Next(31); break;
                 case 31:
                     if (elapsed < .2) return;
-                    Require(!kits.IsOpen && InputModeCoordinator.CurrentMode == InputMode.Combat,
-                        "Second press on active kit did not close wheel.");
+                    Require(!kits.IsOpen && manager.IsPlayerActionActive,
+                        "Second D-pad up did not launch Eclair.");
+                    player.GetComponent<PlayerActionPresentationController>().CancelAction();
+                    player.GetComponent<LitOpsiveLocomotionBridge>().TeleportForSceneTransition(arena.Enemy.transform.position + arena.Enemy.transform.forward * 4, Quaternion.LookRotation(-arena.Enemy.transform.forward));
                     Send(new GamepadState()); Next(32); break;
                 case 32:
                     if (elapsed < .2) return;
@@ -131,20 +190,46 @@ public static class DirectionalSkillKitValidation
                     Send(new GamepadState().WithButton(GamepadButton.East)); Next(2); break;
                 case 2:
                     if (elapsed < .2) return;
-                    Require(kits.IsOpen && player.GetComponent<PlayerScriptedDodgeController>()?.IsActive != true, "Empty B slot closed the kit or dodged.");
+                    Require(!kits.IsOpen && player.GetComponent<PlayerScriptedDodgeController>()?.IsActive != true, "B did not return exclusively (or dodged).");
+                    Send(new GamepadState()); Next(34); break;
+                case 34:
+                    if (elapsed < .2) return;
+                    var openButton = new[] { GamepadButton.DpadUp, GamepadButton.DpadRight, GamepadButton.DpadDown, GamepadButton.DpadLeft }[cancelKitIndex];
+                    Send(new GamepadState().WithButton(openButton)); Next(35); break;
+                case 35:
+                    if (elapsed < .2) return;
+                    Require(kits.IsOpen && kits.ActiveKit == (CombatSkillKit)cancelKitIndex, "Opening press cast a skill instead of choosing the kit.");
+                    Send(new GamepadState().WithButton(GamepadButton.West).WithButton(GamepadButton.North).WithButton(GamepadButton.South));
+                    Next(36); break;
+                case 36:
+                    if (elapsed < .2) return;
+                    Require(kits.IsOpen && !manager.IsPlayerActionActive &&
+                        player.GetComponent<PlayerScriptedJumpController>()?.IsActive != true &&
+                        !CounterSkillCombatController.Instance.IsGuardHeld, "Face buttons cast/jumped/guarded in the wheel.");
+                    Send(new GamepadState().WithButton(GamepadButton.East)); Next(37); break;
+                case 37:
+                    if (elapsed < .2) return;
+                    Require(!kits.IsOpen && !manager.IsPlayerActionActive &&
+                        player.GetComponent<PlayerScriptedDodgeController>()?.IsActive != true,
+                        "B cast a former B skill or dodged for kit " + cancelKitIndex);
+                    Send(new GamepadState());
+                    cancelKitIndex++;
+                    Next(cancelKitIndex < 4 ? 34 : 38); break;
+                case 38:
+                    if (elapsed < .2) return;
                     Send(new GamepadState().WithButton(GamepadButton.DpadRight)); Next(3); break;
                 case 3:
                     if (elapsed < .2) return;
                     Require(kits.ActiveKit == CombatSkillKit.Vesta, "D-pad right did not select Vesta.");
-                    Send(new GamepadState().WithButton(GamepadButton.North)); Next(4); break;
+                    Send(new GamepadState().WithButton(GamepadButton.DpadUp)); Next(4); break;
                 case 4:
                     if (elapsed < .2) return;
-                    Require(!kits.IsOpen && player.CurrentHp == 100 && !CounterSkillCombatController.Instance.IsGuardHeld, "Y did not heal exclusively or failed to close.");
+                    Require(!kits.IsOpen && player.CurrentHp == 100 && !CounterSkillCombatController.Instance.IsGuardHeld, "Up did not heal exclusively or failed to close.");
                     Send(new GamepadState().WithButton(GamepadButton.DpadLeft)); Next(5); break;
                 case 5:
                     if (elapsed < .2) return;
                     Require(kits.ActiveKit == CombatSkillKit.Aurell, "D-pad left did not select Aurell.");
-                    Send(new GamepadState().WithButton(GamepadButton.North)); Next(6); break;
+                    Send(new GamepadState().WithButton(GamepadButton.DpadUp)); Next(6); break;
                 case 6:
                     if (elapsed < .2) return;
                     var effects = PlayerProtectionEffects.Get(player);
@@ -155,7 +240,7 @@ public static class DirectionalSkillKitValidation
                     Send(new GamepadState().WithButton(GamepadButton.DpadRight)); Next(7); break;
                 case 7:
                     if (elapsed < .2) return;
-                    Send(new GamepadState().WithButton(GamepadButton.South)); Next(8); break;
+                    Send(new GamepadState().WithButton(GamepadButton.DpadDown)); Next(8); break;
                 case 8:
                     if (elapsed < .2) return;
                     var regeneration = player.GetComponent<PlayerRegenerationEffect>();
@@ -170,7 +255,7 @@ public static class DirectionalSkillKitValidation
                     if (elapsed < .2) return;
                     Require(kits.IsOpen && kits.ActiveKit == CombatSkillKit.Soren && manager.HasLockedCombatTarget, "D-pad down did not open Soren exclusively.");
                     retreatStart = player.transform.position;
-                    Send(new GamepadState().WithButton(GamepadButton.East)); Next(11); break;
+                    Send(new GamepadState().WithButton(GamepadButton.DpadRight)); Next(11); break;
                 case 11:
                     if (elapsed < .5) return;
                     Require(!kits.IsOpen && Vector3.Distance(retreatStart, player.transform.position) > .5f && player.GetComponent<PlayerScriptedDodgeController>()?.IsActive != true, "Borrowed retreat failed or B dodged.");
@@ -186,7 +271,7 @@ public static class DirectionalSkillKitValidation
                     player.GetComponent<LitOpsiveLocomotionBridge>().TeleportForSceneTransition(arena.Enemy.transform.position + arena.Enemy.transform.forward * 2, Quaternion.LookRotation(-arena.Enemy.transform.forward));
                     beforeEnemyHealth = arena.Enemy.CurrentHealth;
                     Require(kits.Open(CombatSkillKit.Aurell), "Aurell reopening failed.");
-                    Send(new GamepadState().WithButton(GamepadButton.East)); Next(20); break;
+                    Send(new GamepadState().WithButton(GamepadButton.DpadRight)); Next(20); break;
                 case 20:
                     if (elapsed < .2) return;
                     Require(!kits.IsOpen && PlayerProtectionEffects.Get(player).Reserve == 0, "Borrowed Juste Retour did not consume reserve/start.");
@@ -195,7 +280,7 @@ public static class DirectionalSkillKitValidation
                     if (elapsed < 2) return;
                     Require(arena.Enemy.CurrentHealth < beforeEnemyHealth, "Borrowed Juste Retour authored event did not damage the enemy.");
                     Require(kits.Open(CombatSkillKit.Lucian), "Lucian reopening failed.");
-                    Send(new GamepadState().WithButton(GamepadButton.West)); Next(22); break;
+                    Send(new GamepadState().WithButton(GamepadButton.DpadLeft)); Next(22); break;
                 case 22:
                     if (elapsed < .2) return;
                     Require(!kits.IsOpen && (manager.IsPlayerActionActive || manager.IsCinematicSequenceActive), "X did not launch Bond offensif.");
@@ -219,15 +304,15 @@ public static class DirectionalSkillKitValidation
                     if (elapsed < .2) return;
                     Require(manager.HasLockedCombatTarget, "R3 tap did not acquire lock.");
                     Require(kits.Open(CombatSkillKit.Lucian), "Kit reopening failed before cancel.");
-                    Send(new GamepadState { leftTrigger = 1 }); Next(17); break;
+                    Send(new GamepadState().WithButton(GamepadButton.East)); Next(17); break;
                 case 17:
                     if (elapsed < .2) return;
-                    Require(!kits.IsOpen && InputModeCoordinator.CurrentMode == InputMode.Combat, "LT did not cancel without launching a skill.");
+                    Require(!kits.IsOpen && InputModeCoordinator.CurrentMode == InputMode.Combat, "B did not cancel without launching a skill.");
                     Send(new GamepadState());
                     Require(kits.Open(CombatSkillKit.Lucian), "Final kit reopening failed.");
                     manager.EndCombat();
                     Require(!kits.IsOpen && InputModeCoordinator.CurrentMode == InputMode.Exploration, "Combat exit kept the wheel alive.");
-                    Debug.Log("[SkillKits] PLAY PASS | active-kit toggle, held-input/map-handoff debounce, movement with wheel open, 15 skills, four D-pad kits, empty slot, face exclusivity, solo regeneration ticks, borrowed reserve/JusteRetour impact/retreat, Bond offensif X, R3 tap/hold, LT cancel, modal and combat restoration.");
+                    Debug.Log("[SkillKits] PLAY PASS | two-step D-pad skills, repeated up Eclair, held-input/map-handoff debounce, movement with wheel open, 15 skills, B return without dodge, solo regeneration, borrowed reserve/JusteRetour/retreat, Bond left, R3, modal and combat restoration.");
                     InputSystem.RemoveDevice(pad);
                     SessionState.SetBool(Key, false); EditorApplication.Exit(0); break;
             }

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b0c9fe1cd7d4328ba35f67c6d5dd193, type: 3}
   m_Name: CombatLab_BasicSkill_2
   m_EditorClassIdentifier: Assembly-CSharp::BasicSkillsSO
+  targetingMode: 0
   enemyImpact:
     requireGroundedTarget: 0
     offset: {x: 0, y: 1, z: 1.3}

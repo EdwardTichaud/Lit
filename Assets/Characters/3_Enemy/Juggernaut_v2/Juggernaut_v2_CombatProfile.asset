@@ -24,39 +24,60 @@ MonoBehaviour:
   hurtSeconds: 0.35
   interruptionProtectionSeconds: 0.75
   attacks:
-  - stateName: Attack
+  - skill: {fileID: 11400000, guid: 3574dc0264b01b24ea983ed7db44c598, type: 2}
+    stateName: Attack
     clip: {fileID: 7400000, guid: afdd35d12c95c6446b5a6380f4ed205b, type: 2}
-    reactionSeconds: 0.233333333
-    strikeSeconds: 0.466666667
-    impactSeconds: 0.566666667
-    recoverySeconds: 0.733333333
+    reactionSeconds: 0.23333333
+    strikeSeconds: 0.46666667
+    impactSeconds: 0.56666666
+    recoverySeconds: 0.73333335
     recoveryDurationSeconds: 0.2
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.4, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 1.1333337
     preparationAdvanceDistance: 1
     advanceDistance: 0.9
     advanceSeconds: 0.2
     reach: 2.6
     arcDegrees: 110
     heightTolerance: 1.8
-  - stateName: Attack_Sweep
+  - skill: {fileID: 11400000, guid: f2c6087c19055b443b671dcedb526ffa, type: 2}
+    stateName: Attack_Sweep
     clip: {fileID: 7400000, guid: 4583fd938bac54240b22eb24d80a6343, type: 2}
-    reactionSeconds: 0.333333333
-    strikeSeconds: 0.566666667
-    impactSeconds: 0.700000000
-    recoverySeconds: 0.900000000
+    reactionSeconds: 0.33333334
+    strikeSeconds: 0.56666666
+    impactSeconds: 0.7
+    recoverySeconds: 0.9
     recoveryDurationSeconds: 0.2
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.43199995, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 1.1333337
     preparationAdvanceDistance: 1
     advanceDistance: 0.9
     advanceSeconds: 0.2
     reach: 2.6
     arcDegrees: 110
     heightTolerance: 1.8
-  - stateName: Attack_Followup
+  - skill: {fileID: 11400000, guid: b3a4d6f55f403a4498b9a4d2f11d4fa2, type: 2}
+    stateName: Attack_Followup
     clip: {fileID: 7400000, guid: a60d893d891f10147a4de3ac16f48ce0, type: 2}
-    reactionSeconds: 0.266666667
-    strikeSeconds: 0.500000000
-    impactSeconds: 0.600000000
-    recoverySeconds: 0.766666667
+    reactionSeconds: 0.26666668
+    strikeSeconds: 0.5
+    impactSeconds: 0.6
+    recoverySeconds: 0.76666665
     recoveryDurationSeconds: 0.2
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.4181818, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 1.1333337
     preparationAdvanceDistance: 1
     advanceDistance: 0.9
     advanceSeconds: 0.2

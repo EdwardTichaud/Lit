@@ -65,11 +65,12 @@ public sealed class InputModeCoordinator : MonoBehaviour
         instance.Apply("Configure");
     }
 
-    public static void SetBaseMode(InputMode mode)
+    public static void SetBaseMode(InputMode mode, bool preserveHeldActions = false)
     {
         if (instance == null) return;
+        bool continuous = preserveHeldActions && instance.ResolveMode() == InputMode.Exploration && mode == InputMode.Combat && instance.stack.Count == 0;
         instance.baseMode = mode;
-        instance.Apply("Base=" + mode);
+        instance.Apply("Base=" + mode, continuous);
     }
 
     public static void Enter(object owner, InputMode mode)
@@ -135,7 +136,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
     public static bool IsCameraAllowed => CurrentMode == InputMode.Exploration || CurrentMode == InputMode.Dialogue ||
                                           CurrentMode == InputMode.Placement || CurrentMode == InputMode.Combat ||
                                           CurrentMode == InputMode.ThresholdSequence || CurrentMode == InputMode.CombatQTE ||
-                                          CurrentMode == InputMode.TacticalInspection;
+                                          CurrentMode == InputMode.TacticalInspection || CurrentMode == InputMode.CombatWheel;
     public static bool IsUserInterfaceMovementPassthroughActive => instance != null &&
         instance.ResolveMode() == InputMode.UserInterface &&
         instance.userInterfaceMovementOwner != null &&
@@ -203,12 +204,18 @@ public sealed class InputModeCoordinator : MonoBehaviour
         }
     }
 
-    private void Apply(string transition)
+    private void Apply(string transition, bool preserveHeldActions = false)
     {
         if (actions == null) return;
         PurgeDestroyedOwners();
         InputMode mode = ResolveMode();
-        actions.Disable();
+        if (preserveHeldActions)
+        {
+            var requiredMaps = new HashSet<string>(GetMaps(mode));
+            foreach (var map in actions.actionMaps)
+                if (!requiredMaps.Contains(map.name)) map.Disable();
+        }
+        else actions.Disable();
         foreach (string mapName in GetMaps(mode))
         {
             actions.FindActionMap(mapName, false)?.Enable();
@@ -220,8 +227,11 @@ public sealed class InputModeCoordinator : MonoBehaviour
             if (mode == InputMode.CombatWheel) actions.FindAction("Player/RightShoulder", false)?.Enable();
         }
 
-        LocalInputRouter.ResetMove();
-        LocalInputRouter.ResetCamera();
+        if (!preserveHeldActions)
+        {
+            LocalInputRouter.ResetMove();
+            LocalInputRouter.ResetCamera();
+        }
         lastTransition = transition;
         ModeChanged?.Invoke(mode);
 
@@ -256,7 +266,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
                 yield return "Camera";
                 yield break;
             case InputMode.TacticalInspection: yield return "Camera"; yield break;
-            case InputMode.CombatWheel: yield return "CombatWheel"; yield return "System"; yield break;
+            case InputMode.CombatWheel: yield return "CombatWheel"; yield return "Camera"; yield return "System"; yield break;
             case InputMode.CombatQTE:
                 yield return "Camera";
                 yield return "CombatQTE";

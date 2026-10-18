@@ -9,10 +9,11 @@ public sealed class CombatLabClashActor : MonoBehaviour
     public Vector3 localCenter = new Vector3(0, 1.1f, .8f);
     [Min(.01f)] public float radius = .55f;
     public int Generation => GetComponent<LitBrainsEnemy>() is LitBrainsEnemy enemy
-        ? enemy.ActionSequenceId : GetComponent<PlayerActionPresentationController>().ActionGeneration;
+        ? enemy.ActionSequenceId : GetComponent<PlayerActionPresentationController>() is PlayerActionPresentationController presentation
+            ? presentation.ActionGeneration : -1;
     public Vector3 Center => (volumeAnchor != null ? volumeAnchor : transform).TransformPoint(localCenter);
     public bool Open { get; private set; }
-    public int WindowGeneration { get; private set; }
+    public int WindowGeneration { get; private set; } = -1;
     public Vector3 PreviousCenter { get; private set; }
     public int OpenedFrame { get; private set; }
 
@@ -35,7 +36,7 @@ public sealed class CombatLabClashActor : MonoBehaviour
     }
     public void Sample() { PreviousCenter = Center; }
     public void ResetWindow() { Open = false; WindowGeneration = -1; }
-    private void OnDisable() { ResetWindow(); controller?.Cancel(); }
+    private void OnDisable() { ResetWindow(); if (controller != null) controller.ActorDisabled(this); }
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Open ? Color.yellow : Color.gray;

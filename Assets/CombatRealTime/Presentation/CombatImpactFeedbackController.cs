@@ -86,8 +86,15 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
             AudioManager.PlayClipAtPoint(profile.additionalImpactAudio, impactPosition);
         }
 
-        lockCamera?.PlayImpact(profile.camera);
-        StartHitStop(profile);
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        var local = LocalPlayerContext.LocalCharacterRoot;
+        bool localActor = playerRoot != null && local != null &&
+            (playerRoot == local || playerRoot.IsChildOf(local) || local.IsChildOf(playerRoot));
+        if (network == null || !network.IsListening || localActor)
+        {
+            lockCamera?.PlayImpact(profile.camera);
+            StartHitStop(profile);
+        }
     }
 
     public void PushExternalPause()

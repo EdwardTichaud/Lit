@@ -14,6 +14,18 @@ public sealed class CombatSkillKitCatalog : ScriptableObject
         CombatSkillKit.Lucian => lucianCharacter, CombatSkillKit.Vesta => vestaCharacter,
         CombatSkillKit.Soren => sorenCharacter, CombatSkillKit.Aurell => aurellCharacter, _ => null
     };
+    public bool IsCharacter(CharacterData character, CombatSkillKit kit)
+    {
+        var definition = GetCharacter(kit);
+        if (character == null || definition == null) return false;
+        // Runtime clones retain saved identities; display names are not identities.
+        return character == definition ||
+            !string.IsNullOrWhiteSpace(character.UniqueId) &&
+                string.Equals(character.UniqueId, definition.UniqueId, System.StringComparison.Ordinal) ||
+            !string.IsNullOrWhiteSpace(character.characterId) &&
+                string.Equals(character.characterId, definition.characterId, System.StringComparison.OrdinalIgnoreCase);
+    }
+
     public bool TryFind(SkillSO skill, out CombatSkillKit kit, out int slot)
     {
         foreach (CombatSkillKit candidate in System.Enum.GetValues(typeof(CombatSkillKit)))
@@ -21,7 +33,8 @@ public sealed class CombatSkillKitCatalog : ScriptableObject
                 if (skill != null && GetSkill(candidate, i) == skill) { kit = candidate; slot = i; return true; }
         kit = default; slot = -1; return false;
     }
-    // Slots follow the physical buttons: X, Y, A, B. Empty slots stay empty.
+    // Stable slots: left, up, down, right (historically X, Y, A, B).
+    // Never reorder saved unlock masks when changing input presentation.
     [SerializeField] private SkillSO[] lucian = new SkillSO[4];
     [SerializeField] private SkillSO[] vesta = new SkillSO[4];
     [SerializeField] private SkillSO[] soren = new SkillSO[4];
@@ -40,6 +53,18 @@ public sealed class CombatSkillKitCatalog : ScriptableObject
     {
         var skills = GetSkills(kit);
         return skills != null && slot >= 0 && slot < Mathf.Min(4, skills.Length) ? skills[slot] : null;
+    }
+
+    public static bool TrySkillDirection(Vector2 direction, out int slot)
+    {
+        slot = -1;
+        if (!TryDirection(direction, out var directionKit)) return false;
+        slot = directionKit switch
+        {
+            CombatSkillKit.Aurell => 0, CombatSkillKit.Lucian => 1,
+            CombatSkillKit.Soren => 2, CombatSkillKit.Vesta => 3, _ => -1
+        };
+        return slot >= 0;
     }
 
     public static bool TryDirection(Vector2 direction, out CombatSkillKit kit)

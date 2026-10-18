@@ -36,7 +36,10 @@ public static class SorenPlayValidation
     {
         stage = 0; started = 0;
         arrowHits = arrowDamage = 0; arrowImpactAt = 0; immediateStun = false;
-        SessionState.SetBool(Key, true); EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath); EditorApplication.isPlaying = true;
+        SessionState.SetBool(Key, true); EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
+        // The authored lab now starts with Lucian. This unsaved fixture tests Soren.
+        UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>().character = CombatLabCharacter.Soren;
+        EditorApplication.isPlaying = true;
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
     private static SquadCharacterController Actor()
@@ -67,7 +70,7 @@ public static class SorenPlayValidation
                 if (!arena.Enemy.NavigationReady) return;
                 Require(arena.character == CombatLabCharacter.Soren && arena.Player.CharacterData.combatSkills.Count == 4, "Wrong character/loadout");
                 var arrow = arena.Player.CharacterData.combatSkills[0];
-                Require(arrow.damages == 10 && arrow.stunSeconds == 2 && arrow.cooldownSeconds == 10 && arrow.minimumHitDistance == 10 && arrow.maximumHitDistance == 30, "Arrow altered");
+                Require(arrow.damages == 10 && arrow.stunSeconds == 2 && arrow.cooldownSeconds == 10 && arrow.minimumHitDistance == 0 && arrow.maximumHitDistance == 30, "Arrow altered");
                 arena.Enemy.SetCinematicSuspended(true);
                 typeof(LitBrainsEnemy).GetField("currentHealth", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(arena.Enemy, 500);
                 Require(manager.TryUseSkill(revelation) && !manager.TryUseSkill(revelation), "Revelation cooldown invalid");
@@ -91,10 +94,10 @@ public static class SorenPlayValidation
                 var zones = UnityEngine.Object.FindObjectsByType<EnemyEntraveZone>(FindObjectsInactive.Exclude);
                 Require(zones.Length == 1, "Unexpected zone count");
                 var zone = zones[0];
-                Require(Mathf.Abs(EnemyEntraveZone.NavigationMultiplier(zone.transform.position + Vector3.right * 4) - .6f) < .001f, "Radius boundary wrong");
+                Require(Mathf.Abs(EnemyEntraveZone.NavigationMultiplier(zone.transform.position + Vector3.right * 4) - .4f) < .001f, "Radius boundary wrong");
                 Require(EnemyEntraveZone.NavigationMultiplier(zone.transform.position + Vector3.right * 4.01f) == 1, "Outside zone slowed");
                 EnemyEntraveZone.Create(other, zone.transform.position, entrave);
-                Require(Mathf.Abs(EnemyEntraveZone.NavigationMultiplier(zone.transform.position) - .6f) < .001f, "Zones stacked");
+                Require(Mathf.Abs(EnemyEntraveZone.NavigationMultiplier(zone.transform.position) - .4f) < .001f, "Zones stacked");
                 PlayerControlSkills.Get(other).ClearCombatEffects();
                 Require(zone.IsActive, "Other owner cleanup removed zone");
                 arena.Enemy.transform.position = original + Vector3.up * 10;
@@ -103,7 +106,7 @@ public static class SorenPlayValidation
                 float animatorSpeed = arena.Enemy.Animator.speed;
                 arena.Enemy.SetCinematicSuspended(false);
                 arena.Enemy.MoveTo(original + Vector3.forward, 3.6f);
-                Require(Mathf.Abs(arena.Enemy.GetComponent<UnityEngine.AI.NavMeshAgent>().speed - 2.16f) < .001f && arena.Enemy.Animator.speed == animatorSpeed, "Navigation slow changed animation / wrong physical speed");
+                Require(Mathf.Abs(arena.Enemy.GetComponent<UnityEngine.AI.NavMeshAgent>().speed - 1.44f) < .001f && arena.Enemy.Animator.speed == animatorSpeed, "Navigation slow changed animation / wrong physical speed");
                 arena.Enemy.SetCinematicSuspended(true);
                 shortMark = UnityEngine.Object.Instantiate(revelation); shortMark.control.durationSeconds = .12f;
                 Require(effects.TryActivate(shortMark, arena.Enemy), "Short mark failed");

@@ -1,4 +1,5 @@
 using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 
 // UI locale: affiche les points cardinaux et pointe vers l'Ancient Flame la plus proche du personnage controle.
@@ -28,6 +29,7 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
     private Flame targetFlame;
     private float nextTargetRefreshTime;
     private Camera cachedCamera;
+    private readonly List<Flame> sceneFlames = new List<Flame>(32);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeInstance()
@@ -131,7 +133,7 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
 
         if (closest == null)
         {
-            Flame[] sceneFlames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+            Flame.CopyActiveInfluenceFlames(sceneFlames);
             EvaluateFlames(sceneFlames, characterRoot.position, ref closest, ref closestSqr);
         }
 

@@ -9,13 +9,12 @@ public sealed partial class EnemyController
     private void BossAwake()
     {
         bossEncounter = GetComponent<BossEncounterBehaviour>();
+        if (bossEncounter != null) bossEncounter.TryBindEncounterActor(this);
         if (bossEncounter != null && bossEncounter.SuppressDefaultEnemyBrain) SetSuspended(true);
     }
 
     private bool BossFilterIncomingDamage(int amount, SquadCharacterController source, out int permittedDamage)
     {
-        IBossEncounterBehaviour boss = BossEncounter;
-        if (boss == null) { permittedDamage = amount; return true; }
-        return boss.FilterIncomingDamage(amount, source, out permittedDamage);
+        return EnemyEncounterActors.TryFilterIncomingDamage(this, amount, source, out permittedDamage);
     }
 }

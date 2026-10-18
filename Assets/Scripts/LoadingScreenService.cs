@@ -1242,6 +1242,10 @@ public sealed class LoadingScreenService : MonoBehaviour
             loadingOrbRenderPrimeRoutine = null;
         }
 
+        // Hiding the RawImage alone leaves an entire HDRP camera rendering
+        // its texture during gameplay. PlayLoadingOrb re-enables it on demand.
+        if (loadingOrbCamera != null) loadingOrbCamera.enabled = false;
+
         if (loadingOrbInstance == null)
         {
             return;

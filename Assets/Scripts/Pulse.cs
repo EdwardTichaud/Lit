@@ -1,7 +1,6 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[ExecuteAlways]
 public class Pulse : MonoBehaviour
 {
     [Header("Pulse Settings")]

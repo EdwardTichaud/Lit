@@ -69,6 +69,8 @@ public sealed class CombatThreatPanelController : MonoBehaviour
         }
     }
 
+    private void OnEncounterAggroStarted(ICombatTarget target) => ShowAggro();
+
     private void OnCombatStateChanged(bool active)
     {
         if (!active)
@@ -128,6 +130,7 @@ public sealed class CombatThreatPanelController : MonoBehaviour
         if (combatManager != null)
         {
             combatManager.EnemyAggroStarted -= OnEnemyAggroStarted;
+            combatManager.EncounterAggroStarted -= OnEncounterAggroStarted;
             combatManager.CombatStateChanged -= OnCombatStateChanged;
         }
 
@@ -135,6 +138,7 @@ public sealed class CombatThreatPanelController : MonoBehaviour
         if (combatManager != null)
         {
             combatManager.EnemyAggroStarted += OnEnemyAggroStarted;
+            combatManager.EncounterAggroStarted += OnEncounterAggroStarted;
             combatManager.CombatStateChanged += OnCombatStateChanged;
         }
     }

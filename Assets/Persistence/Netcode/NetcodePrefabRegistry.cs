@@ -133,6 +133,22 @@ public static class NetcodePrefabRegistry
     private static readonly HashSet<uint> registeredHashes = new HashSet<uint>();
     private static readonly uint worldInteractionHash = NetcodeStableHash.Hash32("service:world-interaction");
 
+#if UNITY_EDITOR
+    [UnityEditor.InitializeOnLoadMethod]
+    private static void InstallEditorCacheCleanup()
+    {
+        UnityEditor.EditorApplication.playModeStateChanged -= OnEditorPlayModeChanged;
+        UnityEditor.EditorApplication.playModeStateChanged += OnEditorPlayModeChanged;
+    }
+
+    private static void OnEditorPlayModeChanged(UnityEditor.PlayModeStateChange state)
+    {
+        // Wait for network shutdown and scene teardown before dropping runtime
+        // references. Without Domain Reload, these otherwise pin prefab assets in Edit Mode.
+        if (state == UnityEditor.PlayModeStateChange.EnteredEditMode) ResetRuntimeCaches();
+    }
+#endif
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeCaches()
     {
