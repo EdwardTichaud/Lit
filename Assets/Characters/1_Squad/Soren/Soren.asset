@@ -257,7 +257,6 @@ MonoBehaviour:
   characterName: Soren
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
   worldPrefab: {fileID: 2784444758471557209, guid: 7092d6a346b234a4babc605180b95967, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
   - {fileID: 11400000, guid: 90aa80c6988b71c48836f25f68cfbc74, type: 2}
@@ -348,13 +347,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
   airBasicSkills:
   - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
     quantity: 300

@@ -239,7 +239,6 @@ MonoBehaviour:
   characterName: Scientifique fou
   portrait: {fileID: 0}
   worldPrefab: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: 7a006ffc54983974bb8741dc6e2fd909, type: 2}
   enemyCombatProfile: {fileID: 11400000, guid: 9c02bcb39a360484db5992e599e4ad89, type: 2}
@@ -319,13 +318,6 @@ MonoBehaviour:
     voiceLine: {fileID: 11400000, guid: 864a5a50e6434e2b9bfdd9ca65167285, type: 2}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity: []
   hp: 60
   isEnemy: 1

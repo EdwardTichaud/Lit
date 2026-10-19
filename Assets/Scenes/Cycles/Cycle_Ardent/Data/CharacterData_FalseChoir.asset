@@ -240,7 +240,6 @@ MonoBehaviour:
   characterName: "Le Faux Ch\u0153ur"
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
   worldPrefab: {fileID: 5897523970581850453, guid: bb809611406c9b943b8740097ebf4cc6, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
   chargedSkill: {fileID: 0}
@@ -324,13 +323,6 @@ MonoBehaviour:
     voiceLine: {fileID: 0}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity: []
   hp: 300
   isEnemy: 1

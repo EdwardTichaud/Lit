@@ -257,7 +257,6 @@ MonoBehaviour:
   characterName: Vesta
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
   worldPrefab: {fileID: 2784444758471557209, guid: d39b76f9e9afbe74c890382dd3e2e185, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852261, type: 2}
   - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852262, type: 2}
@@ -348,13 +347,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 72b63b75a81ec9142abda45ecf1e0dd4, type: 2}
   airBasicSkills:
   - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
     quantity: 300

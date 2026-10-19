@@ -257,9 +257,6 @@ MonoBehaviour:
   characterName: Lucian
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
   worldPrefab: {fileID: 2784444758471557209, guid: e6050cdae45f2fd4985bcd61214878d7, type: 3}
-  skills:
-  - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
-  - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
   combatSkills:
   - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}
   - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
@@ -352,13 +349,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
   - {fileID: 11400000, guid: 6d38af01b93145848a6512956ee33741, type: 2}
   - {fileID: 11400000, guid: 46567ab025a5d02478c6225a79ef60c1, type: 2}
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
     quantity: 300

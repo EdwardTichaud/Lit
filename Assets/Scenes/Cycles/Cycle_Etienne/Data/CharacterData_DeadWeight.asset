@@ -240,7 +240,6 @@ MonoBehaviour:
   characterName: Le Poids mort
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
   worldPrefab: {fileID: 8247241061401054916, guid: 049f1509efeb6944fbb0ae6a85c3ed7a, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
   chargedSkill: {fileID: 0}
@@ -324,13 +323,6 @@ MonoBehaviour:
     voiceLine: {fileID: 0}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity: []
   hp: 300
   isEnemy: 1

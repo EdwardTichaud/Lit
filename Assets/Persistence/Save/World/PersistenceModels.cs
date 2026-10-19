@@ -93,9 +93,10 @@ public sealed class WorldVariableSnapshot
 [System.Serializable]
 public sealed class WorldSnapshot
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public int SchemaVersion = CurrentSchemaVersion;
+    public AbilitySaveData Abilities;
     public string SceneName;
     public double CapturedAtTime;
     public List<PlayerSnapshot> Players = new List<PlayerSnapshot>();

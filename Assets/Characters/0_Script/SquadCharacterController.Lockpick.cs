@@ -2,21 +2,6 @@ using UnityEngine;
 
 public partial class SquadCharacterController
 {
-    public int GetStatValue(StatType stat)
-    {
-        return characterData != null ? characterData.GetStatValue(stat) : 10;
-    }
-
-    public int GetDexterityValue()
-    {
-        return GetStatValue(StatType.Dexterity);
-    }
-
-    public int GetDexterityModifier()
-    {
-        return global::CharacterData.GetStatModifier(GetDexterityValue());
-    }
-
     public int CountItemById(string itemId)
     {
         if (string.IsNullOrWhiteSpace(itemId))

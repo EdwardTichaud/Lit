@@ -8,6 +8,8 @@ public sealed class CycleInteraction : MonoBehaviour, IGhostInteractionHandler, 
     [Tooltip("ID du dialogue, ou source d'une etape Interaction sans dialogue.")] public string dialogueId;
     [Tooltip("Utilise l'énigme à connaissances du Ghost. Sa résolution complète alors l'étape DialogueCompleted correspondante du cycle.")]
     public bool useGhostPuzzleResolution;
+    [Tooltip("Pour les nouveaux objets de quete : exige une Flame commune active couvrant cet objet.")]
+    public bool requireLitInfluence;
     [SerializeField, Tooltip("Point utilise pour un PNJ ou objet. Vide utilise ce Transform ; un Ghost utilise ses propres reglages.")]
     private Transform interactionAnchor;
     [SerializeField, Min(0), Tooltip("Distance maximale en metres pour un PNJ ou objet ; zero exige le contact au point.")]
@@ -22,7 +24,7 @@ public sealed class CycleInteraction : MonoBehaviour, IGhostInteractionHandler, 
     public bool TryInteract() => isActiveAndEnabled && cycle != null && cycle.Interact(this);
     internal bool IsWithinRange(GameObject player)
     {
-        if (!isActiveAndEnabled || player == null) return false;
+        if (!isActiveAndEnabled || player == null || !HasRequiredLight()) return false;
         var character = player.GetComponentInParent<SquadCharacterController>();
         if (character == null) character = player.GetComponentInChildren<SquadCharacterController>();
         if (character == null || character.CurrentHp <= 0) return false;
@@ -33,7 +35,14 @@ public sealed class CycleInteraction : MonoBehaviour, IGhostInteractionHandler, 
     }
     public bool TryHandleLocalInteract() => Ghost == null && TryInteract();
     public bool CanBeDetectedBy(SquadCharacterController character) => Ghost == null && isActiveAndEnabled && character != null &&
-        cycle != null && cycle.Status != CycleStatus.Completed && cycle.Status != CycleStatus.Unavailable;
+        HasRequiredLight() && cycle != null && cycle.Status != CycleStatus.Completed && cycle.Status != CycleStatus.Unavailable;
+    private bool HasRequiredLight()
+    {
+        if (!requireLitInfluence) return true;
+        foreach (var flame in Flame.ActiveInfluenceFlames)
+            if (flame != null && !flame.IsAncientFlame && flame.ProvidesLitInfluenceTo(GetInteractionDetectionCollider(), GetInteractionAnchor().position)) return true;
+        return false;
+    }
     public Collider GetInteractionDetectionCollider() => interactionCollider != null ? interactionCollider : interactionCollider = GetComponent<Collider>();
     public Transform GetInteractionAnchor() => interactionAnchor != null ? interactionAnchor : transform;
     public float GetInteractionMaxDistance(SquadCharacterController character) => interactionDistance;

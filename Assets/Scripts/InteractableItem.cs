@@ -209,8 +209,6 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private const int MinLockDifficulty = 1;
     private const int MaxLockDifficulty = 30;
-    private const int MinDexterityBonus = -5;
-    private const int MaxDexterityBonus = 10;
     private bool applyingNetLoot;
     private bool unlockAttemptInProgress;
     private bool trapTriggered;
@@ -3766,14 +3764,12 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         inventoryChanged = true;
         int difficulty = GetNormalizedLockDifficulty();
-        int dexterity = controller.GetDexterityValue();
-        int dexterityBonus = Mathf.Clamp(controller.GetDexterityModifier(), MinDexterityBonus, MaxDexterityBonus);
         int roll = Random.Range(1, 21);
-        int total = roll + dexterityBonus;
+        int total = roll;
         bool success = total >= difficulty;
 
         Debug.Log(
-            $"[Lockpick] container='{name}' character='{controller.name}' path='lockpick' difficulty={difficulty} roll={roll} dexterity={dexterity} dexBonus={dexterityBonus} total={total} success={success}",
+            $"[Lockpick] container='{name}' character='{controller.name}' path='lockpick' difficulty={difficulty} roll={roll} total={total} success={success}",
             this);
 
         if (!success)

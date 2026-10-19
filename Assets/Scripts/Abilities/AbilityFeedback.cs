@@ -1,8 +1,8 @@
 using TMPro;
 using UnityEngine;
 
-// Feedback visuel d'un skill check (UI ou world).
-public class SkillCheckFeedback : MonoBehaviour
+// Exploration ability feedback; no dice, statistics or difficulty class.
+public class AbilityFeedback : MonoBehaviour
 {
     [Header("UI")]
     [Tooltip("Texte UI (ScreenSpace).")]
@@ -31,19 +31,10 @@ public class SkillCheckFeedback : MonoBehaviour
         }
     }
 
-    public void Initialize(StatsSO skill, int roll, int modifier, int total, bool success)
+    public void Initialize(AbilitySO ability, bool success)
     {
-        // Construit le texte de feedback.
-        string skillName = skill != null && !string.IsNullOrWhiteSpace(skill.skillName)
-            ? skill.skillName
-            : skill != null ? skill.name : "Skill";
-        string modText = modifier >= 0 ? $"+{modifier}" : modifier.ToString();
-        string text = $"{skillName} {roll}{modText}={total}";
-        if (skill != null)
-        {
-            text += $" (DC {skill.difficultyClass})";
-        }
-
+        string text = ability != null ? ability.DisplayName : "Capacite";
+        if (!success) text += " : non equipee";
         ApplyText(text, success ? successColor : failureColor);
 
         if (lifetime > 0f)

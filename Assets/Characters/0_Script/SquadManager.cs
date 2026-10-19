@@ -115,7 +115,6 @@ public class SquadManager : MonoBehaviour
     private CharacterSaveData pendingLoadData;
     private Dictionary<string, CharacterData> pendingCharacterLookup;
     private Dictionary<string, Item> pendingItemLookup;
-    private Dictionary<string, StatsSO> pendingSkillLookup;
     private readonly Dictionary<CharacterData, CharacterData> runtimeCharacterMap = new Dictionary<CharacterData, CharacterData>();
     private readonly Dictionary<string, CharacterData> runtimeCharactersById = new Dictionary<string, CharacterData>();
     private readonly Dictionary<string, CharacterData> runtimeCharacterSourceById = new Dictionary<string, CharacterData>();
@@ -575,14 +574,13 @@ public class SquadManager : MonoBehaviour
         record.hubParent = hubParent;
     }
 
-    public void SetPendingLoadData(CharacterSaveData data, Dictionary<string, CharacterData> characterLookup, Dictionary<string, Item> itemLookup, Dictionary<string, StatsSO> skillLookup)
+    public void SetPendingLoadData(CharacterSaveData data, Dictionary<string, CharacterData> characterLookup, Dictionary<string, Item> itemLookup)
     {
         // Une nouvelle sauvegarde doit remplacer integralement l'etat de session precedent.
         runtimeStatesByCharacterId.Clear();
         pendingLoadData = data;
         pendingCharacterLookup = characterLookup;
         pendingItemLookup = itemLookup;
-        pendingSkillLookup = skillLookup;
     }
 
     public void ApplyPendingLoadDataNow()
@@ -1183,11 +1181,6 @@ public class SquadManager : MonoBehaviour
                     enabledCombatItems,
                     BuildCombatDefenseItemHitPointsFromEntry(entry));
             }
-            if (entry.skillsInitialized)
-            {
-                List<StatsSO> skills = BuildSkillsFromEntry(entry);
-                runtimeCharacter.SetSkills(skills);
-            }
 
             if (networked)
             {
@@ -1260,7 +1253,6 @@ public class SquadManager : MonoBehaviour
         pendingLoadData = null;
         pendingCharacterLookup = null;
         pendingItemLookup = null;
-        pendingSkillLookup = null;
     }
 
     private static void ApplyMuninChargeStateToRuntimeState(CharacterRuntimeState state, CharacterSaveEntry entry)
@@ -1429,34 +1421,6 @@ public class SquadManager : MonoBehaviour
         }
 
         return hitPoints;
-    }
-
-    private List<StatsSO> BuildSkillsFromEntry(CharacterSaveEntry entry)
-    {
-        List<StatsSO> skills = new List<StatsSO>();
-        if (entry == null || pendingSkillLookup == null || entry.skillIds == null)
-        {
-            return skills;
-        }
-
-        for (int i = 0; i < entry.skillIds.Count; i++)
-        {
-            string id = entry.skillIds[i];
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                continue;
-            }
-
-            if (pendingSkillLookup.TryGetValue(id, out StatsSO skill) && skill != null)
-            {
-                if (!skills.Contains(skill))
-                {
-                    skills.Add(skill);
-                }
-            }
-        }
-
-        return skills;
     }
 
     private void SpawnVfx(Vector3 position, Quaternion rotation)
@@ -2907,10 +2871,6 @@ public class SquadManager : MonoBehaviour
         CharacterData clone = Instantiate(character);
         clone.name = $"{character.name}_Runtime";
         clone.hideFlags = HideFlags.DontSave;
-        if (clone.skills != null)
-        {
-            clone.skills = new List<StatsSO>(clone.skills);
-        }
 
         if (clone.combatSkills != null)
         {

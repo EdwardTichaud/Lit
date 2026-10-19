@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// Point d'ancrage pour afficher un feedback de skill check.
-public class SkillCheckFeedbackAnchor : MonoBehaviour
+// Existing prefab references are preserved through the script GUID.
+public class AbilityFeedbackAnchor : MonoBehaviour
 {
     [Header("Prefab")]
     [Tooltip("Prefab de feedback a instancier.")]
@@ -13,7 +13,7 @@ public class SkillCheckFeedbackAnchor : MonoBehaviour
     [Tooltip("Duree de vie fallback si aucun script n'est trouve.")]
     public float fallbackLifetime = 1.6f;
 
-    public void Show(StatsSO skill, int roll, int modifier, int total, bool success)
+    public void Show(AbilitySO ability, bool success)
     {
         if (feedbackPrefab == null)
         {
@@ -25,10 +25,10 @@ public class SkillCheckFeedbackAnchor : MonoBehaviour
         Vector3 position = transform.position + offset;
         GameObject instance = Instantiate(feedbackPrefab, position, Quaternion.identity, parent);
 
-        SkillCheckFeedback feedback = instance.GetComponent<SkillCheckFeedback>();
+        AbilityFeedback feedback = instance.GetComponent<AbilityFeedback>();
         if (feedback != null)
         {
-            feedback.Initialize(skill, roll, modifier, total, success);
+            feedback.Initialize(ability, success);
             return;
         }
 

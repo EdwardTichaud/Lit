@@ -143,14 +143,12 @@ public sealed class EnemyUnificationTests
             var b = second.AddComponent<CharacterInfo>();
             a.SetCharacterData(data);
             b.SetCharacterData(data);
-            a.CharacterData.stats.strength = 99;
             a.CharacterData.enemySettings.PhysicsGroundSkin = .2f;
             a.CharacterData.enemyCombatProfile.pursuitRadius = 99;
             a.CharacterData.enemyDeathOptions.dialogueSeconds = 99;
             a.CharacterData.enemyEncounterOptions.startAsGhost = true;
             a.CharacterData.vision.maximumDistance = 99;
             a.ApplyDamage(5);
-            Assert.That(b.CharacterData.stats.strength, Is.EqualTo(data.stats.strength));
             Assert.That(b.CharacterData.enemySettings.PhysicsGroundSkin, Is.EqualTo(data.enemySettings.PhysicsGroundSkin));
             Assert.That(b.CharacterData.enemyCombatProfile.pursuitRadius, Is.EqualTo(data.enemyCombatProfile.pursuitRadius));
             Assert.That(b.CurrentHp, Is.EqualTo(20));

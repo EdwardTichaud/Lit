@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Clairmont_relief_register
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 696fc9981d73b2d47a1f8cf81816d112
+  knowledgeId: district1.clairmont.relief_register
+  title: "La rel\xE8ve a re\xE7u les noms"
+  description: "Le registre de transmission porte bien l'accus\xE9 du poste inf\xE9rieur. Aucun nom n'a \xE9t\xE9 perdu au bureau d'Agn\xE8s."
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: district1.nef_tours
+  roomId: 
+  personId: agnes_clairmont
+  lineageId: clairmont
+  objectId: 
+  readableItem: {fileID: 11400000, guid: f95de2f3ce89f9f42afb05b91a00914b, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

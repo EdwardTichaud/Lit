@@ -68,7 +68,7 @@ public static class SorenSkillSetup
             if (AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath) == null) AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);
             var data = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath);
             data.characterName = "Soren"; data.characterId = "Soren"; data.hp = 100; data.isEnemy = false;
-            data.combatSkills = new List<SkillSO>(kit); data.skills.Clear(); data.voiceLines.Clear();
+            data.combatSkills = new List<SkillSO>(kit); data.voiceLines.Clear();
             data.enemyCombatProfile = null; data.enableCombatHealthThresholds = false; data.combatHealthThresholdStages.Clear();
             data.groundBasicSkills = arena.basicSkills.Where(s => s != null).ToList();
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null) AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(arena.lucianPrefab), PrefabPath);

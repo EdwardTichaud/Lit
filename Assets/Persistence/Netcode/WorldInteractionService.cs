@@ -398,6 +398,23 @@ public class WorldInteractionService : NetworkBehaviour
         return playerRoot != null ? playerRoot.gameObject : null;
     }
 
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestNarrowPassageServerRpc(uint passageId, bool travel, RpcParams rpcParams = default)
+    {
+        if (!NetcodeTriggerRegistry.TryGetNarrowPassage(passageId, out var passage) ||
+            !passage.ServerTryPassage(ResolvePlayerCharacter(rpcParams), travel)) return;
+        if (travel) NarrowPassageTravelClientRpc(passageId, BuildClientRpcParams(rpcParams));
+        else NarrowPassageDetectedClientRpc(passageId);
+    }
+
+    [ClientRpc]
+    private void NarrowPassageDetectedClientRpc(uint id)
+    { if (NetcodeTriggerRegistry.TryGetNarrowPassage(id, out var passage)) passage.ApplyPassageResult(false); }
+
+    [ClientRpc]
+    private void NarrowPassageTravelClientRpc(uint id, ClientRpcParams rpcParams = default)
+    { if (NetcodeTriggerRegistry.TryGetNarrowPassage(id, out var passage)) passage.ApplyPassageResult(true); }
+
     private static ClientRpcParams BuildClientRpcParams(RpcParams rpcParams)
     {
         return new ClientRpcParams

@@ -240,7 +240,6 @@ MonoBehaviour:
   characterName: Giant Juggernaut
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
   worldPrefab: {fileID: 4712010629109728797, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: 868c6bf11c102084591a5986869d6755, type: 2}
   chargedSkill: {fileID: 0}
@@ -324,13 +323,6 @@ MonoBehaviour:
     voiceLine: {fileID: 0}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity: []
   hp: 300
   isEnemy: 1

@@ -43,6 +43,7 @@ public class WorldStateManager : MonoBehaviour
         };
 
         CapturePlayers(snapshot);
+        snapshot.Abilities = AbilityService.Ensure().Capture();
         CapturePersistentObjects(snapshot, logValidationFailuresAsErrors);
         CaptureWorldRules(snapshot);
         LegacyBuildingPersistenceMigration.MergeLegacyWorldSnapshots(
@@ -452,6 +453,7 @@ public class WorldStateManager : MonoBehaviour
         try
         {
             worldRulesStateManager?.ApplyVariables(snapshot.WorldVariables);
+            if (snapshot.Abilities != null) AbilityService.Ensure().Restore(snapshot.Abilities);
         }
         catch (Exception ex)
         {

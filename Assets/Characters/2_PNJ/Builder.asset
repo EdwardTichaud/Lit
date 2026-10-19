@@ -17,14 +17,6 @@ MonoBehaviour:
   characterName: Builder
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
   worldPrefab: {fileID: 9154674378261969996, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
-  skills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity: []
   hp: 10
   voiceLines:

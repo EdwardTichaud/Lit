@@ -1,22 +1,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Collider))]
 // Passage etroit detecte par skill, avec interaction et teleport.
 public class TrouEtroit : MonoBehaviour
 {
-    [Header("Skills")]
-    [Tooltip("Skill utilise pour detecter le passage.")]
-    public StatsSO observateurSkill;
-    [Tooltip("Skill requis pour l'utiliser.")]
-    public StatsSO saufConduitSkill;
+    [Header("Abilities")]
+    [FormerlySerializedAs("observateurSkill"), Tooltip("Capacite equipee pour detecter le passage.")]
+    public AbilitySO observateurAbility;
+    [FormerlySerializedAs("saufConduitSkill"), Tooltip("Capacite equipee pour emprunter le passage.")]
+    public AbilitySO saufConduitAbility;
     [Tooltip("Si true, le passage doit etre detecte avant interaction.")]
     public bool requireDetection = true;
 
     [Header("Detection")]
     [Tooltip("Demarre deja detecte.")]
     public bool startDetected = false;
+    [Tooltip("Declencheurs supplementaires du meme passage, par exemple son autre extremite. Partagent une seule decouverte persistante.")]
+    public Collider[] additionalTriggers = System.Array.Empty<Collider>();
 
     [Header("Visibility")]
     [Tooltip("Masque le mesh tant que non detecte.")]
@@ -63,6 +67,8 @@ public class TrouEtroit : MonoBehaviour
     private Transform interactionTarget;
     private GameObject interactionBoxInstance;
     private Canvas interactionCanvas;
+    private uint networkId;
+    private float nextRequestAt;
 
     public bool IsDetected => detected;
 
@@ -70,6 +76,8 @@ public class TrouEtroit : MonoBehaviour
     {
         Collider trigger = EnsureTriggerCollider();
         isTriggerZone = trigger != null;
+        foreach (var extra in additionalTriggers) if (extra != null) extra.isTrigger = true;
+        networkId = NetcodeSceneIdUtility.GetStableId(transform);
 
         detected = startDetected;
         CacheRenderers();
@@ -81,11 +89,13 @@ public class TrouEtroit : MonoBehaviour
     {
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
+        NetcodeTriggerRegistry.Register(this, networkId);
     }
 
     private void OnDisable()
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
+        NetcodeTriggerRegistry.Unregister(this, networkId);
 
         SetGlow(false);
         ResetUIState();
@@ -95,6 +105,8 @@ public class TrouEtroit : MonoBehaviour
     {
         // Selection du perso controle pour l'interaction.
         RefreshCurrentCharacter();
+        if (!detected && currentCharacter != null && HasAbility(currentCharacter, observateurAbility))
+            RequestPassage(false);
     }
 
     private void LateUpdate()
@@ -180,11 +192,7 @@ public class TrouEtroit : MonoBehaviour
         }
         RefreshCurrentCharacter();
 
-        // Detection auto si skill configure et activation par proximite.
-        if (!detected && observateurSkill != null && observateurSkill.autoRollOnProximity && TryCheckSkill(character, observateurSkill))
-        {
-            Detect();
-        }
+        // Detection is validated by the host, then shared with every player.
     }
 
     private void OnTriggerExit(Collider other)
@@ -226,7 +234,7 @@ public class TrouEtroit : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
-        if (InputFocusStack.HasAnyFocus())
+        if (InputFocusStack.HasAnyFocus() || LocalInputRouter.IsInteractConsumed)
         {
             return;
         }
@@ -244,7 +252,7 @@ public class TrouEtroit : MonoBehaviour
             return;
         }
 
-        if (!TryCheckSkill(currentCharacter, saufConduitSkill))
+        if (!HasAbility(currentCharacter, saufConduitAbility))
         {
             return;
         }
@@ -252,7 +260,7 @@ public class TrouEtroit : MonoBehaviour
         LocalInputRouter.ConsumeInteract();
 
         // Teleport apres un check reussi.
-        TeleportCharacter(currentCharacter);
+        RequestPassage(true);
     }
 
     public void Detect()
@@ -361,7 +369,7 @@ public class TrouEtroit : MonoBehaviour
                 interactionTarget = controlled.transform;
             }
 
-            ShowInteraction(true);
+            ShowInteraction((!requireDetection || detected) && HasAbility(controlled, saufConduitAbility));
             return;
         }
 
@@ -377,7 +385,7 @@ public class TrouEtroit : MonoBehaviour
 
     private static bool IsControlledCharacter(GameObject character)
     {
-        return SquadManager.Instance != null && SquadManager.Instance.currentCharacter == character;
+        return LocalPlayerUtils.GetControlledCharacter() == character;
     }
 
     private void DestroyInteractionInstance()
@@ -635,9 +643,60 @@ public class TrouEtroit : MonoBehaviour
         return true;
     }
 
-    private bool TryCheckSkill(GameObject character, StatsSO skill)
+    private static bool HasAbility(GameObject character, AbilitySO ability)
     {
-        return SkillCheckSystem.TryCheck(character, skill, out _, out _, out _);
+        return AbilityService.Ensure().HasEquipped(character, ability);
+    }
+
+    private void RequestPassage(bool travel)
+    {
+        if (Time.unscaledTime < nextRequestAt) return;
+        nextRequestAt = Time.unscaledTime + .5f;
+        var manager = NetworkManager.Singleton;
+        if (manager != null && manager.IsListening)
+        {
+            var service = WorldInteractionService.Instance;
+            if (service != null && service.IsSpawned) service.RequestNarrowPassageServerRpc(networkId, travel);
+            return;
+        }
+        if (ServerTryPassage(currentCharacter, travel)) ApplyPassageResult(travel);
+    }
+
+    public bool ServerTryPassage(GameObject character, bool travel)
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !NetworkManager.Singleton.IsServer) return false;
+        var controller = character != null ? character.GetComponent<SquadCharacterController>() : null;
+        var movement = character != null ? character.GetComponent<LitOpsiveLocomotionBridge>() : null;
+        var trigger = GetComponent<Collider>();
+        if (controller == null || controller.CurrentHp <= 0 || trigger == null || !trigger.enabled ||
+            movement != null && (movement.IsCombatLockActive || movement.IsExternalLockActive) ||
+            !IsInsideInteractionVolume(character.transform.position, trigger)) return false;
+        if (!HasAbility(character, travel ? saufConduitAbility : observateurAbility)) return false;
+        if (travel) return !requireDetection || detected;
+        Detect();
+        return true;
+    }
+
+    public bool IsInsideInteractionVolume(Vector3 position, Collider primary = null)
+    {
+        if (primary == null) primary = GetComponent<Collider>();
+        if (primary != null && primary.enabled && primary.gameObject.activeInHierarchy &&
+            (primary.ClosestPoint(position) - position).sqrMagnitude <= .25f) return true;
+        foreach (var extra in additionalTriggers)
+            if (extra != null && extra.enabled && extra.gameObject.activeInHierarchy &&
+                (extra.ClosestPoint(position) - position).sqrMagnitude <= .25f) return true;
+        return false;
+    }
+
+    public void ApplyPassageResult(bool travel)
+    {
+        if (travel) TeleportCharacter(LocalPlayerUtils.GetControlledCharacter());
+        else
+        {
+            bool wasDetected = detected;
+            Detect();
+            if (!wasDetected) LocalPlayerUtils.GetControlledCharacter()?.GetComponentInChildren<AbilityFeedbackAnchor>()?.Show(observateurAbility, true);
+        }
     }
 
     private GameObject GetSquadCharacter(Collider other)

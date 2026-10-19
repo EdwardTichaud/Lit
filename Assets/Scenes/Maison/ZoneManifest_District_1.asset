@@ -35,6 +35,9 @@ MonoBehaviour:
   - {fileID: 102900000, guid: 16bd42ecfd0ba024cb4aed13baed7334, type: 3}
   - {fileID: 102900000, guid: c15f8be46e1b2a549be874a2935c8454, type: 3}
   - {fileID: 102900000, guid: 9834005d1395a684ab8f0c9a99067416, type: 3}
+  - {fileID: 102900000, guid: 5dbffa393b74c3b4789407a7028692d7, type: 3}
+  - {fileID: 102900000, guid: f2abd71d3a02e844cb5e48a2ea5affa0, type: 3}
+  - {fileID: 102900000, guid: a03ce4f3c746b2347b3692e610aa0b43, type: 3}
   postLoadingScenes: []
   primarySceneName: District_1_Core
   loadingMessage: Exploration du quartier de la Lune...
@@ -63,8 +66,11 @@ MonoBehaviour:
   - District_1_Cycle_Etienne
   - "District_1_ConduitsNoy\xE9s_Environement"
   - District_1_Cycle_Ardent
+  - District_1_NefDesToursInterrompus_Environment
+  - District_1_Cycle_Clairmont
+  - District_1_AbilityShortcuts
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
-  bakedNavMeshData: {fileID: 23800000, guid: 2b68058f92bf0ec45ba2d737d30d2ef7, type: 2}
-  bakedNavMeshVersion: 20261003142505
+  bakedNavMeshData: {fileID: 23800000, guid: de9c13f624b83ea42b77285ed67ec11e, type: 2}
+  bakedNavMeshVersion: 20261019183706
   bakedNavMeshAgentTypeId: 0

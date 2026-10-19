@@ -28,8 +28,7 @@ public sealed class SkillUnlockPanel : MonoBehaviour
 
     // Call only after a successful new grant, never while restoring saved skills.
     public static bool TryShow(SkillSO skill) => skill != null && TryShow(skill.SkillName, skill.description);
-    public static bool TryShow(StatsSO skill) => skill != null && TryShow(
-        string.IsNullOrWhiteSpace(skill.skillName) ? skill.name : skill.skillName, skill.description);
+    public static bool TryShow(AbilitySO ability) => ability != null && TryShow(ability.DisplayName, ability.description);
 
     private static bool TryShow(string title, string description)
     {

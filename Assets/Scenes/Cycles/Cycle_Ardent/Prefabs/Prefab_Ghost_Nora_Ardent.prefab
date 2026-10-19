@@ -229,6 +229,7 @@ MonoBehaviour:
   cycle: {fileID: 0}
   dialogueId: nora
   useGhostPuzzleResolution: 1
+  requireLitInfluence: 0
   interactionAnchor: {fileID: 0}
   interactionDistance: 3
   interactionCollider: {fileID: 0}

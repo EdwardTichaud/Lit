@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c342623c95244b90ad99b3c2d719de59, type: 3}
+  m_Name: GhostData_Agnes_Clairmont
+  m_EditorClassIdentifier: Assembly-CSharp::GhostData
+  ghostId: ghost_agnes_clairmont
+  displayName: "Agn\xE8s Clairmont"
+  apparitionAge: 666
+  apparitionLocationId: district1.nef_tours.registre
+  worldPrefab: {fileID: 5390022840537835418, guid: 9a3acc37652887c41a755f28593520b5, type: 3}
+  targetId: last_transmission
+  targetDisplayName: "La derni\xE8re transmission"
+  expectedAnswerType: 3
+  apparitionLine: 'Le registre est encore ouvert. Je ne peux pas partir : il manque les retours.'
+  question: "Est-ce que j'ai laiss\xE9 quelqu'un derri\xE8re ?"
+  knowledgeUnlockedOnListen: []
+  reactions:
+  - reactionId: transmission_complete
+    optionText: "Votre rel\xE8ve a re\xE7u tous les noms. Ces colonnes comptaient les d\xE9parts, pas les retours."
+    requirement:
+      requiredKnowledge:
+      - {fileID: 11400000, guid: 696fc9981d73b2d47a1f8cf81816d112, type: 2}
+      - {fileID: 11400000, guid: 9dfdfbacc4a7f6c4da78823c790b57b3, type: 2}
+      - {fileID: 11400000, guid: 08dd2edd8163e02479503a90a24782ab, type: 2}
+      anyKnowledge: []
+      requiredCategories: 
+      requiredTags: []
+      requiredCategoryCounts: []
+      requiredTagCounts: []
+    priority: 100
+    responseLine: "Alors je n'avais oubli\xE9 personne. Je peux fermer."
+    marksGhostUnderstood: 1
+    unlockKnowledge: []
+    triggerEffectIds: []
+    notes: 
+  missingKnowledgeLine: "La rel\xE8ve devait reprendre ces noms... Il faut v\xE9rifier le bordereau et le sens du parcours."
+  puzzleSteps: []
+  evidence:
+  - evidenceType: 4
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: f95de2f3ce89f9f42afb05b91a00914b, type: 2}
+    locationId: 
+    note: 
+  - evidenceType: 4
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 11400000, guid: b591903b2a43b944aa5d2cd8c64615d2, type: 2}
+    locationId: 
+    note: 
+  dissolveTargetGameObjectIds: []
+  includeChildrenInDissolveTargets: 1
+  addDissolveControllerIfMissing: 1
+  dissolveTargetDurationOverride: -1
+  notes: 

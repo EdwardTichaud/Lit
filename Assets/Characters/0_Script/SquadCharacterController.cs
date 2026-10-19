@@ -187,7 +187,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public IReadOnlyList<CombatDefenseItemHitPointData> CombatDefenseItemHitPoints => combatDefenseItemHitPoints;
 
-    public IReadOnlyList<StatsSO> Skills => characterData != null ? characterData.skills : null;
 
     public int CurrentHp => currentHp;
 
@@ -1363,39 +1362,6 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         keyItem = matchingKey;
-        return true;
-    }
-
-    public bool LearnSkill(StatsSO skill)
-    {
-        if (characterData == null || skill == null)
-        {
-            return false;
-        }
-
-        if (characterData.HasSkill(skill))
-        {
-            return false;
-        }
-
-        characterData.AddSkill(skill);
-        SkillUnlockPanel.TryShow(skill);
-        return true;
-    }
-
-    public bool ForgetSkill(StatsSO skill)
-    {
-        if (characterData == null || skill == null)
-        {
-            return false;
-        }
-
-        if (!characterData.HasSkill(skill))
-        {
-            return false;
-        }
-
-        characterData.RemoveSkill(skill);
         return true;
     }
 

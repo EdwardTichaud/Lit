@@ -266,7 +266,22 @@ Le jeu ne doit pas proposer uniquement quatre personnages. L'objectif est de
 viser six à huit personnages jouables afin de créer davantage de compositions
 d'équipe, de synergies et de rejouabilité.
 
-Spécialisations validées :
+### Capacités d'exploration équipées
+
+Les capacités d'exploration sont désormais des `AbilitySO`, indépendantes des
+personnages et des compétences de combat. Un seul emplacement est disponible en
+solo ; en coopération, chaque joueur possède son propre emplacement et peut
+choisir la même capacité qu'un autre. Le changement s'effectue à la Maison.
+Les déblocages sont partagés dans la sauvegarde de la partie.
+
+- Observateur : disponible au départ, détecte les passages dissimulés sans jet.
+- Sauf-Conduit : débloqué après Belmont, permet d'emprunter les passages découverts.
+
+Les six statistiques JDR et les jets d'exploration ne font plus partie du système.
+Les PV et les compétences de combat restent distincts et inchangés.
+Voir `Abilities.md` pour les règles d'équipement, la sauvegarde et la configuration.
+
+Pistes de spécialisations futures, non implémentées par cette refonte :
 
 - Manipulateur de Flames : peut allumer ou éteindre les Flames à une distance
   beaucoup plus importante, atteindre certaines Flames autrement et éviter
@@ -275,10 +290,8 @@ Spécialisations validées :
   invisibles pour les autres personnages. Ces anomalies représentent des
   incohérences entre plusieurs époques. Ce ne sont pas des raccourcis ; elles
   servent surtout à fournir davantage d'informations aux joueurs.
-- Médium : dispose d'environ `33 %` de chance de comprendre immédiatement le
-  besoin d'un fantôme, même sans posséder encore la connaissance normalement
-  requise. Cette spécialisation introduit une légère part d'aléatoire et
-  récompense certaines compositions d'équipe.
+- Médium : piste à redéfinir dans le contrat AbilitySO, sans réintroduire les
+  anciens jets de statistiques ni court-circuiter automatiquement les enquêtes.
 
 ## Philosophie générale
 
@@ -561,6 +574,14 @@ indépendant : enquête partageable, trois relais parallèles, Faux Chœur à
 vulnérabilité temporaire et souvenir Timeline confirmé par le groupe.
 La récompense ouvre la galerie des processions, vers une future Nef des Tours
 Interrompus, sans nouvelle Ancient Flame. Voir [Cycle_Ardent.md](Cycle_Ardent.md).
+
+## Extension jouable : Nef des Tours Interrompus
+
+Après les Conduits Noyés, le cycle indépendant Clairmont « Le registre ouvert »
+prolonge l'enquête par deux preuves, un tableau administratif et l'apaisement
+d'Agnès. Son accès est physique, pas un prérequis de cycle. La nef et le couloir
+ouest initial proposent chacun un raccourci facultatif : Observateur révèle le
+passage, Sauf-Conduit équipé permet de le traverser. Voir `Cycle_Clairmont.md`.
 
 ## Hors priorité
 

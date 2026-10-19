@@ -3,6 +3,11 @@ using System.Collections.Generic;
 // Registre local des triggers reseau (par ID stable).
 public static class NetcodeTriggerRegistry
 {
+    private static readonly Dictionary<uint, TrouEtroit> narrowPassages = new Dictionary<uint, TrouEtroit>();
+    public static void Register(TrouEtroit passage, uint id) { if (passage != null && id != 0) narrowPassages[id] = passage; }
+    public static void Unregister(TrouEtroit passage, uint id)
+    { if (narrowPassages.TryGetValue(id, out var current) && current == passage) narrowPassages.Remove(id); }
+    public static bool TryGetNarrowPassage(uint id, out TrouEtroit passage) => narrowPassages.TryGetValue(id, out passage);
     private static readonly Dictionary<uint, ReturnHomeTrigger> returnHomeTriggers = new Dictionary<uint, ReturnHomeTrigger>();
     private static readonly Dictionary<uint, HubCompanionSwapTrigger> hubSwapTriggers = new Dictionary<uint, HubCompanionSwapTrigger>();
     private static readonly Dictionary<uint, LabyrinthStartTrigger> labyrinthTriggers = new Dictionary<uint, LabyrinthStartTrigger>();

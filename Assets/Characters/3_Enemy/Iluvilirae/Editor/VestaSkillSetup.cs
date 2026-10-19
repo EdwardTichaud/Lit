@@ -37,7 +37,7 @@ public static class VestaSkillSetup
                 var identityData = new SerializedObject(data);
                 identityData.FindProperty("uniqueId").stringValue = identity; identityData.ApplyModifiedPropertiesWithoutUndo();
                 data.hp = 100; data.playerSettings.equipment.equippedLightSkill = null;
-                data.skills = new List<StatsSO>(); data.voiceLines.Clear();
+                data.voiceLines.Clear();
                 data.enemyCombatProfile = null; data.enableCombatHealthThresholds = false; data.combatHealthThresholdStages.Clear();
             }
             data.characterName = "Vesta"; data.isEnemy = false;

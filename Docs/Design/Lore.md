@@ -578,6 +578,21 @@ le joueur doivent percevoir cette rupture : celui qui incarne l'Espoir ne voit
 plus d'issue pour lui-même. Lucian choisit alors de se sacrifier : il cesse
 d'exister dans le Monde des Rêves afin de libérer son frère.
 
+## Clairmont — Le registre ouvert
+
+Dans la Nef des Tours Interrompus, accolée aux Conduits Noyés, Agnès Clairmont
+tenait le registre des passages de Veillée. Morte pendant la catastrophe de 666,
+elle croit encore attendre les retours nécessaires à sa clôture. La relève avait
+pourtant reçu tous les noms : les colonnes consignaient les transmissions aux
+postes suivants, pas le retour des groupes dans leurs quartiers.
+
+Le joueur résout cette confusion sans prétendre connaître le destin ultérieur
+des groupes. Les rainures anciennes de la nef montrent que leur circulation vers
+les soubassements de la statue précède les inscriptions récentes. Aucun habitant
+de ce cycle ne connaît la fonction véritable du rituel. Les conduits de maintenance
+étaient distincts du parcours collectif ; les capacités d'exploration permettent
+d'en retrouver les raccourcis.
+
 ## Thème principal
 
 Le thème central de `Lit` n'est ni la religion, ni la catastrophe, ni même le

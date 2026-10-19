@@ -35,6 +35,10 @@ public static class GameplayRuntimeReset
         ReadableContentRuntime.ResetRuntimeState(resolvedReason);
         Zone.ResetRuntimeState();
         DissolveRevealSystem.ResetRuntimeState();
+        if (AbilityService.Instance != null)
+        {
+            AbilityService.Instance.Shutdown();
+        }
 
         if (NetcodePlayerSpawner.Instance != null)
         {

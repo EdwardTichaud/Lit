@@ -239,7 +239,6 @@ MonoBehaviour:
   characterName: "L'Ancre bris\xE9e"
   portrait: {fileID: 0}
   worldPrefab: {fileID: 4254147237030291727, guid: 91a25b2509ec9bc4da31b026e5cb69d1, type: 3}
-  skills: []
   combatSkills: []
   enemyCombatProfile: {fileID: 0}
   enemySettings:
@@ -319,13 +318,6 @@ MonoBehaviour:
     voiceLine: {fileID: 0}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 0
-    dexterity: 0
-    constitution: 0
-    intelligence: 0
-    wisdom: 0
-    charisma: 0
   starterItemsWithQuantity: []
   hp: 3
   isEnemy: 1

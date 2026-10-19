@@ -36,6 +36,8 @@ public sealed class SnapshotSerializer
             WriteObjects(ref writer, snapshot.SceneObjects);
             WriteObjects(ref writer, snapshot.RuntimeObjects);
             WriteWorldVariables(ref writer, snapshot.WorldVariables);
+            if (snapshot.SchemaVersion >= 2)
+                writer.WriteValueSafe(snapshot.Abilities != null ? JsonUtility.ToJson(snapshot.Abilities) : string.Empty);
 
             return writer.ToArray();
         }
@@ -65,6 +67,11 @@ public sealed class SnapshotSerializer
             snapshot.SceneObjects = ReadObjects(ref reader);
             snapshot.RuntimeObjects = ReadObjects(ref reader);
             snapshot.WorldVariables = ReadWorldVariables(ref reader);
+            if (snapshot.SchemaVersion >= 2)
+            {
+                reader.ReadValueSafe(out string abilitiesJson);
+                if (!string.IsNullOrEmpty(abilitiesJson)) snapshot.Abilities = JsonUtility.FromJson<AbilitySaveData>(abilitiesJson);
+            }
 
             return snapshot;
         }

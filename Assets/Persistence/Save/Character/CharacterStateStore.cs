@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
-    private const int SaveDataVersion = 9;
+    private const int SaveDataVersion = 10;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -19,8 +19,6 @@ public class CharacterStateStore : MonoBehaviour
     public List<CharacterData> allCharacters = new List<CharacterData>();
     [Tooltip("Liste d'assets Item disponibles.")]
     public List<Item> allItems = new List<Item>();
-    [Tooltip("Liste d'assets StatsSO disponibles.")]
-    public List<StatsSO> allSkills = new List<StatsSO>();
 
     [Header("Maison - Stockage")]
     [Tooltip("Coffre maison principal.")]
@@ -374,6 +372,7 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         ApplyLoadedPlayerBindings(loadedData);
+        AbilityService.Ensure().RestoreCharacterSave(loadedData);
 
         // Construit les lookups, puis applique les donnees sauvegardees.
         SquadManager manager = GetSquadManager();
@@ -384,10 +383,9 @@ public class CharacterStateStore : MonoBehaviour
 
         Dictionary<string, CharacterData> characterLookup = BuildCharacterLookup(manager);
         Dictionary<string, Item> itemLookup = BuildItemLookup();
-        Dictionary<string, StatsSO> skillLookup = BuildSkillLookup();
         Dictionary<string, Item> buildingLookup = BuildBuildingLookup();
 
-        manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
+        manager.SetPendingLoadData(loadedData, characterLookup, itemLookup);
 
         bool appliedWorldSnapshot = worldAlreadyRestored;
         if (!appliedWorldSnapshot && restoreWorldFromDisk)
@@ -694,6 +692,7 @@ public class CharacterStateStore : MonoBehaviour
         };
         List<CharacterData> knownCharacters = BuildKnownCharacters(manager);
         data.soloTeam = SoloTeamProgression.IsSolo ? SoloTeamProgression.Resolve()?.Capture() : loadedData?.soloTeam;
+        data.abilities = AbilityService.Ensure().Capture();
 
         // Construit la liste de squad + l'etat de chaque personnage.
         if (manager.currentSquad != null)
@@ -876,27 +875,6 @@ public class CharacterStateStore : MonoBehaviour
                         hitPoints = remainingHitPoints,
                         quantity = Mathf.Max(1, hitPointEntry.quantity)
                     });
-                }
-            }
-
-            entry.skillIds.Clear();
-            entry.skillsInitialized = true;
-            if (character.skills != null)
-            {
-                HashSet<string> skillIds = new HashSet<string>();
-                for (int j = 0; j < character.skills.Count; j++)
-                {
-                    StatsSO skill = character.skills[j];
-                    string skillId = GetSkillId(skill);
-                    if (string.IsNullOrWhiteSpace(skillId))
-                    {
-                        continue;
-                    }
-
-                    if (skillIds.Add(skillId))
-                    {
-                        entry.skillIds.Add(skillId);
-                    }
                 }
             }
 
@@ -1153,53 +1131,6 @@ public class CharacterStateStore : MonoBehaviour
         lookup[id] = data;
     }
 
-    private Dictionary<string, StatsSO> BuildSkillLookup()
-    {
-        Dictionary<string, StatsSO> lookup = new Dictionary<string, StatsSO>();
-        if (allSkills != null)
-        {
-            for (int i = 0; i < allSkills.Count; i++)
-            {
-                StatsSO skill = allSkills[i];
-                if (skill == null)
-                {
-                    continue;
-                }
-
-                string id = GetSkillId(skill);
-                if (string.IsNullOrWhiteSpace(id))
-                {
-                    continue;
-                }
-
-                lookup[id] = skill;
-            }
-        }
-
-        StatsSO[] loadedSkills = Resources.FindObjectsOfTypeAll<StatsSO>();
-        for (int i = 0; i < loadedSkills.Length; i++)
-        {
-            StatsSO skill = loadedSkills[i];
-            if (skill == null)
-            {
-                continue;
-            }
-
-            string id = GetSkillId(skill);
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                continue;
-            }
-
-            if (!lookup.ContainsKey(id))
-            {
-                lookup[id] = skill;
-            }
-        }
-
-        return lookup;
-    }
-
     private string GetCharacterId(CharacterData character)
     {
         if (character == null)
@@ -1243,21 +1174,6 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         return item.name;
-    }
-
-    private string GetSkillId(StatsSO skill)
-    {
-        if (skill == null)
-        {
-            return string.Empty;
-        }
-
-        if (!string.IsNullOrWhiteSpace(skill.skillName))
-        {
-            return skill.skillName;
-        }
-
-        return skill.name;
     }
 
     private string GetBuildingItemId(Item data)

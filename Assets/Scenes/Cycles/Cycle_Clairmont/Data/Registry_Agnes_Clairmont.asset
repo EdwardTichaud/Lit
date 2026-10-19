@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d322eb9a8243d4a16a2edbfaf173e4, type: 3}
+  m_Name: Registry_Agnes_Clairmont
+  m_EditorClassIdentifier: Assembly-CSharp::RegistryEntry
+  entryId: district1.clairmont.relief_transfer
+  personName: "Agn\xE8s Clairmont"
+  entryType: 6
+  age: 666
+  district: Quartier de la Lune
+  room: Nef des Tours Interrompus
+  cause: 
+  note: "TRANSMISSION DE LA DERNI\xC8RE VEILL\xC9E\nTous les groupes inscrits ont \xE9t\xE9 remis au poste inf\xE9rieur. Re\xE7u et contresign\xE9.\nLa colonne de droite indique le passage du registre \xE0 la rel\xE8ve. Elle ne constitue pas un relev\xE9 de retour aux quartiers.\nA. Clairmont \u2014 laisser le volet de lecture en position de d\xE9part."
+  isStruckOut: 0
+  readableReferences:
+  - {fileID: 11400000, guid: f95de2f3ce89f9f42afb05b91a00914b, type: 2}
+  associatedObjectIds: []

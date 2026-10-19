@@ -616,7 +616,6 @@ MonoBehaviour:
   maison: {fileID: 0}
   allCharacters: []
   allItems: []
-  allSkills: []
   maisonLootContainer: {fileID: 0}
   maisonChestTag: MaisonChest
   maisonChestCapacity: 100

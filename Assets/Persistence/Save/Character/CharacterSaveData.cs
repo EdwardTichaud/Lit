@@ -5,7 +5,8 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 9;
+    public int dataVersion = 10;
+    public AbilitySaveData abilities;
     public SoloTeamSaveData soloTeam;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
@@ -44,8 +45,8 @@ public class CharacterSaveEntry
     public bool itemsInitialized;
     public List<string> enabledCombatItemIds = new List<string>();
     public List<CombatDefenseItemHitPointData> combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
+    // Read-only v9 migration payload. No runtime character skill list remains.
     public List<string> skillIds = new List<string>();
-    public bool skillsInitialized;
 }
 
 // Pair itemId + quantite pour la persistence.

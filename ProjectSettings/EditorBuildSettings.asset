@@ -110,6 +110,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cycles/Cycle_Ardent/District_1_Cycle_Ardent.unity
     guid: 9834005d1395a684ab8f0c9a99067416
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity
+    guid: 5dbffa393b74c3b4789407a7028692d7
+  - enabled: 1
+    path: Assets/Scenes/Cycles/Cycle_Clairmont/District_1_Cycle_Clairmont.unity
+    guid: f2abd71d3a02e844cb5e48a2ea5affa0
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_AbilityShortcuts.unity
+    guid: a03ce4f3c746b2347b3692e610aa0b43
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

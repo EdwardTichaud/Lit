@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Clairmont_register_understood
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 08dd2edd8163e02479503a90a24782ab
+  knowledgeId: district1.clairmont.register_understood
+  title: "Un relev\xE9 de d\xE9part, pas de retour"
+  description: Les colonnes comptaient les groupes transmis au poste suivant, pas leur retour dans les quartiers.
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: district1.nef_tours
+  roomId: 
+  personId: agnes_clairmont
+  lineageId: clairmont
+  objectId: 
+  readableItem: {fileID: 0}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

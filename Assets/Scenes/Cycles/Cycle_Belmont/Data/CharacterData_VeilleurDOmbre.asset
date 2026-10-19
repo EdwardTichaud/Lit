@@ -240,7 +240,6 @@ MonoBehaviour:
   characterName: "Veilleur d\u2019Ombre"
   portrait: {fileID: 0}
   worldPrefab: {fileID: 8107114219623498148, guid: 76623944f4cc1714d88e01239f88cd0f, type: 3}
-  skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
   chargedSkill: {fileID: 0}
@@ -324,13 +323,6 @@ MonoBehaviour:
     voiceLine: {fileID: 0}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity: []
   hp: 90
   isEnemy: 1

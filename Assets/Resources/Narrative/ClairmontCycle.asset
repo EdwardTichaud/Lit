@@ -1,0 +1,270 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: ClairmontCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: district1.clairmont
+  title: Le registre ouvert
+  description: "Comprendre la derni\xE8re transmission d'Agn\xE8s dans la Nef des Tours Interrompus."
+  category: 0
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: nef_entered
+    title: Entrer dans la nef
+    description: 
+    kind: 7
+    sourceId: nef_entry
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: lucian_nef_entry
+    title: Observer les anciens parcours
+    description: 
+    kind: 1
+    sourceId: lucian_nef_entry
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: nef_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: relief_register_read
+    title: Bordereau de transmission
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 696fc9981d73b2d47a1f8cf81816d112, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: nef_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: old_route_read
+    title: Consigne du parcours ancien
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 9dfdfbacc4a7f6c4da78823c790b57b3, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: nef_entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: register_consulted
+    title: Relire le tableau de transmission
+    description: 
+    kind: 1
+    sourceId: register
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: relief_register_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: old_route_read
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 1
+      skill: {fileID: 0}
+      knowledge: {fileID: 11400000, guid: 08dd2edd8163e02479503a90a24782ab, type: 2}
+      item: {fileID: 0}
+      quantity: 1
+      key: 
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: agnes_spoken
+    title: "Apaiser Agn\xE8s"
+    description: 
+    kind: 1
+    sourceId: agnes
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: register_consulted
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 1
+      skill: {fileID: 0}
+      knowledge: {fileID: 11400000, guid: 294cd622b2dd5d94f8a3c3b6cbd56333, type: 2}
+      item: {fileID: 0}
+      quantity: 1
+      key: 
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    - kind: 4
+      skill: {fileID: 0}
+      knowledge: {fileID: 0}
+      item: {fileID: 0}
+      quantity: 1
+      key: district1.clairmont.statue_belvedere_access
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: lucian_after_clairmont
+    title: Contempler les soubassements
+    description: 
+    kind: 1
+    sourceId: lucian_after_clairmont
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: agnes_spoken
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: District_1_Cycle_Clairmont
+  dialogueSeconds: 4
+  dialogues:
+  - id: lucian_nef_entry
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Ces marques continuent sous les inscriptions. On a chang\xE9 les mots... pas le chemin."
+    unavailableLine: 
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  - id: register
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge:
+      - {fileID: 11400000, guid: 696fc9981d73b2d47a1f8cf81816d112, type: 2}
+      - {fileID: 11400000, guid: 9dfdfbacc4a7f6c4da78823c790b57b3, type: 2}
+    line: "Le tableau indique des transmissions entre postes. Les groupes ont bien quitt\xE9 la nef ; cette colonne n'attendait aucun retour."
+    unavailableLine: Il manque le bordereau et la consigne pour comprendre ces colonnes.
+    repeatLine: "La transmission est compl\xE8te."
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  - id: agnes
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge:
+      - {fileID: 11400000, guid: 696fc9981d73b2d47a1f8cf81816d112, type: 2}
+      - {fileID: 11400000, guid: 9dfdfbacc4a7f6c4da78823c790b57b3, type: 2}
+      - {fileID: 11400000, guid: 08dd2edd8163e02479503a90a24782ab, type: 2}
+    line: "Votre rel\xE8ve a re\xE7u tous les noms. Ces colonnes comptaient les d\xE9parts, pas les retours."
+    unavailableLine: "La rel\xE8ve devait reprendre ces noms... Il faut v\xE9rifier le bordereau et le sens du parcours."
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 1
+    disappearanceDelay: 1
+  - id: lucian_after_clairmont
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: Les quartiers envoyaient leurs voix ici. Et tout repartait vers la statue... depuis bien plus longtemps qu'ils ne le pensaient.
+    unavailableLine: 
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

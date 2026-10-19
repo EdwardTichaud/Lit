@@ -247,9 +247,6 @@ MonoBehaviour:
   characterName: Mia
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
   worldPrefab: {fileID: 2784444758471557209, guid: 3cf1d0ee5d2d7f146b20b31e16b0e489, type: 3}
-  skills:
-  - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
-  - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
   combatSkills: []
   enemyCombatProfile: {fileID: 0}
   enemySettings:
@@ -327,13 +324,6 @@ MonoBehaviour:
     voiceLine: {fileID: 0}
   groundBasicSkills: []
   airBasicSkills: []
-  stats:
-    strength: 10
-    dexterity: 10
-    constitution: 10
-    intelligence: 10
-    wisdom: 10
-    charisma: 10
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
     quantity: 300
