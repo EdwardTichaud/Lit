@@ -195,6 +195,7 @@ public sealed class PlayerLocomotionSettings
     [Tooltip("Vitesse de reference de la marche pour la presentation animee.")] public float walkPresentationSpeed = 1.35f;
     [Tooltip("Vitesse de reference de la course pour la presentation animee.")] public float runPresentationSpeed = 3.25f;
     [Min(1f), Tooltip("Vitesse de rotation vers la cible de combat, en degres/s.")] public float combatFacingSpeedDegreesPerSecond = 900f;
+    [Tooltip("Limiter le facing combat a cette vitesse, comme les rotations de locomotion.")] public bool rateLimitedCombatFacing;
     [Range(0.01f, 0.5f), Tooltip("Seuil d entree laterale pour reconnaitre une orbite autour de la cible.")] public float combatOrbitPureLateralThreshold = 0.12f;
     [Min(0f), Tooltip("Tolerance du rayon d orbite avant correction, en metres.")] public float combatOrbitRadiusDeadZone = 0.035f;
     [Min(0f), Tooltip("Intensite de correction du rayon d orbite autour de la cible.")] public float combatOrbitRadiusCorrectionGain = 2.25f;

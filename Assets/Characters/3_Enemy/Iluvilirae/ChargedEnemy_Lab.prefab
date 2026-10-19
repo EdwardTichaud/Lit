@@ -9368,6 +9368,7 @@ GameObject:
   - component: {fileID: 6285033981025006097}
   - component: {fileID: 8641415479489833242}
   - component: {fileID: 8218315440912688293}
+  - component: {fileID: 1631092920434596286}
   m_Layer: 26
   m_Name: ChargedEnemy_Lab
   m_TagString: Untagged
@@ -9661,6 +9662,22 @@ MonoBehaviour:
   volumeAnchor: {fileID: 0}
   localCenter: {x: 0, y: 1.1, z: 0.8}
   radius: 0.55
+--- !u!114 &1631092920434596286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8060176011446918699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd9d7b725f38b7c46a6274f2cea02a3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatContactPose
+  lightAngle: 5
+  heavyAngle: 11
+  duration: 0.22
+  committedAttackWeight: 0.4
 --- !u!1 &8312635884497608125
 GameObject:
   m_ObjectHideFlags: 0

@@ -49,6 +49,8 @@ public static class SkillTargetingContract
         { minimum = 0; maximum = skill.healingRadius; }
     }
 
-    public static bool Alive(ICombatTarget target) => target != null &&
-        (!(target is Object obj) || obj != null) && target.Root != null && target.Root.gameObject.activeInHierarchy && !target.IsDead;
+    public static bool Exists(ICombatTarget target) => target != null &&
+        (!(target is Object obj) || obj != null) && target.Root != null;
+
+    public static bool Alive(ICombatTarget target) => Exists(target) && target.Root.gameObject.activeInHierarchy && !target.IsDead;
 }

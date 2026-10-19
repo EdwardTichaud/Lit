@@ -1,3 +1,422 @@
+## Integration Du Combat Valide Au Jeu (2026-10-19)
+
+Objectif actif : porter completement le combat valide du laboratoire dans la
+partie normale, sans remplacer les rencontres par les fixtures de test.
+ProductionCombatMigration promeut les reglages d'Ascension vers le SkillSO
+canonique (GUID conserve), les trois Basics aeriens et les controllers existants.
+Profil GameplayCombatCamera dedie : seule la section actionFraming vient du lab,
+les reglages d'exploration restent ceux de la camera de production.
+Audio de contact auteur pour les quatre joueurs ; reaction additive du vrai
+Juggernaut apres controle des colliders de son torse. Pas de copie de la lumiere
+de laboratoire ni de remplacement de ses patterns, donnees ou identite.
+Reseau : BasicTail utilise la session Basic autoritaire et une presentation
+repliquee par epoque/generation ; Burst et freinage Rupture viennent du monde
+serveur. Point de contact confirme transmis aux feedbacks, audio leger/lourd
+sans lecture double, reaction de torse apres impact confirme seulement.
+Premier lot combine : 413 passes, deux anciennes assertions de confinement au
+laboratoire refusees ; contrat de migration explicite ajoute sans retirer les
+controles d'identite ou d'idempotence. Relecture : 415 passes, 0 echec, 1 skip.
+Derniere installation quatre joueurs idempotente (9a5d899bf77549a28638ede88a9d3125).
+Controle combine final : 418 passes, 0 echec, 1 test Explicit non execute.
+Dix fichiers rapatries avec verification SHA-256 et sauvegarde, sans ecraser
+un fichier modifie depuis le preflight. La recette Bootstrap rendue a revele
+zoneManifests vide : seul Core chargeait, NavMesh Failed. District 1 est maintenant
+reference explicitement dans le vrai Bootstrap, via l'outil idempotent, puis
+rapatrie avec sauvegarde (onzieme fichier ; metadata preservee).
+Nouvelle recette passee : 21 additives + Core, NavMesh pre-bake Ready 2/2 anchors,
+Lucian seul, monde combat unique sans arene, Basic puis controle restitue,
+snapshot reel ecrit/lu dans un slot Library isole. Pas de rechargement de partie
+complete ni de ressenti manuel de production deduits. Regression Bootstrap finale :
+419 passes, 0 echec, 1 Explicit non execute. Premier echec et succes conserves
+separement. Dix-sept scripts et onze fichiers livres compares par SHA-256 aux
+sources validees ; aucun processus de recette laisse actif.
+Preuves dans
+Library/ProductionCombatMigration/CombatFeel et Logs/CombatProduction*.log.
+Raccords supplementaires implementes : rotations dans PlayerSettings et profils
+ennemis ; curseur prefab +3 Y dans CombatWorldRuntime, nettoyage natif a la
+desactivation/destruction ; buffer mobilite et reactions dans leurs composants
+communs. Les surcharges de l'arene sont retirees apres migration en deux phases.
+Installation isolee 6ac70eb06a8f447982566ddf9fb84be5 idempotente ; onze fichiers
+auteur livres avec sauvegarde et metadata preservee. Regression finale : 451
+passes, 0 echec, 1 Explicit non execute. Le vrai cycle sauvegarde/menu/recharge
+a revele puis permis de corriger : dechargement impossible de la derniere scene,
+PV joueur absents du JSON, identite solo invalide et double spawn apres snapshot,
+provider d'ennemi ajoutant un marker vide au lieu de lire son vrai parent.
+GameFlow garde la derniere scene jusqu'au Single du menu. JSON v9 conserve les PV
+avec compatibilite ancienne ; SquadManager reutilise l'identite et l'acteur du
+registre. Provider de marker utilisable sur acteur inactif, sans Awake obligatoire.
+Recette rendue 66701034d42a44f5b225c5bc644f902f passee : un seul Lucian apres
+recharge, PV 993 conserves, progression inchangee, ennemi fixture toujours mort
+sous son vrai marker et navigation de nouveau Ready. Pas une victoire jouee ni
+une preuve de toutes les zones/reseau. Vingt-six sources et onze fichiers auteur
+compares par SHA-256, aucun editeur de validation laisse actif. Preuves dans
+Library/ProductionCombatMigration/Controls et Logs/CombatControls*.log, y compris
+les echecs precedents conserves separement.
+Retour auteur confirme dans le lab : ouvertures/reprises du Juggernaut et
+distinction des coups satisfaisantes ; camera large et ChargedSkill preserves.
+Reste : parcours complet des zones/rencontres, autres cycles de sauvegarde,
+Domain Reload On/Off et vrai host/client ;
+ne pas declarer ReadyForProduction ni reprendre les chiffres historiques comme
+preuves des sources courantes. Flame d'Etienne toujours reservee a l'auteur.
+
+## Presence Du Combat (2026-10-19)
+
+Objectif valide par l'auteur le 2026-10-19 apres l'echange manuel demande.
+Perimetre reste
+Lucian/Juggernaut dans Iluvilirae_Test, sans nouvelle mecanique ni migration.
+CombatContactPose installe explicitement sur ChargedEnemy_Lab : reaction additive
+breve du torse apres un contact confirme, attenuee pendant un coup engage,
+sans interruption, changement de degats ou mouvement de racine. Hurt, mort,
+cinematiques et flottement d'Ascension gardent leur presentation. Aucun collider
+sur les os modifies du prefab actuel. Charge et regles d'annulation inchangees.
+Retour auteur : premiere passe bien recue, mais conserver la distance d'exploration
+large facon BG3 et rapprocher seulement selon les actions. Le cadrage permanent
+7,5 m / 38 / 58 est remplace par la base 10 m / 50 / 60 avec zoom relatif lisse
+dans UCC : Basic 0,88, skill 0,78, preparation/frappe ennemie proche 0,92.
+Retour vers la distance manuelle apres l'action, aucune modification du yaw/pitch.
+Zoom manuel prioritaire 1,5 s ; pas de cumul avec le cadrage de charge valide.
+Limite de rapprochement par projection des corps dans le champ. TacticalDefault
+reste inchange, fonctionnalite desactivee par defaut hors du profil laboratoire.
+Lumiere CombatFeelFill de scene pour rendre l'armure lisible, sans flash/shake.
+Installation explicite idempotente : scene, prefab et profil identiques en octets
+au second passage. Assets controles puis rapatries avec leurs metadonnees.
+CombatFeelFinalRendered.log passe en Play Mode isole avec HDRP : trois contacts
+reels de Basic (5/10/15 PV), un impact chacun, reaction visible mesuree, racine
+immobile et retour a la pose normale. Captures inspectees dans la copie isolee,
+Library/CombatFeel/ContactVisual. Premiere recette ScreenCapture sans Game View
+ne produisait pas d'image ; remplacee par une requete de rendu HDRP effective.
+Ne pas assimiler ces trois contacts a une validation du ressenti general.
+CombatFeelRegressionTests.xml : 84/84 Edit Mode, incluant les nouveaux tests de
+presentation, FreeAttackTests, continuite du contact et protections de charge.
+Compilation runtime/outils reussie dans la copie isolee ; pas de campagne reseau.
+CombatContactAudio remplace la lecture existante du son de contact sur Lucian lab,
+sans couche supplementaire : registre leger vers 1,05, troisieme Basic vers 0,91,
+variation deterministe par generation sans consommer le Random de l'IA. La charge
+utilise le registre lourd ; voix, musiques et cinematiques gardent leur lecture.
+CombatFeelAudioPlay.log passe : trois sons pour trois impacts reels, chacun unique.
+CombatActionCameraFinalPlay.log passe : rapprochement pendant les Basics, retour
+au large, distance de zoom manuel preservee, commande moteur zoom 10 -> 12 et
+orbite +12 degres prioritaires pendant un coup. En batch sans focus, la premiere
+injection avant Update etait nettoyee normalement par Application.isFocused ;
+la recette finale injecte au consommateur UCC. Ce n'est pas un test de manette
+physique ni un contournement du focus dans le runtime.
+CombatActionCameraAerial.log passe avec rendu HDRP : debut, montee, sommet,
+Basic aerien, descente, sol ; tete et pieds des deux avatars dans le champ avec
+marge de 2 %, contact unique, navigation et commandes restituees. Captures lues.
+Le prefab Lucian conserve le GUID de script genere dans le projet principal ;
+copie isolee alignee dessus, pas d'ecrasement de ses metadonnees originales.
+CombatActionFeelTests.xml : 93/93 sur le perimetre contacts/charge/continuite/
+attaque libre/nouveau cadrage. Suite avec les anciens tests tactiques : 186/190,
+quatre echecs dans LitTacticalCameraTests, non masques ni modifies pour verdir :
+Bootstrap attend initialMode=0 mais le prefab existant porte 1 ; fixture BattleWall
+inactive non trouvee par GetComponentInParent ; Dispose de PlayerInputs utilise
+Destroy en Edit Mode ; MovementType sans personnage initialise leve NullReference.
+Ces cas ne passent pas par le nouveau calcul de rapprochement. Ils restent a
+traiter, sans annoncer une qualification globale. Mathematique camera, moteur,
+stabilite, mouvement et near clip existants passent dans cette meme suite.
+Recuperations du profil Clash du lab mesurees sur l'avatar reel, puis prolongees
+sans retimer les impacts : 1,05 / 0,985 / 1,017 s au lieu de 0,2 s. Sorties vers
+1,783 / 1,885 / 1,783 s du clip ; score d'ecart pieds/hauteur bassin vers Idle
+0,389 -> 0,044, 0,546 -> 0,058, 0,352 -> 0,045. Ce score mesure un raccord de pose,
+pas une distance de glissement observee. Aucun IK ou playback experimental active.
+L'attente utilise le follow-through auteur plutot qu'un retour tronque en Idle.
+La recuperation plus complete a revele une course : le trigger Attack pouvait
+etre perdu pendant le fondu precedent vers Idle. CommitFluidAttack utilise
+desormais directement l'etat du profil, comme le chemin production existant.
+Pas de seconde autorite Animator, pas de changement d'impacts ni de contre.
+CombatFollowThroughTests.xml : 161/161, incluant continuite Brains, clash, contre,
+paliers, mort, generations, charge et idempotence de la recuperation mesuree.
+CombatExchangeStateContinuity.log passe : 30 s apres vraie stabilisation de la
+simulation, trois reprises calmes sans faux depart. CombatExchangeFinalRendered.log
+passe sur les memes sources : 484 echantillons, 16 actions ennemies de trois types,
+18 lancements joueur, 8 contacts joueur et 15 baisses de PV observees ; trois
+reprises calmes sans faux depart. Captures HDRP sans nombres inspectees dans
+Library/ActorAnimationSandbox/Library/CombatFeel/Exchange. Les PV de cette fixture
+seule sont portes a 1000 pour observer le rythme, sans immunite ni asset modifie.
+Les premiers essais ont ete refuses car le cout d'entree Play Mode etait compte
+dans les 30 s ; la recette attend maintenant 0,5 s de simulation avant de compter.
+La recette headless avec intention continue produit les trois coups du combo ;
+la recette rendue finale n'a produit que les deux premiers, sous pression.
+Retour manuel final : "oui c'est vraiment bien" sur les ouvertures, reprises
+et distinction leger/puissant, sans s'appuyer sur les nombres de degats.
+Conserver cette base : vue large, rapprochements ponctuels et ChargedSkill valide.
+Aucune retouche speculative supplementaire. Cette acceptation du ressenti au
+laboratoire ne constitue pas une qualification production ou reseau, ni une
+certification des appuis de chaque clip. Les quatre echecs de l'ancienne suite
+tactique restent ouverts.
+
+## ChargedSkill Sur La Fin Du Basic (2026-10-19)
+
+Ressenti BasicTail valide explicitement par l'auteur ; conserver ses valeurs.
+Protection renforcee : TryPlay refuse les remplacements ordinaires pendant la
+charge, InterruptBasicSkillForDamage refuse son annulation directe, et le nettoyage
+preserveChargedHold conserve la Basic bufferisee porteuse de la charge. Mort,
+cinematique, relachement de X et nettoyage force restent possibles ; les PV sont
+toujours retires. ChargedArmorFinalTests.xml : 27/27 sur les sources finales,
+y compris conservation de la destination bufferisee avec un manager reel de fixture.
+ChargedTailArmorPlay.log passe : perte de 7 PV pendant la charge, interruption
+directe/animation concurrente/mobilite refusees, generation preservee, Ascension
+unique puis retour sol, vitesse/input/camera restitues. Compilation reussie.
+Valeurs et animations validees inchangees ; pas de campagne reseau ni de nouveaux
+essais de ressenti manuel dans cette passe.
+
+Mode BasicTail ajoute au ChargedSkill lab seulement : meme session et clip Basic,
+ralenti 0,1 apres 70 % et apres tous les evenements non cosmetiques, fondu 0,08 s,
+pose finale tenue sans boucle. Relachement : reprise normale jusqu'a la fin du
+geste. A 2 s reelles depuis la pression, lancement normal d'Ascension valide avant
+remplacement, sans Idle intermediaire. Parametre Animator reserve aux trois
+Basics terrestres ; pas d'ecriture du temps global ou Animator.speed. Verrous UCC,
+camera et vitesse restitues par generation ; input bufferise rattache a son vrai
+Basic de destination. Production et reseau gardent leur preparation existante.
+ChargedBasicTailInstall.log : compilation/installation reussies ; premiere suite
+ChargedBasicTailTests.xml : 5/5. Suite finale ChargedBasicTailFinalTests.xml :
+26/26 (charge, maintien, nettoyage/generation, buffer et continuite des maps).
+ChargedBasicTailPlayContinuity.log : six cas passent, relachement des trois coups
+puis trois lancements uniques a 2 s, restitution vitesse/input/navigation.
+Cette recette a refuse son dernier cas car elle verifiait le gel avant le tick
+Animator correspondant ; controle corrige apres stabilisation de 0,05 s, puis
+nouvelle recette terminale distincte. Les essais refuses ne sont pas des PASS.
+ChargedBasicTailFinalPose.log passe : pose terminale tenue plus de 1,2 s sans
+recuperation intempestive, puis relachement, camera/input/vitesse restitues ;
+sortie Unity 0. Les six autres cas gardent leur preuve precedente sur le meme
+runtime. Ressenti manuel, interruptions en rencontre complete et reseau non
+rejoues dans cette passe. Aucun processus de validation laisse actif.
+La fixture attend les inputs et le retour UCC au sol apres son placement.
+Le premier contact a revele une vraie coupure : SetBaseMode(Combat, preserve=true)
+desactivait les maps si le mode etait deja Combat, annulant X tenu. La reapplication
+Combat conserve maintenant les actions quand explicitement demandee et sans
+contexte superieur ; menus et cinematiques restent prioritaires. Regression ajoutee
+aux tests de continuite, ainsi que nettoyage idempotent et destination bufferisee.
+
+## Combo Aerien Lucian (2026-10-19)
+
+Deux BasicSkills aeriennes ajoutees dans Iluvilirae_Test : coups 2/3 de 10/15 PV,
+clips dedies Twinblades_Air_Attack_1_Inplace / _2_Inplace du pack (corps entier,
+plus de coups au sol adaptes). Remplacement des copies sans changer leurs GUID.
+Impacts/VFX recales selon leur phase normalisee. Liste de
+Lucian_ImpactLab completee (trois coups), deux etats Animator installes ; aucune
+configuration de production modifiee. Pressions distinctes et buffer existants,
+aucun nouveau maintien de gravite ni prolongation du flottement charge.
+LucianAirComboSetup preserve les assets deja crees et est raccorde a l'upgrade
+du laboratoire. Les anciens LucianAirComboTests.xml (4/4) et LucianAirComboPlay.log
+validaient les swings adaptes, pas le remplacement Twinblades. Les nouvelles
+preuves restent distinctes. Le ressenti visuel manuel et l'enchainement complet
+par pressions en conditions de combat restent a essayer.
+LucianTwinbladesAirInstall.log : compilation et remplacement reussis, GUID
+preserves. LucianTwinbladesAirTests.xml : 6/6, dont comparaison des poses
+Humanoid avec les deux sources Twinblades, impact unique et idempotence.
+Les sources et les deux clips livres ont les memes empreintes que la validation.
+LucianTwinbladesAirPlay.log : deux cas passes avec les nouveaux clips, etats 2/3,
+un impact chacun apres Ascension, retour sol et commandes/NavMesh restitues.
+Sortie 0 ; aucun processus de validation laisse actif.
+
+## Allegement des assets telecharges (2026-10-18)
+
+Premiere passe Fab : 7 558 assets et leurs meta retires d'Assets apres audit
+Unity, controle des GUID et archive SHA-256 verifiee sur D:. Gain source :
+21 853 578 821 octets. Archive et manifeste de restauration :
+D:/LitAssetArchive/2026-10-18-fab/. Tous les chemins Assets conserves existent ;
+aucune reference GUID restante vers les candidats retires. Huit tests des
+outils passent. Reouverture Unity batch reussie : audit post-nettoyage a zero
+candidat restant, aucun chemin Assets conserve manquant apres refresh.
+Seconde passe sur 14 perimetres : 1 429 assets et meta supplementaires retires,
+6 171 847 403 octets. Total : 8 987 assets, 28 025 426 224 octets. Seconde
+archive : D:/LitAssetArchive/2026-10-18-other-packs/. Controle GUID cumule passe,
+aucun chemin conserve manquant ; audit Unity final a zero candidat restant.
+Dix tests Unity cibles et treize tests des outils passent. Pour restaurer les
+deux passes : other-packs puis fab. Details : systems/assets_cleanup.md.
+Pas de recette visuelle complete ni de suppression manuelle de Library.
+
+## Objectif combat physique et reactif (2026-10-18)
+
+Verification avec rendu du ChargedSkill en cours, pas seulement -nographics.
+RunMotionVisualBatch capture camera gameplay/depart/montee/sommet/Basic/chute/sol.
+ChargedImpulseMotionVisual.log puis VisualSync.log refuses : sommet Lucian trop
+bas (2,49 m puis 2,34 m de gain mesure), ennemi 3 m. Attendre seulement le timer
+ou la fin de l'ability ne suffisait pas. Correctif candidat : phase de montee
+attend l'ability UCC au pas physique ; en mode Impulse, intention de deplacement
+calculee depuis la position simulee vers la hauteur courante de la courbe,
+bornee par la vitesse de lancement. Rattrapage limite a 0,15 s, collisions et
+plafonds prioritaires. Aucun SetPosition ni teleportation.
+ChargedImpulseMotionVisualHeight.log passe : Lucian Y=2,90 / ennemi Y=3,00 au
+sommet, gain mesure 2,879 / 3,000 m, ecart 0,10 m. Basic aerienne puis retour
+au sol, ressources restituees. Six captures fraiches inspectables sous
+Library/CombatFeel/ChargedVisual ; sommet et descente inspectes. Camera gameplay
+non modifiee, controle fonctionnel pas une preuve de ressenti manuel.
+Regression de cette derniere correction passee : ChargedImpulseHeightSafety.log,
+plafond 0,897 / 0,925 m de montee, annulation 1,520 / 1,644 m, deux retours au sol,
+input/NavMesh restitues, impacts uniques, sortie 0. Aucun processus laisse actif.
+Les anciens 8 tests ne constituent pas la preuve de ce raccord ; les deux nouvelles
+recettes avec rendu et de securite sont ses preuves ciblees. Le ressenti manuel
+du ChargedSkill reste attendu depuis plusieurs tours ; ne pas retoucher les valeurs
+ou les autres gestes deja acceptes sans ce retour. Objectif global non atteint.
+
+Diagnostic de l'echec de deconnexion : dans le package Input System installe,
+InputManager.defaultUpdateType retourne Editor hors Play Mode ; InputActionState
+n'evalue pas les actions de jeu dans cette phase. Le test actuel change la valeur
+brute de X mais ne verifie pas l'entree en Performed avant d'attendre canceled.
+La fixture doit effectuer explicitement un update Dynamic et verifier cette phase,
+sans retirer l'assertion d'annulation. Aucun defaut de charge runtime etabli par
+cet echec. Ecriture redevenue possible : fixture corrigee via le switch du package
+runPlayerUpdatesInEditMode, sauvegarde/restauration en finally et verification de
+Performed avant deconnexion. Un simple update Dynamic sans ce switch est lui-meme
+ignore hors Play Mode (ShouldRunUpdate) ; premier reessai garde donc 7/8.
+ChargedInputLifecycleFinalTests.xml : 8/8 passes, zero echec, compilation reussie.
+L'action est verifiee Performed avant le retrait, canceled et lecture sure du
+controle retire restent exiges ; switch restaure en finally. Aucun changement
+runtime des inputs ou de ressenti. Aucun processus de test laisse actif.
+
+Retour auteur : Rupture est bien, conserver. Nouvelle priorite explicite :
+ameliorer fortement la montee et la retombee des deux acteurs du ChargedSkill.
+Prototype Impulse isole dans Skill_AscensionLumineuse_Lab.asset, reference par
+Lucian_ImpactLab ; SO canonique, Lucian de production et catalogue reseau non
+remplaces. InstallImpulsePrototype cree uniquement cette copie et son lien.
+Montee partagee UCC/ennemis : h=H*t*(2-t), 3 m en 0,36 s, depart energique,
+arrivee progressive au sommet. Flottement/combo manuel 1,2 s conserve, aucun
+second coup automatique. Chute cible acceleree (2,5 m/s initiaux, 42 m/s2,
+plafond 18 m/s), Lucian reprend la gravite UCC avec impulsion initiale de chute.
+Feedback du coup de projection active : impact/audio existants, hit-stop court,
+aucun kick camera ni shockwave. Les assets non prototypes gardent la trajectoire
+ConstantVelocity et les reglages existants. Ancienne coroutine d'ascension
+verifie sa generation avant d'arreter l'ability de Lucian.
+Tests mathematiques 30/60/120 passes ; premier groupe ChargedSkillTests 7/8,
+echec du test de deconnexion (callback canceled non observe), sans changement
+runtime d'input. Tentative de correction de fixture retiree car overload Input
+indisponible dans ce package. Compilation et recette courte de mouvement passent :
+ChargedImpulseMotionPlayFinal.log, montee reelle Lucian 2,650 m / ennemi 2,999 m,
+contact de lancement unique, Basic aerienne demarree depuis le flottement,
+deux acteurs au sol et navigation/commandes restituees (1,606 s apres sommet).
+L'ecart de hauteur au sommet est 0,349 m : ne pas annoncer des poses identiques
+ni une hauteur physique exacte pour UCC. Ancien groupe Edit Mode : 7/8, meme
+echec DeviceRemovalDoesNotReadDisconnectedChargeControls (callback canceled),
+ChargedImpulseArcFinalTests.xml ; tests des trajectoires et isolation laboratoire
+passes, aucune assertion retiree. Ce defaut de fixture est maintenant corrige :
+8/8 dans ChargedInputLifecycleFinalTests.xml ci-dessus, pas une suite globale.
+SO canonique et Lucian de production : diff nul. Source et copie testee identiques
+sur le runtime modifie et le nouvel asset. Recette courte supplementaire
+RunMotionSafetyBatch passee : ChargedImpulseMotionSafety.log. Plafond bas :
+montee limitee Lucian 0,896 m / ennemi 0,925 m, fin naturelle puis retour au sol.
+Annulation pendant ascension : maxima 1,232 / 1,678 m, retour au sol et reprise
+NavMesh/input ; un seul impact dans les deux cas, aucun asset auteur sauve.
+Rendu/manette, interruptions repetees, plafonds asymetriques et reseau restent
+non qualifies. Aucun processus de test laisse actif.
+
+Relecture du contact Bond : fixture corrigee, pas de changement gameplay.
+L'etourdissement remplace hurtRemaining ; le verrou de decision fixe une seule
+fois ne maintenait donc pas l'ennemi immobile entre les essais. RunSkillFeelBatch
+maintient maintenant ce verrou de fixture et mesure sa derive, refusee au-dela
+de 3 cm. CombatSkillFeelStationaryContact.log passe : derive cible 0,000 m,
+Eclair +3,943 m derriere l'origine, Bond devant a 1,231 m, un impact de 10 PV
+chacun, ressources restituees, aucune exception de fermeture, sortie 0.
+Les assertions de contact ne sont pas assouplies. L'ancien echec de Bond n'est
+pas une preuve de bug contre une cible immobile ; pas de homing/impact de secours
+ajoute. Cibles mobiles volontairement evasives, murs et ressenti Rupture encore
+a qualifier. Retour manuel deja positif Eclair/Bond, reglages conserves.
+
+Continuite de sortie : correctif cible de FinishCombatExit pour la reference
+d'interface conservee apres destruction d'un composant Unity. Exists distingue
+l'objet encore present de la cible vivante : ne pas acceder a Root ni restituer
+une suspension d'un composant detruit, mais nettoyer les morts/inactifs encore
+presents. Aucun changement des priorites d'action, degats ou reglages de ressenti.
+Trois regressions ContactContinuity ajoutees (objet/composant detruit, mort
+inactif encore suspendu). Compilation et 64 tests passes :
+Library/CombatExitContinuityTests.xml (ContactContinuity, EngagementLedger,
+FreeAttack). Empreintes source/copie identiques pour les trois fichiers.
+Relecture CombatSkillFeelExitReplayFinal.log : aucune MissingReferenceException
+de fermeture, mais recette globale REFUSEE car Bond manque son contact (4,109 m
+parcourus, arret a 0,891 m devant la cible, 0 degat). Eclair reste valide a
++3,950 m, 10 PV uniques. Ne pas presenter cette relecture comme un nouveau
+succes des deux skills. Un lancement trop tot pendant la fermeture precedente
+a ete refuse par Unity (projet occupe), puis relance apres fin du processus.
+Retour manuel auteur recu : Eclair et Bond sont tous deux meilleurs ; conserver
+leurs reglages. La fiabilite du contact manque dans la recette doit etre
+distinguee de la correction de fermeture, sans fabriquer de degats de secours.
+
+Rupture : recette baseline sur vrais acteurs ajoutee (RunRuptureFeelBatch),
+sans ecriture auteur. Logs/CombatRuptureFeelBaseline.log : impact unique 15 PV,
+recul 7,411 m, montee 1,049 m. Atterrissage vers 1,35 s, puis environ 1,3 m
+de glissement au sol pendant la fin du clip protege (2,63 s).
+Correction candidate reservee au laboratoire : retreatLandingDeceleration=60
+dans le profil de session et l'installateur. Apres decollage observe ET retour
+au sol, la presentation freine la composante planaire de l'elan de recul via
+UCC. Aucune modification du saut, de la gravite, de la duree protegee, du lock
+obligatoire, du timing d'impact ou des degats. Generation invalidee = freinage
+inactif ; reseau et production restent a 0.
+Compilation et recette corrigee passent : CombatRuptureFeelBrakingFinal.log,
+recul total 4,479 m, montee 1,083 m, glissement apres atterrissage 0,133 m,
+un impact de 15 PV, fin normale et commandes/temps restitues. Premier essai
+de freinage refuse : detection d'un faux retour au sol pendant le decollage,
+avant la vraie montee. Le runtime ET la fixture exigent une elevation montante
+de 0,1 m avant de reconnaitre l'atterrissage ; freinage au pas physique, pas
+a chaque image. Les deux essais ne constituent pas une mesure de ressenti
+controlee a FPS identiques. Exceptions de fermeture deja signalees toujours
+presentes avant le correctif de sortie ci-dessus ; interruptions, murs, reseau
+et ressenti de Rupture a la manette non qualifies.
+
+Priorite auteur precisee : deplacements glissants/artificiels et impacts peu
+puissants ou mal synchronises (choix 1 et 2). Premiere passe Eclair/Bond :
+profil ContactDashMotion.Burst active seulement dans Iluvilirae_Test et son
+installateur. Trajectoire temporelle a acceleration/franchissement/freinage
+courts, sans recalcul de convergence vers la cible ; plafonds de vitesse,
+sol, obstacles et moteur UCC conserves. Feedback au point horizontal reel
+de contact, hauteur joueur + 1,5 m, burst non parente a la victime.
+Production et executeur reseau gardent l'approche precedente.
+Compilation et 50 tests FreeAttack passes (CombatSkillBurstTests.xml).
+Recette courte RunSkillFeelBatch executee dans la copie isolee, vrais acteurs :
+Eclair parcourt 8,943 m et finit a +3,943 m de l'origine cible ; Bond parcourt
+3,524 m et reste devant elle. Un impact de 10 PV chacun, aucun lock manuel,
+collisions/mouvement/verrous liberes et echelle 1 verifies avant fermeture.
+Log : Logs/CombatSkillFeelPlay.log. Sortie code 0 MAIS deux MissingReferenceException
+a la destruction de JuggernautV2Brain, depuis FinishCombatExit appele par Arena
+et CombatWorldRuntime.OnDisable : historique avant le correctif de sortie
+ci-dessus. Retour manuel auteur positif sur les deux dashs ; pas de preuve reseau.
+
+Objectif utilisateur actif : ressenti proche de God of War nordique. Priorite
+confirmee : reactivite et poids des frappes, sans changer les boutons ni retirer
+les combos aeriens. Aucun objectif de performance ou de migration ci-dessous
+n'est considere termine par cette passe.
+
+Le runtime d'attaque libre utilise la file unique de la session de presentation,
+comme le laboratoire : premiere Basic immediate, une seule pression suivante
+en reserve, lancement au timing auteur. Suppression du detour par la coroutine
+de combo historique pour ce flux. Revalidation sol/air et notification du vrai
+demarrage communes au jeu et au laboratoire. Aucune ouverture d'annulation avancee.
+Entree Animator en secondes fixes pour toutes les actions (plus de duree
+proportionnelle au clip), redemarrage explicite a zero, validateur adapte.
+
+Poids prototype uniquement Iluvilirae_Test : hit-stop Basic 40/50/70 ms,
+profils sources et copies Clash coherents, installateur conserve les valeurs.
+Production, camera, degats, fenetres de contre et regles reseau inchanges.
+Compilation Unity et quatre tests cibles reussis :
+Logs/CombatFeelResponsivenessFinal.log, Library/CombatFeelResponsivenessFinal.xml.
+Premier essai 2/4 : assertion erronee sur la derniere requete apres refus d'une
+troisieme pression, et fixture historique de pause sans TimeManager. Corriges
+sans affaiblir les verifications de transition/nettoyage. Source/copie testee :
+aucune difference sur les assets modifies. Aucun processus de test laisse actif.
+Ressenti manette dans Iluvilirae_Test, campagne reseau/Domain Reload et
+qualification migration encore non valides. Ancien PID de qualification 26692
+absent ; son log termine pendant import, aucun nouveau resultat revendique.
+Retour utilisateur : pas de changement marquant, mais BasicSkills relativement
+satisfaisantes. Ne pas continuer a durcir leur hit-stop. Prochaine priorite
+explicitement choisie : deplacements et impacts des skills, plutot que camera
+ou rythme ennemi.
+
+Recette ajoutee a FreeAttackPlayValidation.RunBasicFeelBatch : vrais acteurs,
+presses X virtuelles et visee au stick, contacts, echelles observees puis coup
+dans le vide, sans sauvegarde auteur. Compilation reussie ; recette NON validee.
+Logs/CombatFeelLaboratoryAimedCombo.log et
+Library/CombatFeel/laboratory-combo-diagnostic.json : 3 departs, premiere action
+a +1 frame, 2 contacts de 5 et 10 PV, echelles 0,2 / 0,1 ; troisieme coup manque
+et echelle 1. Le diagnostic sans visee montre le decalage lateral du combo et
+la victime hors arc, pas un event d'impact absent. Etat final au sol/commandes
+et essai a vide non atteints ; ne pas les annoncer passes.
+La fixture utilise CharacterInfo.SetHealth, pas l'ancien cache currentHealth,
+et place Lucian selon son yaw UCC reel, pas un axe monde suppose. Les premiers
+essais invalides sont conserves dans Logs/CombatFeelLaboratory*.log.
+Aucun changement supplementaire des degats, portees ou animations gameplay.
+Aucun processus de ces recettes laisse actif. Reste a distinguer visee physique,
+orientation/trajectoire auteur du troisieme coup avant de qualifier ce scenario.
+
 ## Priorite performance editeur et jeu (2026-10-18)
 
 Objectif toujours actif : Bootstrap lent depuis migration combat, Play et

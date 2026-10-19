@@ -9,6 +9,8 @@ public sealed class CombatWorldRuntime : MonoBehaviour
 {
     public FreeAttackProfile freeAttacks = new FreeAttackProfile();
     public Camera gameplayCamera;
+    public GameObject lockCursorPrefab;
+    public Vector3 lockCursorOffset = Vector3.up * 3f;
     private RealTimeCombatManager manager;
     private readonly Dictionary<LitBrainsEnemy, EnemySubscription> subscriptions = new Dictionary<LitBrainsEnemy, EnemySubscription>();
     private float nextScan;
@@ -18,6 +20,12 @@ public sealed class CombatWorldRuntime : MonoBehaviour
     private NetworkCharacterInput networkInput;
     public event System.Action<SquadCharacterController, bool> EngagementChanged;
     public event System.Action<SquadCharacterController> ThreatsChanged;
+
+    public void ConfigureLockIndicator(CombatLockIndicator indicator)
+    {
+        if (indicator != null && lockCursorPrefab != null)
+            indicator.ConfigureWorldCursor(lockCursorPrefab, lockCursorOffset);
+    }
 
     public int CountThreats(SquadCharacterController actor) => actor != null ? engagements.Count(actor.transform) : 0;
     public List<ICombatTarget> GetThreats(SquadCharacterController actor) => engagements.Snapshot(actor != null ? actor.transform : null);

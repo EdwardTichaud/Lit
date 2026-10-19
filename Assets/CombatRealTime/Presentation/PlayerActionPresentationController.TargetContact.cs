@@ -8,6 +8,7 @@ public sealed partial class PlayerActionPresentationController
     private SkillSO contactSkill;
     private int contactGeneration;
     private bool contactWindowArmed, contactImpactUsed;
+    private bool contactUsesBurstMotion;
     private Vector3 contactTravelDirection;
     private LitOpsiveLocomotionBridge.TargetCollisionHandle contactCollisionHandle;
     private RuntimeAnimatorController contactPreviousController;
@@ -15,6 +16,7 @@ public sealed partial class PlayerActionPresentationController
     public bool IsTargetLungeActive => targetLungeOwnsPlanarMotion;
     private System.Func<Transform, Vector3, Vector3, bool> externalContactResolver;
     private float externalFreeDashDistance;
+    private ContactDashMotion externalContactMotion;
 
     public bool TryPrepareExternalContactSkill(int generation, SkillSO skill)
     {
@@ -28,16 +30,23 @@ public sealed partial class PlayerActionPresentationController
     }
 
     public bool TryBeginExternalContactLunge(int generation, SkillSO skill,
-        System.Func<Transform, Vector3, Vector3, bool> resolveContact, float freeDashDistance)
+        System.Func<Transform, Vector3, Vector3, bool> resolveContact, float freeDashDistance,
+        ContactDashMotion motion = ContactDashMotion.Approach)
     {
         if (!externallyDriven || !IsCurrentSession(generation) || AttackContext?.Skill != skill ||
-            resolveContact == null || float.IsNaN(freeDashDistance) || float.IsInfinity(freeDashDistance) || freeDashDistance <= 0) return false;
+            resolveContact == null || float.IsNaN(freeDashDistance) || float.IsInfinity(freeDashDistance) || freeDashDistance <= 0 ||
+            motion != ContactDashMotion.Approach && motion != ContactDashMotion.Burst) return false;
         BeginTargetLunge(skill, AttackContext.TargetRoot);
         if (!targetLungeOwnsPlanarMotion) return false;
         externalContactResolver = resolveContact;
         externalFreeDashDistance = freeDashDistance;
+        externalContactMotion = motion;
         return true;
     }
+
+    private bool ResolveContactBurstMotion() => externalContactResolver != null
+        ? externalContactMotion == ContactDashMotion.Burst
+        : !externallyDriven && RealTimeCombatManager.Instance?.UsesBurstContactDash == true;
 
     private float ResolveFreeContactDistance() => externalContactResolver != null ? externalFreeDashDistance :
         RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.FreeDashDistance : 0;
@@ -81,6 +90,23 @@ public sealed partial class PlayerActionPresentationController
     public static float ContactApproachDuration(float distance, float speed, float authoredDuration) =>
         Mathf.Max(authoredDuration, Mathf.Max(0, distance) / Mathf.Max(.1f, speed)) + .12f;
 
+    public static float ContactBurstDuration(float distance, float speed, float authoredDuration) =>
+        Mathf.Max(.01f, authoredDuration, Mathf.Max(0, distance) / Mathf.Max(.1f, speed) + .045f);
+
+    public static float ContactBurstDistance(float distance, float speed, float authoredDuration, float elapsed)
+    {
+        distance = Mathf.Max(0, distance);
+        float duration = ContactBurstDuration(distance, speed, authoredDuration);
+        float acceleration = Mathf.Min(.03f, duration * .2f);
+        float braking = Mathf.Min(.06f, duration * .25f);
+        float peak = distance / (duration - (acceleration + braking) * .5f);
+        float time = Mathf.Clamp(elapsed, 0, duration);
+        if (time < acceleration) return peak * time * time / (2 * acceleration);
+        if (time <= duration - braking) return peak * (time - acceleration * .5f);
+        float tail = duration - time;
+        return distance - peak * tail * tail / (2 * braking);
+    }
+
     private IEnumerator RunContactTargetLunge(SkillSO skill, Transform targetRoot, int lungeToken, int generation)
     {
         if (!locomotionBridge.BeginScriptedPlanarMotion(this)) yield break;
@@ -122,7 +148,10 @@ public sealed partial class PlayerActionPresentationController
             else if (traversing) yield break;
 
             float elapsed = 0;
-            float duration = ContactApproachDuration(clear, profile.maximumApproachSpeed, profile.approachDurationSeconds);
+            contactUsesBurstMotion = ResolveContactBurstMotion();
+            float duration = contactUsesBurstMotion
+                ? ContactBurstDuration(clear, profile.maximumApproachSpeed, profile.approachDurationSeconds) + .12f
+                : ContactApproachDuration(clear, profile.maximumApproachSpeed, profile.approachDurationSeconds);
             if (!FiniteContact(duration) || duration <= 0) yield break;
             float nextTrace = 0;
             Vector3 previous = transform.position;
@@ -146,19 +175,26 @@ public sealed partial class PlayerActionPresentationController
                 float stepTime = Mathf.Max(.001f, Time.fixedDeltaTime);
                 if (!FiniteContact(stepTime)) yield break;
                 float speed = Mathf.Min(profile.maximumApproachSpeed, remaining / Mathf.Max(stepTime, duration - elapsed - .1f));
-                float safeStep = ClearContactRoute(targetRoot, direction, Mathf.Min(remaining, speed * stepTime * scale), traversing);
+                float requestedStep = Mathf.Min(remaining, speed * stepTime * scale);
+                if (contactUsesBurstMotion)
+                {
+                    float planned = ContactBurstDistance(clear, profile.maximumApproachSpeed, profile.approachDurationSeconds, elapsed + stepTime * scale);
+                    float travelled = Mathf.Max(0, Vector3.Dot(current - start, contactTravelDirection));
+                    requestedStep = Mathf.Min(remaining, Mathf.Clamp(planned - travelled, 0, profile.maximumApproachSpeed * stepTime * scale));
+                }
+                float safeStep = ClearContactRoute(targetRoot, direction, requestedStep, traversing);
                 if (debugContactMotion && elapsed >= nextTrace)
                 {
                     nextTrace += .1f;
                     var targetCollider = targetRoot != null ? targetRoot.GetComponentInChildren<Collider>() : null;
                     bool ignored = targetCollider != null && locomotionBridge.ScriptedMotionColliders.Length > 0 && Physics.GetIgnoreCollision(locomotionBridge.ScriptedMotionColliders[0], targetCollider);
-                    Debug.Log($"[TargetMobility] Step | elapsed={elapsed:F3} pos={current} velocity={locomotionBridge.Velocity} remaining={remaining:F3} speed={speed:F2} safe={safeStep:F3} scope={locomotionBridge.TargetCollisionBypassCount} pairIgnored={ignored}", this);
+                    Debug.Log($"[TargetMobility] Step | elapsed={elapsed:F3} pos={current} velocity={locomotionBridge.Velocity} remaining={remaining:F3} requestedSpeed={requestedStep / (stepTime * scale):F2} burst={contactUsesBurstMotion} safe={safeStep:F3} scope={locomotionBridge.TargetCollisionBypassCount} pairIgnored={ignored}", this);
                 }
                 if (context != null) FaceActionTarget();
                 else locomotionBridge.SetActionFacingDirection(direction);
                 if (!locomotionBridge.DriveScriptedPlanarMotion(this, direction * (safeStep / stepTime))) break;
                 yield return new WaitForFixedUpdate(); elapsed += clock != null ? clock.FixedDeltaTime : Time.fixedDeltaTime;
-                if (safeStep <= .002f)
+                if ((!contactUsesBurstMotion || requestedStep > .002f) && safeStep <= .002f)
                 {
                     if (debugContactMotion) Debug.Log($"[TargetMobility] Blocked | position={transform.position} elapsed={elapsed}", this);
                     break;
@@ -199,18 +235,20 @@ public sealed partial class PlayerActionPresentationController
             GetCapsuleWorldPoints(capsule, out var a, out var b, out float radius);
             Vector3 offset = previous - current;
             bool touching = false; float contactDistance = distance;
+            Vector3 visualContact = current;
             var contactTarget = targetRoot;
             foreach (var collider in Physics.OverlapCapsule(a, b, radius + .12f, ~0, QueryTriggerInteraction.Ignore))
             {
                 var candidate = targetRoot == null && AttackContext != null ? RealTimeCombatManager.TargetFromCollider(collider)?.Root : targetRoot;
-                if (candidate != null && collider.transform.IsChildOf(candidate)) { touching = true; contactTarget = candidate; }
+                if (candidate != null && collider.transform.IsChildOf(candidate))
+                { touching = true; contactTarget = candidate; visualContact = collider.ClosestPoint((a + b) * .5f); }
             }
             if (distance > .0001f)
                 foreach (var hit in Physics.CapsuleCastAll(a + offset, b + offset, radius + .03f, direction, distance, ~0, QueryTriggerInteraction.Ignore))
                 {
                     var candidate = targetRoot == null && AttackContext != null ? RealTimeCombatManager.TargetFromCollider(hit.collider)?.Root : targetRoot;
                     if (candidate != null && hit.collider.transform.IsChildOf(candidate) && (!touching || hit.distance < contactDistance))
-                    { touching = true; contactDistance = hit.distance; contactTarget = candidate; }
+                    { touching = true; contactDistance = hit.distance; contactTarget = candidate; visualContact = hit.point; }
                 }
             if (!touching) continue;
             contactImpactUsed = true;
@@ -223,7 +261,7 @@ public sealed partial class PlayerActionPresentationController
             var manager = RealTimeCombatManager.Instance;
             int applied = manager != null ? manager.ApplySkillDamageAtContact(skill, contactTarget,
                 previous + direction * contactDistance, contactTravelDirection) : 0;
-            if (applied > 0) HandleConfirmedExternalImpact(skill, contactTarget);
+            if (applied > 0) HandleConfirmedExternalImpact(skill, contactTarget, contactUsesBurstMotion ? (Vector3?)visualContact : null);
             return;
         }
     }

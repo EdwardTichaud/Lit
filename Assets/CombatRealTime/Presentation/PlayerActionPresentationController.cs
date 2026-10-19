@@ -281,6 +281,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     public void InterruptBasicSkillForDamage()
     {
+        if (IsChargingSkill) return;
         if (actionActive && activeActionIsBasic)
         {
             basicSkillInterruptedByDamage = true;
@@ -811,6 +812,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         if (actionActive && (!externallyDriven || AttackContext != null)) FaceActionTarget();
     }
 
+    private void FixedUpdate() => BrakeRetreatAfterLanding();
+
     private bool TryPlay(
         int stateHash,
         PlayerActionPresentationProfile profile,
@@ -819,7 +822,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         BasicSkillsSO basicSkill, SkillSO presentedSkill = null, PlayerAttackContext targeting = null)
     {
         LastRequestWasBuffered = false;
-        if (deathAnimationLocked)
+        if (deathAnimationLocked || IsChargingSkill)
         {
             return false;
         }
@@ -830,8 +833,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         }
 
         profile = profile ?? PlayerActionPresentationProfile.CreateDefault();
-        bool laboratory = RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.UsesExternalTarget;
-        if (actionActive && allowChainInterrupt && (chainWindowOpen || laboratory && activeActionIsBasic) && !recoveryOpen)
+        if (actionActive && allowChainInterrupt && (chainWindowOpen || activeActionIsBasic) && !recoveryOpen)
         {
             if (hasBufferedAction)
             {
@@ -929,9 +931,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
                 ? locomotionBridge.AcquireCombatAirborneHold(this, holdDuration) : 0;
             activeHoldsAirborne = activeAirborneHoldHandle != 0;
         }
-        if (presentedSkill is ChargedSkillSO || presentedSkill != null && presentedSkill.TargetLunge.resolveImpactAtContact)
-            animator.CrossFadeInFixedTime(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, .25f), 0, 0);
-        else animator.CrossFade(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, 0.25f), 0);
+        animator.CrossFadeInFixedTime(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, .25f), 0, 0);
         Trace("enter", debugName, profile);
         actionRoutine = StartCoroutine(TrackAction(activeToken, profile, debugName, isBasicAction));
         return true;
@@ -993,9 +993,10 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
                 yield break;
             }
 
+            bool heldBasicTail = TickChargedBasicTail(token, state);
             bool cinematic = Lit.Combat.Migration.Network.CombatCinematicReservations.ContainsParticipant(transform);
             float actionDelta = domain != null ? domain.DeltaTime : Time.deltaTime;
-            stalledSeconds = !cinematic && Mathf.Approximately(previousNormalizedTime, state.normalizedTime)
+            stalledSeconds = !cinematic && !(heldBasicTail && state.normalizedTime >= 1f) && Mathf.Approximately(previousNormalizedTime, state.normalizedTime)
                 ? stalledSeconds + Mathf.Max(0f, actionDelta) : 0f;
             previousNormalizedTime = state.normalizedTime;
             if (stalledSeconds >= 1f)
@@ -1033,7 +1034,12 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
                 }
             }
 
-            float requiredCompletion = isBasicAction && RealTimeCombatManager.Instance?.GetComponent<RealTimeCombatInput>()?.RequiresFullBasicPlayback == true
+            if (chargeTailSkill != null && chargeTailGeneration == token)
+            {
+                yield return null;
+                continue;
+            }
+            float requiredCompletion = chargeTailReleased && chargeTailGeneration == token || isBasicAction && RealTimeCombatManager.Instance?.GetComponent<RealTimeCombatInput>()?.RequiresFullBasicPlayback == true
                 ? 1f : completionTime;
             if (state.normalizedTime >= requiredCompletion)
             {
@@ -1229,7 +1235,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         string actionName = bufferedActionName;
         bool isBasicAction = bufferedActionIsBasic;
         BasicSkillsSO basicSkill = bufferedBasicSkill;
-        if (RealTimeCombatManager.Instance?.UsesExternalTarget == true && basicSkill != null && locomotionBridge != null &&
+        if (basicSkill != null && locomotionBridge != null &&
             basicSkill.Context != (locomotionBridge.Grounded ? BasicSkillContext.Grounded : BasicSkillContext.Airborne))
         {
             ClearBufferedBasicAction();
@@ -1243,7 +1249,8 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         bufferedActionIsBasic = false;
         bufferedBasicSkill = null;
         bool started = StartAction(stateHash, profile, actionName, isBasicAction, basicSkill);
-        if (started && basicSkill != null && RealTimeCombatManager.Instance?.UsesExternalTarget == true)
+        if (started && basicSkill != null && (RealTimeCombatManager.Instance?.AllowsFreeAttacks == true ||
+            RealTimeCombatManager.Instance?.UsesExternalTarget == true))
             RealTimeCombatManager.Instance.NotifyBufferedSkillStarted(basicSkill);
         return started;
     }

@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1abc2bed132da76468ca8c7545a808cf, type: 3}
   m_Name: Skill_AscensionLumineuse
   m_EditorClassIdentifier: Assembly-CSharp::ChargedSkillSO
-  targetingMode: 0
   enemyImpact:
     requireGroundedTarget: 0
     offset: {x: 0, y: 1, z: 1.3}
@@ -34,6 +33,7 @@ MonoBehaviour:
   skillName: Ascension lumineuse
   description: 'Maintenir X : un coup projette la cible, Lucian la rejoint puis flotte. Les attaques aeriennes suivantes sont manuelles.'
   icon: {fileID: 0}
+  targetingMode: 0
   animationClip: {fileID: 7400000, guid: 2292aca236568974da8f774c6c26025d, type: 2}
   animatorState: Base Layer.ChargedAscension
   damages: 10
@@ -123,15 +123,23 @@ MonoBehaviour:
       animatorStateName: 
       transitionSeconds: 0.08
       normalizedStartTime: 0
-  vfxCues: []
+  vfxCues:
+  - displayName: Impact
+    prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+    projectileArcHeightPerMeter: 0
+    projectileMaximumArcHeight: 4
   impactFeedback:
-    enabled: 0
+    enabled: 1
     useHitStop: 1
     hitStopTimeScale: 0.05
     hitStopSeconds: 0.055
     camera:
-      lookOffsetKick: {x: 0, y: 0.03, z: 0.2}
-      fieldOfViewKick: -1
+      lookOffsetKick: {x: 0, y: 0, z: 0}
+      fieldOfViewKick: 0
       recoverySharpness: 18
     additionalImpactVfx: {fileID: 0}
     additionalImpactAudio: {fileID: 0}
@@ -239,6 +247,10 @@ MonoBehaviour:
     useSlowMotion: 0
     slowMotionTimeScale: 0.85
     slowMotionSeconds: 0.15
+  preparationMode: 1
+  chargeTailStartNormalizedTime: 0.7
+  chargeTailPlaybackRate: 0.1
+  chargeTailBlendSeconds: 0.08
   preparationClip: {fileID: 7400000, guid: 8ed27e4f6302a574fa74102a5954eb9f, type: 2}
   preparationState: Base Layer.ChargedPreparation
   chargeSeconds: 2
@@ -250,6 +262,10 @@ MonoBehaviour:
   enemyFloatClip: {fileID: 7400000, guid: 2a29aa705d80bf14580719628bc5898c, type: 2}
   enemyFloatState: Base Layer.ChargedFloatHit
   launchHeight: 3
-  ascentSeconds: 0.55
+  ascentSeconds: 0.36
   airborneHoldSeconds: 1.2
   maximumVerticalHitDistance: 1.5
+  launchTrajectory: 1
+  descentInitialSpeed: 2.5
+  descentAcceleration: 42
+  maximumDescentSpeed: 18

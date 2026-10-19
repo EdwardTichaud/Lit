@@ -1,5 +1,118 @@
 # Input, UCC et caméra
 
+## Raccord Du Laboratoire Au Jeu (2026-10-19)
+
+Les rotations sont portees par PlayerSettings : marche 720, sprint 1080,
+demi-tour et facing combat 1440 degres/s, avec rateLimitedCombatFacing explicite.
+Le bridge consomme son clone de module par acteur ; l'arene ne le surcharge plus.
+Les profils auteur Juggernaut portent leur tracking a 1080 degres/s, copie dans
+leur profil de production sans remplacer les patterns. La camera conserve sa base
+large et son rapprochement selon les actions, sans zoom permanent de combat.
+
+CombatWorldRuntime reference le prefab du curseur et son offset monde +3 Y.
+Les facades de lock commune et historique le transmettent au meme indicateur.
+Le visuel est non parente, dans la scene du proprietaire, sans Canvas ni heritage
+de son echelle. Desactivation/destruction liberent uniquement ce visuel ; un
+rafraichissement tardif ne le recree pas sur un composant desactive.
+
+ProductionCombatMigration installe GameplayCombatCamera sur la camera existante
+de GameplaySessionRoot. Le profil est cree depuis la camera de production :
+distance, pitch, FOV, controles, obstacles et amortissements sont preserves.
+Seul actionFraming est synchronise avec le profil valide du laboratoire.
+TacticalDefault n'est pas modifie ; aucune lumiere de test n'est ajoutee aux zones.
+Le zoom manuel, l'inspection et les cinematiques restent prioritaires.
+
+BasicTail est aussi raccorde a la presentation externe reseau : maintien mesure
+au serveur, generation/epoque repliquees, cadence propre au Basic et cadrage de
+charge pour son proprietaire uniquement. Le relachement restitue la cadence de
+la meme session ; la continuation validee ne demande pas de locomotion intermediaire.
+Une validation locale automatisee ne remplace pas le controle sur client distant.
+
+## Cadrage De Combat Du Laboratoire
+
+CombatFeelCamera garde la base exploration tactique large (10 m, pitch 50,
+FOV 60), selon le retour auteur : pas de rapprochement permanent. Les valeurs de
+zoom/orbite choisies manuellement restent la base, jamais ecrasees par une action.
+LitTacticalUccViewType applique une distance relative lisse : Basic 0,88, skill
+0,78, preparation/frappe adverse proche 0,92 ; repos/recuperation reviennent a 1.
+Entree 0,25 s, retour 0,6 s non scales. Le zoom manuel prend priorite pendant
+1,5 s apres chaque commande ; L3 inspection et cinematiques ne sont pas recadres.
+La marge analytique de projection limite le rapprochement pour garder les corps
+participants dans le champ ; ni yaw, ni pitch, ni FOV ne sont changes par ce suivi.
+La charge garde son cadrage valide et n'empile pas ce rapprochement automatique.
+Le profil TacticalDefault partage reste inchange ; actionFraming est desactive
+par defaut. L'outil Configure Action Camera active uniquement le profil du lab.
+UCC conserve seul l'ecriture physique de la camera. Le lock et les commandes
+existantes ne sont pas remplaces. Lisibilite complete a qualifier en rencontre.
+
+## Preparation Chargee Sur Le Coup Courant (2026-10-19)
+
+Protection renforcee sans changement de ressenti : TryPlay refuse egalement les
+appels directs pendant la charge, et la notification directe de degats ne peut
+plus annuler sa Basic. Un nettoyage preserveChargedHold conserve aussi la Basic
+de destination encore bufferisee. Relachement volontaire et priorites forcees
+(mort/cinematique/desactivation) conservent leur nettoyage.
+
+Le mode BasicTail du ChargedSkill lab garde la session Basic terrestre courante.
+Une pression bufferisee attend le vrai demarrage de son Basic avant d'armer sa
+generation. X tenu ralentit sa fin a 10 %, X relache restitue la cadence en 0,08 s
+et laisse finir le geste. Seul le parametre des etats Basic est modifie, pas le
+temps global ou Animator.speed. Le verrou UCC et le cadrage de charge sont acquis
+au debut de la portion ralentie et restitues par leur generation. La transition
+vers Ascension ne passe ni par Idle ni par ChargedPreparation. Le maintien ne
+declenche qu'une fois ; le reseau utilise desormais ce meme contrat de preparation.
+Une demande explicite de continuite Combat -> Combat preserve egalement les maps
+deja actives (comme Exploration -> Combat), sans contourner un contexte superieur.
+Cela evite l'annulation artificielle de X lors du premier contact en mode Combat.
+
+## Trois Basics Aeriens Au Laboratoire (2026-10-19)
+
+Lucian_ImpactLab equipe maintenant trois coups aeriens manuels via la liste
+CharacterData.airBasicSkills existante. Aucune nouvelle commande : nouvelles
+pressions de X, buffer et generations de session habituels. Les deux ajouts
+ne suspendent pas la gravite et ne prolongent pas le maintien charge. Le retour
+au sol conserve la revalidation de contexte ; aucun combo automatique ajoute.
+
+## ChargedSkill Impulse (2026-10-18)
+
+Le raccord vers le flottement attend l'ability physique, pas un timer Update.
+Le prototype Impulse corrige sa progression verticale depuis locomotion.Position,
+pas le Transform interpole de rendu ; vitesse bornee et 0,15 s maximum de
+rattrapage. Les collisions UCC restent prioritaires. La camera n'est pas changee.
+
+La meme ability LitUccActionTakeoffAbility accepte une courbe de montee du
+ChargedSkillSO au lieu d'une vitesse verticale constante. Il ne s'agit pas d'un
+second moteur : UCC conserve collisions, sol et gravite a la restitution.
+Le prototype garde maintien X, preparation et commandes aeriennes. A expiration
+normale du flottement, une demande de chute donne son impulsion initiale ; mort,
+cinematique et remplacement prioritaire ne la recoivent pas. La camera de charge
+reste celle deja presente ; aucun effet camera de lancement supplementaire.
+Le test de deconnexion autorise temporairement les updates joueur du package
+en Edit Mode et restaure ce switch en finally. Sans cela, seule la valeur brute
+de X changeait, pas la phase de l'action. Le test exige Performed puis canceled,
+et une lecture sure du controle retire. Groupe ChargedSkillTests : 8/8 passes
+(ChargedInputLifecycleFinalTests.xml), sans modification du runtime d'input.
+
+## Entree des frappes et continuite (2026-10-18)
+
+Sans modifier les bindings, RealTimeCombatInput soumet immediatement les Basics
+du runtime libre a la session de presentation, comme au laboratoire. La session
+conserve au maximum une nouvelle pression jusqu'a sa transition auteur, sans
+auto-repetition du maintien X. Les gardes, roulades, charge et priorites existantes
+ne sont pas contournees. Les entrees Animator en secondes fixes remplacent
+l'interpretation normalisee de entryBlendSeconds ; les sorties restent inchangees.
+Les effets de poids modifies sont uniquement ceux des assets Basic du laboratoire.
+
+Les dashs de contact peuvent utiliser ContactDashMotion.Burst, actuellement
+active uniquement au laboratoire : courbe de distance temporelle plutot
+qu'une vitesse de convergence. DriveScriptedPlanarMotion reste l'unique
+commande moteur ; sol, capsule, BattleWall et bypass cible sont conserves.
+Les controles/camera, cooldowns et restitutions par generation ne changent pas.
+Pour Rupture, retreatLandingDeceleration du meme profil peut freiner la vitesse
+sur l'axe du recul apres un decollage puis atterrissage observes. Ce freinage
+UCC cesse avec la generation et ne touche ni vitesse verticale ni axe lateral.
+Valeur 60 au laboratoire, 0 en production ; la fin d'animation reste protegee.
+
 ## Performance des parametres Animator (2026-10-17)
 
 Le pont UCC et la facade squad consultent un cache de metadonnees par composant

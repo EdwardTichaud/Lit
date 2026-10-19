@@ -291,8 +291,8 @@ public class SkillSO : ScriptableObject
     [TextArea] public string description;
     public Sprite icon;
 
-    [Header("Targeting (Iluvilirae_Test)")]
-    [Tooltip("Contrat explicite. Le nouveau resolveur est active uniquement dans le laboratoire.")]
+    [Header("Targeting")]
+    [Tooltip("Contrat explicite partage par le laboratoire et les sessions de jeu configurees.")]
     public SkillTargetingMode targetingMode = SkillTargetingMode.Unconfigured;
 
     [Header("Combat")]

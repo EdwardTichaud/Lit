@@ -704,6 +704,8 @@ public class SquadManager : MonoBehaviour
             controller.BindCharacterData(character, true);
         }
 
+        PersistentWorldSceneInstaller.EnsureRuntimeCharacterIdentity(instance, GetCharacterId(character));
+
         // UCC maintient ses propres caches de simulation. Resynchroniser la
         // pose après le bind garantit le point de spawn authored.
         TrySetCharacterPositionAndRotation(instance, position, rotation);
@@ -721,7 +723,20 @@ public class SquadManager : MonoBehaviour
             return null;
         }
 
-        if (companionRegistry.TryGetValue(character, out CompanionRecord record) && record.instance != null)
+        // Snapshot reconstruction can precede squad initialization. Adopt its exact actor instead of spawning a duplicate.
+        CompanionRecord record = GetOrCreateRecord(character);
+        string characterId = GetCharacterId(character);
+        var registry = NetworkObjectRegistry.Instance;
+        if (record.instance == null && registry != null &&
+            registry.TryGet(PersistentWorldSceneInstaller.BuildCharacterPersistentId(characterId), out var restored) &&
+            restored != null && restored.ObjectKind == PersistentObjectKind.RuntimeSpawned &&
+            restored.RuntimePrefabId == PersistentWorldSceneInstaller.BuildCharacterPrefabId(characterId) &&
+            restored.GetComponent<SquadCharacterController>() != null)
+        {
+            record.instance = restored.gameObject;
+        }
+
+        if (record.instance != null)
         {
             Vector3 position = spawnPoint != null
                 ? spawnPoint.position
@@ -1217,6 +1232,7 @@ public class SquadManager : MonoBehaviour
             if (controller != null)
             {
                 controller.BindCharacterData(runtimeCharacter, true);
+                CharacterStateStore.RestoreCharacterHealth(controller, entry);
             }
             ApplyMuninChargeStateToInstance(instance, entry);
 

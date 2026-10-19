@@ -493,6 +493,8 @@ public sealed partial class EnemyController
             if (locked && ActorLockIndicator == null)
                 ActorLockIndicator = gameObject.AddComponent<CombatLockIndicator>();
         }
+        if (locked && ActorLockIndicator != null)
+            RealTimeCombatManager.Instance?.GetComponent<CombatWorldRuntime>()?.ConfigureLockIndicator(ActorLockIndicator);
         ActorLockIndicator?.SetLocked(locked, playSound);
     }
 

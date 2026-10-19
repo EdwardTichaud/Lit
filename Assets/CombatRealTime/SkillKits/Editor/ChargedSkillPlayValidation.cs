@@ -11,6 +11,214 @@ public static class ChargedSkillPlayValidation
 {
     private const string Key = "Lit.ChargedSkill.Validation";
     private const string PreparationArmorKey = "Lit.ChargedSkill.PreparationArmor";
+    private const string MotionKey = "Lit.ChargedSkill.Motion";
+    private const string MotionVisualKey = "Lit.ChargedSkill.MotionVisual";
+    private static bool capturedMotionLaunch, capturedMotionBasic, capturedMotionDescent;
+    private static int motionVisualFinish;
+    public static void RunMotionVisualBatch()
+    {
+        SessionState.SetBool(MotionVisualKey, true);
+        RunMotionBatch();
+    }
+    private static void CaptureMotion(string name, LucianBrainsCombatArena arena)
+    {
+        const string directory = "Library/CombatFeel/ChargedVisual";
+        System.IO.Directory.CreateDirectory(directory);
+        var camera = arena.arenaCamera;
+        CombatFeelPlayValidation.CaptureCamera(camera, System.IO.Path.GetFullPath(directory + "/" + name + ".png"));
+        foreach (var rig in new[] { arena.Player.GetComponentInChildren<Animator>(), arena.Enemy.Animator })
+            foreach (var bone in new[] { HumanBodyBones.Head, HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot })
+            {
+                var joint = rig.GetBoneTransform(bone);
+                Require(joint != null, "Aerial framing rig bone missing.");
+                var viewport = camera.WorldToViewportPoint(joint.position);
+                Require(viewport.z > camera.nearClipPlane && viewport.x > .02f && viewport.x < .98f && viewport.y > .02f && viewport.y < .98f,
+                    "Aerial framing clipped " + rig.name + "/" + bone + " at " + name + " viewport=" + viewport);
+            }
+        Debug.Log($"[ChargedVisual] {name} frame={Time.frameCount} player={arena.Player.transform.position} enemy={arena.Enemy.transform.position} camera={camera.transform.position} cameraForward={camera.transform.forward} fov={camera.fieldOfView}");
+    }
+    private const string MotionSafetyKey = "Lit.ChargedSkill.MotionSafety";
+    private static GameObject motionCeiling;
+    private static float ceilingPlayerLimit, ceilingEnemyLimit;
+    public static void RunMotionSafetyBatch()
+    {
+        SessionState.SetBool(MotionSafetyKey, true);
+        RunMotionBatch();
+    }
+    private static int motionContacts;
+    private const string AirComboKey = "Lit.ChargedSkill.AirCombo";
+    private static bool airStateSeen;
+    private static SkillSO motionAerialSkill;
+    private static int aerialContacts;
+    public static void RunAirComboBatch()
+    {
+        SessionState.SetBool(AirComboKey, true);
+        RunMotionBatch();
+    }
+    private static ChargedSkillSO motionSkill;
+    public static void RunMotionBatch()
+    {
+        SessionState.SetBool(MotionKey, true);
+        RunRuntimeBatch();
+    }
+
+    private static void TickMotion(LucianBrainsCombatArena arena, RealTimeCombatManager manager,
+        PlayerActionPresentationController action, LitOpsiveLocomotionBridge bridge, ChargedSkillSO skill)
+    {
+        const BindingFlags fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        Require(EditorApplication.timeSinceStartup - started < 45, "Short charged motion timeout: " + stage);
+        var actor = arena.Player;
+        var enemy = arena.Enemy;
+        if (!enemy.IsChargedAirborne) typeof(LitBrainsEnemy).GetField("hurtRemaining", fields).SetValue(enemy, 1000f);
+        if (stage == 0)
+        {
+            typeof(SquadCharacterController).GetField("enableIdleSitting", fields).SetValue(actor, false);
+            if (actor.IsInSittingCycle) { actor.TrySetSitting(false); return; }
+            if (!enemy.NavigationReady || !bridge.Grounded) return;
+            enemy.Health.SetHealth(enemy.Health.MaxHp, enemy.Health.MaxHp);
+            typeof(LitBrainsEnemy).GetField("nextDetection", fields).SetValue(enemy, float.PositiveInfinity);
+            manager.BeginExternalEncounter(actor.transform, enemy, startEngaged: false);
+            motionSkill = skill;
+            manager.PlayerSkillImpactApplied += ObserveMotionContact;
+            Next(1); return;
+        }
+        peakPlayer = Mathf.Max(peakPlayer, actor.transform.position.y);
+        peakEnemy = Mathf.Max(peakEnemy, enemy.transform.position.y);
+        if (SessionState.GetBool(MotionVisualKey, false))
+        {
+            if (stage == 2 && enemy.IsChargedAirborne && !capturedMotionLaunch && actor.transform.position.y > playerStart + .2f)
+            { capturedMotionLaunch = true; CaptureMotion("02_launch", arena); }
+            if (stage == 3 && !capturedMotionBasic && Time.time - gameAt > .25f)
+            { capturedMotionBasic = true; CaptureMotion("04_aerial_basic", arena); }
+            if (stage == 3 && !capturedMotionDescent && Time.time - gameAt > skill.airborneHoldSeconds + .05f && !bridge.Grounded)
+            { capturedMotionDescent = true; CaptureMotion("05_descent", arena); }
+        }
+        if (stage == 1)
+        {
+            if (Time.time - gameAt < .3f || !bridge.Grounded) return;
+            var direction = Vector3.ProjectOnPlane(actor.transform.forward, Vector3.up).normalized;
+            bridge.TeleportForSceneTransition(enemy.transform.position - direction * 1.8f + Vector3.up * .02f, Quaternion.LookRotation(direction));
+            bridge.SetActionFacingDirection(direction);
+            Physics.SyncTransforms();
+            playerStart = peakPlayer = actor.transform.position.y;
+            enemyStart = peakEnemy = enemy.transform.position.y;
+            before = enemy.CurrentHealth;
+            if (SessionState.GetBool(MotionVisualKey, false)) CaptureMotion("01_start", arena);
+            motionContacts = 0;
+            if (SessionState.GetBool(MotionSafetyKey, false) && cycles == 0)
+            {
+                float playerTop = actor.transform.position.y;
+                foreach (var collider in bridge.ScriptedMotionColliders) playerTop = Mathf.Max(playerTop, collider.bounds.max.y);
+                float enemyTop = enemy.GetComponent<CapsuleCollider>().bounds.max.y;
+                float bottom = Mathf.Max(playerTop, enemyTop) + .9f;
+                motionCeiling = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                motionCeiling.name = "Charged motion validation ceiling";
+                motionCeiling.transform.position = (actor.transform.position + enemy.transform.position) * .5f;
+                motionCeiling.transform.position = new Vector3(motionCeiling.transform.position.x, bottom + .15f, motionCeiling.transform.position.z);
+                motionCeiling.transform.localScale = new Vector3(8, .3f, 8);
+                ceilingPlayerLimit = bottom - playerTop + .15f;
+                ceilingEnemyLimit = bottom - enemyTop + .15f;
+                Physics.SyncTransforms();
+            }
+            UnityEngine.Object.FindAnyObjectByType<SkillsManager>().SetAnimationEventSkill(skill);
+            Require(manager.TryUseSkill(skill), "Charged motion launch refused.");
+            Next(2); return;
+        }
+        if (SessionState.GetBool(MotionSafetyKey, false))
+        {
+            if (stage == 2)
+            {
+                if (cycles == 1 && enemy.IsChargedAirborne && Time.time - gameAt >= .47f)
+                {
+                    chargeGeneration = action.ActionGeneration;
+                    action.CancelAction();
+                    Require(!action.IsCurrentSession(chargeGeneration), "Interrupted ascent generation remained active.");
+                    Next(4);
+                }
+                else if (cycles == 0 && action.PassiveChargedFloatSkill == skill && !action.IsActionActive)
+                {
+                    Require(peakPlayer - playerStart <= ceilingPlayerLimit && peakEnemy - enemyStart <= ceilingEnemyLimit,
+                        "Charged ascent crossed the low ceiling.");
+                    Next(4);
+                }
+                return;
+            }
+            if (stage != 4 || !bridge.Grounded || enemy.IsChargedAirborne || !enemy.NavigationReady || action.IsActionActive) return;
+            Require(motionContacts == 1 && !bridge.IsExternalLockActive && !bridge.IsInputSuppressedByUcc && Mathf.Approximately(Time.timeScale, 1),
+                "Charged safety case retained a lock or repeated its launch contact.");
+            Debug.Log($"[ChargedSafety] PASS case={cycles} playerRise={peakPlayer - playerStart:F3} enemyRise={peakEnemy - enemyStart:F3} bothGrounded=True navigationReady=True");
+            if (motionCeiling != null) UnityEngine.Object.Destroy(motionCeiling);
+            if (++cycles < 2)
+            {
+                var cooldowns = (System.Collections.Generic.Dictionary<Transform, System.Collections.Generic.Dictionary<SkillSO, float>>)
+                    typeof(RealTimeCombatManager).GetField("skillCooldowns", fields).GetValue(manager);
+                if (cooldowns.TryGetValue(actor.transform, out var actorCooldowns)) actorCooldowns.Remove(skill);
+                Next(1); return;
+            }
+            manager.PlayerSkillImpactApplied -= ObserveMotionContact;
+            Debug.Log("[ChargedSafety] PLAY PASS | low ceiling, natural landing, ascent interruption, unique contacts, input/navigation restored");
+            SessionState.SetBool(MotionSafetyKey, false); SessionState.SetBool(MotionKey, false); SessionState.SetBool(Key, false);
+            EditorApplication.Exit(0);
+            return;
+        }
+        if (stage == 2 && action.PassiveChargedFloatSkill == skill && !action.IsActionActive)
+        {
+            if (SessionState.GetBool(MotionVisualKey, false)) CaptureMotion("03_apex", arena);
+            Require(motionContacts == 1 && before - enemy.CurrentHealth == 10, "Launch contact missing or duplicated.");
+            Require(peakPlayer - playerStart > 2.5f && peakEnemy - enemyStart > 2.5f, "Actors did not reach their launch height.");
+            Require(Mathf.Abs(actor.transform.position.y - enemy.transform.position.y) < .6f, "Actors separated vertically at the apex.");
+            Require(!bridge.IsExternalLockActive && !bridge.IsInputSuppressedByUcc, "Float retained the charged action controls.");
+            var aerial = actor.CharacterData.airBasicSkills[SessionState.GetBool(AirComboKey, false) ? cycles + 1 : 0];
+            airStateSeen = false;
+            motionAerialSkill = aerial;
+            aerialContacts = 0;
+            UnityEngine.Object.FindAnyObjectByType<SkillsManager>().SetAnimationEventSkill(aerial);
+            Require(manager.TryUseSkill(aerial) && action.IsBasicSkillAction, "Aerial Basic could not interrupt the passive float.");
+            Debug.Log($"[ChargedMotion] Apex | playerRise={peakPlayer - playerStart:F3} enemyRise={peakEnemy - enemyStart:F3} contacts={motionContacts} aerialBasic=True");
+            Next(3); return;
+        }
+        if (stage == 3 && SessionState.GetBool(AirComboKey, false))
+        {
+            var animator = actor.GetComponentInChildren<Animator>();
+            string expected = "Base Layer.AirBasicSkill_" + (cycles + 2);
+            airStateSeen |= animator.GetCurrentAnimatorStateInfo(0).IsName(expected) ||
+                animator.GetNextAnimatorStateInfo(0).IsName(expected);
+        }
+        if (stage != 3 || !bridge.Grounded || enemy.IsChargedAirborne || !enemy.NavigationReady || action.IsActionActive) return;
+        if (SessionState.GetBool(AirComboKey, false))
+        {
+            Require(airStateSeen, "New aerial Animator state was not played: " + (cycles + 2));
+            Require(aerialContacts == 1, "Aerial impact missing or repeated: " + (cycles + 2) + " contacts=" + aerialContacts);
+            Require(!bridge.IsExternalLockActive && !bridge.IsInputSuppressedByUcc && motionContacts == 1,
+                "Aerial action retained input resources or duplicated launch damage.");
+            Debug.Log("[AirCombo] PLAY PASS | aerial=" + (cycles + 2) + " | Animator entered; landing and input restored");
+            if (++cycles < 2)
+            {
+                var cooldowns = (System.Collections.Generic.Dictionary<Transform, System.Collections.Generic.Dictionary<SkillSO, float>>)
+                    typeof(RealTimeCombatManager).GetField("skillCooldowns", fields).GetValue(manager);
+                if (cooldowns.TryGetValue(actor.transform, out var actorCooldowns)) actorCooldowns.Remove(skill);
+                Next(1); return;
+            }
+            SessionState.SetBool(AirComboKey, false);
+        }
+        if (SessionState.GetBool(MotionVisualKey, false))
+        {
+            if (motionVisualFinish == 0) { CaptureMotion("06_landing", arena); motionVisualFinish = Time.frameCount + 3; return; }
+            if (Time.frameCount < motionVisualFinish) return;
+        }
+        Require(!bridge.IsExternalLockActive && !bridge.IsScriptedPlanarMotionActive && Mathf.Approximately(Time.timeScale, 1), "Charged landing retained movement/time resources.");
+        Require(motionContacts == 1, "Charged contact repeated after aerial follow-up.");
+        manager.PlayerSkillImpactApplied -= ObserveMotionContact;
+        Debug.Log($"[ChargedMotion] PLAY PASS | impulse arc, paired apex, manual aerial Basic, both grounded, navigation/input restored | landingAfterApex={Time.time - gameAt:F3}");
+        SessionState.SetBool(MotionKey, false); SessionState.SetBool(Key, false);
+        SessionState.SetBool(MotionVisualKey, false);
+        EditorApplication.Exit(0);
+    }
+    private static void ObserveMotionContact(SkillSO skill, int damage)
+    {
+        if (skill == motionSkill) motionContacts++;
+        if (skill == motionAerialSkill) aerialContacts++;
+    }
     private static int stage, before, casts, chargeGeneration;
     private static int cycles;
     private static int orphanHold;
@@ -169,6 +377,8 @@ public static class ChargedSkillPlayValidation
             var input = arena.GetComponent<RealTimeCombatInput>();
             var skill = player.CharacterData.chargedSkill;
             Require(skill != null, "Lab character charged skill missing");
+            if (SessionState.GetBool(MotionKey, false))
+            { TickMotion(arena, manager, action, bridge, skill); return; }
             if (SessionState.GetBool(PreparationArmorKey, false))
             { TickPreparationArmor(arena, manager, input, action, bridge, skill); return; }
             if (stage == 0)

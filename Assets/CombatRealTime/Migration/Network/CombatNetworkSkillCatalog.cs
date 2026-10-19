@@ -97,7 +97,9 @@ namespace Lit.Combat.Migration.Network
             if (skill is ChargedSkillSO charged)
             {
                 if (charged.preparationClip == null || string.IsNullOrWhiteSpace(charged.preparationState) ||
-                    !ValidNonnegative(charged.chargeSeconds, charged.launchHeight, charged.ascentSeconds, charged.airborneHoldSeconds) ||
+                    !ValidNonnegative(charged.chargeSeconds, charged.launchHeight, charged.ascentSeconds, charged.airborneHoldSeconds,
+                        charged.descentInitialSpeed, charged.descentAcceleration, charged.maximumDescentSpeed) ||
+                    charged.descentAcceleration <= 0 || charged.maximumDescentSpeed <= 0 || charged.descentInitialSpeed > charged.maximumDescentSpeed ||
                     charged.chargeSeconds <= 0 || charged.ascentSeconds <= 0 || !TryGetImpactEvent(skill, out _, out diagnostic))
                     return Unsupported("Charge requires its preparation, finite launch/hold and one native contact.", out diagnostic);
                 return CombatNetworkSkillFamily.Charged;

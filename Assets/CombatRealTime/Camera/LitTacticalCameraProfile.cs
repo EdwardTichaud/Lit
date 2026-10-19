@@ -11,6 +11,8 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     public float initialDistance = 10;
     public Vector2 pitchLimits = new Vector2(25, 75);
     public float initialPitch = 50;
+    [Header("Action framing (opt-in)")]
+    public LitTacticalActionFraming actionFraming = new LitTacticalActionFraming();
     [Header("Damping (seconds)")]
     [Min(.001f)] public float followTime = .16f;
     [Min(.001f)] public float panTime = .10f;

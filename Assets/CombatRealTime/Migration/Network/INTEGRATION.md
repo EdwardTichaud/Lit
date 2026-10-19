@@ -1,6 +1,22 @@
 # Migration Network Integration
 
-## 2026-10-17 Execution Delta And Release Limits
+## 2026-10-19 Validated Feel Parity
+
+BasicTail now uses the authoritative external Basic session, not a separate held
+preparation state. Its presentation snapshot contains authority epoch, action
+generation, skill and observed normalized phase; only the owner frames its camera.
+Release restores the same Basic cadence and a validated continuation cleans the
+outgoing generation without requesting an intermediate locomotion handoff.
+Burst dash motion and retreat landing braking use captured server-world settings
+in the existing UCC presentation/motor. Confirmed dash points are transported to
+contact VFX; confirmed skill/generation select the single existing contact sound.
+Torso recoil remains cosmetic, guarded by the target's current state.
+
+The combined implementation described in AIAgent/Codex/combat_migration_report.md
+supersedes the admission-only limitations below. This is not a real host/client,
+late-observer, latency or four-player acceptance receipt.
+
+## Historical 2026-10-17 Execution Delta Before Combined Delivery
 
 The actor executor additionally implements aerial Basic admission, Sommation,
 Juste Retour, Pas de recul, targeted/free contact dashes, ordinary native-event

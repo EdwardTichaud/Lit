@@ -12,11 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1216f4be9cc9449aac949c16152d9656, type: 3}
   m_Name: CombatLab_ClashEnemyProfile
   m_EditorClassIdentifier: Assembly-CSharp::LitBrainsCombatProfile
+  locomotionState: Locomotion
+  hurtState: Hurt
+  knockoutState: Knocked Out
+  deathState: Base Layer.Death
+  hurtBlendSeconds: 0.04
+  productionSourceProfile: {fileID: 0}
+  executeProductionPatterns: 0
+  idleState: Locomotion
+  guardState: Guard
   attackStartDistance: 3.6
   approachStopDistance: 1.7
   initialAttackDelay: 0.2
   attackFacingDegrees: 55
-  turnDegreesPerSecond: 540
+  turnDegreesPerSecond: 1080
   attackInterval: {x: 1.5, y: 1.9}
   resistance: 100
   resistanceRecoveryDelay: 1
@@ -31,7 +40,7 @@ MonoBehaviour:
     strikeSeconds: 0.46666667
     impactSeconds: 0.56666666
     recoverySeconds: 0.73333335
-    recoveryDurationSeconds: 0.2
+    recoveryDurationSeconds: 1.0500001
     visualHandoff:
       validated: 0
       sourceExitWindow: {x: 0.4, y: 1}
@@ -51,7 +60,7 @@ MonoBehaviour:
     strikeSeconds: 0.56666666
     impactSeconds: 0.7
     recoverySeconds: 0.9
-    recoveryDurationSeconds: 0.2
+    recoveryDurationSeconds: 0.98492086
     visualHandoff:
       validated: 0
       sourceExitWindow: {x: 0.43199995, y: 1}
@@ -71,7 +80,7 @@ MonoBehaviour:
     strikeSeconds: 0.5
     impactSeconds: 0.6
     recoverySeconds: 0.76666665
-    recoveryDurationSeconds: 0.2
+    recoveryDurationSeconds: 1.0166668
     visualHandoff:
       validated: 0
       sourceExitWindow: {x: 0.4181818, y: 1}

@@ -1,5 +1,81 @@
 # Production Combat Migration Audit
 
+## Shared Controls And Save Continuity (2026-10-19)
+
+The remaining arena control overrides now live in authored shared owners:
+PlayerSettings and enemy profiles for rotation, CombatWorldRuntime for free
+attacks and the world cursor at +3 Y, existing mobility/reaction components for
+their validated values. The arena no longer overrides these at runtime.
+The two-phase authoring install is idempotent (6ac70eb06a8f447982566ddf9fb84be5).
+Eleven scoped authoring files are delivered with pre-write hash guards, backups
+and unchanged metadata. Twenty-six current source files match the isolated copy.
+
+The real save/menu/reload recipe exposed and repaired four integration defects:
+last-scene additive unload hung menu return; player HP was absent from save JSON;
+solo actors inherited a null prefab GlobalObjectId and could be spawned again
+after snapshot reconstruction; the marker provider required an empty nested
+SceneMarker when installed on a baked actor. JSON version 9 adds optional health,
+old saves retain their previous initialization, and only server/offline code
+restores it. Solo spawn uses the existing runtime identity contract, squad
+adopts the exact reconstructed actor, and marker capture/apply resolves its real
+owner even before Awake on an inactive actor. No identity or marker replacement.
+
+Final scoped regression: 451 passed / 0 failed / 1 Explicit not executed. Rendered
+recipe 66701034d42a44f5b225c5bc644f902f passes Bootstrap -> all District 1 scenes ->
+Basic -> save -> menu -> actual reload: one Lucian, saved HP 993 instead of the
+unsaved full value, valid snapshot identities, unchanged recruitment/unlocks,
+fixture-defeated enemy still dead under its original marker, navigation Ready.
+Native cursor disable/destruction cleanup also passes. This is a persistence
+fixture, not a played combat victory, complete zone coverage or real host/client
+proof. Failed attempts remain separate. No owned validation Editor remains.
+Evidence: Library/ProductionCombatMigration/Controls and Logs/CombatControls*.log.
+ReadyForProduction remains false; full zones/encounters, other save cases,
+Domain Reload repetitions and real multiplayer acceptance remain required.
+
+## Validated Laboratory Feel Integration (2026-10-19, in progress)
+
+The common authoring migration now includes the latest approved BasicTail/Impulse
+charge, three aerial Basics, captured world Burst/retreat braking settings and
+contact presentation. Ascension's canonical GUID is preserved rather than
+replacing the production skill with its laboratory copy. A dedicated production
+camera profile inherits existing exploration settings and only copies validated
+action framing. No laboratory lighting or fixture enemy replaces world authoring.
+
+Network execution now shares BasicTail's actual external Basic session, with
+authority epoch/generation presentation state, owner-only charge camera and
+server-observed hold. Burst and landing braking are supplied from the server's
+world profile; confirmed dash contact points and action identities reach cosmetic
+feedback. This code integration is not real host/client acceptance.
+
+Isolated authoring installs remain idempotent. The first combined regression was
+413 passed / 2 failed / 1 skipped: both failures asserted the former lab-only
+configuration. Tests now require the promoted configuration, canonical identity,
+unchanged defaults and retained installation idempotence. The next run passed
+415 / 0 / 1. Final four-roster regression passes 418 / 0 / 1 (one Explicit test
+not executed). Final authoring run 9a5d899bf77549a28638ede88a9d3125 is idempotent.
+Ten generated asset/metadata files are delivered to the main project with SHA-256
+verification, pre-write source guards and retained backups (delivery.json).
+The current source Bootstrap scene was synchronized before the rendered smoke.
+That smoke exposed a genuine missing authoring reference: zoneManifests was empty,
+so a normal District 1 start loaded Core alone and failed navigation. The existing
+migration now explicitly registers the existing District 1 manifest in Bootstrap,
+preserving other registrations and refusing dirty scenes. The corrected scene is
+delivered as an eleventh file, with backup/hash guard and unchanged metadata.
+The new rendered smoke passes: all 21 additives plus Core, pre-baked navigation
+Ready (2/2 anchors, 6646 vertices), one solo Lucian and common combat world, no
+laboratory arena, actual Basic completion/control restoration and snapshot disk
+write/read in a Library-only slot. This does not prove a real save reload, a zone
+playthrough or manual production feel. Both the refused and passed recipes are
+retained. Final regression including runtime zone resolution passes 419 / 0 / 1
+(the same Explicit read-only full-inventory test was not executed). Seventeen
+script hashes and all eleven delivered asset/metadata hashes match the isolated
+validation. No validation Editor remains running.
+Evidence: Logs/CombatProduction*.log and Library/ProductionCombatMigration/CombatFeel.
+The two control gaps found at this stage (runtime-only ConfigureTurnRates and
+world cursor prefab/+3 Y) are resolved by the continuation documented above.
+Full zone/encounter, save and multiplayer qualification remains open. No prior
+test totals or installation receipt establish ReadyForProduction for these sources.
+
 ## Implementation continuation, sources combined (2026-10-17)
 
 The remaining implementation is now connected rather than represented only by

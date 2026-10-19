@@ -88,7 +88,7 @@ MonoBehaviour:
     enabled: 1
     useHitStop: 1
     hitStopTimeScale: 0.2
-    hitStopSeconds: 0.025
+    hitStopSeconds: 0.04
     camera:
       lookOffsetKick: {x: 0, y: 0.01, z: 0.08}
       fieldOfViewKick: -0.4

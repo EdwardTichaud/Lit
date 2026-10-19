@@ -26,11 +26,7 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     public BasicSkillsSO[] basicSkills;
     public SkillSO[] additionalCombatSkills;
     public SkillSO[] enemyAttackSkills;
-    [Header("Free attacks (laboratory only)")]
-    public FreeAttackProfile freeAttacks = new FreeAttackProfile();
     public Camera arenaCamera;
-    public GameObject lockCursorPrefab;
-    public Vector3 lockCursorOffset = new Vector3(0, 3, 0);
     [Tooltip("Aim Lucian's combat torso without rotating the authored hips/feet or the physical motor.")]
     public bool alignPlayerCombatTorso = true;
     [Header("Encounter tuning (test only)")]
@@ -41,12 +37,6 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
         enemyAttackSkills != null && enemyAttackSkills.Length > 0 && enemyAttackSkills[0] != null ? enemyAttackSkills[0].Damages : 0f);
     public string hurtState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
     public bool showCombatDiagnostics;
-    [Header("Rotation tuning (test only, degrees/second)")]
-    [Min(1f)] public float playerWalkTurnRate = 720f;
-    [Min(1f)] public float playerSprintTurnRate = 1080f;
-    [Min(1f)] public float playerSharpTurnRate = 1440f;
-    [Min(1f)] public float playerCombatFacingRate = 1440f;
-    [Min(1f)] public float enemyTurnRate = 1080f;
     public SquadCharacterController Player { get; private set; }
     public LitBrainsEnemy Enemy { get; private set; }
     public bool EncounterOver => Player != null && Player.CurrentHp <= 0 || Enemy != null && Enemy.IsDead;
@@ -165,7 +155,6 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
             playerObject.SetActive(false); Destroy(playerObject); enabled = false; return;
         }
         Player.BindCharacterData(info.SourceData, initializeInventory: false);
-        bridge.ConfigureTurnRates(playerWalkTurnRate, playerSprintTurnRate, playerSharpTurnRate, playerCombatFacingRate);
         Player.SetHealth(playerMaxHealth, playerMaxHealth);
         Player.ApplyFlameState(Player.FlameSecondsRemaining, false);
         // This laboratory owns input; no session or network player is launched.
@@ -193,27 +182,14 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
         {
             var clashProfile = GetComponent<CombatLabClashController>()?.labEnemyProfile;
             runtimeEnemyProfile = Instantiate(clashProfile != null ? clashProfile : Enemy.combatProfile);
-            runtimeEnemyProfile.turnDegreesPerSecond = Mathf.Max(1f, enemyTurnRate);
             Enemy.combatProfile = runtimeEnemyProfile;
-        }
-        if (lockCursorPrefab != null)
-        {
-            var indicator = Enemy.GetComponent<CombatLockIndicator>();
-            if (indicator == null) indicator = Enemy.gameObject.AddComponent<CombatLockIndicator>();
-            indicator.ConfigureWorldCursor(lockCursorPrefab, lockCursorOffset);
         }
         Enemy.detectionTargetOverride = playerObject.transform;
         enemyAnimator = Enemy.GetComponent<Animator>();
         LastContact = "Approchez-vous de Juggernaut";
-        combat.ConfigureFreeAttacks(freeAttacks, arenaCamera);
         combat.BeginExternalEncounter(Player.transform, Enemy, startEngaged: !combat.AllowsFreeAttacks);
         GetComponent<CombatWorldRuntime>()?.RefreshEnemies();
         GetComponent<CombatLabClashController>()?.Bind(this, combat);
-        if (Enemy.combatProfile != null)
-        {
-            mobility.SetInputBufferSeconds(.15f);
-            GetComponent<CombatHealthThresholdController>()?.ConfigureExternalReactionPresentation();
-        }
         skills.ResetAllBasicSkillCombos();
         skills.SetAdditionalCombatSkills(IsSpecialCharacter ? null : additionalCombatSkills);
         skills.RefreshSkills(true);

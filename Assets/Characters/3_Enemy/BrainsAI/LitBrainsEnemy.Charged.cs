@@ -11,10 +11,13 @@ public partial class LitBrainsEnemy : ICombatChargedTarget
     private bool chargedLandingAttachment;
     private Rigidbody chargedBody;
     private CapsuleCollider chargedCapsule;
-    private float chargedRiseRemaining, chargedRiseSpeed, chargedHoldRemaining, chargedFallSpeed;
+    private float chargedRiseRemaining, chargedHoldRemaining;
     private float chargedConfirmedGroundY;
     private bool chargedLandingReported;
     private string chargedFloatState;
+    private ChargedSkillSO chargedMotionSkill;
+    private float chargedFallElapsed;
+    private float chargedFallSpeed;
     public bool IsChargedAirborne => chargedAirborne;
     public bool CanReceiveChargedLaunch => HasSimulationAuthority && EncounterAllowsDamage && isActiveAndEnabled && !dead && !cinematicSuspended && !chargedAirborne &&
         agent != null && (ProductionMotionActive ? CanLaunchGroundedProductionAction() :
@@ -41,10 +44,11 @@ public partial class LitBrainsEnemy : ICombatChargedTarget
         navigationReady = false;
         chargedAirborne = true;
         chargedRiseRemaining = skill.ascentSeconds;
-        chargedRiseSpeed = skill.launchHeight / Mathf.Max(.1f, skill.ascentSeconds);
+        chargedMotionSkill = skill;
+        chargedFallElapsed = 0;
+        chargedFallSpeed = 0;
         // Missing second event cannot leave a target suspended indefinitely.
         chargedHoldRemaining = Mathf.Min(8f, Mathf.Max(skill.AnimationClip.length, skill.ascentSeconds) + skill.airborneHoldSeconds);
-        chargedFallSpeed = 0;
         chargedConfirmedGroundY = transform.position.y;
         chargedLandingReported = false;
         chargedFloatState = skill.enemyFloatState;
@@ -80,13 +84,19 @@ public partial class LitBrainsEnemy : ICombatChargedTarget
         float step;
         if (rising)
         {
-            step = chargedRiseSpeed * Mathf.Min(dt, chargedRiseRemaining);
+            float elapsed = chargedMotionSkill.ascentSeconds - chargedRiseRemaining;
+            step = chargedMotionSkill.EvaluateAscentHeight(elapsed + dt) - chargedMotionSkill.EvaluateAscentHeight(elapsed);
             chargedRiseRemaining = Mathf.Max(0, chargedRiseRemaining - dt);
         }
         else if (!dead && chargedHoldRemaining > 0)
         { chargedHoldRemaining = Mathf.Max(0, chargedHoldRemaining - dt); return; }
         else
-        { chargedFallSpeed += 20f * dt; step = -chargedFallSpeed * dt; }
+        {
+            if (chargedMotionSkill.launchTrajectory == ChargedLaunchTrajectory.Impulse)
+                step = -(chargedMotionSkill.EvaluateDescentDistance(chargedFallElapsed + dt) - chargedMotionSkill.EvaluateDescentDistance(chargedFallElapsed));
+            else { chargedFallSpeed += 20f * dt; step = -chargedFallSpeed * dt; }
+            chargedFallElapsed += dt;
+        }
         Vector3 direction = step >= 0 ? Vector3.up : Vector3.down;
         float allowed = Mathf.Abs(step);
         bool collided = false;
@@ -116,7 +126,7 @@ public partial class LitBrainsEnemy : ICombatChargedTarget
     {
         chargedLandingAttachment = true;
         chargedAirborne = false;
-        chargedRiseRemaining = chargedHoldRemaining = chargedFallSpeed = 0;
+        chargedRiseRemaining = chargedHoldRemaining = 0;
         StopControlConditions["LitBrainsEnemy.Charged"] = false;
         anim.SetBool("Grounded", true);
         if (dead || cinematicSuspended) return;
@@ -136,7 +146,7 @@ public partial class LitBrainsEnemy : ICombatChargedTarget
     private void ClearChargedReaction()
     {
         chargedAirborne = false;
-        chargedRiseRemaining = chargedHoldRemaining = chargedFallSpeed = 0;
+        chargedRiseRemaining = chargedHoldRemaining = 0;
         StopControlConditions["LitBrainsEnemy.Charged"] = false;
     }
 

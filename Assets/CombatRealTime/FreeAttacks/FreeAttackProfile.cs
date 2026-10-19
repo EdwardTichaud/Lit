@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+public enum ContactDashMotion { Approach, Burst }
+
 /// <summary>Explicit session configuration shared by gameplay and standalone laboratories.</summary>
 [Serializable]
 public sealed class FreeAttackProfile
@@ -11,6 +13,9 @@ public sealed class FreeAttackProfile
     [Range(0, 90)] public float maximumCorrection = 25f;
     [Min(1)] public float turnDegreesPerSecond = 1440f;
     [Min(0)] public float freeDashDistance = 10f;
+    public ContactDashMotion contactDashMotion;
+    [Min(0), Tooltip("Freinage de l'elan de recul apres atterrissage, pendant sa session. 0 conserve le comportement existant.")]
+    public float retreatLandingDeceleration;
     public Vector3 contactCenter = new Vector3(0, 1f, 1.15f);
     [Min(.01f)] public float contactRadius = 1.05f;
     [Min(0)] public float heightTolerance = 1.8f;

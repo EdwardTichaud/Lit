@@ -135,6 +135,7 @@ public static class ProductionCombatMigration
     public const string ReportDirectory = "Library/ProductionCombatMigration";
     private const string CatalogPath = "Assets/Resources/CombatSkillKits/Default.asset";
     public const string ControllerDirectory = "Assets/CombatRealTime/Migration/Controllers";
+    public const string CameraProfilePath = "Assets/CombatRealTime/Migration/GameplayCombatCamera.asset";
     private static readonly string[] Roster = { "Lucian", "Vesta", "Soren", "Aurell" };
     private static readonly string[] Services = {
         "RealTimeCombatManager", "RealTimeCombatInput", "CombatMobilityController", "SkillsManager",
@@ -266,15 +267,33 @@ public static class ProductionCombatMigration
             var arenas = lab.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<LucianBrainsCombatArena>(true)).ToArray();
             if (arenas.Length != 1) throw new InvalidOperationException("Expected exactly one LucianBrainsCombatArena.");
             var arena = arenas[0];
+            bool hasRetiredOverrides = File.ReadLines(LabPath).Any(line => line.StartsWith("  playerWalkTurnRate:", StringComparison.Ordinal));
+            if (hasRetiredOverrides)
+            {
+                var reactions = arena.GetComponent<CombatHealthThresholdController>();
+                Require(reactions, "Authored laboratory reactions");
+                var serialized = new SerializedObject(reactions);
+                var field = Property(serialized, "externalSuccessSlowMotion");
+                if (!field.boolValue && pass.Change(LabPath, "Promote the former arena reaction feedback flag to its authored controller"))
+                {
+                    field.boolValue = true;
+                    serialized.ApplyModifiedPropertiesWithoutUndo();
+                    EditorSceneManager.MarkSceneDirty(lab);
+                }
+            }
             if (!authoringOnly) Inventory(pass);
             ValidateSources(arena);
+            MigrateBootstrapManifest(pass);
             MigrateSession(pass, arena);
             MigrateRoster(pass, arena);
+            MigrateEnemyRotations(pass, arena);
+            MigrateContactPresentation(pass, arena);
             MigrateEnemyProfiles(pass, arena);
             MigrateClashFixtures(pass, arena);
             int changes = pass.report.entries.Count;
             ConfigureWorld(pass, arena.gameObject, arena.arenaCamera, arena, LabPath);
-            if (apply && pass.report.entries.Count != changes)
+            if (hasRetiredOverrides) pass.Change(LabPath, "Re-serialize arena after promoting retired control overrides to common authoring");
+            if (apply && (lab.isDirty || pass.report.entries.Count != changes))
             {
                 EditorSceneManager.MarkSceneDirty(lab);
                 if (!EditorSceneManager.SaveScene(lab)) throw new IOException("Could not save " + LabPath);
@@ -327,7 +346,9 @@ public static class ProductionCombatMigration
         if (typeof(LitBrainsAttackProfile).GetField("skill")?.FieldType != typeof(SkillSO))
             throw new InvalidOperationException("Parent API required: LitBrainsAttackProfile.public SkillSO skill.");
         Require(arena.arenaCamera, "Lab arenaCamera");
-        if (arena.freeAttacks == null) throw new InvalidOperationException("Lab freeAttacks missing.");
+        var labWorld = arena.GetComponent<CombatWorldRuntime>();
+        if (labWorld == null || labWorld.freeAttacks == null || labWorld.lockCursorPrefab == null)
+            throw new InvalidOperationException("Lab common world settings are missing; promote the authored control configuration before migration.");
         if (arena.basicSkills == null || arena.basicSkills.Length != 3 || arena.basicSkills.Any(skill => skill == null))
             throw new InvalidOperationException("Expected the three exact lab ground BasicSkills.");
         var catalog = Load<CombatSkillKitCatalog>(CatalogPath);
@@ -350,6 +371,33 @@ public static class ProductionCombatMigration
             throw new InvalidOperationException("Expected three authored lab enemyAttackSkills.");
     }
 
+    private static void MigrateBootstrapManifest(Pass pass)
+    {
+        const string path = "Assets/Scenes/Bootstrap.unity";
+        var scene = SceneManager.GetSceneByPath(path);
+        bool opened = !scene.IsValid() || !scene.isLoaded;
+        try
+        {
+            if (!opened && scene.isDirty) throw new InvalidOperationException("Save the dirty Bootstrap scene before migration.");
+            if (opened) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+            var flows = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<GameFlowService>(true)).ToArray();
+            if (flows.Length != 1) throw new InvalidOperationException("Bootstrap requires one authored GameFlowService.");
+            var district = Load<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset");
+            if (!district.IsValid) throw new InvalidOperationException("District 1 manifest is invalid.");
+            var zones = Property(new SerializedObject(flows[0]), "zoneManifests");
+            var references = Enumerable.Range(0, zones.arraySize).Select(i => zones.GetArrayElementAtIndex(i).objectReferenceValue).ToList();
+            if (references.Contains(district)) return;
+            references.Add(district);
+            References(pass, flows[0], "zoneManifests", references.ToArray(), path);
+            if (pass.apply)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save " + path);
+            }
+        }
+        finally { if (opened && scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true); }
+    }
+
     private static void MigrateSession(Pass pass, LucianBrainsCombatArena arena)
     {
         EditPrefab(pass, SessionPath, root =>
@@ -360,7 +408,37 @@ public static class ProductionCombatMigration
             var camera = cameraMode != null ? cameraMode.GetComponent<Camera>() : null;
             Require(camera, "Production gameplay camera");
             ConfigureWorld(pass, battle[0].gameObject, camera, arena, SessionPath);
+            ConfigureActionCamera(pass, cameraMode, arena, SessionPath);
         });
+    }
+
+    private static void ConfigureActionCamera(Pass pass, LitGameplayCameraModeController cameraMode, LucianBrainsCombatArena arena, string path)
+    {
+        var labMode = arena.arenaCamera.GetComponent<LitGameplayCameraModeController>();
+        Require(labMode, "Lab camera mode");
+        var source = Property(new SerializedObject(labMode), "profile").objectReferenceValue as LitTacticalCameraProfile;
+        var current = Property(new SerializedObject(cameraMode), "profile").objectReferenceValue as LitTacticalCameraProfile;
+        Require(source, "Lab camera profile");
+        Require(current, "Production exploration camera profile");
+        var profile = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>(CameraProfilePath);
+        if (profile == null)
+        {
+            if (AssetDatabase.LoadMainAssetAtPath(CameraProfilePath) != null)
+                throw new InvalidOperationException("Refusing to replace non-camera asset: " + CameraProfilePath);
+            if (pass.Change(CameraProfilePath, "Preserve exploration settings; add validated action framing"))
+            {
+                if (!AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(current), CameraProfilePath))
+                    throw new IOException("Cannot copy exploration camera profile.");
+                profile = Load<LitTacticalCameraProfile>(CameraProfilePath);
+            }
+        }
+        if (profile != null)
+        {
+            Copy(pass, profile, source, "actionFraming", CameraProfilePath);
+            if (pass.apply) AssetDatabase.SaveAssetIfDirty(profile);
+            Reference(pass, cameraMode, "profile", profile, path);
+        }
+        else pass.Change(path, "Camera profile -> " + CameraProfilePath);
     }
 
     private static void ConfigureWorld(Pass pass, GameObject host, Camera camera, LucianBrainsCombatArena arena, string path)
@@ -369,10 +447,12 @@ public static class ProductionCombatMigration
         var world = Get(host, "CombatWorldRuntime");
         if (world != null)
         {
-            Copy(pass, world, arena, "freeAttacks", path);
+            var sourceWorld = arena.GetComponent<CombatWorldRuntime>();
+            foreach (string field in new[] { "freeAttacks", "lockCursorPrefab", "lockCursorOffset" })
+                Copy(pass, world, sourceWorld, field, path);
             Reference(pass, world, "gameplayCamera", camera, path);
         }
-        else pass.Note("binding", path, "New CombatWorldRuntime receives arena.freeAttacks and local gameplayCamera on apply.");
+        else pass.Note("binding", path, "New CombatWorldRuntime receives the laboratory's common world configuration and local gameplayCamera on apply.");
         var manager = Get(host, "RealTimeCombatManager");
         var input = Get(host, "RealTimeCombatInput");
         var mobility = Get(host, "CombatMobilityController");
@@ -391,7 +471,15 @@ public static class ProductionCombatMigration
             Reference(pass, manager, "combatSkillCinematicController", Get(host, "CombatSkillCinematicController"), path);
             Reference(pass, manager, "combatHealthThresholdController", Get(host, "CombatHealthThresholdController"), path);
         }
-        if (mobility != null) Reference(pass, mobility, "combatInput", input, path);
+        if (mobility != null)
+        {
+            Reference(pass, mobility, "combatInput", input, path);
+            Copy(pass, mobility, arena.GetComponent<CombatMobilityController>(), "mobilityInputBufferSeconds", path);
+        }
+        var threshold = Get(host, "CombatHealthThresholdController");
+        if (threshold != null)
+            foreach (string field in new[] { "dodgeWindowSeconds", "counterWindowSeconds", "counterRetryDelaySeconds", "reactionTimeScale", "externalSuccessSlowMotion" })
+                Copy(pass, threshold, arena.GetComponent<CombatHealthThresholdController>(), field, path);
         var counter = Get(host, "CounterSkillCombatController");
         var labCounter = arena.GetComponent<CounterSkillCombatController>();
         Require(labCounter, "Lab counter controller");
@@ -460,9 +548,18 @@ public static class ProductionCombatMigration
             var source = sourcePrefab.GetComponent<CharacterInfo>().SourceData;
             var controller = ConfigureController(pass, arena, sourcePrefab, name);
             int count = pass.report.entries.Count;
+            foreach (string field in new[] { "orientationWalkTurnRate", "orientationSprintTurnRate", "orientationSharpTurnRate",
+                "combatFacingSpeedDegreesPerSecond", "rateLimitedCombatFacing" })
+                Copy(pass, target, source, "playerSettings.locomotion." + field, path);
             References(pass, target, "groundBasicSkills", arena.basicSkills.Cast<Object>().ToArray(), path);
             Copy(pass, target, source, "airBasicSkills", path);
-            Copy(pass, target, source, "chargedSkill", path);
+            if (name == "Lucian" && source.chargedSkill != null)
+            {
+                var charged = Load<ChargedSkillSO>(ChargedSkillSetup.SourceSkillPath);
+                CopyAuthoredFields(pass, charged, source.chargedSkill, ChargedSkillSetup.SourceSkillPath);
+                Reference(pass, target, "chargedSkill", charged, path);
+            }
+            else Copy(pass, target, source, "chargedSkill", path);
             var kit = (CombatSkillKit)Enum.Parse(typeof(CombatSkillKit), name);
             References(pass, target, "combatSkills", catalog.GetSkills(kit).Cast<Object>().ToArray(), path);
             if (pass.apply && pass.report.entries.Skip(count).Any(entry => entry.category == "change")) AssetDatabase.SaveAssetIfDirty(target);
@@ -492,10 +589,57 @@ public static class ProductionCombatMigration
                 Reference(pass, Get(root, "SquadCharacterController"), "characterData", target, prefabPath);
                 var presentation = Get(root, "PlayerActionPresentationController");
                 if (presentation != null) Reference(pass, presentation, "animator", animator, prefabPath);
+                var sourceAudio = sourcePrefab.GetComponent<CombatContactAudio>() ?? arena.lucianPrefab.GetComponent<CombatContactAudio>();
+                if (sourceAudio != null)
+                {
+                    Ensure(pass, root, nameof(CombatContactAudio), prefabPath);
+                    var audio = root.GetComponent<CombatContactAudio>();
+                    if (audio != null)
+                        foreach (string field in new[] { "lightPitch", "heavyPitch", "lightDamage", "heavyDamage" })
+                            Copy(pass, audio, sourceAudio, field, prefabPath);
+                }
             });
             pass.Note("source", path, "Identity/worldPrefab/stats/inventory preserved; combat source=" + AssetDatabase.GetAssetPath(source) +
                 "; controller=" + AssetDatabase.GetAssetPath(sourcePrefab.GetComponent<Animator>().runtimeAnimatorController));
         }
+    }
+
+    private static void MigrateEnemyRotations(Pass pass, LucianBrainsCombatArena arena)
+    {
+        var data = Load<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        Require(data.enemyCombatProfile, "Production Juggernaut pattern profile");
+        var source = arena.GetComponent<CombatLabClashController>()?.labEnemyProfile ?? arena.enemyPrefab.GetComponent<LitBrainsEnemy>()?.combatProfile;
+        Require(source, "Authored Juggernaut rotation profile");
+        SetNumber(pass, data.enemyCombatProfile, "trackingDegreesPerSecond", source.turnDegreesPerSecond, AssetDatabase.GetAssetPath(data.enemyCombatProfile));
+        var production = data.ResolveWorldPrefab().GetComponent<LitBrainsEnemy>()?.combatProfile;
+        if (production != null)
+            SetNumber(pass, production, "turnDegreesPerSecond", source.turnDegreesPerSecond, AssetDatabase.GetAssetPath(production));
+    }
+
+    private static void MigrateContactPresentation(Pass pass, LucianBrainsCombatArena arena)
+    {
+        var source = arena.enemyPrefab.GetComponent<CombatContactPose>();
+        if (source == null) return;
+        var data = Load<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        string path = AssetDatabase.GetAssetPath(data.ResolveWorldPrefab());
+        // First-time conversion is owned by the existing enemy migration, not this cosmetic pass.
+        if (data.ResolveWorldPrefab().GetComponent<LitBrainsEnemy>() == null) return;
+        EditPrefab(pass, path, root =>
+        {
+            var animator = root.GetComponent<Animator>();
+            if (animator == null || animator.avatar == null || !animator.avatar.isHuman)
+                throw new InvalidOperationException("Contact pose requires a reviewed humanoid actor: " + path);
+            var spine = animator.GetBoneTransform(HumanBodyBones.Spine);
+            var chest = animator.GetBoneTransform(HumanBodyBones.Chest);
+            if (spine == null || chest == null || root.GetComponentsInChildren<Collider>(true).Any(c =>
+                c.transform == spine || c.transform.IsChildOf(spine) || c.transform == chest || c.transform.IsChildOf(chest)))
+                throw new InvalidOperationException("Review gameplay colliders before adding cosmetic torso response: " + path);
+            Ensure(pass, root, nameof(CombatContactPose), path);
+            var pose = root.GetComponent<CombatContactPose>();
+            if (pose != null)
+                foreach (string field in new[] { "lightAngle", "heavyAngle", "duration", "committedAttackWeight" })
+                    Copy(pass, pose, source, field, path);
+        });
     }
 
     private static RuntimeAnimatorController ConfigureController(Pass pass, LucianBrainsCombatArena arena, GameObject source, string name)
@@ -728,6 +872,17 @@ public static class ProductionCombatMigration
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
+    private static void SetNumber(Pass pass, Object target, string field, float value, string path)
+    {
+        if (!float.IsFinite(value) || value < 1) throw new InvalidOperationException("Invalid authored rotation: " + field);
+        var serialized = new SerializedObject(target);
+        var property = Property(serialized, field);
+        if (property.floatValue == value || !pass.Change(path, target.name + "." + field + " -> " + value)) return;
+        property.floatValue = value;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        AssetDatabase.SaveAssetIfDirty(target);
+    }
+
     private static void Copy(Pass pass, Object target, Object source, string field, string path)
     {
         var from = new SerializedObject(source);
@@ -737,6 +892,21 @@ public static class ProductionCombatMigration
         if (!pass.Change(path, target.GetType().Name + "." + field + " <- " + source.name)) return;
         to.CopyFromSerializedProperty(sourceProperty);
         to.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void CopyAuthoredFields(Pass pass, ScriptableObject target, ScriptableObject source, string path)
+    {
+        if (source.GetType() != target.GetType()) throw new InvalidOperationException("Incompatible skill types: " + path);
+        int changes = pass.report.entries.Count;
+        var iterator = new SerializedObject(source).GetIterator();
+        bool enterChildren = true;
+        while (iterator.Next(enterChildren))
+        {
+            enterChildren = false;
+            if (!iterator.propertyPath.StartsWith("m_", StringComparison.Ordinal))
+                Copy(pass, target, source, iterator.propertyPath, path);
+        }
+        if (pass.apply && pass.report.entries.Count != changes) AssetDatabase.SaveAssetIfDirty(target);
     }
 
     private static SerializedProperty Property(SerializedObject target, string field) => target.FindProperty(field) ??

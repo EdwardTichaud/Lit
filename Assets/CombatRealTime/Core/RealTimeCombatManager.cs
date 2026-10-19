@@ -432,7 +432,7 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         // action presentation. Leaving that action alive makes exploration
         // interactables (ladders, ghosts, etc.) reject their next use.
         ResolvePlayerReferences();
-        externalTarget?.SetCinematicSuspended(false);
+        if (SkillTargetingContract.Exists(externalTarget)) externalTarget.SetCinematicSuspended(false);
         externalTarget = null; externalTargetLocked = false; worldLockedTarget = null;
         RefreshExternalLockIndicator();
         combatActive = false;
@@ -440,7 +440,8 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         if (!preserveCurrentAction) playerMobility?.CancelCombatState();
         foreach (var target in worldThreats.Values)
         {
-            var enemy = target?.Root != null ? target.Root.GetComponent<EnemyController>() : null;
+            if (!SkillTargetingContract.Exists(target)) continue;
+            var enemy = target.Root.GetComponent<EnemyController>();
             if (enemy != null) { enemy.EndBattleWall(); SetEnemyAttackMode(enemy, false); }
         }
         worldThreats.Clear();

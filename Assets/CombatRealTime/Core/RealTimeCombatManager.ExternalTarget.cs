@@ -10,13 +10,18 @@ public sealed partial class RealTimeCombatManager
 
     private void RefreshExternalLockIndicator()
     {
-        if (externalLockIndicator != null) externalLockIndicator.SetLocked(false, false);
-        externalLockIndicator = null;
         var target = LockedCombatTarget;
-        if (!SkillTargetingContract.Alive(target)) return;
-        externalLockIndicator = target.Root.GetComponent<CombatLockIndicator>();
-        if (externalLockIndicator == null)
-            externalLockIndicator = target.Root.gameObject.AddComponent<CombatLockIndicator>();
+        CombatLockIndicator next = null;
+        if (SkillTargetingContract.Alive(target))
+        {
+            next = target.Root.GetComponent<CombatLockIndicator>();
+            if (next == null) next = target.Root.gameObject.AddComponent<CombatLockIndicator>();
+        }
+        if (externalLockIndicator != null && externalLockIndicator != next)
+            externalLockIndicator.SetLocked(false, false);
+        externalLockIndicator = next;
+        if (externalLockIndicator == null) return;
+        GetComponent<CombatWorldRuntime>()?.ConfigureLockIndicator(externalLockIndicator);
         externalLockIndicator.SetLocked(true, false);
     }
     public bool UsesExternalTarget => externalTarget != null || worldLockedTarget != null;

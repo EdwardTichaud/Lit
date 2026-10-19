@@ -22,6 +22,29 @@ Emplacement canonique : `Assets/Persistence/Save/`.
 
 ## Flux principaux
 
+Version 9 du JSON personnage : healthInitialized/currentHp conservent les PV du
+joueur. A la capture, le controller actif est prioritaire ; un personnage non
+instancie conserve son payload charge precedent. Au chargement solo, les PV sont
+restaures apres BindCharacterData. Au spawn reseau, seul le serveur les restaure,
+apres l'identite du NetworkObject. Le maximum reste celui de l'acteur, les PV
+sont bornes et zero reste zero. Un ancien JSON sans healthInitialized garde
+l'initialisation historique, sans etre interprete comme un personnage mort.
+
+Spawn solo : SquadManager appelle EnsureRuntimeCharacterIdentity apres le bind,
+comme le chemin NetcodeCharacterIdentity deja utilise en reseau. Le clone prend
+runtime:character:<id> / character:<id>, sans modifier le prefab ni inventer un
+nouveau GUID. Sans ce raccord, le prefab pouvait exporter son GlobalObjectId nul
+comme objet de scene introuvable au rechargement. La capture JSON des PV et la
+restauration du snapshot monde restent deux controles distincts.
+
+Quand le snapshot a deja reconstruit Lucian avant StartRoutine, SquadManager
+adopte l'acteur exact du registre par ID et prefab attendus ; aucun second spawn
+ni recherche par nom/proximite. PersistentSceneMarkerCharacterState resout son
+marker lors de Capture/Apply, meme avant Awake sur une racine inactive. Il peut
+etre sur l'acteur baked : pas de RequireComponent(SceneMarker), qui ajoutait un
+marker vide sur cet acteur et masquait son vrai parent. Le marker auteur reste
+le proprietaire du clone et de son etat de mort.
+
 Sauvegarde :
 
 `CharacterStateStore.Save` → JSON → `WorldSaveAdapter.SaveWorldSnapshot` →

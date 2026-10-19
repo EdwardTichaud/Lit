@@ -10,6 +10,112 @@ public sealed class CombatNetworkContactDashTests
 {
     private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
 
+    [TestCase(ContactDashMotion.Approach, false)]
+    [TestCase(ContactDashMotion.Burst, true)]
+    public void ExternalDashUsesItsCapturedMotionAndCannotLeakItIntoNextSession(ContactDashMotion motion, bool burst)
+    {
+        var root = new GameObject("External dash motion fixture");
+        try
+        {
+            var action = root.AddComponent<PlayerActionPresentationController>();
+            var type = typeof(PlayerActionPresentationController);
+            var resolve = type.GetMethod("ResolveContactBurstMotion", Private);
+            int first = action.BeginExternalPresentation(action);
+            type.GetField("externalContactMotion", Private).SetValue(action, motion);
+            type.GetField("externalContactResolver", Private).SetValue(action,
+                new Func<Transform, Vector3, Vector3, bool>((_, __, ___) => true));
+            Assert.That(resolve.Invoke(action, null), Is.EqualTo(burst));
+            action.EndExternalPresentation(first);
+            Assert.That(type.GetField("externalContactResolver", Private).GetValue(action), Is.Null);
+            int second = action.BeginExternalPresentation(action);
+            Assert.That(resolve.Invoke(action, null), Is.False, "No local manager or previous session may supply an external dash mode.");
+            type.GetField("externalContactMotion", Private).SetValue(action, ContactDashMotion.Burst);
+            type.GetField("externalContactResolver", Private).SetValue(action,
+                new Func<Transform, Vector3, Vector3, bool>((_, __, ___) => true));
+            action.EndExternalPresentation(first);
+            Assert.That(resolve.Invoke(action, null), Is.True, "A stale end cannot clear the new dash.");
+            action.EndExternalPresentation(second);
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void ExternalDashRejectsUnknownMotionAndStaleGenerationBeforeAcquiringMotor()
+    {
+        var root = new GameObject("External dash parameter fixture");
+        var skill = ScriptableObject.CreateInstance<SkillSO>();
+        try
+        {
+            var action = root.AddComponent<PlayerActionPresentationController>();
+            int session = action.BeginExternalPresentation(action);
+            Assert.That(action.ConfigureExternalSkill(session, skill), Is.True);
+            Assert.That(action.SetExternalAttackContext(session,
+                new PlayerAttackContext(session, skill, Vector3.zero, Vector3.forward, null, false)), Is.True);
+            Func<Transform, Vector3, Vector3, bool> contact = (_, __, ___) => true;
+            Assert.That(action.TryBeginExternalContactLunge(session, skill, contact, 10, (ContactDashMotion)99), Is.False);
+            Assert.That(action.TryBeginExternalContactLunge(session - 1, skill, contact, 10, ContactDashMotion.Burst), Is.False);
+            Assert.That(action.IsTargetLungeActive, Is.False);
+            Assert.That(typeof(PlayerActionPresentationController).GetField("externalContactResolver", Private).GetValue(action), Is.Null);
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(skill); }
+    }
+
+    [TestCase(0f)]
+    [TestCase(60f)]
+    public void ExternalRetreatBrakingIsCapturedAndCleanedByItsOwnGeneration(float deceleration)
+    {
+        var root = new GameObject("External retreat braking fixture");
+        var skill = ScriptableObject.CreateInstance<SkillSO>();
+        skill.RetreatImpulse.enabled = true;
+        try
+        {
+            var action = root.AddComponent<PlayerActionPresentationController>();
+            var type = typeof(PlayerActionPresentationController);
+            var resolve = type.GetMethod("ResolveRetreatLandingDeceleration", Private);
+            var profile = new FreeAttackProfile { retreatLandingDeceleration = deceleration };
+            int first = action.BeginExternalPresentation(action);
+            Assert.That(action.ConfigureExternalSkill(first, skill), Is.True);
+            Assert.That(action.ConfigureExternalRetreatBraking(first, profile.retreatLandingDeceleration), Is.True);
+            profile.retreatLandingDeceleration = 123;
+            Assert.That(resolve.Invoke(action, null), Is.EqualTo(deceleration), "The action must retain its server session value.");
+            action.EndExternalPresentation(first);
+            Assert.That(type.GetField("externalRetreatBrakingGeneration", Private).GetValue(action), Is.EqualTo(-1));
+            Assert.That(type.GetField("externalRetreatLandingDeceleration", Private).GetValue(action), Is.EqualTo(0f));
+            int second = action.BeginExternalPresentation(action);
+            Assert.That(resolve.Invoke(action, null), Is.EqualTo(0f));
+            Assert.That(action.ConfigureExternalSkill(second, skill), Is.True);
+            Assert.That(action.ConfigureExternalRetreatBraking(first, 99), Is.False);
+            Assert.That(action.ConfigureExternalRetreatBraking(second, 17), Is.True);
+            action.EndExternalPresentation(first);
+            Assert.That(resolve.Invoke(action, null), Is.EqualTo(17f));
+            action.EndExternalPresentation(second);
+            Assert.That(type.GetField("externalRetreatLandingDeceleration", Private).GetValue(action), Is.EqualTo(0f));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(skill); }
+    }
+
+    [Test]
+    public void ExternalRetreatBrakingRejectsInvalidValuesAndNonRetreatSessions()
+    {
+        var root = new GameObject("External retreat braking validation fixture");
+        var skill = ScriptableObject.CreateInstance<SkillSO>();
+        try
+        {
+            var action = root.AddComponent<PlayerActionPresentationController>();
+            Assert.That(action.ConfigureExternalRetreatBraking(action.ActionGeneration, 60), Is.False);
+            int session = action.BeginExternalPresentation(action);
+            Assert.That(action.ConfigureExternalSkill(session, skill), Is.True);
+            Assert.That(action.ConfigureExternalRetreatBraking(session, 60), Is.False);
+            skill.RetreatImpulse.enabled = true;
+            Assert.That(action.ConfigureExternalRetreatBraking(session, 23), Is.True);
+            foreach (float invalid in new[] { -1f, float.NaN, float.PositiveInfinity, float.NegativeInfinity })
+                Assert.That(action.ConfigureExternalRetreatBraking(session, invalid), Is.False);
+            var resolve = typeof(PlayerActionPresentationController).GetMethod("ResolveRetreatLandingDeceleration", Private);
+            Assert.That(resolve.Invoke(action, null), Is.EqualTo(23f), "Rejected configuration cannot erase valid braking.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(skill); }
+    }
+
     [Test]
     public void FreeDashDistanceUsesTheSharedAuthoredProfileAndNeverInventsAFallback()
     {

@@ -3,11 +3,12 @@ using Opsive.UltimateCharacterController.Character.Abilities;
 
 public partial class LitOpsiveLocomotionBridge
 {
-    public bool StartChargedAscent(PlayerActionPresentationController owner, float height, float seconds)
+    public bool IsChargedAscentActive => actionTakeoff != null && actionTakeoff.IsActive && actionTakeoff.HasPendingChargedRise;
+    public bool StartChargedAscent(PlayerActionPresentationController owner, ChargedSkillSO skill)
     {
-        PrepareActionTakeoff(owner, height / Mathf.Max(.1f, seconds));
+        PrepareActionTakeoff(owner, 2f * skill.launchHeight / Mathf.Max(.1f, skill.ascentSeconds));
         if (actionTakeoff == null || !actionTakeoff.IsActive) return false;
-        actionTakeoff.Configure(height / Mathf.Max(.1f, seconds), seconds, true);
+        actionTakeoff.ConfigureChargedRise(skill);
         return true;
     }
     public void StopChargedAscent() { if (actionTakeoff != null && !actionTakeoff.IsAirborneHold) RestoreActionTakeoff(); }

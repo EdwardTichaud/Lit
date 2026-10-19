@@ -183,9 +183,10 @@ public partial class LitBrainsEnemy
         if (UsesProductionPatterns)
         {
             BeginProductionMotion(activeAttack.skill);
-            anim.CrossFadeInFixedTime(activeAttack.stateName, .08f, 0, 0f);
         }
-        else anim.SetTrigger("Attack");
+        // The profile owns this action. A queued trigger can lose to the previous recovery-to-idle blend.
+        anim.ResetTrigger("Attack");
+        anim.CrossFadeInFixedTime(activeAttack.stateName, .08f, 0, 0f);
     }
 
     private void TurnToFluidTarget()

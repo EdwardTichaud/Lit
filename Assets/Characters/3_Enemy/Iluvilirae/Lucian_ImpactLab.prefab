@@ -2626,6 +2626,7 @@ GameObject:
   - component: {fileID: 810000000000000009}
   - component: {fileID: 8402552925745160276}
   - component: {fileID: 5383151858749174030}
+  - component: {fileID: 2968556170434710844}
   m_Layer: 6
   m_Name: Lucian_ImpactLab
   m_TagString: Player
@@ -3862,6 +3863,22 @@ MonoBehaviour:
   volumeAnchor: {fileID: 0}
   localCenter: {x: 0, y: 1.1, z: 0.8}
   radius: 0.55
+--- !u!114 &2968556170434710844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99cc2f51abc8a1f4d8d328a95672ed29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatContactAudio
+  lightPitch: {x: 1.02, y: 1.08}
+  heavyPitch: {x: 0.88, y: 0.94}
+  lightDamage: 5
+  heavyDamage: 15
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

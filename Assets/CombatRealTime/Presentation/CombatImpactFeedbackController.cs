@@ -56,7 +56,11 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
     public static Vector3 ResolvePlayerImpactPosition(Transform targetPoint, Transform playerRoot, Vector3 offset = default)
     {
-        Vector3 position = targetPoint.position;
+        return ResolvePlayerImpactPosition(targetPoint.position, playerRoot, offset);
+    }
+
+    public static Vector3 ResolvePlayerImpactPosition(Vector3 position, Transform playerRoot, Vector3 offset = default)
+    {
         if (playerRoot != null) position.y = playerRoot.position.y + 1.5f;
         return position + offset;
     }
@@ -66,7 +70,7 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
         PlayImpact(skill, target != null ? target.LockPoint : null, RealTimeCombatManager.Instance?.PlayerRoot);
     }
 
-    public void PlayImpact(SkillSO skill, Transform impactPoint, Transform playerRoot)
+    public void PlayImpact(SkillSO skill, Transform impactPoint, Transform playerRoot, Vector3? contactPosition = null)
     {
         CombatImpactFeedbackProfile profile = skill != null ? skill.ImpactFeedback : null;
         if (profile == null || !profile.enabled || impactPoint == null)
@@ -75,10 +79,10 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
         }
 
         ResolveDependencies();
-        Vector3 impactPosition = ResolvePlayerImpactPosition(impactPoint, playerRoot);
+        Vector3 impactPosition = ResolvePlayerImpactPosition(contactPosition ?? impactPoint.position, playerRoot);
         if (profile.additionalImpactVfx != null)
         {
-            Instantiate(profile.additionalImpactVfx, impactPosition, impactPoint.rotation, impactPoint);
+            Instantiate(profile.additionalImpactVfx, impactPosition, impactPoint.rotation, contactPosition.HasValue ? null : impactPoint);
         }
 
         if (profile.additionalImpactAudio != null)

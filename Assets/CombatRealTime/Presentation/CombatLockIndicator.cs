@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public sealed class CombatLockIndicator : MonoBehaviour
@@ -24,12 +25,21 @@ public sealed class CombatLockIndicator : MonoBehaviour
 
     public void ConfigureWorldCursor(GameObject prefab, Vector3 worldOffset)
     {
+        if (worldCursorPrefab == prefab)
+        {
+            worldCursorOffset = worldOffset;
+            if (ownsWorldCursor && visualRoot != null)
+                visualRoot.transform.position = transform.position + worldCursorOffset;
+            return;
+        }
+        bool restoreLock = isLocked;
         SetLocked(false, false);
         DestroyOwnedVisual();
         if (visualRoot != null) visualRoot.SetActive(false);
         visualRoot = null;
         worldCursorPrefab = prefab;
         worldCursorOffset = worldOffset;
+        if (restoreLock) SetLocked(true, false);
     }
 
     private void Awake()
@@ -92,11 +102,17 @@ public sealed class CombatLockIndicator : MonoBehaviour
     private void OnDisable()
     {
         SetLocked(false, false);
+        DestroyOwnedVisual();
     }
 
     public void SetLocked(bool locked, bool playSound)
     {
-        if (locked && visualRoot == null) CreateCursor();
+        if (locked && !isActiveAndEnabled) return;
+        if (locked && visualRoot == null)
+        {
+            CreateCursor();
+            visualRoot.SetActive(isLocked);
+        }
         if (isLocked == locked)
         {
             return;
@@ -123,6 +139,7 @@ public sealed class CombatLockIndicator : MonoBehaviour
         if (worldCursorPrefab != null)
         {
             visualRoot = Instantiate(worldCursorPrefab, transform.position + worldCursorOffset, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(visualRoot, gameObject.scene);
             visualRoot.name = worldCursorPrefab.name + " (Locked)";
             initialScale = visualRoot.transform.localScale;
             ownsWorldCursor = true;
@@ -131,6 +148,7 @@ public sealed class CombatLockIndicator : MonoBehaviour
         }
         // Screen-space keeps the target readable regardless of distance or occlusion.
         var canvasObject = new GameObject("CombatLockCursor", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+        SceneManager.MoveGameObjectToScene(canvasObject, gameObject.scene);
         cursorCanvas = canvasObject.GetComponent<Canvas>();
         cursorCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         cursorCanvas.sortingOrder = 30;
@@ -172,15 +190,24 @@ public sealed class CombatLockIndicator : MonoBehaviour
 
     private void DestroyOwnedVisual()
     {
-        if (ownsWorldCursor && visualRoot != null) Destroy(visualRoot);
-        if (cursorCanvas != null) Destroy(cursorCanvas.gameObject);
-        if (cursorSprite != null) Destroy(cursorSprite);
-        if (cursorTexture != null) Destroy(cursorTexture);
+        bool ownedVisual = ownsWorldCursor || cursorCanvas != null;
+        if (ownsWorldCursor && visualRoot != null) Release(visualRoot);
+        if (cursorCanvas != null) Release(cursorCanvas.gameObject);
+        if (cursorSprite != null) Release(cursorSprite);
+        if (cursorTexture != null) Release(cursorTexture);
+        if (ownedVisual) visualRoot = null;
         ownsWorldCursor = false;
         cursorCanvas = null;
         cursorImage = null;
         cursorSprite = null;
         cursorTexture = null;
+        actorRenderers = null;
+    }
+
+    private static void Release(Object value)
+    {
+        if (Application.isPlaying) Destroy(value);
+        else DestroyImmediate(value);
     }
 
     public void PlayLockSound()

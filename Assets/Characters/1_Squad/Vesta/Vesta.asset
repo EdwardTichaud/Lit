@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Vesta
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
       presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
@@ -77,7 +79,8 @@ MonoBehaviour:
       flightStartTriggerParam: FlightStartTrigger
       walkPresentationSpeed: 1.35
       runPresentationSpeed: 3.25
-      combatFacingSpeedDegreesPerSecond: 1080
+      combatFacingSpeedDegreesPerSecond: 1440
+      rateLimitedCombatFacing: 1
       combatOrbitPureLateralThreshold: 0.12
       combatOrbitRadiusDeadZone: 0.035
       combatOrbitRadiusCorrectionGain: 2.25
@@ -163,9 +166,9 @@ MonoBehaviour:
       obstacleTraversalTriggerParam: ObstacleTraversal
       enableCinematicOrientationFeel: 1
       orientationInputDeadZone: 0.14
-      orientationWalkTurnRate: 360
-      orientationSprintTurnRate: 300
-      orientationSharpTurnRate: 300
+      orientationWalkTurnRate: 720
+      orientationSprintTurnRate: 1080
+      orientationSharpTurnRate: 1440
       orientationSharpTurnAngle: 92
       orientationVelocityBlend: 0.1
     interactions:
@@ -260,6 +263,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 874ddaec180f49cba23ab405f0852262, type: 2}
   - {fileID: 11400000, guid: 77d611af48f14e6da001428e65b9b5b2, type: 2}
   - {fileID: 11400000, guid: a61bd390e0de4f36949819d560aa5b11, type: 2}
+  chargedSkill: {fileID: 0}
   enemyCombatProfile: {fileID: 0}
   enemySettings:
     ArenaCreateBattleWall: 0
@@ -329,13 +333,13 @@ MonoBehaviour:
       m_Bits: 4294967295
   enemyEncounterOptions:
     startAsGhost: 0
-    introductionLine:
+    introductionLine: 
     introductionSeconds: 2.5
     interactionDistance: 2.5
     requiredKnowledge: {fileID: 0}
   enemyDeathOptions:
     enabled: 0
-    dialogueLine:
+    dialogueLine: 
     dialogueSeconds: 4
     voiceLine: {fileID: 0}
   groundBasicSkills:

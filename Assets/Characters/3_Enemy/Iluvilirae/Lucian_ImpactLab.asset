@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Lucian_ImpactLab
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
       presentationProfile: {fileID: 0}
       logScriptedTraversalDiagnostics: 0
@@ -77,7 +79,8 @@ MonoBehaviour:
       flightStartTriggerParam: FlightStartTrigger
       walkPresentationSpeed: 1.35
       runPresentationSpeed: 3.25
-      combatFacingSpeedDegreesPerSecond: 1080
+      combatFacingSpeedDegreesPerSecond: 1440
+      rateLimitedCombatFacing: 1
       combatOrbitPureLateralThreshold: 0.12
       combatOrbitRadiusDeadZone: 0.035
       combatOrbitRadiusCorrectionGain: 2.25
@@ -163,9 +166,9 @@ MonoBehaviour:
       obstacleTraversalTriggerParam: ObstacleTraversal
       enableCinematicOrientationFeel: 1
       orientationInputDeadZone: 0.14
-      orientationWalkTurnRate: 360
-      orientationSprintTurnRate: 300
-      orientationSharpTurnRate: 300
+      orientationWalkTurnRate: 720
+      orientationSprintTurnRate: 1080
+      orientationSharpTurnRate: 1440
       orientationSharpTurnAngle: 92
       orientationVelocityBlend: 0.1
     interactions:
@@ -262,7 +265,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 87b9a877500e6ad4da19a318ecce0850, type: 2}
   - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
   - {fileID: 11400000, guid: 305ed9fad85b34f4d8327bcc27b7ae23, type: 2}
-  chargedSkill: {fileID: 11400000, guid: 22e933684f7d2d24fb48aced6564441d, type: 2}
+  chargedSkill: {fileID: 11400000, guid: 4d9131c72800c1d46aaecbce613e1748, type: 2}
   enemyCombatProfile: {fileID: 0}
   enemySettings:
     ArenaCreateBattleWall: 0
@@ -347,6 +350,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 33c43d8aa19cfa74bb2947ab1f8e6def, type: 2}
   airBasicSkills:
   - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
+  - {fileID: 11400000, guid: 6d38af01b93145848a6512956ee33741, type: 2}
+  - {fileID: 11400000, guid: 46567ab025a5d02478c6225a79ef60c1, type: 2}
   stats:
     strength: 10
     dexterity: 10

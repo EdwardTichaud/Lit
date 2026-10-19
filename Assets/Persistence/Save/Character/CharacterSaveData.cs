@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 8;
+    public int dataVersion = 9;
     public SoloTeamSaveData soloTeam;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
@@ -31,6 +31,8 @@ public class CharacterSaveEntry
 {
     public string characterId;
     public bool inSquad;
+    public bool healthInitialized;
+    public int currentHp;
     public Vector3 position;
     public Quaternion rotation;
     public int flameSeconds;

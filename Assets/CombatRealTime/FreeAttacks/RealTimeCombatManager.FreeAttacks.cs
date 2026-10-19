@@ -6,6 +6,8 @@ public sealed partial class RealTimeCombatManager
     private FreeAttackProfile freeAttackProfile;
     private Camera freeAttackCamera;
     public bool AllowsFreeAttacks => freeAttackProfile != null && freeAttackProfile.enabled;
+    public bool UsesBurstContactDash => AllowsFreeAttacks && freeAttackProfile.contactDashMotion == ContactDashMotion.Burst;
+    public float RetreatLandingDeceleration => AllowsFreeAttacks ? freeAttackProfile.retreatLandingDeceleration : 0;
     private bool HasFreeAttackControl => playerRoot != null && (playerLocomotionBridge == null ||
         !playerLocomotionBridge.IsScriptedTraversalActive && !playerLocomotionBridge.IsCinematicMotionSessionActive &&
         playerLocomotionBridge.HasOnlyExternalLocksOwnedBy(playerActionPresentation, playerRoot.GetComponent<PlayerStateMotionController>()));
@@ -187,6 +189,8 @@ public sealed partial class RealTimeCombatManager
             else TryEngageFromPlayerContact(playerRoot, target, action);
         }
         if (applied <= 0) return 0;
+        if (!cinematic && playerRoot != null && target.Root.TryGetComponent<CombatContactPose>(out var contactPose))
+            contactPose.PlayContact(playerRoot.position, Mathf.InverseLerp(10, 35, skill.Damages));
         if (freeAttackProfile.diagnostics) Debug.Log($"[FreeAttack] Delivered skill={skill.name} victim={target.Root.name} damage={applied} deferred={deferred}", this);
         if (skill.stunSeconds > 0 && target is ICombatStunReceiver stun) stun.TryApplySkillStun(skill.stunSeconds);
         CombatDamageWorldFeedback.Show(target.Root, applied, Color.white, 2);

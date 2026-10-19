@@ -6,7 +6,6 @@ using UnityEngine;
 /// itself alive in the scene, including after an enemy disables its own root.
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(SceneMarker))]
 public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersistentStateProvider
 {
     [Serializable]
@@ -30,11 +29,12 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
     {
         // The provider can live on the baked actor when its parent marker must
         // not receive a second, nested NetworkObject.
-        marker = GetComponent<SceneMarker>() ?? GetComponentInParent<SceneMarker>();
+        ResolveMarker();
     }
 
     private void Update()
     {
+        ResolveMarker();
         if (pendingState != null && marker != null && marker.RuntimeInstance != null)
         {
             ApplyToMarker(pendingState);
@@ -44,6 +44,7 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
 
     public byte[] CaptureState(PersistentStateContext context)
     {
+        ResolveMarker();
         GameObject instance = marker != null ? marker.RuntimeInstance : null;
         if (instance == null)
         {
@@ -65,6 +66,7 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
 
     public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
     {
+        ResolveMarker();
         if (phase != PersistentApplyPhase.ApplyGameplayState || marker == null ||
             !PersistentStateJson.TryFromBytes(state, ProviderId, marker, context, out StateData data))
         {
@@ -78,6 +80,11 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
         }
 
         ApplyToMarker(data);
+    }
+
+    private void ResolveMarker()
+    {
+        if (marker == null) marker = GetComponent<SceneMarker>() ?? GetComponentInParent<SceneMarker>(true);
     }
 
     private void ApplyToMarker(StateData data)

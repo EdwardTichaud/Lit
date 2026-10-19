@@ -1522,7 +1522,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatMobilityController
   combatInput: {fileID: 810000000000000002}
   actionPresentation: {fileID: 0}
-  mobilityInputBufferSeconds: 0.12
+  mobilityInputBufferSeconds: 0.15
   dodgeForwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
   dodgeBackwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
   dodge:
@@ -1965,8 +1965,9 @@ MonoBehaviour:
   dodgeWindowSeconds: 0.5
   counterWindowSeconds: 0.2
   counterRetryDelaySeconds: 0.4
-  reactionTimeScale: 0.4
+  reactionTimeScale: 1
   logEnemyReactions: 0
+  externalSuccessSlowMotion: 1
 --- !u!114 &6951612675227300572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2086,6 +2087,8 @@ MonoBehaviour:
     maximumCorrection: 25
     turnDegreesPerSecond: 1440
     freeDashDistance: 10
+    contactDashMotion: 1
+    retreatLandingDeceleration: 60
     contactCenter: {x: 0, y: 1, z: 1.15}
     contactRadius: 1.05
     heightTolerance: 1.8
@@ -2093,6 +2096,8 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 4294967295
   gameplayCamera: {fileID: 2772786180465480446}
+  lockCursorPrefab: {fileID: 1000, guid: b37e8d3d67234ea38d540629884345a0, type: 3}
+  lockCursorOffset: {x: 0, y: 3, z: 0}
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0
@@ -3090,7 +3095,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initialMode: 1
-  profile: {fileID: 11400000, guid: 30d968f394df4db0996406a5ad7c1017, type: 2}
+  profile: {fileID: 11400000, guid: b972d95856d18694e9d335e7e87956ec, type: 2}
   effectiveMode: 1
 --- !u!1 &6785266020379462434
 GameObject:

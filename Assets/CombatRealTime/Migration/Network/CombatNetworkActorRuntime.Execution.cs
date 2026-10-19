@@ -16,7 +16,7 @@ namespace Lit.Combat.Migration.Network
 
         internal bool TryBufferBasicCommand(ulong sender, ulong sequence, int skillId, Vector3 direction, Action<bool> dispatch)
         {
-            if (!IsServer || !IsSpawned || !hasAction || ending || bufferedBasic != null || dispatch == null ||
+            if (!IsServer || !IsSpawned || !hasAction || ending || chargeHeld || bufferedBasic != null || dispatch == null ||
                 !CombatCommandPolicy.Finite(basicBufferSeconds) || basicBufferSeconds <= 0 ||
                 !admitted || authority == null || !authority.CanDeferCommand(sender, NetworkObject, sequence, skillId) || admittedWorld != authority.WorldGeneration || sender != OwnerClientId ||
                 !IsAssigned(sender) || !IsAlive() || !CombatCommandPolicy.Finite(direction) ||
@@ -32,10 +32,12 @@ namespace Lit.Combat.Migration.Network
 
         public bool CanReplace(CombatCommandContext current, CombatCommandContext next)
         {
-            if (!hasAction || !SameTicket(current.Ticket, active.Ticket) || presentation == null || chargeHeld ||
+            if (!hasAction || !SameTicket(current.Ticket, active.Ticket) || presentation == null ||
                 !presentation.IsCurrentSession(presentationSession) || !catalog.TryGet(next.SkillId, out var entry)) return false;
+            bool chargedTailHandoff = IsChargedTailReplacement(entry.skill);
+            if (chargeHeld && !chargedTailHandoff) return false;
             bool ruptureHandoff = entry.skill.IsGroundImpactSkill && entry.skill.groundImpact.interruptibleSkill == activeEntry.skill;
-            if (!ruptureHandoff && !presentation.CanStartAction) return false;
+            if (!ruptureHandoff && !chargedTailHandoff && !presentation.CanStartAction) return false;
             return CanStartAction(next, true);
         }
 
@@ -57,7 +59,8 @@ namespace Lit.Combat.Migration.Network
             {
                 if (presentation == null || !presentation.isActiveAndEnabled || animator == null || relay == null || !relay.IsBoundTo(this) || !presentation.CanPlayState(entry.skill.AnimatorState) ||
                     bridge == null || !bridge.IsDriving || !replacing && (actor.IsMovementInputSuppressed || presentation.IsActionActive) ||
-                    replacing && bridge.IsExternalLockActive && !presentation.OwnsOnlyActionMotionLock(bridge))
+                    replacing && bridge.IsExternalLockActive && !presentation.OwnsOnlyActionMotionLock(bridge) &&
+                    !(IsChargedTailReplacement(entry.skill) && bridge.HasOnlyExternalLocksOwnedBy(presentation, stateMotion)))
                     return Diagnose("Action requires an available actor session, Animator/event relay and driving UCC.");
                 if (CombatNetworkSkillCatalog.IsBasic(family) && (family == CombatNetworkSkillFamily.AirBasic) == bridge.Grounded)
                     return Diagnose("Skill context does not match the authoritative grounded/airborne actor state.");
@@ -160,7 +163,9 @@ namespace Lit.Combat.Migration.Network
         public void End(CombatCommandContext context, CombatActionEndReason reason)
         {
             if (!hasAction || !SameTicket(context.Ticket, active.Ticket)) return;
-            if (reason != CombatActionEndReason.Completed) { StopCharge(); chargeRequiresRelease = true; }
+            bool chargedTailHandoff = reason == CombatActionEndReason.Cancelled && chargeCommit &&
+                IsChargedTailReplacement(actor?.CharacterData?.chargedSkill);
+            if (reason != CombatActionEndReason.Completed && !chargedTailHandoff) { StopCharge(); chargeRequiresRelease = true; }
             var buffered = bufferedBasic;
             bufferedBasic = null;
             ending = true;
@@ -173,7 +178,13 @@ namespace Lit.Combat.Migration.Network
                     var current = actionState.Value;
                     current.Active = false; actionState.Value = current;
                 }
-                StopLocalPresentation();
+                if (chargedTailHandoff)
+                {
+                    int session = presentationSession; presentationSession = 0;
+                    presentation.EndExternalChargedBasicTail(session);
+                    ReleaseExecutionMotion(); ReleaseMovementSuppression();
+                }
+                else StopLocalPresentation();
                 if (reason == CombatActionEndReason.Death || reason == CombatActionEndReason.SceneChanged ||
                     reason == CombatActionEndReason.Despawn || reason == CombatActionEndReason.Disconnect ||
                     reason == CombatActionEndReason.OwnershipChanged || reason == CombatActionEndReason.AuthorityDisabled)
@@ -241,7 +252,7 @@ namespace Lit.Combat.Migration.Network
             finally { serverEventActive = false; }
         }
 
-        private int DeliverBasicImpact(NetworkObject targetObject, int? damageOverride = null)
+        private int DeliverBasicImpact(NetworkObject targetObject, int? damageOverride = null, Vector3? contactPosition = null)
         {
             var entry = activeEntry;
             var ticket = active.Ticket;
@@ -271,9 +282,10 @@ namespace Lit.Combat.Migration.Network
             if (entry.skill.stunSeconds > 0 && target is ICombatStunReceiver stun) stun.TryApplySkillStun(entry.skill.stunSeconds);
             try { ServerImpactApplied?.Invoke(entry.skill, applied, target); }
             catch (Exception exception) { Debug.LogException(exception, this); }
-            if (IsClient) PlayImpactCues(entry.skill, target);
+            if (IsClient) PlayImpactCues(entry.skill, target, ticket.Generation, contactPosition);
             ConfirmedImpactClientRpc(entry.Id, new Unity.Collections.FixedString64Bytes(entry.CanonicalGuid),
-                ticket.AuthorityEpoch, ticket.Generation, new NetworkObjectReference(targetObject), applied);
+                ticket.AuthorityEpoch, ticket.Generation, new NetworkObjectReference(targetObject), applied,
+                contactPosition.HasValue, contactPosition.GetValueOrDefault());
             return applied;
         }
 
@@ -354,18 +366,20 @@ namespace Lit.Combat.Migration.Network
                 basic.RequestsLandingDuringAnimation && bridge.ShouldBeginMotionHandoff(basic.AirborneLandingHandoff)) bridge.RequestCombatSkillLanding();
             var current = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : animator.GetCurrentAnimatorStateInfo(0);
             presentation.UpdateExternalSkillProgress(presentationSession, current.normalizedTime);
-            if (presentation.IsRecoveryOpen && activeEntry.skill.Presentation.allowMoveAfterRecovery) ReleaseMovementSuppression();
+            bool heldBasicTail = chargeHeld && chargePreparation == presentationSession && presentation.IsPreparingBasicTail;
+            if (!heldBasicTail && presentation.IsRecoveryOpen && activeEntry.skill.Presentation.allowMoveAfterRecovery) ReleaseMovementSuppression();
             bool matching = current.fullPathHash == Animator.StringToHash(activeEntry.skill.AnimatorState);
             observedAnimatorState |= matching;
             var domain = GetComponent<CombatTimeDomain>();
             if (matching)
             {
-                stalledActionSeconds = Mathf.Approximately(previousActionProgress, current.normalizedTime)
+                stalledActionSeconds = !(heldBasicTail && current.normalizedTime >= 1f) && Mathf.Approximately(previousActionProgress, current.normalizedTime)
                     ? stalledActionSeconds + Mathf.Max(0, domain != null ? domain.DeltaTime : Time.deltaTime) : 0;
                 previousActionProgress = current.normalizedTime;
                 if (stalledActionSeconds >= 1) { Diagnose("Confirmed animation stopped progressing; only its session was released."); authority.Cancel(active.Ticket); return; }
             }
             if (activeFamily == CombatNetworkSkillFamily.GroundImpact && !basicImpactResolved || chargedAscentActive) return;
+            if (heldBasicTail && matching) return;
             if (matching && (current.normalizedTime >= 1 || bufferedBasic != null && basicImpactResolved &&
                 CombatNetworkSkillCatalog.IsBasic(activeFamily) && CombatCommandPolicy.Finite(activeEntry.skill.Presentation.chainTransitionNormalizedTime) &&
                 current.normalizedTime >= Mathf.Clamp01(activeEntry.skill.Presentation.chainTransitionNormalizedTime))) authority.Complete(active.Ticket);

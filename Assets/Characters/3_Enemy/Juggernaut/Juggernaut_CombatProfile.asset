@@ -61,4 +61,4 @@ MonoBehaviour:
   guardCooldownSeconds: 4
   guardDurationSeconds: 0.6
   guardedDamageMultiplier: 0.45
-  trackingDegreesPerSecond: 720
+  trackingDegreesPerSecond: 1080

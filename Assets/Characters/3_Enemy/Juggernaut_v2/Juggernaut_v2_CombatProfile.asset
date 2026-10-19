@@ -12,11 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1216f4be9cc9449aac949c16152d9656, type: 3}
   m_Name: Juggernaut_v2_CombatProfile
   m_EditorClassIdentifier: Assembly-CSharp::LitBrainsCombatProfile
+  locomotionState: Locomotion
+  hurtState: Hurt
+  knockoutState: Knocked Out
+  deathState: Base Layer.Death
+  hurtBlendSeconds: 0.04
+  productionSourceProfile: {fileID: 0}
+  executeProductionPatterns: 0
+  idleState: Locomotion
+  guardState: Guard
   attackStartDistance: 3.6
   approachStopDistance: 1.7
   initialAttackDelay: 0.2
   attackFacingDegrees: 55
-  turnDegreesPerSecond: 540
+  turnDegreesPerSecond: 1080
   attackInterval: {x: 1.5, y: 1.9}
   resistance: 100
   resistanceRecoveryDelay: 1

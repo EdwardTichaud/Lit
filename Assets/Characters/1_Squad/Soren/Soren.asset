@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Soren
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    combatPresentation:
+      damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
       presentationProfile: {fileID: 11400000, guid: 469d7594bedc4e847abec4fe5c2ede9e, type: 2}
       logScriptedTraversalDiagnostics: 0
@@ -77,7 +79,8 @@ MonoBehaviour:
       flightStartTriggerParam: FlightStartTrigger
       walkPresentationSpeed: 1.35
       runPresentationSpeed: 3.25
-      combatFacingSpeedDegreesPerSecond: 1080
+      combatFacingSpeedDegreesPerSecond: 1440
+      rateLimitedCombatFacing: 1
       combatOrbitPureLateralThreshold: 0.12
       combatOrbitRadiusDeadZone: 0.035
       combatOrbitRadiusCorrectionGain: 2.25
@@ -163,9 +166,9 @@ MonoBehaviour:
       obstacleTraversalTriggerParam: ObstacleTraversal
       enableCinematicOrientationFeel: 1
       orientationInputDeadZone: 0.14
-      orientationWalkTurnRate: 360
-      orientationSprintTurnRate: 300
-      orientationSharpTurnRate: 300
+      orientationWalkTurnRate: 720
+      orientationSprintTurnRate: 1080
+      orientationSharpTurnRate: 1440
       orientationSharpTurnAngle: 92
       orientationVelocityBlend: 0.1
     interactions:
@@ -260,6 +263,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 90aa80c6988b71c48836f25f68cfbc74, type: 2}
   - {fileID: 11400000, guid: 6afd5f499a6ea0145bf1285cb9df278e, type: 2}
   - {fileID: 11400000, guid: dea33cac9ff53484aaf44f7cd8dcd0ae, type: 2}
+  chargedSkill: {fileID: 0}
   enemyCombatProfile: {fileID: 0}
   enemySettings:
     ArenaCreateBattleWall: 0

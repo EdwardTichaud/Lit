@@ -480,9 +480,9 @@ public sealed partial class RealTimeCombatInput : MonoBehaviour
         lastBasicSkillContext = basicSkillContext;
         lastBasicAttackQueuedAt = currentTime;
 
-        if (manager.UsesExternalTarget)
+        if (manager.AllowsFreeAttacks || manager.UsesExternalTarget)
         {
-            // Presentation owns the only pending laboratory attack.
+            // The action session owns the pending combo in both the lab and production.
             if (manager.TryUseSkill(skill)) return true;
             skillsManager.ResetBasicSkillCombo(basicSkillContext);
             return false;
@@ -721,6 +721,8 @@ public sealed partial class RealTimeCombatInput : MonoBehaviour
     public void CancelBufferedBasicSkills(bool preserveChargedHold)
     {
         ClearBasicSkillCombo(preserveHold: preserveChargedHold && heldChargedSkill != null);
+        // This queued Basic is the source of the protected charge, not a spare combo input.
+        if (preserveChargedHold && heldChargedSkill != null && pendingChargeBasic != null) return;
         RealTimeCombatManager.Instance?.PlayerRoot?
             .GetComponentInChildren<PlayerActionPresentationController>(true)?.ClearBufferedBasicAction();
     }

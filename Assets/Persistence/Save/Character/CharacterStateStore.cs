@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
-    private const int SaveDataVersion = 8;
+    private const int SaveDataVersion = 9;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -668,6 +668,14 @@ public class CharacterStateStore : MonoBehaviour
         playerBindings[playerId] = characterId;
     }
 
+    public static void RestoreCharacterHealth(SquadCharacterController controller, CharacterSaveEntry entry)
+    {
+        if (controller == null || entry == null || !entry.healthInitialized) return;
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !NetworkManager.Singleton.IsServer) return;
+        // Maximum health remains authored; old saves without a health payload keep their existing initialization.
+        controller.SetCurrentHp(Mathf.Clamp(entry.currentHp, 0, controller.MaxHp));
+    }
+
     private static bool IsNetworked()
     {
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
@@ -729,6 +737,16 @@ public class CharacterStateStore : MonoBehaviour
             };
 
             SquadCharacterController controller = instance != null ? instance.GetComponent<SquadCharacterController>() : null;
+            if (controller != null)
+            {
+                entry.healthInitialized = true;
+                entry.currentHp = controller.CurrentHp;
+            }
+            else if (TryGetLoadedCharacterEntry(character, out CharacterSaveEntry previous))
+            {
+                entry.healthInitialized = previous.healthInitialized;
+                entry.currentHp = previous.currentHp;
+            }
             int flameSeconds = runtimeState != null ? runtimeState.flameSecondsRemaining : 0;
             bool flameEquipped = runtimeState != null && runtimeState.flameEquipped;
             IReadOnlyList<Item> items = runtimeState != null ? runtimeState.inventoryItems : null;

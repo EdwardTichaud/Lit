@@ -5,6 +5,7 @@ public sealed partial class EnemyController : ICombatChargedTarget
     private bool chargedReaction;
     private float chargedRiseLeft, chargedRiseSpeed, chargedFloatLeft;
     private string chargedHitState;
+    private ChargedSkillSO chargedMotionSkill;
     public Transform ChargedRoot => this != null ? transform : null;
     public bool ChargedAlive => this != null && Health != null && !Health.IsDead && isActiveAndEnabled;
     public bool ChargedProtected => this == null || IsCinematicSuspended;
@@ -27,6 +28,12 @@ public sealed partial class EnemyController : ICombatChargedTarget
             maximumAirborneSeconds = Mathf.Max(4, skill.ascentSeconds + skill.airborneHoldSeconds + 2)
         };
         chargedRiseLeft = skill.ascentSeconds;
+        chargedMotionSkill = skill;
+        if (skill.launchTrajectory == ChargedLaunchTrajectory.Impulse)
+        {
+            PhysicsActiveMotionProfile.gravity = skill.descentAcceleration;
+            PhysicsActiveMotionProfile.maximumFallSpeed = skill.maximumDescentSpeed;
+        }
         chargedRiseSpeed = PhysicsActiveMotionProfile.initialUpwardSpeed;
         chargedFloatLeft = skill.airborneHoldSeconds;
         chargedHitState = skill.enemyFloatState;
@@ -42,7 +49,10 @@ public sealed partial class EnemyController : ICombatChargedTarget
     { if (chargedReaction) chargedFloatLeft = Mathf.Max(0, seconds); }
 
     public void ReleaseChargedHold()
-    { chargedRiseLeft = chargedFloatLeft = 0; }
+    {
+        chargedRiseLeft = chargedFloatLeft = 0;
+        if (chargedMotionSkill != null) PhysicsVerticalVelocity = -chargedMotionSkill.descentInitialSpeed;
+    }
 
     private bool TryChargedReactionDelta(Vector3 position, out Vector3 delta)
     {
@@ -51,18 +61,19 @@ public sealed partial class EnemyController : ICombatChargedTarget
         if (!ChargedAlive || IsCinematicSuspended || PhysicsLandingRequested) ReleaseChargedHold();
         if (chargedRiseLeft > 0)
         {
-            float step = chargedRiseSpeed * Mathf.Min(PhysicsLocalFixedDeltaTime, chargedRiseLeft);
+            float elapsed = chargedMotionSkill.ascentSeconds - chargedRiseLeft;
+            float step = chargedMotionSkill.EvaluateAscentHeight(elapsed + PhysicsLocalFixedDeltaTime) - chargedMotionSkill.EvaluateAscentHeight(elapsed);
             chargedRiseLeft = Mathf.Max(0, chargedRiseLeft - PhysicsLocalFixedDeltaTime);
             if (PhysicsTryClampMotionToObstacle(position, Vector3.up, step, out float allowed))
             { step = allowed; chargedRiseLeft = 0; }
-            PhysicsVerticalVelocity = chargedRiseSpeed;
+            PhysicsVerticalVelocity = 0;
             delta = Vector3.up * step;
             PlayChargedReaction();
             return true;
         }
         if (chargedFloatLeft <= 0) return false;
         chargedFloatLeft = Mathf.Max(0, chargedFloatLeft - PhysicsLocalFixedDeltaTime);
-        PhysicsVerticalVelocity = 0;
+        PhysicsVerticalVelocity = chargedFloatLeft > 0 ? 0 : -chargedMotionSkill.descentInitialSpeed;
         PlayChargedReaction();
         return true;
     }

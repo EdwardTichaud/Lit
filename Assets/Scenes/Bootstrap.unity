@@ -26746,7 +26746,8 @@ MonoBehaviour:
   menuSceneName: MainMenu
   hubSceneName: Maison
   hubManifest: {fileID: 11400000, guid: 62b4414d370e4c5c9be782b4f0d96f1a, type: 2}
-  zoneManifests: []
+  zoneManifests:
+  - {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
   loadMenuAfterBootstrap: 1
   returnToMenuLoadingMessage: ' '
   gameplaySessionPrefab: {fileID: 809035977521740313, guid: 26170eb52d187d3478a73900745c308a, type: 3}

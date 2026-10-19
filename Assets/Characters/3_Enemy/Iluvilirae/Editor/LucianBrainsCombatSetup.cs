@@ -22,9 +22,18 @@ public static class LucianBrainsCombatSetup
         {
             var scene = EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
             var arena = UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>();
-            if (arena.freeAttacks == null) arena.freeAttacks = new FreeAttackProfile();
+            var world = Ensure<CombatWorldRuntime>(arena.gameObject);
+            if (world.freeAttacks == null) world.freeAttacks = new FreeAttackProfile();
+            world.freeAttacks.contactDashMotion = ContactDashMotion.Burst;
+            world.freeAttacks.retreatLandingDeceleration = 60f;
             var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
             var sourceCamera = source.GetComponentInChildren<LitGameplayCameraModeController>(true);
+            var sourceWorld = source.GetComponentInChildren<CombatWorldRuntime>(true);
+            if (world.lockCursorPrefab == null && sourceWorld != null)
+            {
+                world.lockCursorPrefab = sourceWorld.lockCursorPrefab;
+                world.lockCursorOffset = sourceWorld.lockCursorOffset;
+            }
             if (sourceCamera == null) throw new InvalidOperationException("Gameplay camera source missing.");
             if (arena.arenaCamera.GetComponent<LitGameplayCameraModeController>() == null)
             {
@@ -41,6 +50,8 @@ public static class LucianBrainsCombatSetup
                 arena.arenaCamera = cameraObject.GetComponent<Camera>();
                 if (cameraObject.GetComponent<AudioListener>() == null) cameraObject.AddComponent<AudioListener>();
             }
+            world.gameplayCamera = arena.arenaCamera;
+            EditorUtility.SetDirty(world);
             var root = arena.gameObject;
             Ensure<TimeManager>(root);
             var manager = Ensure<RealTimeCombatManager>(root);
@@ -71,6 +82,7 @@ public static class LucianBrainsCombatSetup
             }
             ConfigureCounter(root.GetComponent<CounterSkillCombatController>(), source);
             ConfigureFluidLaboratory(arena, root);
+            LucianAirComboSetup.Configure();
             SkillTargetingAuthoring.MigrateLoadedLab(arena);
             arena.enemyAttackSkills = new[] { "Strike", "Sweep", "Followup" }
                 .Select(name => AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_" + name + ".asset")).ToArray();
@@ -340,7 +352,7 @@ public static class LucianBrainsCombatSetup
                 copy = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(path);
                 copy.interruptionForce = i == 0 ? 20 : i == 1 ? 30 : 50;
                 copy.maximumHitDistance = 2.6f;
-                copy.impactFeedback.hitStopSeconds = i == 0 ? .025f : i == 1 ? .035f : .05f;
+                copy.impactFeedback.hitStopSeconds = i == 0 ? .04f : i == 1 ? .05f : .07f;
                 var events = AnimationUtility.GetAnimationEvents(copy.AnimationClip);
                 float impact = events.Where(e => e.functionName.Contains("Impact") || e.functionName.Contains("Damage"))
                     .Select(e => e.time / copy.AnimationClip.length).DefaultIfEmpty(.35f).Min();

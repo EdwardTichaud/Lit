@@ -73,4 +73,5 @@ public sealed class ChargedSkillSO : SkillSO
     public AnimationClip preparationClip;
     public string preparationState;
     public float chargeSeconds = 2, launchHeight = 3, ascentSeconds = .3f, airborneHoldSeconds = 1.2f;
+    public float descentInitialSpeed = 2.5f, descentAcceleration = 42, maximumDescentSpeed = 18;
 }

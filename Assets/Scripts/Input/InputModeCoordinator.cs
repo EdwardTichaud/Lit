@@ -68,7 +68,9 @@ public sealed class InputModeCoordinator : MonoBehaviour
     public static void SetBaseMode(InputMode mode, bool preserveHeldActions = false)
     {
         if (instance == null) return;
-        bool continuous = preserveHeldActions && instance.ResolveMode() == InputMode.Exploration && mode == InputMode.Combat && instance.stack.Count == 0;
+        InputMode current = instance.ResolveMode();
+        bool continuous = preserveHeldActions && mode == InputMode.Combat &&
+            (current == InputMode.Exploration || current == InputMode.Combat) && instance.stack.Count == 0;
         instance.baseMode = mode;
         instance.Apply("Base=" + mode, continuous);
     }

@@ -587,7 +587,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// contact remains fully owned by UCC, so an aerial BasicSkill can land
     /// safely from any height.
     /// </summary>
-    public bool RequestCombatSkillLanding()
+    public bool RequestCombatSkillLanding(float? initialDownwardSpeed = null)
     {
         ResolveReferences();
         if (!IsDriving || locomotion == null || locomotion.Grounded)
@@ -596,7 +596,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         float currentVerticalSpeed = Vector3.Dot(locomotion.Velocity, transform.up);
-        float requestedVerticalSpeed = -Mathf.Max(0f, combatSkillLandingSpeed);
+        float requestedVerticalSpeed = -Mathf.Max(0f, initialDownwardSpeed ?? combatSkillLandingSpeed);
         if (currentVerticalSpeed > requestedVerticalSpeed)
         {
             locomotion.AddForce(transform.up * (requestedVerticalSpeed - currentVerticalSpeed), 1, false);
@@ -618,7 +618,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// Applies a small, collision-safe planar deceleration while a presentation
     /// is finishing. It never changes vertical velocity, position or rotation.
     /// </summary>
-    public void ApplyPlanarHandoffDamping(float decelerationPerSecond)
+    public void ApplyPlanarHandoffDamping(float decelerationPerSecond, Vector3? ownedDirection = null)
     {
         if (locomotion == null || decelerationPerSecond <= 0f || !locomotion.Grounded)
         {
@@ -626,6 +626,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         Vector3 planarVelocity = PlanarVelocity;
+        if (ownedDirection.HasValue)
+        {
+            Vector3 direction = Vector3.ProjectOnPlane(ownedDirection.Value, transform.up).normalized;
+            planarVelocity = direction * Mathf.Max(0f, Vector3.Dot(planarVelocity, direction));
+        }
         float speed = planarVelocity.magnitude;
         if (speed <= 0.001f)
         {

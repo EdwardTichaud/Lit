@@ -1,0 +1,271 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1abc2bed132da76468ca8c7545a808cf, type: 3}
+  m_Name: Skill_AscensionLumineuse_Lab
+  m_EditorClassIdentifier: Assembly-CSharp::ChargedSkillSO
+  enemyImpact:
+    requireGroundedTarget: 0
+    offset: {x: 0, y: 1, z: 1.3}
+    radius: 1.4
+    arcDegrees: 110
+    targetMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  interruptionForce: 20
+  enemyAttackFeedback:
+    damageVfx: {fileID: 0}
+    damageAudio: {fileID: 0}
+    guardVfx: {fileID: 0}
+    guardAudio: {fileID: 0}
+    counterVfx: {fileID: 0}
+    counterAudio: {fileID: 0}
+    height: 1.2
+    lifetimeSeconds: 3
+  skillName: Ascension lumineuse
+  description: 'Maintenir X : un coup projette la cible, Lucian la rejoint puis flotte. Les attaques aeriennes suivantes sont manuelles.'
+  icon: {fileID: 0}
+  targetingMode: 0
+  animationClip: {fileID: 7400000, guid: 2292aca236568974da8f774c6c26025d, type: 2}
+  animatorState: Base Layer.ChargedAscension
+  damages: 10
+  cooldownSeconds: 8
+  groundImpact:
+    enabled: 0
+    interruptibleSkill: {fileID: 0}
+    radius: 5
+    airborneDamageMultiplier: 2
+    groundPushDistance: 1.5
+    airbornePushDistance: 3
+    descentSpeed: 25
+    maximumDescentSeconds: 3
+    groundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  control:
+    kind: 0
+    range: 25
+    durationSeconds: 6
+    radius: 4
+    strength: 0.2
+    distance: 5
+  protection:
+    kind: 0
+    animationSlot: {fileID: 0}
+    radius: 6
+    durationSeconds: 4
+    maximumLinkDistance: 30
+    reduction: 0.3
+    transferFraction: 0.75
+    reserveMaxHealthFraction: 0.5
+  stunSeconds: 0
+  healingTarget: 0
+  healingPercent: 0
+  healingRadius: 0
+  regenerationHealthPerTick: 1
+  regenerationTickSeconds: 1
+  clarityGainOnHit: 1
+  presentation:
+    movementPolicy: 0
+    entryBlendSeconds: 0.06
+    chainNormalizedTime: 1
+    chainTransitionNormalizedTime: 0.78
+    mobilityCancelNormalizedTime: 0.7
+    recoveryNormalizedTime: 1
+    exitBlendSeconds: 0.1
+    handoff:
+      minimumContactSeconds: 0
+      animationExitNormalizedTime: 0.82
+      planarSettledSpeed: 0.18
+      verticalSettledSpeed: 0.25
+      planarDampingPerSecond: 0
+      maximumSettleSeconds: 0.2
+      locomotionBlendSeconds: 0.08
+      preLandingProbeDistance: 1.2
+      preLandingLeadSeconds: 0.14
+    visualHandoff:
+      validated: 0
+      sourceExitWindow: {x: 0.8, y: 1}
+      blendSeconds: 0.08
+      destinationPhase: 0
+      destinationCycleSeconds: 0
+    facingMode: 1
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
+    allowMobilityCancel: 0
+    allowDamageInterruption: 1
+    lockMovementDuringAnimation: 1
+  minimumHitDistance: 0
+  maximumHitDistance: 3
+  requireValidRangeToStart: 0
+  useLaunchRange: 1
+  minimumLaunchDistance: 0
+  maximumLaunchDistance: 3
+  cinematic:
+    timeline: {fileID: 0}
+    combatCinematicRigPrefab: {fileID: 0}
+    playerAnimatorTrackName: Player.Animator
+    enemyAnimatorTrackName: Enemy.Animator
+    cinemachineTrackName: Cinemachine
+    postTimelinePlayerState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
+    postTimelineEnemyState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
+  vfxCues:
+  - displayName: Impact
+    prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+    projectileArcHeightPerMeter: 0
+    projectileMaximumArcHeight: 4
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.05
+    hitStopSeconds: 0.055
+    camera:
+      lookOffsetKick: {x: 0, y: 0, z: 0}
+      fieldOfViewKick: 0
+      recoverySharpness: 18
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 0}
+  retreatImpulse:
+    enabled: 0
+    horizontalImpulse: 24
+    verticalImpulse: 9
+    maximumHorizontalImpulse: 24
+    maximumVerticalImpulse: 8
+    minimumInputLockSeconds: 0.12
+    maximumInputLockSeconds: 3.5
+    airborneInertiaSeconds: 0
+    airborneInertiaEndSpeedMultiplier: 0.3
+  targetLunge:
+    enabled: 0
+    passThroughTarget: 0
+    resolveImpactAtContact: 0
+    holdControlsUntilAnimationEnd: 0
+    contactAnimationSlot: {fileID: 0}
+    passThroughDistance: 4
+    approachDurationSeconds: 0.18
+    maximumApproachSpeed: 42
+    stoppingDistance: 0.85
+    contactTolerance: 0.18
+    reboundHorizontalImpulse: 16
+    reboundVerticalImpulse: 8
+    minimumInputLockSeconds: 0.1
+    maximumInputLockSeconds: 2.5
+    airborneInertiaSeconds: 0.08
+    airborneInertiaEndSpeedMultiplier: 0.25
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000i
+  requireAllEnemyReactions: 0
+  playerAttackSfx: {fileID: 0}
+  enemyAttackSfx: {fileID: 0}
+  enemyActionMotion:
+    enableAdvance: 0
+    advanceDistance: 0.4
+    advanceDuration: 0.18
+    advanceProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    movementMode: 0
+    initialUpwardSpeed: 12
+    gravity: 32
+    maximumFallSpeed: 28
+    minimumLandingSpeed: 4
+    maximumAirborneSeconds: 2.5
+    enableHomingRush: 0
+    rushMaximumSpeed: 14
+    rushImpulseDuration: 0.35
+    rushStoppingDistance: 1.25
+    rushCollisionSkin: 0.04
+    rushBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  reactionTelegraph:
+    enabled: 1
+    alertPrefab: {fileID: 0}
+    threatColor: {r: 0.85, g: 0.08, b: 0.4, a: 1}
+    perfectWindowColor: {r: 0.72, g: 0.94, b: 1, a: 1}
+    heightOffset: 1.1
+    fadeSeconds: 0.12
+    anticipationAudio: {fileID: 0}
+    perfectWindowAudio: {fileID: 0}
+    successfulReactionAudio: {fileID: 0}
+    usePerfectWindowSlowMotion: 1
+    perfectWindowTimeScale: 0.85
+    perfectWindowSlowMotionSeconds: 0.15
+  combatWarning:
+    enabled: 1
+    color: {r: 1, g: 0.1, b: 0.42, a: 1}
+    intensity: 0.8
+    pulseFrequency: 2.5
+    vignette: 0.26
+    chromaticAberration: 0.012
+    enemyFocusBias: 0.9
+    recenterDegreesPerSecond: 280
+    focusSharpness: 28
+    fieldOfViewOffset: -2
+    fadeOutSeconds: 0.16
+    warningAudio: {fileID: 0}
+    useSlowMotion: 0
+    slowMotionTimeScale: 0.85
+    slowMotionSeconds: 0.15
+  preparationMode: 1
+  chargeTailStartNormalizedTime: 0.7
+  chargeTailPlaybackRate: 0.1
+  chargeTailBlendSeconds: 0.08
+  preparationClip: {fileID: 7400000, guid: 8ed27e4f6302a574fa74102a5954eb9f, type: 2}
+  preparationState: Base Layer.ChargedPreparation
+  chargeSeconds: 2
+  chargeCameraFovReduction: 10
+  chargeCameraBehindOffset: 0.6
+  chargeCameraBlendSeconds: 0.25
+  playerFloatClip: {fileID: 7400000, guid: 816092657c1c01148bd17c27e2e31584, type: 2}
+  playerFloatState: Base Layer.ChargedFloat
+  enemyFloatClip: {fileID: 7400000, guid: 2a29aa705d80bf14580719628bc5898c, type: 2}
+  enemyFloatState: Base Layer.ChargedFloatHit
+  launchHeight: 3
+  ascentSeconds: 0.36
+  airborneHoldSeconds: 1.2
+  maximumVerticalHitDistance: 1.5
+  launchTrajectory: 1
+  descentInitialSpeed: 2.5
+  descentAcceleration: 42
+  maximumDescentSpeed: 18

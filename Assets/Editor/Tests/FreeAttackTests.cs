@@ -5,6 +5,48 @@ using UnityEngine;
 
 public sealed class FreeAttackTests
 {
+    [TestCase(.06f, 65f)] [TestCase(2f, 65f)] [TestCase(10f, 65f)] [TestCase(30f, 42f)]
+    public void BurstDashHasExactDistanceShortRampsAndNeverExceedsSpeedCap(float distance, float speed)
+    {
+        float duration = PlayerActionPresentationController.ContactBurstDuration(distance, speed, .25f);
+        Assert.That(duration, Is.GreaterThanOrEqualTo(distance / speed));
+        Assert.That(PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, 0), Is.Zero);
+        float previous = 0;
+        float step = duration / 1000;
+        for (int i = 1; i <= 1000; i++)
+        {
+            float position = PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, i * step);
+            Assert.That(position, Is.GreaterThanOrEqualTo(previous - .00001f));
+            Assert.That((position - previous) / step, Is.LessThanOrEqualTo(speed + .05f));
+            previous = position;
+        }
+        Assert.That(previous, Is.EqualTo(distance).Within(.0001f));
+        Assert.That(PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, duration + 1),
+            Is.EqualTo(distance).Within(.0001f), "A late frame cannot add travel after the pulse.");
+        float initialStep = PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, step);
+        float finalStep = distance - PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, duration - step);
+        float middle = PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, duration * .5f + step) -
+            PlayerActionPresentationController.ContactBurstDistance(distance, speed, .25f, duration * .5f);
+        Assert.That(initialStep, Is.LessThan(middle));
+        Assert.That(finalStep, Is.LessThan(middle));
+    }
+
+    [Test]
+    public void ContactFeedbackUsesTheActualHorizontalContactAndPlayerHeight()
+    {
+        var player = new GameObject("Impact height fixture");
+        try
+        {
+            player.transform.position = new Vector3(30, 5, 40);
+            var contact = new Vector3(2, 100, 3);
+            Assert.That(CombatImpactFeedbackController.ResolvePlayerImpactPosition(contact, player.transform),
+                Is.EqualTo(new Vector3(2, 6.5f, 3)));
+            Assert.That(new FreeAttackProfile().contactDashMotion, Is.EqualTo(ContactDashMotion.Approach),
+                "Existing production sessions must not silently opt into a laboratory tuning.");
+        }
+        finally { Object.DestroyImmediate(player); }
+    }
+
     private static Transform fixtureRoot;
     private static ICombatTarget Query(RealTimeCombatManager manager, SkillSO skill, bool contact = false) =>
         (ICombatTarget)typeof(RealTimeCombatManager).GetMethod("FindFreeAttackTarget", BindingFlags.NonPublic | BindingFlags.Instance)

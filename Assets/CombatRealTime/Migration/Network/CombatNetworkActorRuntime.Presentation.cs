@@ -25,6 +25,11 @@ namespace Lit.Combat.Migration.Network
             if (session == 0) return false;
             presentationSession = session;
             if (!presentation.ConfigureExternalSkill(session, entry.skill)) { StopLocalPresentation(); return false; }
+            if (server && family == CombatNetworkSkillFamily.Retreat &&
+                (!IsServer || !presentation.ConfigureExternalRetreatBraking(session,
+                    combatWorld != null && combatWorld.isActiveAndEnabled && combatWorld.freeAttacks != null && combatWorld.freeAttacks.enabled
+                        ? combatWorld.freeAttacks.retreatLandingDeceleration : 0)))
+            { StopLocalPresentation(); return Diagnose("Server retreat braking profile is invalid."); }
             if (!presentation.RegisterActionTermination(session, reason => OnPresentationTerminated(session, reason)))
             { StopLocalPresentation(); return false; }
             actor.PushScriptedMovementSuppression(); movementSuppressed = true;
@@ -50,7 +55,8 @@ namespace Lit.Combat.Migration.Network
                 { StopLocalPresentation(); return Diagnose("Server dash world profile is no longer available or valid."); }
                 var ticket = active.Ticket;
                 if (!presentation.TryBeginExternalContactLunge(session, entry.skill,
-                    (target, point, direction) => ResolveDashContact(ticket, session, target, point, direction), freeDashDistance))
+                    (target, point, direction) => ResolveDashContact(ticket, session, target, point, direction), freeDashDistance,
+                    combatWorld.freeAttacks.contactDashMotion))
                 { StopLocalPresentation(); return Diagnose("Dash could not acquire the existing actor contact motor."); }
             }
             if (server && family == CombatNetworkSkillFamily.AirBasic && entry.skill is BasicSkillsSO basic && basic.HoldsAirborneDuringAnimation)
@@ -173,22 +179,25 @@ namespace Lit.Combat.Migration.Network
 
         [ClientRpc]
         private void ConfirmedImpactClientRpc(int skillId, FixedString64Bytes guid, ulong epoch, ulong generation,
-            NetworkObjectReference targetReference, int amount)
+            NetworkObjectReference targetReference, int amount, bool hasContactPosition, Vector3 contactPosition)
         {
             if (IsServer || amount <= 0 || !catalogValid || !catalog.TryGet(skillId, out var entry) || entry.CanonicalGuid != guid.ToString() ||
+                hasContactPosition && !CombatCommandPolicy.Finite(contactPosition) ||
                 !targetReference.TryGet(out var identity, NetworkManager)) return;
             var target = ResolveEnemy(identity);
             if (target?.Root == null) return;
             CombatDamageWorldFeedback.Show(target.Root, amount, Color.white, 2f);
-            PlayImpactCues(entry.skill, target);
+            PlayImpactCues(entry.skill, target, generation, hasContactPosition ? contactPosition : (Vector3?)null);
         }
 
-        private void PlayImpactCues(SkillSO skill, ICombatTarget target)
+        private void PlayImpactCues(SkillSO skill, ICombatTarget target, ulong generation = 0, Vector3? contactPosition = null)
         {
             if (target?.Root == null) return;
             var point = target.LockPoint != null ? target.LockPoint : target.Root;
-            CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, point, transform);
-            presentation?.PlayConfirmedSkillContactVfx(skill, point);
+            if (generation != 0 && target.Root.TryGetComponent<CombatContactPose>(out var contactPose))
+                contactPose.PlayContact(transform.position, Mathf.InverseLerp(10, 35, skill.Damages));
+            CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, point, transform, contactPosition);
+            presentation?.PlayConfirmedSkillContactVfx(skill, point, contactPosition, unchecked((int)generation));
         }
 
         private void OnHealthChanged(CombatNetworkHealthSnapshot before, CombatNetworkHealthSnapshot after) { if (!IsServer) ApplyClientHealth(); }

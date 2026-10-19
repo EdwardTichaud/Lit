@@ -12,8 +12,7 @@ public static class PlayerActionContinuityValidation
             var skill = AssetDatabase.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(guid));
             if (skill == null || skill.AnimationClip == null) continue;
             float blend = skill.Presentation.entryBlendSeconds;
-            // CrossFade uses normalized duration; also cover short clips conservatively.
-            float ambiguousUntil = blend * Mathf.Max(1f, skill.AnimationClip.length);
+            float ambiguousUntil = Mathf.Clamp(blend, 0f, .25f);
             foreach (var evt in AnimationUtility.GetAnimationEvents(skill.AnimationClip))
             {
                 if (evt.time >= ambiguousUntil) continue;

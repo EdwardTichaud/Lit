@@ -9,6 +9,11 @@ public sealed class LitTacticalUccViewType : Adventure
     private LitTacticalCameraProfile profile;
     private Vector3 pivot, targetPivot, pivotVelocity, lastAnchor;
     private float yaw, pitch, zoom, targetZoom, zoomVelocity, groundVelocity;
+    private float actionRatio = 1, actionRatioVelocity;
+    private double manualZoomUntil;
+    private Transform framingParticipant;
+    public float ActionDistanceRatio => actionRatio;
+    public float ManualDistance => targetZoom;
     private bool following = true, initialized, recentering;
     private Vector2 pendingPan;
     private Vector3 lastResolvedPosition;
@@ -24,7 +29,7 @@ public sealed class LitTacticalUccViewType : Adventure
         distanceRecovery.Reset(current);
         // Preserve only the current distance, not old contact/hold history.
         // Mark a retracted pose for a smooth return when collisions are switched off.
-        distanceRecovery.Resolve(current, zoom, 0, false, 0, profile != null ? profile.collisionReturnTime : .15f);
+        distanceRecovery.Resolve(current, zoom * actionRatio, 0, false, 0, profile != null ? profile.collisionReturnTime : .15f);
     }
     public override bool UseSmoothOffset => false; // Never rotate the world orbit with combatant yaw.
     private Vector3 GetFollowAnchor(bool rendered = false)
@@ -53,6 +58,8 @@ public sealed class LitTacticalUccViewType : Adventure
         CollisionAnchorOffset = source.CollisionAnchorOffset;
         FieldOfView = profile.fieldOfView;
         zoom = targetZoom = Mathf.Clamp(profile.initialDistance, profile.distanceLimits.x, profile.distanceLimits.y);
+        actionRatio = 1; actionRatioVelocity = 0; manualZoomUntil = 0;
+        framingParticipant = null;
         pitch = profile.initialPitch;
     }
 
@@ -64,6 +71,7 @@ public sealed class LitTacticalUccViewType : Adventure
     public void Recenter(bool immediate)
     {
         if (immediate) owner?.ResetPoseTracking();
+        if (immediate) { actionRatio = 1; actionRatioVelocity = 0; framingParticipant = null; }
         following = true;
         recentering = !immediate;
         pivotVelocity = Vector3.zero;
@@ -86,6 +94,8 @@ public sealed class LitTacticalUccViewType : Adventure
         yaw += input.orbit.x;
         pitch = Mathf.Clamp(pitch - input.orbit.y, profile.pitchLimits.x, profile.pitchLimits.y);
         targetZoom = Mathf.Clamp(targetZoom - input.zoom, profile.distanceLimits.x, profile.distanceLimits.y);
+        if (Mathf.Abs(input.zoom) > .0001f)
+            manualZoomUntil = Time.realtimeSinceStartupAsDouble + (profile.actionFraming?.manualZoomGraceSeconds ?? 0);
         pendingPan += input.pan;
     }
 
@@ -136,7 +146,44 @@ public sealed class LitTacticalUccViewType : Adventure
         if (!following) pivot = LitTacticalBounds.Constrain(pivot, m_CharacterTransform.position);
         if (recentering && (pivot - anchor).sqrMagnitude < .0025f) recentering = false;
         zoom = immediate ? targetZoom : Mathf.SmoothDamp(zoom, targetZoom, ref zoomVelocity, profile.zoomTime, Mathf.Infinity, dt);
+        TickActionFraming(immediate);
         if (immediate) pivotVelocity = Vector3.zero;
+    }
+
+    private void TickActionFraming(bool immediate)
+    {
+        var settings = profile.actionFraming;
+        if (immediate || settings == null || !settings.enabled)
+        { actionRatio = 1; actionRatioVelocity = 0; framingParticipant = null; return; }
+        if (Time.timeScale <= 0) return;
+        float desired = owner.ResolveActionFraming(out var participant);
+        if (!following) desired = 1;
+        if (Time.realtimeSinceStartupAsDouble < manualZoomUntil) desired = 1;
+        if (participant != null) framingParticipant = participant;
+        float minimum = Mathf.Min(1, profile.distanceLimits.x / Mathf.Max(.01f, zoom));
+        if (following && (desired < 1 || actionRatio < .999f))
+        {
+            var inverse = Quaternion.Inverse(Quaternion.Euler(pitch, yaw, 0));
+            var camera = owner.GetComponent<Camera>();
+            float aspect = camera != null ? camera.aspect : 16f / 9;
+            minimum = Mathf.Max(minimum, FitActor(m_CharacterTransform, inverse, aspect), FitActor(framingParticipant, inverse, aspect));
+        }
+        desired = Mathf.Clamp(desired, minimum, 1);
+        float dt = Mathf.Min(Time.inFixedTimeStep ? Time.fixedUnscaledDeltaTime : Time.unscaledDeltaTime, .1f);
+        actionRatio = Mathf.Max(minimum, Mathf.SmoothDamp(actionRatio, desired, ref actionRatioVelocity,
+            desired < actionRatio ? settings.entrySeconds : settings.returnSeconds, Mathf.Infinity, dt));
+        if (desired == 1 && actionRatio >= .999f) framingParticipant = null;
+    }
+
+    private float FitActor(Transform root, Quaternion inverse, float aspect)
+    {
+        if (root == null || !root.gameObject.activeInHierarchy) return 0;
+        var capsule = root.GetComponentInChildren<CapsuleCollider>();
+        float height = capsule != null ? capsule.height * capsule.transform.lossyScale.y : 2.4f;
+        var bottom = inverse * (root.position + Vector3.up * .05f - pivot);
+        var top = inverse * (root.position + Vector3.up * Mathf.Max(2.1f, height) - pivot);
+        return Mathf.Clamp01(Mathf.Max(LitTacticalActionFraming.RequiredDistance(bottom, profile.fieldOfView, aspect),
+            LitTacticalActionFraming.RequiredDistance(top, profile.fieldOfView, aspect)) / Mathf.Max(.01f, zoom));
     }
 
     public override Quaternion Rotate(float horizontalMovement, float verticalMovement, bool immediateUpdate)
@@ -176,7 +223,7 @@ public sealed class LitTacticalUccViewType : Adventure
         if (advance) clock.TryAdvance(Time.inFixedTimeStep, Time.fixedTimeAsDouble, Time.frameCount);
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
         Vector3 direction = rotation * Vector3.back;
-        Vector3 desired = pivot + direction * zoom;
+        Vector3 desired = pivot + direction * Mathf.Max(profile.distanceLimits.x, zoom * actionRatio);
         if (!following) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetFollowAnchor(), profile.maximumFreeCameraDistance);
         Vector3 requested = desired;
         owner.PrepareVisibilityMask(desired, GetFollowAnchor(), CollisionRadius);

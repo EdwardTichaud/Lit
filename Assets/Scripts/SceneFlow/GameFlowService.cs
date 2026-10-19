@@ -982,7 +982,8 @@ public sealed class GameFlowService : MonoBehaviour
     private static IEnumerator UnloadSceneIfLoaded(string sceneName)
     {
         Scene scene = SceneManager.GetSceneByName(sceneName);
-        if (!scene.IsValid() || !scene.isLoaded)
+        // The following Single load retires the final scene; Unity cannot unload it additively.
+        if (!scene.IsValid() || !scene.isLoaded || SceneManager.sceneCount <= 1)
         {
             yield break;
         }

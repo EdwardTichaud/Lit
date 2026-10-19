@@ -8,6 +8,38 @@ using UnityEngine.InputSystem.LowLevel;
 
 public sealed class ChargedSkillTests
 {
+    [TestCase(30)] [TestCase(60)] [TestCase(120)]
+    public void LaunchDeceleratesToExactApexAndFallAcceleratesWithoutFrameDependence(int fps)
+    {
+        var skill = ScriptableObject.CreateInstance<ChargedSkillSO>();
+        try
+        {
+            skill.ascentSeconds = .36f;
+            skill.launchTrajectory = ChargedLaunchTrajectory.Impulse;
+            skill.descentInitialSpeed = 2.5f; skill.descentAcceleration = 42; skill.maximumDescentSpeed = 18;
+            Assert.That(skill.EvaluateAscentHeight(0), Is.Zero);
+            Assert.That(skill.EvaluateAscentHeight(.09f), Is.GreaterThan(skill.launchHeight * .4f));
+            Assert.That(skill.EvaluateAscentHeight(.36f), Is.EqualTo(skill.launchHeight).Within(.0001f));
+            Assert.That(skill.EvaluateAscentHeight(2), Is.EqualTo(skill.launchHeight).Within(.0001f));
+            float early = skill.EvaluateAscentHeight(.01f);
+            float late = skill.launchHeight - skill.EvaluateAscentHeight(.35f);
+            Assert.That(early, Is.GreaterThan(late * 10));
+            float dt = 1f / fps, previous = 0, sum = 0;
+            for (int i = 1; i <= fps; i++)
+            {
+                float distance = skill.EvaluateDescentDistance(i * dt);
+                Assert.That(distance, Is.GreaterThanOrEqualTo(previous));
+                Assert.That((distance - previous) / dt, Is.LessThanOrEqualTo(skill.maximumDescentSpeed + .001f));
+                sum += distance - previous;
+                previous = distance;
+            }
+            Assert.That(sum, Is.EqualTo(skill.EvaluateDescentDistance(1)).Within(.0001f));
+            Assert.That(skill.EvaluateDescentDistance(.15f) - skill.EvaluateDescentDistance(.1f),
+                Is.GreaterThan(skill.EvaluateDescentDistance(.05f)));
+        }
+        finally { Object.DestroyImmediate(skill); }
+    }
+
     [Test]
     public void DeviceRemovalDoesNotReadDisconnectedChargeControls()
     {
@@ -16,8 +48,12 @@ public sealed class ChargedSkillTests
         var input = owner.AddComponent<RealTimeCombatInput>();
         var pad = InputSystem.AddDevice<Gamepad>();
         var map = new InputActionMap("Charge device test");
+        var inputManager = typeof(InputSystem).GetField("s_Manager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).GetValue(null);
+        var runPlayerUpdates = inputManager.GetType().GetProperty("runPlayerUpdatesInEditMode");
+        bool previousRunPlayerUpdates = (bool)runPlayerUpdates.GetValue(inputManager);
         try
         {
+            runPlayerUpdates.SetValue(inputManager, true);
             map.devices = new InputDevice[] { pad };
             var action = map.AddAction("Basic", InputActionType.Button, "<Gamepad>/buttonWest");
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
@@ -27,8 +63,10 @@ public sealed class ChargedSkillTests
             action.canceled += _ => { canceled = true; Assert.That(read.Invoke(input, null), Is.False); };
             map.Enable();
             InputSystem.QueueStateEvent(pad, new GamepadState().WithButton(GamepadButton.West));
+            // The package's test switch permits game-action updates outside Play Mode.
             InputSystem.Update();
             Assert.That(read.Invoke(input, null), Is.True);
+            Assert.That(action.phase, Is.EqualTo(InputActionPhase.Performed), "The action must have started before removal.");
             InputSystem.RemoveDevice(pad);
             Assert.That(canceled, Is.True);
             Assert.That(read.Invoke(input, null), Is.False);
@@ -37,6 +75,8 @@ public sealed class ChargedSkillTests
         {
             map.Dispose();
             if (pad.added) InputSystem.RemoveDevice(pad);
+            runPlayerUpdates.SetValue(inputManager, previousRunPlayerUpdates);
+            InputSystem.Update();
             Object.DestroyImmediate(owner);
         }
     }
@@ -82,12 +122,21 @@ public sealed class ChargedSkillTests
     }
 
     [Test]
-    public void LucianLaboratoryOwnsOnePersonalChargedSkillOutsideWheel()
+    public void LucianAndLaboratoryKeepTheirSkillIdentitiesWithValidatedChargedMotion()
     {
         var data = AssetDatabase.LoadAssetAtPath<CharacterData>(GroundImpactSkillSetup.DataPath);
         var skill = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(ChargedSkillSetup.SkillPath);
         Assert.That(skill, Is.Not.Null);
         Assert.That(data.chargedSkill, Is.SameAs(skill));
+        Assert.That(skill.launchTrajectory, Is.EqualTo(ChargedLaunchTrajectory.Impulse));
+        Assert.That(skill.ascentSeconds, Is.EqualTo(.36f));
+        var productionSkill = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(ChargedSkillSetup.SourceSkillPath);
+        Assert.That(productionSkill, Is.Not.SameAs(skill));
+        Assert.That(productionSkill.launchTrajectory, Is.EqualTo(ChargedLaunchTrajectory.Impulse));
+        Assert.That(productionSkill.ascentSeconds, Is.EqualTo(skill.ascentSeconds));
+        Assert.That(productionSkill.airborneHoldSeconds, Is.EqualTo(skill.airborneHoldSeconds));
+        Assert.That(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset").chargedSkill,
+            Is.SameAs(productionSkill), "Migration preserves the canonical production skill identity.");
         Assert.That(data.combatSkills.Contains(skill), Is.False);
         Assert.That(skill.chargeSeconds, Is.EqualTo(2));
         Assert.That(skill.cooldownSeconds, Is.EqualTo(8));

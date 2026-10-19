@@ -12,7 +12,7 @@ public sealed partial class PlayerActionPresentationController
     private int chargedPreparationToken;
     private RealTimeCombatInput chargedHoldInput;
     public ChargedSkillSO PassiveChargedFloatSkill => chargedHoldRelease != null ? chargedFloatSkill : null;
-    public bool IsPreparingChargedSkill => chargedPreparationToken != 0 && IsCurrentSession(chargedPreparationToken) &&
+    public bool IsPreparingChargedSkill => IsPreparingBasicTail || chargedPreparationToken != 0 && IsCurrentSession(chargedPreparationToken) &&
         externallyDriven && sessionOwner == this;
     public bool IsChargingSkill => IsPreparingChargedSkill ||
         chargedHoldInput != null && chargedHoldInput.IsChargingSkillFor(this);
@@ -66,9 +66,11 @@ public sealed partial class PlayerActionPresentationController
 
     public bool StartChargedSkill(ChargedSkillSO skill, ICombatChargedTarget target)
     {
-        if (actionActive || target == null && RealTimeCombatManager.Instance?.AllowsFreeAttacks != true || !CanPlayState(skill.AnimatorState) || locomotionBridge == null ||
+        bool replaceTail = CanLaunchFromChargedBasicTail(skill);
+        if (actionActive && !replaceTail || target == null && RealTimeCombatManager.Instance?.AllowsFreeAttacks != true || !CanPlayState(skill.AnimatorState) || locomotionBridge == null ||
             !locomotionBridge.Grounded || !locomotionBridge.HasOnlyExternalLocksOwnedBy(this, GetComponent<PlayerStateMotionController>())) return false;
-        if (!TryPlaySkill(skill, Animator.StringToHash(skill.AnimatorState))) return false;
+        if (replaceTail ? !StartAction(Animator.StringToHash(skill.AnimatorState), skill.Presentation, skill.SkillName, false, null, skill)
+            : !TryPlaySkill(skill, Animator.StringToHash(skill.AnimatorState))) return false;
         chargedTarget = target;
         chargedFirstContact = chargedHoldHandoff = false;
         int token = activeToken;
@@ -94,7 +96,7 @@ public sealed partial class PlayerActionPresentationController
             locomotionBridge.StopChargedAscent();
             if (chargedTarget == target) chargedTarget = null;
         });
-        if (!locomotionBridge.StartChargedAscent(this, skill.launchHeight, skill.ascentSeconds))
+        if (!locomotionBridge.StartChargedAscent(this, skill))
         { target.ReleaseChargedHold(); return false; }
         StartCoroutine(ChargedAirborneHold(generation, target, skill));
         return true;
@@ -113,7 +115,7 @@ public sealed partial class PlayerActionPresentationController
             if (chargedTarget == null || !chargedTarget.CanReceiveChargedLaunch ||
                 manager.ResolveChargedContact(skill, chargedTarget) <= 0 || !chargedTarget.ChargedAlive) return;
             if (!chargedTarget.BeginChargedLaunch(skill)) return;
-            if (!locomotionBridge.StartChargedAscent(this, skill.launchHeight, skill.ascentSeconds))
+            if (!locomotionBridge.StartChargedAscent(this, skill))
             { chargedTarget.ReleaseChargedHold(); return; }
             StartCoroutine(ChargedAirborneHold(activeToken, chargedTarget, skill));
         }
@@ -123,10 +125,10 @@ public sealed partial class PlayerActionPresentationController
     {
         float elapsed = 0;
         var clock = GetComponent<CombatTimeDomain>();
-        while (IsCurrentSession(token) && elapsed < skill.ascentSeconds)
-        { yield return null; elapsed += clock != null ? clock.DeltaTime : Time.deltaTime; }
-        locomotionBridge.StopChargedAscent();
+        while (IsCurrentSession(token) && locomotionBridge.IsChargedAscentActive && elapsed < skill.ascentSeconds + .75f)
+        { yield return new WaitForFixedUpdate(); elapsed += clock != null ? clock.FixedDeltaTime : Time.fixedDeltaTime; }
         if (!IsCurrentSession(token)) yield break;
+        locomotionBridge.StopChargedAscent();
         int holdHandle = locomotionBridge.AcquireCombatAirborneHold(this, skill.airborneHoldSeconds);
         if (holdHandle == 0)
         { TerminateAction(token, ActionEndReason.Completed); yield break; }
@@ -143,6 +145,9 @@ public sealed partial class PlayerActionPresentationController
             // deadline. Its animation may continue, but UCC owns the descent.
             chargedDescentRequired = locomotionBridge != null && !locomotionBridge.Grounded;
             if (chargedDescentRequired) ReleaseAirborneHold();
+            if (chargedDescentRequired && !deathAnimationLocked && !locomotionBridge.IsCinematicMotionSessionActive &&
+                (!actionActive || activeActionIsBasic) && (clock != null ? clock.LocalTime : Time.time) >= chargedHoldDeadline)
+                locomotionBridge.RequestCombatSkillLanding(skill.descentInitialSpeed);
             if (target != null && target.ChargedRoot != null && target.IsChargedAirborne && target.ChargedGeneration == targetGeneration) target.ReleaseChargedHold();
         };
         var ownRelease = chargedHoldRelease;

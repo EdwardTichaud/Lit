@@ -2,6 +2,21 @@
 
 ## Installation explicite du combat commun (2026-10-17)
 
+Extension du 2026-10-19 : camera de production dediee conservant sa base
+d'exploration, promotion d'Ascension sans changement d'identite, trois Basics
+aeriens et presentations de contact auteurs. Le dry-run inclut leurs fichiers
+dans le manifeste et les sauvegardes ; aucune installation automatique au boot.
+Les reglages de deplacement Burst/freinage sont ceux du FreeAttackProfile partage
+par le monde, y compris pour l'execution serveur.
+
+Bootstrap doit referencer District 1 dans zoneManifests, pas uniquement dans
+editorStartManifest. Sinon StartOrLoadGame("District_1_Core") et le chargement
+d'une sauvegarde de cette zone ne trouvent pas son manifeste et chargent Core
+seul. La migration ajoute la reference canonique manquante, sans doublon ni
+remplacement des autres zones. Aucun fallback vers le raccourci editeur n'est
+introduit dans le runtime. Une recette rendue a reproduit l'echec Core seul,
+puis valide les 22 scenes, NavMesh Ready, Lucian et une Basic apres correction.
+
 CombatMigrationImplementationInstall orchestre les services communs, les quatre
 kits, la conversion du vrai Juggernaut, l'authoring reseau et les adaptateurs de
 rencontre. Avant ecriture : plan, sauvegarde des fichiers/metadonnees concernes
@@ -15,6 +30,15 @@ Le rapport separe authoringInstalled et ReadyForProduction. Aucun de ces outils
 ne lance de Play Mode ou ne fournit de preuve de sauvegarde/multijoueur.
 
 ## Coherence des scenes de District 1
+
+Retour menu : UnloadSceneIfLoaded conserve la derniere scene chargee ; le
+chargement Single suivant la retire. Unity refuse son dechargement additif, et
+l'ancien chemin attendait indefiniment sa disparition. La recette avec une vraie
+sauvegarde a reproduit ce defaut apres dechargement des additives, sans perte du
+slot Library. Un test cible couvre cette attente impossible et le nettoyage repete.
+Le cycle District 1 sauvegarde/menu/recharge passe apres correction des PV et
+identites : un seul Lucian, ennemi fixture toujours mort sous son marker, NavMesh
+de nouveau Ready. Les autres zones et le reseau restent a qualifier.
 
 La liste runtime du manifest inclut Indoor_Lights comme sa reference SceneAsset :
 21 scenes additives requises et le Core. L'eclairage se trouve a la racine Assets,
@@ -42,8 +66,11 @@ La recette exige un rendu compatible HDRP et des frames d'affichage : le mode
 demande confirmation et ferme son editeur de test a la fin. Un lancement batch
 ne contourne pas les attentes reelles de presentation du chargement.
 La recette controle chargement obligatoire, navigation, acteur solo, bindings,
-une Basic et une ecriture/lecture de snapshot ; elle ne valide ni une restauration
-complete de sauvegarde ni le ressenti, les autres zones ou le multijoueur.
+une Basic et une ecriture/lecture de snapshot. L'option SaveRoundTrip ajoute
+menu/rechargement reel, PV, progression et mort d'un ennemi sous son marker,
+ainsi que l'unicite de Lucian et le nettoyage natif du curseur. La mort utilise
+une fixture ForceDefeat, pas une victoire jouee. Ni le ressenti, ni les autres
+zones, ni le multijoueur ne sont deduits de cette recette.
 
 ## Admission du combat reseau
 

@@ -8,7 +8,7 @@ public sealed partial class CombatHealthThresholdController
 {
     [Header("Invisible enemy reactions")]
     [FormerlySerializedAs("attackQteDuration"), SerializeField, Min(.05f)] private float dodgeWindowSeconds = .5f;
-    [SerializeField, Min(.01f), Tooltip("Realtime in production; clip seconds immediately before impact when the laboratory supplies EnemyReactionTiming.")]
+    [SerializeField, Min(.01f), Tooltip("Secondes de clip avant impact avec EnemyReactionTiming ; temps reel pour les attaques sans contexte anime.")]
     private float counterWindowSeconds = .2f;
     [SerializeField, Min(.05f), Tooltip("Minimum realtime delay between counter/guard presses, including attempts outside the reaction window. Holding and releasing guard remain available.")]
     private float counterRetryDelaySeconds = .4f;
@@ -119,12 +119,8 @@ public sealed partial class CombatHealthThresholdController
             reactionSlowMotionHandle = reactionTimeManager.AcquireGlobal(reactionTimeScale, this);
     }
 
+    [SerializeField, Tooltip("Feedback bref apres une reaction externe acceptee, sans ralentir sa preparation.")]
     private bool externalSuccessSlowMotion;
-    public void ConfigureExternalReactionPresentation()
-    {
-        reactionTimeScale = 1f;
-        externalSuccessSlowMotion = true;
-    }
 
     public bool IsAttackDodged(ICombatTarget target) => attackDodgeProtected && externalReactionTarget == target && AttackReactionStillValid();
     public void CloseExternalReactionAtContact(ICombatTarget target)

@@ -12,7 +12,43 @@ public sealed partial class PlayerActionPresentationController
     private PlayerActionPresentationController playerActionPresentation;
     private int externalImpactToken = -1;
     private int retreatImpulseToken = -1;
+    private bool retreatHasLeftGround;
+    private float retreatLandingDeceleration;
+    private Vector3 retreatLandingDirection;
+    private Vector3 retreatLaunchPosition;
+    private int externalRetreatBrakingGeneration = -1;
+    private float externalRetreatLandingDeceleration;
+
+    public bool ConfigureExternalRetreatBraking(int generation, float deceleration)
+    {
+        if (!externallyDriven || !IsCurrentSession(generation) || activePresentedSkill == null ||
+            !activePresentedSkill.RetreatImpulse.enabled || !float.IsFinite(deceleration) || deceleration < 0) return false;
+        externalRetreatBrakingGeneration = generation;
+        externalRetreatLandingDeceleration = deceleration;
+        RegisterActionCleanup(generation, () =>
+        {
+            if (externalRetreatBrakingGeneration != generation) return;
+            externalRetreatBrakingGeneration = -1;
+            externalRetreatLandingDeceleration = 0;
+        });
+        return true;
+    }
+
+    private float ResolveRetreatLandingDeceleration() => externallyDriven
+        ? externalRetreatBrakingGeneration == activeToken ? externalRetreatLandingDeceleration : 0
+        : RealTimeCombatManager.Instance?.PlayerRoot == transform ? RealTimeCombatManager.Instance.RetreatLandingDeceleration : 0;
+
+    private void BrakeRetreatAfterLanding()
+    {
+        if (!actionActive || retreatImpulseToken != activeToken || retreatLandingDeceleration <= 0 || locomotionBridge == null) return;
+        retreatHasLeftGround |= !locomotionBridge.Grounded && locomotionBridge.VerticalVelocity > 0 &&
+            Vector3.Dot(transform.position - retreatLaunchPosition, transform.up) > .1f;
+        if (retreatHasLeftGround && locomotionBridge.Grounded)
+            locomotionBridge.ApplyPlanarHandoffDamping(retreatLandingDeceleration, retreatLandingDirection);
+    }
     private bool resolvingExternalImpactVfx;
+    private SkillSO confirmedContactSkill;
+    private int confirmedContactGeneration;
     [Header("Input Prompt Animation Events")]
     [SerializeField] private Transform inputPromptAnchor;
     [SerializeField] private Vector3 inputPromptOffset = new Vector3(0f, 1.25f, 0f);
@@ -260,7 +296,7 @@ public sealed partial class PlayerActionPresentationController
     public void HandleStopDash() => GetMobility()?.HandleStopDash();
 
 
-    private void PlaySkillVfxCue(SkillVfxCue cue, Transform target)
+    private void PlaySkillVfxCue(SkillVfxCue cue, Transform target, Vector3? contactPosition = null)
     {
         if (cue == null)
         {
@@ -304,11 +340,14 @@ public sealed partial class PlayerActionPresentationController
         if (cue.delivery == SkillVfxDelivery.DirectOnTarget)
         {
             Transform targetPoint = target;
-            Vector3 impactPosition = CombatImpactFeedbackController.ResolvePlayerImpactPosition(targetPoint, transform);
-            PlaySkillVfxCueAudio(cue, impactPosition);
+            Vector3 impactPosition = CombatImpactFeedbackController.ResolvePlayerImpactPosition(contactPosition ?? targetPoint.position, transform);
+            if (!(resolvingExternalImpactVfx && confirmedContactSkill != null &&
+                TryGetComponent<CombatContactAudio>(out var contactAudio) &&
+                contactAudio.TryPlay(cue.audioClip, impactPosition, confirmedContactSkill, confirmedContactGeneration)))
+                PlaySkillVfxCueAudio(cue, impactPosition);
             if (cue.prefab != null)
             {
-                Instantiate(cue.prefab, impactPosition, targetPoint.rotation, targetPoint);
+                Instantiate(cue.prefab, impactPosition, targetPoint.rotation, contactPosition.HasValue ? null : targetPoint);
             }
 
             return;
@@ -442,26 +481,36 @@ public sealed partial class PlayerActionPresentationController
         HandleConfirmedExternalImpact(skill, target);
     }
 
-    public void HandleConfirmedExternalImpact(SkillSO skill, Transform target)
+    public void HandleConfirmedExternalImpact(SkillSO skill, Transform target, Vector3? contactPosition = null)
     {
         if (skill == null || target == null) return;
-        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, RealTimeCombatManager.Instance?.PlayerRoot);
+        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target, transform, contactPosition);
         if (RealTimeCombatManager.Instance?.AllowsFreeAttacks == true || RealTimeCombatManager.Instance?.UsesExternalTarget == true || skill.TargetLunge.resolveImpactAtContact)
         {
-            PlayConfirmedSkillContactVfx(skill, target);
+            PlayConfirmedSkillContactVfx(skill, target, contactPosition);
         }
     }
 
-    public void PlayConfirmedSkillContactVfx(SkillSO skill, Transform target)
+    public void PlayConfirmedSkillContactVfx(SkillSO skill, Transform target, Vector3? contactPosition = null, int? generation = null)
     {
         if (skill == null || target == null) return;
+        bool previousResolving = resolvingExternalImpactVfx;
+        var previousSkill = confirmedContactSkill;
+        int previousGeneration = confirmedContactGeneration;
         resolvingExternalImpactVfx = true;
+        confirmedContactSkill = skill;
+        confirmedContactGeneration = generation ?? activeToken;
         try
         {
             foreach (var cue in skill.VfxCues)
-                if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget) PlaySkillVfxCue(cue, target);
+                if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget) PlaySkillVfxCue(cue, target, contactPosition);
         }
-        finally { resolvingExternalImpactVfx = false; }
+        finally
+        {
+            resolvingExternalImpactVfx = previousResolving;
+            confirmedContactSkill = previousSkill;
+            confirmedContactGeneration = previousGeneration;
+        }
     }
 
     /// <summary>
@@ -518,6 +567,10 @@ public sealed partial class PlayerActionPresentationController
         if (bridge != null)
         {
             retreatImpulseToken = activeToken;
+            retreatHasLeftGround = false;
+            retreatLaunchPosition = transform.position;
+            retreatLandingDirection = direction.normalized;
+            retreatLandingDeceleration = ResolveRetreatLandingDeceleration();
             // Les forces trop elevees peuvent faire franchir a la capsule UCC
             // un obstacle entre deux mises a jour de simulation. Chaque skill
             // conserve son recul auteurise, mais dans une limite sure.

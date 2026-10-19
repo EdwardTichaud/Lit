@@ -227,7 +227,7 @@ namespace Lit.Combat.Migration.Network
             var identity = recipient?.Root != null ? recipient.Root.GetComponentInParent<NetworkObject>() : null;
             if (identity != null && identity.IsSpawned && passiveEntry != null)
                 ConfirmedImpactClientRpc(passiveEntry.Id, new FixedString64Bytes(passiveEntry.CanonicalGuid),
-                    0, 0, new NetworkObjectReference(identity), stolen);
+                    0, 0, new NetworkObjectReference(identity), stolen, false, default);
         }
 
         private void OnPassiveEnded()

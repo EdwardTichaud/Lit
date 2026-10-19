@@ -7,14 +7,74 @@ using UnityEngine;
 
 public static class ChargedSkillSetup
 {
-    public const string SkillPath = "Assets/CombatRealTime/Skills/Skill_AscensionLumineuse.asset";
+    public const string SourceSkillPath = "Assets/CombatRealTime/Skills/Skill_AscensionLumineuse.asset";
+    public const string SkillPath = Folder + "/Skill_AscensionLumineuse_Lab.asset";
     public const string Folder = "Assets/Characters/3_Enemy/Iluvilirae";
     public const string EnemyPath = Folder + "/ChargedEnemy_Lab.prefab";
     public const string EnemyControllerPath = Folder + "/ChargedEnemy_Lab.controller";
+    public static void InstallImpulsePrototype()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before authoring.");
+        if (AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(SkillPath) == null)
+        {
+            if (!AssetDatabase.CopyAsset(SourceSkillPath, SkillPath)) throw new InvalidOperationException("Charged source asset missing.");
+            var prototype = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(SkillPath);
+            prototype.launchTrajectory = ChargedLaunchTrajectory.Impulse;
+            prototype.ascentSeconds = .36f;
+            prototype.descentInitialSpeed = 2.5f;
+            prototype.descentAcceleration = 42f;
+            prototype.maximumDescentSpeed = 18f;
+            prototype.impactFeedback.enabled = true;
+            prototype.impactFeedback.camera.lookOffsetKick = Vector3.zero;
+            prototype.impactFeedback.camera.fieldOfViewKick = 0;
+            var reference = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(Folder + "/Clash/ClashBasic_2.asset");
+            foreach (var cue in reference.VfxCues)
+                if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget)
+                    prototype.vfxCues.Add(new SkillVfxCue { displayName = cue.displayName, prefab = cue.prefab,
+                        audioClip = cue.audioClip, delivery = cue.delivery });
+            EditorUtility.SetDirty(prototype);
+        }
+        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(GroundImpactSkillSetup.DataPath);
+        var skill = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(SkillPath);
+        if (data.chargedSkill != skill) { data.chargedSkill = skill; EditorUtility.SetDirty(data); }
+        ConfigureBasicTailAssets(skill, data);
+        AssetDatabase.SaveAssets();
+    }
+    [MenuItem("Lit/Combat Lab/Configure Charged Basic Tail")]
+    public static void InstallBasicTailPrototype() => InstallImpulsePrototype();
+
+    private static void ConfigureBasicTailAssets(ChargedSkillSO skill, CharacterData data)
+    {
+        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(GroundImpactSkillSetup.ControllerPath);
+        if (controller == null) throw new InvalidOperationException("Laboratory controller missing.");
+        if (!controller.parameters.Any(p => p.name == PlayerActionPresentationController.ChargeTailSpeedParameter))
+        {
+            controller.AddParameter(new AnimatorControllerParameter {
+                name = PlayerActionPresentationController.ChargeTailSpeedParameter, type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
+            EditorUtility.SetDirty(controller);
+        }
+        foreach (var basic in data.groundBasicSkills.Concat(Enumerable.Range(0, 3).Select(i =>
+            AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(Folder + "/Clash/ClashBasic_" + i + ".asset"))).Where(s => s != null).Distinct())
+        {
+            if (!PlayerActionPresentationController.TryResolveChargeTailStart(basic, skill, out _))
+                throw new InvalidOperationException("No safe charge tail after authored events: " + basic.name);
+            var state = controller.layers[0].stateMachine.states.FirstOrDefault(s => "Base Layer." + s.state.name == basic.AnimatorState).state;
+            if (state == null) throw new InvalidOperationException("Basic Animator state missing: " + basic.AnimatorState);
+            if (!state.speedParameterActive || state.speedParameter != PlayerActionPresentationController.ChargeTailSpeedParameter)
+            {
+                state.speedParameter = PlayerActionPresentationController.ChargeTailSpeedParameter;
+                state.speedParameterActive = true;
+                EditorUtility.SetDirty(state); EditorUtility.SetDirty(controller);
+            }
+        }
+        if (skill.preparationMode != ChargedPreparationMode.BasicTail)
+        { skill.preparationMode = ChargedPreparationMode.BasicTail; EditorUtility.SetDirty(skill); }
+    }
     [MenuItem("Lit/Combat Lab/Configure Ascension lumineuse")]
     public static void Configure()
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before authoring.");
+        InstallImpulsePrototype();
         var skill = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(SkillPath);
         if (skill == null)
         {
@@ -22,6 +82,7 @@ public static class ChargedSkillSetup
             skill.skillName = "Ascension lumineuse";
             skill.description = "Maintenir X : projette la cible et la rejoint. Flottement permettant des BasicSkills aeriennes manuelles.";
             skill.damages = 10; skill.cooldownSeconds = 8;
+            skill.ascentSeconds = .36f;
             skill.useLaunchRange = true; skill.minimumLaunchDistance = 0; skill.maximumLaunchDistance = 3;
             skill.minimumHitDistance = 0; skill.maximumHitDistance = 3;
             skill.animatorState = "Base Layer.ChargedAscension";
@@ -30,7 +91,14 @@ public static class ChargedSkillSetup
             skill.presentation.allowMobilityCancel = false;
             skill.presentation.recoveryNormalizedTime = 1;
             skill.presentation.chainNormalizedTime = 1;
-            skill.impactFeedback.enabled = false;
+            skill.impactFeedback.enabled = true;
+            skill.impactFeedback.camera.lookOffsetKick = Vector3.zero;
+            skill.impactFeedback.camera.fieldOfViewKick = 0;
+            var referenceImpact = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(Folder + "/Clash/ClashBasic_2.asset");
+            foreach (var cue in referenceImpact.VfxCues)
+                if (cue != null && cue.delivery == SkillVfxDelivery.DirectOnTarget)
+                    skill.vfxCues.Add(new SkillVfxCue { displayName = cue.displayName, prefab = cue.prefab,
+                        audioClip = cue.audioClip, delivery = cue.delivery });
             AssetDatabase.CreateAsset(skill, SkillPath);
         }
         var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(GroundImpactSkillSetup.ControllerPath);

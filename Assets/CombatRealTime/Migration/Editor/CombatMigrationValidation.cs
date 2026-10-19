@@ -37,7 +37,12 @@ public static class CombatMigrationValidation
                     "CombatReadinessEvidenceTests", "CombatNetworkCatalogTests", "CombatEnemyNetworkAuthoringTests",
                     "CombatNetworkExecutionCompletionTests", "CombatCinematicParticipantLifecycleTests", "CombatInventoryTests",
                     "CombatDiagnosticCleanupTests", "ProductionBrainsLifecycleTests", "ProductionImpactContinuityTests",
-                    "CombatNetworkContactDashTests", "EnemyDeathPresentationTests"
+                    "CombatNetworkContactDashTests", "EnemyDeathPresentationTests",
+                    "ProductionCombatFeelMigrationTests", "CombatNetworkBasicTailChargeTests",
+                    "ChargedBasicTailTests", "ChargedSkillTests", "CombatContactAudioTests",
+                    "CombatContactPoseTests", "TacticalActionFramingTests", "CombatEnemyRecoveryTests",
+                    "CombatWorldLockCursorTests", "CombatAuthoredControlTests", "CombatSceneReturnTests",
+                    "CombatPlayerHealthPersistenceTests"
             };
             bool coreOnly = Array.IndexOf(Environment.GetCommandLineArgs(), "-combatMigrationCoreOnly") >= 0;
             if (coreOnly)

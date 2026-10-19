@@ -70,7 +70,7 @@ namespace Lit.Combat.Migration.Network
             {
                 if (!authority.TryConsumeImpact(ticket, identity)) return false;
                 basicImpactResolved = true;
-                DeliverBasicImpact(identity);
+                DeliverBasicImpact(identity, contactPosition: point);
                 return true;
             }
             finally

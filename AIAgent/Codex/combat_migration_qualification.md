@@ -2,6 +2,24 @@
 
 ## Reference et regles
 
+- Dernier lot controles/persistance : onze fichiers auteur livres, 26 sources
+  comparees a la copie validee, 451 tests cibles passes / 0 echec / 1 Explicit
+  non execute. Recette rendue 66701034d42a44f5b225c5bc644f902f passee : Bootstrap,
+  District 1 complet, Basic, vrai retour menu/recharge, un seul Lucian, PV 993,
+  progression preservee, ennemi fixture toujours mort sous son marker, NavMesh
+  Ready. Nettoyage natif du curseur confirme. Preuves et echecs precedents :
+  Library/ProductionCombatMigration/Controls et Logs/CombatControls*.log.
+  Cela ne valide ni victoire jouee, ni toutes zones, ni client distant.
+- Continuation du 2026-10-19 : onze fichiers auteur livres avec sauvegardes et
+  gardes SHA-256 dans `Library/ProductionCombatMigration/CombatFeel/`. La suite
+  combinee avant correction Bootstrap passe 418/0/1 ; la regression finale avec
+  resolution de zone runtime passe 419/0/1 (un Explicit non execute).
+  Une recette rendue a revele `zoneManifests` vide ; le vrai Bootstrap reference
+  maintenant District 1. Nouvelle recette : 22 scenes, NavMesh Ready 2/2,
+  Lucian seul, Basic terminee et snapshot ecrit/lu. Ce n'est ni un parcours solo
+  complet, ni une restauration reelle de sauvegarde, ni une preuve reseau.
+  Rotations et curseur monde, encore propres a l'arene a ce stade, sont maintenant
+  dans les donnees communes du lot controles/persistance ci-dessus.
 - Installation principale : `d0aff98072784154b05309f35428062c` ; 90 fichiers surveilles, GUID preserves, seconde application byte-stable.
 - Export de cette passe : `Library/ProductionCombatMigration/Qualification/source-export.json`. Il contient revision Git, provenance, fichiers synchronises et SHA-256 ; une revision seule ne decrit pas le worktree modifie.
 - Copie isolee : `Library/ActorAnimationSandbox`. Aucun Apply, remplacement d'asset ou restauration de sauvegarde principale pendant la qualification.
@@ -13,11 +31,11 @@
 
 | Gate existante | Preuve attendue | Etat de cette passe |
 |---|---|---|
-| compilation | Compilation runtime et editeur sur sources finales | En cours |
-| editMode | Suite combat elargie ; echecs et exclusions explicites | En cours |
-| playMode | Parcours production, changement d'acteur, nettoyage mort/desactivation | Non execute |
-| zone | Chargement de toutes les zones, overrides, gates, placement NavMesh | Non execute |
-| save | Sauvegarde/recharge reelle, identites et progression preservees | Non execute |
+| compilation | Compilation runtime et editeur sur sources finales | Copie isolee reussie, 26 sources comparees ; gate globale non revendiquee |
+| editMode | Suite combat elargie ; echecs et exclusions explicites | 451 cibles passes / 0 echec / 1 Explicit non execute ; suite narrative exhaustive distincte |
+| playMode | Parcours production, changement d'acteur, nettoyage mort/desactivation | Recette bornee Bootstrap/Basic/curseur/recharge passee ; parcours complet restant |
+| zone | Chargement de toutes les zones, overrides, gates, placement NavMesh | District 1 : 22 scenes et NavMesh Ready ; couverture globale restante |
+| save | Sauvegarde/recharge reelle, identites et progression preservees | Cas District 1 passe (PV, progression, ennemi fixture, unicite) ; autres cas restants |
 | domainReloadOn | Entrees repetees, abonnements uniques, nettoyage statique | Non execute |
 | domainReloadOff | Memes controles sans Domain Reload | Non execute |
 | network | Vrai hote/client, autorite, familles, reactions, paliers et cinematiques | Non execute |

@@ -19,25 +19,47 @@ public static class CombatBootstrapPlayValidation
     private static int actionGeneration;
     private static string sessionId, saveId, characterId, defeatedMarkerId, teamState;
     private static int savedHealth;
+    private static int cursorProbeStage, cursorProbeFrame;
+    private static GameObject cursorProbeOwner, cursorProbeVisual;
     private static string firstActorId;
     private static bool SaveRoundTrip => Environment.GetCommandLineArgs().Contains("-combatMigrationSaveRoundTrip");
+    private static bool RepeatPlay => Environment.GetCommandLineArgs().Contains("-combatMigrationRepeatPlay");
+    private static string RepeatMode => Environment.GetCommandLineArgs().Contains("-combatMigrationDomainReloadOff") ? "off" : "on";
     private static readonly List<string> checks = new List<string>();
 
     [Serializable] private sealed class Result
     {
         public bool passed;
+        public int playCycle;
+        public string domainReload;
         public string runId, reason, saveDirectory;
         public bool fullProductionReadiness = false;
         public string limitation = "Bootstrap, binding, one Basic and snapshot disk roundtrip only; not a zone playthrough, real save restoration, manual feel or multiplayer evidence.";
         public List<string> checks;
     }
 
-    static CombatBootstrapPlayValidation() => EditorApplication.update += Tick;
+    static CombatBootstrapPlayValidation()
+    {
+        EditorApplication.update += Tick;
+        EditorApplication.playModeStateChanged += OnPlayModeChanged;
+    }
 
     public static void RunBatch()
     {
         if (!Application.isBatchMode) throw new InvalidOperationException("Use the isolated Editor smoke entry outside batch mode.");
-        PrepareSmoke();
+        if (RepeatPlay)
+        {
+            if (Directory.Exists(".git") || File.Exists(".git")) throw new InvalidOperationException("Repeat play requires the isolated project.");
+            SessionState.SetBool(Key + ".optionsStored", true);
+            SessionState.SetBool(Key + ".optionsEnabled", EditorSettings.enterPlayModeOptionsEnabled);
+            SessionState.SetInt(Key + ".options", (int)EditorSettings.enterPlayModeOptions);
+            SessionState.SetInt(Key + ".cycle", 1);
+            SessionState.SetBool(Key + ".awaitingExit", false);
+            EditorSettings.enterPlayModeOptionsEnabled = true;
+            EditorSettings.enterPlayModeOptions = RepeatMode == "off" ? EnterPlayModeOptions.DisableDomainReload : EnterPlayModeOptions.None;
+        }
+        try { PrepareSmoke(); }
+        catch { RestoreEditorOptions(); throw; }
     }
 
     public static void RunRenderedIsolated()
@@ -89,7 +111,7 @@ public static class CombatBootstrapPlayValidation
         SessionState.SetString(Key + ".save", saveDirectory);
         SessionState.SetFloat(Key + ".started", (float)EditorApplication.timeSinceStartup);
         SessionState.SetBool(Key, true);
-        stage = 0; checks.Clear();
+        stage = cursorProbeStage = 0; cursorProbeOwner = cursorProbeVisual = null; checks.Clear();
         EditorApplication.isPaused = false;
         EditorApplication.isPlaying = true;
     }
@@ -114,6 +136,12 @@ public static class CombatBootstrapPlayValidation
 
     private static void Tick()
     {
+        if (SessionState.GetBool(Key + ".awaitingExit", false) &&
+            EditorApplication.timeSinceStartup - SessionState.GetFloat(Key + ".exitStarted", 0) > 45)
+        {
+            CompleteRepeat(false, "Timed out waiting for native Play Mode exit.");
+            return;
+        }
         if (!SessionState.GetBool(Key, false) || !EditorApplication.isPlaying || EditorApplication.isCompiling) return;
         try
         {
@@ -173,7 +201,8 @@ public static class CombatBootstrapPlayValidation
                     if (Time.unscaledTime - actionStarted > 8) throw new TimeoutException("Production Basic retained its session beyond eight seconds.");
                     return;
                 }
-                Require(!action.IsActionActive, "Basic session completed and restored control");
+                if (cursorProbeStage == 0) Require(!action.IsActionActive, "Basic session completed and restored control");
+                if (!ValidateCursorLifecycle(manager, root)) return;
                 var adapter = WorldSaveAdapter.Instance;
                 Require(adapter != null, "Production world save adapter available");
                 adapter.SaveWorldSnapshot();
@@ -228,9 +257,13 @@ public static class CombatBootstrapPlayValidation
                 if (flow == null || flow.IsTransitioning || root == null) return;
                 var actor = root.GetComponent<SquadCharacterController>();
                 var adapter = WorldSaveAdapter.Instance;
+                Require(UnityEngine.Object.FindObjectsByType<SquadCharacterController>(FindObjectsInactive.Include)
+                    .Count(candidate => candidate.CharacterData != null && candidate.CharacterData.UniqueId == characterId) == 1,
+                    "Reload retains exactly one physical instance of the controlled character");
                 Require(actor != null && actor.GetEntityId().ToString() != firstActorId && actor.CharacterData.UniqueId == characterId,
                     "Reload spawned a new actor with the same persistent character identity");
-                Require(actor.CurrentHp == savedHealth, "Saved health restored instead of the unsaved runtime value");
+                Require(actor.CurrentHp == savedHealth, "Saved health restored instead of the unsaved runtime value (expected=" +
+                    savedHealth + ", actual=" + actor.CurrentHp + ")");
                 Require(adapter != null && adapter.LastRestoreSucceeded && adapter.LastRestoreIdentityValidated && adapter.LastRestoreIdentityIssues == 0,
                     "World snapshot restoration succeeded with validated identities");
                 Require(TeamState() == teamState, "Companion recruitment and skill unlocks preserved without artificial unlocks");
@@ -248,6 +281,52 @@ public static class CombatBootstrapPlayValidation
         catch (Exception exception) { Debug.LogException(exception); Finish(false, exception.ToString()); }
     }
 
+    private static bool ValidateCursorLifecycle(RealTimeCombatManager manager, Transform actor)
+    {
+        if (cursorProbeStage == 3) return true;
+        if (cursorProbeStage == 0)
+        {
+            var world = manager.GetComponent<CombatWorldRuntime>();
+            Require(world != null && world.lockCursorPrefab != null, "Production world owns an authored lock cursor prefab");
+            cursorProbeOwner = new GameObject("Lock cursor lifecycle probe");
+            cursorProbeOwner.transform.position = actor.position;
+            cursorProbeOwner.transform.localScale = new Vector3(2, 4, 6);
+            var indicator = cursorProbeOwner.AddComponent<CombatLockIndicator>();
+            world.ConfigureLockIndicator(indicator);
+            indicator.SetLocked(true, false);
+            cursorProbeVisual = ReadCursorVisual(indicator);
+            Require(cursorProbeVisual != null && cursorProbeVisual.activeSelf && cursorProbeVisual.transform.parent == null &&
+                cursorProbeVisual.scene == cursorProbeOwner.scene && cursorProbeVisual.GetComponentInChildren<Canvas>() == null &&
+                Vector3.Distance(cursorProbeVisual.transform.position, actor.position + Vector3.up * 3) < .001f,
+                "World lock visual is unparented at owner +3 Y without a UI canvas");
+            indicator.enabled = false;
+            cursorProbeFrame = Time.frameCount;
+            cursorProbeStage = 1;
+            return false;
+        }
+        if (Time.frameCount - cursorProbeFrame < 2) return false;
+        if (cursorProbeStage == 1)
+        {
+            Require(cursorProbeVisual == null, "Native OnDisable releases the world cursor");
+            var indicator = cursorProbeOwner.GetComponent<CombatLockIndicator>();
+            indicator.enabled = true;
+            indicator.SetLocked(true, false);
+            cursorProbeVisual = ReadCursorVisual(indicator);
+            Require(cursorProbeVisual != null && cursorProbeVisual.activeSelf, "A new owner presentation recreates its cursor");
+            UnityEngine.Object.Destroy(cursorProbeOwner);
+            cursorProbeStage = 2;
+            cursorProbeFrame = Time.frameCount;
+            return false;
+        }
+        Require(cursorProbeOwner == null && cursorProbeVisual == null, "Native owner destruction releases its unparented cursor");
+        cursorProbeStage = 3;
+        return true;
+    }
+
+    private static GameObject ReadCursorVisual(CombatLockIndicator indicator) =>
+        (GameObject)typeof(CombatLockIndicator).GetField("visualRoot", System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic).GetValue(indicator);
+
     private static void Advance(int next)
     {
         stage = next;
@@ -264,16 +343,77 @@ public static class CombatBootstrapPlayValidation
 
     private static void Finish(bool passed, string reason)
     {
+        if (cursorProbeOwner != null) UnityEngine.Object.Destroy(cursorProbeOwner);
+        if (cursorProbeVisual != null) UnityEngine.Object.Destroy(cursorProbeVisual);
         SessionState.SetBool(Key, false);
         string directory = ProductionCombatMigration.ReportDirectory;
         Directory.CreateDirectory(directory);
-        File.WriteAllText(directory + "/bootstrap-smoke.json", JsonUtility.ToJson(new Result {
+        string json = JsonUtility.ToJson(new Result {
             passed = passed, reason = reason, checks = checks, runId = SessionState.GetString(Key + ".run", ""),
+            playCycle = RepeatPlay ? SessionState.GetInt(Key + ".cycle", 1) : 1,
+            domainReload = RepeatPlay ? RepeatMode : "editor-current-options",
             saveDirectory = SessionState.GetString(Key + ".save", ""),
             limitation = SaveRoundTrip ? "Real isolated Bootstrap/menu/save reload with health, existing unlocks and marker-owned enemy persistence; no claim of manual combat feel, all zones, authored combat kill or multiplayer validation." :
                 "Bootstrap, binding, one Basic and snapshot disk roundtrip only; not a zone playthrough, real save restoration, manual feel or multiplayer evidence."
-        }, true));
+        }, true);
+        File.WriteAllText(directory + "/bootstrap-smoke.json", json);
         Debug.Log("[CombatBootstrapSmoke] " + (passed ? "PASS" : "FAIL") + " " + reason);
+        if (RepeatPlay)
+        {
+            File.WriteAllText(directory + "/bootstrap-repeat-" + RepeatMode + "-" + SessionState.GetInt(Key + ".cycle", 1) + ".json", json);
+            SessionState.SetBool(Key + ".cyclePassed", passed);
+            SessionState.SetBool(Key + ".awaitingExit", true);
+            SessionState.SetFloat(Key + ".exitStarted", (float)EditorApplication.timeSinceStartup);
+            EditorApplication.isPlaying = false;
+            return;
+        }
         EditorApplication.Exit(passed ? 0 : 1);
+    }
+
+    private static void OnPlayModeChanged(PlayModeStateChange state)
+    {
+        if (state != PlayModeStateChange.EnteredEditMode || !SessionState.GetBool(Key + ".awaitingExit", false)) return;
+        SessionState.SetBool(Key + ".awaitingExit", false);
+        EditorApplication.delayCall += ContinueRepeat;
+    }
+
+    private static void ContinueRepeat()
+    {
+        try
+        {
+            if (!SessionState.GetBool(Key + ".cyclePassed", false)) { CompleteRepeat(false, "A production play cycle failed."); return; }
+            if (LocalPlayerContext.LocalCharacterRoot != null || RealTimeCombatManager.Instance != null ||
+                NavMeshWorldService.Instance != null || TimeManager.Instance != null ||
+                UnityEngine.Object.FindObjectsByType<SquadCharacterController>(FindObjectsInactive.Include).Length != 0)
+                throw new InvalidOperationException("Play Mode exit retained a player or combat/navigation/time singleton.");
+            int cycle = SessionState.GetInt(Key + ".cycle", 1);
+            Debug.Log("[CombatBootstrapRepeat] PASS native cleanup after cycle=" + cycle + " domainReload=" + RepeatMode);
+            if (cycle >= 2) { CompleteRepeat(true, "Two native play entries and exits, production checks and cleanup passed."); return; }
+            SessionState.SetInt(Key + ".cycle", cycle + 1);
+            PrepareSmoke();
+        }
+        catch (Exception exception) { Debug.LogException(exception); CompleteRepeat(false, exception.ToString()); }
+    }
+
+    private static void CompleteRepeat(bool passed, string reason)
+    {
+        SessionState.SetBool(Key, false);
+        SessionState.SetBool(Key + ".awaitingExit", false);
+        Directory.CreateDirectory(ProductionCombatMigration.ReportDirectory);
+        File.WriteAllText(ProductionCombatMigration.ReportDirectory + "/bootstrap-repeat-" + RepeatMode + ".json",
+            JsonUtility.ToJson(new Result { passed = passed, reason = reason, domainReload = RepeatMode,
+                playCycle = SessionState.GetInt(Key + ".cycle", 0), checks = new List<string> {
+                    "Per-cycle artifacts: bootstrap-repeat-" + RepeatMode + "-1.json and -2.json; no full delivery gate inferred." } }, true));
+        RestoreEditorOptions();
+        Debug.Log("[CombatBootstrapRepeat] " + (passed ? "PASS " : "FAIL ") + reason);
+        EditorApplication.Exit(passed ? 0 : 1);
+    }
+
+    private static void RestoreEditorOptions()
+    {
+        if (!SessionState.GetBool(Key + ".optionsStored", false)) return;
+        EditorSettings.enterPlayModeOptionsEnabled = SessionState.GetBool(Key + ".optionsEnabled", false);
+        EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)SessionState.GetInt(Key + ".options", 0);
+        SessionState.SetBool(Key + ".optionsStored", false);
     }
 }

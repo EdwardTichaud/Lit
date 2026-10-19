@@ -262,6 +262,12 @@ public class NetcodePlayerSpawner : MonoBehaviour
             identity.SetCharacter(character);
         }
 
+        CharacterStateStore healthStore = ResolveCharacterStateStore();
+        if (healthStore != null && healthStore.TryGetLoadedCharacterEntry(character, out CharacterSaveEntry savedCharacter))
+        {
+            CharacterStateStore.RestoreCharacterHealth(controller, savedCharacter);
+        }
+
         NetworkInventory inventory = instance.GetComponent<NetworkInventory>();
         if (inventory != null && inventory.IsServer)
         {
