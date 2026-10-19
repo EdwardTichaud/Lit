@@ -329,6 +329,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         cinematicSuspended = suspended;
         if (suspended)
         {
+            if (productionLandingRecovery) { productionAirborne = true; ResetProductionLandingRecovery(); }
             ReleaseChargedHold();
             CancelClashRecovery();
             CancelFluidAttack();

@@ -9,16 +9,20 @@ using UnityEngine.SceneManagement;
 
 /// <summary>Real Bootstrap smoke in an isolated project; never uses or deletes a player's save slot.</summary>
 [InitializeOnLoad]
-public static class CombatBootstrapPlayValidation
+public static partial class CombatBootstrapPlayValidation
 {
     private const string Key = "Lit.CombatMigration.BootstrapSmoke";
-    private const string ManifestPath = "Assets/Scenes/Maison/ZoneManifest_District_1.asset";
+    private const string DefaultManifestPath = "Assets/Scenes/Maison/ZoneManifest_District_1.asset";
+    private static string ManifestPath => ResolveManifestPath(Environment.GetCommandLineArgs());
     private const string BootstrapPath = "Assets/Scenes/Bootstrap.unity";
     private static int stage;
     private static float actionStarted;
+    private static float actionStartedGameTime;
+    private static int actionStartedFrame;
     private static int actionGeneration;
     private static string sessionId, saveId, characterId, defeatedMarkerId, teamState;
     private static int savedHealth;
+    private static Vector3 savedPosition;
     private static int cursorProbeStage, cursorProbeFrame;
     private static GameObject cursorProbeOwner, cursorProbeVisual;
     private static string firstActorId;
@@ -33,9 +37,20 @@ public static class CombatBootstrapPlayValidation
         public int playCycle;
         public string domainReload;
         public string runId, reason, saveDirectory;
+        public string zoneManifest;
         public bool fullProductionReadiness = false;
         public string limitation = "Bootstrap, binding, one Basic and snapshot disk roundtrip only; not a zone playthrough, real save restoration, manual feel or multiplayer evidence.";
         public List<string> checks;
+    }
+
+    internal static string ResolveManifestPath(string[] arguments)
+    {
+        int index = Array.IndexOf(arguments, "-combatMigrationZoneManifest");
+        if (index < 0) return DefaultManifestPath;
+        if (index + 1 >= arguments.Length || !arguments[index + 1].StartsWith("Assets/", StringComparison.Ordinal) ||
+            !arguments[index + 1].EndsWith(".asset", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("-combatMigrationZoneManifest requires an explicit Assets/.../*.asset path.");
+        return arguments[index + 1];
     }
 
     static CombatBootstrapPlayValidation()
@@ -90,7 +105,12 @@ public static class CombatBootstrapPlayValidation
             throw new InvalidOperationException("Bootstrap's HDRP/loading presentation requires rendered frames. A -nographics run cannot validate this flow; use an isolated graphics-enabled Editor with Game View rendering.");
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
         var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>(ManifestPath);
-        if (manifest == null || !manifest.IsValid) throw new InvalidOperationException("District 1 manifest is missing or invalid.");
+        if (manifest == null || !manifest.IsValid) throw new InvalidOperationException("Zone manifest is missing or invalid: " + ManifestPath);
+        if (ManifestPath != DefaultManifestPath && (EncounterProbe || SaveRoundTrip))
+            throw new InvalidOperationException("Encounter and enemy save fixtures currently require the authored District 1 manifest.");
+        if (ZoneRoundTrip && (manifest.PrimarySceneName != "Maison_Core" || EncounterProbe || SaveRoundTrip || RepeatPlay))
+            throw new InvalidOperationException("Zone roundtrip requires the Maison manifest and a separate single Play Mode recipe.");
+        if (GamepadProbe && !ZoneRoundTrip) throw new InvalidOperationException("The gamepad probe requires the zone-roundtrip recipe.");
         var requiredScenes = manifest.LoadingSceneNames.Concat(new[] { manifest.PrimarySceneName }).Distinct().ToArray();
         var buildScenes = EditorBuildSettings.scenes.Where(entry => entry.enabled)
             .Select(entry => Path.GetFileNameWithoutExtension(entry.path)).ToArray();
@@ -112,6 +132,9 @@ public static class CombatBootstrapPlayValidation
         SessionState.SetFloat(Key + ".started", (float)EditorApplication.timeSinceStartup);
         SessionState.SetBool(Key, true);
         stage = cursorProbeStage = 0; cursorProbeOwner = cursorProbeVisual = null; checks.Clear();
+        ResetEncounterProbe();
+        ResetZoneTransferProbe();
+        CleanupGamepadProbe();
         EditorApplication.isPaused = false;
         EditorApplication.isPlaying = true;
     }
@@ -182,6 +205,11 @@ public static class CombatBootstrapPlayValidation
                 var catalog = Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default");
                 var actor = root.GetComponent<SquadCharacterController>();
                 Require(actor != null && catalog != null && catalog.IsCharacter(actor.CharacterData, CombatSkillKit.Lucian), "Solo controlled actor retains Lucian identity");
+                var spawn = ZoneSpawnPoint.FindFirstInScene(manifest.PrimarySceneName);
+                Require(spawn != null && Vector3.ProjectOnPlane(root.position - spawn.transform.position, Vector3.up).magnitude < .25f &&
+                    Mathf.Abs(root.position.y - spawn.transform.position.y) < .5f,
+                    "New game arrives at the authored zone spawn, not the squad origin: " + root.position);
+                Require(actor.IsGrounded, "New-game controlled actor has reached physical ground before attacking");
                 foreach (var member in UnityEngine.Object.FindObjectsByType<SquadCharacterController>())
                     foreach (var kit in new[] { CombatSkillKit.Vesta, CombatSkillKit.Soren, CombatSkillKit.Aurell })
                         Require(!catalog.IsCharacter(member.CharacterData, kit), "No physical solo companion: " + kit);
@@ -189,6 +217,8 @@ public static class CombatBootstrapPlayValidation
                 Require(basic != null && manager.TryUseSkill(basic), "Authored Basic launches through the production facade");
                 actionGeneration = root.GetComponent<PlayerActionPresentationController>().ActionGeneration;
                 actionStarted = Time.unscaledTime;
+                actionStartedGameTime = Time.time;
+                actionStartedFrame = Time.frameCount;
                 Advance(2);
                 return;
             }
@@ -198,16 +228,19 @@ public static class CombatBootstrapPlayValidation
                 if (action == null) throw new InvalidOperationException("Controlled actor disappeared during Basic execution.");
                 if (action.IsCurrentSession(actionGeneration))
                 {
-                    if (Time.unscaledTime - actionStarted > 8) throw new TimeoutException("Production Basic retained its session beyond eight seconds.");
+                    if (Time.unscaledTime - actionStarted > 8) throw new TimeoutException("Production Basic retained its session beyond eight seconds. " + DescribeAction(action));
                     return;
                 }
                 if (cursorProbeStage == 0) Require(!action.IsActionActive, "Basic session completed and restored control");
                 if (!ValidateCursorLifecycle(manager, root)) return;
+                if (ZoneRoundTrip && !ValidateZoneTransfer(flow, manager, root.GetComponent<SquadCharacterController>())) return;
+                if (EncounterProbe && !ValidateProductionEncounter(manager, root)) return;
                 var adapter = WorldSaveAdapter.Instance;
                 Require(adapter != null, "Production world save adapter available");
                 adapter.SaveWorldSnapshot();
                 Require(adapter.TryLoadWorldSnapshot(out var snapshot) && snapshot != null, "Real world snapshot written and read from the isolated slot");
-                Require(SceneManager.GetSceneByName("District_1_Core").isLoaded, "District 1 remains loaded after the smoke");
+                string primaryScene = AssetDatabase.LoadAssetAtPath<ZoneManifest>(ManifestPath).PrimarySceneName;
+                Require(SceneManager.GetSceneByName(primaryScene).isLoaded, "Selected zone remains loaded after the smoke: " + primaryScene);
                 if (SaveRoundTrip)
                 {
                     var actor = root.GetComponent<SquadCharacterController>();
@@ -215,6 +248,14 @@ public static class CombatBootstrapPlayValidation
                     firstActorId = actor.GetEntityId().ToString();
                     savedHealth = Mathf.Max(1, actor.MaxHp - 7);
                     actor.SetCurrentHp(savedHealth);
+                    var spawn = ZoneSpawnPoint.FindFirstInScene("District_1_Core");
+                    Require(TryFindSaveFixturePosition(root, spawn.transform, out var savedPose),
+                        "Save fixture selects clear physical ground near the spawn; player movement does not require a NavMesh polygon");
+                    Require(actor.TrySetUccExternalPositionAndRotation(savedPose, root.rotation, true),
+                        "Save fixture moves only Lucian through UCC before capturing his actual position");
+                    savedPosition = root.position;
+                    Require(Vector3.ProjectOnPlane(savedPosition - spawn.transform.position, Vector3.up).magnitude > 1,
+                        "Saved position is not the initial spawn, so restoration cannot pass via a fallback reset");
                     teamState = TeamState();
                     var marker = UnityEngine.Object.FindObjectsByType<SceneMarker>()
                         .Where(candidate => candidate.CharacterData != null && candidate.CharacterData.UniqueId == "c54e94b14c7826c4482529b6d4d739ec" && candidate.RuntimeInstance != null)
@@ -264,6 +305,9 @@ public static class CombatBootstrapPlayValidation
                     "Reload spawned a new actor with the same persistent character identity");
                 Require(actor.CurrentHp == savedHealth, "Saved health restored instead of the unsaved runtime value (expected=" +
                     savedHealth + ", actual=" + actor.CurrentHp + ")");
+                Require(Vector3.ProjectOnPlane(root.position - savedPosition, Vector3.up).magnitude < .15f &&
+                    Mathf.Abs(root.position.y - savedPosition.y) < .35f,
+                    "Reload retains the saved actor position instead of resetting to the new-game spawn: " + root.position);
                 Require(adapter != null && adapter.LastRestoreSucceeded && adapter.LastRestoreIdentityValidated && adapter.LastRestoreIdentityIssues == 0,
                     "World snapshot restoration succeeded with validated identities");
                 Require(TeamState() == teamState, "Companion recruitment and skill unlocks preserved without artificial unlocks");
@@ -323,9 +367,47 @@ public static class CombatBootstrapPlayValidation
         return true;
     }
 
+    private static bool TryFindSaveFixturePosition(Transform actor, Transform spawn, out Vector3 position)
+    {
+        foreach (var direction in new[] { spawn.forward, -spawn.forward, spawn.right, -spawn.right })
+        {
+            Vector3 expected = actor.position + Vector3.ProjectOnPlane(direction, Vector3.up).normalized * 2;
+            foreach (var ground in Physics.RaycastAll(expected + Vector3.up, Vector3.down, 2, ~0, QueryTriggerInteraction.Ignore)
+                .OrderBy(hit => hit.distance))
+            {
+                if (ground.transform.IsChildOf(actor) || ground.transform.GetComponentInParent<SquadCharacterController>() != null ||
+                    Vector3.Dot(ground.normal, Vector3.up) < .7f || Mathf.Abs(ground.point.y - actor.position.y) > .35f) continue;
+                Vector3 candidate = ground.point + Vector3.up * .02f;
+                bool blocked = Physics.OverlapCapsule(candidate + Vector3.up * .3f, candidate + Vector3.up * 1.5f,
+                    .25f, ~0, QueryTriggerInteraction.Ignore).Any(collider => !collider.transform.IsChildOf(actor));
+                if (blocked) continue;
+                position = candidate;
+                return true;
+            }
+        }
+        position = default;
+        return false;
+    }
+
     private static GameObject ReadCursorVisual(CombatLockIndicator indicator) =>
         (GameObject)typeof(CombatLockIndicator).GetField("visualRoot", System.Reflection.BindingFlags.Instance |
             System.Reflection.BindingFlags.NonPublic).GetValue(indicator);
+
+    private static string DescribeAction(PlayerActionPresentationController action)
+    {
+        var animator = action.GetComponentInChildren<Animator>(true);
+        var state = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var next = animator != null && animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
+        var domain = action.GetComponent<CombatTimeDomain>();
+        string floats = animator != null ? string.Join(",", animator.parameters.Where(p => p.type == AnimatorControllerParameterType.Float)
+            .Select(p => p.name + "=" + animator.GetFloat(p.nameHash))) : "absent";
+        return "frames=" + (Time.frameCount - actionStartedFrame) + " gameSeconds=" + (Time.time - actionStartedGameTime) +
+            " globalScale=" + Time.timeScale + " localScale=" + (domain != null ? domain.Scale : 1) +
+            " enabled=" + action.isActiveAndEnabled + " charging=" + action.IsPreparingBasicTail +
+            " animator=" + (animator != null ? animator.isActiveAndEnabled + "/" + animator.speed : "absent") +
+            " state=" + state.fullPathHash + "/" + state.normalizedTime + " next=" + next.fullPathHash + "/" + next.normalizedTime +
+            " floats=" + floats;
+    }
 
     private static void Advance(int next)
     {
@@ -343,6 +425,8 @@ public static class CombatBootstrapPlayValidation
 
     private static void Finish(bool passed, string reason)
     {
+        CleanupGamepadProbe();
+        CleanupEncounterProbe();
         if (cursorProbeOwner != null) UnityEngine.Object.Destroy(cursorProbeOwner);
         if (cursorProbeVisual != null) UnityEngine.Object.Destroy(cursorProbeVisual);
         SessionState.SetBool(Key, false);
@@ -352,8 +436,11 @@ public static class CombatBootstrapPlayValidation
             passed = passed, reason = reason, checks = checks, runId = SessionState.GetString(Key + ".run", ""),
             playCycle = RepeatPlay ? SessionState.GetInt(Key + ".cycle", 1) : 1,
             domainReload = RepeatPlay ? RepeatMode : "editor-current-options",
-            saveDirectory = SessionState.GetString(Key + ".save", ""),
-            limitation = SaveRoundTrip ? "Real isolated Bootstrap/menu/save reload with health, existing unlocks and marker-owned enemy persistence; no claim of manual combat feel, all zones, authored combat kill or multiplayer validation." :
+            saveDirectory = SessionState.GetString(Key + ".save", ""), zoneManifest = ManifestPath,
+            limitation = GamepadProbe ? "Real solo zone roundtrip plus virtual-gamepad stick/X routed through the production Input System. Short physical movement and single Basic in each zone; no manual feel, interaction-key, narrative, save reload or multiplayer proof." :
+                ZoneRoundTrip ? "Real solo Maison portal admission, District arrival and return-to-hub with actor/control continuity and Basic sessions. Player fixture placed near the authored portal through UCC; not manual interaction, movement feel, narrative gates, save reload or multiplayer evidence." :
+                EncounterProbe ? "Bounded actual production Juggernaut vision/navigation/repeated impacts probe. Optional explicit lit fixture is reported in checks; no proof of Flame interaction/progression, manual feel, all encounters, victory or multiplayer." :
+                SaveRoundTrip ? "Real isolated Bootstrap/menu/save reload with health, existing unlocks and marker-owned enemy persistence; no claim of manual combat feel, all zones, authored combat kill or multiplayer validation." :
                 "Bootstrap, binding, one Basic and snapshot disk roundtrip only; not a zone playthrough, real save restoration, manual feel or multiplayer evidence."
         }, true);
         File.WriteAllText(directory + "/bootstrap-smoke.json", json);
@@ -401,7 +488,7 @@ public static class CombatBootstrapPlayValidation
         SessionState.SetBool(Key + ".awaitingExit", false);
         Directory.CreateDirectory(ProductionCombatMigration.ReportDirectory);
         File.WriteAllText(ProductionCombatMigration.ReportDirectory + "/bootstrap-repeat-" + RepeatMode + ".json",
-            JsonUtility.ToJson(new Result { passed = passed, reason = reason, domainReload = RepeatMode,
+            JsonUtility.ToJson(new Result { passed = passed, reason = reason, domainReload = RepeatMode, zoneManifest = ManifestPath,
                 playCycle = SessionState.GetInt(Key + ".cycle", 0), checks = new List<string> {
                     "Per-cycle artifacts: bootstrap-repeat-" + RepeatMode + "-1.json and -2.json; no full delivery gate inferred." } }, true));
         RestoreEditorOptions();

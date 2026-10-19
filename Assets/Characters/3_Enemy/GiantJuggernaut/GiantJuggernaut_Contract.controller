@@ -1,17 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8894075442438766586
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
 --- !u!1102 &-8778313280715187318
 AnimatorState:
   serializedVersion: 6
@@ -116,18 +104,6 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
---- !u!114 &-7756322435760733466
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
 --- !u!206 &-7620801128680150029
 BlendTree:
   m_ObjectHideFlags: 0
@@ -342,18 +318,6 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 0
---- !u!114 &-5638032690970769205
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
 --- !u!1102 &-3607233871564773182
 AnimatorState:
   serializedVersion: 6
@@ -566,30 +530,6 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
---- !u!114 &-2134522308092122494
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
---- !u!114 &-1503147597380929041
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
 --- !u!1107 &-1153067767699184550
 AnimatorStateMachine:
   serializedVersion: 7
@@ -1661,30 +1601,6 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 0
---- !u!114 &7366390919490560578
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
---- !u!114 &7616545075258324556
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfec8d2897f4f6f84cb8cf8dcf590ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpStateTraceBehaviour
 --- !u!1102 &8333118571860107031
 AnimatorState:
   serializedVersion: 6

@@ -43,7 +43,6 @@ public sealed partial class RealTimeCombatInput : MonoBehaviour
 
     private void Update()
     {
-        RefreshFreeAttackBindings();
         if (basicAttackRequiresRelease)
         {
             if (!IsBasicAttackPhysicallyHeld()) basicAttackRequiresRelease = false;
@@ -104,7 +103,6 @@ public sealed partial class RealTimeCombatInput : MonoBehaviour
         LocalPlayerInput.EnsureInstance();
         ResolveActions();
         Subscribe();
-        InputModeCoordinator.ModeChanged += RefreshFreeAttackMode;
         if (enableOnStart)
         {
             LocalPlayerInput.SetCombatInputActive(true);
@@ -113,13 +111,6 @@ public sealed partial class RealTimeCombatInput : MonoBehaviour
 
     private void OnDisable()
     {
-        InputModeCoordinator.ModeChanged -= RefreshFreeAttackMode;
-        if (explorationAttackEnabled)
-        {
-            basicAttackAction?.Disable();
-            actionMap?.FindAction("SelectSkillKit", false)?.Disable();
-        }
-        explorationAttackEnabled = false;
         Unsubscribe();
         ClosePalette(resolveIfMissing: false);
         LocalInputRouter.PopInteractionAndJumpSuppression(this);

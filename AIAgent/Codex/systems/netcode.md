@@ -1,5 +1,19 @@
 # Netcode
 
+## Callbacks Routes Et SendMessages
+
+NetworkCharacterInput recoit Jump, LocomotionMode, TriggerMunin et ToggleTorch
+depuis LocalInputRouter avec InputAction.CallbackContext. Ses methodes privees
+portent le prefixe OnRouted, pas On<Action> : sur le meme acteur, PlayerInput en
+SendMessages envoie InputValue et tentait auparavant de les appeler, meme hors
+reseau (MissingMethodException reproduite sur un vrai saut). Abonnement et
+desabonnement emploient les memes nouveaux delegates ; corps, controles owner,
+RPC et validation serveur restent inchanges. Aucun nouveau recepteur brut ni
+deuxieme envoi de commande n'est ajoute. Audit des UnityEvents auteur : aucune
+reference serialisee a ces methodes privees trouvee. Quatre regressions de noms/
+signatures et une recette solo RT/A repetee passent ; ceci ne qualifie pas un
+client distant ou les reactions en ligne.
+
 ## Flux participants raccordes (2026-10-17)
 
 CombatNetworkActorRuntime integre maintenant les ticks/restitutions de palier,

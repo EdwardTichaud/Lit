@@ -83,7 +83,7 @@ public sealed class ProductionBrainsDeathLifecycle : NetworkBehaviour, IEnemyFin
 public partial class LitBrainsEnemy : IEnemyDeathPose
 {
     private bool productionDeathPoseStarted;
-    public bool IsDeathPosePending => cinematicSuspended || productionAirborne || chargedAirborne;
+    public bool IsDeathPosePending => cinematicSuspended || productionAirborne || chargedAirborne || productionLandingRecovery;
     public void EnsureDeathPose()
     {
         if (!IsDead || IsDeathPosePending || productionDeathPoseStarted) return;

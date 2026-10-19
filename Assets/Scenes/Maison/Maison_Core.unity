@@ -512,6 +512,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 657731525}
+  - component: {fileID: 810190001}
   m_Layer: 0
   m_Name: LucianSpawnPoint
   m_TagString: Untagged
@@ -534,6 +535,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 313813593}
   m_LocalEulerAnglesHint: {x: 0, y: -35.62, z: 0}
+--- !u!114 &810190001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657731524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 0
 --- !u!1001 &797590403
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -13,6 +13,7 @@ public static class CombatInventoryReference
         if (guid == new string('0', 32)) return "null-guid";
         // Exact Unity resource namespaces, not every GUID with a zero prefix.
         if (guid == "0000000000000000e000000000000000" || guid == "0000000000000000f000000000000000") return "builtin-resource";
+        if (guid == "0000000000000000d000000000000000" && resolvedPath == "Library/unity editor resources") return "builtin-resource";
         if (string.IsNullOrEmpty(resolvedPath)) return "missing-guid";
         return payloadExists ? "asset-guid" : "missing-guid-payload";
     }

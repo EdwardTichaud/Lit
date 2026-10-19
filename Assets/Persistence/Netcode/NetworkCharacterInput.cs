@@ -72,20 +72,20 @@ public partial class NetworkCharacterInput : NetworkBehaviour
     {
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Move += OnMoveChanged;
-        LocalInputRouter.Jump += OnJump;
-        LocalInputRouter.LocomotionMode += OnLocomotionMode;
-        LocalInputRouter.TriggerMunin += OnTriggerMunin;
-        LocalInputRouter.ToggleTorch += OnToggleTorch;
+        LocalInputRouter.Jump += OnRoutedJump;
+        LocalInputRouter.LocomotionMode += OnRoutedLocomotionMode;
+        LocalInputRouter.TriggerMunin += OnRoutedTriggerMunin;
+        LocalInputRouter.ToggleTorch += OnRoutedToggleTorch;
     }
 
     private void UnregisterInput()
     {
         healingRequestPending = false;
         LocalInputRouter.Move -= OnMoveChanged;
-        LocalInputRouter.Jump -= OnJump;
-        LocalInputRouter.LocomotionMode -= OnLocomotionMode;
-        LocalInputRouter.TriggerMunin -= OnTriggerMunin;
-        LocalInputRouter.ToggleTorch -= OnToggleTorch;
+        LocalInputRouter.Jump -= OnRoutedJump;
+        LocalInputRouter.LocomotionMode -= OnRoutedLocomotionMode;
+        LocalInputRouter.TriggerMunin -= OnRoutedTriggerMunin;
+        LocalInputRouter.ToggleTorch -= OnRoutedToggleTorch;
         rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
@@ -212,7 +212,7 @@ public partial class NetworkCharacterInput : NetworkBehaviour
             : value;
     }
 
-    private void OnTriggerMunin(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    private void OnRoutedTriggerMunin(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
@@ -227,7 +227,7 @@ public partial class NetworkCharacterInput : NetworkBehaviour
         triggerMuninRequested = true;
     }
 
-    private void OnLocomotionMode(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    private void OnRoutedLocomotionMode(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
@@ -242,7 +242,7 @@ public partial class NetworkCharacterInput : NetworkBehaviour
         locomotionModeRequested = true;
     }
 
-    private void OnToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    private void OnRoutedToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient() || IsGameplayInputBlocked())
         {
@@ -434,7 +434,7 @@ public partial class NetworkCharacterInput : NetworkBehaviour
         ToggleLocomotionModeServerRpc(flightVerticalInput);
     }
 
-    private void OnJump(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    private void OnRoutedJump(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {

@@ -6,6 +6,15 @@ using NUnit.Framework;
 public sealed class CombatInventoryTests
 {
     [Test]
+    public void EditorIconsResolveToTheEngineLibraryRatherThanAMissingProjectPayload()
+    {
+        const string guid = "0000000000000000d000000000000000";
+        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+        Assert.That(path, Is.EqualTo("Library/unity editor resources"));
+        Assert.That(CombatInventoryReference.ClassifyGuid(guid, path, false), Is.EqualTo("builtin-resource"));
+    }
+
+    [Test]
     public void ZoneSceneLookupFindsAuthoredLightingOutsideScenesFolder()
     {
         Assert.That(ZoneManifestBuildSettingsSync.FindScenePath("District_1_Indoor_Lights"),

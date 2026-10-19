@@ -7,6 +7,22 @@ using UnityEngine.SceneManagement;
 
 public sealed class CombatSceneReturnTests
 {
+    [TestCase(null, false, false, true)]
+    [TestCase("", false, false, true)]
+    [TestCase(" ", false, false, true)]
+    [TestCase(null, false, true, false)]
+    [TestCase("PortalArrival", false, false, false)]
+    [TestCase("PortalArrival", false, true, false)]
+    [TestCase(null, true, true, true)]
+    public void InitialSceneSpawnOnlyDefaultsForANewGameOrExplicitEditorStart(string spawnId,
+        bool explicitFallback, bool hasCharacterSave, bool expected)
+    {
+        bool actual = (bool)typeof(GameFlowService)
+            .GetMethod("ShouldUseInitialSceneSpawn", BindingFlags.Static | BindingFlags.NonPublic)
+            .Invoke(null, new object[] { spawnId, explicitFallback, hasCharacterSave });
+        Assert.AreEqual(expected, actual);
+    }
+
     [Test]
     public void ReturnCleanupDoesNotWaitForAnImpossibleLastSceneUnload()
     {

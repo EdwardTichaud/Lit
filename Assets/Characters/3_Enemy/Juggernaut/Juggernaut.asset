@@ -107,7 +107,6 @@ MonoBehaviour:
     NavigationRetryInterval: 0.25
     NavigationRebuildRequestInterval: 1
     NavigationLogDiagnostics: 1
-
   vision:
     maximumDistance: 30
     fieldOfViewDegrees: 100

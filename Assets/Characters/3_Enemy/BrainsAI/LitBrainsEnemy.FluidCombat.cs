@@ -287,6 +287,7 @@ public partial class LitBrainsEnemy
         brains.Remove(this);
         StopAllCoroutines();
         productionMotionActive = productionAirborne = productionEngaged = productionReturning = false;
+        ResetProductionLandingRecovery();
         productionPattern = null;
         ClearChargedReaction();
         CancelClashRecovery();

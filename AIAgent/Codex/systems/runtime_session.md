@@ -1,5 +1,30 @@
 # Session runtime
 
+## Recette Charge Sans Cible
+
+-combatMigrationCharge exige -combatMigrationGamepad et son aller-retour de zone.
+Le meme validateur teste deux maintiens X distincts par destination : relachement
+pendant le ralenti puis lancement complet. Les callbacks/erreurs/peripherique
+sont nettoyes par leur propre cycle. Duree bornee a 40 s avec attente du vrai
+cooldown, aucune modification du skill, du timer, de la progression ou du sol.
+Cas dfba2a9d62c5430ca189107904d2a224 passe, 119 empreintes identiques ; resultat
+et sources dans Library/ProductionCombatMigration/Charge. Le champ limitation
+historique du JSON de base reste generique stick/Basic ; les checks supplementaires
+et le rapport precisent la charge sans cible. Ce n'est pas une preuve de projection
+ennemie, d'interruption, de sauvegarde/recharge ou de reseau.
+
+## Recette Des Defenses De Production
+
+CombatBootstrapPlayValidation accepte -combatMigrationDefenses avec
+-combatMigrationEncounter, eventuellement -combatMigrationEncounterLifecycle.
+Le Gamepad propre a la recette passe par les inputs reels, dans l'engagement
+production ; ne pas ajouter -combatMigrationGamepad, reserve au transfert de zone.
+Deux cycles roulade/garde avec restitution sont requis, sans suspension d'IA.
+Les checks de base de rencontre sont journalises une seule fois pendant cette
+observation. Cas 5d4f296413df4de0b8e67f70d0555596 passe avec lifecycle,
+fixture Flame explicite, sources comparees dans
+Library/ProductionCombatMigration/Defenses. Aucune qualification globale deduite.
+
 ## Installation explicite du combat commun (2026-10-17)
 
 Extension du 2026-10-19 : camera de production dediee conservant sa base
@@ -29,7 +54,74 @@ Aucun defaut temporaire n'est remplace par des valeurs runtime inventees.
 Le rapport separe authoringInstalled et ReadyForProduction. Aucun de ces outils
 ne lance de Play Mode ou ne fournit de preuve de sauvegarde/multijoueur.
 
-## Coherence des scenes de District 1
+## Spawns Et Couverture Des Zones
+
+Maison_Core : le Transform auteur 0_SpawnPoints/LucianSpawnPoint ne portait aucun
+ZoneSpawnPoint. La recette depuis Bootstrap reproduit un depart a l'origine de
+squad (0,-0.71,3), pas au point auteur. Le meme objet porte maintenant le composant
+ZoneSpawnPoint (Default, slot 0), sans changement de pose, parent ou GUID de scene.
+La regle GameFlow deja presente ne l'utilise que pour une nouvelle partie sans
+JSON personnage ni arrivee explicite ; les sauvegardes gardent leur pose.
+Recette 7a37b21178774e04a2d2920f775a5641 passee : dix scenes, NavMesh Ready,
+Lucian seul au sol (-0.47,-0.56,5.99), Basic/fin de session et cycle curseur natif,
+snapshot monde ecrit/lu. Ni sauvegarde/recharge reelle, ni visite des interactions,
+ni transfert Maison/District 1, ni reseau qualifies par cette seule recette.
+
+CombatBootstrapPlayValidation accepte -combatMigrationZoneManifest suivi du
+chemin Assets/.../*.asset explicite. Sans option, District 1 reste la recette
+existante. Le JSON indique le manifeste teste ; une selection invalide echoue
+sans fallback silencieux. Les fixtures Juggernaut et SaveRoundTrip restent
+explicitement reservees a District 1, pas simulees pour une autre zone. Sept
+tests couvrent selection, refus et composant sur le vrai Transform auteur.
+
+Option -combatMigrationZoneRoundTrip, uniquement avec le manifeste Maison, sans
+fixtures de rencontre, recharge ou repetition : apres la Basic initiale, place
+Lucian sur sol libre pres du portail auteur et appelle son vrai ServerTryUse.
+Les poses d'arrivee viennent du portail, sans ouverture anticipee de District 1
+ni substitution de spawn. Verifie son chargement complet, le dechargement des
+scenes Maison en solo, le nouvel identifiant de monde NavMesh, acteur/PV/
+progression/binding uniques et commandes autorisees. Une Basic doit terminer en
+moins de huit secondes avant ReturnToHub(Default), puis meme verification dans
+Maison avec une nouvelle Basic. Cas 6bf1904b99794059aa90056332b7b46b passe. Les
+90 s par phase bornent le chargement ; le watchdog global reste 180 s. Ce n'est
+ni un test de mouvement au stick, ni une interaction clavier/manette manuelle,
+ni une preuve audio, de sauvegarde/recharge ou de transition multijoueur.
+
+Option supplementaire -combatMigrationGamepad : branche les commandes virtuelles
+sur ce meme parcours apres chaque Basic d'arrivee. La premiere fixture generique
+refusait le trajet avant toute pression ; elle utilise maintenant la capsule et
+le GroundedRaycastHit du moteur. Cas natif courant 125c75c0dc9d43129a260098dd757546
+passe pour mouvement physique camera-relatif et X, sans appels directs aux
+executeurs pour ces deux gestes. Details et limites dans input_camera_ucc.md.
+L'audit de sources a trouve un decalage .2/.5 de fenetre de contre reseau dans
+les quatre prefabs de la copie, pas dans le principal : copie resynchronisee sans
+retoucher le gameplay livre. Quatre regressions verifient maintenant leurs vraies
+valeurs auteur (.5 contre, .5 roulade, .4 antispam). Suite elargie 540/1/1,
+echec Etienne reserve a l'auteur, 61 hashes compares ; pas une preuve reseau.
+
+Complement -combatMigrationLocomotion (requiert Gamepad) : RT avec le stick,
+relachement, puis deux pressions A et atterrissages par destination. Utilise
+tous les executeurs existants et conserve les bornes de phase. RT doit atteindre
+routeur, bridge, tier de course et augmenter la vitesse physique ; les sauts
+doivent rendre les verrous normalement. L'ecoute temporaire des erreurs de
+runtime fait echouer cette phase ; elle est retiree a la fin/nettoyage. La baseline
+a revele le conflit SendMessages/NetworkCharacterInput corrige par renommage des
+delegates prives. Cas 7e1e274b5f814e30bfae8f4651a7a91f passe, 544/1/1 en suite
+elargie, 75 empreintes comparees. Details/limites dans input_camera_ucc.md ; ni
+defenses en engagement, ni charge, ni ressenti manuel ou reseau qualifies ici.
+
+Pour le demarrage normal sans spawnId ni JSON personnage, GameFlow utilise
+desormais le ZoneSpawnPoint existant de la scene primaire. L'existence du fichier
+est capturee AVANT restauration/initialisation squad. Un fichier existant, meme
+invalide ou non restaure, ne doit pas devenir silencieusement une nouvelle partie
+placee au spawn. Les arrivees explicites restent prioritaires ; l'option editeur
+de placement de scene garde son comportement. Aucun point de spawn n'est ajoute
+ou deplace et aucune projection NavMesh ne remplace la pose UCC auteur.
+La recette Bootstrap exige maintenant une arrivee proche du spawn ET grounded
+avant sa Basic. SaveRoundTrip capture une pose distincte sur sol physique libre
+et verifie son maintien apres menu/recharge : le joueur n'a pas besoin d'un
+polygone NavMesh pour ce test. Cas rendu 39e49776f3f2450bbb3f034a7ded5ae9 passe,
+sans generalisation aux autres zones ou au reseau.
 
 Retour menu : UnloadSceneIfLoaded conserve la derniere scene chargee ; le
 chargement Single suivant la retire. Unity refuse son dechargement additif, et
@@ -51,6 +143,56 @@ Ce controle utilise un slot Library jetable ; il ne constitue pas une preuve
 de victoire via le gameplay ni une validation manuelle du combat.
 
 ## Repetition isolee de migration
+
+Option -combatMigrationEncounter : observation bornee du vrai Juggernaut de
+District 1 apres le chargement Bootstrap et une Basic. Seul Lucian est place
+par l'adaptateur UCC sur un point du NavMesh courant devant l'ennemi, avec chemin
+complet et ligne physique libre. Le choix de cette position de fixture sur la
+surface n'altere pas les tolerances de validation du spawn ennemi. Pas de cible
+override, de notification de degat ou d'aggro forcee. Le succes exige aggro sans
+lock, facade engagee, mouvement reel, deux generations d'impact distinctes,
+recuperation et perte de PV. Un doublon d'impact fait echouer la recette.
+Option supplementaire -combatMigrationEncounterLifecycle : apres deux impacts,
+place Lucian hors leash via UCC, observe la restitution du mode exploration et
+des autorisations UCC/interactions, puis le fait reapprocher pendant le retour.
+Une nouvelle attaque doit venir de la perception, sans lock ou aggro forcee.
+Une seconde sortie attend le vrai retour home et l'absence d'impacts tardifs.
+Chaque phase est bornee a 30 s. Ce n'est pas un parcours de fuite pilote au stick,
+une tentative d'interaction narrative ni une preuve de collision BattleWall.
+Recette d14f503cc325488a82628d855da4fe58 passee apres correction de la descente
+par capsule et sortie physique bornee du support non navigable : controles,
+facing, reengagement, troisieme impact puis retour final home/NavMesh/orientation
+auteur et aucun impact tardif. Aucun warp, collider ignore, changement de
+tolerance ou reconstruction NavMesh. Le choix de fixture utilise maintenant les
+hauteurs et le masque de vision auteur, avec verification de la perception
+reelle apres placement UCC. Les echecs anterieurs (meshes deja penetrants, puis
+contact incline bloquant) restent dans LandingRecovery. Regression 483/0/1,
+sources/assets/metas comparees a la copie validee ; pas une qualification globale.
+Option distincte -combatMigrationEncounterLitFixture : si necessaire, allume
+une seule Flame auteur existante couvrant un collider de l'ennemi, puis la remet
+eteinte au nettoyage. Aucun rayon/placement ou gate n'est change. Ce fixture est
+signale dans le JSON et ne prouve ni interaction d'allumage ni progression.
+Les essais en echec restent distincts : un premier montre l'aggro mais aucune
+action, puis le filtre des kits aeriens est corrige ; la recette complete apres
+correction reste en echec hors portee. Le controle du spawn/sol est maintenant
+complete par le cas nouveau jeu et sauvegarde decrit plus haut.
+L'ecart 6/30 apres correction du spawn venait de l'import de la section vision,
+ignoree apres une ligne vide dans l'asset. Suppression de cette seule ligne et
+correction du repositionnement sous la portee minimale : recette bornee
+52de58fb32b245f6b2487b975f212307 passee, aggro sans lock, approche et deux impacts
+reels (1000 -> 960 PV). La regle de Flame reste testee avec un allumage de fixture
+signale, pas avec une interaction/progression simulee comme reussie.
+
+CombatBootstrapPlayValidation accepte -combatMigrationRepeatPlay : deux entrees
+et sorties reelles de Play Mode dans un meme editeur isole, avec nouveaux slots
+Library par cycle. Domain Reload est force On, ou Off avec l'option supplementaire
+-combatMigrationDomainReloadOff. A chaque sortie native : aucun acteur joueur ni
+singleton combat/navigation/temps ne doit survivre. Les options initiales sont
+restaurees a la fin ou apres echec ; watchdog de sortie de 45 s. Le JSON par cycle
+reste distinct du resume, sans fabriquer de gate de qualification.
+Le timeout Basic de 8 s est conserve ; son diagnostic inclut temps de jeu,
+frames, etats Animator courant/suivant, echelles et parametres. Premier essai Off
+expire, puis deux cycles Off passent : anomalie intermittente encore ouverte.
 
 CombatMigrationStaging.RunBatch exige une copie sans racine Git et l'option
 explicite -applyStagedCombatAssets. Il applique les ecritures auteur, repete Apply

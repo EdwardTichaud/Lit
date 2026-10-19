@@ -1,7 +1,201 @@
 ## Integration Du Combat Valide Au Jeu (2026-10-19)
 
+Correction demandee apres essais auteur : exploration et combat redeviennent
+distincts. Retrait de la reactivation individuelle BasicAttack/SelectSkillKit en
+exploration ; admission des attaques libres uniquement en InputMode.Combat et
+roue refusee en exploration. Sans lock reste autorise en combat. Les recettes et
+preuves historiques d'attaques/charge en exploration ci-dessous correspondent
+a l'ancien contrat et ne qualifient plus cette regle. Compilation isolee reussie,
+55 tests FreeAttackTests passes, dont cinq cas de modes/refus sans effet. Pas
+de Play Mode ni de reprise de la campagne generale mise en pause.
+
 Objectif actif : porter completement le combat valide du laboratoire dans la
 partie normale, sans remplacer les rencontres par les fixtures de test.
+
+Lot charge en exploration : -combatMigrationCharge complete la recette Gamepad
+d'aller-retour Maison/District/Maison, sans override d'asset ou appel direct de
+charge. Cas dfba2a9d62c5430ca189107904d2a224 PASSE : dans chaque destination,
+relachement pendant la fin Basic ralentie sans lancement, puis maintien avec
+generation/clip continus, ralenti et cadrage observes, lancement unique apres le
+seuil auteur, cooldown consomme. X reste tenu brievement apres lancement sans
+repetition. Vitesse Basic/camera/sol/commandes restitues, aucun engagement ou lock
+sur ces coups dans le vide ; transfert/PV/progression et snapshot passes.
+Compilation native reussie, 119 empreintes principal/copie identiques. Preuves :
+Library/ProductionCombatMigration/Charge. Aucun runtime ni asset auteur modifie ;
+suite elargie non rejouee dans ce lot (derniere : 544 passes, un echec Etienne,
+un Explicit ignore). Projection ciblee/flottement, interruptions, ressenti et
+reseau restent distincts ; ReadyForProduction faux.
+
+Lot defenses : recette optionnelle -combatMigrationDefenses sur la vraie rencontre
+depuis Bootstrap, Gamepad prive sans appel direct de roulade/garde. Cas
+5d4f296413df4de0b8e67f70d0555596 PASSE : deux B avec vrai mouvement UCC
+(2,87 et 3,49 m), deux Y hors fenetre de contre avec garde tenue puis relachee,
+restitution action/input/sol a chaque cycle. Ennemi non suspendu, aucun lock
+camera ou contre force ; fuite, reengagement, troisieme impact, retour home et
+snapshot passent ensuite. Flame existante allumee comme fixture explicite.
+83 empreintes principal/copie identiques ; preuves dans
+Library/ProductionCombatMigration/Defenses. Ce lot ne prouve ni reduction d'un
+impact garde, ni esquive garantie, contre cinematographique, ressenti ou reseau.
+Compilation native reussie ; regression elargie : 544 passes, un echec de
+couverture Flame Etienne reservee a l'auteur, un Explicit non execute.
+ReadyForProduction reste faux.
+
+Lot sprint/saut : recette -combatMigrationLocomotion ajoutee au meme parcours
+Gamepad. Baseline : vrai saut, mais MissingMethodException sur le callback OnJump
+de NetworkCharacterInput (InputValue contre CallbackContext prive). Les quatre
+callbacks reseau Jump/LocomotionMode/TriggerMunin/ToggleTorch sont renommes OnRouted*,
+sans changer leurs corps, RPC ou autorite ; aucune reference UnityEvent auteur
+trouvee. Le controle d'atterrissage attend la restitution effective dans sa borne
+de cinq secondes, sans forcer la liberation d'un verrou pendant le fondu auteur.
+Cas 7e1e274b5f814e30bfae8f4651a7a91f PASSE : RT route/applique, tier course 3,25,
+vitesse physique accrue dans District et Maison, relachement propre ; deux sauts
+successifs par zone, montee/air/sol observes et commandes rendues, aucune exception
+de runtime dans cette phase. Hauteur/vitesse auteur et bindings inchanges.
+Regression : 544 passes, un echec Etienne Flame auteur, un Explicit ignore ; quatre
+nouveaux tests de collisions de noms passent. 75 hashes source/copie identiques.
+Preuves : Library/ProductionCombatMigration/Locomotion. Roulade/garde en engagement,
+charge, familles de skills, rencontres et reseau restent a qualifier ; aucune
+qualification globale ni de ressenti visuel deduite. ReadyForProduction faux.
+
+Lot commandes natives : -combatMigrationGamepad ajoute a la recette de transfert
+existante, uniquement dans la copie isolee. Cas 125c75c0dc9d43129a260098dd757546
+PASSE sur sources synchronisees : impulsion de stick -> routeur -> UCC -> vrai
+deplacement (District 1,03 m ; Maison 0,87 m), alignements camera >0,997 ; pression
+X -> une Basic, fin propre sans doublon, repetition ou charge. Selection d'un
+trajet sur capsule/sol UCC reels ; un premier refus de fixture generique est garde.
+Controle de provenance : les quatre prefabs de la copie avaient encore .2 au
+lieu du .5 deja auteur pour le contre reseau dans le principal. Synchronisation
+principal -> copie uniquement, aucune modification du gameplay principal ; quatre
+tests de valeurs auteur ajoutes. Suite elargie : 540 passes, un echec Etienne
+Flame auteur, un Explicit non execute. Soixante et une empreintes identiques.
+Preuves : Library/ProductionCombatMigration/Gamepad. Reste notamment sprint,
+saut/roulade/charge et familles de skills en production, rencontres et reseau ;
+pas de ressenti manuel ou huit directions qualifies par ces deux impulsions.
+ReadyForProduction reste faux.
+
+Lot transitions : recette optionnelle -combatMigrationZoneRoundTrip ajoutee au
+validateur Bootstrap existant. Cas 6bf1904b99794059aa90056332b7b46b PASSE : vrai
+portail Maison admis via ServerTryUse, District 1 complet, Basic et fin propre,
+ReturnToHub(Default), Maison complete et nouvelle Basic terminee. Meme acteur/
+binding/PV/progression conserves, monde combat unique, NavMesh Ready portant la
+bonne zone, anciennes scenes dechargees en solo, controles/interactions autorises.
+Placement UCC de Lucian pres du portail uniquement comme fixture ; pas une preuve
+d'input Interagir manuel, de mouvement au stick, d'audio ou de reseau. Aucun
+runtime ou asset auteur modifie dans ce lot. Regression elargie : 536 passes,
+un echec Etienne (couverture Flame auteur), un Explicit non execute. Vingt-neuf
+empreintes sources/assets/metas identiques a la copie validee.
+Preuves : Library/ProductionCombatMigration/ZoneTransfer. ReadyForProduction faux.
+
+Lot couverture des zones : recette Bootstrap parametrable par manifeste, sans
+fallback silencieux ni seconde infrastructure de qualification. Maison reproduit
+un spawn a l'origine squad car LucianSpawnPoint etait un simple Transform. Ajout
+de ZoneSpawnPoint Default/slot 0 SUR cet objet, sans deplacer pose/parent/GUID.
+Recette 7a37b21178774e04a2d2920f775a5641 PASSEE : dix scenes, NavMesh Ready,
+Lucian seul au spawn auteur, grounded, Basic/fin propre, curseur natif et snapshot
+ecrit/lu. Interactions de Maison et reseau restent non qualifies ; transfert solo
+par API couvert par le lot ci-dessus.
+Suite elargie finale : 536 passes, un echec reel Etienne (couverture Flame reservee
+a l'auteur), un Explicit ignore ; les sept nouveaux tests passent, aucune
+assertion retiree. Dix-neuf empreintes sources/assets/metas identiques a la copie
+validee. Backup scene/meta, manifeste cible et preuves dans
+Library/ProductionCombatMigration/ZoneCoverage. ReadyForProduction reste faux.
+
+Lot recuperation physique : sortie bornee d'un support non navigable
+implementee dans le moteur production existant, sans changer collider, tolerance
+NavMesh ni asset auteur. Balayages planaire/vertical separes, gravite conservee,
+destination locale libre et connectee, nettoyage par generation/cinematique/mort.
+Compilation et regression : 483 passes / 0 echec / 1 Explicit non execute,
+dont neuf nouveaux cas de geometrie, mur, etage et proprietaire. Premier essai
+physique reel garde en echec (timeout de sortie). Essai suivant : deux impacts,
+fuite et retour oriente passes, mais reengagement non obtenu ; la fixture
+employait un rayon generique a 1,2 m au lieu du regard auteur. La recette utilise
+maintenant eyeHeight/targetHeight/obstructionMask et verifie la perception exacte
+apres placement UCC. Le diagnostic suivant confirme une penetration deja acquise
+de Flame/MeshCollider (0,026 m) et WoodFire/MeshCollider (0,237 m) : le rayon
+central d'atterrissage ne protegeait pas le volume entier. La descente, ruee incluse,
+utilise maintenant le balayage complet de capsule, sans snap vers le rayon plus
+bas. Une face inclinee bloquante permet la sortie physique, pas le rattachement
+NavMesh ; le test de support decale couvre descente normale et ruee, deux angles.
+Recette rendue d14f503cc325488a82628d855da4fe58 PASSEE : Bootstrap/District 1,
+deux attaques, fuite et restitution des controles, reengagement pendant retour,
+troisieme impact, seconde fuite, retour home avec NavMesh valide et orientation
+auteur, aucun impact tardif. Snapshot monde ecrit/lu. Dix-neuf empreintes
+sources/assets/metas identiques a la copie validee. Allumage de Flame fixture
+toujours explicite ; pas une preuve d'interaction narrative, fuite au stick,
+BattleWall, autres rencontres ou reseau. ReadyForProduction reste faux.
+Artefacts : Library/ProductionCombatMigration/LandingRecovery.
+
+Controle supplementaire de rencontre reelle : la recette Bootstrap accepte
+-combatMigrationEncounter. Avant correctif, le vrai Juggernaut a detecte Lucian
+et engage la facade sans lock, puis reste 65 s sans mouvement ni impact malgre
+un agent valide. Son kit auteur contient uniquement Assomoir ; preferMeleeApproach
+pouvait exclure tout son kit apres le choix aleatoire d'alternative aerienne.
+Le filtre conserve maintenant un kit uniquement aerien ; un kit mixte garde sa
+preference melee. Approche et retour liberent aussi l'arret de l'agent avant
+SetDestination. Aucun skill ajoute, aucune identite ou regle de Flame remplacee.
+La recette peut explicitement allumer une Flame EXISTANTE couvrant l'ennemi
+dans la copie jetable, puis restaurer son etat : ce fixture ne valide pas son
+interaction ni la progression. Aucun placement de Flame, notamment chez Etienne.
+Ecart de vision resolu par preuve d'import natif : une ligne vide precedant
+vision dans Juggernaut.asset faisait ignorer cette section (6 m par defaut au
+lieu des 30 auteur). ForceImport seul ne corrigeait rien ; deux copies temporaires
+avec/sans ligne vide reproduisent 6/30. Suppression de cette seule ligne, GUID et
+valeurs inchanges, sauvegarde/metadonnee conservees. Aucun autre cas analogue
+dans les 19 CharacterData scannes ; pas de nettoyage general des fichiers Unity.
+La vision correcte a revele un second blocage apres le premier Assomoir : trop
+pres pour sa portee minimale, l'agent visait encore le joueur avec un arret plus
+grand que sa distance. Il peut maintenant reprendre sa distance par chemin
+NavMesh complet, seulement si tous les patterns sont trop proches ; marge de
+portee interieure, aucune translation directe, aucune interruption de coup.
+Recette 52de58fb32b245f6b2487b975f212307 passee : vrai Juggernaut, vision 30 m,
+aggro sans lock, vitesse 3.62 m/s, approche 5.61 m, recul de positionnement,
+deux generations d'impact et PV Lucian 1000 -> 960, recuperation observee.
+Fixture de Flame existante toujours explicite : pas une preuve d'allumage ni de
+progression. Fuite/retour/reengagement, autres rencontres et reseau restent a
+valider. Preuves : Library/ProductionCombatMigration/VisionImport et
+Logs/CombatVisionImportDiagnostic.log, CombatEncounterRangeRetreat.log.
+Controle lifecycle ajoute via -combatMigrationEncounterLifecycle : deux sorties
+de zone placees par UCC et reapproche pendant le retour, sans appel de fin/aggro
+force. Baseline : retour a reculons confirme (dot -0.915). Corrige par rotation
+vers home avec le profil existant. La sortie de leash ne peut plus annuler une
+attaque deja engagee sur une cible vivante ; fin normale puis abandon du combo.
+Essai suivant : controles/autorisation d'interaction restitues deux fois, facing
+retour dot 1, reengagement pendant retour et troisieme impact (PV 940) passes.
+Avant le lot recuperation ci-dessus, recette totale en echec : Recovery avec agent
+desactive persiste, aucune suspension Flame/cinematique. Diagnostic suivant
+reproduit et precise : motion=True, airborne=False, endRequested/abort=True,
+vitesse verticale 0 ; sol = collider Flame dans District_1_Corridor_Flammes,
+point (-4.47,-93.93,44.21), root a +0.03. Aucun polygone a 0.15 m ; plus proche
+(-3.80,-94.24,44.21). L'ennemi est pose SUR la Flame non navigable, et le moteur
+n'a pas de sortie physique avant restitution NavMesh. Ce n'est pas un simple
+manque de tolerance : ne pas activer l'agent, ignorer le collider, warper ou
+rebaker pour masquer le cas. Correctifs et preuves actuels de recuperation
+physique dans le lot ci-dessus ; rattachement seulement apres vrai retour au
+sol local valide.
+Artefacts : Library/ProductionCombatMigration/Lifecycle ; journaux baseline,
+fixed et CombatLandingLifecycleDiagnostics.log. Derniere recette passee dans
+LandingRecovery ci-dessus ; ces echecs restent conserves separement.
+Spawn initial corrige : GameFlow capture l'existence du JSON personnage avant
+restauration et utilise le ZoneSpawnPoint de la scene primaire pour une nouvelle
+partie sans spawnId. Un fichier existant, meme en echec de restauration, n'active
+pas ce fallback ; arrivee explicite et option editeur conservent leurs contrats.
+Recette 39e49776f3f2450bbb3f034a7ded5ae9 passee : Lucian au spawn auteur
+(-89.88,-93.94,51.88), sol physique confirme, Basic, sauvegarde a une pose distincte,
+menu/recharge avec cette pose conservee (-91.87,-93.94,52.91), PV 993, acteur unique,
+progression et mort fixture sous marker conservees, navigation Ready. Premier
+essai de fixture sauvegarde refusait un polygone NavMesh non requis pour UCC ;
+remplace par sol physique et espace capsule libre, echec garde separement.
+Preuves : Library/ProductionCombatMigration/Spawn. Ce cas ne valide pas a lui seul
+la rencontre, toutes les zones, une victoire jouee ou le reseau.
+Regression avant recuperation : compilation reussie, 474 passes / 0 echec / 1 Explicit
+non execute ; trois nouveaux cas de protection du coup hors leash. Dix-huit
+fichiers (sources, assets, metas, prefab et scene du cas physique) compares par
+SHA-256 a la copie compilee dans Lifecycle. Aucun asset auteur modifie dans ce
+lot. Le correctif anterieur d'une ligne vide reste manifeste dans VisionImport.
+Pas de preuve reseau ni de qualification globale deduite de ces resultats.
+Echecs conserves dans Library/ProductionCombatMigration/Encounter ; journaux
+Logs/CombatProductionEncounter*.log. ReadyForProduction reste faux.
+
 ProductionCombatMigration promeut les reglages d'Ascension vers le SkillSO
 canonique (GUID conserve), les trois Basics aeriens et les controllers existants.
 Profil GameplayCombatCamera dedie : seule la section actionFraming vient du lab,
@@ -13,32 +207,16 @@ Reseau : BasicTail utilise la session Basic autoritaire et une presentation
 repliquee par epoque/generation ; Burst et freinage Rupture viennent du monde
 serveur. Point de contact confirme transmis aux feedbacks, audio leger/lourd
 sans lecture double, reaction de torse apres impact confirme seulement.
-Premier lot combine : 413 passes, deux anciennes assertions de confinement au
-laboratoire refusees ; contrat de migration explicite ajoute sans retirer les
-controles d'identite ou d'idempotence. Relecture : 415 passes, 0 echec, 1 skip.
-Derniere installation quatre joueurs idempotente (9a5d899bf77549a28638ede88a9d3125).
-Controle combine final : 418 passes, 0 echec, 1 test Explicit non execute.
-Dix fichiers rapatries avec verification SHA-256 et sauvegarde, sans ecraser
-un fichier modifie depuis le preflight. La recette Bootstrap rendue a revele
-zoneManifests vide : seul Core chargeait, NavMesh Failed. District 1 est maintenant
-reference explicitement dans le vrai Bootstrap, via l'outil idempotent, puis
-rapatrie avec sauvegarde (onzieme fichier ; metadata preservee).
-Nouvelle recette passee : 21 additives + Core, NavMesh pre-bake Ready 2/2 anchors,
-Lucian seul, monde combat unique sans arene, Basic puis controle restitue,
-snapshot reel ecrit/lu dans un slot Library isole. Pas de rechargement de partie
-complete ni de ressenti manuel de production deduits. Regression Bootstrap finale :
-419 passes, 0 echec, 1 Explicit non execute. Premier echec et succes conserves
-separement. Dix-sept scripts et onze fichiers livres compares par SHA-256 aux
-sources validees ; aucun processus de recette laisse actif.
-Preuves dans
-Library/ProductionCombatMigration/CombatFeel et Logs/CombatProduction*.log.
+Bootstrap reference maintenant explicitement District 1 dans zoneManifests :
+21 additives + Core, NavMesh pre-bake Ready 2/2 anchors, Lucian seul et monde
+commun sans arene. Historique et preuves initiales dans
+Library/ProductionCombatMigration/CombatFeel et le rapport detaille.
 Raccords supplementaires implementes : rotations dans PlayerSettings et profils
 ennemis ; curseur prefab +3 Y dans CombatWorldRuntime, nettoyage natif a la
 desactivation/destruction ; buffer mobilite et reactions dans leurs composants
 communs. Les surcharges de l'arene sont retirees apres migration en deux phases.
 Installation isolee 6ac70eb06a8f447982566ddf9fb84be5 idempotente ; onze fichiers
-auteur livres avec sauvegarde et metadata preservee. Regression finale : 451
-passes, 0 echec, 1 Explicit non execute. Le vrai cycle sauvegarde/menu/recharge
+auteur livres avec sauvegarde et metadata preservee. Le vrai cycle sauvegarde/menu/recharge
 a revele puis permis de corriger : dechargement impossible de la derniere scene,
 PV joueur absents du JSON, identite solo invalide et double spawn apres snapshot,
 provider d'ennemi ajoutant un marker vide au lieu de lire son vrai parent.
@@ -48,16 +226,37 @@ registre. Provider de marker utilisable sur acteur inactif, sans Awake obligatoi
 Recette rendue 66701034d42a44f5b225c5bc644f902f passee : un seul Lucian apres
 recharge, PV 993 conserves, progression inchangee, ennemi fixture toujours mort
 sous son vrai marker et navigation de nouveau Ready. Pas une victoire jouee ni
-une preuve de toutes les zones/reseau. Vingt-six sources et onze fichiers auteur
-compares par SHA-256, aucun editeur de validation laisse actif. Preuves dans
+une preuve de toutes les zones/reseau. Sources et onze fichiers auteur
+compares par SHA-256. Preuves dans
 Library/ProductionCombatMigration/Controls et Logs/CombatControls*.log, y compris
 les echecs precedents conserves separement.
 Retour auteur confirme dans le lab : ouvertures/reprises du Juggernaut et
 distinction des coups satisfaisantes ; camera large et ChargedSkill preserves.
 Reste : parcours complet des zones/rencontres, autres cycles de sauvegarde,
-Domain Reload On/Off et vrai host/client ;
+qualification exhaustive des abonnements/inputs et vrai host/client ;
 ne pas declarer ReadyForProduction ni reprendre les chiffres historiques comme
 preuves des sources courantes. Flame d'Etienne toujours reservee a l'auteur.
+
+Lot suivant : audit integral en lecture seule, zero ecriture auteur proposee,
+19 sujets ennemis, 34 scenes et 8383 sujets d'inventaire. Baseline avant nettoyage :
+166 blocages, dont 150 references GUID (77 distincts), trois chargements dynamiques,
+un registre reseau et les gates/provenance de copie non attestes. Ne pas confondre
+l'absence de Git dans la copie avec un defaut du jeu. Les deux ZIP indiques par
+l'auteur dans D:/LitAssetArchive ont ete lus : 8987 metas valides, aucun GUID
+recherche ni clip/profil auteur correspondant ; aucune restauration hasardeuse.
+Deux cycles natifs Bootstrap/Basic/menu/recharge/sortie passent avec Domain Reload
+On, puis deux avec Off. Options editeur isole restaurees. Un premier essai Off a
+expire sur une Basic au-dela de 8 s ; non reproduit avec diagnostics, NON corrige
+par allongement du delai et toujours ouvert. Ne pas transformer ces repetitions
+bornees en preuve de tous les callbacks/manettes ou des onze gates.
+Nettoyage explicite du diagnostic supprime en Git 0b219dcd : 70 documents orphelins
+dans 10 controllers, aucun lien de comportement actif, clip, transition ou event
+retire. Plan SHA-256, sauvegardes et metadata preservee ; livres au projet principal.
+Regression apres nettoyage : 453 passes / 0 echec / 1 Explicit non execute.
+L'audit classe desormais les seules icones moteur GUID d comme ressources integrees
+quand AssetDatabase resout exactement Library/unity editor resources ; les autres
+GUID restent controles. Preuves : Library/ProductionCombatMigration/SessionCycles
+et Logs/CombatBootstrapRepeat*.log, CombatSessionCyclesRegression.log.
 
 ## Presence Du Combat (2026-10-19)
 

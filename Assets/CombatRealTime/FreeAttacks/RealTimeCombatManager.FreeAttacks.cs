@@ -12,10 +12,11 @@ public sealed partial class RealTimeCombatManager
         !playerLocomotionBridge.IsScriptedTraversalActive && !playerLocomotionBridge.IsCinematicMotionSessionActive &&
         playerLocomotionBridge.HasOnlyExternalLocksOwnedBy(playerActionPresentation, playerRoot.GetComponent<PlayerStateMotionController>()));
     public bool CanReceiveFreeAttackInput => Time.timeScale > 0 && AllowsFreeAttacks && HasFreeAttackControl && !IsPlayerDead() && !IsCinematicSequenceActive &&
-        (InputModeCoordinator.CurrentMode == InputMode.Combat || InputModeCoordinator.CurrentMode == InputMode.Exploration);
+        InputModeCoordinator.CurrentMode == InputMode.Combat;
     private bool CanUseFreeSkill => CanReceiveFreeAttackInput || Time.timeScale > 0 && AllowsFreeAttacks && HasFreeAttackControl && !IsPlayerDead() &&
         !IsCinematicSequenceActive && InputModeCoordinator.CurrentMode == InputMode.CombatWheel;
-    public bool HasAttackInputContext => CanReceiveFreeAttackInput || combatActive && HasLockedCombatTarget;
+    public bool HasAttackInputContext => InputModeCoordinator.CurrentMode == InputMode.Combat &&
+        (CanReceiveFreeAttackInput || combatActive && HasLockedCombatTarget);
     public PlayerAttackContext CurrentAttackContext => AllowsFreeAttacks ? playerActionPresentation?.AttackContext : null;
     public Transform ActionTargetPoint => CurrentAttackContext != null ? CurrentAttackContext.TargetPoint : LockedTargetPoint;
     public float FreeAttackTurnRate => freeAttackProfile != null ? freeAttackProfile.turnDegreesPerSecond : 1440f;

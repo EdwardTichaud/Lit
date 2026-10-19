@@ -5,6 +5,52 @@ using UnityEngine;
 
 public sealed class FreeAttackTests
 {
+    [TestCase(InputMode.Exploration, false)]
+    [TestCase(InputMode.Combat, true)]
+    [TestCase(InputMode.CombatWheel, false)]
+    [TestCase(InputMode.Dialogue, false)]
+    [TestCase(InputMode.Cinematic, false)]
+    public void FreeAttacksMeanUnlockedCombatNotExploration(InputMode mode, bool allowed)
+    {
+        var host = new GameObject("Combat mode boundary fixture");
+        host.SetActive(false);
+        var manager = host.AddComponent<RealTimeCombatManager>();
+        var coordinator = host.AddComponent<InputModeCoordinator>();
+        const BindingFlags fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        var instance = typeof(InputModeCoordinator).GetField("instance", BindingFlags.Static | BindingFlags.NonPublic);
+        var previous = instance.GetValue(null);
+        float previousScale = Time.timeScale;
+        var skill = ScriptableObject.CreateInstance<SkillSO>();
+        try
+        {
+            instance.SetValue(null, coordinator);
+            typeof(InputModeCoordinator).GetField("baseMode", fields).SetValue(coordinator, mode);
+            typeof(RealTimeCombatManager).GetField("playerRoot", fields).SetValue(manager, host.transform);
+            manager.ConfigureFreeAttacks(new FreeAttackProfile { enabled = true }, null);
+            Time.timeScale = 1;
+            Assert.That(manager.IsCombatActive, Is.False);
+            Assert.That(manager.HasLockedCombatTarget, Is.False);
+            Assert.That(manager.CanReceiveFreeAttackInput, Is.EqualTo(allowed));
+            Assert.That(manager.HasAttackInputContext, Is.EqualTo(allowed));
+            if (mode == InputMode.Exploration)
+            {
+                int starts = 0;
+                manager.PlayerSkillStarted += (_, _) => starts++;
+                Assert.That(manager.TryUseSkill(skill), Is.False);
+                Assert.That(manager.LastSkillTargetingFailure, Is.EqualTo("Action indisponible dans le contexte courant."));
+                Assert.That(manager.GetSkillCooldownRemaining(skill), Is.Zero);
+                Assert.That(starts, Is.Zero);
+            }
+        }
+        finally
+        {
+            instance.SetValue(null, previous);
+            Time.timeScale = previousScale;
+            Object.DestroyImmediate(host);
+            Object.DestroyImmediate(skill);
+        }
+    }
+
     [TestCase(.06f, 65f)] [TestCase(2f, 65f)] [TestCase(10f, 65f)] [TestCase(30f, 42f)]
     public void BurstDashHasExactDistanceShortRampsAndNeverExceedsSpeedCap(float distance, float speed)
     {

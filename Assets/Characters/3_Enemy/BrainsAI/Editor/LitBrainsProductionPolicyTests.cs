@@ -6,6 +6,18 @@ using Ultrabolt.BrainsAI;
 
 public sealed class LitBrainsProductionPolicyTests
 {
+    [Test]
+    public void ProductionJuggernautImportsItsAuthoredVisionInsteadOfDefaultSettings()
+    {
+        const string path = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
+        var data = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+        Assert.IsNotNull(data);
+        Assert.AreEqual("c54e94b14c7826c4482529b6d4d739ec", data.UniqueId);
+        Assert.AreEqual(30f, data.vision.maximumDistance, "Validate the imported asset, not only its YAML text.");
+        Assert.AreEqual(100f, data.vision.fieldOfViewDegrees);
+        Assert.AreEqual(1.5f, data.vision.eyeHeight);
+    }
+
     private GameObject root;
     private LitBrainsEnemy enemy;
     private LitBrainsEncounterGate gate;
@@ -61,6 +73,132 @@ public sealed class LitBrainsProductionPolicyTests
 
     private bool Gate(string name) => (bool)typeof(LitBrainsEnemy)
         .GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(enemy);
+
+    [TestCase(LitBrainsAttackPhase.Preparation)]
+    [TestCase(LitBrainsAttackPhase.Strike)]
+    [TestCase(LitBrainsAttackPhase.Recovery)]
+    public void LeavingPursuitBoundsPreservesTheCommittedActionUntilItsCompletion(LitBrainsAttackPhase phase)
+    {
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        var source = ScriptableObject.CreateInstance<EnemyCombatProfileSO>();
+        var profile = ScriptableObject.CreateInstance<LitBrainsCombatProfile>();
+        var target = new GameObject("Escaped living target");
+        const BindingFlags fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            source.pursuitRadius = 35;
+            source.disengagePauseSeconds = 1;
+            data.enemyCombatProfile = source;
+            profile.productionSourceProfile = source; profile.executeProductionPatterns = true;
+            enemy.combatProfile = profile;
+            enemy.ConfigureCharacterData(data);
+            target.transform.position = new Vector3(100, 0, 0);
+            enemy.fov.useExternalDetection = true;
+            enemy.fov.SetExternalTarget(target.transform);
+            typeof(LitBrainsEnemy).GetField("productionEngaged", fields).SetValue(enemy, true);
+            typeof(LitBrainsEnemy).GetProperty("AttackPhase").SetValue(enemy, phase);
+            typeof(LitBrainsEnemy).GetProperty("CommittedAttackTarget").SetValue(enemy, target.transform);
+            typeof(LitBrainsEnemy).GetProperty("ActionSequenceId").SetValue(enemy, 17);
+            var tick = typeof(LitBrainsEnemy).GetMethod("TickProductionEncounter", fields);
+            Assert.IsFalse((bool)tick.Invoke(enemy, null));
+            Assert.AreEqual(phase, enemy.AttackPhase);
+            Assert.AreSame(target.transform, enemy.CommittedAttackTarget);
+            Assert.AreEqual(17, enemy.ActionSequenceId);
+            Assert.IsFalse((bool)typeof(LitBrainsEnemy).GetField("productionReturning", fields).GetValue(enemy));
+            typeof(LitBrainsEnemy).GetProperty("AttackPhase").SetValue(enemy, LitBrainsAttackPhase.None);
+            Assert.IsTrue((bool)tick.Invoke(enemy, null));
+            Assert.IsTrue((bool)typeof(LitBrainsEnemy).GetField("productionReturning", fields).GetValue(enemy));
+            Assert.IsNull(enemy.CommittedAttackTarget);
+        }
+        finally
+        {
+            Object.DestroyImmediate(target); Object.DestroyImmediate(profile);
+            Object.DestroyImmediate(source); Object.DestroyImmediate(data);
+        }
+    }
+
+    [TestCase(2.5f, 0f, 1f, true)]
+    [TestCase(2.5f, 0f, 2.5f, false)]
+    [TestCase(2.5f, 0f, 5f, false)]
+    [TestCase(0f, 3f, 2f, true)]
+    public void RetreatRequiresBeingInsideEveryEquippedPatternMinimum(float patternMinimum, float skillMinimum, float distance, bool expected)
+    {
+        var skill = ScriptableObject.CreateInstance<SkillSO>();
+        try
+        {
+            skill.minimumHitDistance = skillMinimum;
+            var pattern = new EnemyCombatPattern { minimumStartDistance = patternMinimum,
+                skills = new System.Collections.Generic.List<SkillSO> { skill } };
+            var method = typeof(LitBrainsEnemy).GetMethod("ProductionNeedsRetreat", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.AreEqual(expected, method.Invoke(null, new object[] { new[] { pattern }, distance }));
+            var melee = new EnemyCombatPattern { skills = new System.Collections.Generic.List<SkillSO> { skill } };
+            skill.minimumHitDistance = 0;
+            Assert.IsFalse((bool)method.Invoke(null, new object[] { new[] { pattern, melee }, distance }),
+                "A usable melee band must not be discarded just because Assomoir is too close.");
+        }
+        finally { Object.DestroyImmediate(skill); }
+    }
+
+    [TestCase(0f, 2.5f, 6f, 2.7f)]
+    [TestCase(10f, 2.5f, 6f, 5.8f)]
+    [TestCase(0f, 2f, 2.1f, 2.05f)]
+    public void ApproachUsesTheInteriorOfTheAuthoredRangeWithoutExceedingItsBounds(float preferred, float minimum, float maximum, float expected)
+    {
+        var source = ScriptableObject.CreateInstance<EnemyCombatProfileSO>();
+        var profile = ScriptableObject.CreateInstance<LitBrainsCombatProfile>();
+        var skill = ScriptableObject.CreateInstance<SkillSO>();
+        try
+        {
+            source.preferredCombatDistance = preferred;
+            profile.productionSourceProfile = source; profile.executeProductionPatterns = true;
+            enemy.combatProfile = profile;
+            skill.maximumHitDistance = maximum;
+            var pattern = new EnemyCombatPattern { minimumStartDistance = minimum,
+                skills = new System.Collections.Generic.List<SkillSO> { skill } };
+            float actual = (float)typeof(LitBrainsEnemy).GetMethod("ProductionApproachDistance", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(enemy, new object[] { pattern });
+            Assert.AreEqual(expected, actual, .0001f);
+            Assert.That(actual, Is.InRange(minimum, maximum));
+        }
+        finally { Object.DestroyImmediate(source); Object.DestroyImmediate(profile); Object.DestroyImmediate(skill); }
+    }
+
+    [TestCase(false, false)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public void MeleePreferenceNeverDiscardsAnAirborneOnlyLoadout(bool preferMelee, bool includesMelee)
+    {
+        var source = ScriptableObject.CreateInstance<EnemyCombatProfileSO>();
+        var profile = ScriptableObject.CreateInstance<LitBrainsCombatProfile>();
+        var airborne = ScriptableObject.CreateInstance<SkillSO>();
+        var melee = ScriptableObject.CreateInstance<SkillSO>();
+        try
+        {
+            source.preferMeleeApproach = preferMelee;
+            profile.productionSourceProfile = source;
+            profile.executeProductionPatterns = true;
+            enemy.combatProfile = profile;
+            airborne.enemyActionMotion.movementMode = EnemyActionMovementMode.Airborne;
+            var airPattern = new EnemyCombatPattern { skills = new System.Collections.Generic.List<SkillSO> { airborne } };
+            var meleePattern = new EnemyCombatPattern { skills = new System.Collections.Generic.List<SkillSO> { melee } };
+            var equipped = includesMelee ? new[] { airPattern, meleePattern } : new[] { airPattern };
+            var filter = typeof(LitBrainsEnemy).GetMethod("FilterProductionApproachCandidates", BindingFlags.Instance | BindingFlags.NonPublic);
+            var candidates = (EnemyCombatPattern[])filter.Invoke(enemy, new object[] { equipped });
+            if (preferMelee && includesMelee)
+            {
+                CollectionAssert.AreEqual(new[] { meleePattern }, candidates);
+                typeof(LitBrainsEnemy).GetField("productionAirborneChoice", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(enemy, airPattern);
+                candidates = (EnemyCombatPattern[])filter.Invoke(enemy, new object[] { equipped });
+                CollectionAssert.AreEqual(equipped, candidates, "A chosen airborne alternative remains eligible.");
+            }
+            else CollectionAssert.AreEqual(equipped, candidates, "Airborne-only actors must still approach and attack.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(source); Object.DestroyImmediate(profile);
+            Object.DestroyImmediate(airborne); Object.DestroyImmediate(melee);
+        }
+    }
 
     [Test]
     public void EncounterCanDisableDecisionsWithoutInventingDamageImmunity()

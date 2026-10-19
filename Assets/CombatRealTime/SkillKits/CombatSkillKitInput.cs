@@ -189,8 +189,7 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         { Feedback("Ce membre n’a pas encore rejoint l’équipe"); return false; }
         if (!IsAvailable || manager == null || !manager.isActiveAndEnabled || !manager.IsCombatActive && !manager.AllowsFreeAttacks || manager.IsCinematicSequenceActive ||
             CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsCinematicPlaying ||
-            (InputModeCoordinator.CurrentMode != InputMode.Combat && InputModeCoordinator.CurrentMode != InputMode.CombatWheel &&
-                !(manager.AllowsFreeAttacks && InputModeCoordinator.CurrentMode == InputMode.Exploration))) return false;
+            (InputModeCoordinator.CurrentMode != InputMode.Combat && InputModeCoordinator.CurrentMode != InputMode.CombatWheel)) return false;
         var actor = manager.PlayerRoot != null ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true) : null;
         if (actor == null || !actor.isActiveAndEnabled || actor.CurrentHp <= 0) return false;
         if (actor.GetComponent<PlayerActionPresentationController>()?.IsChargingSkill == true) return false;

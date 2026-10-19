@@ -1,5 +1,87 @@
 # Input, UCC et caméra
 
+## Separation Exploration Et Combat (Regle Actuelle)
+
+Apres retour auteur, les commandes offensives ne sont plus admises en exploration.
+CanReceiveFreeAttackInput et HasAttackInputContext exigent InputMode.Combat ;
+TryUseSkill refuse le lancement en exploration avant ciblage, animation ou cooldown.
+Le contrat sans lock concerne le mode combat, pas l'exploration. La roue des kits
+ne s'ouvre qu'en Combat/CombatWheel. Le coordinateur garde seul l'activation des
+maps : suppression du partial qui reactivait BasicAttack/SelectSkillKit chaque
+frame en exploration. Aggro et restitution habituelles des modes restent inchangees.
+Les anciennes preuves/recettes ci-dessous qui frappent en exploration sont
+historiques ; elles ne sont pas des preuves du nouveau contrat.
+Verification ciblee : compilation et 55 FreeAttackTests passes, dont les modes
+Exploration/Combat/CombatWheel/Dialogue/Cinematic et le refus sans cooldown ou
+lancement en exploration. Essai manuel du changement de modes restant a faire.
+
+## Charge En Exploration De Production
+
+L'option -combatMigrationCharge complete la recette Gamepad d'aller-retour de
+zone. Le vrai X demarre une Basic, garde sa generation et son etat Animator,
+observe la fin a 10 % et le cadrage actif. Un premier relachement avant seuil
+doit finir le geste sans charge ; un second maintien doit lancer exactement une
+Ascension apres chargeSeconds, consommer son cooldown et ne rien repeter tant
+que X reste tenu. La sortie exige cadence Basic a 1, camera hors charge,
+action/hold/verrous UCC termines et acteur au sol. Aucun engagement ni lock.
+Cas dfba2a9d62c5430ca189107904d2a224 passe dans District puis Maison avec
+donnees auteur inchangees. Sans cible : ni projection, flottement, protection aux
+degats ou ressenti visuel qualifies. Les logs de fin Basic sont emis une seule
+fois par cycle meme pendant l'attente de cooldown de la charge.
+
+## Defenses Dans Une Rencontre De Production
+
+L'option -combatMigrationDefenses exige la recette de rencontre Bootstrap. Apres
+deux impacts ennemis reels, un Gamepad prive emet deux cycles B puis Y ; aucun
+appel direct de mobilite ou garde. Pressions pendant Recovery/None, au sol et
+hors fenetre de contre, sans suspendre le cerveau. Le test observe roulade active,
+vrai deplacement, garde tenue/relachee et restitution effective action/UCC/sol.
+Les erreurs runtime font echouer la phase, bornee a 45 s ; aucun verrou force.
+Le nettoyage desabonne seulement son listener et retire son propre peripherique.
+Cas 5d4f296413df4de0b8e67f70d0555596 passe : deux cycles, puis fuite,
+reengagement et retour home. Cela ne valide pas la reduction des degats en garde,
+la protection d'esquive ou le CounterSkill ; aucune regle de defense modifiee.
+
+## Sprint Et Sauts En Production
+
+Le complement -combatMigrationLocomotion de la recette Gamepad mesure RT dans
+LocalInputRouter, le bridge, LocomotionTier et la pose reelle. Une impulsion doit
+etre plus rapide que la marche precedente, puis RT relache rend le controle.
+Deux pressions successives de A passent par Interact/Jump d'exploration : controle
+de montee, air, vrai retour au sol, fin du controleur et restitution UCC/action.
+Le test attend la fin effective du handoff (borne cinq secondes depuis la
+pression), pas une liberation instantanee au premier frame Grounded. Aucune
+liberation forcee, hauteur, gravite, vitesse auteur ou binding n'est change.
+Toute exception/erreur de runtime pendant cette phase fait echouer la recette.
+Cas 7e1e274b5f814e30bfae8f4651a7a91f passe dans District et Maison : tier 3,25,
+acceleration physique avec RT, deux sauts termines par zone et inputs restitues.
+Ce sont des mesures courtes, pas une calibration exacte du multiplicateur ni
+une validation visuelle des clips. Defenses en combat, charge et reseau restent
+distincts.
+
+Baseline corrigee : les callbacks prives NetworkCharacterInput.OnJump et autres
+actions routees ne doivent pas porter les noms On<Action> de SendMessages. Unity
+leur transmettait InputValue au lieu de CallbackContext et produisait une erreur.
+Ils s'appellent maintenant OnRouted*, restent abonnes au seul LocalInputRouter et
+n'ajoutent aucun second traitement brut de saut. Le recepteur InputValue existant
+reste celui du bridge local. Quatre tests protegent ce contrat de noms/signatures.
+
+## Commandes Apres Transition De Zone
+
+Le validateur Bootstrap peut ajouter -combatMigrationGamepad a son aller-retour
+Maison/District 1. Il cree son propre Gamepad virtuel Input System et envoie des
+etats de stick puis X, sans appeler SetMoveInput ou TryUseSkill pour ces gestes.
+Une seule impulsion sure est choisie par zone parmi huit candidats, avec capsule,
+masque et sol UCC reels (pas une capsule generique ni le Y du root). Compare
+direction camera, intention routee et deplacement physique, puis compte les vrais
+PlayerSkillStarted et la fin de session Basic. Relachement, desabonnement et
+RemoveDevice ne concernent que les ressources de ce test. Aucun binding, mode
+d'input, preference utilisateur ou comportement de locomotion n'est modifie.
+Cas 125c75c0dc9d43129a260098dd757546 passe apres synchronisation des sources :
+District 1,03 m / Maison 0,87 m, alignements >0,997, une seule Basic par pression
+et aucun residu de charge. Ce n'est pas un essai des huit directions, du sprint,
+des defenses, du ressenti manuel, de l'input Interagir ou du reseau.
+
 ## Raccord Du Laboratoire Au Jeu (2026-10-19)
 
 Les rotations sont portees par PlayerSettings : marche 720, sprint 1080,

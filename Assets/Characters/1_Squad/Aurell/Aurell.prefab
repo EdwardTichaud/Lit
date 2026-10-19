@@ -4130,6 +4130,7 @@ MonoBehaviour:
   counterRetryDelaySeconds: 0.4
   reactionTimeScale: 0.4
   logEnemyReactions: 0
+  externalSuccessSlowMotion: 0
 --- !u!114 &5495747736022590715
 MonoBehaviour:
   m_ObjectHideFlags: 0

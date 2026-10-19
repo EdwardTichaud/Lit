@@ -364,6 +364,7 @@ public sealed class GameFlowService : MonoBehaviour
             yield return LoadManifestLoadingScenes(manifest, loadingMessage);
         }
 
+        bool hasCharacterSave = CharacterStateStore.Instance != null && CharacterStateStore.Instance.HasSaveFile;
         RestoreActiveSaveAfterSceneLoad(sceneName);
 
         yield return RebuildNavigationForLoadedWorldRoutine("demarrage " + sceneName, manifest);
@@ -378,7 +379,8 @@ public sealed class GameFlowService : MonoBehaviour
         PreserveUccSimulationManager();
         AdoptGameplayManagers();
         SceneTransitionProfiler.Mark("Managers prets");
-        yield return PlaceSquadAtSpawnRoutine(spawnId, sceneName, usePrimarySceneSpawnFallback);
+        yield return PlaceSquadAtSpawnRoutine(spawnId, sceneName,
+            ShouldUseInitialSceneSpawn(spawnId, usePrimarySceneSpawnFallback, hasCharacterSave));
         EnforceSingleAudioListener();
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(sceneName);
@@ -1074,6 +1076,13 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         component.transform.SetParent(gameplaySessionRoot.transform, true);
+    }
+
+    private static bool ShouldUseInitialSceneSpawn(string spawnId, bool explicitSceneFallback, bool hasCharacterSave)
+    {
+        // An existing save (including one that failed restoration) must never
+        // silently become a new-game placement. Explicit editor starts opt in.
+        return explicitSceneFallback || !hasCharacterSave && string.IsNullOrWhiteSpace(spawnId);
     }
 
     private IEnumerator PlaceSquadAtSpawnRoutine(string spawnId, string primarySceneName = null, bool usePrimarySceneSpawnFallback = false)

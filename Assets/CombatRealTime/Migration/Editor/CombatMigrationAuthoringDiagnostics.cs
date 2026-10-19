@@ -7,9 +7,78 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>Read-only spatial evidence from the actual narrative scene instances.</summary>
+/// <summary>Scoped authoring evidence; import fixtures run only in the isolated project.</summary>
 public static class CombatMigrationAuthoringDiagnostics
 {
+    [Serializable] private sealed class VisionImportRecord
+    {
+        public string label, path, guid, characterId, vision;
+    }
+    [Serializable] private sealed class VisionImportReport
+    {
+        public string sourceSha256;
+        public bool sourceBytesUnchanged;
+        public List<VisionImportRecord> records = new List<VisionImportRecord>();
+    }
+
+    public static void RunVisionImportBatch()
+    {
+        const string source = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
+        const string temporary = "Assets/__CombatVisionImportDiagnostic";
+        bool created = false;
+        try
+        {
+            if (!Application.isBatchMode || Directory.Exists(".git") || File.Exists(".git"))
+                throw new InvalidOperationException("Vision import diagnosis requires an isolated batch project.");
+            if (Directory.Exists(temporary)) throw new InvalidOperationException("Diagnostic fixture directory already exists.");
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            byte[] original = File.ReadAllBytes(source);
+            string Hash(byte[] bytes)
+            {
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                    return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "");
+            }
+            var report = new VisionImportReport { sourceSha256 = Hash(original) };
+            void Record(string label, string path)
+            {
+                var data = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+                if (data == null) throw new InvalidOperationException("CharacterData import failed: " + path);
+                report.records.Add(new VisionImportRecord { label = label, path = AssetDatabase.GetAssetPath(data),
+                    guid = AssetDatabase.AssetPathToGUID(path), characterId = data.UniqueId, vision = JsonUtility.ToJson(data.vision) });
+                Debug.Log("[CombatVisionImport] " + label + " " + path + " " + JsonUtility.ToJson(data.vision));
+            }
+            Record("canonical-before", source);
+            AssetDatabase.ImportAsset(source, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+            Record("canonical-force-import", source);
+            AssetDatabase.CreateFolder("Assets", "__CombatVisionImportDiagnostic");
+            created = true;
+            string compact = string.Join("\n", System.Text.Encoding.UTF8.GetString(original).Replace("\r\n", "\n")
+                .Split('\n').Where(line => !string.IsNullOrWhiteSpace(line))) + "\n";
+            if (!compact.Contains("\n  vision:")) throw new InvalidOperationException("Expected authored vision section is absent.");
+            File.WriteAllText(temporary + "/WithBlankLines.asset", compact.Replace("\n  vision:", "\n\n  vision:"));
+            File.WriteAllText(temporary + "/WithoutBlankLines.asset", compact);
+            foreach (string name in new[] { "WithBlankLines", "WithoutBlankLines" })
+            {
+                string path = temporary + "/" + name + ".asset";
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                Record(name, path);
+            }
+            report.sourceBytesUnchanged = report.sourceSha256 == Hash(File.ReadAllBytes(source));
+            Directory.CreateDirectory("Library/ProductionCombatMigration/VisionImport");
+            File.WriteAllText("Library/ProductionCombatMigration/VisionImport/diagnostic.json", JsonUtility.ToJson(report, true));
+            if (!report.sourceBytesUnchanged) throw new InvalidOperationException("The canonical source bytes unexpectedly changed during import.");
+            AssetDatabase.DeleteAsset(temporary);
+            created = false;
+            EditorApplication.Exit(0);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+            if (created) AssetDatabase.DeleteAsset(temporary);
+            EditorApplication.Exit(1);
+        }
+    }
+
     [Serializable] private sealed class FlameRecord
     {
         public string path, prefab, id;

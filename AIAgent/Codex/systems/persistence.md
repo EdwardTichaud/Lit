@@ -22,6 +22,13 @@ Emplacement canonique : `Assets/Persistence/Save/`.
 
 ## Flux principaux
 
+GameFlow distingue l'absence de JSON personnage d'une restauration existante
+avant de choisir le placement initial de zone. Une nouvelle partie sans arrivee
+explicite utilise son ZoneSpawnPoint ; une sauvegarde existante conserve sa pose.
+Un echec de restauration ne doit pas etre masque par ce placement de nouvelle
+partie. Le test de menu/recharge utilise une pose differente du spawn pour ne pas
+confondre restauration reelle et remise au depart.
+
 Version 9 du JSON personnage : healthInitialized/currentHp conservent les PV du
 joueur. A la capture, le controller actif est prioritaire ; un personnage non
 instancie conserve son payload charge precedent. Au chargement solo, les PV sont

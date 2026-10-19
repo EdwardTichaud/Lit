@@ -9,6 +9,38 @@ public sealed class CombatNetworkExecutionCompletionTests
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    [TestCase("Jump")]
+    [TestCase("LocomotionMode")]
+    [TestCase("TriggerMunin")]
+    [TestCase("ToggleTorch")]
+    public void RoutedNetworkCallbacksCannotShadowUnityInputValueMessages(string action)
+    {
+        var type = typeof(NetworkCharacterInput);
+        Assert.That(type.GetMethod("On" + action, Private | BindingFlags.Public), Is.Null,
+            "PlayerInput.SendMessages must not attempt to invoke a CallbackContext receiver with InputValue.");
+        var callback = type.GetMethod("OnRouted" + action, Private);
+        Assert.That(callback, Is.Not.Null);
+        Assert.That(callback.GetParameters(), Has.Length.EqualTo(1));
+        Assert.That(callback.GetParameters()[0].ParameterType, Is.EqualTo(typeof(UnityEngine.InputSystem.InputAction.CallbackContext)));
+    }
+
+    [TestCase("Lucian")]
+    [TestCase("Aurell")]
+    [TestCase("Vesta")]
+    [TestCase("Soren")]
+    public void ProductionActorKeepsTheAuthoredNoSlowdownReactionWindows(string character)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/" + character + "/" + character + ".asset");
+        Assert.That(data, Is.Not.Null);
+        var runtime = data.ResolveWorldPrefab().GetComponent<CombatNetworkActorRuntime>();
+        Assert.That(runtime, Is.Not.Null);
+        var serialized = new SerializedObject(runtime);
+        Assert.That(serialized.FindProperty("networkCounterPreImpactSeconds").floatValue, Is.EqualTo(.5f),
+            "Without multiplayer slowdown the authored pre-impact interval is 0.5 animation seconds, not the old 0.2 default.");
+        Assert.That(serialized.FindProperty("networkDodgeWindowSeconds").floatValue, Is.EqualTo(.5f));
+        Assert.That(serialized.FindProperty("networkCounterRetrySeconds").floatValue, Is.EqualTo(.4f));
+    }
+
     private static void Set(object target, string name, object value) => target.GetType().GetField(name, Private).SetValue(target, value);
     private static CombatCommandContext Context(CombatActionTicket ticket) => (CombatCommandContext)Activator.CreateInstance(
         typeof(CombatCommandContext), Private, null, new object[] { ticket, null, null, null, 1, Vector3.forward }, null);

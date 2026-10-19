@@ -1,5 +1,394 @@
 # Production Combat Migration Audit
 
+## Production Targetless Charged Input (2026-10-19)
+
+The existing zone-roundtrip gamepad recipe accepts -combatMigrationCharge. It
+uses the real held-X route and authored cooldown/threshold/clips, without loadout,
+progression, animation or time overrides. Per destination: an early release in
+the slowed tail completes its Basic without charge; a second hold preserves its
+Basic generation/clip, observes slow playback and charge framing, launches once
+after the authored real-time threshold and consumes cooldown. Holding briefly
+after launch cannot repeat the action. Final checks require Basic playback at 1,
+framing/hold/action/UCC cleanup and grounding, without engagement or camera lock.
+
+Native run dfba2a9d62c5430ca189107904d2a224 PASSES in District and Maison, with
+the actual portal/return, same actor/health/progression and world snapshot. Native
+compilation succeeded; 119 source/asset/metadata hashes match main and copy.
+Artifacts: Library/ProductionCombatMigration/Charge (baseline and final raw JSON,
+validated-source-hashes.json); Logs/CombatProductionChargeFinal.log. The base
+JSON limitation text remains the generic gamepad scope; the added checks specify
+the charged cases. No runtime or author asset change was necessary. Expanded
+regression was not rerun in this helper-only lot; last suite remains 544 passed,
+one author-owned Etienne Flame failure, one Explicit skipped, not a new result.
+Targeted projection, paired airborne float/landing, damage interruptions, visual
+feel and multiplayer remain unqualified by this targetless input recipe.
+
+## Production Defense Inputs (2026-10-19)
+
+Optional -combatMigrationDefenses extends the real Bootstrap encounter, after
+two real enemy impacts. A private Input System Gamepad emits B then Y twice,
+during Recovery/None and outside the counter window. No direct dodge/guard API,
+AI suspension, camera lock, forced counter or runtime parameter change.
+The phase observes actual dodge controller activity and planar UCC movement,
+guard-held state and release, then effective action/input/ground restitution.
+Runtime errors fail the phase; 45-second bound, owner-only cleanup.
+
+Native run 5d4f296413df4de0b8e67f70d0555596 PASSES: dodge travel 2.87/3.49 m,
+two guard cycles, then escape/reengagement/third impact, home return and world
+snapshot. Existing authored Flame lit as an explicit fixture, not interaction
+or progression proof. 83 source/metadata hashes match main and validation copy.
+Raw result: Library/ProductionCombatMigration/Defenses/two-defenses-and-lifecycle.json.
+This does not qualify guarded damage amounts, guaranteed attack avoidance,
+cinematic counters, visual feel, other encounters or real multiplayer.
+Expanded regression on the same sources: 546 total, 544 passed, one existing
+Etienne Flame-coverage authoring failure, one Explicit skipped. Native compilation
+succeeded; raw XML is kept beside the encounter result. No assertions weakened,
+no Flame placed, no readiness gate promoted. Both owned Unity processes exited.
+
+## Sprint, Jump And Routed Input Receivers (2026-10-19)
+
+The existing gamepad recipe can add -combatMigrationLocomotion: RT plus stick,
+release, then two fresh South presses per destination. It observes router and
+motor sprint intent, the running animation parameter and physical speed increase;
+then ascent, airborne state, actual ground contact, controller completion and
+effective action/UCC unlock. It never clears another owner's lock or tunes jump,
+gravity, bindings or speed. The unchanged five-second jump bound allows the actual
+authored landing handoff rather than asserting unlock on its first grounded frame.
+Unexpected runtime exceptions/errors in this phase are captured and fail the run.
+
+Native baseline reproduces MissingMethodException NetworkCharacterInput.OnJump:
+PlayerInput.SendMessages sends InputValue, but the network component had private
+CallbackContext methods with the same On<Action> names. Jump, LocomotionMode,
+TriggerMunin and ToggleTorch callbacks are now OnRouted*, preserving CLR router
+subscriptions, all method bodies, ownership checks and RPCs. No duplicate raw
+input receiver is added. Serialized UnityEvent audit finds no author references
+to the renamed private methods. Four regression cases protect names/signatures.
+
+Native run 7e1e274b5f814e30bfae8f4651a7a91f PASSES on current matched sources:
+District sprint tier 3.25, average pulse speed 1.88 -> 3.88 m/s; Maison 2.52 ->
+4.08 m/s. These are short-pulse measurements, not an exact sprint multiplier
+calibration. Two physical jumps and full input restitution pass in each zone,
+with no captured input runtime error. No manual visual feel, combat dodge/guard,
+charge, damage interruption or live network qualification follows from this run.
+
+Expanded regression: 546 total, 544 passed, one Etienne author-owned Flame
+coverage failure, one Explicit skipped. All four new callback cases pass.
+Seventy-five scoped source/asset/metadata/package hashes match the validation
+copy. Raw baseline/final JSON, final XML and hashes are under
+Library/ProductionCombatMigration/Locomotion; logs CombatProductionLocomotionNative.log,
+CombatProductionLocomotionRouted.log and CombatLocomotionRoutedExpandedRegression.log.
+ReadyForProduction remains false; no global readiness gate is promoted.
+
+## Production Input After Zone Travel (2026-10-19)
+
+The optional -combatMigrationGamepad extension uses the existing Bootstrap zone
+roundtrip. A privately owned Input System Gamepad supplies a short stick pulse
+and a fresh X press in each destination, with no SetMoveInput/TryUseSkill call
+for these gestures, no preference change and no new gameplay driver. It validates
+routed intent, actual physical displacement and camera-relative direction, then
+counts real Basic-start notifications and session release. Only its own event
+subscription and device are removed. A generic fixture rejection before any
+input is retained separately; clearance now uses actual UCC capsule/mask/contact
+ground and chooses one safe direction among eight candidates.
+
+An expanded provenance check finds stale validation prefabs: all four copies
+still serialized networkCounterPreImpactSeconds=.2, while the main source already
+has the intended .5. Source-to-copy synchronization preserves main authoring and
+is recorded in source-sync-manifest.json. Four new production-asset tests assert
+.5 counter, .5 dodge and .4 retry; this is authoring coverage, not live network
+reaction proof. No runtime or source gameplay asset changes in this lot.
+
+Final native run 125c75c0dc9d43129a260098dd757546 PASSES on matched sources:
+District movement 1.029 m, input alignment .9976/travel alignment .9991; Maison
+movement .873 m, alignments >.9998. Each fresh X starts one Basic and releases it
+without repeat, lingering charge or duplicate callback. Actor/health/progression,
+world/navigation and return controls still satisfy the complete solo roundtrip.
+
+Expanded regression: 542 total, 540 passed, one real Etienne Flame-coverage
+failure, one Explicit skipped. All four new authored-window tests pass. Sixty-one
+scoped source/asset/metadata/package hashes match the final copy. Raw earlier
+results, pre-sync hashes, sync manifest and final proofs are retained under
+Library/ProductionCombatMigration/Gamepad. Logs: CombatProductionGamepadCurrentSources.log
+and CombatGamepadCurrentSourceRegression.log. Not a test of all eight directions,
+sprint, jump/dodge/charge, manual feel, interaction-key routing or multiplayer.
+ReadyForProduction remains false; no global gate is promoted.
+
+## Real Solo Zone Roundtrip (2026-10-19)
+
+The existing Bootstrap validator has an optional -combatMigrationZoneRoundTrip
+phase, requiring the Maison manifest and a separate single-run recipe. It moves
+only Lucian to clear physical ground near the authored portal using UCC, admits
+the actual PortalController.ServerTryUse path and captures that portal's real
+destination poses before source unload. It does not substitute a District spawn,
+force aggro, pre-open the destination scenes or create another combat runtime.
+
+Native run 6bf1904b99794059aa90056332b7b46b PASSES: all District scenes loaded,
+all old Maison scenes unloaded offline, NavMesh Ready with current zone identity,
+actual captured portal arrival, same actor identity/combat binding/health/existing
+progression, one common world and one controlled actor, grounded exploration/input
+and interaction authorization, Basic/session release, then ReturnToHub(Default)
+and the same checks back in Maison with another Basic. Both Basic waits retain
+the existing eight-second bound. World snapshot write/read concludes the recipe.
+
+This proves the solo transition APIs and continuity, not manual interaction-key
+routing, stick-driven locomotion, camera/audio feel, narrative gates, real save
+reload or multiplayer travel. It changes no runtime or authored gameplay asset.
+The test partial lives in the existing validator, not a second qualification API.
+
+Final expanded regression: 536 passed, one genuine Etienne Flame-coverage failure,
+one Explicit skipped. No assertion or author-owned Flame placement changed.
+Twenty-nine scoped source/asset/metadata hashes match the native/test copy,
+including portal, manifests, navigation data, session prefab and scene flow.
+Evidence: Library/ProductionCombatMigration/ZoneTransfer; logs
+CombatZoneRoundTripBaseline.log and CombatZoneTransferExpandedRegression.log.
+ReadyForProduction remains false and no global readiness gate is promoted.
+
+## Maison Coverage And Expanded Regression (2026-10-19)
+
+The existing Bootstrap validator now accepts an explicit
+-combatMigrationZoneManifest Assets/.../*.asset selection and records it in the
+JSON. District 1 remains the default; invalid selection fails rather than
+silently testing a different zone. District-specific encounter/save fixtures
+reject other manifests instead of inventing substitute enemies.
+
+Maison baseline loads all ten scenes and the common combat world, but fails
+new-game placement: Lucian appears at squad origin (0,-0.71,3). Its authored
+0_SpawnPoints/LucianSpawnPoint is only a Transform, with no registered arrival
+component. The same object now has ZoneSpawnPoint Default/partySlot 0. No pose,
+parent, scene GUID, character identity, saved position or unlock is modified.
+Only Maison_Core.unity is changed; scene/metadata backups and before/after hashes
+are retained in ZoneCoverage/maison-delivery-manifest.json.
+
+Native run 7a37b21178774e04a2d2920f775a5641 PASSES: Bootstrap, all ten Maison
+scenes, navigation Ready, solo Lucian at the authored spawn (-0.47,-0.56,5.99),
+grounded, Basic through the common facade and session release, native cursor
+disable/destroy cleanup, then world snapshot write/read. This is not a narrated
+Maison playthrough, zone transfer, real save reload or multiplayer proof.
+
+Final expanded Edit Mode suite: 538 total, 536 passed, one failed, one Explicit
+skipped. The remaining failure is EtienneCycleTests.AuthoredScenesPassReadOnlyAudit:
+the authored Ghost is outside potential Flame coverage. Placement remains owned
+by the author and the assertion is unchanged. All seven new zone-selection and
+actual Maison spawn tests pass. Nineteen scoped source/asset/metadata hashes match
+the isolated validation copy. No global readiness gate is promoted.
+
+Evidence: Library/ProductionCombatMigration/ZoneCoverage, with baseline/fixed
+native JSON, before/final expanded XML, targeted authoring manifest and matched
+source hashes. Logs: CombatExpandedMaisonFinal.log, CombatMaisonBootstrapBaseline.log,
+CombatMaisonBootstrapSpawnFixed.log. ReadyForProduction remains false.
+
+## Physical Landing Recovery (2026-10-19)
+
+The landing defect is not solved by increasing NavMesh tolerance. Native contact
+diagnostics prove the actor capsule was already penetrating Flame/MeshCollider
+(0.026 m) and WoodFire/MeshCollider (0.237 m) after center-ray landing. A subsequent
+full-capsule attempt instead exposed a steep contact that blocked descent without
+being recognized as walkable; that complete native recipe still failed.
+
+Production motion now uses full-capsule descending sweeps, including 3D rush,
+without snapping to a lower central-ray point. A steep upward-facing blocking
+contact is physical support for bounded egress, not admission to navigation.
+Egress uses the existing Rigidbody motor, authored clearance/walk/recovery values,
+gravity, capsule clearance and a destination connected to the pre-attack NavMesh
+origin. Agent reactivation still requires actual local validation at 0.15 m.
+Stale generations, cinematic suspension, disable and death clean their own motion;
+timeout reports contacts and refuses warp/fallback damage. No authoring asset,
+collider, skill timing or pattern is changed by this lot.
+
+Compile and targeted Edit Mode regression: 483 passed, zero failed, one Explicit
+not executed. Nine new physical cases cover solid-prop egress, offset supports
+under normal descent/rush and two contact angles, a blocking wall, another floor,
+stale generation and cinematic ownership. Nineteen source/asset/metadata hashes
+match the isolated validation copy. Native lifecycle d14f503cc325488a82628d855da4fe58
+PASSES: Bootstrap/District 1, two impacts, escape/control restitution, perceived
+reengagement and third impact, second escape and actual home arrival with valid
+navigation/authored rotation, no late impacts, then world snapshot write/read.
+This does not certify all zones, manual feel or multiplayer. The authored Flame
+activation remains an explicit fixture, not a successful progression interaction.
+
+The lifecycle fixture now uses authored eye/target heights and obstruction mask,
+then asserts actual return perception after UCC placement. The earlier generic
+1.2 m visibility ray could select a position the real perception rejected.
+Raw failed runs and final XML are retained separately under
+Library/ProductionCombatMigration/LandingRecovery. No readiness gate is promoted.
+
+## Escape, Return Facing And Reengagement Before Landing Fix (2026-10-19)
+
+The optional existing Bootstrap encounter recipe now has a lifecycle phase:
+UCC-placed escape, restored exploration/UCC/interaction authorization, approach
+during return, a new perceived engagement/impact, then another escape and actual
+arrival home. No explicit EndCombat, NotifyPlayerContact or enemy placement is
+used; the authored Flame fixture stays lit until cleanup. This is not a physical
+stick-driven escape path, narrative interaction attempt or BattleWall test.
+
+The baseline reproduces backwards return motion (facing/home dot -0.9145).
+Return now rotates toward home using the authored tracking rate. A separate
+out-of-bounds guard preserves committed living-target attacks through their
+normal completion instead of cancelling them on leash exit; higher priority
+death/cinematic paths remain unchanged. Three phase cases cover this rule.
+
+The next native run proves restored controls/interaction evaluation twice,
+return dot 1, proximity reengagement during return, and a third real impact
+(player HP 940). The WHOLE recipe nevertheless FAILS: after that Assomoir,
+Recovery remains active with the NavMeshAgent disabled at (-5,-93.56,44.96), no
+Flame/cinematic suspension. Final arrival home is NOT proven. Do not increase
+projection tolerances, teleport, remove assertions or re-label this as a pass.
+The next native diagnostic reproduces and identifies the cause: motion active,
+airborne false, end requested/abort true, vertical speed zero. Support is the
+Flame collider in District_1_Corridor_Flammes at (-4.47,-93.93,44.21), root skin
+0.03 above it; no NavMesh within 0.15 m, nearest at (-3.80,-94.24,44.21).
+The actor landed ON an unnavigable Flame and the motor has no physical egress
+before navigation restitution. Do not ignore the collider or expand attachment
+tolerance. A bounded collision/gravity-respecting recovery within the existing
+motor remains implementation work, followed by real local ground validation.
+Current compile/regression: 474 passed / zero failed / one Explicit skipped,
+including three committed-phase leash cases. Eighteen source/asset/metadata,
+prefab and scene hashes match the isolated copy. This does not make the failed
+native lifecycle scenario a pass; no gameplay authoring asset changed here.
+Evidence: Library/ProductionCombatMigration/Lifecycle and
+Logs/CombatEscapeLifecycleBaseline.log, CombatEscapeLifecycleFixed.log and
+CombatLandingLifecycleDiagnostics.log. Raw failures and XML are separate.
+ReadyForProduction remains false; this lot changes no authored asset.
+
+## Imported Vision And Repeated Production Attacks (2026-10-19)
+
+The 6/30 range mismatch is reproduced with native Unity imports. Canonical data
+and a temporary copy with the interior blank line both load defaults (6 m,
+110 degrees, eye 1.35), even after ForceImport; a copy without blank lines loads
+the authored 30/100/1.5 values. Canonical bytes stay unchanged during diagnosis.
+Repair removes only the single empty line before vision in Juggernaut.asset.
+Its GUID, metadata and authored field values remain unchanged; the before asset
+is backed up. No analogous interior gap is found in the 19 CharacterData assets
+scanned; no blanket Unity-file normalization is applied.
+
+With real vision, the encounter first reproduces a separate one-attack stall:
+Assomoir ends inside its 2.5 m minimum, while approach keeps a destination at the
+player and a longer stopping distance. Production now repositions through a
+complete locally validated NavMesh path only when every equipped pattern is too
+close. The desired band has an interior margin bounded by its authored limits.
+No direct Transform movement, forced skill, altered damage range or interruption.
+
+Rendered run 52de58fb32b245f6b2487b975f212307 passes using the actual marker-owned
+Juggernaut and its Assomoir-only kit: vision 30, aggro without manual lock,
+navigation peak 3.616 m/s, 5.606 m approach, recovery/reposition, distinct impact
+generations 1/2 and player HP 1000 -> 960. A covering authored Flame is explicitly
+lit as an isolated fixture and restored afterward. This is NOT proof of its
+interaction/progression, escape/return, all encounters, victory or multiplayer.
+Evidence: Library/ProductionCombatMigration/VisionImport;
+Logs/CombatVisionImportDiagnostic.log, CombatEncounterVisionFixed.log (first-hit
+stall preserved) and CombatEncounterRangeRetreat.log (bounded pass).
+ReadyForProduction remains false; no existing gate is silently promoted.
+Final current compile/scoped regression: 471 passed / zero failed / one Explicit
+not executed, including eight added import/range/retreat cases. Ten current
+source/asset/metadata hashes match the compiled isolated copy. delivery.json
+records the single-line asset repair, its before/after hashes and unchanged
+metadata; temporary import fixtures are removed. No broad asset replacement.
+
+## New-Game Spawn And Saved Pose (2026-10-19)
+
+The normal no-save/no-spawnId entry now selects the existing primary-scene
+ZoneSpawnPoint rather than the squad's world origin. GameFlow samples character
+file existence before restoration; an existing file, including a failed restore,
+does not silently opt into new-game placement. Explicit arrivals and the editor
+override keep their contracts. No spawn asset or NavMesh data was modified.
+
+Rendered recipe 39e49776f3f2450bbb3f034a7ded5ae9 passes: authored new-game arrival
+(-89.88,-93.94,51.88), physical ground, Basic, a real save at a distinct pose,
+menu return and reload preserving that pose (-91.87,-93.94,52.91), HP 993, one
+Lucian, existing unlocks, marker-owned fixture death and navigation Ready.
+The first save fixture unnecessarily demanded a player NavMesh polygon; its
+failure is retained. The fixture now uses physical ground and clear capsule
+space, not relaxed enemy navigation tolerances. Full encounters, other zones,
+manual feel and multiplayer remain unqualified.
+Evidence: Library/ProductionCombatMigration/Spawn and Logs/CombatSpawn*.log.
+Current compile/scoped Edit Mode: 463 passed, zero failed, one Explicit skipped;
+seven new spawn-contract cases pass. Seven source/metadata hashes match the
+compiled isolated copy. No authoring asset edits, readiness receipts or gates.
+
+After this fix, the bounded encounter still fails. The enhanced native diagnostic
+shows Lucian grounded at approximately 7 m, global/local scales 1, no Brains stop,
+but the loaded CharacterData vision range is 6 while canonical YAML says 30.
+A fresh vision evaluation confirms the range refusal. This is not a stale reason
+or an airborne player. Loaded identity and import/serialization require diagnosis;
+do not force range 30 in the brain or claim the encounter passed.
+Evidence: Spawn/encounter-runtime-range-six.json and
+Logs/CombatEncounterGateDiagnostics.log. The save recipe remains a separate pass.
+
+## Actual District 1 Encounter Probe (2026-10-19)
+
+The existing Bootstrap recipe now optionally observes the real marker-owned
+Juggernaut, not an arena clone. Before correction, a bounded run reproduces
+vision aggro and facade engagement without camera lock, followed by 65 seconds
+of zero movement/impacts with a valid enabled agent. The authored kit contains
+only Assomoir. The melee preference could filter out its only airborne pattern
+when the random alternative was not selected. Airborne-only kits now remain
+eligible; mixed kits retain their existing preference. Approach and return also
+resume the stopped agent before assigning their navigation destination.
+
+No authored skill, prefab, identity, Flame placement or NavMesh data was replaced.
+The enemy's fixed-Flame activation rule remains required. An explicitly flagged
+isolated fixture illuminates one existing covering Flame and restores its unlit
+state afterward; this is NOT evidence of interaction/progression. Initial fixture
+position refusals are preserved separately from the reproduced idle failure.
+The later farther-position run does not qualify the encounter: no aggro/impacts
+and a final out-of-range diagnosis. The initial zone-control probe also shows
+Lucian falling at (0,-9,3); its relationship to the later failure is unproven.
+Inspect actual UCC placement, ground colliders and normal zone spawn next.
+Source inspection confirms a configured District_1 ZoneSpawnPoint in Core, but
+normal startup without a spawnId does not enable the primary-scene fallback;
+SquadManager's legacy spawn names are absent and its origin is used. Correcting
+new-game arrival must not overwrite restored save poses. The spawn/saved-pose
+case is now resolved by the following lot above; the encounter remains separate.
+
+Compilation and scoped regression on the current correction: 456 passed, zero
+failed, one Explicit not executed, including three airborne/mixed preference
+cases. Five source/metadata hashes match the compiled isolated copy. This does
+not turn the failed encounter recipe into a pass. No authoring assets delivered.
+
+Evidence: Library/ProductionCombatMigration/Encounter and
+Logs/CombatProductionEncounter*.log. Full readiness remains false; an implemented
+pattern fix is not a passing production encounter or a manual combat review.
+
+## Inventory, Native Play Cycles And Diagnostic Cleanup (2026-10-19)
+
+Read-only full audit before this lot's editor-only changes: zero authoring writes
+proposed, 19 enemy subjects, 34 scene subjects, 8383 inventory subjects. It reports
+166 blockers: 150 missing-reference findings (77 unique GUIDs), three unbounded
+dynamic loads, one runtime registry review, eleven readiness gates and sandbox
+revision provenance. This is the baseline, not a post-cleanup final count.
+No blanket vendor/zero-prefix/reference exemptions are introduced. Three findings
+are editor icons: the exact GUID d namespace is now classified as built-in only
+when Unity resolves Library/unity editor resources; native/pure checks cover it.
+
+The source and package metadata contain no matching payloads for those queried
+GUIDs. The author supplied D:/LitAssetArchive; both ZIP central directories and
+all 8987 valid metadata entries were examined without unpacking 28 GB. No queried
+GUID, aligned Idle or locomotion authoring profile matches. No original is
+invented, swapped for a placeholder, or broadly restored. Original source assets
+and optional/obsolete references still need individual resolution.
+
+The existing Bootstrap recipe now supports two native Play Mode entries/exits
+with explicit Domain Reload On or Off, preserving editor options and separate
+per-cycle artifacts. Two On cycles pass; the first Off run times out on a Basic
+after eight seconds. Diagnostics were added without extending the deadline;
+the next two Off cycles pass with full save/menu/reload and native cleanup.
+The intermittent failure remains open, not silently converted into a fix.
+These bounded recipes do not prove every subscription, physical input, encounter
+or remote client, and no formal readiness gate is manufactured from them.
+
+The already-deleted diagnostic LucianJumpStateTraceBehaviour was confirmed in
+Git commit 0b219dcdc4b9fd67224cacda8d57ddb5c0210726. Existing cleanup code generated
+and revalidated plan bb2bf4f2f43922bb387581694a5610f789364319eb82b2dd022324e8fbf437ee:
+10 controllers, 70 orphan diagnostic documents, zero owner-list references.
+Only these documents were removed; motions, transitions and events remain.
+453 scoped tests pass / 0 fail / 1 Explicit skipped after cleanup. Ten controllers
+are delivered with byte guards, backups and unchanged metadata; no diagnostic
+controller documents remain. The native cycle evidence precedes this purely
+orphan cleanup; it is not asserted to qualify final assets globally.
+Evidence: Library/ProductionCombatMigration/SessionCycles, Logs/CombatFullInventoryCurrent.log,
+Logs/CombatBootstrapRepeat*.log, Logs/CombatDiagnosticCleanupCurrent.log and
+Logs/CombatSessionCyclesRegression.log. ReadyForProduction remains false.
+
 ## Shared Controls And Save Continuity (2026-10-19)
 
 The remaining arena control overrides now live in authored shared owners:

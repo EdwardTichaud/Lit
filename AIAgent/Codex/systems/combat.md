@@ -1,6 +1,76 @@
 # Combat
 
+## Recuperation Apres Support Non Navigable
+
+Le moteur de mouvement production conserve la position NavMesh de depart du
+coup. Apres atterrissage sur un collider hors NavMesh, il peut rechercher une
+sortie locale bornee avec les reglages de clearance/sol existants. Destination
+libre pour la capsule, hauteur compatible et chemin complet depuis le depart
+obligatoires ; aucune extension de tolerance ou activation anticipee d'agent.
+La sortie utilise Rigidbody.MovePosition, vitesse de marche et gravite, avec
+balayages planaire et vertical separes pour ne pas traverser le support pendant
+sa descente. Le rattachement garde la validation locale actuelle de 0,15 m.
+Un mur bloque le trajet ; un delai borne nettoie l'action avec diagnostic sans
+warp ni degat de secours. Cinematique, desactivation et changement de generation
+annulent la sortie capturee ; la mort ne continue pas le trajet horizontal.
+La descente balistique ou en ruee verifie aussi le volume entier de capsule, pas
+seulement le rayon central qui pouvait enfoncer le corps dans un mesh decale.
+Le support confirme par capsule empeche un snap ulterieur vers ce rayon plus bas.
+Une face inclinee qui bloque la descente constitue un support physique pour
+sortir de l'obstacle, pas un sol marchable : les filtres de sol de destination
+et la validation NavMesh ne changent pas.
+Tests physiques natifs : support solide sans penetration, support decale pendant
+la descente, mur, autre etage, generation perimee et suspension cinematographique.
+Regression ciblee 483/0/1.
+La recette rendue depuis Bootstrap reste une preuve distincte, pas deduite de
+ces tests de geometrie isolee.
+Recette d14f503cc325488a82628d855da4fe58 passee : trois impacts avec fuite et
+reengagement, puis retour home/NavMesh/orientation auteur et controles rendus,
+sans impact tardif. Flame fixture explicite ; autres rencontres/reseau non valides.
+
 ## Integration Du Ressenti Valide (2026-10-19)
+
+La preference melee de LitBrainsEnemy.Production s'applique seulement si le kit
+equipe possede au moins un pattern terrestre. Un kit uniquement aerien reste
+eligible sans tirage d'alternative, meme avec preferMeleeApproach actif. Cette
+condition ne rajoute pas de skills : combatSkills reste la source auteur.
+Un kit mixte conserve le choix aerien memorise et ses cooldowns. L'approche et
+le retour remettent explicitement isStopped a false avant leur destination,
+apres les gates existantes ; attaques, physique et suspensions gardent leur
+autorite. Tests de filtrage dans LitBrainsProductionPolicyTests.
+
+Sortie de poursuite : une cible vivante hors limites ne suffit pas a annuler une
+attaque en Preparation/Strike/Recovery. Le controleur laisse sa terminaison
+normale, puis refuse le prochain pas de combo hors zone et commence le retour.
+Mort et interruptions prioritaires gardent leurs chemins existants. Pendant le
+retour NavMesh, le root est oriente vers home par la vitesse de rotation du
+profil ; NavMesh ne reprend pas une seconde autorite de yaw. L'orientation
+auteur initiale est restituee a l'arrivee.
+
+Apres une attaque, si la cible est sous la portee minimale de TOUS les patterns
+equipes, l'approche production devient un repositionnement a pied vers l'exterieur
+de cette zone. Destination locale validee et chemin NavMesh complet obligatoires,
+sinon arret propre ; pas de warp ni mouvement Transform. La distance desiree est
+bornee a l'interieur de la bande auteur (marge max 0,2 m), sans changer sa portee
+de degats. Une melee encore possible interdit ce recul automatique. Attaque,
+recuperation, cooldown et suspension restent prioritaires.
+
+Import Unity 6000.6.4f1 : une ligne vide avant la section vision du Juggernaut
+faisait charger les valeurs par defaut, malgre 30/100 dans le texte. Diagnostic
+sur copies temporaires avec/sans ligne vide : 6/30, meme apres ForceImport du
+source. Seule cette ligne est retiree ; meta/GUID/valeurs auteur preserves.
+Le test de contrat charge maintenant le vrai asset et verifie 30 m/100 degres/
+1,5 m, au lieu de conclure depuis la presence de valeurs dans son YAML.
+Recette production bornee 52de58fb32b245f6b2487b975f212307 : vision, approche,
+deux Assomoirs et repositionnement passes, Flame fixture explicite. Ce n'est pas
+une validation de toutes les rencontres ni du ressenti manuel.
+
+Diagnostic historique LucianJumpStateTraceBehaviour : suppression deja confirmee
+par le commit 0b219dcdc4b9fd67224cacda8d57ddb5c0210726. Le nettoyage cible uniquement
+ses 70 documents orphelins dans 10 controllers, apres verification GUID/type/schema
+et SHA-256 ; aucun StateMachineBehaviour actif, motion, transition ou event ne
+change. L'outil refuse une restauration du script, une modification concurrente
+ou une forme inattendue. Les autres manques d'assets restent visibles a l'audit.
 
 Les reglages jusque-la appliques par LucianBrainsCombatArena sont maintenant
 auteur dans leurs proprietaires communs : rotations des PlayerSettings/profils

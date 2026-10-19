@@ -12,6 +12,13 @@ public static class CombatInventoryChecks
             Check(CombatInventoryReference.ClassifyGuid("0000000000000000e000000000000000", "", false) == "builtin-resource");
             Check(CombatInventoryReference.ClassifyGuid("00000000000000001234567890123456", "", false) == "missing-guid");
         });
+        yield return Case("Editor resource namespace needs the exact engine-resolved library path", () => {
+            const string guid = "0000000000000000d000000000000000";
+            Check(CombatInventoryReference.ClassifyGuid(guid, "Library/unity editor resources", false) == "builtin-resource");
+            Check(CombatInventoryReference.ClassifyGuid(guid, "", false) == "missing-guid");
+            Check(CombatInventoryReference.ClassifyGuid(guid, "Assets/FakeEditorResource.asset", false) == "missing-guid-payload");
+            Check(CombatInventoryReference.ClassifyGuid("0000000000000000a000000000000000", "Library/unity editor resources", false) == "missing-guid-payload");
+        });
         yield return Case("Export-generated GUID prefixes need actual payload proof", () => {
             const string guid = "abc00000000001921638038075592800";
             Check(CombatInventoryReference.ClassifyGuid(guid, "", false) == "missing-guid");

@@ -71,6 +71,10 @@ public partial class LitBrainsEnemy
         EnsureProductionHome();
         var source = ProductionProfile;
         var target = fov.CurrentTarget;
+        // Leaving the leash ends pursuit, not an already committed living-target
+        // attack. Its normal completion rejects the next combo step outside bounds.
+        if (IsLivingTarget(target) && !IsWithinPursuitBounds(target) && AttackPhase != LitBrainsAttackPhase.None)
+            return false;
         if (target != null && !IsWithinPursuitBounds(target) || productionEngaged && !IsLivingTarget(target))
         {
             productionReturning = true;
@@ -97,8 +101,14 @@ public partial class LitBrainsEnemy
             return false;
         }
         if (ProductionNow < productionReturnAt) { StopFluidMovement(); return true; }
-        if (Vector3.ProjectOnPlane(transform.position - productionHome, Vector3.up).magnitude > .25f)
+        Vector3 homeDirection = Vector3.ProjectOnPlane(productionHome - transform.position, Vector3.up);
+        if (homeDirection.magnitude > .25f)
+        {
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(homeDirection),
+                source.trackingDegreesPerSecond * ProductionDelta);
+            agent.isStopped = false;
             MoveTo(productionHome, runSpeed, .15f);
+        }
         else
         {
             StopFluidMovement();
@@ -122,7 +132,8 @@ public partial class LitBrainsEnemy
         TurnToFluidTarget();
         float distance = Vector3.ProjectOnPlane(fov.CurrentTarget.position - transform.position, Vector3.up).magnitude;
         var equipped = source.patterns.Where(ProductionEquipped).ToArray();
-        if (!productionAirborneChosen && source.preferMeleeApproach)
+        bool hasMelee = equipped.Any(pattern => !pattern.skills[0].EnemyActionMotion.IsAirborne);
+        if (!productionAirborneChosen && source.preferMeleeApproach && hasMelee)
         {
             var airborne = equipped.FirstOrDefault(pattern => pattern.skills[0].EnemyActionMotion.IsAirborne && ProductionAvailable(pattern) && ProductionCanStart(pattern, pattern.skills[0]));
             if (airborne != null)
@@ -131,13 +142,34 @@ public partial class LitBrainsEnemy
                 if (Random.value < source.airborneAlternativeChance) productionAirborneChoice = airborne;
             }
         }
-        var candidates = equipped.Where(pattern => !source.preferMeleeApproach || !pattern.skills[0].EnemyActionMotion.IsAirborne || pattern == productionAirborneChoice).ToArray();
+        var candidates = FilterProductionApproachCandidates(equipped);
         if (candidates.Length == 0) return;
-        float desired = candidates.Select(pattern => Mathf.Clamp(source.preferredCombatDistance,
-            Mathf.Max(pattern.minimumStartDistance, pattern.skills[0].MinimumHitDistance), pattern.skills[0].MaximumHitDistance))
+        float desired = candidates.Select(ProductionApproachDistance)
             .OrderBy(value => Mathf.Abs(distance - value)).First();
         if (!candidates.Any(pattern => ProductionCanStart(pattern, pattern.skills[0])))
-        { productionObserveUntil = 0; MoveTo(fov.CurrentTarget.position, runSpeed, desired); return; }
+        {
+            productionObserveUntil = 0;
+            if (ProductionNeedsRetreat(candidates, distance))
+            {
+                Vector3 away = Vector3.ProjectOnPlane(transform.position - fov.CurrentTarget.position, Vector3.up);
+                if (away.sqrMagnitude < .001f) away = -transform.forward;
+                Vector3 destination = fov.CurrentTarget.position + away.normalized * desired;
+                destination.y = transform.position.y;
+                var filter = new NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
+                var world = NavMeshWorldService.Instance;
+                var path = new NavMeshPath();
+                if (!NavMesh.SamplePosition(destination, out var retreat, .15f, filter) ||
+                    world != null && !world.TryValidatePosition(destination, agent.areaMask, out _) ||
+                    !agent.CalculatePath(retreat.position, path) || path.status != NavMeshPathStatus.PathComplete)
+                { StopFluidMovement(); return; }
+                agent.isStopped = false;
+                MoveTo(retreat.position, walkSpeed, .05f);
+                return;
+            }
+            agent.isStopped = false;
+            MoveTo(fov.CurrentTarget.position, runSpeed, desired);
+            return;
+        }
         StopFluidMovement();
         if (productionObserveUntil <= 0)
         { productionObserveUntil = ProductionNow + Random.Range(source.observationSeconds.x, source.observationSeconds.y); return; }
@@ -160,6 +192,25 @@ public partial class LitBrainsEnemy
         productionPreviousPattern = productionPattern = choice;
         productionStep = 0;
         CommitProductionStep();
+    }
+
+    private static bool ProductionNeedsRetreat(EnemyCombatPattern[] candidates, float distance) =>
+        candidates.Length > 0 && candidates.All(pattern => distance < Mathf.Max(pattern.minimumStartDistance, pattern.skills[0].MinimumHitDistance));
+
+    private float ProductionApproachDistance(EnemyCombatPattern pattern)
+    {
+        float minimum = Mathf.Max(pattern.minimumStartDistance, pattern.skills[0].MinimumHitDistance);
+        float maximum = pattern.skills[0].MaximumHitDistance;
+        float margin = Mathf.Min(.2f, Mathf.Max(0, (maximum - minimum) * .5f));
+        return Mathf.Clamp(ProductionProfile.preferredCombatDistance, minimum + margin, maximum - margin);
+    }
+
+    private EnemyCombatPattern[] FilterProductionApproachCandidates(EnemyCombatPattern[] equipped)
+    {
+        // A preference cannot exclude the actor's entire authored loadout.
+        if (!ProductionProfile.preferMeleeApproach || !equipped.Any(pattern => !pattern.skills[0].EnemyActionMotion.IsAirborne))
+            return equipped;
+        return equipped.Where(pattern => !pattern.skills[0].EnemyActionMotion.IsAirborne || pattern == productionAirborneChoice).ToArray();
     }
 
     private void CommitProductionStep()
