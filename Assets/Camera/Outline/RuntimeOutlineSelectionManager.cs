@@ -68,7 +68,7 @@ public static class RuntimeOutlineSelectionManager
 
         CandidateTargets.Clear();
         RuntimeOutlineUtility.CollectOutlineTargets(activeInteractable as Component, CandidateTargets);
-        SetActiveTargets(activeOwner, CandidateTargets);
+        SetActiveTargets(activeOwner, CandidateTargets, true);
     }
 
     /// <summary>
@@ -135,7 +135,7 @@ public static class RuntimeOutlineSelectionManager
         activeInteractable = null;
         CandidateTargets.Clear();
         RuntimeOutlineUtility.CollectOutlineTargets(component, CandidateTargets);
-        SetActiveTargets(owner, CandidateTargets);
+        SetActiveTargets(owner, CandidateTargets, component != null);
     }
 
     public static void Clear()
@@ -160,10 +160,10 @@ public static class RuntimeOutlineSelectionManager
         SetActiveTargets(owner, null);
     }
 
-    private static void SetActiveTargets(Object owner, List<RuntimeOutlineTarget> nextTargets)
+    private static void SetActiveTargets(Object owner, List<RuntimeOutlineTarget> nextTargets, bool retainSelectionOwner = false)
     {
         bool hasNextTargets = nextTargets != null && nextTargets.Count > 0;
-        if (hasNextTargets)
+        if (hasNextTargets || retainSelectionOwner)
         {
             activeOwner = owner;
         }
@@ -190,7 +190,10 @@ public static class RuntimeOutlineSelectionManager
 
         if (!hasNextTargets)
         {
-            activeOwner = null;
+            // A portal can be actionable without a conventional outline renderer.
+            // Its detector still owns the selection; legacy trigger callbacks must
+            // not steal the prompt/input merely because the outline list is empty.
+            if (!retainSelectionOwner) activeOwner = null;
             return;
         }
 

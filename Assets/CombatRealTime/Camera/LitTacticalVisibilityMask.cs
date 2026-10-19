@@ -14,6 +14,7 @@ public sealed class LitTacticalVisibilityMask
     private readonly Camera camera;
     private readonly Dictionary<LitCameraOcclusionGroup, State> groups = new Dictionary<LitCameraOcclusionGroup, State>();
     private readonly List<LitCameraOcclusionGroup> expired = new List<LitCameraOcclusionGroup>();
+    private readonly List<LitCameraOcclusionGroup> visualHits = new List<LitCameraOcclusionGroup>(128);
     private readonly RaycastHit[] hits = new RaycastHit[128];
     private readonly Collider[] overlaps = new Collider[64];
     private float nextQuery;
@@ -23,6 +24,7 @@ public sealed class LitTacticalVisibilityMask
     private bool hasEnemy;
     private Transform previousEnemy;
     private LitTacticalCameraProfile profile;
+    private Transform enemyTransform;
     public bool Covers(LitCameraOcclusionGroup group) => active && groups.ContainsKey(group);
 
     public LitTacticalVisibilityMask(LitGameplayCameraModeController owner, Camera camera)
@@ -37,7 +39,7 @@ public sealed class LitTacticalVisibilityMask
     {
         if (!owner.MaskActive) { Clear(); return; }
         active = true; profile = settings;
-        player = playerAnchor; hasEnemy = lockedEnemy != null;
+        player = playerAnchor; hasEnemy = lockedEnemy != null; enemyTransform = lockedEnemy;
         if (previousEnemy != lockedEnemy)
         {
             foreach (var pair in groups) { pair.Value.enemySeen = float.NegativeInfinity; pair.Value.enemyStrength = 0; }
@@ -78,6 +80,11 @@ public sealed class LitTacticalVisibilityMask
 
     private void Detect(Vector3 origin, Vector3 target, bool isEnemy, int layers)
     {
+        if (camera != null && owner.MaisonMaskActive)
+        {
+            LitMaisonVisibilityZone.Collect(camera, target, profile.maskRadius + profile.maskFeather, visualHits);
+            foreach (var group in visualHits) Mark(group, isEnemy);
+        }
         Vector3 delta = target - origin;
         if (delta.sqrMagnitude < .0001f) return;
         int count = Physics.RaycastNonAlloc(origin, delta.normalized, hits, delta.magnitude, layers, QueryTriggerInteraction.Ignore);
@@ -102,6 +109,10 @@ public sealed class LitTacticalVisibilityMask
         if (renderedCamera != camera) return;
         RestoreBlocks();
         if (!active || !owner.MaskActive || profile == null) return;
+        // Displayed character and camera poses must share one interpolation instant.
+        player = owner.GetRenderedAnchor();
+        hasEnemy = enemyTransform != null;
+        if (hasEnemy) enemy = enemyTransform.position + Vector3.up;
         rendering = true;
         var data = new LitTacticalMaskProperties.Data
         {
@@ -127,7 +138,7 @@ public sealed class LitTacticalVisibilityMask
     }
     public void Clear()
     {
-        RestoreBlocks(); groups.Clear(); expired.Clear(); active = false; nextQuery = 0; lastFrame = -1; previousEnemy = null;
+        RestoreBlocks(); groups.Clear(); expired.Clear(); visualHits.Clear(); active = false; nextQuery = 0; lastFrame = -1; previousEnemy = enemyTransform = null;
     }
     public void Dispose()
     {

@@ -8,6 +8,7 @@ public interface ICharacterDetectedInteractable
     Collider GetInteractionDetectionCollider();
     Transform GetInteractionAnchor();
     float GetInteractionMaxDistance(SquadCharacterController controller);
+    // Tie-breaker only: valid targets are ranked by player distance first.
     int GetInteractionPriority(SquadCharacterController controller);
     void SetDetectedCharacter(GameObject character);
 }
@@ -35,10 +36,11 @@ public static class CharacterInteractionDetection
     /// World interactions are readable only under an active Flame influence.
     /// Les Flames et les torches de puzzle restent exemptes : elles doivent
     /// être atteignables pour pouvoir restaurer une zone sombre.
+    /// Portals remain usable independently of lighting.
     /// </summary>
     public static bool IsInActiveFlameInfluence(ICharacterDetectedInteractable target)
     {
-        if (target == null || target is Flame || target is BrokenAnchorTorch)
+        if (target == null || target is Flame || target is BrokenAnchorTorch || target is PortalController)
         {
             return true;
         }
@@ -243,6 +245,39 @@ public static class CharacterInteractionDetection
         Vector3 point = GetInteractionPoint(collider, anchor, origin);
         float distance = Mathf.Max(0f, maxDistance);
         return (point - origin).sqrMagnitude <= distance * distance;
+    }
+
+    public static bool IsInteractionTargetVisibleFromCharacter(
+        ICharacterDetectedInteractable target,
+        Collider collider,
+        Transform anchor,
+        Vector3 origin,
+        Transform characterRoot)
+    {
+        if (!(target is Component component) || component == null)
+        {
+            return false;
+        }
+
+        Vector3 point = anchor != null ? anchor.position : component.transform.position;
+        if (HasUnblockedInteractionRay(origin, point, component.transform, characterRoot, Physics.DefaultRaycastLayers))
+        {
+            return true;
+        }
+
+        if (!IsUsableCollider(collider, true))
+        {
+            return false;
+        }
+
+        if (HasUnblockedInteractionRay(origin, collider.bounds.center, component.transform, characterRoot, Physics.DefaultRaycastLayers))
+        {
+            return true;
+        }
+
+        // A large trigger is a detection zone, not a visible surface.
+        return !collider.isTrigger && HasUnblockedInteractionRay(
+            origin, GetInteractionPoint(collider, anchor, origin), component.transform, characterRoot, Physics.DefaultRaycastLayers);
     }
 
     public static Camera ResolveInteractionCamera()
@@ -517,27 +552,41 @@ public static class CharacterInteractionDetection
         Transform targetRoot,
         Transform characterRoot)
     {
-        Vector3 cameraPosition = camera.transform.position;
-        Vector3 toSample = samplePoint - cameraPosition;
-        float distance = toSample.magnitude;
-        if (distance <= VisibilityRaycastSkin)
-        {
-            return true;
-        }
-
         int occlusionMask = camera.cullingMask & Physics.DefaultRaycastLayers;
         if (occlusionMask == 0)
         {
             occlusionMask = Physics.DefaultRaycastLayers;
         }
 
+        return HasUnblockedInteractionRay(camera.transform.position, samplePoint, targetRoot, characterRoot, occlusionMask);
+    }
+
+    private static bool HasUnblockedInteractionRay(
+        Vector3 origin,
+        Vector3 samplePoint,
+        Transform targetRoot,
+        Transform characterRoot,
+        int occlusionMask)
+    {
+        Vector3 toSample = samplePoint - origin;
+        float distance = toSample.magnitude;
+        if (distance <= VisibilityRaycastSkin)
+        {
+            return true;
+        }
+
         int hitCount = Physics.RaycastNonAlloc(
-            cameraPosition,
+            origin,
             toSample / distance,
             visibilityRaycastHits,
             distance - VisibilityRaycastSkin,
             occlusionMask,
             QueryTriggerInteraction.Ignore);
+
+        if (hitCount == visibilityRaycastHits.Length)
+        {
+            return false;
+        }
 
         for (int i = 0; i < hitCount; i++)
         {

@@ -8,6 +8,33 @@ public sealed class FlameInteractionReachTests
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    [TestCase("Assets/Interactive/Portal/Portal_1.prefab")]
+    [TestCase("Assets/Interactive/Portal/Portal_2.prefab")]
+    public void PortalDoesNotRequireAnyActiveFlame(string prefabPath)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        Assert.That(prefab, Is.Not.Null);
+        var portal = prefab.GetComponent<PortalController>();
+        Assert.That(portal, Is.Not.Null);
+
+        const BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic;
+        var flamesField = typeof(CharacterInteractionDetection).GetField("activeFlames", flags);
+        var frameField = typeof(CharacterInteractionDetection).GetField("activeFlamesFrame", flags);
+        var previousFlames = flamesField.GetValue(null);
+        var previousFrame = frameField.GetValue(null);
+        try
+        {
+            flamesField.SetValue(null, System.Array.Empty<Flame>());
+            frameField.SetValue(null, Time.frameCount);
+            Assert.That(CharacterInteractionDetection.IsInActiveFlameInfluence(portal), Is.True);
+        }
+        finally
+        {
+            flamesField.SetValue(null, previousFlames);
+            frameField.SetValue(null, previousFrame);
+        }
+    }
+
     [Test]
     public void NonConvexDoorUsesItsSurfaceForFlameReach()
     {

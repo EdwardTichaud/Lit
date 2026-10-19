@@ -1,3 +1,25 @@
+## Interactions Depuis Le Personnage (2026-10-19)
+
+La selection locale ne depend plus du frustum, de la position ou du masque de
+la camera. Portee et orientation restent liees au joueur ; obstruction depuis
+son origine d'interaction, buffer reutilise et au plus trois rayons par candidat.
+Migration des deux champs serialises, sans modification de scene/prefab.
+Tests ajoutes : camera eloignee/retournee, renderer masque, mur, portee et dos.
+Compilation runtime et Editor (tests inclus) reussie avec le compilateur et les
+references Unity du projet, sorties isolees dans Library/PortalInteractionValidation.
+Tests physiques et parcours Play non executes ; verifier en Maison le portail
+avec camera eloignee puis un obstacle entre joueur et portail.
+
+## Portails Sans Influence Lumineuse (2026-10-19)
+
+`PortalController` rejoint les exceptions du filtre d'influence partage.
+Distance, visibilite, destination et activation restent inchangees ; aucun
+prefab ni scene modifie. Deux cas de non-regression couvrent les prefabs de
+transition et de teleportation locale sans Flame active.
+Verification du diff effectuee ; compilation et tests Unity non executes dans
+ce lot. A valider en Play : portail utilisable hors influence, controles de
+distance et de visibilite conserves.
+
 ## Integration Du Combat Valide Au Jeu (2026-10-19)
 
 Correction demandee apres essais auteur : exploration et combat redeviennent

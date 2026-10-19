@@ -129,6 +129,8 @@ Material:
     - _IceReliefRoughnessInfluence: 0
     - _IceScale: 1.06
     - _LightReactiveBloom: 1
+    - _LitMaskEnabled: 0
+    - _LitMaskVersion: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0.995
@@ -192,6 +194,11 @@ Material:
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
     - _FrostColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
     - _IceDeepColor: {r: 0.08962262, g: 0.49661505, b: 1, a: 1}
+    - _LitMaskCameraForward: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskCameraPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskSettings: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget0: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget1: {r: 0, g: 0, b: 0, a: 0}
     - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

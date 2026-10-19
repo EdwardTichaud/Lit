@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public partial class SquadCharacterController
 {
@@ -14,10 +15,12 @@ public partial class SquadCharacterController
     private float interactionMinimumForwardDot = -0.35f;
     [SerializeField, Tooltip("Hauteur supplementaire ajoutee au point d'origine de la detection si aucune capsule n'est disponible.")]
     private float interactionDetectionHeightOffset = 0.9f;
-    [SerializeField, Tooltip("Exige qu'au moins une partie de l'objet soit visible par la camera et non cachee par un collider.")]
-    private bool requireInteractionTargetVisibleByCamera = true;
-    [SerializeField, Min(0f), Tooltip("Temps de maintien de la cible courante quand le test camera perd brievement la visibilite.")]
-    private float interactionCameraVisibilityGraceSeconds = 0.15f;
+    [FormerlySerializedAs("requireInteractionTargetVisibleByCamera")]
+    [SerializeField, Tooltip("Exige une ligne de vue depuis le personnage vers l'objet, independamment de la camera.")]
+    private bool requireInteractionTargetLineOfSight = true;
+    [FormerlySerializedAs("interactionCameraVisibilityGraceSeconds")]
+    [SerializeField, Min(0f), Tooltip("Temps de maintien de la cible courante quand le personnage perd brievement la ligne de vue.")]
+    private float interactionLineOfSightGraceSeconds = 0.15f;
 
     [Header("Munin Reaction")]
     [SerializeField, Tooltip("Fait reagir Munin quand une cible allumable/eteignable est detectee.")]
@@ -27,11 +30,11 @@ public partial class SquadCharacterController
 
     private const int InteractionDetectionHitCapacity = 128;
 
-    private readonly Collider[] interactionDetectionHits = new Collider[InteractionDetectionHitCapacity];
+    private Collider[] interactionDetectionHits = new Collider[InteractionDetectionHitCapacity];
     private readonly List<ICharacterDetectedInteractable> interactionDetectionCandidates = new List<ICharacterDetectedInteractable>(16);
     private readonly HashSet<Object> interactionDetectionUniqueTargets = new HashSet<Object>();
     private ICharacterDetectedInteractable currentDetectedInteractable;
-    private float currentTargetLastCameraVisibleTime = float.NegativeInfinity;
+    private float currentTargetLastVisibleTime = float.NegativeInfinity;
 
     public Vector3 GetInteractionOriginWorldPosition()
     {
@@ -102,12 +105,11 @@ public partial class SquadCharacterController
 
     private void RefreshInteractionDetectionCandidates(Vector3 origin)
     {
-        int hitCount = Physics.OverlapSphereNonAlloc(
+        int hitCount = CharacterInteractionSelection.CollectCandidates(
+            ref interactionDetectionHits,
             origin,
             ResolveInteractionDetectionRadius(),
-            interactionDetectionHits,
-            interactionDetectionMask,
-            QueryTriggerInteraction.Collide);
+            interactionDetectionMask);
 
         interactionDetectionCandidates.Clear();
         interactionDetectionUniqueTargets.Clear();
@@ -148,9 +150,6 @@ public partial class SquadCharacterController
         }
 
         Vector3 forward = ResolveInteractionForward();
-        Camera interactionCamera = requireInteractionTargetVisibleByCamera
-            ? CharacterInteractionDetection.ResolveInteractionCamera()
-            : null;
 
         ICharacterDetectedInteractable bestTarget = null;
         int bestPriority = int.MinValue;
@@ -163,7 +162,6 @@ public partial class SquadCharacterController
                     candidate,
                     origin,
                     forward,
-                    interactionCamera,
                     out _,
                     out float distanceSqr))
             {
@@ -171,27 +169,9 @@ public partial class SquadCharacterController
             }
 
             int priority = candidate.GetInteractionPriority(this);
-            // Ghosts remain prioritised by their authored value against distant
-            // candidates, but never replace a closer ordinary interaction.
-            // This prevents their dialogue subscription from stealing a torch,
-            // readable or pickup in the same small play space.
-            bool closerOrdinaryObjectBeatsGhost =
-                bestTarget is GhostController &&
-                !(candidate is GhostController) &&
-                distanceSqr < bestDistanceSqr;
-            bool ghostCannotBeatCloserOrdinaryObject =
-                candidate is GhostController &&
-                !(bestTarget is GhostController) &&
-                distanceSqr > bestDistanceSqr;
-
             if (bestTarget == null ||
-                closerOrdinaryObjectBeatsGhost ||
-                (!ghostCannotBeatCloserOrdinaryObject &&
-                 (priority > bestPriority ||
-                  (priority == bestPriority &&
-                   (distanceSqr < bestDistanceSqr ||
-                    (distanceSqr == bestDistanceSqr &&
-                     GetInteractionCandidateTieBreaker(candidate) < GetInteractionCandidateTieBreaker(bestTarget)))))))
+                CharacterInteractionSelection.IsBetter(distanceSqr, priority, GetInteractionCandidateTieBreaker(candidate),
+                    bestDistanceSqr, bestPriority, GetInteractionCandidateTieBreaker(bestTarget)))
             {
                 bestTarget = candidate;
                 bestPriority = priority;
@@ -206,7 +186,6 @@ public partial class SquadCharacterController
         ICharacterDetectedInteractable candidate,
         Vector3 origin,
         Vector3 forward,
-        Camera interactionCamera,
         out bool usesTriggerZone,
         out float distanceSqr)
     {
@@ -240,16 +219,11 @@ public partial class SquadCharacterController
         Collider collider = candidate.GetInteractionDetectionCollider();
         Transform anchor = candidate.GetInteractionAnchor();
         usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
-        // A Flame uses a large trigger volume to grant interaction access. Once
-        // the player is inside it, Collider.ClosestPoint returns the player
-        // position, which used to make its selection distance exactly zero and
-        // let it permanently beat a nearer item. Keep the trigger for range
-        // validation, but rank it from its actual visual/interaction anchor.
+        // Keep authored volumes for eligibility, but never rank an access
+        // trigger's containing volume as a physical object at distance zero.
         Vector3 rangePoint = CharacterInteractionDetection.GetInteractionPoint(
             collider, anchor, origin);
-        Vector3 selectionPoint = usesTriggerZone && anchor != null
-            ? anchor.position
-            : rangePoint;
+        Vector3 selectionPoint = CharacterInteractionSelection.SelectionPoint(collider, anchor, rangePoint);
         Vector3 toPoint = selectionPoint - origin;
         distanceSqr = toPoint.sqrMagnitude;
         float rangeDistance = Vector3.Distance(rangePoint, origin);
@@ -294,12 +268,12 @@ public partial class SquadCharacterController
             }
         }
 
-        if (requireInteractionTargetVisibleByCamera &&
-            !IsInteractionCandidateVisibleFromCamera(
+        if (requireInteractionTargetLineOfSight &&
+            !IsInteractionCandidateVisibleFromCharacter(
                 candidate,
                 collider,
                 anchor,
-                interactionCamera))
+                origin))
         {
             return false;
         }
@@ -307,35 +281,35 @@ public partial class SquadCharacterController
         return true;
     }
 
-    private bool IsInteractionCandidateVisibleFromCamera(
+    private bool IsInteractionCandidateVisibleFromCharacter(
         ICharacterDetectedInteractable candidate,
         Collider collider,
         Transform anchor,
-        Camera interactionCamera)
+        Vector3 origin)
     {
-        bool visible = CharacterInteractionDetection.IsInteractionTargetVisibleFromCamera(
+        bool visible = CharacterInteractionDetection.IsInteractionTargetVisibleFromCharacter(
             candidate,
             collider,
             anchor,
-            interactionCamera,
+            origin,
             transform);
         if (visible)
         {
             if (ReferenceEquals(candidate, currentDetectedInteractable))
             {
-                currentTargetLastCameraVisibleTime = Time.unscaledTime;
+                currentTargetLastVisibleTime = Time.unscaledTime;
             }
 
             return true;
         }
 
         if (!ReferenceEquals(candidate, currentDetectedInteractable) ||
-            interactionCameraVisibilityGraceSeconds <= 0f)
+            interactionLineOfSightGraceSeconds <= 0f)
         {
             return false;
         }
 
-        return Time.unscaledTime - currentTargetLastCameraVisibleTime <= interactionCameraVisibilityGraceSeconds;
+        return Time.unscaledTime - currentTargetLastVisibleTime <= interactionLineOfSightGraceSeconds;
     }
 
     private Vector3 ResolveInteractionForward()
@@ -399,7 +373,7 @@ public partial class SquadCharacterController
         }
 
         currentDetectedInteractable = target;
-        currentTargetLastCameraVisibleTime = currentDetectedInteractable != null
+        currentTargetLastVisibleTime = currentDetectedInteractable != null
             ? Time.unscaledTime
             : float.NegativeInfinity;
 
@@ -416,7 +390,7 @@ public partial class SquadCharacterController
     {
         if (currentDetectedInteractable == null)
         {
-            currentTargetLastCameraVisibleTime = float.NegativeInfinity;
+            currentTargetLastVisibleTime = float.NegativeInfinity;
             UpdateMuninInteractionReaction(null);
             RuntimeOutlineSelectionManager.Clear(this);
             return;
@@ -424,7 +398,7 @@ public partial class SquadCharacterController
 
         currentDetectedInteractable.SetDetectedCharacter(null);
         currentDetectedInteractable = null;
-        currentTargetLastCameraVisibleTime = float.NegativeInfinity;
+        currentTargetLastVisibleTime = float.NegativeInfinity;
         UpdateMuninInteractionReaction(null);
         RuntimeOutlineSelectionManager.Clear(this);
     }

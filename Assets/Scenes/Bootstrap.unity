@@ -26755,7 +26755,7 @@ MonoBehaviour:
   postLoadingMaximumStableFrameSeconds: 0.05
   loadingSceneStableFrames: 1
   navigationPreparationMaximumWaitSeconds: 30
-  editorStartGameplayDirectly: 1
+  editorStartGameplayDirectly: 0
   editorStartManifest: {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
   editorStartSceneName: 
   editorStartSpawnId: District_1

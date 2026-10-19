@@ -13,6 +13,7 @@ public sealed class LitTacticalCameraEditor : Editor
         EditorGUILayout.LabelField("Authority", controller.ExternalControl ? "Cinematic (pending gameplay mode)" : controller.EffectiveMode.ToString());
         EditorGUILayout.LabelField("Obstacles — requested", controller.RequestedObstacleMode.ToString());
         EditorGUILayout.LabelField("Obstacles — effective", controller.EffectiveObstacleMode.ToString());
+        EditorGUILayout.LabelField("Maison visibility mask", controller.MaisonMaskActive ? "Active (camera distance preserved)" : "Inactive");
         EditorGUILayout.LabelField("Near clip — initial (m)", controller.InitialNearClip.ToString("F3"));
         EditorGUILayout.LabelField("Near clip — effective (m)", controller.EffectiveNearClip.ToString("F3"));
         EditorGUILayout.LabelField("Adaptive near clip", controller.AdaptiveNearClipActive ? "Follow only" : "Inactive");
@@ -36,5 +37,18 @@ public sealed class LitCameraOcclusionGroupEditor : Editor
         var group = (LitCameraOcclusionGroup)target;
         bool compatible = group.IsMaskCompatible(out string diagnostic);
         EditorGUILayout.HelpBox(diagnostic, compatible ? MessageType.Info : MessageType.Warning);
+    }
+}
+
+[CustomEditor(typeof(LitMaisonVisibilityZone))]
+public sealed class LitMaisonVisibilityZoneEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+        var zone = (LitMaisonVisibilityZone)target;
+        EditorGUILayout.LabelField("Prepared architecture renderers", zone.PreparedRendererCount.ToString());
+        EditorGUILayout.LabelField("Incompatible renderers", zone.UnsupportedRendererCount.ToString());
+        EditorGUILayout.HelpBox("Maison Near 1–4 only. Local material copies enable HDRP depth/normal cutout; shared assets and colliders are unchanged. Floors, walkable stairs, animated objects and other scenes are excluded. Follow only with IgnoreObstacles; L3 and Timelines restore the effect.", MessageType.Info);
     }
 }

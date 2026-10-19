@@ -92,7 +92,11 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
     public TacticalObstacleMode RequestedObstacleMode => profile != null ? profile.obstacleMode : TacticalObstacleMode.Sliding;
     public TacticalObstacleMode EffectiveObstacleMode => LitTacticalCameraProfile.ResolveObstacleMode(RequestedObstacleMode,
         inspection || tactical == null || !tactical.Following, external || effectiveMode != GameplayCameraMode.Tactical || !isActiveAndEnabled);
-    public bool MaskActive => EffectiveObstacleMode == TacticalObstacleMode.VisibilityMask && ucc != null && ucc.enabled && ucc.Character != null;
+    public bool MaisonMaskActive => isActiveAndEnabled && !external && effectiveMode == GameplayCameraMode.Tactical &&
+        !inspection && tactical != null && tactical.Following && IgnoringObstacles && ucc != null && ucc.enabled &&
+        ucc.Character != null && LitMaisonVisibilityZone.ContainsPlayer(ucc.Character.transform.position);
+    public bool MaskActive => ucc != null && ucc.enabled && ucc.Character != null &&
+        (EffectiveObstacleMode == TacticalObstacleMode.VisibilityMask || MaisonMaskActive);
     public bool IsBlending => !external && profile != null && Time.time - blendStarted < profile.transitionTime;
     public void ResetPoseTracking() { hasPreviousPosition = hasVisibleAnchor = false; blendStarted = -100; ClearTacticalInput(); RestoreOcclusion(); ResetNearClip(); }
     public struct TacticalInput { public Vector2 pan, orbit; public float zoom; }

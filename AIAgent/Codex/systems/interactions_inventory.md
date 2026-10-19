@@ -1,5 +1,16 @@
 # Interactions et inventaire
 
+Les `PortalController` sont exempts du filtre commun d'influence des Flames :
+leur detection reste possible sans Flame allumee, sous reserve des controles
+habituels de portee, ligne de vue du personnage, etat actif et destination valide.
+
+Les interactions sont independantes de la camera : recherche et distance depuis
+le personnage, direction selon son orientation et obstruction depuis son origine
+d'interaction. Aucun frustum, masque camera ou etat de rendu ne conditionne la
+selection. Le test d'obstruction reutilise un buffer sans allocation et au plus
+trois rayons par candidat. Les anciens champs serialises de visibilite camera
+sont migres vers les reglages de ligne de vue du personnage.
+
 Le fallback d'influence de `InteractableItem`, utilise aussi pour les VFX des
 objets inactifs, lit le registre actif de `Flame` dans un buffer reutilise.
 Il garde les tests de portee/collider et evite une recherche globale dans chaque
@@ -44,7 +55,7 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 
 1. Le personnage effectue un `OverlapSphere`.
 2. Chaque collider est résolu vers un interactable et validé par portée,
-   direction, visibilité et règles temporelles.
+   direction du personnage, ligne de vue du personnage et règles temporelles.
 3. La cible retenue est la cible valide ayant la plus haute priorité, puis la
    plus proche à priorité égale; l’ancien `SwitchTarget` ne force plus une
    cible manuelle.

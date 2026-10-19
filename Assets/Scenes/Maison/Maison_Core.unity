@@ -1925,6 +1925,55 @@ MeshCollider:
   m_CorrespondingSourceObject: {fileID: 5289599535246169026, guid: 752f80d0005715840858e8e4e3f0845c, type: 3}
   m_PrefabInstance: {fileID: 4676676581140195478}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1900192020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1900192021}
+  - component: {fileID: 1900192022}
+  m_Layer: 0
+  m_Name: Maison_TacticalVisibility
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1900192021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900192020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1900192022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900192020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88b19bf9f3504859a34d54108a685201, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  environmentScenes:
+  - Maison_Environment_Near_1
+  - Maison_Environment_Near_2
+  - Maison_Environment_Near_3
+  - Maison_Environment_Near_4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1935,3 +1984,4 @@ SceneRoots:
   - {fileID: 1300806881}
   - {fileID: 1065234744}
   - {fileID: 1576932492}
+  - {fileID: 1900192021}
