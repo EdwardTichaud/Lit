@@ -9,3 +9,4 @@
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.mesh filter=lfs diff=lfs merge=lfs -text
+Assets/StoneGolem/ExtractMe/BuiltInToHDRP.unitypackage filter=lfs diff=lfs merge=lfs -text

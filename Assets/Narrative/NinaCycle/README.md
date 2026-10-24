@@ -3,7 +3,7 @@
 Ce contenu utilise le runtime generique [Cycles](../Cycles/README.md) :
 CycleController, CycleDefinition et CycleInteraction.
 
-La scène District_1_Enigme_Ghost_Nina est enregistrée dans le manifest du district.
+La scène `District_1_Cycle_Nina` est enregistrée dans le manifest du district.
 Ses objets sont des emplacements à placer, pas des ressources artistiques temporaires.
 
 ## Configuration
@@ -19,16 +19,18 @@ Ses objets sont des emplacements à placer, pas des ressources artistiques tempo
   éditables dans `CharacterData > Détection et engagement > Enemy Encounter Options`.
   `EnemyController` porte cette interaction. Ses derniers mots, leur durée et la
   voix se règlent dans `CharacterData > À la mort de l'ennemi`.
-- Ajouter le modèle animal sous Ghost_Nina et assigner son Animator au contrôleur du cycle.
-  Fournir les états Idle/Dead et leurs vrais clips. Le contrôleur ne crée aucune animation.
-- Placer le prefab de sang sous `Nina's blood_A_ASSIGNER`, qui sert de root d'activation.
-- Ajouter le modèle de Scar sous Ghost_Scar. Garder CycleInteraction avec dialogueId = scar.
-- Assigner le WorldPrefab du parchemin Item_Edward puis baker son SceneMarker.
-- Assigner la Timeline au PlayableDirector et son TimelineBindingProfile au cycle.
-  Les pistes caméra doivent utiliser les participants Timeline/LitCameraDirector du projet.
-  La Timeline doit avoir une durée finie et ne pas boucler.
-- Assigner un SkillSO Cicatrice terminé dans Resources/Narrative/NinaCycle.
-  Ses effets et animations ne sont pas inventés par le cycle. Ne pas renommer cycleId.
+- Le modèle animal sous `Ghost_Nina` et son Animator sont déjà présents.
+  Conserver les états Idle/Dead et leurs clips ; ne pas ajouter un second modèle.
+- `Nina's blood` est la racine d'activation du sang existant.
+- Le modèle de Scar est déjà sous `Ghost_Scar`. Garder CycleInteraction avec dialogueId = scar.
+- Le parchemin d'Édouard est déjà présent avec son WorldPrefab ; ne pas le rebaker
+  pour installer le souvenir, afin de préserver son placement manuel.
+- Le Director `Cinematique_ScientifiqueFou` utilise maintenant
+  `Assets/Scenes/Cycles/Cycle_Nina/Memory/Nina_EncoreLa.playable` et son profil.
+  Ne pas relancer le générateur pour les éditer. Les pistes caméra utilisent la
+  passerelle commune `LitTimelineCinemachineBridge` et `LitCameraDirector`.
+- La récompense Cicatrice est déjà assignée dans la définition. Ses effets et
+  animations ne sont pas inventés par le cycle. Ne pas renommer cycleId.
 
 ## Progression
 
@@ -78,3 +80,35 @@ Solo et 2–4 joueurs : lettre avant/après combat, fermeture anticipée, dialog
 death event répété, interruption Timeline, sauvegarde et rechargement de chaque étape,
 arrivée tardive à Maison, scène déchargée pendant le dialogue/cinématique, skill connu
 après changement de personnage et sortie du district. Tester le rendu après assignation.
+
+## Souvenir « Encore là » — 24 octobre 2026
+
+Créé sur décision explicite du développeur. Timeline éditable de **18 secondes**,
+quatre plans Cinemachine de 4,5 secondes. Les cadrages regardent Nina, la lettre
+et l'espace laissé autour d'elle. Les quatre citations proviennent de la lettre
+d'Édouard : sa présence sous cette forme, sa recherche d'une voix familière,
+l'impossibilité de promettre de la sauver, le refus de la laisser seule.
+Ce n'est pas la représentation certaine d'une scène historique ou de sa mort.
+
+La présentation utilise des copies de maillages de Nina et ses matériaux
+existants, sans fantôme interactif, ennemi, collider ou NetworkObject dupliqué.
+Les neuf maillages de pose sont des assets locaux de présentation, pas de
+nouveaux acteurs. Les textes sont sur des Canvas locaux sans cible de clic.
+Les cinq pistes Activation masquent ces éléments à la fin ou à l'arrêt.
+Les quatre caméras restent de faible priorité hors Timeline. Une piste Audio
+vide et muette indique explicitement l'absence de voix de production.
+
+Le profil résout `camera.cinemachine_brain` ; les activations et références de
+plans sont liées directement au Director de la même scène. Les placements et
+identifiants des objets existants, la définition et les bits historiques sont
+conservés. `aftermath_seen` demeure facultatif : seule la réussite valide le
+souvenir ; Cicatrice reste la récompense de Scar, sans nouveau prérequis.
+
+L'auteur a vérifié la création native, la couverture des liaisons, l'absence de
+déplacement des objets existants et l'intégrité des autres scènes District_1.
+Les tests Edit Mode contrôlent également la durée, les plans, les cibles, le
+masquage initial, le défilement réel des quatre citations et leur disparition
+après destruction du graphe à l'arrêt. La dernière suite de cycles sélectionnée
+passe à **194/194** (`FullCycleTestsCleanup-20261024.xml`).
+**Cadrages rendus, lisibilité HDRP et restauration de la caméra
+dans une partie réelle restent à accepter en solo et hôte/client.**

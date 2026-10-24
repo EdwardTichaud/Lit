@@ -44,7 +44,7 @@ public class NetworkObjectRegistry : MonoBehaviour
 
     public void Register(PersistentNetworkObject persistentObject)
     {
-        if (persistentObject == null)
+        if (persistentObject == null || !persistentObject.gameObject.scene.IsValid())
         {
             return;
         }
@@ -279,7 +279,7 @@ public class NetworkObjectRegistry : MonoBehaviour
         List<string> toRemove = null;
         foreach (KeyValuePair<string, PersistentNetworkObject> pair in dictionary)
         {
-            if (pair.Value != null)
+            if (pair.Value != null && pair.Value.gameObject.scene.IsValid())
             {
                 continue;
             }

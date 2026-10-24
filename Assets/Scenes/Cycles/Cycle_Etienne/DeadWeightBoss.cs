@@ -20,12 +20,12 @@ public sealed class DeadWeightBoss : BossEncounterBehaviour
 
     protected override void Awake() { base.Awake(); BindHealth(); }
     private void OnEnable() => BindHealth();
-    private void OnDisable()
+    protected override void OnDisable()
     {
         if (observedHealth != null) observedHealth.HealthChanged -= OnHealthChanged;
         observedHealth = null;
         ReleaseBrakeSuspension();
-        EndLocalCombatPresentation();
+        base.OnDisable();
     }
 
     public override void OnNetworkSpawn() { base.OnNetworkSpawn(); BindHealth(); SynchronizeHealth(); }

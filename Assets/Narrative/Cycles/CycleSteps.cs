@@ -69,7 +69,7 @@ public sealed class CycleStep
     public string sourceId;
     [Tooltip("Connaissance attendue pour une etape de connaissance.")]
     public KnowledgeSO knowledge;
-    [Tooltip("Prerequis de cette etape. Les evenements recus trop tot ne sont pas memorises.")]
+    [Tooltip("Prerequis de cette etape. Les faits valides sont conserves et reevalues lorsque ces prerequis sont remplis.")]
     public CycleRequirements prerequisites = new CycleRequirements();
     [Tooltip("Toutes les etapes terminales doivent etre validees pour terminer le cycle.")]
     public bool terminal;

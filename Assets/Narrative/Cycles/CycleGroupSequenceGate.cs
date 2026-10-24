@@ -17,7 +17,7 @@ public sealed class CycleGroupSequenceGate : NetworkBehaviour,ICharacterDetected
     private readonly NetworkList<ulong> confirmations=new();
     private readonly HashSet<ulong> offlineConfirmations=new();
     private double offlineExpires,offlineStarts;
-    private string roster="";
+    private readonly HashSet<ulong> roster = new();
     private double nextWithdrawal;
     private bool Online => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     private bool Authority => !Online || IsServer;
@@ -46,7 +46,13 @@ public sealed class CycleGroupSequenceGate : NetworkBehaviour,ICharacterDetected
         if(c==null && player != null)c=player.GetComponentInParent<SquadCharacterController>();
         return c != null && c.CurrentHp>0;
     }
-    private bool Within(Transform player) => Alive(player) && (player.position-transform.position).sqrMagnitude<=gatheringRadius*gatheringRadius;
+    private bool Within(Transform player) => Alive(player) && ValidDistance(gatheringRadius) &&
+        (player.position-transform.position).sqrMagnitude<=gatheringRadius*gatheringRadius;
+    private static bool ValidDistance(float value) => value > 0 && !float.IsNaN(value) && !float.IsInfinity(value);
+    private bool CanConfirmLocation(Transform player) => Within(player) &&
+        (Pending || ValidDistance(interactionDistance) && CharacterInteractionDetection.IsCharacterWithinRange(
+            player, GetComponent<Collider>(), transform, interactionDistance));
+    private bool CanCancelRequest(Transform player) => Authority && Pending && Within(player);
     private bool Free(Transform player)
     {
         var character=player != null ? player.GetComponentInChildren<SquadCharacterController>() : null;
@@ -69,13 +75,37 @@ public sealed class CycleGroupSequenceGate : NetworkBehaviour,ICharacterDetected
     }
     private bool AllReady()
     {
+        if (!CharacterInteractionDetection.IsInActiveFlameInfluence(this)) return false;
         var players=LivingPlayers().ToArray();
         return players.Length>0 && players.All(p=>Within(p.player)&&Free(p.player)&&Confirmed.Contains(p.id));
     }
     private void SetTimes(double expires,double starts)
     { if(IsSpawned){expiresAt.Value=expires;startsAt.Value=starts;}else{offlineExpires=expires;offlineStarts=starts;} }
     private void Clear()
-    { SetTimes(0,0);if(IsSpawned)confirmations.Clear();else offlineConfirmations.Clear();roster=""; }
+    {
+        SetTimes(0,0);
+        if(IsSpawned) { confirmations.Clear(); participantCount.Value=0; }
+        else offlineConfirmations.Clear();
+        roster.Clear();
+    }
+    public override void OnNetworkSpawn() { if(IsServer) Clear(); }
+    private void CaptureRoster(IEnumerable<ulong> participants)
+    {
+        roster.Clear();
+        foreach (ulong id in participants) roster.Add(id);
+    }
+    private void ReconcileRoster(IEnumerable<ulong> participants)
+    {
+        var next = new HashSet<ulong>(participants);
+        if (roster.SetEquals(next)) return;
+        if (next.Any(id => !roster.Contains(id)))
+        {
+            if (IsSpawned) confirmations.Clear();
+            else offlineConfirmations.Clear();
+        }
+        SetTimes(Expires, 0);
+        CaptureRoster(next);
+    }
     private void OnDisable() { LocalInputRouter.PrioritizedInteract-=ConfirmInput; LocalInputRouter.Return-=CancelInput; if(Authority) Clear(); }
     private void Update()
     {
@@ -86,13 +116,7 @@ public sealed class CycleGroupSequenceGate : NetworkBehaviour,ICharacterDetected
         if(!Pending || cycle==null || !cycle.IsSceneEventActive(CycleStepKind.SequenceCompleted,sequenceId)){Clear();return;}
         var players=LivingPlayers().ToArray();
         if(IsSpawned)participantCount.Value=players.Length;
-        string next=string.Join(",",players.Select(p=>p.id).OrderBy(id=>id));
-        if(roster!=next)
-        {
-            bool joined=roster.Length>0 && players.Any(p=>!roster.Split(',').Contains(p.id.ToString()));
-            if(joined){if(IsSpawned)confirmations.Clear();else offlineConfirmations.Clear();}
-            SetTimes(Expires,0);roster=next;
-        }
+        ReconcileRoster(players.Select(p=>p.id));
         foreach(var id in Confirmed.ToArray())
             if(!players.Any(p=>p.id==id&&Within(p.player)&&Free(p.player))) { if(IsSpawned)confirmations.Remove(id);else offlineConfirmations.Remove(id);SetTimes(Expires,0); }
         if(AllReady())
@@ -124,20 +148,34 @@ public sealed class CycleGroupSequenceGate : NetworkBehaviour,ICharacterDetected
     }
     private bool Confirm(ulong id,Transform player)
     {
-        if(!Authority||!Within(player)||!Free(player)||cycle==null||!cycle.IsSceneEventActive(CycleStepKind.SequenceCompleted,sequenceId)||!CharacterInteractionDetection.IsInActiveFlameInfluence(this))return false;
+        if(!Authority||!CanConfirmLocation(player)||!Free(player)||cycle==null||!cycle.IsSceneEventActive(CycleStepKind.SequenceCompleted,sequenceId)||!CharacterInteractionDetection.IsInActiveFlameInfluence(this))return false;
         var c=player.GetComponentInChildren<SquadCharacterController>();
         var bridge=c != null ? c.GetComponent<LitUccInteractionBridge>() : null;
         if(bridge != null&&!bridge.CanUseLitInteractable(this))return false;
-        if(!Pending) { Clear();SetTimes(Now+confirmationTimeout,0); }
+        if(!Pending)
+        {
+            if (!ValidDistance(confirmationTimeout) || countdownSeconds < 0 || float.IsNaN(countdownSeconds) || float.IsInfinity(countdownSeconds)) return false;
+            Clear(); SetTimes(Now+confirmationTimeout,0);
+            // Capture before accepting the first vote, not on the next Update:
+            // a join between those frames must invalidate the existing votes.
+            CaptureRoster(LivingPlayers().Select(participant => participant.id));
+        }
         if(!Confirmed.Contains(id)){if(IsSpawned)confirmations.Add(id);else offlineConfirmations.Add(id);}
         return true;
     }
     [Rpc(SendTo.Server,InvokePermission=RpcInvokePermission.Everyone)]
     private void ConfirmRpc(RpcParams rpc=default)=>Confirm(rpc.Receive.SenderClientId,NetcodePlayerUtils.GetPlayerTransform(rpc.Receive.SenderClientId));
     [Rpc(SendTo.Server,InvokePermission=RpcInvokePermission.Everyone)]
-    private void CancelRpc(RpcParams rpc=default) { if(LivingPlayers().Any(p=>p.id==rpc.Receive.SenderClientId))Clear(); }
+    private void CancelRpc(RpcParams rpc=default)
+    {
+        if(CanCancelRequest(NetcodePlayerUtils.GetPlayerTransform(rpc.Receive.SenderClientId))) Clear();
+    }
     [Rpc(SendTo.Server,InvokePermission=RpcInvokePermission.Everyone)]
-    private void WithdrawRpc(RpcParams rpc=default) { confirmations.Remove(rpc.Receive.SenderClientId);SetTimes(Expires,0); }
+    private void WithdrawRpc(RpcParams rpc=default)
+    {
+        if (!confirmations.Contains(rpc.Receive.SenderClientId)) return;
+        confirmations.Remove(rpc.Receive.SenderClientId); SetTimes(Expires,0);
+    }
     private void OnGUI()
     {
         if(!Application.isPlaying||!Pending||!Within(LocalPlayerContext.LocalCharacterRoot)||InputFocusStack.HasAnyFocus())return;

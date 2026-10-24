@@ -70,12 +70,12 @@ public sealed class BrokenAnchorBoss : BossEncounterBehaviour
         if (Authority && IsBossEngaged && Enemy != null && !Enemy.IsFlameDormant && firing == null) firing = StartCoroutine(FireLoop());
         if ((!IsBossEngaged || IsBossResolved) && firing != null) { StopCoroutine(firing); firing = null; }
     }
-    private void OnDisable()
+    protected override void OnDisable()
     {
         if (firing != null) StopCoroutine(firing);
         firing = null;
         UnbindTorchEvents();
-        EndLocalCombatPresentation();
+        base.OnDisable();
     }
 
     public override void OnDestroy()

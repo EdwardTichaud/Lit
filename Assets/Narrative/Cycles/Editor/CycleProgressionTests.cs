@@ -57,6 +57,22 @@ public sealed class CycleProgressionTests
         Assert.That(service.IsCompleted(first), Is.True);
         Assert.That(service.GetStatus(second), Is.EqualTo(CycleStatus.Available));
     }
+    [Test] public void ProjectWideAuthoringContractPassesValidation()
+        => Assert.That(CycleProjectValidator.CollectIssues(), Is.Empty);
+
+    [Test] public void EveryAuthoredCycleIsDiscoverableBeforeItsSceneLoads()
+    {
+        var runtime = CycleCatalog.LoadDefinitions();
+        Assert.That(runtime.Select(cycle => cycle.cycleId).Distinct().Count(), Is.EqualTo(runtime.Length), "Duplicate cycle identities must not be hidden by the catalog.");
+        foreach (string guid in AssetDatabase.FindAssets("t:CycleDefinition", new[] { "Assets" }))
+        {
+            var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            Assert.That(runtime, Does.Contain(definition), AssetDatabase.GetAssetPath(definition) + " is not discoverable at startup.");
+        }
+        Assert.That(runtime.Count(cycle => cycle.cycleId == "district1.luc"), Is.EqualTo(1));
+        Assert.That(runtime.Count(cycle => cycle.cycleId == "district1.nina"), Is.EqualTo(1));
+    }
+
     [Test] public void AuthoredCyclesHaveNoCrossCyclePrerequisites()
     {
         foreach (string guid in AssetDatabase.FindAssets("t:CycleDefinition", new[] { "Assets" }))
@@ -201,6 +217,53 @@ public sealed class CycleProgressionTests
         b.prerequisites = Requires("missing");
         Assert.That(cycle.ValidateConfiguration(), Has.Some.Contains("introuvable"));
     }
+    [Test] public void PartialMailboxDeliveryPreservesOnlyTheUnpaidBalanceAcrossReload()
+    {
+        var item = ScriptableObject.CreateInstance<Item>();
+        var homeRoot = new GameObject("Isolated cycle reward chest");
+        homeRoot.SetActive(false);
+        var instance = typeof(Maison).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        var previousHome = Maison.Instance;
+        try
+        {
+            var chest = homeRoot.AddComponent<InteractableItem>();
+            chest.maxStoredQuantity = 2;
+            var home = homeRoot.AddComponent<Maison>();
+            home.maisonChestTag = string.Empty;
+            home.maisonLootContainer = chest;
+            instance.SetValue(null, home);
+            var step = Interaction("reward", true);
+            step.rewards = new[] { new CycleReward { kind = CycleRewardKind.Item, item = item, quantity = 5 } };
+            var cycle = Cycle(step);
+            var deposit = typeof(CycleProgressionService).GetMethod("DepositMailbox", Private);
+            Report(cycle, CycleStepKind.Interaction, "reward");
+            deposit.Invoke(service, null);
+            Assert.That(chest.GetItemCount(item), Is.EqualTo(2));
+            var snapshot = rules.CaptureVariables();
+            rules.ResetRuntimeState();
+            rules.ApplyVariables(snapshot);
+            deposit.Invoke(service, null);
+            Assert.That(chest.GetItemCount(item), Is.EqualTo(2), "A full chest must not duplicate the partial deposit.");
+            chest.storedItems.Clear();
+            deposit.Invoke(service, null);
+            Assert.That(chest.GetItemCount(item), Is.EqualTo(2));
+            chest.storedItems.Clear();
+            deposit.Invoke(service, null);
+            Assert.That(chest.GetItemCount(item), Is.EqualTo(1), "Only the fifth and final item is still owed.");
+            chest.storedItems.Clear();
+            deposit.Invoke(service, null);
+            Assert.That(chest.GetItemCount(item), Is.Zero, "Completed delivery must be removed from the mailbox.");
+            Assert.That(rules.TryGetInt(cycle.RewardKey(step.id, 0) + ".remaining", out int balance), Is.True);
+            Assert.That(balance, Is.Zero);
+        }
+        finally
+        {
+            instance.SetValue(null, previousHome);
+            Object.DestroyImmediate(homeRoot);
+            Object.DestroyImmediate(item);
+        }
+    }
+
     [Test] public void MultipleDialoguesAndSequencesUseIndependentSourceIds()
     {
         var a = new CycleStep { id = "a", sourceId = "intro", kind = CycleStepKind.SequenceCompleted };

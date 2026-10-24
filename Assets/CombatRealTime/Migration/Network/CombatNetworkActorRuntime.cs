@@ -43,8 +43,12 @@ namespace Lit.Combat.Migration.Network
         private readonly NetworkVariable<CombatNetworkPassiveSnapshot> passiveState = new NetworkVariable<CombatNetworkPassiveSnapshot>();
         private readonly NetworkVariable<CombatNetworkThreatSnapshot> engagementState = new NetworkVariable<CombatNetworkThreatSnapshot>(
             default, NetworkVariableReadPermission.Owner, NetworkVariableWritePermission.Server);
-        private NetworkList<CombatNetworkControlSnapshot> controlStates;
-        private NetworkList<CombatNetworkCooldownSnapshot> cooldownStates;
+        // NGO also synchronizes inactive scene actors, before Unity invokes
+        // their Awake. Keep these instances alive from construction onward;
+        // NetworkBehaviour owns their registration and disposal.
+        private readonly NetworkList<CombatNetworkControlSnapshot> controlStates = new NetworkList<CombatNetworkControlSnapshot>();
+        private readonly NetworkList<CombatNetworkCooldownSnapshot> cooldownStates =
+            new NetworkList<CombatNetworkCooldownSnapshot>(null, NetworkVariableReadPermission.Owner);
         private readonly Dictionary<int, CombatNetworkCooldownSnapshot> acceptedCooldowns = new Dictionary<int, CombatNetworkCooldownSnapshot>();
 
         public string LastDiagnostic { get; private set; }
@@ -55,8 +59,6 @@ namespace Lit.Combat.Migration.Network
 
         private void Awake()
         {
-            controlStates = new NetworkList<CombatNetworkControlSnapshot>();
-            cooldownStates = new NetworkList<CombatNetworkCooldownSnapshot>(null, NetworkVariableReadPermission.Owner);
             ResolveReferences();
         }
 

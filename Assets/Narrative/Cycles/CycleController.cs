@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>Server commits milestones; world variables own save/load, NGO owns live replication.</summary>
 [RequireComponent(typeof(NetworkObject))]
-public sealed class CycleController : NetworkBehaviour
+public sealed partial class CycleController : NetworkBehaviour
 {
     public CycleDefinition definition;
     public SceneMarker encounterMarker;
@@ -37,6 +37,8 @@ public sealed class CycleController : NetworkBehaviour
     [Tooltip("Repliques automatiques de l'histoire. Elles ne demandent pas une nouvelle interaction au joueur.")]
     public CycleAutoDialogueBinding[] autoDialogues = Array.Empty<CycleAutoDialogueBinding>();
     public CycleSequenceBinding[] sequences = Array.Empty<CycleSequenceBinding>();
+    /// <summary>Shared sequence outcome, including viewers which finished locally before a peer failed.</summary>
+    public event Action<string, bool> SequencePresentationFinished;
 
     [Header("Dev - démarrage de cycle")]
     [SerializeField, Tooltip("Simule les jalons antérieurs à l'étape choisie. Cet état est local, temporaire et n'écrit jamais la sauvegarde.")]
@@ -304,12 +306,14 @@ public sealed class CycleController : NetworkBehaviour
         }
         if (rules == null || definition == null || string.IsNullOrWhiteSpace(definition.cycleId)) return;
         if (Online && !DevSimulationActive && (!IsSpawned || !Authority && (progression == null || !progression.IsReady))) return;
+        // Refused or cancelled presentations write no progression event to wake
+        // the controller. Retry their scheduler independently of presentationDirty.
+        if (Authority) TryStartAutoDialogue();
         if (presentationDirty)
         {
             presentationDirty = false;
             if (Authority)
             {
-                TryStartAutoDialogue();
                 TryStartSequence();
             }
             ApplyPresentation();
@@ -373,38 +377,6 @@ public sealed class CycleController : NetworkBehaviour
             if (Authority && HasFact(CycleStepKind.Interaction, binding.id)) torch.RestoreLitFromCycle();
             if (torch.IsLit) Report(CycleStepKind.Interaction, binding.id);
         }
-    }
-
-    private void TryStartAutoDialogue()
-    {
-        if (localDialogue || cinematicRunning || !DevSimulationActive && progression == null) return;
-        foreach (var binding in autoDialogues ?? Array.Empty<CycleAutoDialogueBinding>())
-        {
-            if (binding == null || string.IsNullOrWhiteSpace(binding.id) || playedAutoDialogues.Contains(binding) ||
-                !Evaluate(binding.condition)) continue;
-            var step = definition.FindStep(binding.id);
-            if (step == null || step.kind != CycleStepKind.DialogueCompleted || !IsStepActive(step)) continue;
-            playedAutoDialogues.Add(binding);
-            StartCoroutine(CompleteAutoDialogue(binding));
-            return;
-        }
-    }
-
-    private IEnumerator CompleteAutoDialogue(CycleAutoDialogueBinding binding)
-    {
-        string line = binding.line;
-        if (Online && IsSpawned) PlayAutoDialogueClientRpc(binding.id);
-        else DialoguePanelUI.TryShowTimedConversation(line, binding.durationSeconds, _ => { }, this);
-        yield return new WaitForSecondsRealtime(Mathf.Max(.1f, binding.durationSeconds));
-        if (Authority && binding != null) Report(CycleStepKind.DialogueCompleted, binding.id);
-    }
-
-    [ClientRpc]
-    private void PlayAutoDialogueClientRpc(string id)
-    {
-        var binding = Array.Find(autoDialogues ?? Array.Empty<CycleAutoDialogueBinding>(), item => item != null && item.id == id);
-        if (binding != null && !string.IsNullOrWhiteSpace(binding.line))
-            DialoguePanelUI.TryShowTimedConversation(binding.line, binding.durationSeconds, _ => { }, this);
     }
 
     private void BindGhostPuzzleEvents()
@@ -487,7 +459,7 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void TryStartSequence()
     {
-        if (Completed || cinematicRunning || sequencePending) return;
+        if (Completed || cinematicRunning || sequencePending || localDialogue || AutoDialogueIsBlocking) return;
         if (definition.HasSteps)
         {
             foreach (var step in definition.steps)
@@ -515,7 +487,7 @@ public sealed class CycleController : NetworkBehaviour
 
     private bool CompletionPresentationReady()
     {
-        if (localDialogue || cinematicRunning || (playback != null && !playback.IsDone) || EncounterPresentationIsBlocking()) return false;
+        if (localDialogue || AutoDialogueIsBlocking || cinematicRunning || (playback != null && !playback.IsDone) || EncounterPresentationIsBlocking()) return false;
         if (interactions != null) foreach (var interaction in interactions)
         {
             if (interaction == null || interaction.cycle != this || interaction.Ghost == null) continue;
@@ -559,6 +531,7 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void CancelOwnedPresentation()
     {
+        CancelAutoDialogues();
         cinematicRunning = false;
         pendingDialogues.Clear();
         DialoguePanelUI.CancelTimedConversation(this);
@@ -782,6 +755,7 @@ public sealed class CycleController : NetworkBehaviour
     {
         bool success = false;
         int generation = ++localPlaybackGeneration;
+        TimelinePlaybackHandle localPlayback = null;
         try
         {
             var root = LocalPlayerUtils.GetControlledCharacter();
@@ -789,15 +763,22 @@ public sealed class CycleController : NetworkBehaviour
             if (lockedPlayer != null) ownsLock = lockedPlayer.TryBeginUccExternalLock(this, out playerLock);
             if (!HasCinematic() || TimelineManager.Instance == null || lockedPlayer != null && !ownsLock) yield break;
             ActiveDirector.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
-            playback = TimelineManager.Instance.Play(ActiveDirector, ActiveProfile);
-            while (!playback.IsDone) yield return null;
-            success = playback.State == TimelinePlaybackState.Completed;
+            localPlayback = TimelineManager.Instance.Play(ActiveDirector, ActiveProfile);
+            playback = localPlayback;
+            // Shared cancellation clears the owned field while this coroutine
+            // may still be suspended. Keep this attempt's handle, and never
+            // acknowledge an attempt invalidated by the shared stop/retry.
+            while (generation == localPlaybackGeneration && !localPlayback.IsDone) yield return null;
+            success = generation == localPlaybackGeneration && localPlayback.State == TimelinePlaybackState.Completed;
         }
         finally
         {
-            if (generation == localPlaybackGeneration) { ReleaseLock(); playback = null; }
-            if (Online && IsSpawned) CinematicResultServerRpc(token, success);
-            else if (Authority) FinishCinematic(success);
+            if (generation == localPlaybackGeneration)
+            {
+                ReleaseLock(); playback = null;
+                if (Online && IsSpawned) CinematicResultServerRpc(token, success);
+                else if (Authority) FinishCinematic(success);
+            }
         }
     }
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -813,14 +794,26 @@ public sealed class CycleController : NetworkBehaviour
         if (!Authority || !cinematicRunning) return;
         cinematicRunning = false;
         ReleaseEnemies();
-        if (Online && IsSpawned) StopCinematicClientRpc();
-        else CancelPlayback();
+        if (Online && IsSpawned) StopCinematicClientRpc(activeSequenceId, success);
+        else { CancelPlayback(); NotifySequencePresentationFinished(activeSequenceId, success); }
+        if (Online && IsSpawned && !IsClient) NotifySequencePresentationFinished(activeSequenceId, success);
         if (!success) return;
         if (definition.HasSteps) Report(CycleStepKind.SequenceCompleted, activeSequenceId);
         else Commit(definition.cinematicCompletedFlags);
         presentationDirty = true;
     }
-    [ClientRpc] private void StopCinematicClientRpc() => CancelPlayback();
+    [ClientRpc] private void StopCinematicClientRpc(string id, bool success)
+    {
+        CancelPlayback();
+        NotifySequencePresentationFinished(id, success);
+    }
+    private void NotifySequencePresentationFinished(string id, bool success)
+    {
+        if (SequencePresentationFinished == null) return;
+        foreach (Action<string, bool> handler in SequencePresentationFinished.GetInvocationList())
+            try { handler(id, success); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+    }
     private void ReleaseLock()
     {
         playerLock?.Dispose();
@@ -837,7 +830,7 @@ public sealed class CycleController : NetworkBehaviour
     public bool Interact(CycleInteraction interaction)
     {
         ResolveRules();
-        if (!isActiveAndEnabled || definition == null || rules == null || localDialogue || cinematicRunning ||
+        if (!isActiveAndEnabled || definition == null || rules == null || localDialogue || AutoDialogueIsBlocking || cinematicRunning ||
             interaction == null || FindInteraction(interaction.dialogueId) != interaction) return false;
         string id = interaction.dialogueId;
         var dialogue = definition.FindDialogue(id);
@@ -950,7 +943,11 @@ public sealed class CycleController : NetworkBehaviour
     [ClientRpc] private void OpenDialogueClientRpc(string id, int token, ClientRpcParams rpcParams = default)
     {
         var dialogue = definition != null ? definition.FindDialogue(id) : null;
-        if (dialogue == null || localDialogue) return;
+        if (dialogue == null || localDialogue || AutoDialogueIsBlocking)
+        {
+            if (IsSpawned) CompleteDialogueServerRpc(id, token, false);
+            return;
+        }
         string text = IsDialogueCompleted(dialogue) && !string.IsNullOrWhiteSpace(dialogue.repeatLine) ? dialogue.repeatLine : dialogue.line;
         if (string.IsNullOrWhiteSpace(text)) return;
         localDialogue = true;
@@ -959,7 +956,11 @@ public sealed class CycleController : NetworkBehaviour
             localDialogue = false;
             if (this != null && isActiveAndEnabled && IsSpawned) CompleteDialogueServerRpc(id, token, completed);
         }, this);
-        if (!shown) localDialogue = false;
+        if (!shown)
+        {
+            localDialogue = false;
+            if (IsSpawned) CompleteDialogueServerRpc(id, token, false);
+        }
     }
     private static ClientRpcParams BuildClientRpcParams(ulong clientId) => new ClientRpcParams
     {
@@ -985,6 +986,8 @@ public sealed class CycleController : NetworkBehaviour
     }
     private void OnDisable()
     {
+        NotifySequencePresentationFinished(activeSequenceId, false);
+        CancelAutoDialogues();
         UnbindGhostPuzzleEvents();
         cinematicRunning = false;
         attemptedCinematic = false;
@@ -1004,6 +1007,7 @@ public sealed class CycleController : NetworkBehaviour
                 binding.health = null;
             }
         presentedInteractions.Clear();
+        presentedDisappearances.Clear();
         if (poses != null) foreach (var binding in poses) if (binding != null) binding.previousState = null;
         DialoguePanelUI.CancelTimedConversation(this);
         ReleaseEnemies();

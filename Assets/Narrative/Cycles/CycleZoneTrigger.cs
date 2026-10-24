@@ -26,11 +26,29 @@ public sealed class CycleZoneTrigger : MonoBehaviour
     }
     private void Observe(Transform player)
     {
-        if (player == null || !volume.bounds.Contains(player.position + Vector3.up * .5f)) return;
+        if (player == null || !ContainsWorldPoint(player.position + Vector3.up * .5f)) return;
         SquadCharacterController character = player.GetComponentInChildren<SquadCharacterController>();
         if (character == null) character = player.GetComponentInParent<SquadCharacterController>();
         if (character != null && character.CurrentHp > 0) cycle.TryReportSceneEvent(CycleStepKind.ZoneEntered, sourceId);
     }
+    /// <summary>Tests the actual oriented trigger, not its world-space enclosing bounds.</summary>
+    public bool ContainsWorldPoint(Vector3 worldPoint)
+    {
+        if (volume == null) volume = GetComponent<BoxCollider>();
+        if (!isActiveAndEnabled || volume == null || !volume.enabled || !IsFinite(worldPoint) ||
+            !IsFinite(volume.center) || !IsFinite(volume.size)) return false;
+        Vector3 scale = transform.lossyScale;
+        if (!IsFinite(scale) || Mathf.Abs(scale.x) <= Mathf.Epsilon ||
+            Mathf.Abs(scale.y) <= Mathf.Epsilon || Mathf.Abs(scale.z) <= Mathf.Epsilon) return false;
+        Vector3 local = transform.InverseTransformPoint(worldPoint) - volume.center;
+        Vector3 half = volume.size * .5f;
+        return IsFinite(local) && Mathf.Abs(local.x) <= Mathf.Abs(half.x) &&
+            Mathf.Abs(local.y) <= Mathf.Abs(half.y) && Mathf.Abs(local.z) <= Mathf.Abs(half.z);
+    }
+    private static bool IsFinite(Vector3 value) =>
+        !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
+        !float.IsNaN(value.y) && !float.IsInfinity(value.y) &&
+        !float.IsNaN(value.z) && !float.IsInfinity(value.z);
     private void OnDrawGizmosSelected()
     {
         BoxCollider box = GetComponent<BoxCollider>();

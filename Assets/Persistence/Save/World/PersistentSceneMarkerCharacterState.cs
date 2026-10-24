@@ -45,6 +45,9 @@ public sealed class PersistentSceneMarkerCharacterState : MonoBehaviour, IPersis
     public byte[] CaptureState(PersistentStateContext context)
     {
         ResolveMarker();
+        // Returning scenes can be captured again before the navigation-gated
+        // actor has spawned. Preserve its already restored death/health state.
+        if (pendingState != null) return PersistentStateJson.ToBytes(pendingState);
         GameObject instance = marker != null ? marker.RuntimeInstance : null;
         if (instance == null)
         {

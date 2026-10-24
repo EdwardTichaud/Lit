@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public class WorldStateManager : MonoBehaviour
 {
+    public static WorldStateManager Instance { get; private set; }
     [SerializeField] private NetworkObjectRegistry registry;
     [SerializeField] private SpawnManager spawnManager;
     [SerializeField] private WorldRulesStateManager worldRulesStateManager;
@@ -16,13 +17,134 @@ public class WorldStateManager : MonoBehaviour
     public SnapshotApplyResult LastApplyResult { get; private set; }
 
     public bool LastApplySucceeded => LastApplyResult != null && LastApplyResult.Succeeded;
+    public bool LastCaptureSucceeded { get; private set; }
 
     private readonly List<PersistentObjectSnapshot> preservedLegacyBuildingSnapshots =
         new List<PersistentObjectSnapshot>();
+    private readonly Dictionary<string, PersistentSceneArchive> sceneArchives =
+        new Dictionary<string, PersistentSceneArchive>(StringComparer.Ordinal);
 
     private void Awake()
     {
+        Instance = this;
         ResolveReferences();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public void ResetSceneArchives()
+    {
+        sceneArchives.Clear();
+        preservedLegacyBuildingSnapshots.Clear();
+        LastApplyResult = null;
+        LastCaptureSucceeded = false;
+    }
+
+    /// <summary>Records a gameplay removal before the scene object is destroyed.</summary>
+    public void RecordSceneObjectRemoved(PersistentNetworkObject target)
+    {
+        if (!HasWorldAuthority() || target == null || target.ObjectKind != PersistentObjectKind.ScenePlaced ||
+            !target.HasPersistentId || !target.gameObject.scene.IsValid()) return;
+        string sceneName = target.gameObject.scene.name;
+        PersistentSceneArchive archive = GetOrCreateArchive(sceneName);
+        if (!archive.RemovedSceneObjectIds.Contains(target.PersistentId))
+            archive.RemovedSceneObjectIds.Add(target.PersistentId);
+    }
+
+    /// <summary>Capture departure state while the scene's objects still exist.</summary>
+    public bool CaptureScenesBeforeUnload(IEnumerable<string> sceneNames)
+    {
+        if (!HasWorldAuthority() || sceneNames == null) return true;
+        ResolveReferences();
+        registry?.RefreshSceneObjects();
+        var snapshot = new WorldSnapshot { SceneName = SceneManager.GetActiveScene().name };
+        var scope = new HashSet<string>(sceneNames, StringComparer.Ordinal);
+        if (!CapturePersistentObjects(snapshot, true, scope)) return false;
+        foreach (string sceneName in scope)
+        {
+            Scene scene = SceneManager.GetSceneByName(sceneName);
+            if (!scene.IsValid() || !scene.isLoaded) continue;
+            UpdateSceneArchive(sceneName, snapshot);
+        }
+        return true;
+    }
+
+    /// <summary>Replays only returning scenes, leaving live session objects untouched.</summary>
+    public bool RestoreArchivedScenes(IEnumerable<string> sceneNames)
+    {
+        if (!HasWorldAuthority() || sceneNames == null) return true;
+        var scope = new HashSet<string>(StringComparer.Ordinal);
+        var snapshot = new WorldSnapshot { SceneName = SceneManager.GetActiveScene().name };
+        foreach (string name in sceneNames)
+        {
+            if (string.IsNullOrWhiteSpace(name) || !sceneArchives.TryGetValue(name, out PersistentSceneArchive archive) ||
+                !scope.Add(name)) continue;
+            Scene scene = SceneManager.GetSceneByName(name);
+            if (!scene.IsValid() || !scene.isLoaded) { scope.Remove(name); continue; }
+            PersistentSceneArchive copy = CloneArchive(archive);
+            snapshot.SceneArchives.Add(copy);
+            snapshot.SceneObjects.AddRange(copy.SceneObjects);
+            snapshot.RuntimeObjects.AddRange(copy.RuntimeObjects);
+        }
+        if (snapshot.SceneArchives.Count == 0) return true;
+        return ApplySnapshotInternal(snapshot, true, scope);
+    }
+
+    private PersistentSceneArchive GetOrCreateArchive(string sceneName)
+    {
+        if (!sceneArchives.TryGetValue(sceneName, out PersistentSceneArchive archive))
+        {
+            archive = new PersistentSceneArchive { SceneName = sceneName };
+            sceneArchives.Add(sceneName, archive);
+        }
+        return archive;
+    }
+
+    private void UpdateSceneArchive(string sceneName, WorldSnapshot live)
+    {
+        PersistentSceneArchive archive = GetOrCreateArchive(sceneName);
+        archive.SceneObjects.Clear();
+        archive.RuntimeObjects.Clear();
+        foreach (PersistentObjectSnapshot entry in live.SceneObjects)
+            if (entry.SceneName == sceneName && !archive.RemovedSceneObjectIds.Contains(entry.PersistentId))
+                archive.SceneObjects.Add(entry);
+        foreach (PersistentObjectSnapshot entry in live.RuntimeObjects)
+            if (entry.SceneName == sceneName) archive.RuntimeObjects.Add(entry);
+    }
+
+    private static PersistentSceneArchive CloneArchive(PersistentSceneArchive archive)
+    {
+        // Providers own their payload arrays. Never retain references to an
+        // incoming late-join/disk snapshot that may later be normalized.
+        return JsonUtility.FromJson<PersistentSceneArchive>(JsonUtility.ToJson(archive));
+    }
+
+    private static bool HasWorldAuthority()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager == null || !manager.IsListening || manager.IsServer;
+    }
+
+    private void ApplyRemovedSceneObjects(List<PersistentSceneArchive> archives)
+    {
+        if (archives == null || registry == null) return;
+        foreach (PersistentSceneArchive archive in archives)
+        {
+            Scene scene = SceneManager.GetSceneByName(archive.SceneName);
+            if (!scene.IsValid() || !scene.isLoaded) continue;
+            foreach (string id in archive.RemovedSceneObjectIds)
+            {
+                if (!registry.TryGetSceneObject(id, out PersistentNetworkObject target) || target == null ||
+                    target.gameObject.scene.name != archive.SceneName) continue;
+                NetworkObject networkObject = target.GetComponent<NetworkObject>();
+                if (HasWorldAuthority() && networkObject != null && networkObject.IsSpawned && target.IsServer)
+                    networkObject.Despawn(false);
+                target.gameObject.SetActive(false);
+            }
+        }
     }
 
     public WorldSnapshot CaptureSnapshot(string captureReason = null, bool logValidationFailuresAsErrors = true)
@@ -44,7 +166,18 @@ public class WorldStateManager : MonoBehaviour
 
         CapturePlayers(snapshot);
         snapshot.Abilities = AbilityService.Ensure().Capture();
-        CapturePersistentObjects(snapshot, logValidationFailuresAsErrors);
+        LastCaptureSucceeded = CapturePersistentObjects(snapshot, logValidationFailuresAsErrors);
+        if (HasWorldAuthority() && LastCaptureSucceeded)
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene scene = SceneManager.GetSceneAt(i);
+                if (scene.isLoaded) UpdateSceneArchive(scene.name, snapshot);
+            }
+        }
+        foreach (PersistentSceneArchive archive in sceneArchives.Values)
+            snapshot.SceneArchives.Add(CloneArchive(archive));
+        snapshot.SceneArchives.Sort((a, b) => string.CompareOrdinal(a.SceneName, b.SceneName));
         CaptureWorldRules(snapshot);
         LegacyBuildingPersistenceMigration.MergeLegacyWorldSnapshots(
             snapshot,
@@ -65,6 +198,26 @@ public class WorldStateManager : MonoBehaviour
 
     public bool ApplySnapshot(WorldSnapshot snapshot, bool serverSideLoad = false)
     {
+        return ApplySnapshotInternal(snapshot, serverSideLoad, null);
+    }
+
+    // Validate data before sending it without loading scenes or replaying any
+    // gameplay provider. Archives of absent scenes deliberately remain data.
+    internal SnapshotApplyResult ValidateSnapshotStructure(WorldSnapshot snapshot)
+    {
+        var result = new SnapshotApplyResult();
+        if (snapshot == null)
+        {
+            result.AddError("Snapshot is missing.");
+            return result;
+        }
+        ValidateSnapshotIdentityGraph(snapshot, result);
+        ValidateSceneArchives(snapshot.SceneArchives, result);
+        return result;
+    }
+
+    private bool ApplySnapshotInternal(WorldSnapshot snapshot, bool serverSideLoad, HashSet<string> sceneScope)
+    {
         SnapshotApplyResult result = new SnapshotApplyResult();
         LastApplyResult = result;
 
@@ -77,15 +230,17 @@ public class WorldStateManager : MonoBehaviour
         }
 
         ResolveReferences();
-        preservedLegacyBuildingSnapshots.Clear();
-        if (!LegacyBuildingSystem.Enabled && LegacyBuildingSystem.PreserveLegacyWorldSnapshots)
+        if (sceneScope == null) preservedLegacyBuildingSnapshots.Clear();
+        if (sceneScope == null && !LegacyBuildingSystem.Enabled && LegacyBuildingSystem.PreserveLegacyWorldSnapshots)
         {
             preservedLegacyBuildingSnapshots.AddRange(
                 LegacyBuildingPersistenceMigration.CaptureLegacyWorldSnapshots(snapshot));
         }
 
-        int normalizedSingletonCount = PersistentWorldSceneInstaller.NormalizeManagedSingletonSnapshots(snapshot, this, "apply snapshot");
-        int ensuredSingletonCount = PersistentWorldSceneInstaller.EnsureManagedSingletonsForSnapshot(snapshot, this, "apply snapshot");
+        int normalizedSingletonCount = sceneScope == null
+            ? PersistentWorldSceneInstaller.NormalizeManagedSingletonSnapshots(snapshot, this, "apply snapshot") : 0;
+        int ensuredSingletonCount = sceneScope == null
+            ? PersistentWorldSceneInstaller.EnsureManagedSingletonsForSnapshot(snapshot, this, "apply snapshot") : 0;
         registry?.RefreshSceneObjects();
 
         if (normalizedSingletonCount > 0 || ensuredSingletonCount > 0)
@@ -109,6 +264,8 @@ public class WorldStateManager : MonoBehaviour
             this);
 
         ValidateSnapshotIdentityGraph(snapshot, result);
+        ValidateSceneArchives(snapshot.SceneArchives, result);
+        if (!result.Succeeded) return FinalizeApply(snapshot, context, result);
         if (!string.IsNullOrWhiteSpace(snapshot.SceneName) &&
             !string.Equals(snapshot.SceneName, SceneManager.GetActiveScene().name, StringComparison.Ordinal))
         {
@@ -118,6 +275,19 @@ public class WorldStateManager : MonoBehaviour
             PersistentWorldDebug.Error(sceneMismatch, this);
             return FinalizeApply(snapshot, context, result);
         }
+
+        if (sceneScope == null)
+        {
+            sceneArchives.Clear();
+            if (snapshot.SceneArchives != null)
+                foreach (PersistentSceneArchive archive in snapshot.SceneArchives)
+                {
+                    sceneArchives.Add(archive.SceneName, CloneArchive(archive));
+                    foreach (PersistentObjectSnapshot runtime in archive.RuntimeObjects)
+                        spawnManager?.RegisterIssuedPersistentId(runtime.PersistentId);
+                }
+        }
+        ApplyRemovedSceneObjects(snapshot.SceneArchives);
 
         if (!ExecuteReconstructionPhase(
                 "resolve scene objects",
@@ -145,7 +315,7 @@ public class WorldStateManager : MonoBehaviour
                     PersistentWorldDebug.Log("remove invalid objects", this);
                     context.SetCurrentPhase(PersistentApplyPhase.RemoveInvalidObjects);
                     int removedCount = spawnManager != null
-                        ? spawnManager.RemoveRuntimeObjectsNotInSnapshot(snapshot.RuntimeObjects, registry, serverSideLoad)
+                        ? spawnManager.RemoveRuntimeObjectsNotInSnapshot(snapshot.RuntimeObjects, registry, serverSideLoad, sceneScope)
                         : 0;
                     PersistentWorldDebug.Log($"remove invalid objects result count={removedCount}", this);
 
@@ -176,7 +346,7 @@ public class WorldStateManager : MonoBehaviour
                 PersistentApplyPhase.ApplyGameplayState,
                 result,
                 context,
-                () => ApplyGameplayState(snapshot, context, result)))
+                () => ApplyGameplayState(snapshot, context, result, sceneScope == null)))
         {
             return FinalizeApply(snapshot, context, result);
         }
@@ -266,11 +436,11 @@ public class WorldStateManager : MonoBehaviour
         }
     }
 
-    private void CapturePersistentObjects(WorldSnapshot snapshot, bool logValidationFailuresAsErrors)
+    private bool CapturePersistentObjects(WorldSnapshot snapshot, bool logValidationFailuresAsErrors, ISet<string> sceneScope = null)
     {
         if (snapshot == null || registry == null)
         {
-            return;
+            return false;
         }
 
         List<PersistentNetworkObject> objects = registry.GetAllObjects();
@@ -289,6 +459,12 @@ public class WorldStateManager : MonoBehaviour
             {
                 continue;
             }
+            string objectSceneName = persistentObject.gameObject.scene.name ?? string.Empty;
+            if (sceneScope != null && !sceneScope.Contains(objectSceneName)) continue;
+
+            if (persistentObject.ObjectKind == PersistentObjectKind.ScenePlaced &&
+                sceneArchives.TryGetValue(objectSceneName, out PersistentSceneArchive removedArchive) &&
+                removedArchive.RemovedSceneObjectIds.Contains(persistentObject.PersistentId)) continue;
 
             PrepareObjectForCapture(persistentObject);
             PersistentObjectSnapshot objectSnapshot = persistentObject.CaptureSnapshot(context);
@@ -305,6 +481,34 @@ public class WorldStateManager : MonoBehaviour
             {
                 snapshot.RuntimeObjects.Add(objectSnapshot);
             }
+        }
+        return context.ValidationIssueCount == 0;
+    }
+
+    private void ValidateSceneArchives(List<PersistentSceneArchive> archives, SnapshotApplyResult result)
+    {
+        if (archives == null) return;
+        var scenes = new HashSet<string>(StringComparer.Ordinal);
+        var identities = new HashSet<string>(StringComparer.Ordinal);
+        foreach (PersistentSceneArchive archive in archives)
+        {
+            if (archive == null || string.IsNullOrWhiteSpace(archive.SceneName) || !scenes.Add(archive.SceneName) ||
+                archive.SceneObjects == null || archive.RuntimeObjects == null || archive.RemovedSceneObjectIds == null)
+            {
+                result.AddError("Snapshot contains a missing or duplicate scene archive.");
+                continue;
+            }
+            ValidateSnapshotIdentityGraph(archive.SceneObjects, PersistentObjectKind.ScenePlaced, identities, result);
+            ValidateSnapshotIdentityGraph(archive.RuntimeObjects, PersistentObjectKind.RuntimeSpawned, identities, result);
+            foreach (PersistentObjectSnapshot entry in archive.SceneObjects)
+                if (entry == null || entry.SceneName != archive.SceneName || archive.RemovedSceneObjectIds.Contains(entry.PersistentId))
+                    result.AddError("Scene archive contains a removed object or an object belonging to a different scene.");
+            foreach (PersistentObjectSnapshot entry in archive.RuntimeObjects)
+                if (entry == null || entry.SceneName != archive.SceneName)
+                    result.AddError("Scene archive runtime object belongs to a different scene.");
+            foreach (string removed in archive.RemovedSceneObjectIds)
+                if (string.IsNullOrWhiteSpace(removed) || !identities.Add(removed))
+                    result.AddError("Scene archive contains a missing or duplicate removed object identity.");
         }
     }
 
@@ -380,6 +584,21 @@ public class WorldStateManager : MonoBehaviour
             return;
         }
 
+        // Runtime items are created in the currently active Core by their
+        // factory. Restore their additive ownership before the next departure.
+        // Characters/session singletons keep their persistent parent/root.
+        foreach (PersistentObjectSnapshot entry in snapshot.RuntimeObjects)
+        {
+            if (entry == null || string.IsNullOrWhiteSpace(entry.RuntimePrefabId) ||
+                entry.RuntimePrefabId.StartsWith(PersistentWorldSceneInstaller.CharacterPrefabPrefix, StringComparison.Ordinal) ||
+                entry.RuntimePrefabId.StartsWith(PersistentWorldSceneInstaller.SingletonPrefabPrefix, StringComparison.Ordinal) ||
+                !registry.TryGet(entry.PersistentId, out PersistentNetworkObject target) || target == null ||
+                target.transform.parent != null) continue;
+            Scene owner = SceneManager.GetSceneByName(entry.SceneName);
+            if (owner.IsValid() && owner.isLoaded && target.gameObject.scene != owner)
+                SceneManager.MoveGameObjectToScene(target.gameObject, owner);
+        }
+
         ApplyTransforms(snapshot.SceneObjects, context, result);
         ApplyTransforms(snapshot.RuntimeObjects, context, result);
     }
@@ -446,14 +665,17 @@ public class WorldStateManager : MonoBehaviour
         }
     }
 
-    private void ApplyGameplayState(WorldSnapshot snapshot, PersistentStateContext context, SnapshotApplyResult result)
+    private void ApplyGameplayState(WorldSnapshot snapshot, PersistentStateContext context, SnapshotApplyResult result, bool restoreGlobalState = true)
     {
         ApplyGameplayState(snapshot.SceneObjects, context, PersistentApplyPhase.ApplyGameplayState, result);
         ApplyGameplayState(snapshot.RuntimeObjects, context, PersistentApplyPhase.ApplyGameplayState, result);
         try
         {
-            worldRulesStateManager?.ApplyVariables(snapshot.WorldVariables);
-            if (snapshot.Abilities != null) AbilityService.Ensure().Restore(snapshot.Abilities);
+            if (restoreGlobalState)
+            {
+                worldRulesStateManager?.ApplyVariables(snapshot.WorldVariables);
+                if (snapshot.Abilities != null) AbilityService.Ensure().Restore(snapshot.Abilities);
+            }
         }
         catch (Exception ex)
         {
@@ -952,7 +1174,7 @@ public class WorldStateManager : MonoBehaviour
 
     private static bool IsServer()
     {
-        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+        return HasWorldAuthority();
     }
 
     private static double GetCaptureTime()

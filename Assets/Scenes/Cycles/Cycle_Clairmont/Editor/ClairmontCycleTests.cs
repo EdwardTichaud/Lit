@@ -91,7 +91,11 @@ public sealed class ClairmontCycleTests
         var previous = SceneManager.GetActiveScene(); var oldPlayer = LocalPlayerContext.LocalCharacterRoot;
         var scene = SceneManager.GetSceneByPath(path); bool opened = !scene.IsValid() || !scene.isLoaded;
         if (opened) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
-        var home = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive); home.name = "Maison_Core";
+        // Opening the authored home works even when NUnit's active scene is
+        // untitled. Never create/save a scene or substitute a production asset.
+        const string homePath = "Assets/Scenes/Maison/Maison_Core.unity";
+        var home = SceneManager.GetSceneByPath(homePath); bool openedHome = !home.IsValid() || !home.isLoaded;
+        if (openedHome) home = EditorSceneManager.OpenScene(homePath, OpenSceneMode.Additive);
         var actor = new GameObject("Ability traversal test actor"); actor.SetActive(false);
         actor.AddComponent<Rigidbody>(); actor.AddComponent<CapsuleCollider>(); actor.AddComponent<SquadCharacterController>();
         var serviceObject = new GameObject("Isolated ability service"); serviceObject.SetActive(false);
@@ -130,7 +134,7 @@ public sealed class ClairmontCycleTests
             typeof(AbilityService).GetMethod("OnDestroy", Private).Invoke(service, null);
             Object.DestroyImmediate(serviceObject); Object.DestroyImmediate(actor);
             if (!opened && passage != null) passage.RestoreDetectedState(oldDetected);
-            EditorSceneManager.CloseScene(home, true);
+            if (openedHome) EditorSceneManager.CloseScene(home, true);
             if (opened) EditorSceneManager.CloseScene(scene, true);
             if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
         }

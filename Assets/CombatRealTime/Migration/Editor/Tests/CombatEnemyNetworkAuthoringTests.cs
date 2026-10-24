@@ -75,6 +75,17 @@ public sealed class CombatEnemyNetworkAuthoringTests
     }
 
     [Test]
+    public void PlayerAuthoringRejectsAnOldTransformInsteadOfAddingASecondAuthority()
+    {
+        root.AddComponent<SquadCharacterController>();
+        var existing = root.AddComponent<NetworkTransform>();
+        Assert.That(CombatPlayerNetworkAuthoring.Validate(root), Does.Contain("UCC motor cache"));
+        Assert.Throws<System.InvalidOperationException>(() => CombatPlayerNetworkAuthoring.Ensure(root));
+        Assert.That(root.GetComponents<NetworkTransform>().Length, Is.EqualTo(1));
+        Assert.That(root.GetComponent<NetworkTransform>(), Is.SameAs(existing));
+    }
+
+    [Test]
     public void RequiresARealControllerAndDoesNotCreateOne()
     {
         animator.runtimeAnimatorController = null;

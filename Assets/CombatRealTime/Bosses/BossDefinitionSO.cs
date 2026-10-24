@@ -19,6 +19,8 @@ public sealed class BossDefinitionSO : ScriptableObject
     [SerializeField] private bool showImmuneImpact = true;
     [SerializeField, Tooltip("Désactive l'IA ordinaire pour un boss piloté entièrement par son comportement dédié.")]
     private bool suppressDefaultEnemyBrain = true;
+    [SerializeField, Tooltip("La quete ou une Timeline possede la disparition du boss. Empeche le fondu et la desactivation automatiques du cadavre ; ne change ni les PV ni la fin de combat.")]
+    private bool useExternalDeathPresentation;
 
     public string BossId => bossId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
@@ -28,4 +30,5 @@ public sealed class BossDefinitionSO : ScriptableObject
     public bool ShowBossBar => showBossBar;
     public bool ShowImmuneImpact => showImmuneImpact;
     public bool SuppressDefaultEnemyBrain => suppressDefaultEnemyBrain;
+    public bool UseExternalDeathPresentation => useExternalDeathPresentation;
 }

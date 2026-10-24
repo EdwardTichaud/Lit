@@ -10,6 +10,7 @@ public static class MainMenuSaveCatalog
         if (slot == null || !slot.validMetadata || string.IsNullOrEmpty(slot.directoryPath)) return false;
         try
         {
+            SaveMetadataWriter.RecoverPendingBatch(slot.directoryPath);
             string path = Path.Combine(slot.directoryPath, "CharacterState.json");
             if (!File.Exists(path)) return false;
             CharacterSaveData data = JsonUtility.FromJson<CharacterSaveData>(File.ReadAllText(path));

@@ -97,6 +97,13 @@ connaissances et résoudre les interactions narratives.
   question par défaut ou l’option joueur.
 - Les contenus lisibles générés sont capturés dans `CharacterStateStore`.
 - Les séquences `playOnce` sont enregistrées dans les métadonnées du slot.
+  Leur completion et leur reset restent en memoire pendant la partie : ils ne
+  modifient plus immediatement le slot. TryPrepareSaveMetadata les inclut dans
+  la transaction de sauvegarde personnage/monde/meta. Quitter sans sauvegarder
+  puis recharger restitue donc les sequences du dernier commit. Un nouveau
+  slot manuel de la meme session reprend les completions runtime, sans modifier
+  l'ancien slot. Le reset de session efface aussi les completions transitoires
+  sans slot (notamment cote client). Le format des metadonnees est inchange.
 - `SceneMarker` est le point d'auteur unique pour les personnages, items et
   fantômes. Son Inspector permet `Bake in Scene` pour les items et fantômes :
   leur `WorldPrefab` devient alors un objet de scène déjà configuré, sans

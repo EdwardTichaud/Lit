@@ -26,6 +26,9 @@ public class SaveSessionManager : MonoBehaviour
     public SaveSessionType CurrentSessionType { get; private set; }
 
     private bool trackingPlaytime;
+    // Published with the character/world transaction, never when a sequence ends.
+    private readonly HashSet<string> runtimeStorySequenceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private bool runtimeStorySequencesInitialized;
     private List<SaveSessionInfo> sessionsCache = new List<SaveSessionInfo>();
 
     private void Awake()
@@ -306,6 +309,7 @@ public class SaveSessionManager : MonoBehaviour
         CurrentSaveName = ResolveSaveName(sessionId, saveId);
 
         SaveMeta meta = ReadJson<SaveMeta>(GetSaveMetaPath(sessionId, saveId));
+        LoadRuntimeStorySequences(meta);
         CurrentPlaytimeSeconds = meta != null ? meta.playTimeSeconds : 0f;
         CurrentSessionType = meta != null ? meta.sessionType : ResolveSessionType(sessionId);
     }
@@ -328,12 +332,21 @@ public class SaveSessionManager : MonoBehaviour
 
     public void RecordSaveMetadata(string sceneName)
     {
+        if (TryPrepareSaveMetadata(sceneName, out string path, out byte[] bytes))
+            SaveMetadataWriter.WriteBytesAtomic(path, bytes);
+    }
+
+    public bool TryPrepareSaveMetadata(string sceneName, out string path, out byte[] bytes)
+    {
+        path = null;
+        bytes = null;
         if (!HasActiveSave)
         {
-            return;
+            return false;
         }
 
         string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
+        SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(metaPath));
         SaveMeta meta = ReadJson<SaveMeta>(metaPath) ?? new SaveMeta();
         meta.sessionId = CurrentSessionId;
         meta.sessionName = ResolveSessionName(CurrentSessionId);
@@ -343,8 +356,11 @@ public class SaveSessionManager : MonoBehaviour
         meta.savedAtUtcTicks = DateTime.UtcNow.Ticks;
         meta.playTimeSeconds = CurrentPlaytimeSeconds;
         meta.sceneName = sceneName;
-        EnsureStorySequenceList(meta);
-        WriteJson(metaPath, meta);
+        EnsureRuntimeStorySequences();
+        meta.completedStorySequenceIds = GetRuntimeStorySequenceIds();
+        path = metaPath;
+        bytes = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(meta, true));
+        return true;
     }
 
     public bool IsStorySequenceCompleted(string sequenceId)
@@ -354,26 +370,8 @@ public class SaveSessionManager : MonoBehaviour
             return false;
         }
 
-        SaveMeta meta = ReadJson<SaveMeta>(
-            GetSaveMetaPath(CurrentSessionId, CurrentSaveId));
-        if (meta == null || meta.completedStorySequenceIds == null)
-        {
-            return false;
-        }
-
-        string id = sequenceId.Trim();
-        for (int i = 0; i < meta.completedStorySequenceIds.Count; i++)
-        {
-            if (string.Equals(
-                    meta.completedStorySequenceIds[i],
-                    id,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        EnsureRuntimeStorySequences();
+        return runtimeStorySequenceIds.Contains(sequenceId.Trim());
     }
 
     public bool MarkStorySequenceCompleted(string sequenceId)
@@ -383,24 +381,8 @@ public class SaveSessionManager : MonoBehaviour
             return false;
         }
 
-        string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
-        SaveMeta meta = ReadJson<SaveMeta>(metaPath) ?? CreateActiveSaveMeta();
-        EnsureStorySequenceList(meta);
-
-        string id = sequenceId.Trim();
-        for (int i = 0; i < meta.completedStorySequenceIds.Count; i++)
-        {
-            if (string.Equals(
-                    meta.completedStorySequenceIds[i],
-                    id,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        meta.completedStorySequenceIds.Add(id);
-        WriteJson(metaPath, meta);
+        EnsureRuntimeStorySequences();
+        runtimeStorySequenceIds.Add(sequenceId.Trim());
         return true;
     }
 
@@ -411,21 +393,8 @@ public class SaveSessionManager : MonoBehaviour
             return false;
         }
 
-        string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
-        SaveMeta meta = ReadJson<SaveMeta>(metaPath);
-        if (meta == null || meta.completedStorySequenceIds == null)
-        {
-            return true;
-        }
-
-        string id = sequenceId.Trim();
-        int removed = meta.completedStorySequenceIds.RemoveAll(
-            candidate => string.Equals(candidate, id, StringComparison.OrdinalIgnoreCase));
-        if (removed > 0)
-        {
-            WriteJson(metaPath, meta);
-        }
-
+        EnsureRuntimeStorySequences();
+        runtimeStorySequenceIds.Remove(sequenceId.Trim());
         return true;
     }
 
@@ -436,20 +405,9 @@ public class SaveSessionManager : MonoBehaviour
             return 0;
         }
 
-        string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
-        SaveMeta meta = ReadJson<SaveMeta>(metaPath);
-        if (meta == null || meta.completedStorySequenceIds == null)
-        {
-            return 0;
-        }
-
-        int removed = meta.completedStorySequenceIds.Count;
-        meta.completedStorySequenceIds.Clear();
-        if (removed > 0)
-        {
-            WriteJson(metaPath, meta);
-        }
-
+        EnsureRuntimeStorySequences();
+        int removed = runtimeStorySequenceIds.Count;
+        runtimeStorySequenceIds.Clear();
         return removed;
     }
 
@@ -533,6 +491,7 @@ public class SaveSessionManager : MonoBehaviour
 
     public void ClearActiveSave()
     {
+        ResetRuntimeStorySequenceState();
         CurrentSessionId = null;
         CurrentSessionName = null;
         CurrentSaveId = null;
@@ -611,33 +570,39 @@ public class SaveSessionManager : MonoBehaviour
             return result;
         }
 
-        SaveMeta activeMeta = ReadJson<SaveMeta>(
-            GetSaveMetaPath(CurrentSessionId, CurrentSaveId));
-        if (activeMeta == null || activeMeta.completedStorySequenceIds == null)
-        {
-            return result;
-        }
-
-        for (int i = 0; i < activeMeta.completedStorySequenceIds.Count; i++)
-        {
-            string id = activeMeta.completedStorySequenceIds[i];
-            if (!string.IsNullOrWhiteSpace(id) &&
-                !result.Exists(candidate =>
-                    string.Equals(candidate, id, StringComparison.OrdinalIgnoreCase)))
-            {
-                result.Add(id);
-            }
-        }
-
-        return result;
+        EnsureRuntimeStorySequences();
+        return GetRuntimeStorySequenceIds();
     }
 
-    private static void EnsureStorySequenceList(SaveMeta meta)
+    public void ResetRuntimeStorySequenceState()
     {
-        if (meta != null && meta.completedStorySequenceIds == null)
+        runtimeStorySequenceIds.Clear();
+        runtimeStorySequencesInitialized = false;
+    }
+
+    private void EnsureRuntimeStorySequences()
+    {
+        if (!runtimeStorySequencesInitialized)
+            LoadRuntimeStorySequences(HasActiveSave
+                ? ReadJson<SaveMeta>(GetSaveMetaPath(CurrentSessionId, CurrentSaveId)) : null);
+    }
+
+    private void LoadRuntimeStorySequences(SaveMeta meta)
+    {
+        runtimeStorySequenceIds.Clear();
+        if (meta?.completedStorySequenceIds != null)
         {
-            meta.completedStorySequenceIds = new List<string>();
+            foreach (string id in meta.completedStorySequenceIds)
+                if (!string.IsNullOrWhiteSpace(id)) runtimeStorySequenceIds.Add(id.Trim());
         }
+        runtimeStorySequencesInitialized = true;
+    }
+
+    private List<string> GetRuntimeStorySequenceIds()
+    {
+        var ids = new List<string>(runtimeStorySequenceIds);
+        ids.Sort(StringComparer.OrdinalIgnoreCase);
+        return ids;
     }
 
     private List<SaveSessionInfo> LoadSessions()
@@ -764,6 +729,7 @@ public class SaveSessionManager : MonoBehaviour
     private static void WriteJson<T>(string path, T data) where T : class
     {
         if (string.IsNullOrWhiteSpace(path) || data == null) throw new ArgumentException("MÃÆ’©tadonnÃÆ’©es manquantes.");
+        SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(path));
         SaveMetadataWriter.WriteAtomic(path, JsonUtility.ToJson(data, true));
     }
 
@@ -792,13 +758,15 @@ public class SaveSessionManager : MonoBehaviour
 
     private static T ReadJson<T>(string path) where T : class
     {
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        if (string.IsNullOrWhiteSpace(path))
         {
             return null;
         }
 
         try
         {
+            SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(path));
+            if (!File.Exists(path)) return null;
             string json = File.ReadAllText(path);
             return JsonUtility.FromJson<T>(json);
         }

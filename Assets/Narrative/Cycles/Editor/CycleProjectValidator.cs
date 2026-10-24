@@ -30,12 +30,15 @@ public sealed class CycleProjectValidator : IPreprocessBuildWithReport
     public static List<string> CollectIssues()
     {
         var issues = new List<string>();
-        var cycles = Resources.LoadAll<CycleDefinition>("Narrative");
+        var runtimeCycles = new HashSet<CycleDefinition>(CycleCatalog.LoadDefinitions());
+        var cycles = AssetDatabase.FindAssets("t:CycleDefinition").Select(guid =>
+            AssetDatabase.LoadAssetAtPath<CycleDefinition>(AssetDatabase.GUIDToAssetPath(guid))).Where(cycle => cycle != null).ToArray();
         var ids = new HashSet<string>();
         var buildScenes = new HashSet<string>(EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => System.IO.Path.GetFileNameWithoutExtension(scene.path)));
         foreach (var cycle in cycles)
         {
             if (cycle == null) continue;
+            if (!runtimeCycles.Contains(cycle)) issues.Add(cycle.name + " : definition introuvable au demarrage ; placer sous Resources/Narrative ou referencer dans un CycleCatalog de ce dossier.");
             if (!ids.Add(cycle.cycleId ?? string.Empty)) issues.Add("Cycle ID duplique : " + cycle.cycleId);
             foreach (var issue in cycle.ValidateConfiguration()) issues.Add(cycle.name + " : " + issue);
             if (!string.IsNullOrWhiteSpace(cycle.cycleSceneName) && !buildScenes.Contains(cycle.cycleSceneName))
@@ -44,16 +47,19 @@ public sealed class CycleProjectValidator : IPreprocessBuildWithReport
                 if (step != null) foreach (var reward in step.rewards ?? System.Array.Empty<CycleReward>())
                     if (reward != null && reward.kind == CycleRewardKind.Item && reward.item == null) issues.Add(cycle.name + " : item de recompense absent : " + step.id);
         }
-        bool hasMaison = AssetDatabase.FindAssets("t:Prefab").Any(guid =>
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
-            return prefab != null && prefab.GetComponentInChildren<Maison>(true) != null;
-        });
-        if (!hasMaison) hasMaison = AssetDatabase.FindAssets("t:Scene").Any(guid =>
+        // Inspect serialized component references, not every prefab's imported
+        // hierarchy. Loading the entire asset library here also loads its meshes,
+        // materials and editor callbacks, unrelated to this authoring gate.
+        string maisonScriptGuid = AssetDatabase.FindAssets("Maison t:MonoScript")
+            .FirstOrDefault(guid => AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(guid))?.GetClass() == typeof(Maison));
+        bool HasMaisonScript(string guid)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            return !string.IsNullOrWhiteSpace(path) && System.IO.File.ReadAllText(path).Contains("Assembly-CSharp::Maison");
-        });
+            return maisonScriptGuid != null && System.IO.File.Exists(path) && System.IO.File.ReadLines(path)
+                .Any(line => line.Contains("m_Script:") && line.Contains("guid: " + maisonScriptGuid + ","));
+        }
+        bool hasMaison = AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }).Any(HasMaisonScript) ||
+            AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" }).Any(HasMaisonScript);
         if (!hasMaison)
             issues.Add("Aucun composant Maison trouve pour le coffre de recompenses.");
         return issues;

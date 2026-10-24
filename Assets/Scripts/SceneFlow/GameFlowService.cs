@@ -64,7 +64,14 @@ public sealed class GameFlowService : MonoBehaviour
     private GameplaySessionRoot gameplaySessionRoot;
     private Coroutine transitionRoutine;
     private readonly List<AsyncOperation> pendingSceneOperations = new List<AsyncOperation>();
+    private readonly HashSet<string> pendingPostLoadingScenes = new HashSet<string>(StringComparer.Ordinal);
     private Coroutine postLoadingRoutine;
+    private Coroutine synchronizedClientPreparation;
+    private string synchronizedClientScene;
+    private bool synchronizedClientReady;
+    private bool synchronizedClientFailed;
+    internal static float ClientPreparationBudgetSeconds => Instance != null
+        ? Mathf.Max(1f, Instance.navigationPreparationMaximumWaitSeconds) + 5f : 35f;
     private ProximitySceneStreamingController proximityStreaming;
     private ZoneRuntimeContext activeZoneRuntimeContext;
     private int postLoadingGeneration;
@@ -145,6 +152,7 @@ public sealed class GameFlowService : MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
         SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.activeSceneChanged += OnActiveSceneChanged;
     }
 
     private void Start()
@@ -173,6 +181,7 @@ public sealed class GameFlowService : MonoBehaviour
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         ReleaseZonePresentation();
         if (Instance == this)
         {
@@ -182,8 +191,89 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        EnsureSynchronizedClientSession(scene.name);
         EnforceSingleAudioListener();
         TryOpenMenuFromBootstrap(scene);
+    }
+
+    private void OnActiveSceneChanged(Scene previous, Scene next)
+    {
+        EnsureSynchronizedClientSession(next.name);
+    }
+
+    // Native NGO scene synchronization owns all scene loading and actor spawning.
+    // Create only the configured local services; do not reset the live connection.
+    internal bool EnsureSynchronizedClientSession(string sceneName)
+    {
+        NetworkManager network = NetworkManager.Singleton;
+        if (network == null || !network.IsListening || !network.IsClient || network.IsServer) return true;
+        ZoneManifest manifest = ResolveGameplayManifest(sceneName);
+        if (manifest == null || !SceneManager.GetSceneByName(manifest.PrimarySceneName).isLoaded) return false;
+
+        bool wasPreparing = IsPreparingGameplayScene;
+        bool hasSession;
+        IsPreparingGameplayScene = true;
+        try { hasSession = EnsureGameplaySession(); }
+        finally { IsPreparingGameplayScene = wasPreparing; }
+        if (!hasSession) return false;
+        if (synchronizedClientScene == manifest.PrimarySceneName) return true;
+        if (synchronizedClientPreparation != null) StopCoroutine(synchronizedClientPreparation);
+        synchronizedClientPreparation = null;
+        synchronizedClientScene = manifest.PrimarySceneName;
+        synchronizedClientReady = false;
+        synchronizedClientFailed = false;
+        activeGameplaySceneName = manifest.PrimarySceneName;
+        initialGameplaySceneName = manifest.PrimarySceneName;
+        InstallZonePresentation(manifest, manifest.PrimarySceneName);
+        return true;
+    }
+
+    // Called only after the snapshot has restored cycle completion/progression.
+    // Before that point, a completed cycle's intentionally absent scene is unknown.
+    internal bool FinishSynchronizedClientWorld(string sceneName)
+    {
+        NetworkManager network = NetworkManager.Singleton;
+        if (network == null || !network.IsListening || !network.IsClient || network.IsServer) return true;
+        if (!EnsureSynchronizedClientSession(sceneName) || synchronizedClientFailed) return false;
+        if (synchronizedClientReady && NavMeshWorldService.Instance != null && NavMeshWorldService.Instance.IsReady) return true;
+        synchronizedClientReady = false;
+        if (synchronizedClientPreparation == null)
+            synchronizedClientPreparation = StartCoroutine(FinishSynchronizedClientWorldRoutine(ResolveGameplayManifest(sceneName)));
+        return false;
+    }
+
+    private IEnumerator FinishSynchronizedClientWorldRoutine(ZoneManifest manifest)
+    {
+        yield return null;
+        if (!ValidateManifestScenesLoaded(manifest, out string report))
+        {
+            Debug.LogError("[GameFlow] Client world is incomplete: " + report, this);
+            synchronizedClientFailed = true;
+            synchronizedClientPreparation = null;
+            yield break;
+        }
+        loadedZoneSceneNames.Clear();
+        AddLoadedGameplayScene(manifest.PrimarySceneName);
+        foreach (string name in manifest.LoadingSceneNames)
+            if (SceneManager.GetSceneByName(name).isLoaded) AddLoadedGameplayScene(name);
+        foreach (string name in manifest.PostLoadingSceneNames)
+            if (SceneManager.GetSceneByName(name).isLoaded) AddLoadedGameplayScene(name);
+        yield return StopProximityStreaming();
+        yield return RebuildNavigationForLoadedWorldRoutine("client sync " + manifest.PrimarySceneName, manifest);
+        if (NavMeshWorldService.Instance == null || !NavMeshWorldService.Instance.IsReady)
+        {
+            synchronizedClientFailed = true;
+            synchronizedClientPreparation = null;
+            yield break;
+        }
+        SquadManager.Instance?.InitializeForLoadedGameplayScene();
+        yield return null;
+        PreserveUccSimulationManager();
+        AdoptGameplayManagers();
+        EnforceSingleAudioListener();
+        StartProximityStreaming(manifest.PrimarySceneName);
+        synchronizedClientReady = true;
+        synchronizedClientPreparation = null;
     }
 
     private void TryOpenMenuFromBootstrap(Scene scene)
@@ -258,13 +348,14 @@ public sealed class GameFlowService : MonoBehaviour
     {
         if (transitionRoutine != null) { StopCoroutine(transitionRoutine); transitionRoutine = null; }
         StopPostLoadingRoutine();
-        foreach (AsyncOperation operation in pendingSceneOperations)
+        foreach (AsyncOperation operation in pendingSceneOperations.ToArray())
         {
             if (operation == null || operation.isDone) continue;
             operation.allowSceneActivation = true;
             while (!operation.isDone) yield return null;
         }
         pendingSceneOperations.Clear();
+        pendingPostLoadingScenes.Clear();
         IsPreparingGameplayScene = false;
     }
 
@@ -406,9 +497,19 @@ public sealed class GameFlowService : MonoBehaviour
         yield return LoadingScreenService.ShowAndWaitForPresentation(destination.LoadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
+        bool postLoadingReady = false;
+        yield return FinishPostLoadingRequests(true, ready => postLoadingReady = ready);
+        if (!postLoadingReady) { transitionRoutine = null; yield break; }
         yield return StopProximityStreaming();
         ReleaseZonePresentation(preserveAudio: true);
         List<string> previousScenes = CaptureLoadedGameplayScenes();
+        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(previousScenes))
+        {
+            LoadingScreenService.SetProgress(0f, "La conservation de la zone a échoué.");
+            transitionRoutine = null;
+            yield break;
+        }
+        HashSet<string> alreadyLoadedScenes = CaptureLoadedUnitySceneNames();
         loadedZoneSceneNames.Clear();
 
         yield return LoadAdditiveRoutine(destination.PrimarySceneName, destination.LoadingMessage);
@@ -442,6 +543,13 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark($"Sous-scene precedente dechargee ({previousScenes[i]})");
         }
 
+        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.RestoreArchivedScenes(
+                loadedZoneSceneNames.FindAll(name => !alreadyLoadedScenes.Contains(name))))
+        {
+            LoadingScreenService.SetProgress(0f, "La restauration de la zone a échoué.");
+            transitionRoutine = null;
+            yield break;
+        }
         yield return RebuildNavigationForLoadedWorldRoutine("arrivee " + destination.PrimarySceneName, destination);
 
         activeGameplaySceneName = destination.PrimarySceneName;
@@ -473,9 +581,19 @@ public sealed class GameFlowService : MonoBehaviour
         yield return LoadingScreenService.ShowAndWaitForPresentation(hubLoadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
+        bool postLoadingReady = false;
+        yield return FinishPostLoadingRequests(true, ready => postLoadingReady = ready);
+        if (!postLoadingReady) { transitionRoutine = null; yield break; }
         yield return StopProximityStreaming();
         ReleaseZonePresentation(preserveAudio: true);
         List<string> previousScenes = CaptureLoadedGameplayScenes();
+        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(previousScenes))
+        {
+            LoadingScreenService.SetProgress(0f, "La conservation de la zone a échoué.");
+            transitionRoutine = null;
+            yield break;
+        }
+        HashSet<string> alreadyLoadedScenes = CaptureLoadedUnitySceneNames();
         loadedZoneSceneNames.Clear();
 
         yield return LoadAdditiveRoutine(hubScene, hubLoadingMessage);
@@ -502,6 +620,13 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark($"Sous-scene dechargee ({previousScenes[i]})");
         }
 
+        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.RestoreArchivedScenes(
+                loadedZoneSceneNames.FindAll(name => !alreadyLoadedScenes.Contains(name))))
+        {
+            LoadingScreenService.SetProgress(0f, "La restauration de la Maison a échoué.");
+            transitionRoutine = null;
+            yield break;
+        }
         yield return RebuildNavigationForLoadedWorldRoutine("retour " + hubScene, hubManifest);
 
         activeGameplaySceneName = hubScene;
@@ -519,12 +644,27 @@ public sealed class GameFlowService : MonoBehaviour
         StartPostLoading(hubManifest);
     }
 
+    private static HashSet<string> CaptureLoadedUnitySceneNames()
+    {
+        var result = new HashSet<string>(StringComparer.Ordinal);
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            Scene scene = SceneManager.GetSceneAt(i);
+            if (scene.isLoaded) result.Add(scene.name);
+        }
+        return result;
+    }
+
     private IEnumerator ReturnToMenuRoutine()
     {
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
         try
         {
             yield return LoadingScreenService.ShowAndWaitForPresentation(returnToMenuLoadingMessage);
+
+            bool postLoadingReady = false;
+            yield return FinishPostLoadingRequests(returnToMenuShouldSave, ready => postLoadingReady = ready);
+            if (!postLoadingReady) yield break;
 
             PausePanelController pausePanel = PausePanelController.Instance;
             pausePanel?.CloseForSceneTransition();
@@ -535,7 +675,18 @@ public sealed class GameFlowService : MonoBehaviour
 
             if (returnToMenuShouldSave)
             {
-                yield return SaveBeforeReturningToMenuRoutine(pausePanel);
+                bool saved = false;
+                yield return SaveBeforeReturningToMenuRoutine(pausePanel, success => saved = success);
+                if (!saved)
+                {
+                    // Keep the live session, transport, navigation and zone
+                    // presentation intact so the player can retry the save.
+                    StartPostLoading(ResolveGameplayManifest(activeGameplaySceneName));
+                    LoadingScreenService.HideWhenSceneIsReady();
+                    yield return LoadingScreenService.WaitUntilHidden();
+                    InfoBoxUI.TryShow("La sauvegarde a échoué. La partie reste ouverte.");
+                    yield break;
+                }
             }
 
             yield return StopProximityStreaming();
@@ -590,16 +741,18 @@ public sealed class GameFlowService : MonoBehaviour
         }
     }
 
-    private IEnumerator SaveBeforeReturningToMenuRoutine(PausePanelController pausePanel)
+    private IEnumerator SaveBeforeReturningToMenuRoutine(PausePanelController pausePanel, Action<bool> completed)
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
         {
+            completed(true); // Clients leave without writing the host's save.
             yield break;
         }
 
         if (pausePanel != null && !pausePanel.PrepareSaveForSceneTransition())
         {
             Debug.LogWarning("[GameFlow] Sauvegarde de sortie impossible : aucun slot actif.");
+            completed(false);
             yield break;
         }
 
@@ -607,6 +760,7 @@ public sealed class GameFlowService : MonoBehaviour
         if (store == null)
         {
             Debug.LogWarning("[GameFlow] Sauvegarde de sortie impossible : CharacterStateStore absent.");
+            completed(false);
             yield break;
         }
 
@@ -618,8 +772,9 @@ public sealed class GameFlowService : MonoBehaviour
 
         if (!store.LastSaveSucceeded)
         {
-            Debug.LogWarning("[GameFlow] La sauvegarde de sortie a echoue ; retour au menu poursuivi.");
+            Debug.LogWarning("[GameFlow] La sauvegarde de sortie a echoue ; la session est conservee.");
         }
+        completed(store.LastSaveSucceeded);
     }
 
     private IEnumerator PrepareUccCharactersForShutdownRoutine()
@@ -874,6 +1029,11 @@ public sealed class GameFlowService : MonoBehaviour
             {
                 continue;
             }
+            if (SceneManager.GetSceneByName(sceneName).isLoaded)
+            {
+                AddLoadedGameplayScene(sceneName);
+                continue; // Never replay an archive onto a retained/live scene.
+            }
 
             yield return WaitForStableGameplayFrames(generation);
             if (generation != postLoadingGeneration)
@@ -889,6 +1049,16 @@ public sealed class GameFlowService : MonoBehaviour
             }
 
             AddLoadedGameplayScene(sceneName);
+            if (pendingPostLoadingScenes.Contains(sceneName))
+            {
+                if (WorldStateManager.Instance != null && !WorldStateManager.Instance.RestoreArchivedScenes(new[] { sceneName }))
+                {
+                    postLoadingRoutine = null;
+                    EndPostLoadingPriority();
+                    yield break;
+                }
+                pendingPostLoadingScenes.Remove(sceneName);
+            }
             SceneTransitionProfiler.Mark($"Post chargement active ({sceneName})");
 
             yield return WaitForStableGameplayFrames(generation);
@@ -901,7 +1071,7 @@ public sealed class GameFlowService : MonoBehaviour
         }
     }
 
-    private static IEnumerator LoadAdditiveAfterGameplayRoutine(string sceneName)
+    private IEnumerator LoadAdditiveAfterGameplayRoutine(string sceneName)
     {
         Scene scene = SceneManager.GetSceneByName(sceneName);
         if (scene.IsValid() && scene.isLoaded)
@@ -910,6 +1080,10 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         AsyncOperation operation = LoadScene(sceneName, LoadSceneMode.Additive);
+        // The native request outlives a stopped coroutine. Remember ownership
+        // before yielding so a portal cannot leave an untracked scene behind.
+        AddLoadedGameplayScene(sceneName);
+        pendingPostLoadingScenes.Add(sceneName);
         if (operation == null)
         {
             while (!SceneManager.GetSceneByName(sceneName).isLoaded)
@@ -1024,6 +1198,11 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void DestroyGameplaySession()
     {
+        if (synchronizedClientPreparation != null) StopCoroutine(synchronizedClientPreparation);
+        synchronizedClientPreparation = null;
+        synchronizedClientScene = null;
+        synchronizedClientReady = false;
+        synchronizedClientFailed = false;
         StopPostLoadingRoutine();
         IsPreparingGameplayScene = false;
         if (gameplaySessionRoot != null)
@@ -1046,6 +1225,41 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         EndPostLoadingPriority();
+    }
+
+    private IEnumerator FinishPostLoadingRequests(bool restoreArchivedState, Action<bool> completed)
+    {
+        // Called only after the loading screen is opaque. A load held at 90%
+        // blocks Unity's whole scene-operation queue, including unloads.
+        double deadline = Time.realtimeSinceStartupAsDouble + 120;
+        AsyncOperation[] operations = pendingSceneOperations.ToArray();
+        foreach (AsyncOperation operation in operations)
+            if (operation != null && !operation.isDone) operation.allowSceneActivation = true;
+        foreach (AsyncOperation operation in operations)
+        {
+            while (operation != null && !operation.isDone && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+            if (operation != null && !operation.isDone)
+            {
+                LoadingScreenService.SetProgress(0, "Une opération de scène n'a pas terminé. La partie est conservée.");
+                completed(false);
+                yield break;
+            }
+        }
+        pendingSceneOperations.RemoveAll(operation => operation == null || operation.isDone);
+        foreach (string sceneName in new List<string>(pendingPostLoadingScenes))
+        {
+            while (!SceneManager.GetSceneByName(sceneName).isLoaded && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+            if (!SceneManager.GetSceneByName(sceneName).isLoaded ||
+                (restoreArchivedState && WorldStateManager.Instance != null &&
+                 !WorldStateManager.Instance.RestoreArchivedScenes(new[] { sceneName })))
+            {
+                LoadingScreenService.SetProgress(0, "La préparation de la scène a échoué. La partie est conservée.");
+                completed(false);
+                yield break;
+            }
+            pendingPostLoadingScenes.Remove(sceneName);
+        }
+        completed(true);
     }
 
     private void AdoptGameplayManagers()
@@ -1574,6 +1788,7 @@ public sealed class GameFlowService : MonoBehaviour
         NetworkManager networkManager = NetworkManager.Singleton;
         if (networkManager != null && networkManager.IsListening && networkManager.IsServer && networkManager.SceneManager != null)
         {
+            networkManager.SceneManager.ActiveSceneSynchronizationEnabled = true;
             networkManager.SceneManager.LoadScene(sceneName, mode);
             return null;
         }
@@ -1617,6 +1832,8 @@ public sealed class GameFlowService : MonoBehaviour
                 root.GetComponentInChildren<GameplaySessionRoot>(true) != null) return false;
         var manager = NetworkManager.Singleton;
         bool started;
+        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(new[] { scene.name }))
+            return false;
         if (manager != null && manager.IsListening)
         {
             if (!manager.IsServer || manager.SceneManager == null || !manager.NetworkConfig.EnableSceneManagement) return false;

@@ -18,6 +18,9 @@ namespace Lit.Timeline
             public TimelineBindingProfile profile;
             public TimelinePlaybackHandle handle;
             public Coroutine waitRoutine;
+            public DirectorWrapMode originalWrapMode;
+            public bool ownsWrapMode;
+            public int observedEndFrame = -1;
             public readonly List<ITimelinePlaybackParticipant> participants = new List<ITimelinePlaybackParticipant>();
         }
 
@@ -52,11 +55,20 @@ namespace Lit.Timeline
 
         private void OnDestroy()
         {
+            StopAllPlaybacks("TimelineManager detruit.");
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             if (Instance == this)
             {
                 Instance = null;
             }
+        }
+
+        // Releasing the service must also release the camera/effect participants.
+        private void OnDisable() => StopAllPlaybacks("TimelineManager desactive.");
+        private void StopAllPlaybacks(string reason)
+        {
+            foreach (var playback in new List<ActivePlayback>(activePlaybacks.Values))
+                FinishPlayback(playback, TimelinePlaybackState.Failed, reason);
         }
 
         public void Register(TimelineBindingTarget target)
@@ -238,6 +250,13 @@ namespace Lit.Timeline
             }
 
             HashSet<TrackAsset> outputTracks = new HashSet<TrackAsset>();
+            var coverageIssues = TimelineBindingContract.CollectCoverageIssues(playback.director, playback.profile);
+            if (coverageIssues.Count > 0)
+            {
+                if (logFailures)
+                    foreach (string issue in coverageIssues) Debug.LogError("Timeline: " + issue, playback.director);
+                return false;
+            }
             foreach (PlayableBinding output in timeline.outputs)
             {
                 if (output.sourceObject is TrackAsset track)
@@ -264,6 +283,7 @@ namespace Lit.Timeline
             {
                 if (!playback.profile.TryGetBinding(output.sourceObject, out TimelineBindingDefinition definition))
                 {
+                    RegisterParticipant(playback, playback.director.GetGenericBinding(output.sourceObject));
                     continue;
                 }
 
@@ -333,6 +353,13 @@ namespace Lit.Timeline
             }
 
             playback.director.stopped += OnDirectorStopped;
+            // None resets director.time before emitting stopped. Hold preserves
+            // the graph's actual end time so completion cannot be confused with
+            // cancellation. Managed narrative playback is one pass; restore the
+            // authored wrap mode when releasing the Director.
+            playback.originalWrapMode = playback.director.extrapolationMode;
+            playback.ownsWrapMode = true;
+            playback.director.extrapolationMode = DirectorWrapMode.Hold;
             playback.director.time = 0d;
             playback.director.Play();
             playback.handle.State = TimelinePlaybackState.Playing;
@@ -369,13 +396,14 @@ namespace Lit.Timeline
 
         private static void RegisterParticipant(ActivePlayback playback, UnityEngine.Object target)
         {
-            Component component = target as Component;
-            if (component == null)
+            GameObject owner = target as GameObject;
+            if (owner == null && target is Component component) owner = component.gameObject;
+            if (owner == null)
             {
                 return;
             }
 
-            MonoBehaviour[] behaviours = component.GetComponents<MonoBehaviour>();
+            MonoBehaviour[] behaviours = owner.GetComponents<MonoBehaviour>();
             for (int i = 0; i < behaviours.Length; i++)
             {
                 if (behaviours[i] is ITimelinePlaybackParticipant participant &&
@@ -383,6 +411,30 @@ namespace Lit.Timeline
                 {
                     playback.participants.Add(participant);
                 }
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (activePlaybacks.Count == 0) return;
+            foreach (var playback in new List<ActivePlayback>(activePlaybacks.Values))
+            {
+                if (playback.handle.State != TimelinePlaybackState.Playing) continue;
+                var director = playback.director;
+                if (director == null)
+                {
+                    FinishPlayback(playback, TimelinePlaybackState.Failed, "PlayableDirector detruit pendant la lecture.");
+                    continue;
+                }
+                double duration = director.duration;
+                bool atEnd = duration > 0 && !double.IsInfinity(duration) && !double.IsNaN(duration) &&
+                    director.playableGraph.IsValid() && director.time >= duration - 0.0000001d;
+                if (!atEnd) { playback.observedEndFrame = -1; continue; }
+                // Give the last authored frame a full evaluation/presentation
+                // before releasing effects and camera ownership.
+                if (playback.observedEndFrame < 0) playback.observedEndFrame = Time.frameCount;
+                else if (Time.frameCount > playback.observedEndFrame)
+                    FinishPlayback(playback, TimelinePlaybackState.Completed);
             }
         }
 
@@ -395,9 +447,7 @@ namespace Lit.Timeline
                     $"TimelineManager: lecture de '{director.playableAsset?.name}' terminee a {director.time:0.###} s.",
                     director);
 #endif
-                bool reachedEnd = director.duration > 0 && !double.IsInfinity(director.duration) &&
-                    director.time >= director.duration - .05d;
-                FinishPlayback(playback, reachedEnd ? TimelinePlaybackState.Completed : TimelinePlaybackState.Stopped);
+                FinishPlayback(playback, TimelinePlaybackState.Stopped);
             }
         }
 
@@ -409,6 +459,7 @@ namespace Lit.Timeline
                 bool missingRequiredBinding = false;
                 if (playback.director != null && playback.handle.State == TimelinePlaybackState.Playing)
                 {
+                    missingRequiredBinding = TimelineBindingContract.CollectCoverageIssues(playback.director, playback.profile).Count > 0;
                     foreach (TimelineBindingDefinition binding in playback.profile.Bindings)
                     {
                         if (binding != null && binding.required && binding.track != null && playback.director.GetGenericBinding(binding.track) == null)
@@ -451,11 +502,22 @@ namespace Lit.Timeline
                 // restore and commit their final gameplay pose before input
                 // is returned to UCC.
                 playback.director.Stop();
+                if (playback.ownsWrapMode)
+                {
+                    playback.director.extrapolationMode = playback.originalWrapMode;
+                    playback.ownsWrapMode = false;
+                }
             }
 
             for (int i = playback.participants.Count - 1; i >= 0; i--)
             {
-                try { playback.participants[i].OnTimelinePlaybackFinished(playback.director); }
+                if (playback.participants[i] is UnityEngine.Object participantObject && participantObject == null) continue;
+                try
+                {
+                    if (playback.participants[i] is ITimelinePlaybackResultParticipant resultParticipant)
+                        resultParticipant.OnTimelinePlaybackFinished(playback.director, state);
+                    else playback.participants[i].OnTimelinePlaybackFinished(playback.director);
+                }
                 catch (Exception exception) { Debug.LogException(exception); }
             }
             playback.participants.Clear();

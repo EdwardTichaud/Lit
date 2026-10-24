@@ -20,3 +20,4 @@ MonoBehaviour:
   showBossBar: 0
   showImmuneImpact: 1
   suppressDefaultEnemyBrain: 1
+  useExternalDeathPresentation: 1

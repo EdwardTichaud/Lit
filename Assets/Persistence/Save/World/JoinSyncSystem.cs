@@ -94,6 +94,7 @@ public class JoinSyncSystem : MonoBehaviour
     }
 
     private int menuSyncRetries;
+    private readonly HashSet<ulong> deferredSnapshotClients = new HashSet<ulong>();
 
     private void Update()
     {
@@ -103,6 +104,12 @@ public class JoinSyncSystem : MonoBehaviour
         SyncLocalGameplayBlock();
         SyncVisualGate();
         if (PrivateSessionService.Instance?.Phase == PrivateSessionPhase.Lobby) return;
+        if (hookedManager != null && hookedManager.IsServer && deferredSnapshotClients.Count > 0 &&
+            !GameFlowService.IsPreparingGameplayScene && !(GameFlowService.Instance?.IsTransitioning ?? false) &&
+            !(worldSaveAdapter?.IsHostWorldRestoreInProgress ?? false))
+        {
+            foreach (ulong client in new List<ulong>(deferredSnapshotClients)) SendSnapshotToClient(client);
+        }
         HandleSnapshotTimeouts();
         TryCompletePendingTransfer();
 
@@ -118,6 +125,7 @@ public class JoinSyncSystem : MonoBehaviour
         pendingTransfer = null;
         readyClients.Clear();
         pendingServerTransfers.Clear();
+        deferredSnapshotClients.Clear();
         localSnapshotRequestSent = false;
         localSyncFailed = false;
         syncInputLockApplied = false;
@@ -220,6 +228,7 @@ public class JoinSyncSystem : MonoBehaviour
 
     private void OnClientDisconnected(ulong clientId)
     {
+        deferredSnapshotClients.Remove(clientId);
         readyClients.Remove(clientId);
         RemoveServerTransfer(clientId, "client_disconnected");
 
@@ -319,13 +328,25 @@ public class JoinSyncSystem : MonoBehaviour
             return;
         }
 
+        // A snapshot of a half-loaded additive group would reset good archived
+        // data and fail reconstruction on clients still integrating its scenes.
+        if (GameFlowService.IsPreparingGameplayScene || (GameFlowService.Instance?.IsTransitioning ?? false))
+        {
+            deferredSnapshotClients.Add(clientId);
+            readyClients[clientId] = false;
+            return;
+        }
+
         if (worldSaveAdapter != null && worldSaveAdapter.IsHostWorldRestoreInProgress)
         {
+            deferredSnapshotClients.Add(clientId);
+            readyClients[clientId] = false;
             PersistentWorldDebug.Warn(
                 $"post-load late-join synchronization delayed clientId={clientId} because host world restore is still in progress reason='{worldSaveAdapter.LastRestoreReason}'",
                 this);
             return;
         }
+        deferredSnapshotClients.Remove(clientId);
 
         bool sendingRestoredHostWorld =
             worldSaveAdapter != null &&
@@ -348,9 +369,23 @@ public class JoinSyncSystem : MonoBehaviour
             sendingRestoredHostWorld
                 ? $"late-join export clientId={clientId} hostMode=restored"
                 : $"late-join export clientId={clientId} hostMode=fresh");
-        if (sendingRestoredHostWorld)
+        if (!worldStateManager.LastCaptureSucceeded)
         {
-            worldSaveAdapter.ValidatePostLoadLateJoinSnapshot(snapshot, clientId);
+            readyClients[clientId] = false;
+            PersistentWorldDebug.Error($"late-join export refused clientId={clientId}: world state capture failed", this);
+            return;
+        }
+        if (!worldStateManager.ValidateSnapshotStructure(snapshot).Succeeded)
+        {
+            readyClients[clientId] = false;
+            PersistentWorldDebug.Error($"late-join export refused clientId={clientId}: snapshot identity graph is invalid", this);
+            return;
+        }
+        if (sendingRestoredHostWorld && !worldSaveAdapter.ValidatePostLoadLateJoinSnapshot(snapshot, clientId))
+        {
+            readyClients[clientId] = false;
+            PersistentWorldDebug.Error($"late-join export refused clientId={clientId}: runtime identity continuity failed", this);
+            return;
         }
 
         if (pendingServerTransfers.TryGetValue(clientId, out ServerPendingSnapshotTransfer existingTransfer))
@@ -1120,40 +1155,42 @@ public class JoinSyncSystem : MonoBehaviour
             return;
         }
 
-        pendingTransfer.WaitReason = string.Empty;
-        SetLocalSyncStatus("Reconstruction du monde...");
-        PersistentWorldDebug.Log(
-            $"snapshot reconstruction start transferId={pendingTransfer.TransferId} scene='{snapshot.SceneName}'",
-            this);
-        bool applySucceeded;
-        try
+        if (!pendingTransfer.WorldApplied)
         {
-            applySucceeded = worldStateManager != null && worldStateManager.ApplySnapshot(snapshot, false);
-        }
-        catch (Exception ex)
-        {
-            PersistentWorldDebug.Error(
-                $"snapshot reconstruction exception transferId={pendingTransfer.TransferId} error='{ex.Message}' stackTrace='{ex}'",
+            pendingTransfer.WaitReason = string.Empty;
+            SetLocalSyncStatus("Reconstruction du monde...");
+            PersistentWorldDebug.Log(
+                $"snapshot reconstruction start transferId={pendingTransfer.TransferId} scene='{snapshot.SceneName}'",
                 this);
-            LogClientReadyAckNotSent(pendingTransfer.TransferId, "snapshot reconstruction exception");
-            FailLocalSync($"snapshot reconstruction threw transferId={pendingTransfer.TransferId} error='{ex.Message}'");
-            return;
-        }
-
-        if (!applySucceeded)
-        {
-            PersistentWorldDebug.Error(
-                $"snapshot reconstruction failed transferId={pendingTransfer.TransferId} result='{DescribeLastApplyResult()}'",
+            bool applySucceeded;
+            try
+            {
+                applySucceeded = worldStateManager != null && worldStateManager.ApplySnapshot(snapshot, false);
+            }
+            catch (Exception ex)
+            {
+                PersistentWorldDebug.Error(
+                    $"snapshot reconstruction exception transferId={pendingTransfer.TransferId} error='{ex.Message}' stackTrace='{ex}'",
+                    this);
+                LogClientReadyAckNotSent(pendingTransfer.TransferId, "snapshot reconstruction exception");
+                FailLocalSync($"snapshot reconstruction threw transferId={pendingTransfer.TransferId} error='{ex.Message}'");
+                return;
+            }
+            if (!applySucceeded)
+            {
+                PersistentWorldDebug.Error(
+                    $"snapshot reconstruction failed transferId={pendingTransfer.TransferId} result='{DescribeLastApplyResult()}'",
+                    this);
+                LogClientReadyAckNotSent(pendingTransfer.TransferId, "snapshot reconstruction failed");
+                FailLocalSync($"snapshot reconstruction failed transferId={pendingTransfer.TransferId} result='{DescribeLastApplyResult()}'");
+                return;
+            }
+            PersistentWorldDebug.Log(
+                $"snapshot reconstruction applied transferId={pendingTransfer.TransferId} result='{DescribeLastApplyResult()}'",
                 this);
-            LogClientReadyAckNotSent(pendingTransfer.TransferId, "snapshot reconstruction failed");
-            FailLocalSync(
-                $"snapshot reconstruction failed transferId={pendingTransfer.TransferId} result='{DescribeLastApplyResult()}'");
-            return;
+            pendingTransfer.WorldApplied = true;
+            pendingTransfer.WorldAppliedAtUnscaledTime = Time.unscaledTime;
         }
-
-        PersistentWorldDebug.Log(
-            $"snapshot reconstruction applied transferId={pendingTransfer.TransferId} result='{DescribeLastApplyResult()}'",
-            this);
 
         PersistentNetworkObject controlledObject = worldStateManager.ResolveControlledObject(snapshot, hookedManager.LocalClientId);
         if (controlledObject != null)
@@ -1172,6 +1209,12 @@ public class JoinSyncSystem : MonoBehaviour
         else
         {
             PersistentWorldDebug.Warn($"client controlled persistent object not resolved for clientId={hookedManager.LocalClientId}", this);
+        }
+
+        if (GameFlowService.Instance != null && !GameFlowService.Instance.FinishSynchronizedClientWorld(snapshot.SceneName))
+        {
+            SetLocalSyncStatus("Preparation de la navigation et des services locaux...");
+            return;
         }
 
         ulong transferId = pendingTransfer.TransferId;
@@ -1216,7 +1259,11 @@ public class JoinSyncSystem : MonoBehaviour
         float now = Time.unscaledTime;
         if (pendingTransfer != null)
         {
-            if (now - pendingTransfer.StartedAtUnscaledTime < snapshotTransferTimeoutSeconds)
+            float phaseStarted = pendingTransfer.WorldApplied
+                ? pendingTransfer.WorldAppliedAtUnscaledTime : pendingTransfer.StartedAtUnscaledTime;
+            float phaseBudget = pendingTransfer.WorldApplied
+                ? GameFlowService.ClientPreparationBudgetSeconds : snapshotTransferTimeoutSeconds;
+            if (now - phaseStarted < phaseBudget)
             {
                 return;
             }
@@ -1273,7 +1320,7 @@ public class JoinSyncSystem : MonoBehaviour
                 continue;
             }
 
-            if (now - transfer.StartedAtUnscaledTime < snapshotTransferTimeoutSeconds)
+            if (now - transfer.StartedAtUnscaledTime < snapshotTransferTimeoutSeconds + GameFlowService.ClientPreparationBudgetSeconds)
             {
                 continue;
             }
@@ -1362,6 +1409,31 @@ public class JoinSyncSystem : MonoBehaviour
     {
         blockingSnapshot = null;
         waitReason = string.Empty;
+        if (snapshot != null && !string.IsNullOrWhiteSpace(snapshot.SceneName) &&
+            snapshot.SceneName != SceneManager.GetActiveScene().name)
+        {
+            waitReason = "waiting for the host active scene '" + snapshot.SceneName + "'";
+            return false;
+        }
+        if (snapshot != null && GameFlowService.Instance != null &&
+            !GameFlowService.Instance.EnsureSynchronizedClientSession(snapshot.SceneName))
+        {
+            waitReason = "waiting for the configured local gameplay session";
+            return false;
+        }
+        if (snapshot?.SceneObjects != null)
+        {
+            foreach (PersistentObjectSnapshot sceneObject in snapshot.SceneObjects)
+            {
+                if (sceneObject == null || string.IsNullOrWhiteSpace(sceneObject.SceneName) ||
+                    sceneObject.SceneName == "DontDestroyOnLoad") continue;
+                Scene scene = SceneManager.GetSceneByName(sceneObject.SceneName);
+                if (scene.IsValid() && scene.isLoaded) continue;
+                blockingSnapshot = sceneObject;
+                waitReason = "waiting for additive scene '" + sceneObject.SceneName + "'";
+                return false;
+            }
+        }
         if (snapshot == null || snapshot.RuntimeObjects == null)
         {
             return true;
@@ -1462,6 +1534,8 @@ public class JoinSyncSystem : MonoBehaviour
 
     private sealed class PendingSnapshotTransfer
     {
+        public bool WorldApplied;
+        public float WorldAppliedAtUnscaledTime;
         public ulong TransferId;
         public int TotalChunks;
         public int TotalBytes;

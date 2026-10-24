@@ -11,7 +11,7 @@ public static class CycleSharedSkills
     {
         var rules = Object.FindAnyObjectByType<WorldRulesStateManager>();
         if (rules == null) return;
-        definitions ??= Resources.LoadAll<CycleDefinition>("Narrative");
+        definitions ??= CycleCatalog.LoadDefinitions();
         foreach (var definition in definitions)
         {
             if (definition != null && definition.steps != null)

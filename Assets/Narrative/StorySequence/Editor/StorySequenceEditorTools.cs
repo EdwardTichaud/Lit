@@ -281,6 +281,7 @@ namespace Lit.Story.Editor
                 string path = metaPaths[i];
                 try
                 {
+                    SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(path));
                     SaveMeta meta = JsonUtility.FromJson<SaveMeta>(File.ReadAllText(path));
                     if (meta == null ||
                         meta.completedStorySequenceIds == null ||
@@ -309,7 +310,7 @@ namespace Lit.Story.Editor
                         continue;
                     }
 
-                    File.WriteAllText(path, JsonUtility.ToJson(meta, true));
+                    SaveMetadataWriter.WriteAtomic(path, JsonUtility.ToJson(meta, true));
                     changedFiles++;
                 }
                 catch (Exception exception)

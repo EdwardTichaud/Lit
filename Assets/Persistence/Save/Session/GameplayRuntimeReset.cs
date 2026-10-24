@@ -32,6 +32,8 @@ public static class GameplayRuntimeReset
         NetcodePlayerSessionRegistry.Clear();
         ConfirmationManager.Dismiss(null, false);
         BuildingRuntimeState.Clear();
+        SaveSessionManager.Instance?.ResetRuntimeStorySequenceState();
+        Lit.Story.StorySequenceCompletionStore.ResetSessionCompletions();
         ReadableContentRuntime.ResetRuntimeState(resolvedReason);
         Zone.ResetRuntimeState();
         DissolveRevealSystem.ResetRuntimeState();

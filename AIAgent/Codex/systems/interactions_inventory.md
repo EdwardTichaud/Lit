@@ -42,6 +42,11 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - `InteractableItem` : conteneurs, objets récupérables, serrures et pièges.
 - `InventoryPanelController` : UI, dépôt, lecture et placement.
 - `NetworkInventory` / `WorldInteractionService` : autorité réseau.
+- `LootSlotUI` possede son propre MonoScript. Le composant du prefab
+  `UI_Slot_InventorySlot_2` doit referencer ce script, pas `InteractableItem` :
+  l'identifiant de classe editeur ne remplace pas le type resolu par m_Script.
+  Un slot affiche n'est donc jamais un conteneur du monde. Les references
+  visuelles existantes et la logique de ramassage restent inchangees.
 - `Item` centralise les messages de confirmation d'objet : `Objet récupéré :
   [nom]`, `Objet jeté : [nom]` et `Objet détruit : [nom]`. Les mêmes libellés
   sont utilisés pour les actions locales et leurs RPC.

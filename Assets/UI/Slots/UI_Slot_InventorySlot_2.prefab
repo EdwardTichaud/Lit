@@ -175,7 +175,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3371615080175422078}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
+  m_Script: {fileID: 11500000, guid: 06d287af4df34207939d4e772e8809ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSlotUI
   ShowTopMostFoldoutHeaderGroup: 1

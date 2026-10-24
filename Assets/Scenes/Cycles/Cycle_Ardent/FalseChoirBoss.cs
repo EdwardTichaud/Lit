@@ -25,10 +25,10 @@ public sealed class FalseChoirBoss : BossEncounterBehaviour
     public override void OnNetworkSpawn() { base.OnNetworkSpawn(); BindHealth(); HealthChanged(health); }
     private void OnEnable() { BindHealth(); if(Enemy != null && !IsBossEngaged) Enemy.SetSuspended(true); }
     protected override void OnBossEngagedAuthoritatively() { if(Enemy != null) Enemy.SetSuspended(false); }
-    private void OnDisable()
+    protected override void OnDisable()
     {
         if (health != null) health.HealthChanged -= HealthChanged;
-        health = null; EndLocalCombatPresentation();
+        health = null; base.OnDisable();
         foreach(var decoy in visualDecoys ?? System.Array.Empty<GameObject>()) if(decoy != null) decoy.SetActive(false);
     }
     protected override bool CanEngage(Transform player)

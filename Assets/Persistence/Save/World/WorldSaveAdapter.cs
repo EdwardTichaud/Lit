@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Netcode;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -54,6 +55,8 @@ public class WorldSaveAdapter : MonoBehaviour
 
     public void ResetSessionState(string reason = null)
     {
+        ResolveReferences();
+        worldStateManager?.ResetSceneArchives();
         IsHostWorldRestoreInProgress = false;
         HasRestoredWorldSnapshotThisSession = false;
         LastRestoreSucceeded = false;
@@ -85,33 +88,52 @@ public class WorldSaveAdapter : MonoBehaviour
 
     public void SaveWorldSnapshot()
     {
-        if (!Application.isPlaying)
+        TrySaveWorldSnapshot();
+    }
+
+    public bool TrySaveWorldSnapshot()
+    {
+        if (!TryPrepareWorldSnapshot(out string path, out byte[] bytes)) return false;
+        string directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
+        SaveMetadataWriter.WriteBytesAtomic(path, bytes);
+        PersistentWorldDebug.Log($"world snapshot saved path='{path}' bytes={bytes.Length}", this);
+        return true;
+    }
+
+    // Capture and serialization must succeed before CharacterStateStore replaces
+    // any part of the save. This method deliberately performs no payload write.
+    public bool TryPrepareWorldSnapshot(out string path, out byte[] bytes)
+    {
+        path = null;
+        bytes = null;
+        if (!Application.isPlaying || !HasWorldSaveAuthority())
         {
-            return;
+            return false;
         }
 
         ResolveReferences();
         if (worldStateManager == null)
         {
-            return;
+            return false;
         }
 
+        path = ResolveSavePath();
+        if (string.IsNullOrWhiteSpace(path)) return false;
         WorldSnapshot snapshot = worldStateManager.CaptureSnapshot("save world snapshot");
-        byte[] bytes = snapshotSerializer.Serialize(snapshot);
-        string path = ResolveSavePath();
-        if (string.IsNullOrWhiteSpace(path))
+        if (!worldStateManager.LastCaptureSucceeded)
         {
-            return;
+            PersistentWorldDebug.Error("world snapshot save refused because one or more state providers failed capture", this);
+            return false;
         }
+        bytes = snapshotSerializer.Serialize(snapshot);
+        return true;
+    }
 
-        string directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        File.WriteAllBytes(path, bytes);
-        PersistentWorldDebug.Log($"world snapshot saved path='{path}' bytes={bytes.Length}", this);
+    private static bool HasWorldSaveAuthority()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager == null || !manager.IsListening || manager.IsServer;
     }
 
     public bool TryLoadWorldSnapshot(out WorldSnapshot snapshot)
@@ -122,14 +144,11 @@ public class WorldSaveAdapter : MonoBehaviour
             return false;
         }
 
-        string path = ResolveSavePath();
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-        {
-            return false;
-        }
-
+        string path = null;
         try
         {
+            path = ResolveSavePath();
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return false;
             byte[] bytes = File.ReadAllBytes(path);
             snapshot = snapshotSerializer.Deserialize(bytes);
             if (snapshot != null)
@@ -141,7 +160,8 @@ public class WorldSaveAdapter : MonoBehaviour
 
             return snapshot != null;
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException ||
+                                   ex is ArgumentException || ex is OverflowException)
         {
             PersistentWorldDebug.Error($"world snapshot load failed path='{path}' error='{ex.Message}'", this);
             return false;
@@ -150,6 +170,10 @@ public class WorldSaveAdapter : MonoBehaviour
 
     public bool EnsureHostWorldRestoredFromSave(string restoreReason = null)
     {
+        if (!HasWorldSaveAuthority())
+        {
+            return false;
+        }
         ResolveReferences();
         string path = ResolveSavePath();
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
@@ -189,6 +213,12 @@ public class WorldSaveAdapter : MonoBehaviour
 
     public bool ApplyWorldSnapshot(WorldSnapshot snapshot, bool serverSideLoad = true, string restoreReason = null)
     {
+        // Remote clients restore the host snapshot through JoinSyncSystem,
+        // never through a local campaign save or a server-side reconstruction.
+        if (!HasWorldSaveAuthority())
+        {
+            return false;
+        }
         ResolveReferences();
 
         string resolvedReason = string.IsNullOrWhiteSpace(restoreReason)
@@ -234,12 +264,15 @@ public class WorldSaveAdapter : MonoBehaviour
             int identityIssues = 0;
             bool identityValidated = !validateRestoredRuntimeIdentity ||
                                      ValidateRestoredWorldIdentity(snapshot, out identityIssues);
-            LastRestoreSucceeded = true;
+            LastRestoreSucceeded = identityValidated;
             LastRestoreIdentityValidated = identityValidated;
             LastRestoreIdentityIssues = identityIssues;
-            HasRestoredWorldSnapshotThisSession = true;
-            lastAppliedSnapshotPath = path;
-            LastRestoreSequence++;
+            if (identityValidated)
+            {
+                HasRestoredWorldSnapshotThisSession = true;
+                lastAppliedSnapshotPath = path;
+                LastRestoreSequence++;
+            }
 
             string summary =
                 $"host world restore completed reason='{resolvedReason}' scene='{snapshot.SceneName}' runtimeObjects={snapshot.RuntimeObjects?.Count ?? 0} sceneObjects={snapshot.SceneObjects?.Count ?? 0} path='{path}' restoreSequence={LastRestoreSequence} identityValidated={identityValidated} identityIssues={identityIssues}";
@@ -250,6 +283,12 @@ public class WorldSaveAdapter : MonoBehaviour
             else
             {
                 PersistentWorldDebug.Error(summary, this);
+            }
+
+            if (!identityValidated)
+            {
+                HostWorldRestoreFailed?.Invoke(summary);
+                return false;
             }
 
             HostWorldRestoreCompleted?.Invoke(snapshot);
@@ -263,6 +302,11 @@ public class WorldSaveAdapter : MonoBehaviour
 
     public bool ValidatePostLoadLateJoinSnapshot(WorldSnapshot outgoingSnapshot, ulong clientId)
     {
+        if (outgoingSnapshot == null)
+        {
+            PersistentWorldDebug.Error($"late-join snapshot missing clientId={clientId}", this);
+            return false;
+        }
         if (!HasRestoredWorldSnapshotThisSession || LastLoadedSnapshot == null)
         {
             return true;
@@ -283,9 +327,10 @@ public class WorldSaveAdapter : MonoBehaviour
         }
 
         int issues = ValidateRuntimeIdentityContinuity(
-            LastLoadedSnapshot.RuntimeObjects,
-            outgoingSnapshot != null ? outgoingSnapshot.RuntimeObjects : null,
-            $"post_load_late_join_client_{clientId}");
+            RuntimeSnapshotsIncludingArchives(LastLoadedSnapshot),
+            RuntimeSnapshotsIncludingArchives(outgoingSnapshot),
+            $"post_load_late_join_client_{clientId}",
+            requireAllBaselineObjects: false);
         bool success = issues == 0;
         string message =
             $"post-load late-join snapshot validation clientId={clientId} success={success} issues={issues} restoreSequence={LastRestoreSequence} restoredRuntimeObjects={LastLoadedSnapshot.RuntimeObjects?.Count ?? 0} outgoingRuntimeObjects={outgoingSnapshot?.RuntimeObjects?.Count ?? 0}";
@@ -299,6 +344,16 @@ public class WorldSaveAdapter : MonoBehaviour
         }
 
         return success;
+    }
+
+    private static List<PersistentObjectSnapshot> RuntimeSnapshotsIncludingArchives(WorldSnapshot snapshot)
+    {
+        var result = new List<PersistentObjectSnapshot>();
+        if (snapshot?.RuntimeObjects != null) result.AddRange(snapshot.RuntimeObjects);
+        if (snapshot?.SceneArchives != null)
+            foreach (PersistentSceneArchive archive in snapshot.SceneArchives)
+                if (archive?.RuntimeObjects != null) result.AddRange(archive.RuntimeObjects);
+        return result;
     }
 
     public bool LoadAndApplyWorldSnapshot()
@@ -393,7 +448,8 @@ public class WorldSaveAdapter : MonoBehaviour
     private int ValidateRuntimeIdentityContinuity(
         IReadOnlyList<PersistentObjectSnapshot> baselineRuntime,
         IReadOnlyList<PersistentObjectSnapshot> currentRuntime,
-        string validationPhase)
+        string validationPhase,
+        bool requireAllBaselineObjects = true)
     {
         if (baselineRuntime == null)
         {
@@ -435,6 +491,11 @@ public class WorldSaveAdapter : MonoBehaviour
 
             if (!currentLookup.TryGetValue(baseline.PersistentId, out PersistentObjectSnapshot current))
             {
+                // Immediate restore must reconstruct every saved runtime root.
+                // A later join exports the current world: consumed roots may
+                // legitimately be gone. Remaining IDs must still keep their
+                // original kind and prefab, including those in unloaded zones.
+                if (!requireAllBaselineObjects) continue;
                 issues++;
                 PersistentWorldDebug.Error(
                     $"runtime identity continuity failed phase='{validationPhase}' persistentId='{baseline.PersistentId}' reason='missing_after_restore' expectedPrefab='{baseline.RuntimePrefabId}'",
@@ -478,16 +539,17 @@ public class WorldSaveAdapter : MonoBehaviour
 
     private string ResolveSavePath()
     {
+        string path;
         if (useActiveSaveSession && SaveSessionManager.Instance != null && SaveSessionManager.Instance.HasActiveSave)
         {
-            return SaveSessionManager.Instance.GetActiveSaveFilePath(fileName);
+            path = SaveSessionManager.Instance.GetActiveSaveFilePath(fileName);
         }
-
-        if (!allowGlobalFallbackWithoutActiveSave)
+        else
         {
-            return null;
+            if (!allowGlobalFallbackWithoutActiveSave) return null;
+            path = Path.Combine(Application.persistentDataPath, fileName);
         }
-
-        return Path.Combine(Application.persistentDataPath, fileName);
+        if (!string.IsNullOrWhiteSpace(path)) SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(path));
+        return path;
     }
 }

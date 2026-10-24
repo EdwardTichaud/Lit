@@ -49,9 +49,28 @@ namespace Lit.Editor
             TimelineBindingProfile[] profiles = AssetDatabase.FindAssets("t:TimelineBindingProfile")
                 .Select(guid => AssetDatabase.LoadAssetAtPath<TimelineBindingProfile>(AssetDatabase.GUIDToAssetPath(guid)))
                 .ToArray();
-            for (int i = 0; i < profiles.Length; i++)
+            // A profile for an unloaded additive scene is not a broken binding.
+            // Validate only directors present in the scenes being inspected.
+            foreach (PlayableDirector director in UnityEngine.Object.FindObjectsByType<PlayableDirector>(FindObjectsInactive.Include))
             {
-                ValidateProfile(profiles[i], targets, errors);
+                if (director.playableAsset == null) continue;
+                var matching = profiles.Where(profile => profile != null && profile.Matches(director.playableAsset)).ToArray();
+                if (matching.Length == 0)
+                {
+                    errors.Add($"{director.name}: aucun TimelineBindingProfile pour '{director.playableAsset.name}'.");
+                    continue;
+                }
+                // The cycle's explicitly assigned profile takes precedence over
+                // other profiles legitimately using the same Timeline asset.
+                TimelineBindingProfile assigned = FindAssignedProfile(director);
+                if (assigned == null && matching.Length != 1)
+                {
+                    errors.Add($"{director.name}: plusieurs profils possibles, assigner explicitement le profil au cycle.");
+                    continue;
+                }
+                var profile = assigned != null ? assigned : matching[0];
+                errors.AddRange(CollectBindingCoverageIssues(director, profile));
+                ValidateProfile(profile, targets, errors);
             }
 
             Report("Timeline bindings", errors);
@@ -78,6 +97,22 @@ namespace Lit.Editor
 
             Report("Timeline Bootstrap", errors);
         }
+
+        private static TimelineBindingProfile FindAssignedProfile(PlayableDirector director)
+        {
+            foreach (var cycle in UnityEngine.Object.FindObjectsByType<CycleController>(FindObjectsInactive.Include))
+            {
+                if (cycle.director == director) return cycle.bindingProfile;
+                foreach (var sequence in cycle.sequences ?? Array.Empty<CycleSequenceBinding>())
+                    if (sequence != null && sequence.director == director) return sequence.profile;
+            }
+            return null;
+        }
+
+        /// <summary>Shared runtime/authoring check. Explicit optional bindings and
+        /// valid native Director bindings remain supported.</summary>
+        public static List<string> CollectBindingCoverageIssues(PlayableDirector director, TimelineBindingProfile profile)
+            => TimelineBindingContract.CollectCoverageIssues(director, profile);
 
         private static void ValidateProfile(
             TimelineBindingProfile profile,

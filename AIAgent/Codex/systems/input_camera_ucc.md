@@ -653,7 +653,7 @@ Un input strictement gauche ou droite produit une tangente autour de la cible,
 stabilisee par une faible correction radiale UCC. Cette correction ne concerne
 ni les diagonales, ni les actions, ni les evasions.
 
-Dans Iluvilirae_Test seulement, LucianCombatTorsoFacing complete la presentation
+Dans Iluvilirae_Test, LucianCombatTorsoFacing complete la presentation
 sous lock : l'axe visible est mesure entre LeftUpperArm et RightUpperArm puis
 aligne sur le forward physique via Spine/Chest (40/60 %, 65 degres maximum).
 La correction ne tourne ni root, ni bassin, ni jambes et ne fournit aucun
@@ -664,7 +664,22 @@ libre, evasions, exploration et session cinematique sont exclus. OnDisable et
 pause ne laissent pas de correction accumulee ; une pose deja reevaluee par
 l'Animator n'est jamais remplacee par une ancienne pose memorisee.
 Le laboratoire l'installe a chaque rencontre ; alignPlayerCombatTorso permet
-la comparaison avant/apres. Aucun ajout aux prefabs de production.
+la comparaison avant/apres. La migration production peut egalement l'ajouter ;
+il est present dans le prefab Lucian actuel (constat du 24 octobre 2026).
+
+Diagnostic TwinBlades / StoneGolem du 24 octobre 2026 : sur les copies isolees
+des vrais rigs, le root ne tourne pas mais les poses source ont un axe visuel
+variable (torse Idle environ 58,5 degres, marche avant 35,6, course avant 7,4
+sur Lucian). StoneGolem Humanoid reproduit ces angles presque a l'identique ;
+le fournisseur Generic porte deja la garde de profil. Based Upon Original,
+Offset 0 et Bake Into Pose conservent le decalage dans la pose, meme lorsque
+applyRootMotion est desactive. Body Orientation/Offset permettent de modifier
+ce repere, mais ne doivent pas etre generalises sans calibration par clip :
+la course et le strafe conservent des postures distinctes. Le correcteur de
+torse ci-dessus est une compensation supplementaire, pas la cause source.
+Preuve : 66 cas Unity sans gameplay, 121 points par cas, huit sources et
+metadonnees inchangees ; Library/TwinBladesRotationAudit/Rapport.md. StoneGolem
+original reste Generic ; aucune migration d'assets n'est appliquee par l'audit.
 
 La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
 `LitUccCameraCharacterBinder` sur la caméra active pour suivre

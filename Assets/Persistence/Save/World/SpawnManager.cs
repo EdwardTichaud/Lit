@@ -341,7 +341,8 @@ public class SpawnManager : MonoBehaviour
         return spawnedCount;
     }
 
-    public int RemoveRuntimeObjectsNotInSnapshot(IReadOnlyList<PersistentObjectSnapshot> snapshots, NetworkObjectRegistry registry, bool serverSideLoad)
+    public int RemoveRuntimeObjectsNotInSnapshot(IReadOnlyList<PersistentObjectSnapshot> snapshots, NetworkObjectRegistry registry, bool serverSideLoad,
+        ISet<string> sceneScope = null)
     {
         if (registry == null)
         {
@@ -372,6 +373,11 @@ public class SpawnManager : MonoBehaviour
             {
                 continue;
             }
+
+            // A zone return restores only that zone. It must never remove the
+            // persistent squad or another currently loaded zone's objects.
+            if (sceneScope != null && !sceneScope.Contains(runtimeObject.gameObject.scene.name))
+                continue;
 
             PersistentWorldDebug.Log(
                 $"remove invalid objects removing persistentId='{runtimeObject.PersistentId}' prefab='{runtimeObject.RuntimePrefabId}' serverSideLoad={serverSideLoad}",

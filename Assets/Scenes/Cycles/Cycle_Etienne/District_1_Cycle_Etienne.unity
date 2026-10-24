@@ -202,8 +202,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8054610295901197848}
   - component: {fileID: 144378230}
+  - component: {fileID: 8054610295901197848}
   - component: {fileID: 144378228}
   - component: {fileID: 144378226}
   - component: {fileID: 144378225}
@@ -2546,6 +2546,7 @@ Transform:
   - {fileID: 848966280}
   - {fileID: 1400758174}
   - {fileID: 1553880016}
+  - {fileID: 2001000451}
   m_Father: {fileID: 784297443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1322350154
@@ -3726,7 +3727,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -38.050003
+      value: 7.1500015
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3734,23 +3735,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.7000008
+      value: 48.95001
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4918019471982619060, guid: 84f1aa20cdf324a489419576eae22772, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3833,9 +3834,72 @@ MonoBehaviour:
   cycle: {fileID: 784297441}
   dialogueId: etienne
   useGhostPuzzleResolution: 1
+  requireLitInfluence: 0
   interactionAnchor: {fileID: 0}
   interactionDistance: 3
   interactionCollider: {fileID: 0}
+--- !u!1001 &2001000450
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1277034554}
+    m_Modifications:
+    - target: {fileID: 4608906675159266921, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1761829351
+      objectReference: {fileID: 0}
+    - target: {fileID: 5560443018987116452, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_Name
+      value: Flame_Etienne
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 7.1500015
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -22.400002
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 45.900005
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7861603483691956603, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: isLit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7861603483691956603, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+      propertyPath: flameId
+      value: district1.puits.etienne
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+--- !u!4 &2001000451 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6132718284418147747, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
+  m_PrefabInstance: {fileID: 2001000450}
+  m_PrefabAsset: {fileID: 0}
 --- !u!23 &1559434866210235037
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4595,6 +4659,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1887014346914748754}
   m_Mesh: {fileID: -4116889142186547323, guid: a527cb5ed18dbcb45a62b3bdec715867, type: 3}
+--- !u!114 &8054610295901197848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144378224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
+  actorOwner: {fileID: 0}
+  signalTarget: {fileID: 0}
+  cameraRoot: {fileID: 0}
+  previewOnly: 0
+  lastSignal: 
+  presentation: {fileID: 0}
 --- !u!64 &8277837001934694009
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4666,21 +4748,3 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 784297443}
---- !u!114 &8054610295901197848
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 144378224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationEvents
-  presentation: {fileID: 0}
-  actorOwner: {fileID: 0}
-  signalTarget: {fileID: 0}
-  cameraRoot: {fileID: 0}
-  previewOnly: 0
-  lastSignal: 

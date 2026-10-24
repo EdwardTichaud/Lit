@@ -27,6 +27,9 @@ public static partial class CombatBootstrapPlayValidation
     private static GameObject cursorProbeOwner, cursorProbeVisual;
     private static string firstActorId;
     private static bool SaveRoundTrip => Environment.GetCommandLineArgs().Contains("-combatMigrationSaveRoundTrip");
+    private static bool PersistenceOnly => Environment.GetCommandLineArgs().Contains("-combatMigrationPersistenceOnly");
+    private static double nextPersistenceHeartbeat;
+    private static int renderedStableUpdates;
     private static bool RepeatPlay => Environment.GetCommandLineArgs().Contains("-combatMigrationRepeatPlay");
     private static string RepeatMode => Environment.GetCommandLineArgs().Contains("-combatMigrationDomainReloadOff") ? "off" : "on";
     private static readonly List<string> checks = new List<string>();
@@ -57,6 +60,19 @@ public static partial class CombatBootstrapPlayValidation
     {
         EditorApplication.update += Tick;
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
+        // -executeMethod can run before a final startup assembly reload. Its
+        // temporary delegate must not be the only record of the requested run.
+        if (PersistenceOnly && Environment.GetCommandLineArgs().Contains("-combatMigrationRenderedSmoke") &&
+            Environment.GetCommandLineArgs().Contains("CombatBootstrapPlayValidation.RunRenderedIsolated") &&
+            !Directory.Exists(".git") && !File.Exists(".git") &&
+            !SessionState.GetBool(Key + ".renderedLaunchConsumed", false))
+        {
+            RequestRenderedLaunch();
+        }
+        else if (SessionState.GetBool(Key + ".renderedLaunchPending", false))
+        {
+            EditorApplication.update += StartRenderedWhenStable;
+        }
     }
 
     public static void RunBatch()
@@ -83,8 +99,56 @@ public static partial class CombatBootstrapPlayValidation
             throw new InvalidOperationException("Explicit -combatMigrationRenderedSmoke in a rendered isolated Editor is required.");
         if (Directory.Exists(".git") || File.Exists(".git"))
             throw new InvalidOperationException("The rendered smoke cannot run in the source checkout.");
-        PrepareSmoke();
-        EditorApplication.ExecuteMenuItem("Window/General/Game");
+        // Startup layout/search callbacks can still run after -executeMethod.
+        // Opening a scene and entering Play from that initial GUI pass causes
+        // native Hierarchy assertions in Unity 6.6. Wait for a stable editor,
+        // not a shortened gameplay/loading phase.
+        RequestRenderedLaunch();
+    }
+
+    private static void RequestRenderedLaunch()
+    {
+        if (SessionState.GetBool(Key + ".renderedLaunchConsumed", false)) return;
+        if (!SessionState.GetBool(Key + ".renderedLaunchPending", false))
+        {
+            SessionState.SetBool(Key + ".renderedLaunchPending", true);
+            SessionState.SetFloat(Key + ".renderedLaunchEarliest", (float)EditorApplication.timeSinceStartup + 2);
+        }
+        renderedStableUpdates = 0;
+        EditorApplication.update -= StartRenderedWhenStable;
+        EditorApplication.update += StartRenderedWhenStable;
+        Debug.Log("[PersistencePlayLaunch] Rendered launch retained across assembly reloads.");
+    }
+
+    private static void StartRenderedWhenStable()
+    {
+        if (!SessionState.GetBool(Key + ".renderedLaunchPending", false))
+        {
+            EditorApplication.update -= StartRenderedWhenStable;
+            return;
+        }
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating ||
+            EditorApplication.timeSinceStartup < SessionState.GetFloat(Key + ".renderedLaunchEarliest", 0))
+        {
+            renderedStableUpdates = 0;
+            return;
+        }
+        if (++renderedStableUpdates < 3) return;
+        EditorApplication.update -= StartRenderedWhenStable;
+        SessionState.SetBool(Key + ".renderedLaunchPending", false);
+        SessionState.SetBool(Key + ".renderedLaunchConsumed", true);
+        try
+        {
+            PrepareSmoke();
+            EditorApplication.ExecuteMenuItem("Window/General/Game");
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+            RestoreEditorOptions();
+            SessionState.SetBool(Key, false);
+            EditorApplication.Exit(1);
+        }
     }
 
     [MenuItem("Lit/Combat/Production Migration/Validate Bootstrap In Isolated Editor")]
@@ -111,6 +175,17 @@ public static partial class CombatBootstrapPlayValidation
         if (ZoneRoundTrip && (manifest.PrimarySceneName != "Maison_Core" || EncounterProbe || SaveRoundTrip || RepeatPlay))
             throw new InvalidOperationException("Zone roundtrip requires the Maison manifest and a separate single Play Mode recipe.");
         if (GamepadProbe && !ZoneRoundTrip) throw new InvalidOperationException("The gamepad probe requires the zone-roundtrip recipe.");
+        if (PersistenceOnly && (!SaveRoundTrip || ZoneRoundTrip || GamepadProbe || EncounterProbe || RepeatPlay))
+            throw new InvalidOperationException("Persistence-only validation requires the separate District save-roundtrip recipe.");
+        if (PersistenceOnly)
+        {
+            SessionState.SetBool(Key + ".optionsStored", true);
+            SessionState.SetBool(Key + ".optionsEnabled", EditorSettings.enterPlayModeOptionsEnabled);
+            SessionState.SetInt(Key + ".options", (int)EditorSettings.enterPlayModeOptions);
+            EditorSettings.enterPlayModeOptionsEnabled = true;
+            EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.None;
+            Application.runInBackground = true;
+        }
         var requiredScenes = manifest.LoadingSceneNames.Concat(new[] { manifest.PrimarySceneName }).Distinct().ToArray();
         var buildScenes = EditorBuildSettings.scenes.Where(entry => entry.enabled)
             .Select(entry => Path.GetFileNameWithoutExtension(entry.path)).ToArray();
@@ -165,7 +240,25 @@ public static partial class CombatBootstrapPlayValidation
             CompleteRepeat(false, "Timed out waiting for native Play Mode exit.");
             return;
         }
-        if (!SessionState.GetBool(Key, false) || !EditorApplication.isPlaying || EditorApplication.isCompiling) return;
+        if (!SessionState.GetBool(Key, false)) return;
+        if (PersistenceOnly)
+        {
+            if (EditorApplication.timeSinceStartup >= nextPersistenceHeartbeat)
+            {
+                nextPersistenceHeartbeat = EditorApplication.timeSinceStartup + 15;
+                Debug.Log("[PersistencePlayHeartbeat] stage=" + stage + " playing=" + EditorApplication.isPlaying +
+                    " paused=" + EditorApplication.isPaused + " compiling=" + EditorApplication.isCompiling +
+                    " updating=" + EditorApplication.isUpdating + " frames=" + Time.frameCount);
+            }
+            if (EditorApplication.timeSinceStartup - SessionState.GetFloat(Key + ".started", 0) > 180)
+            {
+                Finish(false, "Persistence recipe made no stage progress for 180 seconds; stage=" + stage +
+                    " playing=" + EditorApplication.isPlaying + " paused=" + EditorApplication.isPaused +
+                    " compiling=" + EditorApplication.isCompiling + " frames=" + Time.frameCount);
+                return;
+            }
+        }
+        if (!EditorApplication.isPlaying || EditorApplication.isCompiling) return;
         try
         {
             if (EditorApplication.timeSinceStartup - SessionState.GetFloat(Key + ".started", 0) > 180)
@@ -213,6 +306,14 @@ public static partial class CombatBootstrapPlayValidation
                 foreach (var member in UnityEngine.Object.FindObjectsByType<SquadCharacterController>())
                     foreach (var kit in new[] { CombatSkillKit.Vesta, CombatSkillKit.Soren, CombatSkillKit.Aurell })
                         Require(!catalog.IsCharacter(member.CharacterData, kit), "No physical solo companion: " + kit);
+                if (PersistenceOnly)
+                {
+                    Require(InputModeCoordinator.CurrentMode == InputMode.Exploration,
+                        "Persistence recipe preserves exploration instead of forcing combat for an unrelated attack smoke");
+                    actionGeneration = -1;
+                    Advance(2);
+                    return;
+                }
                 var basic = actor.CharacterData.groundBasicSkills?.FirstOrDefault(skill => skill != null);
                 Require(basic != null && manager.TryUseSkill(basic), "Authored Basic launches through the production facade");
                 actionGeneration = root.GetComponent<PlayerActionPresentationController>().ActionGeneration;
@@ -232,7 +333,7 @@ public static partial class CombatBootstrapPlayValidation
                     return;
                 }
                 if (cursorProbeStage == 0) Require(!action.IsActionActive, "Basic session completed and restored control");
-                if (!ValidateCursorLifecycle(manager, root)) return;
+                if (!PersistenceOnly && !ValidateCursorLifecycle(manager, root)) return;
                 if (ZoneRoundTrip && !ValidateZoneTransfer(flow, manager, root.GetComponent<SquadCharacterController>())) return;
                 if (EncounterProbe && !ValidateProductionEncounter(manager, root)) return;
                 var adapter = WorldSaveAdapter.Instance;
@@ -319,7 +420,8 @@ public static partial class CombatBootstrapPlayValidation
                     "Defeated marker-owned enemy did not resurrect on reload");
                 Require(NavMeshWorldService.Instance != null && NavMeshWorldService.Instance.IsReady,
                     "Navigation validated again after real reload");
-                Finish(true, "Bootstrap, Basic, menu return and real save reload complete; combat feel, all zones and multiplayer remain separate.");
+                Finish(true, "Bootstrap, " + (PersistenceOnly ? "exploration, " : "Basic, ") +
+                    "menu return and real save reload complete; combat feel, all zones and multiplayer remain separate.");
             }
         }
         catch (Exception exception) { Debug.LogException(exception); Finish(false, exception.ToString()); }
@@ -435,9 +537,10 @@ public static partial class CombatBootstrapPlayValidation
         string json = JsonUtility.ToJson(new Result {
             passed = passed, reason = reason, checks = checks, runId = SessionState.GetString(Key + ".run", ""),
             playCycle = RepeatPlay ? SessionState.GetInt(Key + ".cycle", 1) : 1,
-            domainReload = RepeatPlay ? RepeatMode : "editor-current-options",
+            domainReload = PersistenceOnly ? "on (persistence recipe)" : RepeatPlay ? RepeatMode : "editor-current-options",
             saveDirectory = SessionState.GetString(Key + ".save", ""), zoneManifest = ManifestPath,
-            limitation = GamepadProbe ? "Real solo zone roundtrip plus virtual-gamepad stick/X routed through the production Input System. Short physical movement and single Basic in each zone; no manual feel, interaction-key, narrative, save reload or multiplayer proof." :
+            limitation = PersistenceOnly ? "Real isolated Bootstrap/menu/save reload in exploration: health, existing unlocks and marker-owned enemy persistence. No attack, authored combat kill, item pickup, zone roundtrip or multiplayer proof." :
+                GamepadProbe ? "Real solo zone roundtrip plus virtual-gamepad stick/X routed through the production Input System. Short physical movement and single Basic in each zone; no manual feel, interaction-key, narrative, save reload or multiplayer proof." :
                 ZoneRoundTrip ? "Real solo Maison portal admission, District arrival and return-to-hub with actor/control continuity and Basic sessions. Player fixture placed near the authored portal through UCC; not manual interaction, movement feel, narrative gates, save reload or multiplayer evidence." :
                 EncounterProbe ? "Bounded actual production Juggernaut vision/navigation/repeated impacts probe. Optional explicit lit fixture is reported in checks; no proof of Flame interaction/progression, manual feel, all encounters, victory or multiplayer." :
                 SaveRoundTrip ? "Real isolated Bootstrap/menu/save reload with health, existing unlocks and marker-owned enemy persistence; no claim of manual combat feel, all zones, authored combat kill or multiplayer validation." :
@@ -454,6 +557,7 @@ public static partial class CombatBootstrapPlayValidation
             EditorApplication.isPlaying = false;
             return;
         }
+        if (PersistenceOnly) RestoreEditorOptions();
         EditorApplication.Exit(passed ? 0 : 1);
     }
 

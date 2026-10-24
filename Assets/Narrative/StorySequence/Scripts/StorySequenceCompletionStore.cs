@@ -18,9 +18,14 @@ namespace Lit.Story
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetTransientState()
         {
-            transientCompletedIds.Clear();
+            ResetSessionCompletions();
             IsCompletedOverride = null;
             MarkCompletedOverride = null;
+        }
+
+        public static void ResetSessionCompletions()
+        {
+            transientCompletedIds.Clear();
         }
 
         public static bool IsCompleted(StorySequenceAsset sequence)

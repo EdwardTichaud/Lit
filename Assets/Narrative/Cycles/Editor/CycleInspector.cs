@@ -10,6 +10,7 @@ public sealed class CycleInspector : Editor
         var cycle = (CycleController)target;
         serializedObject.Update();
         CycleInspectorLayout.Group(serializedObject, "Identite et liaisons", "Fiche du cycle et acteurs propres a cette scene.", "definition", "interactions", "encounters", "sequences");
+        CycleInspectorLayout.Group(serializedObject, "Sources de progression", "Torches et repliques automatiques. La replique ne valide son etape qu'apres une fermeture naturelle confirmee par les participants.", "flames", "autoDialogues");
         CycleInspectorLayout.Group(serializedObject, "Presentation", "Objets affichés, cachés ou dissous selon les conditions ; seuls les participants listes sont suspendus.", "activations", "deactivations", "disappearances", "poses", "cinematicParticipants");
         CycleInspectorLayout.Group(serializedObject, "Rencontre historique", "Liaisons existantes conservees pour Nina ; source encounter pour l'ennemi et cinematic pour la sequence.", "encounterMarker", "encounterEnemy", "director", "bindingProfile");
         DrawDevStartControls(cycle, serializedObject);
@@ -30,6 +31,13 @@ public sealed class CycleInspector : Editor
             EditorGUILayout.HelpBox("La mort de l'ennemi ne peut pas etre suivie : assigner le marker ou l'EnemyController de la rencontre.", MessageType.Warning);
         if (cycle.definition.playCinematicAfterDefeat && (cycle.director == null || cycle.director.playableAsset == null || cycle.bindingProfile == null))
             EditorGUILayout.HelpBox("Cinematique activee : Timeline et profil de bindings requis.", MessageType.Warning);
+        if (cycle.director != null && cycle.bindingProfile != null)
+            foreach (string issue in Lit.Editor.TimelineBindingsValidator.CollectBindingCoverageIssues(cycle.director, cycle.bindingProfile))
+                EditorGUILayout.HelpBox(issue, MessageType.Error);
+        foreach (var sequence in cycle.sequences ?? System.Array.Empty<CycleSequenceBinding>())
+            if (sequence != null)
+                foreach (string issue in Lit.Editor.TimelineBindingsValidator.CollectBindingCoverageIssues(sequence.director, sequence.profile))
+                    EditorGUILayout.HelpBox("Sequence '" + sequence.id + "' : " + issue, MessageType.Error);
         if (cycle.definition.HasSteps)
         {
             var encounterIds = new System.Collections.Generic.HashSet<string>();
@@ -40,11 +48,23 @@ public sealed class CycleInspector : Editor
             foreach (var sequence in cycle.sequences)
                 if (sequence == null || string.IsNullOrWhiteSpace(sequence.id) || !sequenceIds.Add(sequence.id))
                     EditorGUILayout.HelpBox("Sequence vide ou identifiant duplique.", MessageType.Error);
+            var autoIds = new System.Collections.Generic.HashSet<string>();
+            foreach (var automatic in cycle.autoDialogues ?? System.Array.Empty<CycleAutoDialogueBinding>())
+            {
+                var automaticStep = automatic != null ? cycle.definition.FindStep(automatic.id) : null;
+                if (automatic == null || string.IsNullOrWhiteSpace(automatic.id) || !autoIds.Add(automatic.id) ||
+                    automaticStep == null || automaticStep.kind != CycleStepKind.DialogueCompleted ||
+                    string.IsNullOrWhiteSpace(automatic.line) || float.IsNaN(automatic.durationSeconds) ||
+                    float.IsInfinity(automatic.durationSeconds) || automatic.durationSeconds <= 0f)
+                    EditorGUILayout.HelpBox("Replique automatique invalide : ID d'etape unique, texte et duree positive requis.", MessageType.Error);
+            }
             foreach (var step in cycle.definition.steps)
             {
                 if (step == null) continue;
                 if ((step.kind == CycleStepKind.Interaction || step.kind == CycleStepKind.DialogueCompleted) &&
-                    !cycle.interactions.Any(item => item != null && item.cycle == cycle && item.dialogueId == step.sourceId))
+                    !(cycle.interactions ?? System.Array.Empty<CycleInteraction>()).Any(item => item != null && item.cycle == cycle && item.dialogueId == step.sourceId) &&
+                    !(step.kind == CycleStepKind.DialogueCompleted && autoIds.Contains(step.id)) &&
+                    !(step.kind == CycleStepKind.Interaction && (cycle.flames ?? System.Array.Empty<CycleFlameBinding>()).Any(item => item != null && item.id == step.sourceId && (item.flame != null || item.bossTorch != null))))
                     EditorGUILayout.HelpBox("Interaction non liee : " + step.title, MessageType.Error);
                 if (step.kind == CycleStepKind.EnemyDefeated && step.sourceId == "encounter" && cycle.encounterEnemy == null && cycle.encounterMarker == null)
                     EditorGUILayout.HelpBox("Rencontre principale non liee : " + step.title, MessageType.Error);
@@ -56,6 +76,7 @@ public sealed class CycleInspector : Editor
         }
         if (Application.isPlaying && (CycleProgressionService.Instance != null || cycle.IsDevSimulationActive))
         {
+            EditorGUILayout.LabelField("Répliques automatiques", cycle.AutomaticDialogueStatus);
             using (new EditorGUI.DisabledScope(true))
             {
                 EditorGUILayout.TextField(cycle.IsDevSimulationActive ? "État Dev" : "État partagé", cycle.Status.ToString());
@@ -80,7 +101,7 @@ public sealed class CycleInspector : Editor
             }
             EditorUtility.SetDirty(cycle);
         }
-        EditorGUILayout.HelpBox("Placer la definition dans Resources/Narrative pour retrouver les skills apres chargement. Conserver l'ID du cycle et ses bits une fois les sauvegardes publiees.", MessageType.Info);
+        EditorGUILayout.HelpBox("Placer la definition dans Resources/Narrative ou la referencer dans un CycleCatalog de ce dossier. Conserver les IDs du cycle et des etapes une fois les sauvegardes publiees.", MessageType.Info);
     }
 
     private static void DrawDevStartControls(CycleController cycle, SerializedObject serialized)
@@ -118,9 +139,9 @@ public sealed class CycleDefinitionInspector : Editor
         CycleInspectorLayout.Group(serializedObject, "Compatibilite cinematographique", "Champs historiques conserves pour les cycles non migres.", "completionFlags", "enemyDefeatedFlags", "knowledgeOnEnemyDefeat", "playCinematicAfterDefeat", "deathDelay", "cinematicCompletedFlags");
         serializedObject.ApplyModifiedProperties();
         foreach (string issue in definition.ValidateConfiguration()) EditorGUILayout.HelpBox(issue, MessageType.Warning);
-        if (!AssetDatabase.GetAssetPath(definition).Contains("/Resources/Narrative/"))
-            EditorGUILayout.HelpBox("Placer cet asset sous Resources/Narrative pour les recompenses persistantes.", MessageType.Warning);
-        if (Resources.LoadAll<CycleDefinition>("Narrative").Any(other => other != definition && other.cycleId == definition.cycleId))
+        if (!CycleCatalog.LoadDefinitions().Contains(definition))
+            EditorGUILayout.HelpBox("Placer cet asset sous Resources/Narrative ou le referencer dans un CycleCatalog de ce dossier.", MessageType.Warning);
+        if (AssetDatabase.FindAssets("t:CycleDefinition").Select(guid => AssetDatabase.LoadAssetAtPath<CycleDefinition>(AssetDatabase.GUIDToAssetPath(guid))).Any(other => other != null && other != definition && other.cycleId == definition.cycleId))
             EditorGUILayout.HelpBox("Un autre cycle utilise deja cet ID de sauvegarde.", MessageType.Error);
     }
 }

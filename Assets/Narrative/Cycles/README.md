@@ -11,7 +11,10 @@ TimelineManager gardent leurs effets. GameFlowService possede le dechargement.
 ## Creer un cycle
 
 1. Menu Assets > Create > Lit > Narrative > Modele de cycle vide. Ranger la fiche
-   sous Resources/Narrative et conserver son ID apres publication.
+   sous Resources/Narrative et conserver son ID apres publication. Si la fiche
+   reste dans le dossier de sa scene, la referencer dans un CycleCatalog situe
+   sous Resources/Narrative (comme Luc et Nina). Le catalogue garantit la
+   restauration et les recompenses meme lorsque la scene est deja dechargee.
 2. Renseigner titre, description et categorie principale/annexe. Ces metadonnees
    preparent le journal ; aucune interface de journal n'est creee ici.
 3. Ajouter des etapes avec ID stable et libelle : connaissance, dialogue termine,
@@ -40,9 +43,10 @@ Les nouveaux cycles n'utilisent aucun flag. Une migration versionnee est reserve
 ## Progression et persistance
 
 Etats : indisponible, disponible, en cours au premier jalon, termine. Les
- evenements recus avant les prerequis sont oublies. Les connaissances acquises
-et morts enregistrees restent des faits persistants reevalues a l'activation.
-Un clic ne traverse pas plusieurs etapes successives attendant le meme evenement.
+ evenements valides par les adaptateurs de scene restent des faits persistants,
+reevalues lorsque les prerequis sont remplis. Une meme source partagee par
+plusieurs etapes peut donc les satisfaire successivement : utiliser des IDs de
+source distincts lorsque plusieurs actions du joueur sont necessaires.
 Le dialogue est valide apres fermeture naturelle, controle du token, de la
 portee et de sa duree. Interaction correspond a l'ouverture validee ou a l'action
 sans dialogue. Le serveur reste seul autorise a valider en reseau.
@@ -56,6 +60,27 @@ CycleSharedSkills compose les skills depuis les jalons sauvegardes, sans modifie
 les fiches ni equiper de force. Une restauration ne rejoue pas la notification.
 
 ## Fin et nettoyage
+
+### Repliques automatiques
+
+Configurer `autoDialogues` dans le groupe « Sources de progression » du
+CycleController. L'ID de liaison est l'ID d'etape ; son `sourceId` peut etre
+different. La replique utilise une session transitoire, sans nouveau format
+de sauvegarde, isolee dans CycleController.AutoDialogues et CycleAutoDialogueSession.
+
+Une interface deja occupee n'est jamais remplacee. La progression attend la
+fermeture naturelle, pas un delai fixe : chaque spectateur connecte au lancement
+doit confirmer. Refus, remplacement ou interruption annulent la tentative,
+sans jalon ni recompense ; une nouvelle tentative est possible apres une seconde.
+Le delai de securite est la duree de la replique plus au moins 30 secondes.
+Une deconnexion retire le spectateur, mais il faut au moins une fin naturelle
+pour valider. Une arrivee tardive ne change pas l'audience ; elle recoit la
+progression partagee. Les anciens tokens et doublons sont ignores.
+
+La desactivation et le dechargement annulent seulement la presentation possedee
+par ce controleur. L'inspecteur Play Mode affiche les confirmations de fin.
+
+### Dechargement
 
 Le serveur attend les dialogues et dissolutions des clients connectes, 15 s au
 maximum par defaut. Il annule ensuite uniquement les presentations du cycle et
@@ -83,7 +108,30 @@ Nina : son etape facultative reste non validee.
 ## Validation
 
 Menu Lit > Narrative > Executer les tests des cycles ; resultat dans
-Library/CycleTests.xml. Completer par un parcours Play Mode solo/hote-client :
+Library/CycleTests.xml ; l'etat et le resultat sont dans Library/CycleTests.result.
+Ce lanceur couvre les fondations et les tests Luc, Nina, Belmont, Etienne, Ardent et
+Clairmont. Les scenes modifiees doivent etre enregistrees avant son lancement ;
+aucun import force ni reconstruction n'est effectue. Completer par un parcours Play Mode solo/hote-client :
 interaction simultanee, deconnexion, client tardif, expiration de presentation,
 retour de zone et Domain Reload active/desactive. Une compilation seule ne
 valide pas ces parcours.
+
+Regression du protocole des repliques en vrais processus separes :
+`Tools/Validation/CycleNetworkSmoke/Run.ps1`. La procedure ne touche pas aux
+scenes du jeu et isole les sauvegardes. Elle couvre sept scenarios de
+presentation/transport ; elle ne remplace pas les parcours des scenes et boss.
+Consulter son README avant utilisation.
+
+Les modes `timeline`, `timeline_pause`, `timeline_stop`, `timeline_external_stop`,
+`timeline_service` et `timeline_missing` de ce meme outil verifient la lecture
+native d'une animation en executable, sans personnage ni sauvegarde. Le
+gestionnaire pilote ses sequences en une passe avec Hold temporaire : il
+constate la fin sur le temps reel du Director, laisse presenter la derniere
+image puis restaure le wrap mode d'origine. Il ne deduit jamais une reussite
+de la duree ecoulee ni de l'evenement stopped, dont Unity peut remettre le
+temps a zero. Les arrets explicites restent des interruptions.
+
+Le contrat de couverture des bindings est commun a l'editeur et au runtime.
+Une piste active non liee fait echouer la lecture ; un binding facultatif
+doit etre declare explicitement. Les bindings natifs compatibles du Director
+conservent leurs callbacks de presentation et de restauration.

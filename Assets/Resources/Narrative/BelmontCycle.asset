@@ -306,6 +306,28 @@ MonoBehaviour:
     rewardFlag: 0
     disappearAfterCompletion: 1
     disappearanceDelay: 0
+  - id: lucian_after_shadow
+    durationSeconds: 5
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: shadow_warden_defeated
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Lucian : Mais qu\u2019est-ce qu\u2019il se passe ici ? J\u2019ai une impression\u2026 de rage\u2026 dissip\xE9e. Mais les conduits restent plong\xE9s dans le noir."
+    unavailableLine:
+    repeatLine:
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 0
   enemyDefeatedFlags: 1
   knowledgeOnEnemyDefeat: []
   playCinematicAfterDefeat: 0

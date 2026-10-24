@@ -54,6 +54,7 @@ public static class WorldPickupUtility
         if (existing != null)
         {
             ConfigureLootContainer(existing, item, quantity, destroyWhenEmpty, collectable, displayItem);
+            if (Application.isPlaying) PersistentWorldSceneInstaller.EnsureLocalDroppedItemInstance(existing, item);
             return existing;
         }
 
@@ -63,7 +64,9 @@ public static class WorldPickupUtility
         root.transform.localScale = Vector3.one;
         instance.transform.SetParent(root.transform, true);
 
-        return ConfigurePickupOnRoot(root, item, quantity, destroyWhenEmpty, collectable, displayItem);
+        InteractableItem created = ConfigurePickupOnRoot(root, item, quantity, destroyWhenEmpty, collectable, displayItem);
+        if (Application.isPlaying) PersistentWorldSceneInstaller.EnsureLocalDroppedItemInstance(created, item);
+        return created;
     }
 
     public static void ConfigureLootContainer(

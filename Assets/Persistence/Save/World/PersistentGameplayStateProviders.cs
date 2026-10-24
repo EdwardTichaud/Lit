@@ -46,6 +46,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
 
     public byte[] CaptureState(PersistentStateContext context)
     {
+        if (container == null) container = GetComponent<InteractableItem>();
         if (container == null)
         {
             PersistentStateValidation.LogValidation(
@@ -100,6 +101,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
             return;
         }
 
+        if (container == null) container = GetComponent<InteractableItem>();
         if (container == null)
         {
             PersistentStateValidation.LogValidation(
@@ -175,6 +177,12 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
                 });
             }
         }
+
+        // Resolve the complete payload before touching the live container.
+        // A missing definition must not erase authored contents on a retry.
+        if (missingItemDefinitions > 0 ||
+            !string.IsNullOrWhiteSpace(data.ContainerItemId) && resolvedContainerItem == null)
+            return;
 
         container.representedItem = string.IsNullOrWhiteSpace(data.ContainerItemId) ? null : resolvedContainerItem;
         container.allowTake = data.Collectable;
@@ -453,6 +461,7 @@ public class PersistentSecretPassageState : MonoBehaviour, IPersistentStateProvi
 
     public byte[] CaptureState(PersistentStateContext context)
     {
+        if (secretPassage == null) secretPassage = GetComponent<TrouEtroit>();
         if (secretPassage == null)
         {
             PersistentStateValidation.LogValidation(
@@ -477,6 +486,7 @@ public class PersistentSecretPassageState : MonoBehaviour, IPersistentStateProvi
             return;
         }
 
+        if (secretPassage == null) secretPassage = GetComponent<TrouEtroit>();
         if (secretPassage == null)
         {
             PersistentStateValidation.LogValidation(
@@ -522,6 +532,11 @@ public class PersistentPuzzleElementState : MonoBehaviour, IPersistentStateProvi
 
     private void Awake()
     {
+        ResolvePuzzle();
+    }
+
+    private void ResolvePuzzle()
+    {
         if (puzzle == null)
         {
             puzzle = GetComponent<TwoLeverPuzzle>();
@@ -536,6 +551,7 @@ public class PersistentPuzzleElementState : MonoBehaviour, IPersistentStateProvi
 
     public byte[] CaptureState(PersistentStateContext context)
     {
+        ResolvePuzzle();
         if (puzzle == null && leverA == null && leverB == null)
         {
             PersistentStateValidation.LogValidation(
@@ -564,6 +580,7 @@ public class PersistentPuzzleElementState : MonoBehaviour, IPersistentStateProvi
             return;
         }
 
+        ResolvePuzzle();
         if (puzzle == null && leverA == null && leverB == null)
         {
             PersistentStateValidation.LogValidation(
@@ -643,6 +660,7 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
 
     public byte[] CaptureState(PersistentStateContext context)
     {
+        if (flame == null) flame = GetComponent<Flame>();
         if (flame == null)
         {
             PersistentStateValidation.LogValidation(
@@ -668,6 +686,7 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
 
     public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
     {
+        if (flame == null) flame = GetComponent<Flame>();
         if (flame == null)
         {
             PersistentStateValidation.LogValidation(

@@ -10,8 +10,8 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class LucCycleSetup
 {
-    public const string ScenePath = "Assets/Scenes/District_1/District_1_Cycle_Luc.unity";
-    private const string DefinitionPath = "Assets/Resources/Narrative/LucCycle.asset";
+    public const string ScenePath = "Assets/Scenes/Cycles/Cycle_Luc/District_1_Cycle_Luc.unity";
+    private const string DefinitionPath = "Assets/Scenes/Cycles/Cycle_Luc/LucCycle.asset";
 
     static LucCycleSetup() => EditorApplication.update += Poll;
 

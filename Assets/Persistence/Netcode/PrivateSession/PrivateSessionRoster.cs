@@ -12,6 +12,7 @@ public sealed class PrivateSessionRoster : ScriptableObject
     {
         IEnumerable<CharacterData> available = characters ?? System.Array.Empty<CharacterData>();
         string path = SaveSessionManager.Instance?.GetActiveSaveFilePath("CharacterState.json");
+        if (!string.IsNullOrEmpty(path)) SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(path));
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
             CharacterSaveData saved = JsonUtility.FromJson<CharacterSaveData>(File.ReadAllText(path));

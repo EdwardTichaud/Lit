@@ -24,6 +24,27 @@ public class ItemRegistry : MonoBehaviour
         BuildLookup();
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    // Add only definitions referenced by newly prepared scene content. The
+    // bootstrap catalogue is not necessarily exhaustive for additive zones.
+    public static bool RegisterLoadedDefinition(Item item)
+    {
+        ItemRegistry registry = Instance;
+        if (registry == null || item == null) return false;
+        if (!registry.initialized) registry.BuildLookup();
+        string id = ItemIdUtils.GetItemId(item);
+        if (string.IsNullOrWhiteSpace(id)) return false;
+        if (registry.lookup.TryGetValue(id, out Item existing)) return existing == item;
+        registry.lookup.Add(id, item);
+        registry.items ??= new List<Item>();
+        if (!registry.items.Contains(item)) registry.items.Add(item);
+        return true;
+    }
+
     public static Item Resolve(string id)
     {
         if (string.IsNullOrWhiteSpace(id))

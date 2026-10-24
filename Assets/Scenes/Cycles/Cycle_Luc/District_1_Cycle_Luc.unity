@@ -206,8 +206,7 @@ MonoBehaviour:
   lockDifficulty: 12
   lockpickToolItem: {fileID: 0}
   lockpickToolItemId: outils_de_crochetage
-  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir
-    ce coffre ?
+  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir ce coffre ?
   missingLockpickMessage: Il manque des outils de crochetage.
   lockpickSuccessMessage: "Crochetage r\xE9ussi."
   lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
@@ -289,6 +288,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4610656072568180555, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4610656072568180555, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4610656072568180555, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6411929473796178513, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
       propertyPath: m_Name
       value: Pierre tombale
@@ -296,13 +307,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3968963004063233166, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1415963781}
   m_SourcePrefab: {fileID: 100100000, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
 --- !u!4 &1415963779 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
   m_PrefabInstance: {fileID: 1415963778}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1415963780 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3968963004063233166, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+  m_PrefabInstance: {fileID: 1415963778}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1415963781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415963780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
+  outlined: 0
 --- !u!1 &1423774655
 GameObject:
   m_ObjectHideFlags: 0
@@ -353,7 +387,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1741227917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,12 +449,18 @@ MonoBehaviour:
   interactions:
   - {fileID: 2557317206520416564}
   activations: []
+  deactivations: []
+  disappearances: []
   poses: []
   director: {fileID: 0}
   bindingProfile: {fileID: 0}
   cinematicParticipants: []
   encounters: []
+  flames: []
+  autoDialogues: []
   sequences: []
+  devStartEnabled: 0
+  devStartStepId: 
 --- !u!23 &1441255426274508962
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -482,6 +522,7 @@ GameObject:
   - component: {fileID: 9018881120849713134}
   - component: {fileID: 9018881120849713136}
   - component: {fileID: 9018881120849713135}
+  - component: {fileID: 9018881120849713137}
   m_Layer: 0
   m_Name: Petite tombe de Jon
   m_TagString: Untagged
@@ -541,15 +582,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 928999184455422515, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -47.96859
+      value: -3.5
       objectReference: {fileID: 0}
     - target: {fileID: 928999184455422515, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -94.28796
+      value: -93.865
       objectReference: {fileID: 0}
     - target: {fileID: 928999184455422515, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 44.24
+      value: 51.5
       objectReference: {fileID: 0}
     - target: {fileID: 928999184455422515, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_LocalRotation.w
@@ -581,7 +622,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2245622642330593558, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3779883059869037527, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_Name
@@ -593,11 +634,11 @@ PrefabInstance:
       objectReference: {fileID: 2557317206520416561}
     - target: {fileID: 6440911006407488790, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6868018813235486059, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9112250133946299520, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
       propertyPath: appearanceAnimator
@@ -644,6 +685,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CycleInteraction
   cycle: {fileID: 1741227919}
   dialogueId: luc
+  useGhostPuzzleResolution: 0
+  requireLitInfluence: 0
   interactionAnchor: {fileID: 0}
   interactionDistance: 3
   interactionCollider: {fileID: 0}
@@ -661,7 +704,7 @@ Transform:
   m_GameObject: {fileID: 1957369246601607095}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -9, y: -93.865, z: 54.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -751,8 +794,7 @@ MonoBehaviour:
   lockDifficulty: 12
   lockpickToolItem: {fileID: 0}
   lockpickToolItemId: outils_de_crochetage
-  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir
-    ce coffre ?
+  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir ce coffre ?
   missingLockpickMessage: Il manque des outils de crochetage.
   lockpickSuccessMessage: "Crochetage r\xE9ussi."
   lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
@@ -782,10 +824,31 @@ MonoBehaviour:
   actionBoxDisabledAlpha: 0.25
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: '{0}/{1}'
-  interactionTrigger: {fileID: 0}
-  interactionMaxDistance: 1.75
+  interactionTrigger: {fileID: 9018881120849713137}
+  interactionMaxDistance: 2
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
+--- !u!65 &9018881120849713137
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1957369246601607095}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.31342942, y: 1.0590768, z: 0.7292276}
+  m_Center: {x: 0, y: 0.49953842, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

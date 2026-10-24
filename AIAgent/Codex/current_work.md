@@ -1,3 +1,73 @@
+## Origine du desaxage TwinBlades / StoneGolem (2026-10-24)
+
+Diagnostic termine, sans migration du jeu : le decalage est reproduit sans
+scripts dans les poses TwinBlades source et conserve par Based Upon Original,
+Offset 0, rotation bakee. Torse Idle : Lucian 58,52 degres / copie Humanoid de
+StoneGolem 58,47 ; marche avant 35,56 / 35,82. Root physique : zero rotation.
+La pose existe deja sur le rig fournisseur Generic ; ce n'est pas une rotation
+ajoutee uniquement par le retargeting StoneGolem. 66 cas Unity a 121 points,
+avatars cibles valides, comparaisons Root on/off, Body Orientation et Offset
+sur copies isolees. Body Orientation ramene Idle vers -1 degre mais decale
+encore la course : aucune correction globale de tous les clips n'est validee.
+LucianCombatTorsoFacing est aussi present dans le prefab Lucian actuel ; sa
+compensation doit etre distinguee des poses brutes lors d'une future correction.
+StoneGolem original reste Generic ; huit sources FBX/metadonnees inchangees.
+Preuves : Library/TwinBladesRotationAudit/Rapport.md, verification.json et
+Library/RotationResults/report.json dans ce mini-projet. Aucun clip/controller,
+prefab, vitesse ni script runtime modifie pour cet audit. Retargeting rendu,
+appuis et raccords a valider avant une future calibration de production.
+
+## Continuite Scenes Et Sauvegardes (2026-10-24)
+
+Etat : SOLO rendu qualifie dans le perimetre de recette ; RESEAU COMPLET NON
+VALIDE. Aucun essai suivi encore actif. Aucun nouveau projet cree ce tour.
+
+Corrections conservees :
+- Archives additives selectives, identites et quantites de depots ; definitions
+  d'items resolues avant restauration. Sauvegarde transactionnelle recuperable.
+- Completions narratives publiees avec la sauvegarde, pas lors d'un simple visionnage.
+- Creation de session cliente avant snapshot, navigation/escouade apres progression
+  restauree ; une seule application initiale avant client_ready.
+- Hash de prefab enregistre conserve et provider de container installe par les
+  fabriques NGO, sans creation d'identite stable sur client.
+- ServerUccNetworkTransform conserve l'autorite serveur et aligne le cache UCC
+  client sur la pose NGO recue ; snap complet uniquement au spawn/teleport.
+  Quatre prefabs joueurs et fabrique/authoring alignes, sans double composant.
+- CombatNetworkActorRuntime : NetworkList creees a la declaration, utilisables
+  par NGO avant Awake sur acteur inactif ; Awake ne les recree jamais.
+
+Preuves :
+- inactive-network-actor-tests.xml : 75 passes, zero echec/ignore, compilation Unity.
+- Execution precedente isolee ucc-network-pose-continuity-tests.xml : 74 passes.
+  Cinq tests authoring passes dans une execution mixte par ailleurs EN ECHEC
+  (42 SetUp refusent la scene dirty). Ne pas presenter cette execution verte.
+- Solo 3cfb072ef8f84a1d929fa407c8ef0edb : 84 assertions, zero erreur runtime,
+  portails, depot 3/prise 1/reste 2, vraie recharge et echec de sortie transactionnel.
+  Approches UCC/defaite sont des fixtures ; pas une preuve d'inputs/combat manuels.
+- Diagnostic pose 2b9ea330f79344a4a1060429268b7bf5 : cible NGO correcte mais
+  ancienne pose reimposee par UCC. Apres correctif, client atteint le depot.
+- Dernier run 9e10931ebdff44f693b7e21a76637e23 EN ECHEC : portail Maison
+  et influence reelle du depot passent hote ; late join echoue sur l'objet
+  VigilAltar_Hub_Safeguard (hash 1275473975, Maison_Enigme_Vigil), puis
+  NetworkObject.Deserialize. Annulation gracieuse, deux editeurs sortis.
+  Le warning de serialisation ShadowGuardian et UnityEditor.Search sont conserves.
+
+A reprendre : mappage/despawn des objets de scenes NGO au late join apres portail,
+puis vrai pickup RPC/commit et portails avec client actif ; reconnexion/recharge
+disque hote ; refus de restauration partielle sans perte du sol ni publication
+d'un monde incomplet ; gameplay auteur et mouvement/camera/saut manuels.
+Ne pas bypasser les validateurs de build existants, ni modifier l'autorite.
+
+Nettoyage autorise par l'utilisateur pour DEUX copies seulement :
+Library/MovingLegsValidationProject (60.46 Gio de fichiers) et
+Library/PersistenceNetworkClientProject (18.58 Gio). Suppression automatique
+BLOQUEE par l'environnement ; les deux existent encore, aucun espace annonce
+comme libere. Racines/reparse points verifies, aucun processus ne les utilise.
+Rapports/recettes preserves hors copies ; archive Evidence-2026-10-24.zip
+(409 entrees, SHA256 dans rapport), Tools/Validation/PersistenceContinuity.
+Originaux Library/PersistenceContinuityValidation conserves. Ne pas recreer
+de copie sans accord. Rapport courant : rapport_persistance_reprise.md.
+
 ## Interactions Depuis Le Personnage (2026-10-19)
 
 La selection locale ne depend plus du frustum, de la position ou du masque de

@@ -18,6 +18,8 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
     private readonly List<Material> temporaryMaterials = new List<Material>();
     private CharacterInfo observedHealth;
     public bool HasCompletedPresentation { get; private set; }
+    public bool UsesExternalPresentation => actor?.BossEncounter?.Definition != null &&
+        actor.BossEncounter.Definition.UseExternalDeathPresentation;
 
     private void Awake() { enemy = GetComponent<EnemyController>(); actor = EnemyEncounterActors.Resolve(this); }
 
@@ -58,6 +60,10 @@ public sealed class EnemyDeathPresentation : MonoBehaviour
 
     private void BeginIfDead()
     {
+        // A quest-owned boss remains available for its authored cinematic and
+        // retries. Health, encounter resolution and persistence keep their own
+        // authority; this component only relinquishes visual disappearance.
+        if (UsesExternalPresentation) return;
         if (routine == null && Health != null && Health.IsDead)
             routine = StartCoroutine(Disappear());
     }

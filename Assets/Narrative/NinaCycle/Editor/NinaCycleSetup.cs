@@ -119,7 +119,7 @@ public static class NinaCycleSetup
         var serialized = new SerializedObject(manifest);
         var names = serialized.FindProperty("loadingSceneNames");
         names.InsertArrayElementAtIndex(names.arraySize);
-        names.GetArrayElementAtIndex(names.arraySize - 1).stringValue = "District_1_Enigme_Ghost_Nina";
+        names.GetArrayElementAtIndex(names.arraySize - 1).stringValue = System.IO.Path.GetFileNameWithoutExtension(ScenePath);
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(manifest);
         if (!EditorBuildSettings.scenes.Any(s => s.path == ScenePath))

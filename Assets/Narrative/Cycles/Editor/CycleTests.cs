@@ -41,7 +41,7 @@ public sealed class CycleTests
         Assert.That(step.rewards[0].kind, Is.EqualTo(CycleRewardKind.Skill));
         Assert.That(dialogue.HasCompleted(8), Is.False);
         Assert.That(definition.IsCompleted(8), Is.False);
-        Assert.That(definition.cycleSceneName, Is.EqualTo("District_1_Enigme_Ghost_Nina"));
+        Assert.That(definition.cycleSceneName, Is.EqualTo(System.IO.Path.GetFileNameWithoutExtension(NinaCycleSetup.ScenePath)));
         Assert.That(definition.FindDialogue("nina").disappearAfterCompletion, Is.False);
     }
 
@@ -216,6 +216,31 @@ public sealed class CycleTests
             Assert.That(animator.GetBool("isDead"), Is.True);
         }
         finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void ReenabledControllerRestoresCompletedDisappearanceWithoutReplayingItsFade()
+    {
+        var root = new GameObject("Dissolve lifecycle contract"); root.SetActive(false);
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        try
+        {
+            definition.cycleId = "test.dissolve-lifecycle";
+            var cycle = root.AddComponent<CycleController>();
+            var rules = root.AddComponent<WorldRulesStateManager>();
+            cycle.definition = definition;
+            typeof(CycleController).GetField("rules", Private).SetValue(cycle, rules);
+            var target = new GameObject("Cycle-owned wall"); target.transform.SetParent(root.transform);
+            var binding = new CycleDissolveBinding { target = target, condition = new CycleCondition { allFlags = 1 } };
+            cycle.disappearances = new[] { binding };
+            typeof(CycleController).GetMethod("ApplyDisappearances", Private).Invoke(cycle, null);
+            Assert.That(target.activeSelf, Is.True);
+            rules.SetInt(definition.StateKey, 1);
+            typeof(CycleController).GetMethod("OnDisable", Private).Invoke(cycle, null);
+            typeof(CycleController).GetMethod("ApplyDisappearances", Private).Invoke(cycle, null);
+            Assert.That(target.activeSelf, Is.False, "A previously committed disappearance must restore immediately, not start another coroutine.");
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(definition); }
     }
 
     [Test]

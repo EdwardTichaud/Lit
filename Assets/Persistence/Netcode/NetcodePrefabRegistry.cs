@@ -476,7 +476,10 @@ public static class NetcodePrefabRegistry
 
         if (withLootContainer)
         {
-            WorldPickupUtility.EnsurePickupInfrastructure(instance);
+            InteractableItem container = WorldPickupUtility.EnsurePickupInfrastructure(instance);
+            // The remote prefab handler must expose the same snapshot provider
+            // as the server, before the late-join snapshot can be applied.
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(container.gameObject);
         }
 
         uint hash = withLootContainer ? info.lootHash : info.plainHash;
@@ -501,7 +504,8 @@ public static class NetcodePrefabRegistry
             ? Object.Instantiate(info.sourcePrefab, position, rotation, parent)
             : Object.Instantiate(info.sourcePrefab, position, rotation);
 
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
+        if (instance.GetComponent<NetworkTransform>() == null)
+            instance.AddComponent<ServerUccNetworkTransform>();
         NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(instance);
@@ -647,7 +651,8 @@ public static class NetcodePrefabRegistry
 
         if (withLootContainer)
         {
-            WorldPickupUtility.EnsurePickupInfrastructure(instance);
+            InteractableItem container = WorldPickupUtility.EnsurePickupInfrastructure(instance);
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(container.gameObject);
         }
 
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);

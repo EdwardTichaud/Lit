@@ -40,7 +40,7 @@ public sealed class CycleProgressionService : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
         rules = GetComponent<WorldRulesStateManager>();
-        foreach (var definition in Resources.LoadAll<CycleDefinition>("Narrative")) RegisterDefinition(definition);
+        foreach (var definition in CycleCatalog.LoadDefinitions()) RegisterDefinition(definition);
     }
     private void OnEnable()
     {
@@ -116,7 +116,7 @@ public sealed class CycleProgressionService : MonoBehaviour
         if (Instance != null) return Instance.IsCompletedScene(sceneName);
         var state = UnityEngine.Object.FindAnyObjectByType<WorldRulesStateManager>();
         if (state == null || string.IsNullOrWhiteSpace(sceneName)) return false;
-        foreach (var definition in Resources.LoadAll<CycleDefinition>("Narrative"))
+        foreach (var definition in CycleCatalog.LoadDefinitions())
             if (definition.cycleSceneName == sceneName &&
                 (state.TryGetInt(definition.StateKey + ".completed", out int completed) && completed != 0 ||
                  HasTerminalSteps(state, definition) ||
@@ -339,12 +339,18 @@ public sealed class CycleProgressionService : MonoBehaviour
         for (int i = mailbox.rewardKeys.Count - 1; i >= 0; i--)
         {
             if (!TryResolveItemReward(mailbox.rewardKeys[i], out CycleReward reward)) { mailbox.rewardKeys.RemoveAt(i); changed = true; continue; }
-            int remaining = Mathf.Max(1, reward.quantity);
+            // A full chest may accept only part of a reward. Keep the unpaid balance
+            // in the existing world-variable snapshot, otherwise each retry duplicates it.
+            string balanceKey = mailbox.rewardKeys[i] + ".remaining";
+            int remaining = rules.TryGetInt(balanceKey, out int savedBalance)
+                ? Mathf.Max(0, savedBalance) : Mathf.Max(1, reward.quantity);
+            int before = remaining;
             foreach (var chest in containers)
             {
                 if (chest == null || remaining <= 0) continue;
                 remaining -= chest.AddItemsWithCapacity(reward.item, remaining);
             }
+            if (remaining != before || remaining == 0) rules.SetInt(balanceKey, remaining);
             if (remaining == 0) { mailbox.rewardKeys.RemoveAt(i); changed = true; }
         }
         if (changed) WriteMailbox(mailbox);

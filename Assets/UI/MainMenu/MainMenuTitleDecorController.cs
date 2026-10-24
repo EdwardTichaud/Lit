@@ -160,13 +160,15 @@ public class MainMenuTitleDecorController : MonoBehaviour
 
     private static T ReadJson<T>(string path) where T : class
     {
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        if (string.IsNullOrWhiteSpace(path))
         {
             return null;
         }
 
         try
         {
+            SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(path));
+            if (!File.Exists(path)) return null;
             return JsonUtility.FromJson<T>(File.ReadAllText(path));
         }
         catch (Exception ex)

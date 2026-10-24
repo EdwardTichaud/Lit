@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -39,6 +40,24 @@ public sealed class SnapshotSerializer
             if (snapshot.SchemaVersion >= 2)
                 writer.WriteValueSafe(snapshot.Abilities != null ? JsonUtility.ToJson(snapshot.Abilities) : string.Empty);
 
+            if (snapshot.SchemaVersion >= 3)
+            {
+                writer.WriteValueSafe(snapshot.SceneArchives != null ? snapshot.SceneArchives.Count : 0);
+                if (snapshot.SceneArchives != null)
+                {
+                    foreach (PersistentSceneArchive archive in snapshot.SceneArchives)
+                    {
+                        if (archive == null) throw new InvalidDataException("Null scene archive.");
+                        writer.WriteValueSafe(archive.SceneName ?? string.Empty);
+                        WriteObjects(ref writer, archive.SceneObjects);
+                        WriteObjects(ref writer, archive.RuntimeObjects);
+                        writer.WriteValueSafe(archive.RemovedSceneObjectIds.Count);
+                        foreach (string removedId in archive.RemovedSceneObjectIds)
+                            writer.WriteValueSafe(removedId ?? string.Empty);
+                    }
+                }
+            }
+
             return writer.ToArray();
         }
         finally
@@ -51,7 +70,7 @@ public sealed class SnapshotSerializer
     {
         if (bytes == null || bytes.Length == 0)
         {
-            return new WorldSnapshot();
+            throw new InvalidDataException("World snapshot is empty.");
         }
 
         FastBufferReader reader = new FastBufferReader(bytes, Allocator.Temp);
@@ -60,6 +79,10 @@ public sealed class SnapshotSerializer
             WorldSnapshot snapshot = new WorldSnapshot();
 
             reader.ReadValueSafe(out snapshot.SchemaVersion);
+            if (snapshot.SchemaVersion < 1 || snapshot.SchemaVersion > WorldSnapshot.CurrentSchemaVersion)
+            {
+                throw new InvalidDataException("Unsupported world snapshot schema: " + snapshot.SchemaVersion);
+            }
             reader.ReadValueSafe(out snapshot.SceneName);
             reader.ReadValueSafe(out snapshot.CapturedAtTime);
 
@@ -71,6 +94,36 @@ public sealed class SnapshotSerializer
             {
                 reader.ReadValueSafe(out string abilitiesJson);
                 if (!string.IsNullOrEmpty(abilitiesJson)) snapshot.Abilities = JsonUtility.FromJson<AbilitySaveData>(abilitiesJson);
+            }
+
+            if (snapshot.SchemaVersion >= 3)
+            {
+                reader.ReadValueSafe(out int archiveCount);
+                ValidateCount(ref reader, archiveCount);
+                var seenScenes = new HashSet<string>(StringComparer.Ordinal);
+                for (int i = 0; i < archiveCount; i++)
+                {
+                    var archive = new PersistentSceneArchive();
+                    reader.ReadValueSafe(out archive.SceneName);
+                    if (string.IsNullOrWhiteSpace(archive.SceneName) || !seenScenes.Add(archive.SceneName))
+                        throw new InvalidDataException("Missing or duplicate scene archive name.");
+                    archive.SceneObjects = ReadObjects(ref reader);
+                    archive.RuntimeObjects = ReadObjects(ref reader);
+                    reader.ReadValueSafe(out int removedCount);
+                    ValidateCount(ref reader, removedCount);
+                    for (int removedIndex = 0; removedIndex < removedCount; removedIndex++)
+                    {
+                        reader.ReadValueSafe(out string removedId);
+                        if (string.IsNullOrWhiteSpace(removedId)) throw new InvalidDataException("Missing removed scene object identity.");
+                        archive.RemovedSceneObjectIds.Add(removedId);
+                    }
+                    snapshot.SceneArchives.Add(archive);
+                }
+            }
+
+            if (reader.Position != reader.Length)
+            {
+                throw new InvalidDataException("Unexpected trailing bytes in world snapshot.");
             }
 
             return snapshot;
@@ -136,6 +189,7 @@ public sealed class SnapshotSerializer
     private static List<PlayerSnapshot> ReadPlayers(ref FastBufferReader reader)
     {
         reader.ReadValueSafe(out int count);
+        ValidateCount(ref reader, count);
         List<PlayerSnapshot> players = new List<PlayerSnapshot>(Mathf.Max(0, count));
 
         for (int i = 0; i < count; i++)
@@ -183,6 +237,7 @@ public sealed class SnapshotSerializer
     private static List<PersistentObjectSnapshot> ReadObjects(ref FastBufferReader reader)
     {
         reader.ReadValueSafe(out int count);
+        ValidateCount(ref reader, count);
         List<PersistentObjectSnapshot> snapshots = new List<PersistentObjectSnapshot>(Mathf.Max(0, count));
 
         for (int i = 0; i < count; i++)
@@ -191,6 +246,8 @@ public sealed class SnapshotSerializer
             reader.ReadValueSafe(out snapshot.PersistentId);
 
             reader.ReadValueSafe(out byte objectKind);
+            if (objectKind > (byte)PersistentObjectKind.RuntimeSpawned)
+                throw new InvalidDataException("Unknown persistent object kind: " + objectKind);
             snapshot.ObjectKind = (PersistentObjectKind)objectKind;
 
             reader.ReadValueSafe(out snapshot.RuntimePrefabId);
@@ -199,6 +256,7 @@ public sealed class SnapshotSerializer
             snapshot.Transform = ReadTransform(ref reader);
 
             reader.ReadValueSafe(out int stateBlobCount);
+            ValidateCount(ref reader, stateBlobCount);
             snapshot.StateBlobs = new List<StateBlobSnapshot>(Mathf.Max(0, stateBlobCount));
             for (int blobIndex = 0; blobIndex < stateBlobCount; blobIndex++)
             {
@@ -246,6 +304,7 @@ public sealed class SnapshotSerializer
     private static List<WorldVariableSnapshot> ReadWorldVariables(ref FastBufferReader reader)
     {
         reader.ReadValueSafe(out int count);
+        ValidateCount(ref reader, count);
         List<WorldVariableSnapshot> variables = new List<WorldVariableSnapshot>(Mathf.Max(0, count));
 
         for (int i = 0; i < count; i++)
@@ -254,6 +313,8 @@ public sealed class SnapshotSerializer
             reader.ReadValueSafe(out variable.Key);
 
             reader.ReadValueSafe(out byte valueType);
+            if (valueType > (byte)WorldVariableValueType.String)
+                throw new InvalidDataException("Unknown world variable type: " + valueType);
             variable.ValueType = (WorldVariableValueType)valueType;
 
             switch (variable.ValueType)
@@ -345,6 +406,7 @@ public sealed class SnapshotSerializer
     private static byte[] ReadBytes(ref FastBufferReader reader)
     {
         reader.ReadValueSafe(out int length);
+        ValidateCount(ref reader, length);
         if (length <= 0)
         {
             return Array.Empty<byte>();
@@ -353,5 +415,13 @@ public sealed class SnapshotSerializer
         byte[] payload = new byte[length];
         reader.ReadBytesSafe(ref payload, length);
         return payload;
+    }
+
+    private static void ValidateCount(ref FastBufferReader reader, int count)
+    {
+        // Every entry occupies at least one byte. Validate before allocation,
+        // including opaque provider payloads, for both disk and late-join data.
+        if (count < 0 || count > reader.Length - reader.Position)
+            throw new InvalidDataException("World snapshot contains an invalid collection or payload length.");
     }
 }

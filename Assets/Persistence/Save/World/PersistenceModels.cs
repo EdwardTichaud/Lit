@@ -91,9 +91,18 @@ public sealed class WorldVariableSnapshot
 }
 
 [System.Serializable]
+public sealed class PersistentSceneArchive
+{
+    public string SceneName;
+    public List<PersistentObjectSnapshot> SceneObjects = new List<PersistentObjectSnapshot>();
+    public List<PersistentObjectSnapshot> RuntimeObjects = new List<PersistentObjectSnapshot>();
+    public List<string> RemovedSceneObjectIds = new List<string>();
+}
+
+[System.Serializable]
 public sealed class WorldSnapshot
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public int SchemaVersion = CurrentSchemaVersion;
     public AbilitySaveData Abilities;
@@ -103,6 +112,9 @@ public sealed class WorldSnapshot
     public List<PersistentObjectSnapshot> SceneObjects = new List<PersistentObjectSnapshot>();
     public List<PersistentObjectSnapshot> RuntimeObjects = new List<PersistentObjectSnapshot>();
     public List<WorldVariableSnapshot> WorldVariables = new List<WorldVariableSnapshot>();
+    // Includes unloaded scenes. These records are data, never a request to
+    // instantiate an entire zone during disk load or late join.
+    public List<PersistentSceneArchive> SceneArchives = new List<PersistentSceneArchive>();
 }
 
 public sealed class SnapshotApplyResult

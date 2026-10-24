@@ -139,11 +139,38 @@ public static class PersistentWorldSceneInstaller
         if (droppedLoot)
         {
             InteractableItem lootContainer = target.GetComponent<InteractableItem>() ?? target.GetComponentInChildren<InteractableItem>(true);
-            if (lootContainer != null && lootContainer.GetComponentInParent<BuildingInfoInteractable>(true) == null)
+            if (lootContainer != null)
             {
                 NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(lootContainer.gameObject);
             }
         }
+    }
+
+    public static void EnsureLocalDroppedItemInstance(InteractableItem container, Item item)
+    {
+        if (container == null || item == null ||
+            (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)) return;
+
+        string itemId = ItemIdUtils.GetItemId(item);
+        if (string.IsNullOrWhiteSpace(itemId)) itemId = item.name;
+        string prefabId = BuildDroppedLootPrefabId(itemId);
+        PersistentNetworkObject existing = container.GetComponent<PersistentNetworkObject>();
+        string id = existing != null && existing.IsRuntimeObject && existing.HasPersistentId &&
+                    string.Equals(existing.RuntimePrefabId, prefabId, StringComparison.Ordinal)
+            ? existing.PersistentId : null;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            if (SpawnManager.Instance != null)
+                id = SpawnManager.Instance.AllocatePersistentId("dropped-loot", itemId);
+            else
+            {
+                // Keep the existing legacy runtime-spawn policy, never a
+                // scene identity copied from the item's authored prefab.
+                id = $"runtime:dropped-loot:{itemId}:{Guid.NewGuid():N}";
+                PersistentWorldDebug.Warn("local dropped-loot created without SpawnManager allocator itemId='" + itemId + "'", container);
+            }
+        }
+        EnsureRuntimeItemInstance(container.gameObject, item, id, droppedLoot: true);
     }
 
     public static void EnsureRuntimeKnowledgeManager(KnowledgeManager manager)
@@ -329,7 +356,7 @@ public static class PersistentWorldSceneInstaller
             NetcodeRuntimeUtilities.GetOrAdd<PersistentMuninChargeRewardState>(target);
         }
 
-        if (target.GetComponent<InteractableItem>() != null && target.GetComponentInParent<BuildingInfoInteractable>(true) == null)
+        if (UsesStandaloneContainerState(target.GetComponent<InteractableItem>()))
         {
             NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(target);
         }
@@ -515,6 +542,19 @@ public static class PersistentWorldSceneInstaller
         }
     }
 
+    private static bool UsesStandaloneContainerState(InteractableItem container)
+    {
+        if (container == null) return false;
+        // Recoverable items also use BuildingInfoInteractable for their UI.
+        // Only an actual, enabled legacy building owns the container payload.
+        if (!LegacyBuildingSystem.Enabled) return true;
+        foreach (BuildingInfoInteractable owner in container.GetComponentsInParent<BuildingInfoInteractable>(true))
+        {
+            if (owner != null && owner.IsLegacyBuilding) return false;
+        }
+        return true;
+    }
+
     private static void PrepareSceneContainers(GameObject root)
     {
         InteractableItem[] containers = root.GetComponentsInChildren<InteractableItem>(true);
@@ -526,7 +566,12 @@ public static class PersistentWorldSceneInstaller
                 continue;
             }
 
-            if (container.GetComponentInParent<BuildingInfoInteractable>(true) != null)
+            ItemRegistry.RegisterLoadedDefinition(container.representedItem);
+            if (container.storedItems != null)
+                foreach (InteractableItem.LootItemEntry entry in container.storedItems)
+                    if (entry != null) ItemRegistry.RegisterLoadedDefinition(entry.item);
+
+            if (!UsesStandaloneContainerState(container))
             {
                 continue;
             }
@@ -723,17 +768,20 @@ public static class PersistentWorldSceneInstaller
             return null;
         }
 
-        if (ownNetworkObject == null)
+        bool addedNetworkObject = ownNetworkObject == null;
+        if (addedNetworkObject)
         {
             ownNetworkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(target);
         }
 
-        if (sceneObject)
+        if (sceneObject && !ownNetworkObject.IsSpawned)
         {
             NetcodeRuntimeUtilities.EnsureSceneObjectHash(ownNetworkObject, NetcodeSceneIdUtility.GetStableId(target.transform));
         }
-        else
+        else if (addedNetworkObject)
         {
+            // Preserve the factory's registered hash on existing runtime objects.
+            // A clone-name hash has no matching client prefab handler.
             uint hash = NetcodeStableHash.Hash32(target.name);
             NetcodeRuntimeUtilities.EnsureNetworkObjectHash(ownNetworkObject, hash);
         }
@@ -749,7 +797,7 @@ public static class PersistentWorldSceneInstaller
         }
 
         NetworkObject networkObject = target.GetComponent<NetworkObject>();
-        if (networkObject == null)
+        if (networkObject == null || networkObject.IsSpawned)
         {
             return;
         }

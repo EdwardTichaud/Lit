@@ -60,7 +60,7 @@ public static class CombatEnemyNetworkAuthoring
 public static class CombatPlayerNetworkAuthoring
 {
     private static readonly Type[] Required = {
-        typeof(NetworkTransform), typeof(NetcodeCharacterIdentity), typeof(NetcodeLocalPlayer),
+        typeof(ServerUccNetworkTransform), typeof(NetcodeCharacterIdentity), typeof(NetcodeLocalPlayer),
         typeof(NetworkCharacterInput), typeof(NetworkInventory), typeof(PersistentNetworkObject)
     };
 
@@ -72,6 +72,8 @@ public static class CombatPlayerNetworkAuthoring
             if (root.GetComponents(type).Length > 1) return "Multiple root network authorities: " + type.Name;
         var movement = root.GetComponent<NetworkTransform>();
         if (movement != null && !movement.IsServerAuthoritative()) return "Player movement must retain server authority.";
+        if (movement != null && !(movement is ServerUccNetworkTransform))
+            return "Player NetworkTransform must synchronize the UCC motor cache (ServerUccNetworkTransform).";
         return null;
     }
 

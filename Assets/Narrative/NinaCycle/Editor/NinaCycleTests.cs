@@ -7,6 +7,99 @@ public sealed class NinaCycleTests
     private const System.Reflection.BindingFlags Private = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
 
     [Test]
+    public void NinaMemoryIsAnEditableBoundTimelineWithoutChangingTheOptionalSaveStep()
+    {
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenPreviewScene(NinaCycleSetup.ScenePath);
+        try
+        {
+            var cycle = System.Linq.Enumerable.Single(System.Linq.Enumerable.SelectMany(scene.GetRootGameObjects(),
+                r => r.GetComponentsInChildren<CycleController>(true)));
+            var director = cycle.director;
+            Assert.NotNull(director);
+            Assert.NotNull(director.GetComponent<LitTimelineCinemachineBridge>());
+            Assert.NotNull(cycle.bindingProfile);
+            Assert.IsTrue(cycle.bindingProfile.Matches(director.playableAsset));
+            Assert.IsFalse(director.playOnAwake);
+            Assert.AreEqual(UnityEngine.Playables.DirectorWrapMode.None, director.extrapolationMode);
+            var timeline = director.playableAsset as UnityEngine.Timeline.TimelineAsset;
+            Assert.NotNull(timeline);
+            Assert.That(timeline.duration, Is.EqualTo(18).Within(.01));
+            var cameraTrack = System.Linq.Enumerable.Single(System.Linq.Enumerable.OfType<Unity.Cinemachine.CinemachineTrack>(timeline.GetOutputTracks()));
+            var shots = System.Linq.Enumerable.ToArray(cameraTrack.GetClips());
+            Assert.AreEqual(4, shots.Length);
+            for (int i = 0; i < shots.Length; i++)
+            {
+                Assert.That(shots[i].start, Is.EqualTo(i * 4.5).Within(.001));
+                Assert.That(shots[i].duration, Is.EqualTo(4.5).Within(.001));
+                var camera = ((Unity.Cinemachine.CinemachineShot)shots[i].asset).VirtualCamera.Resolve(director);
+                Assert.NotNull(camera);
+                Assert.AreEqual(scene, camera.gameObject.scene);
+            }
+            Assert.That(Lit.Editor.TimelineBindingsValidator.CollectBindingCoverageIssues(director, cycle.bindingProfile), Is.Empty);
+            var memory = cycle.definition.FindStep("aftermath_seen");
+            Assert.IsFalse(memory.terminal);
+            Assert.AreEqual("cinematic", memory.sourceId);
+            Assert.IsTrue(cycle.definition.FindStep("scar_reward").terminal);
+            Assert.That(director.GetComponentsInChildren<EnemyController>(true), Is.Empty);
+            Assert.That(director.GetComponentsInChildren<GhostController>(true), Is.Empty);
+            Assert.That(director.GetComponentsInChildren<Unity.Netcode.NetworkObject>(true), Is.Empty);
+            foreach (var activation in System.Linq.Enumerable.OfType<UnityEngine.Timeline.ActivationTrack>(timeline.GetOutputTracks()))
+            {
+                var target = director.GetGenericBinding(activation) as UnityEngine.GameObject;
+                Assert.NotNull(target);
+                Assert.IsFalse(target.activeSelf, "Presentation must not leak outside Timeline playback.");
+                Assert.AreEqual(UnityEngine.Timeline.ActivationTrack.PostPlaybackState.Inactive, activation.postPlaybackState);
+            }
+        }
+        finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+    [UnityEngine.TestTools.UnityTest]
+    public System.Collections.IEnumerator NinaMemoryNativeGraphShowsOnlyTheCurrentCaptionAndCleansUpOnStop()
+    {
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenPreviewScene(NinaCycleSetup.ScenePath);
+        UnityEngine.Playables.PlayableDirector director = null;
+        UnityEngine.GameObject cameraObject = null;
+        try
+        {
+            var cycle = System.Linq.Enumerable.Single(System.Linq.Enumerable.SelectMany(scene.GetRootGameObjects(),
+                r => r.GetComponentsInChildren<CycleController>(true)));
+            director = cycle.director;
+            var timeline = (UnityEngine.Timeline.TimelineAsset)director.playableAsset;
+            var cameraTrack = System.Linq.Enumerable.Single(System.Linq.Enumerable.OfType<Unity.Cinemachine.CinemachineTrack>(timeline.GetOutputTracks()));
+            cameraObject = new UnityEngine.GameObject("Isolated memory preview camera");
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(cameraObject, scene);
+            cameraObject.AddComponent<UnityEngine.Camera>();
+            director.SetGenericBinding(cameraTrack, cameraObject.AddComponent<Unity.Cinemachine.CinemachineBrain>());
+            var activations = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.OfType<UnityEngine.Timeline.ActivationTrack>(timeline.GetOutputTracks()));
+            Assert.AreEqual(5, activations.Length);
+            var targets = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(activations,
+                track => (UnityEngine.GameObject)director.GetGenericBinding(track)));
+            director.timeUpdateMode = UnityEngine.Playables.DirectorUpdateMode.Manual;
+            director.Play();
+            for (int i = 0; i < 4; i++)
+            {
+                director.time = i * 4.5 + .25;
+                director.Evaluate();
+                Assert.IsTrue(targets[0].activeSelf, "Nina's visual fragment should be present.");
+                for (int caption = 0; caption < 4; caption++)
+                    Assert.AreEqual(caption == i, targets[caption + 1].activeSelf, "Only the current quotation should be shown.");
+            }
+            director.Stop();
+            // ActivationMixerPlayable applies postPlaybackState in OnPlayableDestroy.
+            // Native graph destruction is deferred until the next editor frame.
+            yield return null;
+            foreach (var target in targets) Assert.IsFalse(target.activeSelf, "Stopping must remove local presentation: " + target.name);
+        }
+        finally
+        {
+            if (director != null) director.Stop();
+            if (cameraObject != null) UnityEngine.Object.DestroyImmediate(cameraObject);
+            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene);
+        }
+    }
+
+    [Test]
     public void NinaDefinitionLookupPreservesAuthoredAssetIdentity()
     {
         var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>(NinaCycleSetup.DefinitionPath);

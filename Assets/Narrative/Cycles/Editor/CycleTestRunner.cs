@@ -19,13 +19,37 @@ public sealed class CycleTestRunner : ICallbacks
     public static void Run()
     {
         if (runner != null || EditorApplication.isPlayingOrWillChangePlaymode) return;
-        AssetDatabase.ImportAsset("Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset", ImportAssetOptions.ForceUpdate);
-        var scientist = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset");
-        File.WriteAllText("Library/CycleScientistImported.json", JsonUtility.ToJson(scientist, true));
+        // Never open a save/discard prompt from an unattended test request.
+        // TestRunner changes scenes; preserve all manual edits first.
+        var modifiedScenes = new System.Collections.Generic.List<string>();
+        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+        {
+            var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+            if (scene.isDirty) modifiedScenes.Add(string.IsNullOrEmpty(scene.path) ? scene.name + " (non enregistree)" : scene.path);
+        }
+        if (modifiedScenes.Count > 0)
+        {
+            string sceneNames = string.Join("\n- ", modifiedScenes);
+            File.WriteAllText("Library/CycleTests.result", "NOT RUN: save modified scenes before running cycle tests.\n- " + sceneNames);
+            Debug.LogWarning("[Cycle] Tests non lances : enregistrer les scenes modifiees puis relancer.\n- " + sceneNames);
+            return;
+        }
+        File.WriteAllText("Library/CycleTests.result", "RUNNING " + System.DateTime.UtcNow.ToString("O"));
         runner = ScriptableObject.CreateInstance<TestRunnerApi>();
         runner.RegisterCallbacks(new CycleTestRunner());
-        runner.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode,
-            groupNames = new[] { "^CycleProgressionTests", "^CycleTests", "^NinaCycleTests" } }) { runSynchronously = true });
+        try
+        {
+            runner.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode,
+                groupNames = new[] { "^CycleProgressionTests", "^CycleTests", "^CycleAutoDialogueTests", "^CycleAutoDialogueControllerTests", "^CycleTimelineBindingTests", "^CycleTimelinePresentationTests", "^CycleGroupSequenceGateTests", "^NinaCycleTests", "^LucCycleTests",
+                    "^CycleTimelineRuntimeTests", "^CycleZoneTriggerTests", "^BelmontCycleTests", "^BelmontReleaseSceneTests", "^EtienneCycleTests", "^ArdentCycleTests", "^ClairmontCycleTests" } }) { runSynchronously = true });
+        }
+        catch (System.Exception exception)
+        {
+            File.WriteAllText("Library/CycleTests.result", "ERROR: " + exception);
+            if (runner != null) Object.DestroyImmediate(runner);
+            runner = null;
+            throw;
+        }
     }
     public void RunStarted(ITestAdaptor test) { }
     public void TestStarted(ITestAdaptor test) { }
@@ -36,5 +60,6 @@ public sealed class CycleTestRunner : ICallbacks
         File.WriteAllText("Library/CycleTests.result", "Passed=" + result.PassCount + "; Failed=" + result.FailCount + "; Skipped=" + result.SkipCount);
         runner.UnregisterCallbacks(this);
         Object.DestroyImmediate(runner);
+        runner = null;
     }
 }

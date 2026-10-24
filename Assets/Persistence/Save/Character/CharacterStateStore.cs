@@ -238,29 +238,37 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
-        CharacterSaveData data = BuildSaveData(manager);
-        string path = GetPath();
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return;
-        }
-
-        string json = JsonUtility.ToJson(data);
-        if (string.IsNullOrEmpty(json))
-        {
-            return;
-        }
-
+        string path = null;
         saveInProgress = true;
         ResolveSavingPanel()?.BeginSave();
         try
         {
-            File.WriteAllText(path, json);
-            SaveWorldSnapshot();
-            if (SaveSessionManager.Instance != null)
+            path = GetPath();
+            if (string.IsNullOrWhiteSpace(path))
             {
-                SaveSessionManager.Instance.RecordSaveMetadata(SceneManager.GetActiveScene().name);
+                ResolveSavingPanel()?.CompleteSave(false);
+                return;
             }
+            CharacterSaveData data = BuildSaveData(manager);
+            string json = JsonUtility.ToJson(data);
+            if (string.IsNullOrEmpty(json)) throw new InvalidOperationException("Character snapshot is empty.");
+            WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
+            if (adapter == null || !adapter.TryPrepareWorldSnapshot(out string worldPath, out byte[] worldBytes))
+                throw new InvalidOperationException("World snapshot preparation failed; no save file was replaced.");
+            var payloads = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            {
+                { path, System.Text.Encoding.UTF8.GetBytes(json) },
+                { worldPath, worldBytes }
+            };
+            SaveSessionManager session = SaveSessionManager.Instance;
+            if (session != null && session.HasActiveSave)
+            {
+                if (!session.TryPrepareSaveMetadata(SceneManager.GetActiveScene().name, out string metaPath, out byte[] metaBytes))
+                    throw new InvalidOperationException("Save metadata preparation failed.");
+                payloads.Add(metaPath, metaBytes);
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            SaveMetadataWriter.WriteBatchAtomic(payloads);
             LastSaveSucceeded = true;
             if (!RequestScreenshotCapture())
             {
@@ -269,28 +277,13 @@ public class CharacterStateStore : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"CharacterStateStore: echec de sauvegarde {path}. {ex.Message}");
+            Debug.LogWarning($"CharacterStateStore: echec de sauvegarde {path}. {ex}");
             ResolveSavingPanel()?.CompleteSave(false);
         }
         finally
         {
             saveInProgress = false;
         }
-    }
-
-    private void SaveWorldSnapshot()
-    {
-#if UNITY_2023_1_OR_NEWER
-        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
-#else
-        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
-#endif
-        if (adapter == null)
-        {
-            return;
-        }
-
-        adapter.SaveWorldSnapshot();
     }
 
     public void Load()
@@ -306,19 +299,19 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
-        string path = GetPath();
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-        {
-            loadedData = null;
-            return;
-        }
-
+        string path = null;
         try
         {
+            path = GetPath();
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                loadedData = null;
+                return;
+            }
             string json = File.ReadAllText(path);
             loadedData = JsonUtility.FromJson<CharacterSaveData>(json);
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException)
         {
             Debug.LogWarning($"CharacterStateStore: echec de lecture {path}. {ex.Message}");
             loadedData = null;
@@ -364,13 +357,12 @@ public class CharacterStateStore : MonoBehaviour
             return false;
         }
 
-        ReadableContentRuntime.RestoreSaveData(loadedData != null ? loadedData.readableGeneratedContents : null);
-
         if (loadedData == null)
         {
             return false;
         }
 
+        ReadableContentRuntime.RestoreSaveData(loadedData.readableGeneratedContents);
         ApplyLoadedPlayerBindings(loadedData);
         AbilityService.Ensure().RestoreCharacterSave(loadedData);
 
@@ -390,7 +382,11 @@ public class CharacterStateStore : MonoBehaviour
         bool appliedWorldSnapshot = worldAlreadyRestored;
         if (!appliedWorldSnapshot && restoreWorldFromDisk)
         {
-            appliedWorldSnapshot = TryApplyLoadedWorldSnapshot(restoreReason);
+            appliedWorldSnapshot = TryApplyLoadedWorldSnapshot(out bool savedWorldExists, restoreReason);
+            // A legacy save without a world snapshot may use the compatibility
+            // payload. A present but unreadable/invalid world must never be
+            // replaced by that partial state and reported as a successful load.
+            if (savedWorldExists && !appliedWorldSnapshot) return false;
         }
 
         if (!appliedWorldSnapshot)
@@ -527,8 +523,9 @@ public class CharacterStateStore : MonoBehaviour
         return Path.Combine(directory, screenshotFileName);
     }
 
-    private bool TryApplyLoadedWorldSnapshot(string restoreReason = null)
+    private bool TryApplyLoadedWorldSnapshot(out bool savedWorldExists, string restoreReason = null)
     {
+        savedWorldExists = false;
 #if UNITY_2023_1_OR_NEWER
         WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #else
@@ -539,7 +536,8 @@ public class CharacterStateStore : MonoBehaviour
             return false;
         }
 
-        if (!adapter.HasSavedWorldSnapshot())
+        savedWorldExists = adapter.HasSavedWorldSnapshot();
+        if (!savedWorldExists)
         {
             PersistentWorldDebug.Log("host load path did not find a world snapshot; using compatibility restore", this);
             return false;
@@ -551,7 +549,7 @@ public class CharacterStateStore : MonoBehaviour
         bool applied = adapter.EnsureHostWorldRestoredFromSave(resolvedReason);
         if (!applied)
         {
-            PersistentWorldDebug.Error("host load path world snapshot apply failed; falling back to compatibility restore", this);
+            PersistentWorldDebug.Error("host load path world snapshot apply failed; partial character/compatibility restore refused", this);
             return false;
         }
 
@@ -2047,6 +2045,7 @@ public class CharacterStateStore : MonoBehaviour
             string managedPath = SaveSessionManager.Instance.GetActiveSaveFilePath(saveFileName);
             if (!string.IsNullOrWhiteSpace(managedPath))
             {
+                SaveMetadataWriter.RecoverPendingBatch(Path.GetDirectoryName(managedPath));
                 return managedPath;
             }
         }
@@ -2056,6 +2055,7 @@ public class CharacterStateStore : MonoBehaviour
             return null;
         }
 
+        SaveMetadataWriter.RecoverPendingBatch(Application.persistentDataPath);
         return Path.Combine(Application.persistentDataPath, saveFileName);
     }
 }

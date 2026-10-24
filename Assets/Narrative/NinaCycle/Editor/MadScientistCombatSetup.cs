@@ -15,7 +15,7 @@ using Unity.Netcode.Components;
 /// </summary>
 public static class MadScientistCombatSetup
 {
-    private const string ScenePath = "Assets/Scenes/District_1/District_1_Enigme_Ghost_Nina.unity";
+    private const string ScenePath = NinaCycleSetup.ScenePath;
     private const string FlameScenePath = "Assets/Scenes/District_1/District_1_Corridor_Flammes.unity";
     private const string PrefabPath = "Assets/Characters/9_Ghosts/Luc/Enemy_Model_MadScientist.prefab";
     private const string CharacterPath = "Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset";

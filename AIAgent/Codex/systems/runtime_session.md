@@ -1,5 +1,49 @@
 # Session runtime
 
+## Synchronisation de pose UCC/Netcode
+
+Les joueurs utilisent ServerUccNetworkTransform, toujours serveur autoritaire.
+OnTransformUpdated reporte la pose NGO interpolee dans CharacterLocomotion et
+SimulationManager via les API natives du moteur. Sans ce raccord, NGO recevait
+la bonne cible mais UCC reimposait son cache de spawn a chaque simulation.
+Le spawn et les teleports reseau declenchent le snap UCC complet une seule fois.
+L'interpolation ordinaire ne stoppe pas les capacites et n'emet pas de snap de
+camera/Animator. Le changement Grounded/Land est laisse au prochain pas physique.
+Le serveur et le solo ne passent jamais dans ce chemin de reception.
+
+Les quatre prefabs joueurs deja authors conservent fileIDs et reglages du
+NetworkTransform ; seul son script devient ce derive. La fabrique dynamique
+emploie le meme type, et l'authoring refuse d'ajouter une seconde autorite sur
+un ancien composant. Aucun objet reseau n'est ajoute au personnage solo.
+Qualification : 75 tests persistance passes dans la derniere execution et cinq
+tests authoring passes auparavant (execution mixte par ailleurs en echec de
+SetUp). Le replay franchit la distance cliente apres correction du cache, mais
+le parcours complet avec portail/late join reste NON valide : le dernier essai
+echoue sur le mappage d'un objet de Maison avant de rendre le controle client.
+
+## Session locale d'un client synchronise
+
+GameFlow observe les scenes Core et la scene active recues via NGO pour creer
+le GameplaySessionRoot configure cote client, une seule fois, sans charger de
+scene ni creer de personnage. La restauration de snapshot dispose ainsi des
+managers locaux avant son application. La navigation et l'initialisation de
+l'escouade cliente n'interviennent qu'APRES les variables de progression : un
+cycle termine peut avoir retire volontairement sa scene du groupe de l'hote.
+JoinSync applique le snapshot une seule fois, attend cette seconde phase puis
+envoie client_ready et libere le controle. La phase locale utilise le budget
+NavMesh existant plus une marge de 5 s ; le delai de transfert reste distinct.
+L'hote conserve scene loading, placement et spawn ; aucun restore disque client.
+Qualification native : 69 tests passes. Essais rendus 690c557883b94b62ba03b2269ab7e507
+et 52e0fa372f9d44048b5198175d54928b : session cliente creee, snapshot applique
+une fois, navigation Ready, depot stable retrouve et ack recu par l'hote.
+Ces deux anciens essais ne qualifient pas les transitions ni le ramassage.
+Le conflit de cache UCC/NGO a ensuite ete demontre et corrige par le raccord
+decrit plus haut, sans changement d'autorite. Le dernier late join apres portail
+(9e10931ebdff44f693b7e21a76637e23) echoue sur VigilAltar_Hub_Safeguard,
+hash 1275473975 de Maison_Enigme_Vigil, puis NetworkObject.Deserialize.
+Le mappage/despawn des objets NGO apres voyage reste a analyser ; aucun succes
+global reseau n'est deduit des seules phases ou suites natives passees.
+
 ## Recette Charge Sans Cible
 
 -combatMigrationCharge exige -combatMigrationGamepad et son aller-retour de zone.
@@ -141,6 +185,16 @@ La recette isolee peut demander -combatMigrationSaveRoundTrip pour verifier un
 retour menu/rechargement reel (PV, deblocages existants et ennemi sous marker).
 Ce controle utilise un slot Library jetable ; il ne constitue pas une preuve
 de victoire via le gameplay ni une validation manuelle du combat.
+
+Pour qualifier uniquement la persistance avec les regles actuelles, l'option
+supplementaire -combatMigrationPersistenceOnly requiert SaveRoundTrip et refuse
+les autres recettes de combat/repetition. Elle garde le mode Exploration,
+sans lancer de Basic ni creer la fixture du curseur de combat. Chargement,
+spawn/sol, PV, progression, identite de l'ennemi et vrai retour menu/recharge
+restent verifies ; aucune preuve d'attaque, de pickup ou de transfert interzone
+n'est deduite de cette variante. Les anciennes recettes de combat restent
+distinctes et ne doivent pas imposer une attaque en exploration pour qualifier
+une sauvegarde.
 
 ## Repetition isolee de migration
 

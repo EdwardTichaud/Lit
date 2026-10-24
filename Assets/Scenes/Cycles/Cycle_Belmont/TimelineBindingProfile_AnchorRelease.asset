@@ -13,4 +13,16 @@ MonoBehaviour:
   m_Name: TimelineBindingProfile_AnchorRelease
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Timeline.TimelineBindingProfile
   timeline: {fileID: 11400000, guid: 243aea278dbb2d846ac311b640bd6a93, type: 2}
-  bindings: []
+  bindings:
+  - track: {fileID: 4928060074630574314, guid: 243aea278dbb2d846ac311b640bd6a93, type: 2}
+    bindingId: camera.cinemachine_brain
+    required: 1
+  - track: {fileID: -6964357634918953695, guid: 243aea278dbb2d846ac311b640bd6a93, type: 2}
+    bindingId: district1.belmont.release.links
+    required: 1
+  - track: {fileID: 5803350042698997319, guid: 243aea278dbb2d846ac311b640bd6a93, type: 2}
+    bindingId: district1.belmont.release.dissolve
+    required: 1
+  - track: {fileID: 4384203974376028438, guid: 243aea278dbb2d846ac311b640bd6a93, type: 2}
+    bindingId: district1.belmont.release.reveal
+    required: 1

@@ -261,7 +261,11 @@ public class PersistentNetworkObject : NetworkBehaviour
         MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
         for (int i = 0; i < behaviours.Length; i++)
         {
-            if (behaviours[i] != null && behaviours[i].isActiveAndEnabled &&
+            // Inactive roots still own state: dead enemies, hidden objects and
+            // scene markers must retain their providers through capture and
+            // the transform phase that may deliberately deactivate them.
+            // An explicitly disabled orphan provider remains excluded.
+            if (behaviours[i] != null && behaviours[i].enabled &&
                 behaviours[i] is IPersistentStateProvider provider)
             {
                 string providerId = provider.ProviderId ?? string.Empty;
