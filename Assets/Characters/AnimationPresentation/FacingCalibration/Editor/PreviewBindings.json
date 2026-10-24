@@ -1,0 +1,41 @@
+{
+    "scope": "Uninstalled actor-specific preview overrides. Base graphs, torch overrides, action clips and production prefabs are unchanged. Contacts/recovery acceptance pending.",
+    "actors": [
+        {
+            "actor": "Lucian",
+            "originalController": "Assets/CombatRealTime/Migration/Controllers/Lucian.overrideController",
+            "baseController": "Assets/Characters/3_Enemy/Iluvilirae/Lucian_ImpactLab.controller",
+            "previewController": "Assets/Characters/AnimationPresentation/FacingCalibration/Controllers/Lucian_FacingPreview.overrideController",
+            "status": "Staged only. Disable LucianCombatTorsoFacing on the test instance before comparing; physical and recovery acceptance pending.",
+            "totalSlots": 98,
+            "changedSlots": 15
+        },
+        {
+            "actor": "Juggernaut",
+            "originalController": "Assets/Characters/3_Enemy/Juggernaut_v2/Juggernaut_v2.controller",
+            "baseController": "Assets/Characters/3_Enemy/Juggernaut_v2/Juggernaut_v2.controller",
+            "previewController": "Assets/Characters/AnimationPresentation/FacingCalibration/Controllers/Juggernaut_FacingPreview.overrideController",
+            "status": "Staged only. Disable LucianCombatTorsoFacing on the test instance before comparing; physical and recovery acceptance pending.",
+            "totalSlots": 23,
+            "changedSlots": 15
+        },
+        {
+            "actor": "Werewolf",
+            "originalController": "Assets/Werewolf/Werewolf Animator Controller.controller",
+            "baseController": "Assets/Werewolf/Werewolf Animator Controller.controller",
+            "previewController": "Assets/Werewolf/Werewolf Animator Controller.controller",
+            "status": "Generic native controller preserved; no override generated",
+            "totalSlots": 0,
+            "changedSlots": 0
+        },
+        {
+            "actor": "StoneGolem",
+            "originalController": "Assets/StoneGolem/StoneGolem Animator Controller.controller",
+            "baseController": "Assets/StoneGolem/StoneGolem Animator Controller.controller",
+            "previewController": "Assets/StoneGolem/StoneGolem Animator Controller.controller",
+            "status": "Generic native controller preserved; no override generated",
+            "totalSlots": 0,
+            "changedSlots": 0
+        }
+    ]
+}

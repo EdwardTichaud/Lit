@@ -1,0 +1,102 @@
+{
+  "noIk": [
+    {
+      "actor": "Juggernaut_v2",
+      "state": "Attack",
+      "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Strike.anim",
+      "status": "Blocked: source tail does not match Idle within support tolerances; dedicated recovery/animation retouch required",
+      "impactSeconds": 0.5666666626930237,
+      "recoverySeconds": 0.7333333492279053,
+      "gameplayReleaseSeconds": 0.9333333373069763,
+      "sourceLength": 1.8333333730697632,
+      "recoveryRate": 5.5,
+      "originalExitFootPoseDistance": 0.2915366590023041,
+      "recoveredExitFootPoseDistance": 0.04527899995446205,
+      "recoveredExitPelvisHeightDifference": 0.0012707114219665527,
+      "suggestedDestinationPhase": 0.8999999761581421,
+      "recoveredExitSoleDistance": 0.053435683250427246
+    },
+    {
+      "actor": "Juggernaut_v2",
+      "state": "Attack_Sweep",
+      "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Sweep.anim",
+      "status": "Blocked: source tail does not match Idle within support tolerances; dedicated recovery/animation retouch required",
+      "impactSeconds": 0.699999988079071,
+      "recoverySeconds": 0.8999999761581421,
+      "gameplayReleaseSeconds": 1.100000023841858,
+      "sourceLength": 2.0833334922790527,
+      "recoveryRate": 5.916667461395264,
+      "originalExitFootPoseDistance": 0.427997887134552,
+      "recoveredExitFootPoseDistance": 0.054481230676174164,
+      "recoveredExitPelvisHeightDifference": 0.02610689401626587,
+      "suggestedDestinationPhase": 0.8999999761581421,
+      "recoveredExitSoleDistance": 0.06096980720758438
+    },
+    {
+      "actor": "Juggernaut_v2",
+      "state": "Attack_Followup",
+      "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Followup.anim",
+      "status": "Blocked: source tail does not match Idle within support tolerances; dedicated recovery/animation retouch required",
+      "impactSeconds": 0.6000000238418579,
+      "recoverySeconds": 0.7666666507720947,
+      "gameplayReleaseSeconds": 0.9666666388511658,
+      "sourceLength": 1.8333333730697632,
+      "recoveryRate": 5.333333492279053,
+      "originalExitFootPoseDistance": 0.24926480650901794,
+      "recoveredExitFootPoseDistance": 0.04527732729911804,
+      "recoveredExitPelvisHeightDifference": 0.0012707710266113281,
+      "suggestedDestinationPhase": 0.8999999761581421,
+      "recoveredExitSoleDistance": 0.053433820605278015
+    }
+  ],
+  "nativeIk": [
+    {
+      "actor": "Juggernaut_v2",
+      "state": "Attack",
+      "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Strike.anim",
+      "status": "Pose candidate; validate retimed recovery and interruptions visually before enabling",
+      "impactSeconds": 0.5666666626930237,
+      "recoverySeconds": 0.7333333492279053,
+      "gameplayReleaseSeconds": 0.9333333373069763,
+      "sourceLength": 1.8333333730697632,
+      "recoveryRate": 5.5,
+      "originalExitFootPoseDistance": 0.1764129251241684,
+      "recoveredExitFootPoseDistance": 0.03978263586759567,
+      "recoveredExitPelvisHeightDifference": 0.0030021071434020996,
+      "suggestedDestinationPhase": 0.3083333373069763,
+      "recoveredExitSoleDistance": 0.029799165204167366
+    },
+    {
+      "actor": "Juggernaut_v2",
+      "state": "Attack_Sweep",
+      "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Sweep.anim",
+      "status": "Blocked: source tail does not match Idle within support tolerances; dedicated recovery/animation retouch required",
+      "impactSeconds": 0.699999988079071,
+      "recoverySeconds": 0.8999999761581421,
+      "gameplayReleaseSeconds": 1.100000023841858,
+      "sourceLength": 2.0833334922790527,
+      "recoveryRate": 5.916667461395264,
+      "originalExitFootPoseDistance": 0.30186793208122253,
+      "recoveredExitFootPoseDistance": 0.05150134116411209,
+      "recoveredExitPelvisHeightDifference": 0.021262764930725098,
+      "suggestedDestinationPhase": 0.2916666567325592,
+      "recoveredExitSoleDistance": 0.04164672642946243
+    },
+    {
+      "actor": "Juggernaut_v2",
+      "state": "Attack_Followup",
+      "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Followup.anim",
+      "status": "Pose candidate; validate retimed recovery and interruptions visually before enabling",
+      "impactSeconds": 0.6000000238418579,
+      "recoverySeconds": 0.7666666507720947,
+      "gameplayReleaseSeconds": 0.9666666388511658,
+      "sourceLength": 1.8333333730697632,
+      "recoveryRate": 5.333333492279053,
+      "originalExitFootPoseDistance": 0.17229856550693512,
+      "recoveredExitFootPoseDistance": 0.03978381305932999,
+      "recoveredExitPelvisHeightDifference": 0.0030020475387573242,
+      "suggestedDestinationPhase": 0.3083333373069763,
+      "recoveredExitSoleDistance": 0.02979835867881775
+    }
+  ]
+}

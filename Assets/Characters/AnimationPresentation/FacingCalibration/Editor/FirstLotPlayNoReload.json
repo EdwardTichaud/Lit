@@ -1,0 +1,10 @@
+{
+    "passed": true,
+    "domainReloadDisabled": true,
+    "assertions": 23717,
+    "comparedFrames": 657,
+    "maximumFootDifference": 7.103104167072161e-7,
+    "maximumHipDifference": 5.298300607137207e-7,
+    "error": "",
+    "scope": "Actual four rigs and preview player in Play Mode; not UCC/NavMesh gameplay acceptance"
+}

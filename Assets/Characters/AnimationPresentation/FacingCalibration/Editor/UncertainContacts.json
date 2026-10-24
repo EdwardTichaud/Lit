@@ -1,0 +1,271 @@
+{
+    "scope": "Read-only rendered-sole contact hypotheses. No physics, controller offsets or animation curves are changed.",
+    "soleHeightTolerance": 0.019999999552965164,
+    "risingVelocityTolerance": 0.15000000596046448,
+    "cases": [
+        {
+            "actor": "Lucian",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": false,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.02202899567782879,
+            "curveOffset": 0.5416666865348816,
+            "contactOffset": 0.20000000298023224,
+            "contactDice": 0.7136150002479553,
+            "alternativeMargin": 0.09389668703079224,
+            "referenceLeftDuty": 0.4749999940395355,
+            "referenceRightDuty": 0.6416666507720947,
+            "leftDuty": 0.30000001192092896,
+            "rightDuty": 0.3583333194255829,
+            "referenceLeftTouchdowns": [
+                0.07500000298023224,
+                0.3333333432674408,
+                0.824999988079071,
+                0.949999988079071
+            ],
+            "referenceRightTouchdowns": [
+                0.4166666567325592,
+                0.8333333134651184
+            ],
+            "leftTouchdowns": [
+                0.008333333767950535,
+                0.6833333373069763
+            ],
+            "rightTouchdowns": [
+                0.15000000596046448,
+                0.42500001192092896
+            ]
+        },
+        {
+            "actor": "Lucian",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": true,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.0035721445456147194,
+            "curveOffset": 0.5416666865348816,
+            "contactOffset": 0.7166666388511658,
+            "contactDice": 0.7157894968986511,
+            "alternativeMargin": 0.007017552852630615,
+            "referenceLeftDuty": 0.34166666865348816,
+            "referenceRightDuty": 0.6833333373069763,
+            "leftDuty": 0.574999988079071,
+            "rightDuty": 0.7749999761581421,
+            "referenceLeftTouchdowns": [
+                0.2750000059604645
+            ],
+            "referenceRightTouchdowns": [
+                0.2750000059604645,
+                0.2916666567325592,
+                0.3083333373069763,
+                0.4000000059604645,
+                0.7333333492279053
+            ],
+            "leftTouchdowns": [
+                0.0416666679084301,
+                0.5,
+                0.824999988079071
+            ],
+            "rightTouchdowns": [
+                0.3583333194255829,
+                0.9416666626930237,
+                0.9916666746139526
+            ]
+        },
+        {
+            "actor": "Juggernaut",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": false,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.02930258773267269,
+            "curveOffset": 0.675000011920929,
+            "contactOffset": 0.28333333134651184,
+            "contactDice": 0.6200000047683716,
+            "alternativeMargin": 0.06999999284744263,
+            "referenceLeftDuty": 0.4416666626930237,
+            "referenceRightDuty": 0.625,
+            "leftDuty": 0.18333333730697632,
+            "rightDuty": 0.4166666567325592,
+            "referenceLeftTouchdowns": [
+                0.3166666626930237,
+                0.824999988079071,
+                0.949999988079071
+            ],
+            "referenceRightTouchdowns": [
+                0.4166666567325592,
+                0.8333333134651184
+            ],
+            "leftTouchdowns": [
+                0.7083333134651184
+            ],
+            "rightTouchdowns": [
+                0.11666666716337204,
+                0.46666666865348816
+            ]
+        },
+        {
+            "actor": "Juggernaut",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": true,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.010790741071105003,
+            "curveOffset": 0.675000011920929,
+            "contactOffset": 0.7083333134651184,
+            "contactDice": 0.6974359154701233,
+            "alternativeMargin": 0.0,
+            "referenceLeftDuty": 0.3583333194255829,
+            "referenceRightDuty": 0.5166666507720947,
+            "leftDuty": 0.2916666567325592,
+            "rightDuty": 0.4583333432674408,
+            "referenceLeftTouchdowns": [
+                0.10000000149011612,
+                0.2666666805744171
+            ],
+            "referenceRightTouchdowns": [
+                0.5083333253860474,
+                0.7250000238418579
+            ],
+            "leftTouchdowns": [
+                0.15000000596046448
+            ],
+            "rightTouchdowns": [
+                0.10833333432674408,
+                0.4333333373069763
+            ]
+        },
+        {
+            "actor": "Juggernaut",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": false,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.02930258773267269,
+            "curveOffset": 0.675000011920929,
+            "contactOffset": 0.2750000059604645,
+            "contactDice": 0.31578946113586426,
+            "alternativeMargin": 0.0,
+            "referenceLeftDuty": 0.4416666626930237,
+            "referenceRightDuty": 0.625,
+            "leftDuty": 0.20000000298023224,
+            "rightDuty": 0.0,
+            "referenceLeftTouchdowns": [
+                0.3166666626930237,
+                0.824999988079071,
+                0.949999988079071
+            ],
+            "referenceRightTouchdowns": [
+                0.4166666567325592,
+                0.8333333134651184
+            ],
+            "leftTouchdowns": [
+                0.7250000238418579,
+                0.9166666865348816,
+                0.9333333373069763
+            ],
+            "rightTouchdowns": []
+        },
+        {
+            "actor": "Juggernaut",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": true,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.010790741071105003,
+            "curveOffset": 0.675000011920929,
+            "contactOffset": 0.6916666626930237,
+            "contactDice": 0.40909090638160706,
+            "alternativeMargin": 0.0,
+            "referenceLeftDuty": 0.3583333194255829,
+            "referenceRightDuty": 0.5166666507720947,
+            "leftDuty": 0.0,
+            "rightDuty": 0.22499999403953552,
+            "referenceLeftTouchdowns": [
+                0.10000000149011612,
+                0.2666666805744171
+            ],
+            "referenceRightTouchdowns": [
+                0.5083333253860474,
+                0.7250000238418579
+            ],
+            "leftTouchdowns": [],
+            "rightTouchdowns": [
+                0.6166666746139526
+            ]
+        },
+        {
+            "actor": "Juggernaut",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": false,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.02930258773267269,
+            "curveOffset": 0.9583333134651184,
+            "contactOffset": 0.9166666865348816,
+            "contactDice": 0.6276595592498779,
+            "alternativeMargin": 0.1808510422706604,
+            "referenceLeftDuty": 0.4416666626930237,
+            "referenceRightDuty": 0.625,
+            "leftDuty": 0.4000000059604645,
+            "rightDuty": 0.10000000149011612,
+            "referenceLeftTouchdowns": [
+                0.3166666626930237,
+                0.824999988079071,
+                0.949999988079071
+            ],
+            "referenceRightTouchdowns": [
+                0.4166666567325592,
+                0.8333333134651184
+            ],
+            "leftTouchdowns": [
+                0.22499999403953552,
+                0.3333333432674408,
+                0.7416666746139526
+            ],
+            "rightTouchdowns": [
+                0.06666667014360428
+            ]
+        },
+        {
+            "actor": "Juggernaut",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
+            "nativeIK": true,
+            "controllerFootIK": false,
+            "groundReferenceY": -0.010790741071105003,
+            "curveOffset": 0.9583333134651184,
+            "contactOffset": 0.7916666865348816,
+            "contactDice": 0.7724867463111877,
+            "alternativeMargin": 0.1269841194152832,
+            "referenceLeftDuty": 0.3583333194255829,
+            "referenceRightDuty": 0.5166666507720947,
+            "leftDuty": 0.4333333373069763,
+            "rightDuty": 0.2666666805744171,
+            "referenceLeftTouchdowns": [
+                0.10000000149011612,
+                0.2666666805744171
+            ],
+            "referenceRightTouchdowns": [
+                0.5083333253860474,
+                0.7250000238418579
+            ],
+            "leftTouchdowns": [
+                0.05833333358168602,
+                0.8333333134651184
+            ],
+            "rightTouchdowns": [
+                0.5333333611488342
+            ]
+        }
+    ]
+}

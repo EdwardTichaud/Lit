@@ -1,3 +1,70 @@
+## Calibration du regard, premier lot laboratoire (2026-10-24)
+
+Werewolf reste Generic avec ses animations natives, selon choix utilisateur ;
+aucune course native disponible. StoneGolem reste egalement Generic.
+Onze copies de laboratoire preparees : Idle/marche/course Lucian et Juggernaut,
+Idle/marche Werewolf, Idle/marche/course StoneGolem. Les deux derniers ne sont
+pas modifies dans leurs poses. Sur les Humanoid, seuls les muscles Head/Neck
+Turn sont ajustes ; Root Rotation reste a zero offset, garde du torse preservee.
+Les appuis TwinBlades vont deja droit (marche environ 2 degres, course 0) : une
+rotation globale de 40-60 degres serait contre-productive. Le regard est mesure
+sur le plan horizontal, sans compter l'inclinaison verticale de la tete.
+
+Extension directionnelle : 32 references Humanoid marche/course, quatre deja
+alignees conservees, deux copies reutilisees, 26 copies nouvelles. Regard moyen
+corrige a moins de 0,1 degre, oscillation auteur jusqu'a 3,8 degres conservee.
+256 fondus voisins verifies : regard au plus 4,2 degres, appuis et root preserves.
+Overriders resolus et couche de base seule pour ne pas confondre les etats
+homonymes de la torche. 32 captures supplementaires ; regeneration idempotente
+par comparaison des courbes auteur, sans comparer les caches natifs de Unity.
+SaveAssetIfDirty cible les copies ; aucune sauvegarde globale des assets dirty.
+
+Play Mode du lecteur sur les quatre vrais rigs dans le mini-projet isole :
+23 717 assertions, 657 frames par mode, Domain Reload actif puis desactive,
+pause, demandes rapides, desactivation/reactivation. Aucun test Play Mode
+n'a detourne l'editeur principal. Ces tests ne qualifient pas UCC/NavMesh.
+80 fondus Idle/marche/course mesures ; phases propres a chaque avatar,
+conservation du clip sortant pendant le fondu.
+
+Audit semelles des quatre marches incertaines ajoute, avec/sans IK native :
+aucune proposition de phase assez fiable. Foot IK est actuellement desactive
+sur les etats locomotion des deux controllers. Walk_L Juggernaut : pied droit
+sans contact dans la tolerance de hauteur ; ne pas traiter comme simple cycle
+offset. Experience RootT.y en memoire non retenue : hauteur de semelle forcee
+mais oscillation bassin doublee sur certains cas (7,6 -> 15,6 cm), corrections
+jusqu'a 9,7 cm. Les extractions verticales Unity alternatives ne corrigent pas
+globalement ces cas. Aucun clip de hauteur experimental enregistre.
+Captures sur sol de reference dans Library/ActorFacingCalibration/GroundingCaptures ;
+rendu de phase zero initialise par un delta positif minuscule. Tentative de
+capture CPU invalide retiree. Les mesures ne valent pas validation gameplay.
+
+Deux overrides de previsualisation non installes prepares (Lucian/Juggernaut),
+autres slots effectifs/overrides torche conserves, base graphs/prefabs inchanges.
+Idle gameplay effectif du Juggernaut calibre a part, GUID et evenements source
+conserves. Generics natifs inchanges. Choix artistique demande pour les quatre
+marches : retoucher les copies en gardant le style ou chercher des equivalents ;
+ne pas entreprendre cette retouche dependante avant la reponse.
+
+Points ouverts : quatre correlations directionnelles sous 0,75 ; reference
+historique Idle_LucianAligned manquante sans entree/default entrant trouve,
+non reparee par supposition. Catalogue conservateur graph/skills/overrides
+inventorie (157 entrees avant resolution des overrides), pas une preuve que
+tous ces clips sont actifs. Sorties Juggernaut : sans IK bloque a 5-6 cm ; avec
+IK existante, Strike/Followup candidats, Sweep reste hors seuil. Aucun raccord
+retime active. Suite : recuperations rendues, contacts ambigus, pilotes physiques.
+
+Prevalidation et reimport des onze clips passes dans Unity principal 6000.6.4f1,
+ainsi que dans le mini-projet sur les quatre rigs. Regard Humanoid borne a
+2,55 degres ; pieds/bassin preserves a moins de 0,001 mm. Compilation runtime
+et Editor passe. Source/metadonnees, evenements, durees et extraction preserves.
+Nouveaux outils/scene sous Characters/AnimationPresentation/FacingCalibration.
+Rapports : Library/ActorFacingCalibration ; manifeste durable FirstLotManifest.
+Le laboratoire ne contient ni gameplay, ni compensation LucianCombatTorsoFacing.
+Aucune reference ou autorite de production n'est migree. Les poses identiques
+aux sources ne prouvent pas une absence de glissement physique. Validation
+rendue, raccords avec UCC/NavMesh dans Iluvilirae_Test, autres directions et
+actions restent necessaires avant integration. Voir README du premier lot.
+
 ## Origine du desaxage TwinBlades / StoneGolem (2026-10-24)
 
 Diagnostic termine, sans migration du jeu : le decalage est reproduit sans

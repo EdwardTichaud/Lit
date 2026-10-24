@@ -101,9 +101,9 @@ public static class ActorAnimationLabValidation
             RenderTexture.active = texture;
             var image = new Texture2D(1280,720,TextureFormat.RGB24,false);
             try { image.ReadPixels(new Rect(0,0,1280,720),0,0); image.Apply(); File.WriteAllBytes(path,image.EncodeToPNG()); }
-            finally { RenderTexture.active = previous; UnityEngine.Object.Destroy(image); }
+            finally { RenderTexture.active = previous; if(Application.isPlaying) UnityEngine.Object.Destroy(image); else UnityEngine.Object.DestroyImmediate(image); }
         }
-        finally { UnityEngine.Object.Destroy(texture); }
+        finally { if(Application.isPlaying) UnityEngine.Object.Destroy(texture); else UnityEngine.Object.DestroyImmediate(texture); }
     }
     private static void SetupPose()
     {

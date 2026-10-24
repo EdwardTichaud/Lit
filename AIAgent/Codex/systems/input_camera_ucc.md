@@ -667,6 +667,40 @@ Le laboratoire l'installe a chaque rencontre ; alignPlayerCombatTorso permet
 la comparaison avant/apres. La migration production peut egalement l'ajouter ;
 il est present dans le prefab Lucian actuel (constat du 24 octobre 2026).
 
+Premier lot de calibration du regard (24 octobre 2026), laboratoire seulement :
+`Assets/Characters/AnimationPresentation/FacingCalibration/README.md` decrit
+les onze copies, le manifeste et les commandes explicites. Lucian/Juggernaut
+restent Humanoid ; Werewolf et StoneGolem Generic natifs. Werewolf ne recoit
+aucune course TwinBlades. Les trajectoires d'appui TwinBlades sont deja dans
+l'axe : les copies corrigent seulement Head/Neck Turn, pas l'orientation globale
+des clips, les jambes ou le torse. Regard horizontal calibre a +/-3 degres,
+pieds/bassin preserves ; ni vitesses physiques ni bindings de production modifies.
+Le laboratoire n'instancie aucun correcteur de torse ou script de gameplay.
+La validation des appuis en deplacement et des raccords dans Iluvilirae_Test
+reste distincte de cette validation de poses. Ne pas activer ces copies en
+production avec LucianCombatTorsoFacing sans reevaluation de la double correction.
+
+Extension du meme lot : 32 references marche/course directionnelles Humanoid,
+quatre preservees car deja alignees, deux reutilisees, 26 copies nouvelles.
+Regard moyen ajuste par avatar, oscillation auteur conservee (maximum 3,8 degres).
+256 fondus voisins conservent appuis/root ; 80 raccords du premier lot mesures.
+Le lecteur ne reinitialise plus le clip sortant ; phases marche/course mesurees.
+Les controllers d'override sont resolus avant lecture des motions effectives ;
+la couche de base reste distincte des etats homonymes de la torche. Tests du
+lecteur en Play Mode isole, Domain Reload actif/desactive, ne qualifient pas
+UCC/NavMesh. Quatre correlations de phases insuffisantes et recuperation Sweep
+du Juggernaut restent a retoucher/verifier ; aucun changement de rythme,
+controller, profil de combat ou correcteur de production n'est applique.
+
+Audit complementaire des semelles : les quatre phases faibles ne sont pas
+resolues par un simple decalage temporel, meme avec IK native (actuellement
+desactivee sur ces etats). RootT.y est bien une trajectoire de pose corporelle :
+le modifier en memoire peut aligner le pied bas mais doubler l'oscillation du
+bassin ; ce correctif automatique est rejete, aucun clip hauteur sauvegarde.
+Deux overrides de test dedies conservent tous les slots effectifs hors
+calibration ; ils ne sont pas assignes aux prefabs. Les reglages/source du saut,
+les deplacements UCC/NavMesh et les autorites de production restent intacts.
+
 Diagnostic TwinBlades / StoneGolem du 24 octobre 2026 : sur les copies isolees
 des vrais rigs, le root ne tourne pas mais les poses source ont un axe visuel
 variable (torse Idle environ 58,5 degres, marche avant 35,6, course avant 7,4

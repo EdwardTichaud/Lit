@@ -1,0 +1,831 @@
+{
+    "scope": "Presentation crossfades, actual avatars, 60 Hz. Does not validate physical ground contact.",
+    "phases": [
+        {
+            "actor": "Lucian",
+            "walkToRunOffset": 0.8666666746139526,
+            "correlation": 0.8307228684425354,
+            "status": "Measured phase correspondence; rendered transition review required"
+        },
+        {
+            "actor": "Juggernaut",
+            "walkToRunOffset": 0.9166666865348816,
+            "correlation": 0.8783397674560547,
+            "status": "Measured phase correspondence; rendered transition review required"
+        },
+        {
+            "actor": "Werewolf",
+            "walkToRunOffset": 0.0,
+            "correlation": 0.0,
+            "status": "No native Run; no Walk/Run transition"
+        },
+        {
+            "actor": "StoneGolem",
+            "walkToRunOffset": 0.875,
+            "correlation": 0.9906022548675537,
+            "status": "Measured phase correspondence; rendered transition review required"
+        }
+    ],
+    "transitions": [
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 2.2351741790771484e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7238871455192566
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7238871455192566
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.43759764279639e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7238871455192566
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7238871455192566
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 6.664001972467304e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.375154733657837
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.1526697874069214
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2287812012345967e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.537733554840088
+        },
+        {
+            "actor": "Lucian",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.484244465827942
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 2.7939677238464355e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.738604724407196
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.026798367500305e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4681369662284851
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8161333799362183
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.978626660407826e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.49058762192726135
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.972094641037984e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7525148987770081
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.56006536764653e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8627541065216064
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.44787066967001e-8,
+            "maximumHipDifference": 8.442221854920717e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.3373265266418457
+        },
+        {
+            "actor": "Lucian",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.5428155660629272
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.284813404083252
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4159008264541626
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.592538356781006
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960646376479417e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.39958450198173523
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7712634801864624
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8096339106559753
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.961192073300481e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.7579166889190674
+        },
+        {
+            "actor": "Lucian",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.807455837726593
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.958120942115784e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5471546053886414
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.972094641037984e-8,
+            "maximumHipDifference": 5.986600370988526e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.31713545322418213
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1921292752958834e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.49692827463150024
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.961192073300481e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2873553931713104
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 3.958120942115784e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.480151653289795
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3789916038513184
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.56006536764653e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.427247405052185
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.5423082113265991
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.026798367500305e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.3763853907585144
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2639295756816864
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4097389578819275
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.3351345956325531
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0345757007598877
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.7504419088363647
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.1992021597961866e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.5604026317596436
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9642863273620605
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960646376479417e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6367380619049072
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 4.889443516731262e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3789916038513184
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.8091647624969482
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 1.3336135396002646e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2958842515945435
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.341104507446289e-7,
+            "maximumHipDifference": 8.44787066967001e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9394114017486572
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3789916038513184
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.1992021597961866e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.860884189605713
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.193701982498169
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.771448135375977
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.771448135375977
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.771448135375977
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.771448135375977
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 5.986480236053467
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 10.569391250610352
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.461507797241211
+        },
+        {
+            "actor": "Werewolf",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 11.647214889526367
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 7.669614315032959
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 7.413888454437256
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 7.336604118347168
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.723526954650879
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 7.669614315032959
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 7.413888454437256
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 7.336604118347168
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Idle",
+            "to": "Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.723526954650879
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.165836215019226
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3201206922531128
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2145037651062012
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Walk",
+            "to": "Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3052130937576294
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Idle",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 8.141287803649902
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.9898731708526611
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5055169463157654
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.840900182723999
+        },
+        {
+            "actor": "StoneGolem",
+            "from": "Run",
+            "to": "Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.741513192653656
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "version": 1,
+    "scope": "LAB ONLY: source/candidate visual comparison; no production migration",
+    "werewolf": "Generic, native animations; no native Run",
+    "entries": [
+        {
+            "actor": "Juggernaut",
+            "cycle": "CurrentIdle",
+            "source": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Idle.anim",
+            "sourceGuid": "694d6e00010eea94897d16d538f21151",
+            "sourceHash": "8BD5CB34E5A71EAD8428B29B845D6CA57F14808D0230F67B7C35F46BED62EBD0",
+            "metadataHash": "0C724DBBF615B30799034DA3D5882C2205BE9F00D4E54951406A65A90DD229FE",
+            "avatarGuid": "68d2336e63afe7d44963d301b4a25d5d",
+            "target": "Assets/Characters/AnimationPresentation/FacingCalibration/Additional/Juggernaut_CurrentIdle.anim",
+            "sourceFileId": 7400000,
+            "muscleOffset": -0.7468336820602417,
+            "originalYaw": 58.87998962402344,
+            "candidateYaw": 0.03755955025553703,
+            "maximumCandidateYaw": 0.5828266739845276,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1923202691832557e-7,
+            "maximumRootDisplacement": 0.0,
+            "status": "Lab candidate; rendered review and gameplay transitions pending",
+            "events": [],
+            "consumers": []
+        }
+    ]
+}

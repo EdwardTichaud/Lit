@@ -1,0 +1,2566 @@
+{
+    "scope": "Presentation crossfades, actual avatars, 60 Hz. Does not validate physical ground contact.",
+    "phases": [],
+    "transitions": [
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.377855896949768
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6812751889228821
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.940696716308594e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3752970695495605
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.557077944278717
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.30385160446167e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.377855896949768
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 8.429883990856979e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.48213890194892883
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3723057508468628
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8697566986083984
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.940696716308594e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2151482105255127
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9839723110198975
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2287812012345967e-7,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.213375449180603
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0831784009933472
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2365390062332153
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7666831016540527
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2287812012345967e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0507159233093262
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_L_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.664001972467304e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4681369662284851
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.904605507850647
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3089559078216553
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8334521651268005
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_L_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.1973200741977053e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9907107353210449
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7238871455192566
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3089559078216553
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1926748300084e-7,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7514740228652954
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FL_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9907107353210449
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2365390062332153
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8717791438102722
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9039563536643982
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.2351741790771484e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6236960887908936
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2412774562835693
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0181939601898193
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.559092402458191
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_F_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.1556761264801025
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.6347765922546387
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8277983665466309
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.3922016620635986
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_F_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.433998743839766e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7200928330421448
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.6347765922546387
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.862645149230957e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9557254314422607
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1922384146600962e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.3922016620635986
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_FR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9759851694107056
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.43142728967905e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0702749490737915
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0181939601898193
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1920928955078125e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3338353633880615
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_FR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.1556761264801025
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6387693881988525
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.862645149230957e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.742040753364563
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9944564700126648
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_R_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.862645149230957e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.5416736602783203
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.140551805496216
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 5.961192073300481e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2067451477050781
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8954741954803467
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_R_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 5.961192073300481e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9587916731834412
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.140551805496216
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2067451477050781
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.6858739115832577e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9325121641159058
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_BR_Inplace",
+            "to": "Twinblades_Strafe_Walk_B_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.557077944278717
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6387693881988525
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6006826758384705
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0962868928909302
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.5416736602783203
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.862645149230957e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9598115682601929
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9839723110198975
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.429369557916289e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.193045973777771
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Walk_B_Inplace",
+            "to": "Twinblades_Strafe_Walk_BL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0831784009933472
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6220855712890625
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.923868715763092
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5453635454177856
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.43142728967905e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.4417617321014404
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9280951023101807
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5947902798652649
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.632711967493378e-8,
+            "maximumHipDifference": 6.006850128414953e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6477051973342896
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.365778659755961e-8,
+            "maximumHipDifference": 5.986600370988526e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.975584089756012
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.553554356098175
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9280951023101807
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.975584089756012
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.56006536764653e-8,
+            "maximumHipDifference": 8.480662216925339e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6620474457740784
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0943217277526855
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9942596554756165
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8798225522041321
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_L_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.56006536764653e-8,
+            "maximumHipDifference": 8.480662216925339e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2676107883453369
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.940696716308594e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9280951023101807
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 6.664001972467304e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.2503876686096191
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 1.1926748300084e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2676107883453369
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_L_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.7881393432617188e-7,
+            "maximumHipDifference": 1.7265423934986757e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8798225522041321
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 3.2681327866157517e-7,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4159008264541626
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0945004224777222
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8084245920181274
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FL_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 3.122362102203624e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8798225522041321
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 3.2681327866157517e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0943217277526855
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.712013073529306e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6192882657051086
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1920928955078125e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0406105518341064
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4805128276348114
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.1926748300084e-7,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.4239819049835205
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.2287812012345967e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0555469989776611
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 3.4035229682922363
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_F_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.6924465739975858e-7,
+            "maximumHipDifference": 1.6909083910832123e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.3552615642547607
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 8.429369557916289e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 3.0110342502593994
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.5463114639023843e-7,
+            "maximumHipDifference": 1.1934018573356298e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6611601710319519
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 3.153184175491333
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_F_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 3.332000986233652e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.199002504348755
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 2.60770320892334e-8,
+            "maximumHipDifference": 1.4901161193847656e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.3065595626831055
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.2287812012345967e-7,
+            "maximumHipDifference": 1.2867090504187217e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6321101784706116
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.3753695487976074
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_FR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1920928955078125e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.199002504348755
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.391564130783081
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1926748300084e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0018362998962402
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.513960361480713
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_FR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.940696716308594e-8,
+            "maximumHipDifference": 8.632711967493378e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.2548985481262207
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.47105371952056885
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.429369557916289e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0018362998962402
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 6.664001972467304e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.675909996032715
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_R_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9052541851997375
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.001934051513672
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4600097131278744e-7,
+            "maximumHipDifference": 1.2867090504187217e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5719823241233826
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.6366331577301025
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_R_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9392030835151672
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.341104507446289e-7,
+            "maximumHipDifference": 4.190951585769653e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6220855712890625
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.659085214138031
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5233933329582214
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_BR_Inplace",
+            "to": "Twinblades_Strafe_Run_B_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.43142728967905e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.4417617321014404
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.43142728967905e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.4417617321014404
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6220855712890625
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.39712852239608765
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BR_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5626699328422546
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.4417617321014404
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6220855712890625
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3333209381016786e-7,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.975584089756012
+        },
+        {
+            "actor": "Lucian",
+            "from": "Twinblades_Strafe_Run_B_Inplace",
+            "to": "Twinblades_Strafe_Run_BL_Inplace",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.664001972467304e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9172792434692383
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.21028929948806763
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.43521255254745483
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.1922384146600962e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6757959723472595
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.963374150042e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4320538640022278
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.967009286678149e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.14265252649784088
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2357339709997177
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.1922384146600962e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2719624638557434
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_B",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2880355417728424
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.13562093675136566
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 5.962101568002254e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2373882681131363
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.16071255505084991
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2804633677005768
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.08156468719244003
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1924203136004508e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.40638232231140137
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.19179700314998627
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.2139788568019867
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.1988101750612259
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.35387784242630005
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 6.51925802230835e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.09065409004688263
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_BL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.43142728967905e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.23821109533309937
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6795496940612793
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.46562227606773376
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.48818862438201904
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_L",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.1926748300084e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.24944603443145752
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.239031121134758
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6214960813522339
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1944189282075968e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.19179700314998627
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk_L",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.862645149230957e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4471870958805084
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.26979541778564453
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6214960813522339
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4049352705478668
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FL",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1926748300084e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4471870958805084
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6795496940612793
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.43759764279639e-8,
+            "maximumHipDifference": 8.429883990856979e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.3368816077709198
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 5.986600370988526e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5116726160049438
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.22028696537017822
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6283844709396362
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7972127199172974
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0436149835586548
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9942596554756165
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.972094641037984e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6400824785232544
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.365714012990793e-7,
+            "maximumHipDifference": 1.3387175101797766e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.49771520495414734
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 1.3333209381016786e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.182005524635315
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1926748300084e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4297834634780884
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.972094641037984e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6400824785232544
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.1992021597961866e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.20270878076553345
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.3328003944934608e-7,
+            "maximumHipDifference": 1.3333209381016786e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0941427946090698
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_FR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4297834634780884
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4768337607383728
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7972127199172974
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8508785367012024
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_FR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.9942596554756165
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.3189810812473297
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.43521255254745483
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6898379325866699
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_R",
+            "to": "Juggernaut_v2_Walk_BR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.26834097504615784
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.193874226146363e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.474365234375
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.19979195296764374
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5924829244613647
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_R",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 5.961192073300481e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6578965783119202
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.18130822479724884
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.3511022627353668
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.5539076924324036
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Walk_BR",
+            "to": "Juggernaut_v2_Walk_B",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.963374150042e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6578965783119202
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0141170024871826
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6559944152832031
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4441135823726654
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6425489187240601
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.43759764279639e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0141170024871826
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6559944152832031
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 2.561137080192566e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3823931217193604
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_B",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.047862655123026e-8,
+            "maximumHipDifference": 6.047862655123026e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8652454018592834
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6559944152832031
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7263158559799194
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.4718838036060333
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.143906006172983e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0141170024871826
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7375442981719971
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.693797767162323
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.862645149230957e-9,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7428314685821533
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3823931217193604
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.963374150042e-8,
+            "maximumHipDifference": 5.986600370988526e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6864256858825684
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.593143105506897
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 4.6566128730773926e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3823931217193604
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_BL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 2.7939677238464355e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7127181887626648
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.963374150042e-8,
+            "maximumHipDifference": 5.963374150042e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0916361808776855
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 5.587935447692871e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6988559365272522
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 1.1175870895385742e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.1136420965194702
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_L",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 6.006850128414953e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.47928959131240845
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.6180230975151062
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 8.940696716308594e-8,
+            "maximumHipDifference": 6.1014070240617e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0916361808776855
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1920928955078125e-7,
+            "maximumHipDifference": 1.1920928955078125e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.1599466800689697
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run_L",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.960464477539063e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8893346190452576
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3842321634292603
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1924203136004508e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.4939693212509155
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.58745276927948
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FL",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.1463712453842163
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.5627281665802002
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.712013073529306e-7,
+            "maximumHipDifference": 1.22028140481234e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.9988032579421997
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.712013073529306e-7,
+            "maximumHipDifference": 1.712013073529306e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.0248841047286987
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FL",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.1887738704681396
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.446166515350342
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.3840909004211426
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1924203136004508e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 4.178420543670654
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.4799399375915527
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.43759764279639e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 3.101982593536377
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.1944189282075968e-7,
+            "maximumHipDifference": 1.1924203136004508e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7491268515586853
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 4.031189441680908
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.9601452350616455
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 2.1950781103896588e-7,
+            "maximumHipDifference": 1.7441361421788315e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.2829337120056152
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7140896320343018
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.940696716308594e-8,
+            "maximumHipDifference": 8.56006536764653e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.1093287467956543
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_FR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.9601452350616455
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.130557894706726
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.186774969100952
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.181039571762085
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_FR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 0.0,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.2311644554138184
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 6.143906006172983e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7457234263420105
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.4901161193847656e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.186774969100952
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.234407901763916
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_R",
+            "to": "Juggernaut_v2_Run_BR",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.429369557916289e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.8052718639373779
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 3.725290298461914e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.186774969100952
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 1.2287812012345967e-7,
+            "maximumHipDifference": 1.2383438274810032e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.3758651614189148
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 2.9802322387695313e-8,
+            "maximumHipDifference": 7.450580596923828e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.1916921138763428
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_R",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 0.0,
+            "maximumHipDifference": 1.862645149230957e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7491268515586853
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.0,
+            "maximumFootDifference": 1.2013700256829907e-7,
+            "maximumHipDifference": 1.192174750030972e-7,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 1.6559944152832031
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.25,
+            "maximumFootDifference": 5.960464477539063e-8,
+            "maximumHipDifference": 5.972094641037984e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.7543329000473022
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.5,
+            "maximumFootDifference": 8.429369557916289e-8,
+            "maximumHipDifference": 8.44787066967001e-8,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 0.46520185470581055
+        },
+        {
+            "actor": "Juggernaut",
+            "from": "Juggernaut_v2_Run_BR",
+            "to": "Juggernaut_v2_Run_B",
+            "outgoingPhase": 0.75,
+            "maximumFootDifference": 7.450580596923828e-9,
+            "maximumHipDifference": 3.725290298461914e-9,
+            "maximumRootDisplacement": 0.0,
+            "maximumHeadYaw": 2.0141170024871826
+        }
+    ]
+}

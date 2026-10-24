@@ -1,0 +1,13 @@
+{
+  "directionalReferences": 32,
+  "alreadyAligned": 4,
+  "newDirectionalClips": 26,
+  "reusedFirstLotClips": 2,
+  "crossfades": 256,
+  "maximumHeadYawInCrossfades": 4.178420543670654,
+  "maximumFootDelta": 3.2681327866157517E-07,
+  "weakContactCorrelations": 4,
+  "changedClipOrMetaFiles": 0,
+  "changedSourcesOrMetadata": 0,
+  "scope": "Laboratory candidates. UCC/NavMesh, action recovery and production integration remain unqualified."
+}

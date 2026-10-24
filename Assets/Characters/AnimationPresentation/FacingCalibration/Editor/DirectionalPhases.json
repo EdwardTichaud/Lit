@@ -1,0 +1,324 @@
+{
+    "items": [
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.0,
+            "timeScale": 1.0,
+            "correlation": 1.0
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_B_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.6416666507720947,
+            "timeScale": 0.9999997615814209,
+            "correlation": 0.9379289746284485
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_FL_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.8333333134651184,
+            "timeScale": 1.000001311302185,
+            "correlation": 0.7533307671546936
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_FR_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.7833333611488342,
+            "timeScale": 1.000001311302185,
+            "correlation": 0.9728258848190308
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BL_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.6083333492279053,
+            "timeScale": 1.0,
+            "correlation": 0.9393038153648376
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Blocked: unreliable correspondence; animation review required",
+            "offset": 0.5416666865348816,
+            "timeScale": 1.0000004768371582,
+            "correlation": 0.7354664206504822
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_L_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.625,
+            "timeScale": 0.9999997615814209,
+            "correlation": 0.8199936747550964
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Walk",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_R_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.7583333253860474,
+            "timeScale": 0.9999997615814209,
+            "correlation": 0.89154452085495
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.0,
+            "timeScale": 1.0,
+            "correlation": 0.9999996423721313
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_B_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.9166666865348816,
+            "timeScale": 0.9999999403953552,
+            "correlation": 0.9558023810386658
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FL_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.949999988079071,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.989822268486023
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FR_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.949999988079071,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.9862644076347351
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_BL_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.008333333767950535,
+            "timeScale": 1.0,
+            "correlation": 0.8996476531028748
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_BR_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.44999998807907104,
+            "timeScale": 1.0000005960464478,
+            "correlation": 0.9700090289115906
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_L_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.0416666679084301,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.9566828608512878
+        },
+        {
+            "actor": "Player_Model_Lucian",
+            "tree": "PlayerCombatStrafe_Run",
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_R_Inplace.FBX",
+            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.6416666507720947,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.971563458442688
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.0,
+            "timeScale": 1.0,
+            "correlation": 1.0000001192092896
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FR.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.7833333611488342,
+            "timeScale": 1.000001311302185,
+            "correlation": 0.9840328097343445
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_R.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.7749999761581421,
+            "timeScale": 0.9999997615814209,
+            "correlation": 0.9924256205558777
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_BR.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.574999988079071,
+            "timeScale": 1.0000004768371582,
+            "correlation": 0.8965113759040833
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Blocked: unreliable correspondence; animation review required",
+            "offset": 0.675000011920929,
+            "timeScale": 0.9999997615814209,
+            "correlation": 0.7493975758552551
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_BL.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.6499999761581421,
+            "timeScale": 1.0,
+            "correlation": 0.8631030321121216
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Blocked: unreliable correspondence; animation review required",
+            "offset": 0.675000011920929,
+            "timeScale": 0.9999997615814209,
+            "correlation": 0.6482704281806946
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_WalkDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "status": "Blocked: unreliable correspondence; animation review required",
+            "offset": 0.9583333134651184,
+            "timeScale": 1.000001311302185,
+            "correlation": 0.743841826915741
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.0,
+            "timeScale": 1.0,
+            "correlation": 1.000000238418579
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_FR.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.9583333134651184,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.9930389523506165
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_R.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.6416666507720947,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.9815689325332642
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_BR.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.49166667461395264,
+            "timeScale": 1.0000005960464478,
+            "correlation": 0.9659687876701355
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_B.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.9583333134651184,
+            "timeScale": 0.9999999403953552,
+            "correlation": 0.9225238561630249
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_BL.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.06666667014360428,
+            "timeScale": 1.0,
+            "correlation": 0.9218090176582336
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_L.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.09166666865348816,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.9582324624061584
+        },
+        {
+            "actor": "Juggernaut_v2",
+            "tree": "Juggernaut_v2_RunDirectional",
+            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run_FL.anim",
+            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Run.anim",
+            "status": "Phase candidate; ground acceptance separate",
+            "offset": 0.949999988079071,
+            "timeScale": 1.0000011920928955,
+            "correlation": 0.9953683018684387
+        }
+    ]
+}
