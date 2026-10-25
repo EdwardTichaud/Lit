@@ -54,6 +54,7 @@ public sealed class CombatCinematicContext
     public Animator TargetAnimator { get; }
     public Transform TargetLockPoint { get; }
     public Action ResolveImpact { get; }
+    public Func<float, int> ResolveCounterHitDamage { get; }
     public CombatCinematicCasterRole CasterRole { get; }
     public EnemyController CasterEnemy { get; }
     public bool AllowGameplayCameraFallback { get; }
@@ -77,7 +78,8 @@ public sealed class CombatCinematicContext
         Transform explicitPlayer = null,
         Animator explicitPlayerAnimator = null,
         bool controlsLocalCamera = true,
-        bool appliesGameplayEffects = true)
+        bool appliesGameplayEffects = true,
+        Func<float, int> resolveCounterHitDamage = null)
     {
         CombatManager = manager;
         Definition = definition;
@@ -89,6 +91,7 @@ public sealed class CombatCinematicContext
         TargetAnimator = Target != null ? Target.Animator : null;
         TargetLockPoint = Target != null ? Target.LockPoint : null;
         ResolveImpact = resolveImpact;
+        ResolveCounterHitDamage = resolveCounterHitDamage;
         CasterRole = casterRole;
         CasterEnemy = casterEnemy;
         AllowGameplayCameraFallback = allowGameplayCameraFallback;
@@ -155,7 +158,7 @@ public readonly struct CombatCinematicPlacement
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AnimationEvents))]
 [RequireComponent(typeof(PlayableDirector), typeof(SignalReceiver), typeof(LitTimelineCinemachineBridge))]
-public sealed class CombatCinematicRig : MonoBehaviour
+public sealed partial class CombatCinematicRig : MonoBehaviour
 {
     [SerializeField] private PlayableDirector director;
     [SerializeField] private SignalReceiver signalReceiver;
@@ -241,14 +244,15 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
     }
 
-    public bool ValidateSkillPlayback(CombatCinematicContext candidate, string playerTrack, string enemyTrack, out string error)
+    public bool ValidateSkillPlayback(CombatCinematicContext candidate, string playerTrack, string enemyTrack, out string error, PlayableAsset requestedTimeline = null)
     {
         error = null;
+        var timeline = requestedTimeline != null ? requestedTimeline : RuntimeTimeline;
         if (candidate?.PlayerRoot == null || candidate.PlayerAnimator == null || candidate.TargetRoot == null ||
-            candidate.TargetAnimator == null || RuntimeTimeline == null || Director == null || GetComponent<SignalReceiver>() == null)
+            candidate.TargetAnimator == null || timeline == null || Director == null || GetComponent<SignalReceiver>() == null)
         { error = "Rig baked, acteurs ou Animators indisponibles."; return false; }
-        bool player = false, enemy = false;
-        foreach (var output in RuntimeTimeline.outputs)
+        bool player = false, enemy = false, authoredCamera = false;
+        foreach (var output in timeline.outputs)
         {
             if (output.sourceObject is TrackAsset muted && muted.mutedInHierarchy) continue;
             if (output.sourceObject is AnimationTrack)
@@ -258,11 +262,20 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
             if (output.sourceObject is CinemachineTrack cameraTrack)
                 foreach (var clip in cameraTrack.GetClips())
-                    if (clip.asset is CinemachineShot shot && ResolveCamera(shot.VirtualCamera.exposedName.ToString()) == null)
-                    { error = "Camera auteur absente du rig : " + shot.VirtualCamera.exposedName; return false; }
+                    if (clip.asset is CinemachineShot shot)
+                    {
+                        authoredCamera = true;
+                        if (ResolveCamera(shot.VirtualCamera.exposedName.ToString()) == null)
+                        { error = "Camera auteur absente du rig : " + shot.VirtualCamera.exposedName; return false; }
+                    }
+        }
+        if (HasCounterHitSignals(timeline))
+        {
+            if (!ValidateCounterHitStates(timeline, candidate.TargetAnimator, out error)) return false;
+            enemy = true;
         }
         if (!player || !enemy) { error = "Pistes Animator Player/Enemy absentes ou incompatibles."; return false; }
-        if (HasAuthoredCamera && candidate.ControlsLocalCamera)
+        if (authoredCamera && candidate.ControlsLocalCamera)
         {
             var camera = candidate.CombatManager != null ? candidate.CombatManager.GetComponent<CombatLockOnCameraController>()?.ControlledCamera : null;
             if (camera == null || camera.GetComponent<CinemachineBrain>() == null)
@@ -287,6 +300,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     public bool TryResolveParticipantImpact(AnimationEvent source = null)
     {
         if (!sessionActive || context == null) return false;
+        if (context.Definition is CounterSkillSO && UsesCounterHitSignals) return true; // Handled: the authored contact markers own damage.
         if (source != null && !IsActiveActorClip(source)) return false;
         context.ResolveImpact?.Invoke();
         return true;
@@ -502,6 +516,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
         LitTimelineCinemachineBridge cameraBridge = GetComponent<LitTimelineCinemachineBridge>();
         cameraBridge?.UpdateTimelineCameraNow();
+        AdvanceCounterHitPresentation(director.time);
 
         if (timelineOwnsStagedActorTransforms)
         {
@@ -562,6 +577,10 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
 
         context = playbackContext;
+        consumedCounterHits.Clear();
+        if (HasCounterHitSignals(timeline) && (!ValidateCounterHitStates(timeline, playbackContext.TargetAnimator, out error) ||
+            playbackContext.AppliesGameplayEffects && playbackContext.ResolveCounterHitDamage == null))
+        { error ??= "Autorite de degats CounterHit absente."; return false; }
         if (!context.ControlsLocalCamera)
             foreach (var camera in GetComponentsInChildren<CinemachineCamera>(true))
             {
@@ -606,6 +625,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
         TracePlacement("Participants acceptes.");
+        BeginCounterHitPresentation(timeline);
 
         director.playableAsset = timeline;
         bakedTimeline ??= timeline;
@@ -642,6 +662,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         // The rig is the single owner of all Timeline bindings and graph setup.
         // The bridge only hands the gameplay camera to Cinemachine.
         director.RebuildGraph();
+        RegisterCounterHitNotifications();
         ApplyLocalPlaybackScale();
         TraceCamera("Bind Timeline -> Brain -> controle Timeline -> RebuildGraph", false);
         director.time = 0d;
@@ -775,6 +796,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
         bool playerBound = false;
         bool enemyBound = false;
+        bool counterHitAnimation = HasCounterHitSignals(timeline);
+        if (counterHitAnimation) enemyBound = true;
         bool cameraTrackBound = false;
         bool signalBound = false;
         List<string> skippedBindings = allowPartialBindings ? new List<string>() : null;
@@ -796,6 +819,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
             else if (output.sourceObject is AnimationTrack && output.streamName == enemyTrack)
             {
+                // A fixed Timeline pose would overwrite the victim's own Hit_n controller state.
+                if (counterHitAnimation) { director.ClearGenericBinding(output.sourceObject); continue; }
                 if (context.TargetAnimator != null)
                 {
                     director.SetGenericBinding(output.sourceObject, context.TargetAnimator);
@@ -1070,6 +1095,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void AdvanceEnemyRootFromTimelineMotion()
     {
+        if (UsesCounterHitSignals) return;
         if (context?.TargetRoot == null || context.TargetAnimator == null) return;
 
         RestoreEnemyAnimatorRestLocalPose();
@@ -1134,7 +1160,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         if (timeline == null) return false;
 
         bool playerRelative = false;
-        bool enemyRelative = false;
+        bool enemyRelative = HasCounterHitSignals(timeline);
         foreach (PlayableBinding output in timeline.outputs)
         {
             if (output.sourceObject is not AnimationTrack track) continue;
@@ -1293,6 +1319,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private void EndCameraSession(string reason, CombatCinematicEndReason endReason = CombatCinematicEndReason.Interrupted)
     {
         if (!sessionActive && context == null) return;
+        EndCounterHitPresentation();
 
         // Animation Tracks can leave bound child transforms on an authored pose.
         // Reset their local offsets before pooling so a later cinematic cannot

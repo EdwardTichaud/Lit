@@ -1,3 +1,69 @@
+## Contrat Animator commun — prevalidation, migration non appliquee (2026-10-25)
+
+Reference choisie explicitement : Player_Model.controller. Meme structure et
+memes chemins d'etats pour les personnages ; seules les motions adaptees au
+rig different. Choix confirme pour une action sans clip : etat conserve mais
+action indisponible et signalee, sans clip de remplacement.
+Audit lecture seule : Player_Model 90 etats/11 Blend Trees/88 transitions ;
+Lucian_ImpactLab actif 96 etats ; Juggernaut v2 9, Production 10, StoneGolem 28,
+Werewolf 7. Les six etats actifs supplementaires de Lucian doivent etre
+preserves : ChargedPreparation, ChargedAscension, ChargedFloat, ImpactDeLumiere,
+AirBasicSkill_2 et AirBasicSkill_3. Hit_n doit aussi entrer dans le schema
+commun, pas seulement dans les controllers ennemis comme actuellement.
+Le declenchement exclusivement par nom implique de migrer les pilotes des
+88 transitions automatiques et leurs consommateurs, pas seulement les assets.
+Perimetre transversal au-dela d'un patch local : plan requis par AGENTS avant
+remplacement. Aucun controller, prefab ni code runtime modifie pour cette
+demande a ce stade. Inventaire : Library/SharedAnimatorContract/Inventory.json.
+Plan et criteres de migration dans systems/combat.md. Les travaux precedents
+et les modifications auteur restent en place.
+
+## Impacts de contre multi-ennemis (2026-10-25)
+
+CombatLab_CounterSkill_2 migree vers quatre marqueurs
+CombatLab_CounterHit_Damage_Animation_VFX_SFX : Damage float, Hit Index,
+Blend Seconds, Vfx, Sfx. Horaires conserves ; 25 degats de base au total
+initialises en 6/6/7/6, editables par marqueur. Enemy.Animator conservee mais
+muette pour laisser jouer Hit_n propre a chaque ennemi. Alias natifs Hit_1
+dans les controllers actifs (StoneGolem aussi Hit_2/Hit_3), sans changer
+leurs motions existantes. Modification auteur precedente des clips de la
+Timeline preservee ; rig et installateur ne recreent plus les anciens impacts.
+
+Clock Timeline unique pour les reactions malgre pause globale ; autorite
+Animator et root-motion restituee a la sortie. Ancien impact du clip joueur
+ignore sur ce mode, dedoublonnage session/graphe, cible capturee, clarte unique,
+degats reseau reserves au serveur. Details dans systems/combat.md.
+Choix explicite CounterSkillSO.Timeline egalement respecte cote reseau.
+Compilation Unity et 25 assertions EditMode de graphe passees ; configuration
+repetee : zero difference sur sept assets, references clips auteur preservees.
+Rapports Library/CounterHitSignals*. Rendu Play Mode et host/client non valides.
+
+## Execution TwinBlades / StoneGolem (2026-10-25)
+
+Copies nommees Execution1_Inplace_Humanoid et Executed1_Inplace_Generic
+reimportees par API Unity : Original, rotation offset 0, rotation bakee.
+La seconde etait en realite Humanoid ; son import est maintenant Generic
+avec masque Humanoid retire. GUID, fileID des clips, durees et evenements
+conserves ; FBX fournisseur originaux intacts.
+
+Cible Generic confirmee par l'utilisateur : StoneGolem. Le FBX Generic natif
+TwinBlades n'est pas directement compatible avec ce squelette. Clip adapte :
+Assets/StoneGolem/Animations/Calibrated/Twinblades_Attack_Executed1_Inplace_Generic.anim.
+Retarget Humanoid hors runtime sur le vrai squelette puis courbes Transform
+Generic ; aucune conversion du modele/prefab StoneGolem de production.
+Helpers sous FacingCalibration/Execution/EditorSources. Duree 3 s conservee,
+densite de capture 480 Hz sans changement de vitesse ; courbes reduites puis
+comparees sur 5 761 poses, quarts d'intervalles independants inclus : erreur
+maximale 3,8 mm / 0,244 degre. Racine physique immobile, evenements conserves.
+Execution Humanoid verifiee sur Lucian et Juggernaut. Aucun controller/Timeline
+reference les deux nouvelles copies FBX dans l'inventaire serialise trouve ;
+aucun remplacement global. Utiliser le .anim adapte pour StoneGolem.
+Compilation Unity et validation ciblee passees ; seconde execution sans
+modification du clip adapte ni des deux imports FBX/GUID. Rendu en contexte de jeu et
+synchronisation du couple executeur/victime restent a verifier visuellement.
+Rapports : Library/ActorFacingCalibration/execution-clips.json et
+executed-stonegolem.json. Menu Calibrate Named Execution Clips reproduit le lot.
+
 ## Calibration du regard, premier lot laboratoire (2026-10-24)
 
 Werewolf reste Generic avec ses animations natives, selon choix utilisateur ;
@@ -41,9 +107,24 @@ capture CPU invalide retiree. Les mesures ne valent pas validation gameplay.
 Deux overrides de previsualisation non installes prepares (Lucian/Juggernaut),
 autres slots effectifs/overrides torche conserves, base graphs/prefabs inchanges.
 Idle gameplay effectif du Juggernaut calibre a part, GUID et evenements source
-conserves. Generics natifs inchanges. Choix artistique demande pour les quatre
-marches : retoucher les copies en gardant le style ou chercher des equivalents ;
-ne pas entreprendre cette retouche dependante avant la reponse.
+conserves. Generics natifs inchanges. Choix artistique confirme : retoucher les
+copies des quatre marches en conservant leur style. Quatre copies preparees
+dans FacingCalibration/RetouchedWalks : Lucian Walk_BR, Juggernaut Walk_B/L/FL.
+Retouche hors runtime des muscles des jambes sur chaque avatar reel ; aucune
+installation en production ni modification des vitesses physiques. Walk_L
+necessite une posture de bassin abaissee de 3,5 cm constants pour la portee des
+jambes : oscillation auteur conservee, pas de suivi vertical force du sol.
+Les trois autres gardent la trajectoire du bassin. Premier controle : appuis
+verticaux a moins de 0,2 mm dans les fenetres basses identifiees, haut du corps
+inchange, ecart horizontal cheville au plus 6,1 mm. Ce dernier chiffre mesure
+la retouche, PAS le glissement au sol en locomotion. Captures avant/apres sous
+Library/ActorFacingCalibration/RetouchedWalkCaptures. Compilation Unity,
+boucles, evenements et seconde execution passes (zero clip reecrit).
+Echantillonnage intermediaire : erreur verticale maximale 3 mm pour Walk_L,
+moins de 0,4 mm pour les trois autres. Racine physique immobile, orientation
+des pieds et du haut du corps conservee. Rapports durables dans RetouchedWalks.
+Reste : qualification en mouvement avec UCC/NavMesh, contacts horizontaux,
+raccords et composition avec les copies de regard avant integration.
 
 Points ouverts : quatre correlations directionnelles sous 0,75 ; reference
 historique Idle_LucianAligned manquante sans entree/default entrant trouve,

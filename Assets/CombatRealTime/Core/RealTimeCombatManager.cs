@@ -1215,6 +1215,18 @@ public sealed partial class RealTimeCombatManager : MonoBehaviour
         EvaluateCombatOutcome();
     }
 
+    public int ApplyCounterHitDamage(CounterSkillSO skill, ICombatTarget target, float authoredDamage, bool grantClarity)
+    {
+        if (skill == null || target?.Root == null || target.IsDead || IsPlayerDead() ||
+            float.IsNaN(authoredDamage) || float.IsInfinity(authoredDamage) || authoredDamage <= 0) return 0;
+        int damage = CounterHitSignal.RoundDamage(authoredDamage);
+        int applied = target is LegacyCombatTarget && target.Root.TryGetComponent<EnemyController>(out var legacy)
+            ? legacy.ReceiveDamage(damage, canPrepareRetaliation: false, source: playerController, applyRevelation: true)
+            : DeliverExternalImpact(target, new CombatImpact(damage, 100, CombatImpactOrigin.Counter));
+        if (applied > 0 && grantClarity) AddClarity(skill.ClarityGain);
+        return applied; // Outcome remains deferred until the cinematic releases its participants.
+    }
+
     /// <summary>
     /// Fin authored by a successful health-threshold QTE. This is deliberately
     /// distinct from a normal victory: the threshold cinematic already carries

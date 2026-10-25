@@ -1,5 +1,101 @@
 # Combat
 
+## Unification Player_Model — plan confirme, non applique
+
+Reference auteur : Assets/Characters/4_Animations/Player_Model.controller,
+90 etats, 11 Blend Trees et 88 transitions automatiques. Le controller actif
+de Lucian est un override de Lucian_ImpactLab (96 etats), pas directement de
+Player_Model. Les copies ennemies comptent actuellement 7 a 28 etats selon le
+rig. La migration commune ne peut pas etre une copie aveugle des 90 etats.
+
+Decisions utilisateur : structure et noms communs, lancement des animations
+par nom d'etat, clips propres au rig ; une action sans clip reste explicitement
+indisponible, sans remplacement. Werewolf et StoneGolem restent Generic.
+
+Ordre de realisation :
+1. Etablir dans Unity le manifeste des chemins complets (couche/sous-machine/
+   etat) et des motions effectives, y compris les overrides et les feuilles de
+   Blend Trees. Partir de Player_Model et y integrer les six etats actifs
+   supplementaires de Lucian ainsi que les Hit_n communs. Conserver les
+   identifiants encore consommes par les skills, Timelines et pilotes.
+2. Definir un catalogue de disponibilite par acteur/etat/feuille de locomotion.
+   Un etat vide ne suffit pas : Animator.HasState le considere toujours present.
+   Interdire un appel indisponible avant cooldown, degats ou reservation de
+   cible. Signaler precisement acteur, etat et clip absent. Ne pas confondre
+   une entree existante avec une animation jouable.
+3. Generer des controllers ayant le meme schema et leurs motions propres,
+   avec prevalidation complete avant remplacement. Eviter le piege des
+   AnimatorOverrideController : un override null conserve le clip de Lucian.
+   Les motions indisponibles doivent etre reellement absentes et couvertes
+   par le catalogue ; aucun clip vide ou etranger pour masquer le manque.
+   Controler les masques/couches sur les vrais rigs Generic et Humanoid ;
+   une couche optionnelle entierement indisponible ne doit pas modifier la pose.
+4. Migrer les scripts/profils vers une entree commune par chemin d'etat et une
+   autorite unique de presentation. Les Blend Trees peuvent conserver leurs
+   parametres de melange ; entrees/sorties d'etats doivent etre pilotees par
+   script. Remplacer progressivement les transitions automatiques apres
+   migration de leurs pilotes : saut, reception, depart/arret, vol, torche,
+   skills, reactions et mort. Adapter aussi les profils IA, les noms legacy,
+   les garde-fous des marqueurs CounterHit et la presentation reseau.
+5. Integrer sur les prefabs/definitions des acteurs actifs, puis leurs outils
+   d'installation. Preserver les GUID, les overrides et evenements auteur,
+   les physiques UCC/NavMesh, les autorites et sessions cinematographiques.
+   Ne pas generaliser aux controllers UI/objets ni aux prototypes hors perimetre.
+6. Valider l'egalite du schema (couches, chemins, parametres, Blend Trees), les
+   correspondances de rig, le refus des actions manquantes, les evenements et
+   le resultat d'une deuxieme migration. Recette sur les vrais acteurs :
+   locomotion, saut/reception, torche, skills, Hit_n, mort, contre, interruption,
+   changement de zone et host/client. Aucune action fonctionnelle de Lucian ne
+   doit disparaitre lors du retour au gabarit Player_Model.
+
+Les six etats supplementaires a conserver sont ChargedPreparation,
+ChargedAscension, ChargedFloat, ImpactDeLumiere, AirBasicSkill_2 et AirBasicSkill_3.
+Inventaire initial en lecture seule : Library/SharedAnimatorContract/Inventory.json.
+Ce plan de migration ne decrit pas encore l'etat du runtime installe.
+
+## Contres : impacts Timeline independants du rig ennemi
+
+`CombatLab_CounterSkill_2` utilise des marqueurs `CounterHitSignal`, affiches
+`CombatLab_CounterHit_Damage_Animation_VFX_SFX` sur la piste Signals.
+Chaque marqueur expose Damage (float en points de vie, arrondi a l'entier),
+Hit Index, Blend Seconds, Vfx et Sfx. Hit Index 2 cible Base Layer.Hit_2 sur
+l'Animator de la victime capturee par la session. Ce meme nom d'etat doit
+exister sur chaque ennemi compatible ; ses clips restent propres a son rig.
+Un indice absent ou une valeur invalide refuse la lecture avant tout degat.
+
+La piste Enemy.Animator fixe du contre 2 est conservee mais muette. Les
+reactions sont evaluees par le rig sur l'horloge de la Timeline, meme pendant
+la pause globale du contre. L'evaluation automatique de cet Animator est
+suspendue pendant cette autorite, puis enabled/keep-state/root-motion sont
+restitues sur fin, echec ou interruption. Aucun delta Root ennemi n'est
+transfere pour ce mode. Les clips et horaires auteur du joueur et des cameras
+restent inchanges. Les anciens evenements ResolveCounterSkillImpact sont
+consommes sans degat supplementaire uniquement sur les Timelines migrees.
+
+Les degats passent par le contrat combat existant avec la cible capturee ;
+la clarte n'est accordee qu'au premier impact positif. Le reseau conserve
+l'autorite serveur et la generation/reservation de cinematique. Le choix
+explicite CounterSkillSO.Timeline est respecte pour validation, lecture et
+delai de fin, plutot que d'imposer la Timeline bakee du rig. Les observers
+jouent la presentation, sans appliquer de degats ni doubler le SFX via le RPC.
+Chaque marqueur est consomme une fois par session/graphe ; un ancien graphe,
+une victime morte et une session interrompue ne peuvent plus appliquer de coup.
+
+Menu Lit/Combat Lab/Configure Unified Counter Hits : migration explicite et
+idempotente, conservation des montants/indices/horaires/effets deja auteur.
+Les quatre contacts existants gardent 25 degats de base au total (6/6/7/6),
+librement editables par signal. Des alias natifs Hit_1 sont ajoutes aux
+controllers Juggernaut v2, Iluvilirae, Juggernaut Production, Werewolf et
+StoneGolem ; ce dernier a aussi Hit_2/Hit_3 a partir de gethit2/gethit3.
+Aucun clip d'une autre famille de squelette n'est injecte dans ces etats.
+
+Verification : compilation Unity runtime/Editor, 25 assertions de graphe
+EditMode (notifications reelles, floats, indices, doublons, pause Animator,
+interruption, reprise de pool, ancien graphe, mort, observer, arret reentrant),
+seconde configuration sans changement des sept assets controles. Rapports
+Library/CounterHitSignals*. Le rendu Play Mode et un parcours host/client
+complet restent a qualifier dans le contexte de jeu.
+
 ## Recuperation Apres Support Non Navigable
 
 Le moteur de mouvement production conserve la position NavMesh de depart du

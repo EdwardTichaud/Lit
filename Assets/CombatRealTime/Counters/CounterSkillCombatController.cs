@@ -37,6 +37,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private bool guardHeld;
     private bool cinematicPlaying;
     private bool impactResolved;
+    private bool counterHitClarityGranted;
     private bool playerLockHeld;
     private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
     private bool finishing;
@@ -274,13 +275,16 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         activeSkill = skill;
         cinematicPlaying = true;
         impactResolved = false;
+        counterHitClarityGranted = false;
 
         if (skill.CombatCinematicRigPrefab != null)
         {
             if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
             string error = "CombatCinematicPlaybackService manquant.";
             bool staged = skill.CombatCinematicRigPrefab.HasAuthoringStageLayout;
-            var context = new CombatCinematicContext(combatManager, skill, transferTimelineRootMotion: !staged);
+            var capturedTarget = combatManager.CombatTarget;
+            var context = new CombatCinematicContext(combatManager, skill, transferTimelineRootMotion: !staged,
+                resolveCounterHitDamage: damage => ResolveCounterHitDamage(skill, capturedTarget, damage));
             CombatCinematicPlacement? placement = null;
             if (staged)
             {
@@ -352,6 +356,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     /// <summary>Player Animation Event placed on the authored CounterSkill Timeline contact frame.</summary>
     public void ResolveCounterSkillImpact()
     {
+        if (cinematicPlayback?.ActiveRig?.UsesCounterHitSignals == true) return;
         if (!CombatLocalCinematicPolicy.AllowsLocalExecution) { AbortForActionTermination(); return; }
         if (!cinematicPlaying || impactResolved || activeSkill == null || combatManager == null)
         {
@@ -364,6 +369,14 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         {
             AudioManager.PlayClipAtPoint(activeSkill.ImpactSfx, combatManager.CombatTarget.LockPoint.position);
         }
+    }
+
+    private int ResolveCounterHitDamage(CounterSkillSO skill, ICombatTarget target, float damage)
+    {
+        if (!CombatLocalCinematicPolicy.AllowsLocalExecution || !cinematicPlaying || activeSkill != skill || combatManager == null) return 0;
+        int applied = combatManager.ApplyCounterHitDamage(skill, target, damage, !counterHitClarityGranted);
+        if (applied > 0) { impactResolved = true; counterHitClarityGranted = true; }
+        return applied;
     }
 
     public static int ModifyGuardDamage(int damage, bool playFeedback = true)

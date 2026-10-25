@@ -23,16 +23,17 @@ public static class CounterAudioSetup
         var voiceSignal = Signal("CombatLab_CounterVoice");
         var showSwordSignal = Signal("CombatLab_CounterShowSword");
         var hideSwordSignal = Signal("CombatLab_CounterHideSword");
-        var hitSignal = Signal("CombatLab_CounterHitVfx");
+        var hitSignal = AssetDatabase.LoadAssetAtPath<SignalAsset>(Folder + "CombatLab_CounterHitVfx.signal");
         var hitPrefab = HitPrefab();
         var contactSignal = AssetDatabase.LoadAssetAtPath<SignalAsset>(CounterKnockoutSignalSetup.CameraShakeSignalPath);
         var contacts = track.GetMarkers().OfType<SignalEmitter>().Where(m => m.asset == contactSignal).Select(m => m.time).OrderBy(t => t).ToArray();
+        var previousHitTimes = track.GetMarkers().OfType<SignalEmitter>().Where(m => hitSignal != null && m.asset == hitSignal).Select(m => m.time).OrderBy(t => t).ToArray();
         if (contacts.Length != 4) throw new InvalidOperationException("Expected four authored counter contacts.");
-        // Only replace our audio markers; preserve camera, impact and knockout signals.
-        foreach (var marker in track.GetMarkers().OfType<SignalEmitter>().Where(m => m.asset == slashSignal || m.asset == voiceSignal || m.asset == showSwordSignal || m.asset == hideSwordSignal || m.asset == hitSignal).ToArray())
+        // Migrate only the old contact effects. Preserve authored voice/sword markers and times.
+        foreach (var marker in track.GetMarkers().OfType<SignalEmitter>().Where(m => m.asset == slashSignal || hitSignal != null && m.asset == hitSignal).ToArray())
             track.DeleteMarker(marker);
-        foreach (double time in contacts) AddMarker(track, slashSignal, time);
-        foreach (double time in contacts) AddMarker(track, hitSignal, time);
+        CounterHitSignalSetup.ConfigureMarkers(timeline, track, previousHitTimes.Length > 0 ? previousHitTimes : contacts, hitPrefab, slash);
+        CounterHitSignalSetup.ConfigureNativeHitStates();
         AddMarker(track, voiceSignal, .05);
         AddMarker(track, showSwordSignal, 0);
         AddMarker(track, hideSwordSignal, Math.Max(0, timeline.duration - 1.0 / timeline.editorSettings.frameRate));
@@ -47,19 +48,15 @@ public static class CounterAudioSetup
             Bind(receiver, voiceSignal, events.PlayVoice, voice);
             Bind(receiver, showSwordSignal, events.ShowTimelineSword);
             Bind(receiver, hideSwordSignal, events.HideTimelineSword);
-            var hitReaction = receiver.GetReaction(hitSignal);
-            if (hitReaction == null) { hitReaction = new UnityEvent(); receiver.AddReaction(hitSignal, hitReaction); }
-            for (int i = hitReaction.GetPersistentEventCount() - 1; i >= 0; i--)
-                if (hitReaction.GetPersistentMethodName(i) == nameof(AnimationEvents.SpawnTimelineHitVfx)) UnityEventTools.RemovePersistentListener(hitReaction, i);
-            UnityEventTools.AddObjectPersistentListener(hitReaction, events.SpawnTimelineHitVfx, hitPrefab);
+            if (hitSignal != null && receiver.GetReaction(hitSignal) != null) receiver.Remove(hitSignal);
             EditorUtility.SetDirty(receiver);
             PrefabUtility.SaveAsPrefabAsset(root, CounterKnockoutSignalSetup.RigPath);
         }
         finally { PrefabUtility.UnloadPrefabContents(root); }
         EditorUtility.SetDirty(track);
         EditorUtility.SetDirty(timeline);
-        AssetDatabase.SaveAssets();
-        Debug.Log("[CounterAudio] Four slash SFX/hit VFX, one voice and sword signals configured; existing counter sounds preserved.");
+        AssetDatabase.SaveAssetIfDirty(timeline);
+        Debug.Log("[CounterAudio] Unified damage/Hit_n/VFX/SFX contacts configured; voice, sword and camera timings preserved.");
     }
 
     private static GameObject HitPrefab()
@@ -122,6 +119,7 @@ public static class CounterAudioSetup
 
     private static void AddMarker(SignalTrack track, SignalAsset signal, double time)
     {
+        if (track.GetMarkers().OfType<SignalEmitter>().Any(m => m.asset == signal)) return;
         var marker = track.CreateMarker<SignalEmitter>(time);
         marker.asset = signal; marker.emitOnce = true; marker.retroactive = false;
         EditorUtility.SetDirty(marker);
@@ -159,15 +157,16 @@ public static class CounterAudioSetup
         var rig = AssetDatabase.LoadAssetAtPath<GameObject>(CounterKnockoutSignalSetup.RigPath);
         var receiver = rig.GetComponent<SignalReceiver>();
         foreach (var pair in new[] { ("CombatLab_CounterSlash", "PlaySfx", 4), ("CombatLab_CounterVoice", "PlayVoice", 1),
-            ("CombatLab_CounterShowSword", "ShowTimelineSword", 1), ("CombatLab_CounterHideSword", "HideTimelineSword", 1),
-            ("CombatLab_CounterHitVfx", "SpawnTimelineHitVfx", 4) })
+            ("CombatLab_CounterShowSword", "ShowTimelineSword", 1), ("CombatLab_CounterHideSword", "HideTimelineSword", 1) })
         {
             var signal = AssetDatabase.LoadAssetAtPath<SignalAsset>(Folder + pair.Item1 + ".signal");
             int count = timeline.GetRootTracks().OfType<SignalTrack>().SelectMany(t => t.GetMarkers()).OfType<SignalEmitter>().Count(m => m.asset == signal);
             var reaction = receiver.GetReaction(signal);
+            if (pair.Item1 == "CombatLab_CounterSlash") continue; // Swing SFX now belongs to each unified contact.
             if (count != pair.Item3 || reaction == null || reaction.GetPersistentEventCount() != 1 || reaction.GetPersistentMethodName(0) != pair.Item2)
                 throw new InvalidOperationException("Counter audio validation failed: " + pair.Item1);
         }
+        if (CombatCinematicRig.CounterHits(timeline).Count() != 4) throw new InvalidOperationException("Expected four unified CounterHit markers");
         var hitPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "CombatLab_CounterHitVfx.prefab");
         var particles = hitPrefab.GetComponent<ParticleSystem>();
         if (particles.main.loop || !particles.main.useUnscaledTime || particles.main.stopAction != ParticleSystemStopAction.Destroy ||

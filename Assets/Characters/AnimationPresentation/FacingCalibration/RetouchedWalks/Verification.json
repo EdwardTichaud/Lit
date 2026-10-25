@@ -1,0 +1,45 @@
+{
+  "scope": "Four offline walk retouches; lab only, no production bindings or physical speed changes",
+  "compilation": "Unity 6000.6.4f1 Editor assembly rebuilt successfully",
+  "changedClipsOnSecondExecution": 0,
+  "productionInstalled": false,
+  "pending": [
+    "Horizontal stance slip with UCC/NavMesh",
+    "Rendered transitions and constant pelvis offset on Walk_L",
+    "Composition with gaze-calibrated copies"
+  ],
+  "cases": [
+    {
+      "clip": "walk-retouch-Juggernaut_Walk_B",
+      "status": "Lab copy only: pose and vertical contact gates passed; horizontal stance and rendered style review pending",
+      "subframeContactMetres": 0.00032345205545425415,
+      "events": true,
+      "loopSeamMetres": 0.0,
+      "rootMetres": 0.0
+    },
+    {
+      "clip": "walk-retouch-Juggernaut_Walk_FL",
+      "status": "Lab copy only: pose and vertical contact gates passed; horizontal stance and rendered style review pending",
+      "subframeContactMetres": 0.00017390772700309753,
+      "events": true,
+      "loopSeamMetres": 3.202338234586932E-07,
+      "rootMetres": 0.0
+    },
+    {
+      "clip": "walk-retouch-Juggernaut_Walk_L",
+      "status": "Lab copy only: pose and vertical contact gates passed; horizontal stance and rendered style review pending",
+      "subframeContactMetres": 0.0029825083911418915,
+      "events": true,
+      "loopSeamMetres": 0.0,
+      "rootMetres": 0.0
+    },
+    {
+      "clip": "walk-retouch-Lucian_Walk_BR_Inplace",
+      "status": "Lab copy only: pose and vertical contact gates passed; horizontal stance and rendered style review pending",
+      "subframeContactMetres": 0.00023001804947853088,
+      "events": true,
+      "loopSeamMetres": 0.0,
+      "rootMetres": 0.0
+    }
+  ]
+}

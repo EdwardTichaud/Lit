@@ -53,6 +53,68 @@ public sealed class CycleAutoDialogueControllerTests
         return session;
     }
 
+    private void CreateDialogueUi()
+    {
+        root.SetActive(true);
+        var uiRoot = new GameObject("Timed line UI", typeof(RectTransform));
+        uiRoot.SetActive(false); uiRoot.transform.SetParent(root.transform);
+        fakeUi = uiRoot.AddComponent<DialoguePanelUI>();
+        fakeUi.autoFindOnAwake = false;
+        fakeUi.fadeDuration = 0;
+        fakeUi.dialoguePanelRoot = uiRoot;
+        var textRoot = new GameObject("Timed line text", typeof(RectTransform));
+        textRoot.transform.SetParent(uiRoot.transform);
+        fakeUi.dialogueText = textRoot.AddComponent<TMPro.TextMeshProUGUI>();
+        SetUiInstance(fakeUi);
+        uiRoot.SetActive(true);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void IntentionalDismissalCompletesButOwnerCancellationDoesNot(bool manual)
+    {
+        CreateDialogueUi();
+        var owner = new object();
+        bool? completed = null;
+        Assert.That(DialoguePanelUI.TryShowTimedConversation("Une trace subsiste.", 5, result => completed = result, owner), Is.True);
+        if (manual) typeof(DialoguePanelUI).GetMethod("HideManually", Private).Invoke(fakeUi, null);
+        else DialoguePanelUI.CancelTimedConversation(owner);
+        Assert.That(completed, Is.EqualTo(manual));
+        Assert.That(fakeUi.IsShowing, Is.False);
+    }
+
+    [UnityEngine.TestTools.UnityTest]
+    public IEnumerator SkippingEarlyAcknowledgesOnceAfterTheHostGuardWithoutReplayingOrSaving()
+    {
+        CreateDialogueUi();
+        binding.durationSeconds = .2f;
+        var session = new CycleAutoDialogueSession(7, "spoken_intro", new[] { 0UL }, Time.realtimeSinceStartupAsDouble, .2, 30);
+        Set("autoDialogueSession", session);
+        Get<HashSet<CycleAutoDialogueBinding>>("playedAutoDialogues").Add(binding);
+        Set("localAutoDialogueToken", 7); Set("autoDialogueGeneration", 1); Set("localAutoDialoguePending", true);
+        var local = (IEnumerator)Invoke("LocalAutoDialogue", 7, "intro", 1);
+        Assert.That(local.MoveNext(), Is.True);
+        Assert.That(fakeUi.IsShowing, Is.True);
+        typeof(DialoguePanelUI).GetMethod("HideManually", Private).Invoke(fakeUi, null);
+        Assert.That(fakeUi.IsShowing, Is.False);
+        Assert.That(local.MoveNext(), Is.True, "A passed line must not send an acknowledgement too early.");
+        Assert.That(session.Status, Is.EqualTo(CycleAutoDialogueStatus.Waiting));
+        double deadline = Time.realtimeSinceStartupAsDouble + 2;
+        while (local.MoveNext())
+        {
+            Assert.That(Time.realtimeSinceStartupAsDouble, Is.LessThan(deadline));
+            Assert.That(fakeUi.IsShowing, Is.False, "Waiting for acknowledgement must not reopen the line.");
+            yield return null;
+        }
+        Assert.That(session.Status, Is.EqualTo(CycleAutoDialogueStatus.Completed));
+        Assert.That(session.CompletedCount, Is.EqualTo(1));
+        var wait = (IEnumerator)Invoke("WaitForAutoDialogue", session, binding);
+        Assert.That(wait.MoveNext(), Is.False);
+        Assert.That(cycle.IsSceneStepCompleted("intro"), Is.True);
+        Assert.That(Get<HashSet<CycleAutoDialogueBinding>>("playedAutoDialogues").Contains(binding), Is.True);
+        Assert.That(rules.CaptureVariables(), Is.Empty, "Dev completion must not write a real save.");
+    }
+
     [Test] public void NaturalCompletionNotElapsedTimeCommitsTheDevStep()
     {
         var session = PendingSession();

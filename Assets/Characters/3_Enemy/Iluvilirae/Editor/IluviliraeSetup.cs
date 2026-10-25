@@ -18,7 +18,7 @@ public static class IluviliraeSetup
     public const string Folder = "Assets/Characters/3_Enemy/Iluvilirae";
     public const string PrefabPath = Folder + "/Iluvilirae.prefab";
     public const string ScenePath = Folder + "/Iluvilirae_Test.unity";
-    public const string ControllerPath = Folder + "/Iluvilirae.controller";
+    public const string ControllerPath = "Assets/Characters/3_Enemy/Juggernaut/BrainsProduction/Production.controller";
     private const string Request = "Library/Iluvilirae.request";
     private const string Result = "Library/Iluvilirae.result";
     static IluviliraeSetup() { EditorApplication.update += Poll; }

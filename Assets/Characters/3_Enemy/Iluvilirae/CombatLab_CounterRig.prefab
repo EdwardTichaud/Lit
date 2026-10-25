@@ -266,7 +266,6 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 10215f128eea40f4087be03f6ea068db, type: 2}
     - {fileID: 11400000, guid: 2fbd97d9275e9fc499d782bb09114565, type: 2}
     - {fileID: 11400000, guid: dc40705a1f2ccec41af89ec1148a9adb, type: 2}
-    - {fileID: 11400000, guid: e2c9b01bccc772744a0f2d40b7696496, type: 2}
     m_Events:
     - m_PersistentCalls:
         m_Calls:
@@ -347,20 +346,6 @@ MonoBehaviour:
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 8069486010096295346}
-          m_TargetAssemblyTypeName: AnimationEvents, Assembly-CSharp
-          m_MethodName: SpawnTimelineHitVfx
-          m_Mode: 2
-          m_Arguments:
-            m_ObjectArgument: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
             m_StringArgument: 

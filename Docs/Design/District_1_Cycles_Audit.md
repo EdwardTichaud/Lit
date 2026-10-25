@@ -3,6 +3,24 @@
 État du chantier : en cours, reprise le 24 octobre 2026. Ce document ne constitue pas une
 validation de parcours multijoueur.
 
+### Correction du 25 octobre — répliques automatiques passées
+
+Passer volontairement une réplique chronométrée avec Interagir/Valider/Annuler
+compte désormais comme une lecture réussie. Les annulations techniques,
+remplacements et déchargements restent des interruptions rejouables. La
+confirmation locale attend si nécessaire la durée minimale imposée par l'hôte,
+sans rouvrir le panneau : un succès envoyé trop tôt était rejeté sans être
+renvoyé et pouvait finir par relancer la réplique. Aucun jalon ni format de
+sauvegarde n'est modifié, aucune scène n'est reconstruite.
+
+Validation isolée des copies exactes du runtime : **22/22 tests réussis**,
+zéro ignoré, dont fermeture volontaire, annulation technique et passage précoce
+suivi d'une confirmation unique, sans réouverture ni écriture Dev.
+Rapport : `Library/DistrictCycleValidation/Run-20261025-105258/DialogueTests.xml`.
+Le nouvel argument `-DialogueTestsOnly` de l'outil de validation permet de les
+relancer sans fermer l'éditeur principal. Aucun nouveau parcours multijoueur
+complet n'a été exécuté pour cette correction.
+
 Mise à jour : Luc réactivé/replacé avec contrôles natifs ; souvenir Nina créé
 sur décision humaine ; proposition Gustave rédigée, encore à valider.
 Suite principale sélectionnée : 192/192 puis 193/193 après l'ajout Nina,

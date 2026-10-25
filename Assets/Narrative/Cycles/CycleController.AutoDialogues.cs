@@ -96,10 +96,18 @@ public sealed partial class CycleController
                 (localDialogue || cinematicRunning || InputFocusStack.HasAnyFocus() || DialoguePanelUI.Instance != null && DialoguePanelUI.Instance.IsShowing))
                 yield return null;
             if (!LocalAutoDialogueIsCurrent(generation) || Time.realtimeSinceStartupAsDouble >= timeout) yield break;
+            double acknowledgeNotBefore = Time.realtimeSinceStartupAsDouble + Math.Max(.1d, binding.durationSeconds);
             bool shown = DialoguePanelUI.TryShowTimedConversation(binding.line, binding.durationSeconds,
                 completed => { natural = completed; finished = true; }, autoDialogueOwner);
             if (!shown) yield break;
             while (LocalAutoDialogueIsCurrent(generation) && !finished && Time.realtimeSinceStartupAsDouble < timeout) yield return null;
+            // A player may pass the line immediately. Keep the host's minimum-time
+            // guard intact: an early successful acknowledgement would otherwise be
+            // rejected and never resent, causing a timeout and a replay of the line.
+            // Only the confirmation waits; the dismissed UI stays closed.
+            while (LocalAutoDialogueIsCurrent(generation) && finished && natural &&
+                Time.realtimeSinceStartupAsDouble < acknowledgeNotBefore && Time.realtimeSinceStartupAsDouble < timeout)
+                yield return null;
         }
         finally
         {

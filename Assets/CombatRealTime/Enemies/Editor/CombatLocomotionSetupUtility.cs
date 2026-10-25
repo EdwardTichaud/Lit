@@ -7,7 +7,7 @@ using UnityEngine;
 public static class CombatLocomotionSetupUtility
 {
     private const string PlayerControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
-    private const string JuggernautControllerPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.controller";
+    private const string JuggernautControllerPath = "Assets/Characters/3_Enemy/Juggernaut/BrainsProduction/Production.controller";
     private const string GiantJuggernautControllerPath = "Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut.controller";
     private const string StrafeFolder = "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Root/Movement/";
     private static readonly string[] EnemyPrefabs =

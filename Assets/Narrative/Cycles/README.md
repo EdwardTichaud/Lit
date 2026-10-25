@@ -68,12 +68,17 @@ CycleController. L'ID de liaison est l'ID d'etape ; son `sourceId` peut etre
 different. La replique utilise une session transitoire, sans nouveau format
 de sauvegarde, isolee dans CycleController.AutoDialogues et CycleAutoDialogueSession.
 
-Une interface deja occupee n'est jamais remplacee. La progression attend la
-fermeture naturelle, pas un delai fixe : chaque spectateur connecte au lancement
-doit confirmer. Refus, remplacement ou interruption annulent la tentative,
+Une interface deja occupee n'est jamais remplacee. La progression attend une
+lecture terminee ou passee volontairement : chaque spectateur connecte au lancement
+doit confirmer. Interagir/Valider/Annuler pour passer une replique affichee compte
+comme une lecture, et ne la redemarre pas. La fermeture est immediate ; si le joueur
+passe avant la duree minimale, seule la confirmation attend la fin de cette duree,
+afin de respecter la protection de l'hote contre les confirmations precoces.
+Un delai seul, sans lecture ni passage volontaire, ne valide rien.
+Remplacement, annulation technique ou interruption de scene annulent la tentative,
 sans jalon ni recompense ; une nouvelle tentative est possible apres une seconde.
 Le delai de securite est la duree de la replique plus au moins 30 secondes.
-Une deconnexion retire le spectateur, mais il faut au moins une fin naturelle
+Une deconnexion retire le spectateur, mais il faut au moins une lecture confirmee
 pour valider. Une arrivee tardive ne change pas l'audience ; elle recoit la
 progression partagee. Les anciens tokens et doublons sont ignores.
 

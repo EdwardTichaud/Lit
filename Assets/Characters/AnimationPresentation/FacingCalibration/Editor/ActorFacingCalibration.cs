@@ -71,6 +71,8 @@ public static partial class ActorFacingCalibration
             else if (command == "grounding-capture") CaptureWalkGrounding();
             else if (command == "vertical-extraction-probe") ProbeNativeVerticalExtraction();
             else if (command == "bindings") PreparePreviewBindings();
+            else if (command == "retouch-walk") PrepareWalkRetouch();
+            else if (command == "retouch-walks") PrepareWalkRetouches();
             else throw new InvalidOperationException("Unknown facing calibration request: " + command);
             Directory.CreateDirectory(ReportFolder); File.WriteAllText(ReportFolder + "/result.txt", "PASS: " + command);
         }
@@ -207,7 +209,7 @@ public static partial class ActorFacingCalibration
         }
         return copy;
     }
-    static bool SameAuthoring(AnimationClip a, AnimationClip b)
+    internal static bool SameAuthoring(AnimationClip a, AnimationClip b)
     {
         if(a.frameRate!=b.frameRate || a.legacy!=b.legacy || a.wrapMode!=b.wrapMode || a.isHumanMotion!=b.isHumanMotion ||
             JsonUtility.ToJson(AnimationUtility.GetAnimationClipSettings(a))!=JsonUtility.ToJson(AnimationUtility.GetAnimationClipSettings(b)))return false;
@@ -298,7 +300,7 @@ public static partial class ActorFacingCalibration
 
     [MenuItem("Lit/Animation Presentation/Facing Calibration/3 Capture Actual Models")]
     public static void Capture() => CaptureInputs(Resolve(),"Captures");
-    static void CaptureInputs(List<Input> inputs,string captureFolder,float normalizedTime=.35f,float? groundY=null,bool bodyVerticalCorrection=false)
+    static void CaptureInputs(List<Input> inputs,string captureFolder,float normalizedTime=.35f,float? groundY=null,bool bodyVerticalCorrection=false,bool legRetouch=false,float pelvisPoseOffset=0)
     {
         if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play Mode before capturing the isolated comparison.");
         foreach(var input in inputs)
@@ -370,7 +372,13 @@ public static partial class ActorFacingCalibration
                         var a=sourceAnimator.isHuman?sourceAnimator.GetBoneTransform(side):Named(original.transform,side==HumanBodyBones.LeftFoot?"foot_l":"foot_r");
                         var b=targetAnimator.isHuman?targetAnimator.GetBoneTransform(side):Named(candidate.transform,side==HumanBodyBones.LeftFoot?"foot_l":"foot_r");
                         var delta=b.position-a.position;
-                        if(bodyVerticalCorrection)
+                        if(legRetouch)
+                        {
+                            if(Vector3.ProjectOnPlane(delta,Vector3.up).magnitude>.01f || Mathf.Abs(delta.y)>.101f ||
+                                Vector3.Distance(sourceAnimator.GetBoneTransform(HumanBodyBones.Hips).position+Vector3.up*pelvisPoseOffset,targetAnimator.GetBoneTransform(HumanBodyBones.Hips).position)>.001f)
+                                throw new InvalidOperationException("Leg retouch capture changed protected hip/horizontal pose");
+                        }
+                        else if(bodyVerticalCorrection)
                         {
                             var ah=sourceAnimator.GetBoneTransform(HumanBodyBones.Hips);var bh=targetAnimator.GetBoneTransform(HumanBodyBones.Hips);
                             if(Vector3.ProjectOnPlane(delta,Vector3.up).magnitude>.001f || Mathf.Abs(delta.y)>.101f ||

@@ -41,7 +41,8 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     private bool timedConversation;
     private object timedConversationOwner;
 
-    /// <summary>Reports natural timed completion separately from dismissal, replacement or teardown.</summary>
+    /// <summary>Reports elapsed playback or intentional dismissal as completion;
+    /// replacement, owner cancellation and teardown remain interruptions.</summary>
     public static bool TryShowTimedConversation(string message, float duration, Action<bool> finished, object owner = null)
     {
         var ui = GetOrCreate();
@@ -358,7 +359,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     public bool HandleInputModeAction(InputModeAction action, InputAction.CallbackContext context)
     {
         if (!isShowing || !InputFocusStack.HasFocus(this)) return false;
-        if (timedConversation && action == InputModeAction.Cancel)
+        if (timedConversation && action == InputModeAction.Cancel && Time.frameCount != shownFrame)
         {
             HideManually();
             return true;
@@ -373,11 +374,14 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     private void HideManually()
     {
-        timedConversationCompleted = false;
         if (!isShowing)
         {
             return;
         }
+
+        // Reading and then passing a timed line is a successful presentation,
+        // not a technical interruption which should rearm the cycle's retry.
+        timedConversationCompleted = timedConversation;
 
         if (hideRoutine != null)
         {

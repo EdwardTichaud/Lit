@@ -49,31 +49,31 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -5367699531173051119, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: -5160184807179694704, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: -4253381298905272682, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: -2975559413979594822, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: -921051004840006995, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: -451502785067478575, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: 12745845055873494, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: a89bb02af12e3524cb5d8886e5407a72, type: 2}
     - target: {fileID: 919132149155446097, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
@@ -81,19 +81,19 @@ PrefabInstance:
       value: StoneGolem_Skin2
       objectReference: {fileID: 0}
     - target: {fileID: 2518385382312484314, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 2793ab601beb15141bab7bbdef55220b, type: 2}
     - target: {fileID: 3662611847696915990, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: 4224744669028717703, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 40f9137019d9e764f8153176debb6043, type: 2}
     - target: {fileID: 4241928185620556176, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 2793ab601beb15141bab7bbdef55220b, type: 2}
     m_RemovedComponents: []
@@ -111,20 +111,21 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
 --- !u!95 &3963088514230081082
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4774926048125841077}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 5efe07eec637b384fb8aef2221dddb9b, type: 2}
+  m_Avatar: {fileID: 9000000, guid: b4a13081c14d4fc44ba16af405db1084, type: 3}
+  m_Controller: {fileID: 9100000, guid: 534f14ed8e65d33428f338c38dfd006b, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1

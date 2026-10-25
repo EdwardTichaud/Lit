@@ -1,0 +1,23 @@
+{
+    "source": "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Inplace/Battle/Twinblades_Attack_Executed1_Inplace.FBX",
+    "target": "Assets/StoneGolem/Animations/Calibrated/Twinblades_Attack_Executed1_Inplace_Generic.anim",
+    "targetPrefab": "Assets/StoneGolem/Prefab/StoneGolem_Skin1.prefab",
+    "modelHash": "67D3707E15D5FBD933389CB50C650048C22F6B82DD95DC910D3DAD4B2FDE88A9",
+    "modelMetadataHash": "A4A75DF9C996B7D08E185F4C85DD840C0F815B05BE1C66A3EE5AD20EAF370BEE",
+    "prefabHash": "81F4F1D2748BC3E328F6D53F23902C9F171C2498B9ADB70BE1AFD26FFCABCF4C",
+    "method": "Offline Humanoid retarget on the exact StoneGolem skeleton, baked as native Transform curves. Production rig stays Generic.",
+    "sampledFrames": 5761,
+    "transformBindings": 954,
+    "curveKeys": 48872,
+    "duration": 3.000000238418579,
+    "maximumBonePositionError": 0.00378131540492177,
+    "maximumBoneRotationError": 0.2438931167125702,
+    "maximumPhysicalMovement": 0.0,
+    "bakeSamplesPerSecond": 480.0,
+    "maximumKeyPositionError": 0.000014838803508609999,
+    "maximumKeyRotationError": 0.0,
+    "worstTime": 0.6098958849906921,
+    "worstBone": "root/pelvis/thigh_r/calf_r/foot_r/ball_r",
+    "eventsPreserved": true,
+    "sourceRigUnchanged": true
+}

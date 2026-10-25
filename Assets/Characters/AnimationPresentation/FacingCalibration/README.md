@@ -128,3 +128,52 @@ NavMeshAgent. Il reste a valider les raccords et la locomotion avec ces vraies
 autorites dans Iluvilirae_Test, le comportement avec torche, les autres
 directions et les actions. Les marqueurs d'impact et l'orientation des armes
 doivent etre controles avant toute integration aux controllers du jeu.
+
+Retouches des quatre marches (choix artistique confirme)
+-----------------------------------------------------
+`Prepare Four Walk Retouches (Lab Only)` cree des copies sous `RetouchedWalks` :
+Lucian Walk_BR, Juggernaut Walk_B, Walk_L et Walk_FL. La retouche utilise une
+resolution des jambes hors runtime puis enregistre les muscles Humanoid ; elle
+n'ajoute aucun verrouillage des pieds, IK runtime ou deplacement physique.
+Une enveloppe lisse corrige la partie basse des pas, en conservant les arcs
+des pieds leves et l'orientation auteur des chevilles. Les fenetres d'appui
+deduites de la hauteur restent des hypotheses a verifier en mouvement reel.
+
+La reconstruction du centre de masse Humanoid est compensee pour conserver
+la trajectoire du bassin. Exception explicite : Walk_L Juggernaut abaisse sa
+posture de 3,5 cm constants pour donner assez de portee aux jambes ; son
+oscillation est conservee. Ce choix de pose reste a qualifier sur les raccords.
+Les copies de regard et leurs overrides ne sont pas remplaces par ces copies :
+leur composition et leur integration restent a faire apres qualification.
+
+Le contrat de retouche est distinct du contrat strict des copies de regard.
+Il controle bassin, haut du corps, racine physique, orientations des pieds,
+contact vertical aux frames et entre les frames, boucle, evenements et sources.
+Un controle echoue bloque l'ecriture du clip concerne. Les captures utilisent
+les vrais meshes et materiaux ; elles ne prouvent pas la cadence, les contacts
+horizontaux ou la qualite des transitions UCC/NavMesh. Rapports detailles :
+`Library/ActorFacingCalibration/walk-retouch-*.json`.
+
+Execution / Executed1
+---------------------
+`Calibrate Named Execution Clips` configure uniquement les deux copies FBX
+nommees par l'utilisateur : Execution1_Humanoid en Humanoid et Executed1_Generic
+en Generic, Based Upon Original, offset rotation 0 et rotation bakee. Les
+fichiers fournisseur sans suffixe restent intacts. Les GUID et fileID existants,
+evenements, durees et cadences des deux FBX sont verifies apres reimport.
+
+Pour StoneGolem, utiliser **Assets/StoneGolem/Animations/Calibrated/
+Twinblades_Attack_Executed1_Inplace_Generic.anim** : le FBX Generic TwinBlades
+ne correspond pas directement aux chemins de ses os. Le menu produit ce .anim
+par retarget Humanoid hors runtime sur une copie du squelette StoneGolem puis
+enregistrement de courbes Transform natives. Modele, prefab, controller et
+avatar Generic de production ne sont pas modifies. Les helpers sont dans
+`Execution/EditorSources` ; ils ne sont pas des rigs de remplacement a installer.
+La capture a 480 Hz conserve la duree et la vitesse de lecture. Les courbes
+sont simplifiees avec tolerance locale puis controlees sur le vrai rig Generic,
+aux cles, aux milieux et a des quarts d'intervalles independants. Seuils :
+5 mm de position, 0,5 degre de rotation, aucun mouvement physique ; evenements
+et empreintes du modele/prefab proteges. Aucun IK ou retarget runtime ajoute.
+Rapports : `Library/ActorFacingCalibration/execution-clips.json` et
+`executed-stonegolem.json`. La qualite rendue et le raccord de l'execution dans
+son contexte de jeu restent une verification visuelle distincte.

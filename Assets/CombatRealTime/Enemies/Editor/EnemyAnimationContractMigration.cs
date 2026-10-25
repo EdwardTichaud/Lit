@@ -20,7 +20,7 @@ public sealed class EnemyAnimationContractMigration : IPreprocessBuildWithReport
 {
     private const string RequestPath = "Library/EnemyAnimationContract.request";
     private const string JuggernautPrefabPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab";
-    private const string JuggernautControllerPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Model.controller";
+    private const string JuggernautControllerPath = "Assets/Characters/3_Enemy/Juggernaut/BrainsProduction/Production.controller";
     private const string JuggernautDataPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
     private const string ShadowPrefabPath = "Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/ShadowGuardian.prefab";
     private const string ShadowControllerPath = "Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/ShadowGuardian.controller";

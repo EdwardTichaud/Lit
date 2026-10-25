@@ -40,6 +40,7 @@ namespace Lit.Combat.Migration.Network
         private LitOpsiveLocomotionBridge.ExternalLockHandle cinematicMotionLock;
         private ulong shownCinematicGeneration, nextCinematicGeneration;
         private bool cinematicInputOwned, cinematicImpactConsumed, applyingCinematicImpact, stoppingCinematic;
+        private bool cinematicCounterClarityGranted;
         private bool cinematicConfirmationPending;
         private double cinematicDeadline;
         private int cinematicPresentationGeneration;
@@ -146,14 +147,14 @@ namespace Lit.Combat.Migration.Network
             return rig != null && rig.RuntimeTimeline != null && !string.IsNullOrWhiteSpace(playerTrack) && !string.IsNullOrWhiteSpace(enemyTrack);
         }
 
-        private CombatCinematicContext ParticipantContext(UnityEngine.Object definition, ICombatTarget target, Action impact)
+        private CombatCinematicContext ParticipantContext(UnityEngine.Object definition, ICombatTarget target, Action impact, Func<float, int> counterHit = null)
         {
             var local = RealTimeCombatManager.Instance;
             bool ownsView = IsOwner && local != null && local.PlayerRoot == transform;
             return new CombatCinematicContext(local, definition, impact, allowGameplayCameraFallback: true,
                 transferTimelineRootMotion: IsServer, allowMissingTimelineBindings: true, explicitTarget: target,
                 explicitPlayer: transform, explicitPlayerAnimator: animator, controlsLocalCamera: ownsView,
-                appliesGameplayEffects: IsServer);
+                appliesGameplayEffects: IsServer, resolveCounterHitDamage: counterHit);
         }
 
         internal bool CanStartNetworkCinematic(CombatCommandContext context)
@@ -191,10 +192,11 @@ namespace Lit.Combat.Migration.Network
                 bridge.IsCinematicMotionSessionActive || bridge.IsExternalLockActive && !presentation.OwnsOnlyActionMotionLock(bridge) ||
                 target?.Root == null || target.IsDead || !GetCinematicRig(definition, out var rig, out var playerTrack, out var enemyTrack)) return false;
             var context = ParticipantContext(definition, target, null);
-            if (double.IsNaN(rig.RuntimeTimeline.duration) || double.IsInfinity(rig.RuntimeTimeline.duration) ||
-                rig.RuntimeTimeline.duration <= 0 || rig.RuntimeTimeline.duration > 56)
+            var requestedTimeline = definition is CounterSkillSO counter && counter.Timeline != null ? counter.Timeline : rig.RuntimeTimeline;
+            if (double.IsNaN(requestedTimeline.duration) || double.IsInfinity(requestedTimeline.duration) ||
+                requestedTimeline.duration <= 0 || requestedTimeline.duration > 56)
             { error = "Cinematic duration is invalid or exceeds the existing reservation lifetime."; return false; }
-            if (!rig.ValidateSkillPlayback(context, playerTrack, enemyTrack, out error)) return false;
+            if (!rig.ValidateSkillPlayback(context, playerTrack, enemyTrack, out error, requestedTimeline)) return false;
             if (rig.HasAuthoringStageLayout && (!rig.TryGetMidpointPlacement(context, out var placement, out error) ||
                 !CounterSkillCombatController.ValidateParticipantStage(context, placement, out error))) return false;
             return true;
@@ -215,6 +217,7 @@ namespace Lit.Combat.Migration.Network
         {
             if (nextCinematicGeneration == ulong.MaxValue) return false;
             cinematicDefinition = definition; cinematicVictim = target; cinematicImpactConsumed = false;
+            cinematicCounterClarityGranted = false;
             var state = new CombatNetworkCinematicSnapshot { Active = true, Generation = ++nextCinematicGeneration,
                 World = admittedWorld, Kind = kind, SkillId = id, Target = new NetworkObjectReference(target.Root.GetComponentInParent<NetworkObject>()),
                 StartedAt = NetworkManager.ServerTime.Time };
@@ -222,7 +225,8 @@ namespace Lit.Combat.Migration.Network
             if (!BeginParticipantPlayback(state, definition, target, out string error))
             { state.Active = false; cinematicState.Value = state; CleanupParticipantPlayback(); cinematicDefinition = null; cinematicVictim = null; return Diagnose("Cinematic start rejected: " + error); }
             GetCinematicRig(definition, out var rig, out _, out _);
-            cinematicDeadline = Time.unscaledTimeAsDouble + Math.Min(58, Math.Max(1, rig.RuntimeTimeline.duration + 2));
+            var duration = definition is CounterSkillSO counter && counter.Timeline != null ? counter.Timeline.duration : rig.RuntimeTimeline.duration;
+            cinematicDeadline = Time.unscaledTimeAsDouble + Math.Min(58, Math.Max(1, duration + 2));
             cinematicState.Value = state; shownCinematicGeneration = state.Generation;
             return true;
         }
@@ -245,7 +249,8 @@ namespace Lit.Combat.Migration.Network
                             target, ordinary.targetingMode == SkillTargetingMode.LockedTarget))) return false;
             }
             if (IsServer) target.SetCinematicSuspended(true);
-            var context = ParticipantContext(definition, target, () => ResolveNetworkCinematicImpact(state.Generation));
+            var context = ParticipantContext(definition, target, () => ResolveNetworkCinematicImpact(state.Generation),
+                definition is CounterSkillSO ? damage => ResolveNetworkCinematicImpact(state.Generation, damage) : null);
             if (context.ControlsLocalCamera)
             { InputModeCoordinator.Enter(this, InputMode.Cinematic); cinematicInputOwned = true; }
             CombatCinematicPlacement? placement = null;
@@ -254,7 +259,8 @@ namespace Lit.Combat.Migration.Network
                 if (!prefab.TryGetMidpointPlacement(context, out var stage, out error)) return false;
                 if (IsServer) placement = stage;
             }
-            if (!actorCinematicPlayback.TryPlay(prefab, context, null, playerTrack, enemyTrack, placement,
+            var requestedTimeline = definition is CounterSkillSO selectedCounter ? selectedCounter.Timeline : null;
+            if (!actorCinematicPlayback.TryPlay(prefab, context, requestedTimeline, playerTrack, enemyTrack, placement,
                 rig => OnNetworkCinematicStopped(state.Generation, rig), out error)) return false;
             var startSfx = definition is CounterSkillSO counter ? counter.StartSfx : definition is LightSkillSO light ? light.StartSfx : null;
             if (IsClient && startSfx != null) AudioManager.PlayClipAtPoint(startSfx, transform.position);
@@ -285,37 +291,44 @@ namespace Lit.Combat.Migration.Network
             return actorCinematicPlayback.ActiveRig.TryResolveParticipantImpact(source);
         }
 
-        private void ResolveNetworkCinematicImpact(ulong generation)
+        private void ResolveNetworkCinematicImpact(ulong generation) => ResolveNetworkCinematicImpact(generation, null);
+
+        private int ResolveNetworkCinematicImpact(ulong generation, float? authoredDamage)
         {
-            if (!IsServer || !HasNetworkCinematic || cinematicState.Value.Generation != generation || cinematicImpactConsumed ||
+            bool counterHit = authoredDamage.HasValue && cinematicDefinition is CounterSkillSO;
+            if (authoredDamage.HasValue && (!counterHit || float.IsNaN(authoredDamage.Value) || float.IsInfinity(authoredDamage.Value) || authoredDamage.Value < 0)) return 0;
+            if (!IsServer || !HasNetworkCinematic || cinematicState.Value.Generation != generation || cinematicImpactConsumed && !counterHit ||
                 cinematicVictim?.Root == null || cinematicVictim.IsDead || !IsAlive() || authority == null ||
-                admittedWorld != cinematicState.Value.World) return;
-            if (cinematicLease != null ? !cinematicLease.IsActive : !authority.IsCurrent(cinematicTicket)) return;
+                admittedWorld != cinematicState.Value.World) return 0;
+            if (cinematicLease != null ? !cinematicLease.IsActive : !authority.IsCurrent(cinematicTicket)) return 0;
             var victim = cinematicVictim;
             var identity = victim.Root.GetComponentInParent<NetworkObject>();
-            if (identity == null || !authority.IsRegistered(identity)) return;
+            if (identity == null || !authority.IsRegistered(identity)) return 0;
             applyingCinematicImpact = true;
             try
             {
-                if (cinematicState.Value.Kind == CombatNetworkCinematicKind.Skill && !authority.TryConsumeImpact(cinematicTicket, identity)) return;
+                if (cinematicState.Value.Kind == CombatNetworkCinematicKind.Skill && !authority.TryConsumeImpact(cinematicTicket, identity)) return 0;
                 cinematicImpactConsumed = true;
                 int damage = cinematicDefinition is SkillSO skill ? Mathf.Max(0, Mathf.RoundToInt(skill.Damages)) :
                     cinematicDefinition is CounterSkillSO counter ? counter.Damage : ((LightSkillSO)cinematicDefinition).Damage;
+                if (counterHit) damage = CounterHitSignal.RoundDamage(authoredDamage.Value);
                 var origin = cinematicDefinition is CounterSkillSO ? CombatImpactOrigin.Counter :
                     cinematicDefinition is LightSkillSO ? CombatImpactOrigin.LightSkill : CombatImpactOrigin.Basic;
                 float interruption = cinematicDefinition is SkillSO ordinarySkill ? ordinarySkill.interruptionForce : 100;
                 int applied = victim is ICombatImpactReceiver receiver ? receiver.ReceiveImpact(new CombatImpact(damage, interruption, origin, source: actor)) : 0;
-                if (applied > 0 && cinematicDefinition is CounterSkillSO success) GrantNetworkClarity(success.ClarityGain);
+                if (applied > 0 && cinematicDefinition is CounterSkillSO success && (!counterHit || !cinematicCounterClarityGranted))
+                { GrantNetworkClarity(success.ClarityGain); cinematicCounterClarityGranted = true; }
                 if (applied > 0 && cinematicDefinition is SkillSO ordinary) GrantNetworkClarity(ordinary.ClarityGainOnHit);
                 if (applied > 0) CinematicDamageFeedbackClientRpc(new NetworkObjectReference(identity), applied, cinematicState.Value.Kind,
-                    cinematicState.Value.SkillId);
+                    cinematicState.Value.SkillId, !counterHit);
                 PublishHealthSnapshot(true);
+                return applied;
             }
             finally { applyingCinematicImpact = false; }
         }
 
         [ClientRpc]
-        private void CinematicDamageFeedbackClientRpc(NetworkObjectReference victim, int amount, CombatNetworkCinematicKind kind, int skillId)
+        private void CinematicDamageFeedbackClientRpc(NetworkObjectReference victim, int amount, CombatNetworkCinematicKind kind, int skillId, bool playImpactSound = true)
         {
             if (amount > 0 && victim.TryGet(out var identity, NetworkManager))
             {
@@ -323,7 +336,7 @@ namespace Lit.Combat.Migration.Network
                 if (TryResolveCinematicDefinition(kind, skillId, out var definition))
                 {
                     var sfx = definition is CounterSkillSO counter ? counter.ImpactSfx : definition is LightSkillSO light ? light.ImpactSfx : null;
-                    if (sfx != null) AudioManager.PlayClipAtPoint(sfx, identity.transform.position);
+                    if (playImpactSound && sfx != null) AudioManager.PlayClipAtPoint(sfx, identity.transform.position);
                 }
             }
         }

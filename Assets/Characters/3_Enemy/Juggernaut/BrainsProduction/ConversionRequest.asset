@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ConversionRequest
   m_EditorClassIdentifier: Assembly-CSharp-Editor::ProductionBrainsEnemyConversionRequest
   character: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
-  sourceController: {fileID: 9100000, guid: 16953135bd952ee4b84667029bec18b3, type: 2}
+  sourceController: {fileID: 9100000, guid: 5d105e9a4f6972a4c8c2b9f4d85f877c, type: 2}
   requiresFlameInfluence: 1
   reviewedProfile: {fileID: 11400000, guid: bc75aebe3dba82e4ebdb047552d2c5e3, type: 2}
   reviewedController: {fileID: 9100000, guid: 5d105e9a4f6972a4c8c2b9f4d85f877c, type: 2}

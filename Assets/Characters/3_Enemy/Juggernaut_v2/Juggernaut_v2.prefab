@@ -9365,6 +9365,7 @@ GameObject:
   - component: {fileID: 3356830981980446926}
   - component: {fileID: 6219942412039208771}
   - component: {fileID: 5202176028539560017}
+  - component: {fileID: 8641415479489833242}
   m_Layer: 26
   m_Name: Juggernaut_v2
   m_TagString: Untagged
@@ -9417,7 +9418,7 @@ Animator:
   m_GameObject: {fileID: 8060176011446918699}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
-  m_Controller: {fileID: 9100000, guid: 308280d46c635614ab1d4cbe2deed5c0, type: 2}
+  m_Controller: {fileID: 9100000, guid: 5d105e9a4f6972a4c8c2b9f4d85f877c, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -9592,6 +9593,7 @@ MonoBehaviour:
   escaping: 0
   VFX_KnockedOut: {fileID: 8536472074939748950, guid: 0b5e711e6f5f4c94798d120d558ae598, type: 3}
   characterData: {fileID: 11400000, guid: ae20b803adc89254cb98695e2687584c, type: 2}
+  lockPoint: {fileID: 0}
   combatProfile: {fileID: 11400000, guid: 8ba500745b4f34d4d92cc4efd498fc83, type: 2}
   presentationProfile: {fileID: 0}
   reconcileNavigationGroundHeight: 1
@@ -9602,6 +9604,18 @@ MonoBehaviour:
   currentHealth: 0
   detectionReason: 
   navigationReady: 0
+--- !u!114 &8641415479489833242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8060176011446918699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 329263ad34614736b8b21a74abc3e422, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LitBrainsAnimationEvents
 --- !u!1 &8312635884497608125
 GameObject:
   m_ObjectHideFlags: 0

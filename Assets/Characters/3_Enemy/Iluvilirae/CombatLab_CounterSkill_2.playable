@@ -1,5 +1,57 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8930635215929799548
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86107364859029046ba6cbf97f992fb8, type: 3}
+  m_Name: CombatLab_CounterHit_Damage_Animation_VFX_SFX
+  m_EditorClassIdentifier: Assembly-CSharp::CounterHitSignal
+  m_Time: 1.85
+  damage: 6
+  hitIndex: 1
+  blendSeconds: 0.04
+  vfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  sfx: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
+--- !u!114 &-7818348723216853569
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
+  m_Time: 3.5
+  m_Retroactive: 0
+  m_EmitOnce: 1
+  m_Asset: {fileID: 11400000, guid: dc40705a1f2ccec41af89ec1148a9adb, type: 2}
+--- !u!114 &-7292027536674818783
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86107364859029046ba6cbf97f992fb8, type: 3}
+  m_Name: CombatLab_CounterHit_Damage_Animation_VFX_SFX
+  m_EditorClassIdentifier: Assembly-CSharp::CounterHitSignal
+  m_Time: 0.7666666666666667
+  damage: 6
+  hitIndex: 1
+  blendSeconds: 0.04
+  vfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  sfx: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
 --- !u!114 &-7224433283587368765
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -60,22 +112,6 @@ MonoBehaviour:
   m_Loop: 0
   m_Version: 1
   m_Rotation: {x: 0, y: 0, z: 0, w: 1}
---- !u!114 &-4056526057852892294
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 0.7666666666666667
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: 4dba32dc62ab16e488866d3bb1cbd6cc, type: 2}
 --- !u!114 &-3871074859734782346
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -92,22 +128,6 @@ MonoBehaviour:
   VirtualCamera:
     exposedName: CombatLab.CounterCamera
     defaultValue: {fileID: 0}
---- !u!114 &-3401627805626616296
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 1.85
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: 4dba32dc62ab16e488866d3bb1cbd6cc, type: 2}
 --- !u!114 &-3194544093835522693
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -303,7 +323,25 @@ MonoBehaviour:
   m_OpenClipOffsetRotation: {x: 0, y: 0, z: 0, w: 1}
   m_Rotation: {x: 0, y: 0, z: 0, w: 1}
   m_ApplyOffsets: 0
---- !u!114 &-2783481852698299727
+--- !u!114 &-2652576895335484368
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86107364859029046ba6cbf97f992fb8, type: 3}
+  m_Name: CombatLab_CounterHit_Damage_Animation_VFX_SFX
+  m_EditorClassIdentifier: Assembly-CSharp::CounterHitSignal
+  m_Time: 0.6833333333333333
+  damage: 7
+  hitIndex: 1
+  blendSeconds: 0.04
+  vfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  sfx: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
+--- !u!114 &-2635265712150748045
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -315,26 +353,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 0.05
+  m_Time: 0
   m_Retroactive: 0
   m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: 10215f128eea40f4087be03f6ea068db, type: 2}
---- !u!114 &-1433914027631063900
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 1.85
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: e2c9b01bccc772744a0f2d40b7696496, type: 2}
+  m_Asset: {fileID: 11400000, guid: 2fbd97d9275e9fc499d782bb09114565, type: 2}
 --- !u!114 &-972350453827342116
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -404,17 +426,33 @@ MonoBehaviour:
     - {fileID: 8313187241152330440}
     - {fileID: 8790884998792989239}
     - {fileID: 4154961900367704066}
-    - {fileID: 7619306202078692986}
-    - {fileID: -4056526057852892294}
-    - {fileID: 588137067650092503}
-    - {fileID: -3401627805626616296}
-    - {fileID: 6148058427623152458}
-    - {fileID: 841889908430565619}
-    - {fileID: 8248287734925014397}
-    - {fileID: -1433914027631063900}
-    - {fileID: -2783481852698299727}
-    - {fileID: 7561312550008977852}
-    - {fileID: 753252571220447084}
+    - {fileID: 895941754059809792}
+    - {fileID: -7292027536674818783}
+    - {fileID: 1685305915581567188}
+    - {fileID: -8930635215929799548}
+    - {fileID: 2447735085621190215}
+    - {fileID: -2635265712150748045}
+    - {fileID: -7818348723216853569}
+    - {fileID: -264779038991505866}
+    - {fileID: -2652576895335484368}
+--- !u!114 &-264779038991505866
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86107364859029046ba6cbf97f992fb8, type: 3}
+  m_Name: CombatLab_CounterHit_Damage_Animation_VFX_SFX
+  m_EditorClassIdentifier: Assembly-CSharp::CounterHitSignal
+  m_Time: 0.4
+  damage: 7
+  hitIndex: 1
+  blendSeconds: 0.04
+  vfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  sfx: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -440,22 +478,6 @@ MonoBehaviour:
     m_ScenePreview: 1
   m_DurationMode: 1
   m_MarkerTrack: {fileID: 0}
---- !u!114 &588137067650092503
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 1.2833333333333334
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: 4dba32dc62ab16e488866d3bb1cbd6cc, type: 2}
 --- !u!74 &622354273661810896
 AnimationClip:
   m_ObjectHideFlags: 0
@@ -829,7 +851,7 @@ AnimationClip:
   m_HasGenericRootTransform: 1
   m_HasMotionFloatCurves: 0
   m_Events: []
---- !u!114 &753252571220447084
+--- !u!114 &895941754059809792
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -838,14 +860,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 3.5
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: dc40705a1f2ccec41af89ec1148a9adb, type: 2}
---- !u!114 &841889908430565619
+  m_Script: {fileID: 11500000, guid: 86107364859029046ba6cbf97f992fb8, type: 3}
+  m_Name: CombatLab_CounterHit_Damage_Animation_VFX_SFX
+  m_EditorClassIdentifier: Assembly-CSharp::CounterHitSignal
+  m_Time: 0.36666666666666664
+  damage: 6
+  hitIndex: 1
+  blendSeconds: 0.04
+  vfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  sfx: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
+--- !u!114 &1685305915581567188
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -854,13 +878,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 0.7666666666666667
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: e2c9b01bccc772744a0f2d40b7696496, type: 2}
+  m_Script: {fileID: 11500000, guid: 86107364859029046ba6cbf97f992fb8, type: 3}
+  m_Name: CombatLab_CounterHit_Damage_Animation_VFX_SFX
+  m_EditorClassIdentifier: Assembly-CSharp::CounterHitSignal
+  m_Time: 1.2833333333333334
+  damage: 7
+  hitIndex: 1
+  blendSeconds: 0.04
+  vfx: {fileID: 7038192684214929689, guid: a27aabd217b39f047b570fcc41b084a4, type: 3}
+  sfx: {fileID: 11400000, guid: 8fedd8fdeb456ed418f7134eb56fdc3d, type: 2}
 --- !u!114 &1904034025370069543
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -883,6 +909,22 @@ MonoBehaviour:
   m_Loop: 0
   m_Version: 1
   m_Rotation: {x: 0, y: 0, z: 0, w: 1}
+--- !u!114 &2447735085621190215
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
+  m_Time: 0.05
+  m_Retroactive: 0
+  m_EmitOnce: 1
+  m_Asset: {fileID: 11400000, guid: 10215f128eea40f4087be03f6ea068db, type: 2}
 --- !u!114 &3650647725018645079
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -972,7 +1014,7 @@ MonoBehaviour:
     m_PreExtrapolationMode: 1
     m_PostExtrapolationTime: Infinity
     m_PreExtrapolationTime: 0
-    m_DisplayName: Twinblades_Attack_Execution1_Inplace
+    m_DisplayName: Twinblades_Attack_Execution1_Inplace_Humanoid
   m_Markers:
     m_Objects: []
   m_InfiniteClipPreExtrapolation: 0
@@ -1083,7 +1125,25 @@ MonoBehaviour:
       m_RotationOrder: 4
     m_MixOutCurve:
       serializedVersion: 2
-      m_Curve: []
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -1220,54 +1280,6 @@ MonoBehaviour:
   m_Markers:
     m_Objects: []
   TrackPriority: 0
---- !u!114 &6148058427623152458
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 0.36666666666666664
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: e2c9b01bccc772744a0f2d40b7696496, type: 2}
---- !u!114 &7561312550008977852
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 0
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: 2fbd97d9275e9fc499d782bb09114565, type: 2}
---- !u!114 &7619306202078692986
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 0.36666666666666664
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: 4dba32dc62ab16e488866d3bb1cbd6cc, type: 2}
 --- !u!114 &7991490539777113722
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1284,22 +1296,6 @@ MonoBehaviour:
   m_Retroactive: 0
   m_EmitOnce: 1
   m_Asset: {fileID: 11400000, guid: 6b888b79b4cc6d948b6a9b3beac0cd61, type: 2}
---- !u!114 &8248287734925014397
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalEmitter
-  m_Time: 1.2833333333333334
-  m_Retroactive: 0
-  m_EmitOnce: 1
-  m_Asset: {fileID: 11400000, guid: e2c9b01bccc772744a0f2d40b7696496, type: 2}
 --- !u!114 &8313187241152330440
 MonoBehaviour:
   m_ObjectHideFlags: 1

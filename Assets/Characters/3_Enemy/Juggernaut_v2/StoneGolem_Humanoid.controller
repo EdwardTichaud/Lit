@@ -136,13 +136,39 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
+--- !u!1102 &-3703368612773044031
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Hit_1
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 0
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 7400000, guid: c7d2898c39b9df5478fea514689d541d, type: 2}
+  m_Tag: Action
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!206 &-3383627950425052234
 BlendTree:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Juggernaut_v2 Locomotion
+  m_Name: StoneGolem_Humanoid Locomotion
   m_Childs:
   - serializedVersion: 2
     m_Motion: {fileID: 7400000, guid: 694d6e00010eea94897d16d538f21151, type: 2}
@@ -208,6 +234,9 @@ AnimatorStateMachine:
   - serializedVersion: 1
     m_State: {fileID: -5675117242864575021}
     m_Position: {x: 80, y: 290, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -3703368612773044031}
+    m_Position: {x: 115, y: 355, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions:
   - {fileID: 6179162121859003453}
@@ -254,7 +283,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Juggernaut_v2
+  m_Name: StoneGolem_Humanoid
   serializedVersion: 6
   m_AnimatorParameters:
   - m_Name: Speed
@@ -387,7 +416,7 @@ BlendTree:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Juggernaut_v2_WalkDirectional
+  m_Name: StoneGolem_Humanoid_WalkDirectional
   m_Childs:
   - serializedVersion: 2
     m_Motion: {fileID: 7400000, guid: 9c62dde72514aac45ba217c6f5dd63dd, type: 2}

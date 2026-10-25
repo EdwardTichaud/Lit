@@ -14,7 +14,7 @@ public static class JuggernautV2Setup
 {
     public const string Folder = "Assets/Characters/3_Enemy/Juggernaut_v2";
     public const string PrefabPath = Folder + "/Juggernaut_v2.prefab";
-    public const string ControllerPath = Folder + "/Juggernaut_v2.controller";
+    public const string ControllerPath = "Assets/Characters/3_Enemy/Juggernaut/BrainsProduction/Production.controller";
     public const string ScenePath = Folder + "/Juggernaut_v2_Test.unity";
     public const string OriginalPrefab = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab";
     private const string OriginalFolder = "Assets/Characters/3_Enemy/Juggernaut/";

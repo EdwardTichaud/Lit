@@ -80,6 +80,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -173,6 +174,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -311,7 +313,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: db19a32c9d8c08a4681098e8b4cd781f, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 3794b9feca453834382cc615a4b478ec, type: 2}
+      objectReference: {fileID: 9100000, guid: a4e6150dea9625548bd0aa306be76f79, type: 2}
     - target: {fileID: 8608622271414082882, guid: db19a32c9d8c08a4681098e8b4cd781f, type: 3}
       propertyPath: m_Materials.Array.size
       value: 2

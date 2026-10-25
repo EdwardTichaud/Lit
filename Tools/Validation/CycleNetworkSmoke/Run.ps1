@@ -1,6 +1,7 @@
 param(
     [string]$ProjectRoot = (Join-Path $PSScriptRoot '../../..'),
     [string]$UnityExe,
+    [switch]$DialogueTestsOnly,
     [ValidateSet('normal','busy','interrupt','disconnect','late','allgone','disable','timeline','timeline_stop','timeline_service','timeline_missing','timeline_pause','timeline_external_stop','sequence','sequence_interrupt')]
     [string[]]$Scenarios = @('normal','busy','interrupt','disconnect','late','allgone','disable')
 )
@@ -59,6 +60,23 @@ $cycleHashes = foreach ($cycleSubject in $cycleSubjects) {
 $cycleRunDirectory = Join-Path $cycleReports ('Run-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $cycleRunDirectory | Out-Null
 $cycleHashes | Export-Csv -LiteralPath (Join-Path $cycleRunDirectory 'SourceHashes.csv') -NoTypeInformation
+if ($DialogueTestsOnly) {
+    # Test exact runtime copies without closing the developer's source editor.
+    foreach ($cycleTestName in @('CycleAutoDialogueTests.cs','CycleAutoDialogueControllerTests.cs')) {
+        Copy-Item -LiteralPath (Join-Path $cycleRepo ('Assets/Narrative/Cycles/Editor/' + $cycleTestName)) -Destination (Join-Path $cycleAssets ('Editor/' + $cycleTestName)) -Force
+    }
+    $cycleTestRun = Start-Process -FilePath $UnityExe -ArgumentList @('-batchmode','-nographics','-projectPath',('"'+$cycleProject+'"'),
+        '-runTests','-testPlatform','EditMode','-testFilter','"^(CycleAutoDialogueTests|CycleAutoDialogueControllerTests)"',
+        '-testResults',('"'+(Join-Path $cycleRunDirectory 'DialogueTests.xml')+'"'),
+        '-logFile',('"'+(Join-Path $cycleRunDirectory 'DialogueTests.log')+'"')) -WindowStyle Hidden -PassThru
+    $cycleTestRun.WaitForExit()
+    if ($cycleTestRun.ExitCode -ne 0) { throw "Dialogue tests failed; inspect $cycleRunDirectory/DialogueTests.log" }
+    foreach ($cycleSubjectHash in $cycleHashes) {
+        if ((Get-FileHash -LiteralPath (Join-Path $cycleRepo $cycleSubjectHash.Subject)).Hash -ne $cycleSubjectHash.Hash) { throw 'A tested source changed during the run; rerun against the current worktree.' }
+    }
+    Write-Output "Isolated dialogue tests passed. Reports: $cycleRunDirectory"
+    return
+}
 $cycleBuild = Start-Process -FilePath $UnityExe -ArgumentList @('-batchmode','-nographics','-projectPath',('"'+$cycleProject+'"'),
     '-executeMethod','DistrictCycleRuntimeBuild.Build','-logFile',('"'+(Join-Path $cycleRunDirectory 'Build.log')+'"'),'-quit') -WindowStyle Hidden -PassThru
 $cycleBuild.WaitForExit()
