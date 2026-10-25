@@ -11359,7 +11359,7 @@ PrefabInstance:
     - target: {fileID: 3658772831375786774, guid: fcdcae5282448594986973d94fa41218, type: 3}
       propertyPath: m_PropertySheet.m_NamedObject.m_Array.Array.data[0].m_Value
       value: 
-      objectReference: {fileID: 4300000, guid: abc00000000016554909093258889086, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 8971197077504121960, guid: fcdcae5282448594986973d94fa41218, type: 3}
       propertyPath: Target
       value: 

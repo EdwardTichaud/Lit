@@ -1,0 +1,160 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: LimbesSeuilCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: reve.limbes.seuil
+  title: "Le seuil \xE9parpill\xE9"
+  description: "R\xE9unir les fragments d'un passage dispers\xE9, puis reconstituer le seuil depuis sa st\xE8le."
+  category: 0
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: entered
+    title: Entrer dans les Limbes
+    description: 
+    kind: 7
+    sourceId: entry
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: fragment_0
+    title: Un seuil sans mur
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: ee310e5ab62635c4cbcca39da8f463a4, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: fragment_1
+    title: "La m\xEAme entaille"
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 3894c9cf9b885c947ba098b929e3f03b, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: fragment_2
+    title: Des pierres qui se reconnaissent
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 64a561c9a971b884b8b6e43b0c451951, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: resolved
+    title: Reconstituer le seuil
+    description: 
+    kind: 1
+    sourceId: resolve
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: fragment_0
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: fragment_1
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: fragment_2
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 4
+      skill: {fileID: 0}
+      knowledge: {fileID: 0}
+      item: {fileID: 0}
+      quantity: 1
+      key: reve.limbes.seuil_recompose
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: Reve_Limbes_Cycle_Seuil
+  dialogueSeconds: 4
+  dialogues:
+  - id: resolve
+    durationSeconds: 5
+    condition:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge:
+      - {fileID: 11400000, guid: ee310e5ab62635c4cbcca39da8f463a4, type: 2}
+      - {fileID: 11400000, guid: 3894c9cf9b885c947ba098b929e3f03b, type: 2}
+      - {fileID: 11400000, guid: 64a561c9a971b884b8b6e43b0c451951, type: 2}
+    line: "Ces fragments ne d\xE9crivent qu'un seul passage. Il suffit de leur rendre un seuil... m\xEAme sans mur autour."
+    unavailableLine: Il manque des morceaux. Les pierres ne dessinent pas encore un passage.
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

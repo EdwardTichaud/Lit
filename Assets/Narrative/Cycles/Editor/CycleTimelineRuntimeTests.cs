@@ -85,6 +85,46 @@ public sealed class CycleTimelineRuntimeTests
         Assert.That(owned.State, Is.EqualTo(TimelinePlaybackState.Stopped));
     }
     [Test]
+    public void OldHostSequenceCannotWaitOnOrCancelANewerAttempt()
+    {
+        NativeAnimatedTarget();
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        if (TimelineManager.Instance == null) typeof(TimelineManager).GetMethod("Awake", flags).Invoke(manager, null);
+        var cycle = content.AddComponent<CycleController>();
+        cycle.director = director; cycle.bindingProfile = profile;
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>(); created.Add(definition);
+        definition.cycleId = "test.timeline.host-generation"; definition.deathDelay = 0;
+        cycle.definition = definition;
+        int failures = 0;
+        cycle.SequencePresentationFinished += (_, success) => { if (!success) failures++; };
+        var oldHost = (IEnumerator)typeof(CycleController).GetMethod("DeathSequence", flags).Invoke(cycle, null);
+        Assert.That(oldHost.MoveNext(), Is.True); // Death delay.
+        Assert.That(oldHost.MoveNext(), Is.True, "First native playback must actually be running.");
+        var oldHandle = (TimelinePlaybackHandle)typeof(CycleController).GetField("playback", flags).GetValue(cycle);
+        Assert.That(oldHandle, Is.Not.Null);
+        Assert.That(oldHandle.State, Is.EqualTo(TimelinePlaybackState.Playing));
+        typeof(CycleController).GetMethod("FinishCinematic", flags).Invoke(cycle, new object[] { false });
+        Assert.That(oldHandle.State, Is.EqualTo(TimelinePlaybackState.Stopped));
+        Assert.That(failures, Is.EqualTo(1));
+
+        // A retry can start before the old host enumerator resumes. It owns a
+        // different token and graph, even though it shares the same controller.
+        var token = typeof(CycleController).GetField("cinematicToken", flags);
+        token.SetValue(cycle, (int)token.GetValue(cycle) + 1);
+        typeof(CycleController).GetField("cinematicRunning", flags).SetValue(cycle, true);
+        handle = manager.Play(director, profile);
+        typeof(CycleController).GetField("playback", flags).SetValue(cycle, handle);
+        Assert.That(handle.State, Is.EqualTo(TimelinePlaybackState.Playing));
+        try
+        {
+            Assert.That(oldHost.MoveNext(), Is.False, "The superseded host loop must exit, not monitor the retry until its old timeout.");
+            Assert.That(handle.State, Is.EqualTo(TimelinePlaybackState.Playing));
+            Assert.That(typeof(CycleController).GetField("cinematicRunning", flags).GetValue(cycle), Is.True);
+            Assert.That(failures, Is.EqualTo(1), "No stale failure notification may reach the new presentation.");
+        }
+        finally { typeof(CycleController).GetMethod("FinishCinematic", flags).Invoke(cycle, new object[] { false }); }
+    }
+    [Test]
     public void ActiveUnboundTrackFailsInsteadOfCompletingAnInvisibleSequence()
     {
         var track = timeline.CreateTrack<ActivationTrack>(null, "Unbound action"); created.Add(track);

@@ -17,7 +17,8 @@ namespace Lit.Story
         Timeline,
         SceneEvent,
         ProgressivePlayerStop,
-        LaunchCombat
+        LaunchCombat,
+        ChooseMuninName
     }
 
     [Serializable]
@@ -128,6 +129,8 @@ namespace Lit.Story
         [Header("Steps")]
         public List<StorySequenceStep> steps = new List<StorySequenceStep>();
 
+        public bool RequiresNamePrompt => steps != null && steps.Exists(step => step != null && step.type == StorySequenceStepType.ChooseMuninName);
+
         public string ProgressKey
         {
             get
@@ -135,6 +138,48 @@ namespace Lit.Story
                 string id = string.IsNullOrWhiteSpace(sequenceId) ? name : sequenceId.Trim();
                 return $"lit.story.sequence.{id}.completed";
             }
+        }
+
+        public bool TryValidate(out string issue)
+        {
+            if (steps == null || steps.Count == 0)
+            {
+                issue = "Sequence vide : ajoutez les etapes de la rencontre avant de la jouer.";
+                return false;
+            }
+            for (int i = 0; i < steps.Count; i++)
+            {
+                var step = steps[i];
+                string problem = null;
+                if (step == null) problem = "etape nulle";
+                else if (!Enum.IsDefined(typeof(StorySequenceStepType), step.type)) problem = "type inconnu";
+                else if (step.type == StorySequenceStepType.Dialogue)
+                {
+                    if (step.voiceLine == null) problem = "VoiceLineData manquante";
+                    else if (!step.skippable && step.dialogueMaxDisplayDuration <= 0f)
+                        problem = "dialogue sans fin : autorisez Interact ou donnez une duree maximale";
+                }
+                else if (step.type == StorySequenceStepType.Timeline &&
+                         (step.timeline == null || step.timelineBindingProfile == null))
+                    problem = "Timeline ou profil de bindings manquant";
+                else if (step.type == StorySequenceStepType.CameraShot &&
+                         string.IsNullOrWhiteSpace(step.cameraPointId) && string.IsNullOrWhiteSpace(step.actorId))
+                    problem = "point camera ou acteur requis";
+                else if (step.type == StorySequenceStepType.AnimatorTrigger &&
+                         (string.IsNullOrWhiteSpace(step.actorId) || string.IsNullOrWhiteSpace(step.animatorTrigger)))
+                    problem = "acteur ou trigger Animator manquant";
+                else if (step.type == StorySequenceStepType.Sitting && !step.applyToWholeSquad &&
+                         string.IsNullOrWhiteSpace(step.actorId)) problem = "acteur requis";
+                else if (step.type == StorySequenceStepType.SceneEvent && string.IsNullOrWhiteSpace(step.eventId))
+                    problem = "identifiant d'evenement manquant";
+                if (problem != null)
+                {
+                    issue = $"Etape {i + 1} ({step?.label}) : {problem}.";
+                    return false;
+                }
+            }
+            issue = null;
+            return true;
         }
 
         private void OnValidate()

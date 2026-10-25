@@ -363,7 +363,7 @@ namespace Lit.Story
 
         private void SetSpeaker(string value)
         {
-            activeSpeakerName = value ?? string.Empty;
+            activeSpeakerName = StorySequenceNames.Resolve(value);
             if (speakerText != null)
             {
                 speakerText.text = activeSpeakerName;
@@ -372,7 +372,7 @@ namespace Lit.Story
 
         private void SetDialogue(string value)
         {
-            activeDialogueText = value ?? string.Empty;
+            activeDialogueText = StorySequenceNames.Resolve(value);
             if (dialogueText != null)
             {
                 dialogueText.text = activeDialogueText;

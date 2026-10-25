@@ -404,3 +404,103 @@ scene retiree quitte loadedZoneSceneNames. Les chargements de manifeste ignorent
 les cycles deja termines via CycleProgressionService.ShouldSkipScene, y compris
 pour la validation des scenes necessaires au NavMesh. La scene principale n'est
 jamais retiree par ce chemin. La progression reste dans le service de session.
+
+## Intro video des nouvelles parties
+
+MainMenuController.CreateNewGameAndStart lance PlayNewGameIntroAndStart apres
+la creation/selection du slot. NewGameIntroPlayer charge la ressource
+Videos/Lit_Intro (Assets/Resources/Videos/Lit_Intro.mp4) en passant par le service
+BootstrapVideoPanel. Aucun lecteur, Canvas ou AudioSource de remplacement n'est
+cree. Le composant utilise le VideoPlayer auteur de
+Bootstrap/ApplicationRoot/UI_Overlay/VideoPanel/VideoPanel_Root, qui survit aux
+changements de scenes avec ApplicationRoot. La copie identique de l'ancien MP4
+sous StreamingAssets est retiree pour eviter un double embarquement.
+
+Le panneau auteur est complete par UiPanel (cache au boot), CanvasGroup et fond
+noir ; son root video porte une RawImage et un AspectRatioFitter FitInParent.
+Le VideoPlayer est en VideoClip/APIOnly, horloge non scalee et sans boucle. Sa
+texture alimente la RawImage ; le son embarque est en sortie directe au volume
+master. Les AudioSources actives du menu sont rendues muettes pendant la lease,
+puis leur etat mute initial est restitue. Pas de RenderTexture temporaire ni de
+VideoPlayer dynamique. UIManager gere le panneau ; le focus Cinematic appartient
+au service uniquement pendant l'utilisation. Les champs du service referencent
+explicitement les composants auteurs, pas une recherche par noms a chaque lecture.
+
+API commune pour les videos de ce type : BootstrapVideoPanel.PlayResource(path,
+owner) ou Play(VideoClip, owner), puis StopAndHide(owner) lorsque l'ecran suivant
+est pret. Une lease refuse les lectures concurrentes ; un ancien appelant ne
+peut pas masquer une nouvelle lecture. Le panneau reste noir apres la fin ou
+une erreur, jusqu'a cette liberation. L'intro attend la presentation du loading
+solo avant de le masquer dans OnDisable. Une desactivation du panneau ou du
+caller arrete le lecteur, retire les callbacks et restitue focus/audio. Les
+operations Resources deja engagees ne sont pas annulees, mais leur resultat est
+ignore apres liberation/remplacement de lease. Etat d'instance seulement, sans
+nouveau singleton/cache statique (Domain Reload On/Off).
+
+Erreur, ressource manquante, preparation ou stagnation de frame de 20 s : warning
+et poursuite de l'intro vers le chargement. Sans panneau Bootstrap configure,
+aucun lecteur de secours n'est genere. En multijoueur, seul le createur voit
+cette presentation avant le salon, sans ecran de chargement solo impose avant
+le salon ni promesse de lecture synchronisee.
+
+Validation : compilation C# runtime/Editor et import natif passes ; 27/27 tests
+Unity passes (19 tests narratifs/nom + 8 tests video/timing/audio), zero echec/ignore.
+BootstrapVideoPanelTests ouvre
+Bootstrap dans une scene de preview sans sauvegarder la scene auteur et controle
+l'instance exacte du VideoPlayer, la resource clip/audio, les references UI, le
+masquage initial et les proportions. Rendu/decodage, son et raccord complet a
+qualifier en Play : Nouvelle partie -> film -> loading -> Maison/rencontre ;
+Charger sans film ; seconde nouvelle partie ; annulation/desactivation ; pause ;
+ecrans 16:9/ultrawide ; build avec Resources ; salon prive apres film.
+
+Apres cette video, le menu demande aussi le prefab StorySequence
+1_Munin_Meeting pour la nouvelle session. GameFlow consomme cette demande dans
+BeginGameplay et instancie le rig sous GameplaySessionRoot apres preparation de
+Maison. Le lecteur attend la disparition du loading avant de jouer. Erreur de
+menu, annulation et retour menu nettoient la demande. La rencontre contient
+la question, la saisie du nom (defaut Munin) puis deux repliques de Lucian. Le
+nom est conserve dans la variable monde story.munin.name des snapshots existants.
+Edition et contrat de validation dans systems/narrative.md. Les chargements de
+sauvegardes et trajets de zones restent sans demande d'intro/rencontre.
+
+
+### Loading avant intro et cue musique de Maison
+
+NewGameIntroPlayer affiche le LoadingScreenService, attend une presentation
+opaque puis impose encore au moins 2,5 secondes de pre-roll reel. Resources et
+VideoPlayer.Prepare travaillent sous ce loading ; la piste HubMusic du manifeste
+Maison est chargee via LoadAudioData avant lecture. Plus lent = loading plus
+long ; le film ne commence qu'apres preparation et minimum visibles. Le callback
+beforePlayback du panneau masque l'overlay juste avant revelation/Play.
+
+Le callback onPlaybackTime recoit VideoPlayer.time, uniquement pendant la lecture
+(et la position finale lors d'une fin naturelle). VideoTimeCue declenche une
+seule fois a la premiere position >= 19 s, meme si une frame saute le seuil ; une
+pause avant le seuil ou un long chargement initial ne fait pas avancer ce repere.
+Pas d'attente murale de 19 s depuis un clic, pas de soustraction de temps de load.
+La precision reste celle de la frame de lecture et du buffer audio, sans promesse
+de declenchement physique pendant un gel complet du thread principal.
+
+GameFlowService.BeginHubIntroMusic utilise la musique du hub deja configuree.
+AudioManager.PlayMusicImmediately stoppe les canaux du menu encore muets et lance
+la piste de Maison sans crossfade retardant l'attaque. Le panneau restitue le
+mute initial des seuls canaux musique (pas ambiance/SFX), puis cesse de les gerer.
+Un PushMusicOverride appartenant a GameFlow protege la piste durant la fin du
+film et le chargement de Maison ; pas de copie audio separee a recaler ou detruire.
+InstallZonePresentation configure d'abord la musique/ambiance de Maison, puis
+libere cet override. PlayMusic ignore le meme clip deja en lecture : position
+et AudioSource conserves pour les PC rapides comme pour les chargements longs.
+Cancel/retour/destruction nettoient le token ; une erreur rend la musique du menu.
+Maison reste chargee apres la video, ce qui conserve le flux scenes/sauvegardes.
+
+A valider en Play : noter VideoPlayer.time a la premiere musique ; pre-roll avec
+preparation rapide/lente, video en pause avant 19 s, reprise, source non doublee
+a Maison, chargement long avec musique continue, arret pendant pre-roll/lecture,
+seconde nouvelle partie, volume musique a zero puis restitution et dialogues.
+
+Validation du cue : compilation native runtime/Editor passee et 27/27 tests Unity
+EditMode passes, zero echec/ignore. Les cinq ajouts verifient : seuil de 19 s et
+pause, saut du seuil et nouvelle lecture, timestamps invalides, piste Maison
+bouclee/non affectee par TimeScale, restitution musique seule et absence de
+remute au handoff. Ce lot ne mesure pas le premier echantillon sonore en Play ni
+la continuite DSP pendant le vrai chargement de toutes les sous-scenes Maison.

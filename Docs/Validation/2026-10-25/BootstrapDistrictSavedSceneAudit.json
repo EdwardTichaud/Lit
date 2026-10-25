@@ -1,0 +1,283 @@
+{
+    "utc": "2026-10-25T11:35:23.9762371Z",
+    "authoringChecksPassed": true,
+    "fullPlaythroughValidated": false,
+    "scope": "Saved Bootstrap, MainMenu and all District_1 manifest scenes; preview inspection only. Does not validate rendering, navigation reachability, manual inputs, save restoration or real multiplayer scene synchronization.",
+    "issues": [],
+    "notes": [
+        "Baked navigation: assigned, not a path reachability test",
+        "Editor direct startup enabled: True; not a validation of MainMenu startup."
+    ],
+    "scenes": [
+        {
+            "path": "Assets/Scenes/Bootstrap.unity",
+            "sha256": "FFF081980BEC9885C05C8C54A10E15746A741AC1CB93A0C0F660903D4B98E69D",
+            "objects": 462,
+            "networkObjects": 1,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/MainMenu/MainMenu.unity",
+            "sha256": "D03C267F01800F631BA6776785FBA75D7844042A56A92AFEB814A8406C84B724",
+            "objects": 334,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Core.unity",
+            "sha256": "66FEE60B8F55917DEACECE3944E6620590870C18D746B44C0714FEB06653AE6D",
+            "objects": 12,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Rooms_Environment.unity",
+            "sha256": "2C4856ECAF12FF145DA67C6DBA2CCF4C098DE6BE10715C8704940AF23CEC63DA",
+            "objects": 428,
+            "networkObjects": 12,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 7,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Corridor_Environment.unity",
+            "sha256": "80F0F16BF31905984198D87CA4AC6BB553C4932A6D6FED6183A9DAFFFF7CA0DF",
+            "objects": 975,
+            "networkObjects": 1,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 1,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Crypt_Environment.unity",
+            "sha256": "96D27C324E9360E0A2C31DEC3D08B0E70E52083A72CF087AC3450BCB5F5E495F",
+            "objects": 321,
+            "networkObjects": 2,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Arena_Environment.unity",
+            "sha256": "6DC18B4D72D35B09190E0E4463293495B0F685F322C5DE6E54649F000BB9856B",
+            "objects": 108,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Balcony_Environment.unity",
+            "sha256": "5FC4AD0A9D798CFD6185C710A9104870B97D986FCB6C6531D2EBA503601BA9D0",
+            "objects": 12,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Environment_OldBarn.unity",
+            "sha256": "285ABDC27C8806E95BDFAE4F72C71F629ED3AC966DCA22401DF79B41D05F3A9D",
+            "objects": 57,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/District_1_Indoor_Lights.unity",
+            "sha256": "F938398C829B6D9C3E609FBE763C07443E09B062C754EDE0ED05C72C1AAD47A2",
+            "objects": 398,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Interactives.unity",
+            "sha256": "A3C8AB9D5208DEBA31324A0740C0EB0CD5F022EBA693C7B57D2EC4B6AAF10085",
+            "objects": 33,
+            "networkObjects": 13,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 16,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Corridor_Flammes.unity",
+            "sha256": "E4AA76C59E9194F2B6C9B0D7A220D9210788229F650439F7806DBC150D533FF5",
+            "objects": 46,
+            "networkObjects": 5,
+            "cycles": 0,
+            "flames": 5,
+            "interactables": 5,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Rooms_Flammes.unity",
+            "sha256": "41EE258399634F329E568AD7E3833BD762D5B35EEED1F3E623A4ED7911913A8D",
+            "objects": 39,
+            "networkObjects": 3,
+            "cycles": 0,
+            "flames": 2,
+            "interactables": 3,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Luc/District_1_Cycle_Luc.unity",
+            "sha256": "82FE15C91333907F661AC76282E66595AE6116E1F81BEC29484B830718E7B885",
+            "objects": 130,
+            "networkObjects": 3,
+            "cycles": 1,
+            "flames": 0,
+            "interactables": 5,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Cycle_Gustave.unity",
+            "sha256": "E3E8B3125B44A009430991E4F0A5E9146B34BDC140807633CF160A6DE4C9B6B6",
+            "objects": 2,
+            "networkObjects": 1,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 1,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Enigme_Levers.unity",
+            "sha256": "750DB0F2CF3B1171BB86B00E2493CB1B5884A1625F5B83E1001B12F23F03A14D",
+            "objects": 11,
+            "networkObjects": 2,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Enemies.unity",
+            "sha256": "A6BC38700F148CE05CBB15AF43C0BA3168269320745CC1BA4FC15EF627D4571B",
+            "objects": 133,
+            "networkObjects": 1,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Sequences.unity",
+            "sha256": "C61A099611089C59608820877C46A57D7632FBB92A9A26E2510A565D3EF8A664",
+            "objects": 7,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Nina/District_1_Cycle_Nina.unity",
+            "sha256": "4C5B011BACFF8F62A19C867BFEEF19CF29AFFCB708A65D2FF72313609BFAD0AA",
+            "objects": 363,
+            "networkObjects": 3,
+            "cycles": 1,
+            "flames": 0,
+            "interactables": 7,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Belmont/District_1_Cycle_Belmont.unity",
+            "sha256": "A79C114DBEAACCE56DC0C2FC36EEBF41332451236B026372245CD34911CDB5BF",
+            "objects": 321,
+            "networkObjects": 12,
+            "cycles": 1,
+            "flames": 3,
+            "interactables": 11,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_PuitsDeLaReleve_Environment.unity",
+            "sha256": "10F5EC1B2E4A1170AB94D6570F94B17C47225B9945B168E03CA36C8B7CCAAA59",
+            "objects": 2506,
+            "networkObjects": 0,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Etienne/District_1_Cycle_Etienne.unity",
+            "sha256": "C7AE5A8CFF89D245B16D88DDF1AF55C47792FE156D2035E72C7D5C0DB1789167",
+            "objects": 691,
+            "networkObjects": 12,
+            "cycles": 1,
+            "flames": 5,
+            "interactables": 11,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_ConduitsNoyés_Environement.unity",
+            "sha256": "D9275708DC02799D1485597EF43C8A4A6F09E3AD9E0F206D3562AFAFBA6FDF91",
+            "objects": 493,
+            "networkObjects": 7,
+            "cycles": 0,
+            "flames": 7,
+            "interactables": 7,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Ardent/District_1_Cycle_Ardent.unity",
+            "sha256": "6BD7FE3281C5FADDF45C014FB07EEC4059CA27DE7AF49358F106E44512D4A617",
+            "objects": 931,
+            "networkObjects": 10,
+            "cycles": 1,
+            "flames": 0,
+            "interactables": 9,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity",
+            "sha256": "08A47B521C4DBFC66B483C639235E72CF9AB98BB6929DB24ABD50CD6926C84CA",
+            "objects": 383,
+            "networkObjects": 7,
+            "cycles": 0,
+            "flames": 6,
+            "interactables": 6,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Clairmont/District_1_Cycle_Clairmont.unity",
+            "sha256": "173959A727436A33CFF2A9CCF05D503B5AD27D2F5EDEED513AFA36BB6C2B565E",
+            "objects": 131,
+            "networkObjects": 4,
+            "cycles": 1,
+            "flames": 0,
+            "interactables": 5,
+            "missingScripts": []
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_AbilityShortcuts.unity",
+            "sha256": "FB74B37835D270711827D24F6E85283EC6C7C879E8D35861817562D126553779",
+            "objects": 12,
+            "networkObjects": 1,
+            "cycles": 0,
+            "flames": 0,
+            "interactables": 0,
+            "missingScripts": []
+        }
+    ]
+}

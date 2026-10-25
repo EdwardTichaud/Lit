@@ -68,3 +68,19 @@ Keep Unity closed during removal and restoration.
 - Full rendered gameplay has not been replayed. These checks establish asset
   presence/dependencies and targeted loading/animation contracts, not a new
   whole-game performance or visual-quality qualification.
+
+## Animation/controller consolidation: 2026-10-25
+
+Targeted cleanup of Lucian, Juggernaut, StoneGolem and Werewolf. Archive:
+D:/LitAssetArchive/2026-10-25-animation-cleanup-101902. The prior archive ending
+101544 preserves the original Generic StoneGolem importer metadata.
+StoneGolem's main model now owns the valid Humanoid avatar previously used by
+the workshop; its GUID remains unchanged. Latest author controller retained.
+Execution/Executed1 adaptations retired; CounterHit Timeline/signals and the
+previous facing/foot calibration work retained. Required overrides and shared
+Player_Model remain. Report: Library/CharacterAnimationCleanup/report.json.
+Final removal completed with Unity closed: four assets and four metadata
+files, SHA-256 archive equality verified and no retained serialized/code GUID
+references found immediately before removal. Restore details:
+closed-editor-removals.json in the archive. Reimport and rendered gameplay
+must still be qualified after reopening Unity.

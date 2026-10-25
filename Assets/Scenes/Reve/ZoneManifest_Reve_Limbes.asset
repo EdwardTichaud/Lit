@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f1bfbd2cc9d45c6b4501ccbc85a1d29, type: 3}
+  m_Name: ZoneManifest_Reve_Limbes
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneManifest
+  primaryScene: {fileID: 102900000, guid: 676b3c5f91d66d74dbcdece4e164a248, type: 3}
+  loadingScenes:
+  - {fileID: 102900000, guid: 0cfc4695aba590f4a868b63cf13fe82d, type: 3}
+  - {fileID: 102900000, guid: a23b80a0c98ddd248aec4f43de5ebbc3, type: 3}
+  - {fileID: 102900000, guid: 69039ad9eb680ab438a1fb397079fb8d, type: 3}
+  - {fileID: 102900000, guid: 0432967484af93e4398cd5d7dbac41cb, type: 3}
+  - {fileID: 102900000, guid: 894b73e0ec021ef4cb8149c069052b0b, type: 3}
+  postLoadingScenes: []
+  primarySceneName: Reve_Limbes
+  loadingMessage: Entrer dans les Limbes...
+  music: {fileID: 0}
+  ambience: {fileID: 0}
+  presentationAudioFadeDuration: 1
+  loadingSceneNames:
+  - Reve_Limbes_Environment
+  - Reve_Limbes_Lighting
+  - Reve_Limbes_Interactives
+  - Reve_Limbes_Cycle_Seuil
+  - Reve_Limbes_Cycle_Chambre
+  postLoadingSceneNames: []
+  editorSceneReferencesMigrated: 1
+  bakedNavMeshData: {fileID: 23800000, guid: b8787b2a36738be44977ec2d9f739b8b, type: 2}
+  bakedNavMeshVersion: 20261025181756
+  bakedNavMeshAgentTypeId: 0

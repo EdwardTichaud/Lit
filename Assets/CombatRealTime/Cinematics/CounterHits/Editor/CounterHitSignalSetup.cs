@@ -19,6 +19,7 @@ public static class CounterHitSignalSetup
         {
             if (command == "configure") Configure();
             else if (command == "validate") CounterHitSignalValidation.Run();
+            else if (command == "validate-flow") CounterHitSignalValidation.RunSignalFlow();
             else throw new InvalidOperationException("Unknown CounterHit request");
             File.WriteAllText("Library/CounterHitSignals.result", "PASS: " + command);
         }

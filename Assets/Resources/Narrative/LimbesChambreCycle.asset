@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: LimbesChambreCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: reve.limbes.chambre
+  title: "La chambre \xE0 l'envers"
+  description: "Explorer une chambre renvers\xE9e et comprendre ce qu'il reste de son point de vue."
+  category: 1
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: entered
+    title: "Entrer dans la chambre renvers\xE9e"
+    description: 
+    kind: 7
+    sourceId: entry
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: fragment_0
+    title: "La fen\xEAtre n'a pas boug\xE9"
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 1ef6020bfff050d4da5d1c35951229f9, type: 2}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: entered
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: resolved
+    title: Retrouver le regard de la chambre
+    description: 
+    kind: 1
+    sourceId: resolve
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: fragment_0
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards:
+    - kind: 4
+      skill: {fileID: 0}
+      knowledge: {fileID: 0}
+      item: {fileID: 0}
+      quantity: 1
+      key: reve.limbes.chambre_apaisee
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    - kind: 2
+      skill: {fileID: 0}
+      knowledge: {fileID: 0}
+      item: {fileID: 11400000, guid: 845afa1e4c271764cbf03d62c8752b96, type: 2}
+      quantity: 3
+      key: 
+      valueType: 2
+      intValue: 1
+      floatValue: 0
+      boolValue: 1
+      stringValue: 
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: Reve_Limbes_Cycle_Chambre
+  dialogueSeconds: 4
+  dialogues:
+  - id: resolve
+    durationSeconds: 5
+    condition:
+      requirements:
+        mode: 0
+        conditions: []
+      allFlags: 0
+      anyFlags: 0
+      knowledge:
+      - {fileID: 11400000, guid: 1ef6020bfff050d4da5d1c35951229f9, type: 2}
+    line: "Ce lieu a gard\xE9 un regard, pas une chambre. Je n'ai pas besoin de retourner le monde pour retrouver sa lumi\xE8re."
+    unavailableLine: "Cette chambre est renvers\xE9e... mais quelque chose n'a pas boug\xE9."
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

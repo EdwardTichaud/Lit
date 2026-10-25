@@ -730,7 +730,9 @@ public sealed partial class CycleController : NetworkBehaviour
         }
         else StartCoroutine(LocalCinematic(token));
         double timeout = Time.realtimeSinceStartupAsDouble + ActiveDirector.playableAsset.duration + 30d;
-        while (cinematicRunning && Time.realtimeSinceStartupAsDouble < timeout)
+        // A failed attempt may be retried before this coroutine resumes. Never
+        // monitor or time out the replacement's shared cinematicRunning flag.
+        while (cinematicRunning && token == cinematicToken && Time.realtimeSinceStartupAsDouble < timeout)
         {
             if (Online)
             {
@@ -739,7 +741,7 @@ public sealed partial class CycleController : NetworkBehaviour
             }
             yield return null;
         }
-        if (cinematicRunning) FinishCinematic(false);
+        if (cinematicRunning && token == cinematicToken) FinishCinematic(false);
     }
     private bool HasCinematic() => ActiveDirector != null && ActiveDirector.playableAsset != null &&
         ActiveDirector.playableAsset.duration > 0 && !double.IsInfinity(ActiveDirector.playableAsset.duration) &&

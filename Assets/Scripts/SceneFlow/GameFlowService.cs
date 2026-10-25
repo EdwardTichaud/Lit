@@ -62,6 +62,13 @@ public sealed class GameFlowService : MonoBehaviour
 
     private readonly List<string> loadedZoneSceneNames = new List<string>();
     private GameplaySessionRoot gameplaySessionRoot;
+    private Lit.Story.StorySequenceRunner pendingNewGameOpeningSequence;
+
+    // Queued only by New Game; loading an existing save never requests an opening.
+    public void QueueNewGameOpeningSequence(Lit.Story.StorySequenceRunner prefab)
+    {
+        pendingNewGameOpeningSequence = prefab;
+    }
     private Coroutine transitionRoutine;
     private readonly List<AsyncOperation> pendingSceneOperations = new List<AsyncOperation>();
     private readonly HashSet<string> pendingPostLoadingScenes = new HashSet<string>(StringComparer.Ordinal);
@@ -79,6 +86,32 @@ public sealed class GameFlowService : MonoBehaviour
     private string initialGameplaySceneName;
     private bool postLoadingPriorityApplied;
     private ThreadPriority previousBackgroundLoadingPriority;
+    private int introMusicOverrideToken;
+    private AudioManager introMusicManager;
+    public AudioClipSO HubMusic => hubManifest != null ? hubManifest.Music : null;
+
+    public bool BeginHubIntroMusic()
+    {
+        if (introMusicOverrideToken != 0) return true;
+        var music = HubMusic;
+        var manager = AudioManager.Instance;
+        if (music == null || music.audioClip == null || manager == null) return false;
+        manager.PlayMusicImmediately(music);
+        introMusicOverrideToken = manager.PushMusicOverride(music);
+        introMusicManager = manager;
+        return true;
+    }
+
+    public bool CancelHubIntroMusic()
+    {
+        if (introMusicOverrideToken == 0) return false;
+        int token = introMusicOverrideToken;
+        introMusicOverrideToken = 0;
+        if (introMusicManager != null) introMusicManager.PopMusicOverride(token);
+        introMusicManager = null;
+        return true;
+    }
+
     private bool returnToMenuShouldSave;
     public bool IsTransitioning => transitionRoutine != null;
     public bool HasGameplaySession => gameplaySessionRoot != null;
@@ -180,6 +213,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void OnDestroy()
     {
+        CancelHubIntroMusic();
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         ReleaseZonePresentation();
@@ -346,6 +380,8 @@ public sealed class GameFlowService : MonoBehaviour
     // the gameplay coroutine must no longer continue spawning into a cancelled session.
     public IEnumerator FinishCancelledSessionTransition()
     {
+        CancelHubIntroMusic();
+        pendingNewGameOpeningSequence = null;
         if (transitionRoutine != null) { StopCoroutine(transitionRoutine); transitionRoutine = null; }
         StopPostLoadingRoutine();
         foreach (AsyncOperation operation in pendingSceneOperations.ToArray())
@@ -396,7 +432,9 @@ public sealed class GameFlowService : MonoBehaviour
             IsPreparingGameplayScene = false;
             return false;
         }
-        transitionRoutine = StartCoroutine(LoadInitialGameplayRoutine(sceneToLoad, initialSpawnId, manifest, usePrimarySceneSpawnFallback));
+        var openingSequence = pendingNewGameOpeningSequence;
+        pendingNewGameOpeningSequence = null;
+        transitionRoutine = StartCoroutine(LoadInitialGameplayRoutine(sceneToLoad, initialSpawnId, manifest, usePrimarySceneSpawnFallback, openingSequence));
         return true;
     }
 
@@ -439,7 +477,7 @@ public sealed class GameFlowService : MonoBehaviour
         return true;
     }
 
-    private IEnumerator LoadInitialGameplayRoutine(string sceneName, string spawnId, ZoneManifest manifest, bool usePrimarySceneSpawnFallback)
+    private IEnumerator LoadInitialGameplayRoutine(string sceneName, string spawnId, ZoneManifest manifest, bool usePrimarySceneSpawnFallback, Lit.Story.StorySequenceRunner openingSequence)
     {
         SceneTransitionProfiler.Begin($"Demarrage -> {sceneName}");
         string loadingMessage = manifest != null ? manifest.LoadingMessage : "Chargement de la partie...";
@@ -479,6 +517,11 @@ public sealed class GameFlowService : MonoBehaviour
         StartCoroutine(LogZoneControlProbe(sceneName));
 #endif
         SceneTransitionProfiler.Mark("Escouade placee");
+        if (openingSequence != null && gameplaySessionRoot != null)
+        {
+            var runner = Instantiate(openingSequence, gameplaySessionRoot.transform);
+            runner.PlayAfterLoading();
+        }
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
@@ -500,15 +543,15 @@ public sealed class GameFlowService : MonoBehaviour
         bool postLoadingReady = false;
         yield return FinishPostLoadingRequests(true, ready => postLoadingReady = ready);
         if (!postLoadingReady) { transitionRoutine = null; yield break; }
-        yield return StopProximityStreaming();
-        ReleaseZonePresentation(preserveAudio: true);
         List<string> previousScenes = CaptureLoadedGameplayScenes();
         if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(previousScenes))
         {
-            LoadingScreenService.SetProgress(0f, "La conservation de la zone a échoué.");
+            yield return RevealRejectedDepartureRoutine("La conservation de la zone a échoué. Le passage reste disponible pour réessayer.");
             transitionRoutine = null;
             yield break;
         }
+        yield return StopProximityStreaming();
+        ReleaseZonePresentation(preserveAudio: true);
         HashSet<string> alreadyLoadedScenes = CaptureLoadedUnitySceneNames();
         loadedZoneSceneNames.Clear();
 
@@ -584,15 +627,15 @@ public sealed class GameFlowService : MonoBehaviour
         bool postLoadingReady = false;
         yield return FinishPostLoadingRequests(true, ready => postLoadingReady = ready);
         if (!postLoadingReady) { transitionRoutine = null; yield break; }
-        yield return StopProximityStreaming();
-        ReleaseZonePresentation(preserveAudio: true);
         List<string> previousScenes = CaptureLoadedGameplayScenes();
         if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(previousScenes))
         {
-            LoadingScreenService.SetProgress(0f, "La conservation de la zone a échoué.");
+            yield return RevealRejectedDepartureRoutine("La conservation de la zone a échoué. Le retour reste disponible pour réessayer.");
             transitionRoutine = null;
             yield break;
         }
+        yield return StopProximityStreaming();
+        ReleaseZonePresentation(preserveAudio: true);
         HashSet<string> alreadyLoadedScenes = CaptureLoadedUnitySceneNames();
         loadedZoneSceneNames.Clear();
 
@@ -630,7 +673,10 @@ public sealed class GameFlowService : MonoBehaviour
         yield return RebuildNavigationForLoadedWorldRoutine("retour " + hubScene, hubManifest);
 
         activeGameplaySceneName = hubScene;
-        yield return PlaceSquadAtSpawnRoutine(spawnId);
+        // Returning without an explicit portal spawn must never keep the
+        // previous zone's coordinates after that zone has been unloaded.
+        // This fallback is for travel only, not restoration of a saved pose.
+        yield return PlaceSquadAtSpawnRoutine(spawnId, hubScene, usePrimarySceneSpawnFallback: true);
         EnforceSingleAudioListener();
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(hubScene);
@@ -655,8 +701,25 @@ public sealed class GameFlowService : MonoBehaviour
         return result;
     }
 
+    private IEnumerator RevealRejectedDepartureRoutine(string message)
+    {
+        // BeginZoneTravel/BeginReturnToHub invalidated navigation before
+        // presenting the overlay. No scene or presentation has been released:
+        // restore this same world, without resetting dialogue/combat input or
+        // ever exporting a partial save. The loading service owns its camera
+        // snapshot and must release it even on a refused departure.
+        ZoneManifest current = ResolveGameplayManifest(activeGameplaySceneName);
+        yield return RebuildNavigationForLoadedWorldRoutine("depart annule " + activeGameplaySceneName, current);
+        LoadingScreenService.HideImmediately();
+        StartPostLoading(current);
+        InfoBoxUI.TryShowToast(message, 6f);
+        SceneTransitionProfiler.End("Depart annule ; zone conservee");
+    }
+
     private IEnumerator ReturnToMenuRoutine()
     {
+        CancelHubIntroMusic();
+        pendingNewGameOpeningSequence = null;
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
         try
         {
@@ -1645,6 +1708,9 @@ public sealed class GameFlowService : MonoBehaviour
         SceneManager.MoveGameObjectToScene(host, coreScene);
         activeZoneRuntimeContext = host.AddComponent<ZoneRuntimeContext>();
         activeZoneRuntimeContext.Configure(manifest);
+        // The zone now owns the same track. Removing the override reuses the playing
+        // AudioSource rather than restarting the music after a slow/fast scene load.
+        CancelHubIntroMusic();
     }
 
     private void ReleaseZonePresentation(bool preserveAudio = false)

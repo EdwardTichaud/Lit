@@ -1,6 +1,6 @@
 # Calibration du regard — premier lot, laboratoire uniquement
 
-Lucian et Juggernaut restent Humanoid. Werewolf et StoneGolem restent Generic
+Etat du lot historique : Lucian et Juggernaut Humanoid, Werewolf et StoneGolem Generic
 avec leurs animations natives. Werewolf ne possede pas de course native : aucun
 Run TwinBlades ne lui est attribue.
 
@@ -154,26 +154,8 @@ les vrais meshes et materiaux ; elles ne prouvent pas la cadence, les contacts
 horizontaux ou la qualite des transitions UCC/NavMesh. Rapports detailles :
 `Library/ActorFacingCalibration/walk-retouch-*.json`.
 
-Execution / Executed1
----------------------
-`Calibrate Named Execution Clips` configure uniquement les deux copies FBX
-nommees par l'utilisateur : Execution1_Humanoid en Humanoid et Executed1_Generic
-en Generic, Based Upon Original, offset rotation 0 et rotation bakee. Les
-fichiers fournisseur sans suffixe restent intacts. Les GUID et fileID existants,
-evenements, durees et cadences des deux FBX sont verifies apres reimport.
-
-Pour StoneGolem, utiliser **Assets/StoneGolem/Animations/Calibrated/
-Twinblades_Attack_Executed1_Inplace_Generic.anim** : le FBX Generic TwinBlades
-ne correspond pas directement aux chemins de ses os. Le menu produit ce .anim
-par retarget Humanoid hors runtime sur une copie du squelette StoneGolem puis
-enregistrement de courbes Transform natives. Modele, prefab, controller et
-avatar Generic de production ne sont pas modifies. Les helpers sont dans
-`Execution/EditorSources` ; ils ne sont pas des rigs de remplacement a installer.
-La capture a 480 Hz conserve la duree et la vitesse de lecture. Les courbes
-sont simplifiees avec tolerance locale puis controlees sur le vrai rig Generic,
-aux cles, aux milieux et a des quarts d'intervalles independants. Seuils :
-5 mm de position, 0,5 degre de rotation, aucun mouvement physique ; evenements
-et empreintes du modele/prefab proteges. Aucun IK ou retarget runtime ajoute.
-Rapports : `Library/ActorFacingCalibration/execution-clips.json` et
-`executed-stonegolem.json`. La qualite rendue et le raccord de l'execution dans
-son contexte de jeu restent une verification visuelle distincte.
+Les adaptations Execution / Executed1 et leurs commandes ont ete retirees a la
+demande de l'utilisateur (2026-10-25). Le travail regard/appuis reste conserve.
+StoneGolem utilise maintenant son avatar Humanoid de l'atelier sur le modele
+principal. Les mesures Generic de ce document restent historiques et doivent
+etre requalifiees pour cet import ; elles ne valident pas son rendu Humanoid.

@@ -12274,6 +12274,7 @@ MonoBehaviour:
   newGameConfirmAction: {fileID: 1518605368}
   newGameCancelAction: {fileID: 1468770376}
   newGameCursorRoot: {fileID: 0}
+  newGameOpeningSequencePrefab: {fileID: 2171863246060046666, guid: 9d5740d511d840ca8fe0534f6687bcd9, type: 3}
   defaultNewGameSaveName: Light
   requireNewGameName: 1
   autoFocusNewGameInput: 1

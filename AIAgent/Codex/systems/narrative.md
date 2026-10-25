@@ -227,3 +227,59 @@ Nina est le premier cycle sans flags actifs : ses anciens bits restent uniquemen
 ## Cycle Luc : etapes nommees (2026-09-27)
 
 Luc suit le meme socle que Nina, sans flags historiques car son ancien flux n'en persistait pas. Les connaissances du collier et de la tombe reconciliant les deux premieres etapes, l'interaction luc puis sa fermeture valident la conclusion. La connaissance jonLocation est une recompense idempotente de luc_farewell; Ghost_Luc est relie a CycleInteraction et CycleController par Lit/Narrative/Configure Luc Cycle. La scene est referencee sous District_1_Cycle_Luc dans le manifest District 1.
+
+## Rencontre Munin apres la video de nouvelle partie
+
+Asset : Narrative/StorySequence/Sequences/1_Munin_Meeting.asset, rig homonyme
+sous Prefabs reference par MainMenu. Nouvelle partie queue ce rig ; GameFlow
+consomme une fois la demande, prepare Maison/navigation/personnages et place
+l'escouade avant de l'instancier sous GameplaySessionRoot. PlayAfterLoading
+attend la disparition du loading. Annulation/retour menu nettoient l'attente et
+la demande ; Charger et les portails n'en creent pas. Presentation locale au
+createur seulement ; pas de nouveau protocole reseau narratif.
+
+Quatre etapes : question de Lucian -> ChooseMuninName -> presentation avec le
+nom choisi -> invitation au depart. Les trois VoiceLineData dans
+VoiceLines/1_Munin_Meeting sont textuelles, sans voix ajoutee. Les dialogues
+attendent Interact et leur fermeture precede l'etape suivante ; pas de camera
+ou d'acteur Munin invente. La camera de jeu actuelle est conservee.
+
+ChooseMuninName est ajoute a la fin de l'enum (10) sans renumeroter les anciens
+types. Le composant StorySequenceNamePrompt du rig reference explicitement
+UI_Overlay_VirtualKeyboard. Il reprend ses touches/visuels avec des Buttons,
+desactive les pilotes du menu sur la copie et gere la saisie sous focus/mode UI.
+Les pressions ne traversent pas vers le dialogue suivant. Clavier physique et
+souris disponibles ; manette : stick/croix pour selectionner, A pour une touche,
+B pour effacer, Start pour valider. Entree/OK valident ; Echap choisit le defaut.
+Vide/espaces seuls donnent Munin ; nom borne a 24 caracteres, lettres/chiffres,
+espaces, apostrophes et tirets (pas de balises de texte). Annulation/desactivation
+ferment l'UI sans enregistrer de brouillon et restaurent curseur, selection,
+navigation EventSystem, focus et mode d'input. Echec de saisie : sequence avortee,
+pas de completion PlayOnce.
+
+StorySequenceNames stocke story.munin.name via WorldRulesStateManager.SetString.
+Le snapshot binaire existant conserve cette valeur ; aucune nouvelle ecriture
+immediate ni changement de format. Sauver puis recharger restitue le nom ; une
+nouvelle partie repart sans nom choisi et utilise le defaut. La balise [Munin]
+est resolue a l'affichage par StorySequenceDialoguePresenter et DialoguePanelUI,
+y compris les cues ; aucune mutation des VoiceLineData source. Les textes
+overhead utilisant un autre afficheur ne passent pas par ce chemin.
+
+StorySequenceAsset.TryValidate partage les controles structurels entre lecteur
+et inspecteur : vide, etapes nulles/inconnues, dialogue sans contenu ou sans
+issue, Timeline sans profil, camera sans point/acteur, etc. Le lecteur verifie
+le composant de saisie et son clavier avant toute sequence qui le requiert.
+Les bindings dynamiques restent a qualifier dans la scene. L'inspecteur offre
+une liste numerotee reordonnable avec champs par type, ajouts Wait neufs (1 s),
+et diagnostic ; outils auteur diriges vers Narrative/StorySequence.
+
+Validation : compilation runtime/Editor et import natif passes ; 19/19 tests
+StorySequenceAuthoringTests passes dans Unity, zero echec/ignore (XML dans
+Library/IntroValidation). Tests de normalisation/defaut, vrai serialiseur binaire
+du monde, reset/recharge du nom, token sans mutation source, ordre auteur des
+etapes et construction des 39 touches dans une scene de preview, sans sauvegarde
+utilisateur modifiee. Ces tests EditMode ne qualifient pas les inputs en jeu.
+A qualifier en Play depuis Bootstrap : intro complete, fermeture question,
+saisie nom/validation vide, reprise des deux repliques sans double validation,
+restitution UCC/camera, sauvegarde/recharge du nom, seconde nouvelle partie,
+annulation du rig pendant la saisie, manette/souris/clavier, Domain Reload On/Off.

@@ -80,7 +80,7 @@ public sealed class LitTacticalVisibilityMask
 
     private void Detect(Vector3 origin, Vector3 target, bool isEnemy, int layers)
     {
-        if (camera != null && owner.MaisonMaskActive)
+        if (camera != null && owner.ZoneMaskActive)
         {
             LitMaisonVisibilityZone.Collect(camera, target, profile.maskRadius + profile.maskFeather, visualHits);
             foreach (var group in visualHits) Mark(group, isEnemy);

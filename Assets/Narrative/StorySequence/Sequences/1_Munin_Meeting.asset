@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
+  m_Name: 1_Munin_Meeting
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
+  sequenceId: 1_Munin_Meeting
+  displayName: Rencontre avec Munin
+  description: "Lucian demande le nom de Munin, le joueur le choisit au clavier, puis Lucian se presente avant le depart."
+  playOnce: 1
+  waitForLocalPlayer: 1
+  localPlayerWaitTimeout: 30
+  lockPlayerControl: 1
+  stopActiveAbilitiesOnLock: 1
+  useUnscaledTime: 1
+  startFromBlack: 1
+  openingFadeDuration: 1
+  fadeToBlackBeforeGameplay: 0
+  closingFadeDuration: 0.5
+  fadeFromBlackAfterGameplayRestore: 0
+  gameplayFadeInDuration: 0.75
+  steps:
+  - label: Lucian - Question
+    type: 1
+    skippable: 1
+    actorId: player
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: 126e0f4ba67644cda62b48935f5036aa, type: 2}
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+  - label: Choisir le nom de Munin
+    type: 10
+    skippable: 0
+  - label: Lucian - Presentation
+    type: 1
+    skippable: 1
+    actorId: player
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: ddbb7aef968848dbb431e6e6875a7fe6, type: 2}
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+  - label: Lucian - Depart
+    type: 1
+    skippable: 1
+    actorId: player
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: 547a7bc8f9e44baea871401f83df53cf, type: 2}
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0

@@ -1,0 +1,39 @@
+			ProcessInitializeOnLoadAttributes (185ms)
+			ProcessInitializeOnLoadAttributes (3187ms)
+			ProcessInitializeOnLoadAttributes (1272ms)
+			ProcessInitializeOnLoadAttributes (1791ms)
+			ProcessInitializeOnLoadAttributes (1084ms)
+			ProcessInitializeOnLoadAttributes (1163ms)
+			ProcessInitializeOnLoadAttributes (1243ms)
+			ProcessInitializeOnLoadAttributes (1229ms)
+	  at System.Xml.Serialization.XmlSerializationWriterILGen:GenerateMethod <0x0012a>
+	  at System.Xml.Serialization.XmlSerializationILGen:GenerateReferencedMethods <0x00059>
+	  at System.Xml.Serialization.XmlSerializationWriterILGen:GenerateEnd <0x00022>
+	  at System.Xml.Serialization.TempAssembly:GenerateRefEmitAssembly <0x0099a>
+	  at System.Xml.Serialization.TempAssembly:.ctor <0x00152>
+	  at System.Xml.Serialization.XmlSerializer:GenerateTempAssembly <0x000e2>
+	  at System.Xml.Serialization.XmlSerializer:.ctor <0x0027a>
+	  at System.Xml.Serialization.XmlSerializer:.ctor <0x00022>
+	  at Unity.PlasticSCM.Editor.FindWorkspace:PathForApplicationPath <0x0001a>
+	  at Unity.PlasticSCM.Editor.FindWorkspace:HasWorkspace <0x00022>
+	  at Unity.PlasticSCM.Editor.UVCSPlugin:InitializeIfNeeded <0x0002a>
+	  at Unity.PlasticSCM.Editor.PackageEntryPoint:.cctor <0x0009a>
+	  at UnityEditor.EditorAssemblies:ProcessInitializeOnLoadAttributes <0x00592>
+0x00007FFEB663691C (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\metadata\object.c:1951] mono_class_vtable_checked 
+0x0000018CFE21977B (System.Xml) System.Xml.Serialization.XmlSerializationWriterILGen:GenerateMethod (System.Xml.Serialization.TypeMapping)
+0x0000018CFE2195FA (System.Xml) System.Xml.Serialization.XmlSerializationILGen:GenerateReferencedMethods ()
+0x0000018CFE219513 (System.Xml) System.Xml.Serialization.XmlSerializationWriterILGen:GenerateEnd ()
+0x0000018CFE2052CB (System.Xml) System.Xml.Serialization.TempAssembly:GenerateRefEmitAssembly (System.Xml.Serialization.XmlMapping[],System.Type[],string,System.Security.Policy.Evidence)
+0x0000018CFE1FEFD3 (System.Xml) System.Xml.Serialization.TempAssembly:.ctor (System.Xml.Serialization.XmlMapping[],System.Type[],string,string,System.Security.Policy.Evidence)
+0x0000018CFE1FEE03 (System.Xml) System.Xml.Serialization.XmlSerializer:GenerateTempAssembly (System.Xml.Serialization.XmlMapping,System.Type,string)
+0x0000018CFDE427AB (System.Xml) System.Xml.Serialization.XmlSerializer:.ctor (System.Type,string)
+0x0000018CFDE42343 (System.Xml) System.Xml.Serialization.XmlSerializer:.ctor (System.Type)
+0x0000018CFDE412DB (Unity.PlasticSCM.Editor) [.\Library\PackageCache\com.unity.collab-proxy@4628d2ba6ea4\Editor\FindWorkspace.cs:19] Unity.PlasticSCM.Editor.FindWorkspace:PathForApplicationPath (string) 
+0x0000018CFDE41263 (Unity.PlasticSCM.Editor) [.\Library\PackageCache\com.unity.collab-proxy@4628d2ba6ea4\Editor\FindWorkspace.cs:12] Unity.PlasticSCM.Editor.FindWorkspace:HasWorkspace (string) 
+0x0000018CFDE40F5B (Unity.PlasticSCM.Editor) [.\Library\PackageCache\com.unity.collab-proxy@4628d2ba6ea4\Editor\UVCSPlugin.cs:98] Unity.PlasticSCM.Editor.UVCSPlugin:InitializeIfNeeded () 
+0x0000018CFDE09F3B (Unity.PlasticSCM.Editor) [.\Library\PackageCache\com.unity.collab-proxy@4628d2ba6ea4\Editor\PackageEntryPoint.cs:24] Unity.PlasticSCM.Editor.PackageEntryPoint:.cctor () 
+0x0000018CFD40C1F3 (UnityEditor.CoreModule) UnityEditor.EditorAssemblies:ProcessInitializeOnLoadAttributes (System.ReadOnlySpan`1<intptr>)
+0x00007FFEBA1500F6 (Unity) Scripting::UnityEditor::EditorAssembliesProxy::ProcessInitializeOnLoadAttributes
+0x00007FFEBC413A02 (Unity) ProcessInitializeOnLoadAttributes
+========== END OF STACKTRACE ===========
+A crash has been intercepted by the crash handler. For call stack and other details, see the latest crash report generated in:

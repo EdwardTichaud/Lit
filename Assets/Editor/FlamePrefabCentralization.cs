@@ -71,7 +71,7 @@ public static class FlamePrefabCentralization
             lighting.name = "Lighting_Common";
             Light warm = FindOrCreateLight(lighting, "Warm_Core");
             LitContrastLight profile = EnsureComponent<LitContrastLight>(warm.gameObject);
-            profile.Configure(LightType.Point, new Color(1f, 0.31f, 0.08f, 1f), UnityEngine.Rendering.LightUnit.Lumen, 330f, 4.5f, 55f,
+            profile.Configure(LightType.Point, new Color(1f, 0.31f, 0.08f, 1f), UnityEngine.Rendering.LightUnit.Lumen, 2000f, 4.5f, 55f,
                 true, 0.75f, 0.65f, 0.55f, true, "Warm practical source. Keep its range short so the arena background stays dark.");
 
             ConfigureFlamePresentation(root, warm, false, lighting.gameObject, materials);
@@ -89,7 +89,7 @@ public static class FlamePrefabCentralization
             Transform lighting = EnsureChild(root.transform, "Lighting_Ancient");
             Light warm = FindOrCreateLight(EnsureChild(lighting, "Warm_Core"), "Point_Light");
             LitContrastLight warmProfile = EnsureComponent<LitContrastLight>(warm.gameObject);
-            warmProfile.Configure(LightType.Point, new Color(1f, 0.38f, 0.12f, 1f), UnityEngine.Rendering.LightUnit.Lumen, 250f, 5f, 55f,
+            warmProfile.Configure(LightType.Point, new Color(1f, 0.38f, 0.12f, 1f), UnityEngine.Rendering.LightUnit.Lumen, 2000f, 5f, 55f,
                 true, 0.75f, 0.65f, 0.55f, true, "Warm core of the Ancient Flame. The cyan aura is a separate vertical beam.");
 
             Transform auraRoot = EnsureChild(lighting, "Cyan_Aura");

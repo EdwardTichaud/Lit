@@ -126,6 +126,8 @@ public static partial class CharacterAnimationCleanup
     [MenuItem("Lit/Animation/Cleanup Recent Execution Assets And Character Controllers")]
     public static void Apply()
     {
+        if (!File.Exists(GolemHelper))
+            throw new InvalidOperationException("Cleanup source already retired. Keep the existing report; use validation instead of applying again.");
         Directory.CreateDirectory(Output);
         report=new Report {archive="D:/LitAssetArchive/2026-10-25-animation-cleanup-"+DateTime.UtcNow.ToString("HHmmss"),status="Running"};
         Directory.CreateDirectory(report.archive); replacements.Clear(); retired.Clear();pathReplacements.Clear();

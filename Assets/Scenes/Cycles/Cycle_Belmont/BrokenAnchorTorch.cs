@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>Cible lumineuse propre au puzzle de L'Ancre brisée. Ce n'est pas une Flame.</summary>
 [RequireComponent(typeof(SphereCollider), typeof(NetworkObject))]
 [DisallowMultipleComponent]
-public sealed class BrokenAnchorTorch : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler
+public sealed partial class BrokenAnchorTorch : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler
 {
     [SerializeField] private Light torchLight;
     [SerializeField] private GameObject[] activateWhenLit = Array.Empty<GameObject>();
@@ -80,6 +80,7 @@ public sealed class BrokenAnchorTorch : NetworkBehaviour, ICharacterDetectedInte
     {
         if (!isActiveAndEnabled || detectedCharacter == null || InputFocusStack.HasAnyFocus()) return false;
         if (!CharacterInteractionDetection.IsCharacterWithinRange(detectedCharacter.transform, GetInteractionDetectionCollider(), GetInteractionAnchor(), interactionDistance)) return false;
+        if (TryHandleReleaseRecovery(detectedCharacter.transform)) return true;
         return DialoguePanelUI.TryShowNonBlocking(inspectionLine, 3f);
     }
 }

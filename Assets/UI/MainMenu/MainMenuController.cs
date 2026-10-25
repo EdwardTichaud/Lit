@@ -15,6 +15,9 @@ using TMPro;
 public class MainMenuController : MonoBehaviour
 {
     public const string DefaultMenuSceneName = "MainMenu";
+    [Header("New Game Opening")]
+    [SerializeField] private Lit.Story.StorySequenceRunner newGameOpeningSequencePrefab;
+
     private const float DefaultTitleCardIntroDelaySeconds = 3f;
     private const float DefaultTitleCardParticleLeadDelaySeconds = 2f;
 
@@ -3477,7 +3480,24 @@ public class MainMenuController : MonoBehaviour
         string newGameScene = GameFlowService.Instance != null
             ? GameFlowService.Instance.HubSceneName
             : null;
-        StartGameFlow(newGameScene);
+        StartCoroutine(PlayNewGameIntroAndStart(newGameScene));
+    }
+
+    private IEnumerator PlayNewGameIntroAndStart(string initialSceneName)
+    {
+        BeginSessionOperation();
+        var introRoot = new GameObject("New Game Intro");
+        introRoot.transform.SetParent(transform, false);
+        var intro = introRoot.AddComponent<NewGameIntroPlayer>();
+        yield return intro.Play();
+        // Present the loading overlay before hiding the shared Bootstrap video panel.
+        if (currentSessionType == SaveSessionType.Solo)
+            yield return LoadingScreenService.ShowAndWaitForPresentation(loadingMessage);
+        introRoot.SetActive(false);
+        Destroy(introRoot);
+        isLoading = false;
+        GameFlowService.Instance?.QueueNewGameOpeningSequence(newGameOpeningSequencePrefab);
+        StartGameFlow(initialSceneName);
     }
 
     private void RegisterNewGameNameListener(bool enabled)
@@ -4487,6 +4507,10 @@ public class MainMenuController : MonoBehaviour
 
     private void RestoreAfterOperation(string message)
     {
+        GameFlowService.Instance?.QueueNewGameOpeningSequence(null);
+        GameFlowService.Instance?.CancelHubIntroMusic();
+        mainMenuAudioPlayed = false;
+        PlayMainMenuLoadAudio();
         isLoading = false;
         joinInProgress = false;
         SetTitleCardIntroInputLock(false);

@@ -10,7 +10,9 @@ rig. La migration commune ne peut pas etre une copie aveugle des 90 etats.
 
 Decisions utilisateur : structure et noms communs, lancement des animations
 par nom d'etat, clips propres au rig ; une action sans clip reste explicitement
-indisponible, sans remplacement. Werewolf et StoneGolem restent Generic.
+indisponible, sans remplacement. Choix actualise : protagonistes principalement
+Humanoid ; StoneGolem conserve l'avatar Humanoid de l'atelier sur son modele
+principal. Werewolf natif reste Generic a ce stade.
 
 Ordre de realisation :
 1. Etablir dans Unity le manifeste des chemins complets (couche/sous-machine/
@@ -61,7 +63,11 @@ Chaque marqueur expose Damage (float en points de vie, arrondi a l'entier),
 Hit Index, Blend Seconds, Vfx et Sfx. Hit Index 2 cible Base Layer.Hit_2 sur
 l'Animator de la victime capturee par la session. Ce meme nom d'etat doit
 exister sur chaque ennemi compatible ; ses clips restent propres a son rig.
-Un indice absent ou une valeur invalide refuse la lecture avant tout degat.
+Hit Index 0 ne declenche aucune reaction Hit_n : les degats, VFX et SFX
+restent actifs et la Timeline continue. Une Timeline dont tous les signaux
+ont cet indice ne prend pas l'autorite Animator pour les reactions.
+Un indice negatif, un etat positif absent ou une valeur invalide refuse la
+lecture avant tout degat.
 
 La piste Enemy.Animator fixe du contre 2 est conservee mais muette. Les
 reactions sont evaluees par le rig sur l'horloge de la Timeline, meme pendant
@@ -85,8 +91,10 @@ Menu Lit/Combat Lab/Configure Unified Counter Hits : migration explicite et
 idempotente, conservation des montants/indices/horaires/effets deja auteur.
 Les quatre contacts existants gardent 25 degats de base au total (6/6/7/6),
 librement editables par signal. Des alias natifs Hit_1 sont ajoutes aux
-controllers Juggernaut v2, Iluvilirae, Juggernaut Production, Werewolf et
-StoneGolem ; ce dernier a aussi Hit_2/Hit_3 a partir de gethit2/gethit3.
+controllers retenus Juggernaut Production, Werewolf et StoneGolem Humanoid.
+Les anciennes references Juggernaut v2/Iluvilirae pointent vers Production.
+Les Hit_2/Hit_3 Generic du Golem ne sont pas transferes au controller Humanoid ;
+un indice absent reste refuse avant degat.
 Aucun clip d'une autre famille de squelette n'est injecte dans ces etats.
 
 Verification : compilation Unity runtime/Editor, 25 assertions de graphe

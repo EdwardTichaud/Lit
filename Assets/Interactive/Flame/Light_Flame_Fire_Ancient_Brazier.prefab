@@ -7318,7 +7318,7 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 0.38, b: 0.12, a: 1}
-  m_Intensity: 19.894367
+  m_Intensity: 159.15494
   m_Range: 5
   m_SpotAngle: 55
   m_InnerSpotAngle: 0
@@ -7547,7 +7547,7 @@ MonoBehaviour:
   lightType: 2
   lightColor: {r: 1, g: 0.38, b: 0.12, a: 1}
   intensityUnit: 0
-  intensity: 250
+  intensity: 2000
   range: 5
   spotAngle: 55
   castSoftShadows: 1

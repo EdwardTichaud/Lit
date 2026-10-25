@@ -41,3 +41,23 @@ Ce dossier centralise le système de séquences narratives de Lit.
   au prochain Play Mode.
 
 Les anciennes clés `PlayerPrefs` ne sont plus utilisées.
+
+
+## Premiere rencontre apres la video
+
+`Sequences/1_Munin_Meeting.asset` contient la question de Lucian, l'etape
+`ChooseMuninName`, sa presentation et la derniere replique avant le gameplay.
+Les dialogues sont des `VoiceLineData` sous `VoiceLines/1_Munin_Meeting`.
+Ils se ferment avec Interact. Le clavier s'ouvre apres la fermeture de la question.
+
+Le prefab `Prefabs/1_Munin_Meeting.prefab` reference le clavier virtuel existant.
+Entree/OK valident le choix ; ne rien saisir donne **Munin**. Le clavier physique,
+la souris et la manette sont geres ; le nom est sauvegarde avec l'etat du monde
+lors de la sauvegarde normale. Le texte `[Munin]` dans une replique est remplace
+par le nom choisi a l'affichage (StorySequence et DialoguePanelUI).
+
+Le menu reference le prefab, qui reference l'asset : rien a ajouter dans Resources.
+Conserver Play On Start desactive : GameFlow demande PlayAfterLoading apres
+preparation de Maison. Charger une sauvegarde et les portails ne relancent pas
+cette rencontre. En multijoueur, seule la presentation locale du createur est
+branchee ; il n'y a pas de lecture partagee.

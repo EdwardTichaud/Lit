@@ -261,20 +261,22 @@ public sealed class QTEPanelController : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        ResolveReferences();
-        AssignDefaultInputVisuals();
-        if (!Application.isPlaying)
-        {
-            EditorUtility.SetDirty(this);
-            if (gameObject.scene.IsValid()) EditorSceneManager.MarkSceneDirty(gameObject.scene);
-        }
+        RefreshEditorDefaults();
     }
 
     private void Reset()
     {
+        RefreshEditorDefaults();
+    }
+
+    private void RefreshEditorDefaults()
+    {
+        // OnValidate also runs after a domain reload. Only actual serialized
+        // default/reference changes should require saving the owning scene.
+        string before = !Application.isPlaying ? EditorJsonUtility.ToJson(this) : null;
         ResolveReferences();
         AssignDefaultInputVisuals();
-        if (!Application.isPlaying)
+        if (before != null && !string.Equals(before, EditorJsonUtility.ToJson(this), StringComparison.Ordinal))
         {
             EditorUtility.SetDirty(this);
             if (gameObject.scene.IsValid()) EditorSceneManager.MarkSceneDirty(gameObject.scene);

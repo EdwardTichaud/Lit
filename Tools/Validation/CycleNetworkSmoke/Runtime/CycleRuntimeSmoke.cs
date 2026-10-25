@@ -118,6 +118,12 @@ public sealed partial class CycleRuntimeSmoke : MonoBehaviour
         if (!automaticShowing && lastAutomaticShowing) sawStoppedPresentation = true;
         lastAutomaticShowing = automaticShowing;
         if (automaticShowing && firstUiAt < 0) { firstUiAt = Time.realtimeSinceStartup; evidence.Add("Automatic text really shown."); }
+        if (scenario == "skip" && automaticShowing && !interrupted && Time.realtimeSinceStartup - firstUiAt > .1f)
+        {
+            interrupted = true;
+            typeof(DialoguePanelUI).GetMethod("HideManually", Private).Invoke(ui, null);
+            evidence.Add("Viewer intentionally passed the line before its minimum duration.");
+        }
         if (!server && role != "late" && (scenario == "late" || scenario == "busy"))
             if (!priorFinished && ui != null && ui.IsShowing && ui.dialogueText != null)
             {
@@ -163,6 +169,8 @@ public sealed partial class CycleRuntimeSmoke : MonoBehaviour
             }
             if (completed)
             {
+                if (scenario == "skip" && (!interrupted || shownAttempts != 1 || sessions.Count != 1))
+                { Finish(false, "Passing the line must complete the first attempt without replaying it."); return; }
                 if ((scenario == "interrupt" || scenario == "disable") && (sessions.Count < 2 || sessions[0].Status != CycleAutoDialogueStatus.Failed))
                 { Finish(false, "Interruption did not require a fresh successful attempt."); return; }
                 if (scenario == "late" && (sessions.Count != 1 || sessions[0].Participants.Count != 2))
@@ -174,6 +182,8 @@ public sealed partial class CycleRuntimeSmoke : MonoBehaviour
         }
         else if (completed)
         {
+            if (scenario == "skip" && (!interrupted || shownAttempts != 1))
+            { Finish(false, "Client's passed line was replayed or never acknowledged."); return; }
             if (scenario == "disable" && (shownAttempts < 2 || !sawStoppedPresentation))
             { Finish(false, "Client did not observe cancellation and a fresh presentation after reenable."); return; }
             if (role == "late" && firstUiAt >= 0) { Finish(false, "Late viewer was forced into an already-started presentation."); return; }

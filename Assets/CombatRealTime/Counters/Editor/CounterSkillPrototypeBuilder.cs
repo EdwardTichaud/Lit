@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Timeline;
-using UnityEngine.UI;
 
 public static class CounterSkillPrototypeBuilder
 {
@@ -18,12 +17,9 @@ public static class CounterSkillPrototypeBuilder
     private const string SessionRootPath = "Assets/Core/System/GameplaySessionRoot.prefab";
     private const string CounterSwordGuid = "2622150291d55c442964e5d6fc048a04";
     private const string JuggernautCounteredGuid = "37a89e362d7404e4b99804c51c57ed3b";
-    private const string SouthButtonPath = "Assets/UI/Inputs/XBox GamePad SouthButton.png";
     private const string AssomoirPath = "Assets/Characters/1_Squad/Lucian/Animation/Juggernaut_Assomoir.anim";
     private const string AssomoirSkillPath = "Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset";
     private const string AttackAlertPath = "Assets/CombatRealTime/Presentation/AttackLightAlert.prefab";
-    private const string EastButtonPath = "Assets/UI/Inputs/XBox GamePad EastButton.png";
-    private const string NorthButtonPath = "Assets/UI/Inputs/XBox GamePad NorthButton.png";
     private const string ThreatAudioPath = "Assets/Audio/AudioClips/AudioClip_SFX_LightCharge.asset";
     private const string PerfectAudioPath = "Assets/Audio/AudioClips/AudioClip_SFX_LightImpact.asset";
     private const string WarningMaterialPath = "Assets/CombatRealTime/Presentation/MAT_CombatWarning.mat";
@@ -45,7 +41,6 @@ public static class CounterSkillPrototypeBuilder
         ConfigureAssomoirEvents();
         ConfigureSessionRoot(skill);
         RemoveBootstrapCounterWheel();
-        RemoveBootstrapReactionPrompt();
         RemoveBootstrapCounterWheel();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -57,10 +52,9 @@ public static class CounterSkillPrototypeBuilder
     {
         ConfigureAssomoirEvents();
         ConfigureSessionRoot(AssetDatabase.LoadAssetAtPath<CounterSkillSO>(SkillPath));
-        RemoveBootstrapReactionPrompt();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[Combat Telegraph] Assomoir, BattleManager et prompt world-space configures.");
+        Debug.Log("[Combat Telegraph] Assomoir et BattleManager configures.");
     }
 
     private static TimelineAsset BuildTimeline(AnimationClip playerClip, AnimationClip enemyClip)
@@ -154,11 +148,9 @@ public static class CounterSkillPrototypeBuilder
 
             CombatReactionTelegraphController telegraph = battleManager.GetComponent<CombatReactionTelegraphController>();
             if (telegraph == null) telegraph = battleManager.gameObject.AddComponent<CombatReactionTelegraphController>();
-            RealTimeCombatReactionPrompt prompt = CreateReactionPrompt(battleManager);
             SerializedObject telegraphSerialized = new SerializedObject(telegraph);
             telegraphSerialized.FindProperty("combatManager").objectReferenceValue = battleManager.GetComponent<RealTimeCombatManager>();
             telegraphSerialized.FindProperty("impactFeedback").objectReferenceValue = battleManager.GetComponent<CombatImpactFeedbackController>();
-            telegraphSerialized.FindProperty("prompt").objectReferenceValue = prompt;
             telegraphSerialized.ApplyModifiedPropertiesWithoutUndo();
             PrefabUtility.SaveAsPrefabAsset(root, SessionRootPath);
         }
@@ -207,70 +199,6 @@ public static class CounterSkillPrototypeBuilder
         var skill = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset");
         if (skill != null) JuggernautEssentialEvents.ConfigureSkill(skill, .837f);
     }
-
-    private static RealTimeCombatReactionPrompt CreateReactionPrompt(Transform battleManager)
-    {
-        Transform existing = battleManager.Find("RealTimeCombatReactionPrompt");
-        if (existing != null)
-        {
-            Object.DestroyImmediate(existing.gameObject);
-        }
-
-        GameObject root = new GameObject("RealTimeCombatReactionPrompt", typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup), typeof(RealTimeCombatReactionPrompt));
-        root.transform.SetParent(battleManager, false);
-        root.transform.localScale = Vector3.one * 0.01f;
-        Canvas canvas = root.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.overrideSorting = true;
-        canvas.sortingOrder = 1000;
-        RectTransform rootRect = root.GetComponent<RectTransform>();
-        rootRect.sizeDelta = new Vector2(360f, 110f);
-        RealTimeCombatReactionPrompt prompt = root.GetComponent<RealTimeCombatReactionPrompt>();
-
-        Image[] icons = new Image[3];
-        Sprite[] sprites =
-        {
-            AssetDatabase.LoadAssetAtPath<Sprite>(NorthButtonPath),
-            AssetDatabase.LoadAssetAtPath<Sprite>(EastButtonPath),
-            AssetDatabase.LoadAssetAtPath<Sprite>(SouthButtonPath)
-        };
-        for (int i = 0; i < icons.Length; i++)
-        {
-            GameObject iconObject = new GameObject("ReactionIcon_" + i, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            iconObject.transform.SetParent(root.transform, false);
-            RectTransform rect = iconObject.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(72f, 72f);
-            rect.anchoredPosition = new Vector2((i - 1) * 92f, 0f);
-            icons[i] = iconObject.GetComponent<Image>();
-            icons[i].sprite = sprites[i];
-            icons[i].preserveAspect = true;
-        }
-
-        SerializedObject serialized = new SerializedObject(prompt);
-        serialized.FindProperty("visualRoot").objectReferenceValue = root;
-        serialized.FindProperty("canvasGroup").objectReferenceValue = root.GetComponent<CanvasGroup>();
-        SerializedProperty iconArray = serialized.FindProperty("reactionIcons");
-        iconArray.arraySize = icons.Length;
-        for (int i = 0; i < icons.Length; i++) iconArray.GetArrayElementAtIndex(i).objectReferenceValue = icons[i];
-        serialized.FindProperty("counterIcon").objectReferenceValue = sprites[0];
-        serialized.FindProperty("dodgeIcon").objectReferenceValue = sprites[1];
-        serialized.FindProperty("jumpIcon").objectReferenceValue = sprites[2];
-        serialized.ApplyModifiedPropertiesWithoutUndo();
-        return prompt;
-    }
-
-    private static void RemoveBootstrapReactionPrompt()
-    {
-        var scene = EditorSceneManager.OpenScene(BootstrapPath, OpenSceneMode.Single);
-        RealTimeCombatReactionPrompt prompt = Object.FindAnyObjectByType<RealTimeCombatReactionPrompt>(FindObjectsInactive.Include);
-        if (prompt != null)
-        {
-            Object.DestroyImmediate(prompt.gameObject);
-        }
-        EditorSceneManager.MarkSceneDirty(scene);
-        EditorSceneManager.SaveScene(scene);
-    }
-
 
     private static void ConfigureCombatWarning(Transform battleManager)
     {

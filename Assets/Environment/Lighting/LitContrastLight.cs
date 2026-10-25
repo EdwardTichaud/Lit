@@ -72,7 +72,7 @@ public sealed class LitContrastLight : MonoBehaviour
                     "Use only inside the matching local Volume. It sculpts moonlit surfaces; it is not blue ambient fill.");
                 break;
             case Role.Flame:
-                SetProfile(LightType.Point, new Color(1f, 0.31f, 0.08f), LightUnit.Lumen, 330f, 4.5f, 55f, true, 0.75f, 0.65f, 0.55f, true, false,
+                SetProfile(LightType.Point, new Color(1f, 0.31f, 0.08f), LightUnit.Lumen, 2000f, 4.5f, 55f, true, 0.75f, 0.65f, 0.55f, true, false,
                     "Warm practical source. Keep its range short so the arena background stays dark.");
                 break;
             case Role.MagicOrIceCrystal:

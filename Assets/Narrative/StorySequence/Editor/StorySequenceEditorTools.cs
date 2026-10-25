@@ -12,7 +12,7 @@ namespace Lit.Story.Editor
 {
     public static class StorySequenceEditorTools
     {
-        private const string Root = "Assets/StorySequenceAssets";
+        private const string Root = "Assets/Narrative/StorySequence";
         private const string SequenceFolder = Root + "/Sequences";
         private const string ProfileFolder = Root + "/CameraProfiles";
         private const string PrefabFolder = Root + "/Prefabs";
@@ -345,6 +345,7 @@ namespace Lit.Story.Editor
                 errors.Add($"Sequence '{sequence.name}' sans sequenceId.");
             }
 
+            if (!sequence.TryValidate(out string issue)) errors.Add($"{sequence.name}: {issue}");
             if (sequence.steps == null)
             {
                 return;
@@ -520,12 +521,43 @@ namespace Lit.Story.Editor
     [CustomEditor(typeof(StorySequenceAsset))]
     public sealed class StorySequenceAssetEditor : UnityEditor.Editor
     {
+        private UnityEditorInternal.ReorderableList stepList;
+
+        private void OnEnable()
+        {
+            stepList = new UnityEditorInternal.ReorderableList(serializedObject,
+                serializedObject.FindProperty("steps"), true, true, true, true);
+            stepList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Etapes (glisser pour reordonner)");
+            stepList.elementHeightCallback = index => EditorGUI.GetPropertyHeight(
+                stepList.serializedProperty.GetArrayElementAtIndex(index), true) + 4f;
+            stepList.drawElementCallback = (rect, index, active, focused) =>
+            {
+                rect.y += 2f;
+                EditorGUI.PropertyField(rect, stepList.serializedProperty.GetArrayElementAtIndex(index),
+                    new GUIContent($"{index + 1}"), true);
+            };
+            stepList.onAddCallback = list =>
+            {
+                var steps = list.serializedProperty;
+                int index = steps.arraySize;
+                steps.arraySize++;
+                var step = steps.GetArrayElementAtIndex(index);
+                step.boxedValue = new StorySequenceStep { type = StorySequenceStepType.Wait };
+                step.isExpanded = true;
+                list.index = index;
+            };
+        }
+
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
+            serializedObject.Update();
+            DrawPropertiesExcluding(serializedObject, "m_Script", "steps");
+            stepList.DoLayoutList();
+            serializedObject.ApplyModifiedProperties();
             EditorGUILayout.Space();
 
             StorySequenceAsset sequence = (StorySequenceAsset)target;
+            if (!sequence.TryValidate(out string issue)) EditorGUILayout.HelpBox(issue, MessageType.Warning);
             bool completed = StorySequenceCompletionStore.IsCompleted(sequence);
             string storage = StorySequenceCompletionStore.HasActiveSave
                 ? $"Sauvegarde active : {SaveSessionManager.Instance.CurrentSaveName}"

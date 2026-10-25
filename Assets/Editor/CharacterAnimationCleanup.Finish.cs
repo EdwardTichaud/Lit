@@ -9,16 +9,6 @@ using Object = UnityEngine.Object;
 
 public static partial class CharacterAnimationCleanup
 {
-    static string ClipSignature(AnimationClip clip)
-    {
-        var text=new StringBuilder();text.Append(clip.length.ToString("R")).Append('|').Append(clip.frameRate).Append('|').Append(clip.isHumanMotion);
-        text.Append(JsonUtility.ToJson(AnimationUtility.GetAnimationClipSettings(clip)));
-        text.Append(JsonUtility.ToJson(new ActorFacingCalibration.Entry{events=ActorAnimationAudit.EventDetails(clip)}));
-        foreach(var binding in AnimationUtility.GetCurveBindings(clip).OrderBy(b=>b.path).ThenBy(b=>b.propertyName).ThenBy(b=>b.type.FullName))
-        {text.Append(binding.path).Append('|').Append(binding.propertyName).Append('|').Append(binding.type.FullName).Append(JsonUtility.ToJson(AnimationUtility.GetEditorCurve(clip,binding)));}
-        if(AnimationUtility.GetObjectReferenceCurveBindings(clip).Length>0)throw new InvalidOperationException("Object-reference animation requires explicit duplicate review");
-        return text.ToString();
-    }
     static void FinishEditorChanges()
     {
         report=JsonUtility.FromJson<Report>(File.ReadAllText(Output+"/report.json"));replacements.Clear();

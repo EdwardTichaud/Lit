@@ -7,7 +7,6 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
     public static CombatReactionTelegraphController Instance { get; private set; }
 
     [SerializeField] private RealTimeCombatManager combatManager;
-    [SerializeField] private RealTimeCombatReactionPrompt prompt;
     [SerializeField] private CombatImpactFeedbackController impactFeedback;
 
     private EnemyController activeEnemy;
@@ -65,7 +64,6 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
         if (!profile.enabled) return;
 
         ResolveReferences();
-        prompt?.BeginTelegraph(enemy.LockPoint, activeSkill);
         PlayAlert(profile.threatColor, profile);
         if (profile.anticipationAudio != null) AudioManager.PlayClipAtPoint(profile.anticipationAudio, enemy.LockPoint.position);
     }
@@ -73,7 +71,6 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
     public void Clear()
     {
         TimeManager.Instance?.ReleaseOwner(this);
-        prompt?.Clear();
         for (int i = activeAlerts.Count - 1; i >= 0; i--)
         {
             if (activeAlerts[i] != null) Destroy(activeAlerts[i]);
@@ -87,7 +84,6 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
     {
         if (!window.IsOpen)
         {
-            prompt?.Clear();
             return;
         }
 
@@ -98,7 +94,6 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
         if (!profile.enabled) return;
 
         ResolveReferences();
-        prompt?.OpenPerfectWindow(window.Enemy, activeSkill);
         PlayAlert(profile.perfectWindowColor, profile);
         if (profile.perfectWindowAudio != null) AudioManager.PlayClipAtPoint(profile.perfectWindowAudio, window.Enemy.position);
         if (profile.usePerfectWindowSlowMotion)
@@ -114,7 +109,6 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
     {
         if (activeSkill != skill) return;
         CombatReactionTelegraphProfile profile = activeSkill.ReactionTelegraph;
-        prompt?.Resolve(succeeded);
         if (succeeded && profile.successfulReactionAudio != null && activeEnemy != null)
         {
             AudioManager.PlayClipAtPoint(profile.successfulReactionAudio, activeEnemy.LockPoint.position);
@@ -146,6 +140,5 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
     {
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (impactFeedback == null) impactFeedback = GetComponent<CombatImpactFeedbackController>();
-        if (prompt == null) prompt = FindAnyObjectByType<RealTimeCombatReactionPrompt>(FindObjectsInactive.Include);
     }
 }

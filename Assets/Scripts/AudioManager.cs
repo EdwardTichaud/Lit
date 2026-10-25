@@ -314,6 +314,26 @@ public class AudioManager : MonoBehaviour
         UpdateZoneAudio();
     }
 
+    public bool IsMusicSource(AudioSource source) => source != null &&
+        (source == primarySource || source == secondarySource);
+
+    // For a frame-timed cinematic cue: remove the muted outgoing menu track first,
+    // then start the requested track without waiting through a crossfade.
+    public void PlayMusicImmediately(AudioClipSO clip)
+    {
+        EnsureMusicSources();
+        if (fadeRoutine != null) { StopCoroutine(fadeRoutine); fadeRoutine = null; }
+        primarySource.Stop();
+        secondarySource.Stop();
+        activeClip = clip != null && clip.audioClip != null ? clip : null;
+        if (activeClip == null) return;
+        activeSource.clip = activeClip.audioClip;
+        activeSource.loop = activeClip.loop;
+        ApplyClipPitch(activeSource, activeClip);
+        activeSource.volume = GetMusicSourceVolume(activeClip) * GetMusicMultiplier();
+        activeSource.Play();
+    }
+
     public void PlayMusic(AudioClipSO clip)
     {
         PlayMusic(clip, fadeDuration);

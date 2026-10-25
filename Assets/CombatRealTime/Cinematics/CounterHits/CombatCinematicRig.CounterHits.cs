@@ -34,7 +34,7 @@ public sealed partial class CombatCinematicRig : INotificationReceiver
         foreach (var hit in CounterHits(asset))
         {
             string state = "Base Layer.Hit_" + hit.hitIndex;
-            if (!hit.IsValid || target == null || !target.HasState(0, Animator.StringToHash(state)))
+            if (!hit.IsValid || (hit.hitIndex > 0 && (target == null || !target.HasState(0, Animator.StringToHash(state)))))
             { error = "CounterHit invalide ou etat manquant sur la victime : " + state; return false; }
         }
         error = null; return true;
@@ -62,12 +62,15 @@ public sealed partial class CombatCinematicRig : INotificationReceiver
     private void CombatLab_CounterHit_Damage_Animation_VFX_SFX(float damage, int hitIndex, GameObject vfx, AudioClipSO sfx, float blend)
     {
         if (!sessionActive || context?.Target?.Root == null || context.Target.IsDead) return;
-        int hash = Animator.StringToHash("Base Layer.Hit_" + hitIndex);
-        if (context.TargetAnimator == null || !context.TargetAnimator.HasState(0, hash)) return;
         int token = sessionToken;
-        // Start the pose before damage: lethal hits retain the normal death authority.
-        context.TargetAnimator.CrossFadeInFixedTime(hash, Mathf.Clamp(blend, 0, .25f), 0, 0);
-        AdvanceCounterHitPresentation(counterHitPoseTime);
+        if (hitIndex > 0)
+        {
+            int hash = Animator.StringToHash("Base Layer.Hit_" + hitIndex);
+            if (context.TargetAnimator == null || !context.TargetAnimator.HasState(0, hash)) return;
+            // Start the pose before damage: lethal hits retain the normal death authority.
+            context.TargetAnimator.CrossFadeInFixedTime(hash, Mathf.Clamp(blend, 0, .25f), 0, 0);
+            AdvanceCounterHitPresentation(counterHitPoseTime);
+        }
         if (context.AppliesGameplayEffects) context.ResolveCounterHitDamage?.Invoke(damage);
         if (!sessionActive || sessionToken != token || context?.TargetRoot == null) return;
         SpawnHitVfx(vfx);
@@ -75,7 +78,7 @@ public sealed partial class CombatCinematicRig : INotificationReceiver
     }
     private void BeginCounterHitPresentation(PlayableAsset timeline)
     {
-        if (!HasCounterHitSignals(timeline) || context?.TargetAnimator == null) return;
+        if (!CounterHits(timeline).Any(hit => hit.hitIndex > 0) || context?.TargetAnimator == null) return;
         counterHitAnimator = context.TargetAnimator;
         counterHitAnimatorEnabled = counterHitAnimator.enabled;
         counterHitKeepState = counterHitAnimator.keepAnimatorStateOnDisable;

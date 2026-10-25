@@ -32,3 +32,23 @@ surface par défaut, puis joue un clip aléatoire avec le volume et le pitch de
   global, afin d'éviter un état statique runtime.
 - Les futurs impacts/VFX/decals doivent réutiliser `SurfaceResolver` plutôt que
   refaire une résolution parallèle.
+
+
+## Musique synchronisee a l'intro video
+
+Le lecteur UI peut rendre audibles les seuls canaux musique au repere media de
+19 s. AudioManager.PlayMusicImmediately stoppe le titre precedent encore muet,
+applique les volumes/pitch/loop du clip et demarre le nouveau titre directement.
+IsMusicSource identifie ces canaux sans recherche par nom de GameObject.
+
+GameFlow garde temporairement un override sur Music_Maison (clip du HubManifest).
+Le ZoneRuntimeContext de Maison est configure avant liberation de cet override :
+le garde existant de PlayMusic conserve le meme AudioSource deja en lecture.
+Pas de reset du morceau a la fin de la video ni de dependance a la vitesse de
+chargement. Les cycles de mute du VideoPanel retirent ces canaux de leur snapshot
+lorsqu'ils sont rendus audibles, pour ne pas les remuter lors de la fermeture.
+Le pre-roll et le contrat de temps sont decrits dans systems/runtime_session.md.
+
+Validation : compilation native et suite Unity 27/27 passee. Le controle audio
+cible le choix des canaux a restituer et leur etat mute au handoff ; l'ecoute
+et la position reelle du morceau pendant un chargement complet restent a qualifier.

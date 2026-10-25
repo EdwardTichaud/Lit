@@ -23,6 +23,7 @@ MonoBehaviour:
   - {fileID: 102900000, guid: 1a8ff779189ab844e93214c342fdc2c1, type: 3}
   - {fileID: 102900000, guid: 405309556a65f6744918b2c54b44e578, type: 3}
   - {fileID: 102900000, guid: 7a30aa2a39c80674a82941e3c44b214f, type: 3}
+  - {fileID: 102900000, guid: 3e2f45b23169c6d4d9ca4fd7f8acacef, type: 3}
   postLoadingScenes: []
   primarySceneName: Maison_Core
   loadingMessage: On est jamais mieux que chez soi...
@@ -39,6 +40,7 @@ MonoBehaviour:
   - Maison_Environment_Near_3
   - Maison_Environment_Near_4
   - Maison_Environment_Far
+  - Maison_AccesReve
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
   bakedNavMeshData: {fileID: 0}

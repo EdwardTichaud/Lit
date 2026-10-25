@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0,0979638">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0.097964" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1020" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProject/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0.087139" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="35944" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1016" name="GameFlowDepartureFailureTests" fullname="GameFlowDepartureFailureTests" classname="GameFlowDepartureFailureTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0.085701" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="1019" name="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" fullname="GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" classname="GameFlowDepartureFailureTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0.080271" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1017" name="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(False)" fullname="GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(False)" methodname="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" classname="GameFlowDepartureFailureTests" runstate="Runnable" seed="1585023407" result="Passed" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0.061199" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[PersistentWorld] capture provider failed persistentId='scene:departure:uncapturable' componentType='Uncapturable departure object' provider='departure_failure_fixture' providerType='DepartureFailingProvider' error='Intentional departure capture failure.' stackTrace='System.InvalidOperationException: Intentional departure capture failure.
+  at DepartureFailingProvider.CaptureState (PersistentStateContext context) [0x0000e] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Editor\GameFlowDepartureFailureTests.cs:128 
+  at PersistentNetworkObject.CaptureSnapshot (PersistentStateContext context) [0x000eb] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Persistence\Save\World\PersistentNetworkObject.cs:156 '
+[SceneTransition] DepartureFailure_b15cd1f386e04ec1b334309fe2f1543a ->  | total 0,027s | plus longue frame 22,4 ms | Presentation de l'overlay 0,000s | Overlay opaque 0,004s | Depart annule ; zone conservee 0,022s | fin 0,000s
+]]></output>
+          </test-case>
+          <test-case id="1018" name="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(True)" fullname="GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(True)" methodname="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" classname="GameFlowDepartureFailureTests" runstate="Runnable" seed="1750171110" result="Passed" start-time="2026-10-25 12:27:33Z" end-time="2026-10-25 12:27:33Z" duration="0.003809" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[PersistentWorld] capture provider failed persistentId='scene:departure:uncapturable' componentType='Uncapturable departure object' provider='departure_failure_fixture' providerType='DepartureFailingProvider' error='Intentional departure capture failure.' stackTrace='System.InvalidOperationException: Intentional departure capture failure.
+  at DepartureFailingProvider.CaptureState (PersistentStateContext context) [0x0000e] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Editor\GameFlowDepartureFailureTests.cs:128 
+  at PersistentNetworkObject.CaptureSnapshot (PersistentStateContext context) [0x000eb] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Persistence\Save\World\PersistentNetworkObject.cs:156 '
+[SceneTransition] DepartureFailure_bfdad46823b44c9782ae2c6c17fee032 -> Maison | total 0,001s | plus longue frame 1,0 ms | Overlay opaque 0,000s | Depart annule ; zone conservee 0,001s | fin 0,000s
+Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

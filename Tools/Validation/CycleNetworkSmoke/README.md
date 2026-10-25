@@ -24,6 +24,30 @@ Scenarios: normal host/client; occupied client UI; interrupted dialogue and retr
 client disconnect; late arrival during a delayed presentation; all clients leaving
 a dedicated server; controller disable/reenable during playback.
 
+`skip` has both viewers intentionally pass their displayed line before the minimum
+duration. Each peer must display it exactly once and receive one successful
+authoritative completion, without a replay or a timeout.
+
+Native editor tests can also run on exact runtime code copies without closing
+the developer's editor:
+
+```powershell
+& ./Tools/Validation/CycleNetworkSmoke/Run.ps1 -DialogueTestsOnly
+& ./Tools/Validation/CycleNetworkSmoke/Run.ps1 -TimelineTestsOnly
+& ./Tools/Validation/CycleNetworkSmoke/Run.ps1 -MenuSessionTestsOnly
+& ./Tools/Validation/CycleNetworkSmoke/Run.ps1 -RecoveryTestsOnly
+```
+
+Run one option at a time. Reports retain the filenames `DialogueTests.xml` and
+`DialogueTests.log` for compatibility; the selected test class names in the XML
+identify the actual coverage. Timeline tests exercise real native graphs, including
+superseded host attempts. Menu tests cover lobby state and isolated temporary save
+transactions, not the rendered MainMenu scene or a complete Bootstrap startup.
+Recovery tests exercise the real BrokenAnchorTorch interaction and authoritative
+retry checks against an isolated controller; they also compile the editor launcher.
+They do not qualify the recovery RPC with production avatars or rendered Belmont.
+The editor test modes do not build or start the protocol player.
+
 Native Timeline scenarios use a single real player process and an authored
 one-second animation, without a character or save profile:
 
@@ -68,3 +92,10 @@ These assertions verify the actual UI lifecycle, NGO RPC transport and narrative
 progression protocol. They do **not** verify HDRP appearance, physical player
 interaction, navigation, the authored quest scenes or their Timeline camera shots.
 Keep the cycle EditMode tests and complete gameplay acceptance passes as well.
+
+For saved production content, `Lit/Validation/Audit Saved Bootstrap MainMenu District_1`
+is a separate read-only editor audit. It uses Preview scenes, preserves the user's
+loaded scene order and dirty flags, and checks file hashes before/after inspection.
+Its report is `Library/StartupDistrictValidation/SavedSceneAudit.json` and does not
+claim gameplay readiness. It can inspect saved content while a working scene is
+dirty; it never saves/discards that working scene or enters Play Mode.

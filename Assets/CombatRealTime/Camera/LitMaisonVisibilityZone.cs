@@ -4,11 +4,16 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering.HighDefinition;
 
-/// <summary>Explicit Maison-only preparation. Never changes shared material assets or physics.</summary>
+/// <summary>Scoped Maison/District_1 preparation. Never changes shared material assets or physics.</summary>
 [DisallowMultipleComponent]
 public sealed class LitMaisonVisibilityZone : MonoBehaviour
 {
+    [SerializeField] private bool districtOne;
+    public bool IsDistrictOne => districtOne;
+    // Called by the District_1 installer while its object is still inactive.
+    public void ConfigureForDistrictOne() => districtOne = true;
     [SerializeField] private Shader nativeLitMaskShader;
+    private Shader autodeskMaskShader;
     [SerializeField] private string[] environmentScenes = {
         "Maison_Environment_Near_1", "Maison_Environment_Near_2",
         "Maison_Environment_Near_3", "Maison_Environment_Near_4" };
@@ -32,11 +37,7 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
     private void OnEnable()
     {
         if (!Application.isPlaying) return;
-        if (nativeLitMaskShader == null)
-        {
-            var template = Resources.Load<Material>("MaisonVisibilityNativeLit");
-            if (template != null) nativeLitMaskShader = template.shader;
-        }
+        ResolveMaskShaders();
         zones.Add(this);
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.sceneUnloaded += OnSceneUnloaded;
@@ -48,28 +49,58 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
         yield return null;
         for (int i = 0; i < SceneManager.sceneCount; i++) PrepareScene(SceneManager.GetSceneAt(i));
     }
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PrepareScene(scene);
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (districtOne) StartCoroutine(PrepareDistrictAfterStart(scene));
+        else PrepareScene(scene);
+    }
+    private System.Collections.IEnumerator PrepareDistrictAfterStart(Scene scene)
+    {
+        // Include geometry assembled by scene components in Start, not only
+        // the renderers already present when sceneLoaded fires.
+        yield return null;
+        PrepareScene(scene);
+    }
+    private void ResolveMaskShaders()
+    {
+        if (nativeLitMaskShader == null)
+        {
+            var template = Resources.Load<Material>("MaisonVisibilityNativeLit");
+            if (template != null) nativeLitMaskShader = template.shader;
+        }
+        if (districtOne && autodeskMaskShader == null)
+        {
+            var template = Resources.Load<Material>("DistrictVisibilityAutodesk");
+            if (template != null) autodeskMaskShader = template.shader;
+        }
+    }
     private void PrepareScene(Scene scene)
     {
-        if (!scene.IsValid() || !scene.isLoaded || Array.IndexOf(environmentScenes, scene.name) < 0 ||
-            !scene.path.StartsWith("Assets/Scenes/Maison/", StringComparison.Ordinal) || !preparedScenes.Add(scene)) return;
+        if (!isActiveAndEnabled || !scene.IsValid() || !scene.isLoaded || !AcceptsScene(scene.path, scene.name) || !preparedScenes.Add(scene)) return;
+        PrepareSceneContent(scene);
+    }
+    private void PrepareSceneContent(Scene scene)
+    {
+        ResolveMaskShaders();
         int failed = 0;
         foreach (var root in scene.GetRootGameObjects())
         foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
         {
-            if (!IsArchitecture(renderer.name) || renderer.GetComponentInParent<Animator>() != null ||
+            if (!(districtOne ? IsDistrictArchitecture(renderer.transform, scene.name) : IsArchitecture(renderer.name)) ||
+                renderer.GetComponentInParent<Animator>() != null ||
                 renderer.GetComponent<LitCameraOcclusionGroup>() != null) continue;
             var originals = renderer.sharedMaterials;
             bool compatible = originals.Length > 0;
             foreach (var material in originals) compatible &= material != null &&
                 (LitTacticalMaskProperties.Supports(material) ||
-                (material.shader.name == "HDRP/Lit" && nativeLitMaskShader != null && nativeLitMaskShader.isSupported));
+                (material.shader.name == "HDRP/Lit" && nativeLitMaskShader != null && nativeLitMaskShader.isSupported) ||
+                (districtOne && IsAutodesk(material.shader) && autodeskMaskShader != null && autodeskMaskShader.isSupported));
             if (!compatible) { failed++; continue; }
             var assigned = new Material[originals.Length];
             for (int i = 0; i < originals.Length; i++)
             {
                 if (!copies.TryGetValue(originals[i], out var copy))
-                { copy = CreateMaskMaterial(originals[i], nativeLitMaskShader); copies.Add(originals[i], copy); }
+                { copy = CreateMaskMaterial(originals[i], nativeLitMaskShader, autodeskMaskShader); copies.Add(originals[i], copy); }
                 assigned[i] = copy;
             }
             renderer.sharedMaterials = assigned;
@@ -79,8 +110,44 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
         }
         unsupported += failed;
         RebuildCoverage();
-        if (failed > 0) Debug.LogWarning("[MaisonMask] " + scene.name + ": " + failed +
-            " éléments architecturaux ont des matériaux incompatibles ; ils restent inchangés. Voir le diagnostic Maison.", this);
+        if (failed > 0) Debug.LogWarning("[VisibilityMask] " + scene.name + ": " + failed +
+            " éléments architecturaux ont des matériaux incompatibles ; ils restent inchangés. Voir le diagnostic de zone.", this);
+    }
+
+    public bool AcceptsScene(string path, string name) => districtOne
+        ? LitDistrictOneVisibilityInstaller.IsDistrictScene(path, name)
+        : path.StartsWith("Assets/Scenes/Maison/", StringComparison.Ordinal) && Array.IndexOf(environmentScenes, name) >= 0;
+
+    public static bool IsDistrictArchitecture(Transform item, string sceneName)
+    {
+        // Narrative traces sometimes reuse a rock mesh. Inspect the whole
+        // hierarchy before accepting the mesh name as environmental architecture.
+        for (var current = item; current != null; current = current.parent)
+        {
+            string key = current.name.ToLowerInvariant();
+            if (key.Contains("web") || key.Contains("flame") || key.Contains("torche") ||
+                key.Contains("enemies") || key.Contains("characters") || key.Contains("blood") ||
+                key.Contains("memory_") || key.Contains("souvenir") || key.Contains("visualonly") ||
+                key.Contains("glitter") || key.Contains("stars") || key.StartsWith("vfx") ||
+                key == "sword" || key == "bow" || key.StartsWith("sm_sword") || key.StartsWith("sm_bow")) return false;
+        }
+        for (var current = item; current != null; current = current.parent)
+        {
+            string key = current.name.ToLowerInvariant();
+            if (!key.Contains("roof") && !key.Contains("toit") &&
+                (key.Contains("floor") || key.Contains("stairs") || key.Contains("ground") || key.Contains("terrain") || key.Contains("path") ||
+                 key.Contains("plane") || key.Contains("marche") || key.Contains("walkable") || key.Contains("platform") ||
+                 key.StartsWith("sol_") || key == "sol" || key.Contains("plateforme"))) return false;
+            if (IsArchitecture(current.name) || key.Contains("mur") || key.Contains("cloison") || key.Contains("pilier") ||
+                key.Contains("toit") || key.Contains("plafond") || key.Contains("poutre") || key.Contains("beam") ||
+                key.Contains("conduit") || key.Contains("pipe") || key.Contains("tuyau") || key.Contains("guardrail") ||
+                key.Contains("railing") || key.Contains("fence") || key.Contains("porte") || key.Contains("gate") ||
+                key.Contains("door") || key.Contains("rocher")) return true;
+        }
+        // Environment scenes also contain unnamed/default mesh pieces. Other
+        // scene types only opt their recognisable architecture into the effect.
+        return sceneName.IndexOf("environment", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            sceneName.IndexOf("environement", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     public static bool IsArchitecture(string name)
@@ -95,7 +162,11 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
             key.Contains("roof") || key.Contains("pillar") || key.Contains("rock") || key.Contains("ceiling");
     }
 
-    public static Material CreateMaskMaterial(Material original, Shader nativeShader = null)
+    public static bool IsAutodesk(Shader shader) => shader != null &&
+        shader.name.StartsWith("HDRP/Autodesk Interactive/", StringComparison.Ordinal) &&
+        shader.name.EndsWith("/AutodeskInteractive", StringComparison.Ordinal);
+
+    public static Material CreateMaskMaterial(Material original, Shader nativeShader = null, Shader autodeskShader = null)
     {
         var copy = new Material(original) { name = original.name + " (Maison visibility)", hideFlags = HideFlags.DontSave };
         bool wasCutout = original.HasProperty("_AlphaCutoffEnable") && original.GetFloat("_AlphaCutoffEnable") > .5f;
@@ -114,6 +185,11 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
             copy.shader = nativeShader != null ? nativeShader : Shader.Find("Lit/Camera/Maison HDRP Lit");
             copy.shaderKeywords = keywords;
             copy.renderQueue = queue;
+        }
+        else if (IsAutodesk(original.shader))
+        {
+            copy.shader = autodeskShader != null ? autodeskShader : Shader.Find("Lit/Camera/LitDistrictAutodeskMask");
+            HDMaterial.ValidateMaterial(copy);
         }
         copy.EnableKeyword("_ALPHATEST_ON");
         return copy;
@@ -154,10 +230,15 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
             if (entries[i].scene == scene) { Release(entries[i]); entries.RemoveAt(i); }
         preparedScenes.Remove(scene);
         RebuildCoverage();
+        if (entries.Count == 0)
+        {
+            foreach (var copy in copies.Values) if (copy != null) Destroy(copy);
+            copies.Clear();
+        }
     }
     private static void Release(Entry entry)
     {
-        if (entry.group != null) { entry.group.enabled = false; Destroy(entry.group); }
+        if (entry.group != null) { entry.group.enabled = false; DestroyOwned(entry.group); }
         if (entry.renderer == null) return;
         var current = entry.renderer.sharedMaterials;
         for (int i = 0; i < current.Length && i < entry.assigned.Length; i++)
@@ -166,12 +247,17 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
     }
     private void OnDisable()
     {
+        if (Application.isPlaying) StopAllCoroutines();
         zones.Remove(this);
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneUnloaded -= OnSceneUnloaded;
         foreach (var entry in entries) Release(entry);
         entries.Clear(); preparedScenes.Clear(); hasCoverage = false; unsupported = 0;
-        foreach (var copy in copies.Values) if (copy != null) Destroy(copy);
+        foreach (var copy in copies.Values) if (copy != null) DestroyOwned(copy);
         copies.Clear();
+    }
+    private static void DestroyOwned(UnityEngine.Object value)
+    {
+        if (Application.isPlaying) Destroy(value); else DestroyImmediate(value);
     }
 }

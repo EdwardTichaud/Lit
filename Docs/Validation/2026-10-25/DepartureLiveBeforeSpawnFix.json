@@ -1,0 +1,168 @@
+{
+    "run": "C:\\Users\\pierr\\git\\Lit\\Library\\StartupDistrictValidation\\PlayRuns\\72765d533a674ff1a9229fc348a0aa13",
+    "clone": "Assets/__StartupDistrictValidation/72765d533a674ff1a9229fc348a0aa13/Bootstrap.unity",
+    "utc": "2026-10-25T12:36:28.5914646Z",
+    "status": "Failed",
+    "reason": "Cancelled by validation coordinator.",
+    "oldPlayScene": "",
+    "fixtureId": "scene:validation:departure:72765d533a674ff1a9229fc348a0aa13",
+    "actorEntity": "80280:256",
+    "stage": 42,
+    "oldOptions": 1,
+    "started": 923.2194548,
+    "stageStarted": 997.2231859999999,
+    "oldOptionsEnabled": true,
+    "passed": false,
+    "restored": true,
+    "recovery": true,
+    "fullProductionReadiness": false,
+    "scope": "Real editor Bootstrap/menu solo creation, authored portal, all District_1 manifest scenes and return to menu. Public menu handlers and a UCC portal approach fixture; not manual input, cycle completion, multiplayer or visual quality proof. Saves isolated under this run directory. Also injects one invalid-identity scene object before each departure (Maison to District_1 and District_1 to Maison), requires actual rejection, visible same world, restored navigation/control and a successful retry after removing only that fixture.",
+    "scenes": [
+        {
+            "path": "Assets/Scenes/Bootstrap.unity",
+            "loaded": true,
+            "active": true
+        }
+    ],
+    "files": [
+        {
+            "path": "Assets/Scenes/Bootstrap.unity",
+            "hash": "FFF081980BEC9885C05C8C54A10E15746A741AC1CB93A0C0F660903D4B98E69D"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Core.unity",
+            "hash": "66FEE60B8F55917DEACECE3944E6620590870C18D746B44C0714FEB06653AE6D"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Corridor_Environment.unity",
+            "hash": "80F0F16BF31905984198D87CA4AC6BB553C4932A6D6FED6183A9DAFFFF7CA0DF"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Rooms_Environment.unity",
+            "hash": "2C4856ECAF12FF145DA67C6DBA2CCF4C098DE6BE10715C8704940AF23CEC63DA"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Crypt_Environment.unity",
+            "hash": "96D27C324E9360E0A2C31DEC3D08B0E70E52083A72CF087AC3450BCB5F5E495F"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Balcony_Environment.unity",
+            "hash": "5FC4AD0A9D798CFD6185C710A9104870B97D986FCB6C6531D2EBA503601BA9D0"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Arena_Environment.unity",
+            "hash": "6DC18B4D72D35B09190E0E4463293495B0F685F322C5DE6E54649F000BB9856B"
+        },
+        {
+            "path": "Assets/District_1_Indoor_Lights.unity",
+            "hash": "F938398C829B6D9C3E609FBE763C07443E09B062C754EDE0ED05C72C1AAD47A2"
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Luc/District_1_Cycle_Luc.unity",
+            "hash": "82FE15C91333907F661AC76282E66595AE6116E1F81BEC29484B830718E7B885"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Cycle_Gustave.unity",
+            "hash": "E3E8B3125B44A009430991E4F0A5E9146B34BDC140807633CF160A6DE4C9B6B6"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Enigme_Levers.unity",
+            "hash": "750DB0F2CF3B1171BB86B00E2493CB1B5884A1625F5B83E1001B12F23F03A14D"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Interactives.unity",
+            "hash": "A3C8AB9D5208DEBA31324A0740C0EB0CD5F022EBA693C7B57D2EC4B6AAF10085"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Environment_OldBarn.unity",
+            "hash": "285ABDC27C8806E95BDFAE4F72C71F629ED3AC966DCA22401DF79B41D05F3A9D"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Enemies.unity",
+            "hash": "A6BC38700F148CE05CBB15AF43C0BA3168269320745CC1BA4FC15EF627D4571B"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Sequences.unity",
+            "hash": "C61A099611089C59608820877C46A57D7632FBB92A9A26E2510A565D3EF8A664"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Rooms_Flammes.unity",
+            "hash": "41EE258399634F329E568AD7E3833BD762D5B35EEED1F3E623A4ED7911913A8D"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_Corridor_Flammes.unity",
+            "hash": "E4AA76C59E9194F2B6C9B0D7A220D9210788229F650439F7806DBC150D533FF5"
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Nina/District_1_Cycle_Nina.unity",
+            "hash": "4C5B011BACFF8F62A19C867BFEEF19CF29AFFCB708A65D2FF72313609BFAD0AA"
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Belmont/District_1_Cycle_Belmont.unity",
+            "hash": "A79C114DBEAACCE56DC0C2FC36EEBF41332451236B026372245CD34911CDB5BF"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_PuitsDeLaReleve_Environment.unity",
+            "hash": "10F5EC1B2E4A1170AB94D6570F94B17C47225B9945B168E03CA36C8B7CCAAA59"
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Etienne/District_1_Cycle_Etienne.unity",
+            "hash": "C7AE5A8CFF89D245B16D88DDF1AF55C47792FE156D2035E72C7D5C0DB1789167"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_ConduitsNoyés_Environement.unity",
+            "hash": "D9275708DC02799D1485597EF43C8A4A6F09E3AD9E0F206D3562AFAFBA6FDF91"
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Ardent/District_1_Cycle_Ardent.unity",
+            "hash": "6BD7FE3281C5FADDF45C014FB07EEC4059CA27DE7AF49358F106E44512D4A617"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity",
+            "hash": "08A47B521C4DBFC66B483C639235E72CF9AB98BB6929DB24ABD50CD6926C84CA"
+        },
+        {
+            "path": "Assets/Scenes/Cycles/Cycle_Clairmont/District_1_Cycle_Clairmont.unity",
+            "hash": "173959A727436A33CFF2A9CCF05D503B5AD27D2F5EDEED513AFA36BB6C2B565E"
+        },
+        {
+            "path": "Assets/Scenes/District_1/District_1_AbilityShortcuts.unity",
+            "hash": "FB74B37835D270711827D24F6E85283EC6C7C879E8D35861817562D126553779"
+        }
+    ],
+    "checks": [
+        "Bootstrap reached the actual menu with no active slot.",
+        "Solo options selected through the production menu handler.",
+        "Actual menu created an isolated solo session and spawned the controlled avatar.",
+        "A screen camera is enabled after Maison loading.",
+        "No previous rejection fixture remains in the world.",
+        "UCC fixture approached the real portal on a clear physical floor.",
+        "The authored portal accepted the normal production transition request.",
+        "The production archive rejected exactly one invalid fixture on departure 1.",
+        "Rejected departure retained the same controlled avatar.",
+        "Rejected departure released the opaque overlay and pointer blocker.",
+        "Rejected departure restored a screen camera.",
+        "The invalid fixture was preserved by the rejected departure.",
+        "UCC fixture approached the real portal on a clear physical floor.",
+        "The authored portal accepted the normal production transition request.",
+        "All District_1 manifest scenes loaded, navigation ready, avatar grounded and exploration input restored.",
+        "A screen camera is enabled after District_1 loading.",
+        "No previous rejection fixture remains in the world.",
+        "Requested real District_1-to-Maison departure with an uncapturable fixture.",
+        "The production archive rejected exactly one invalid fixture on departure 2.",
+        "Rejected departure retained the same controlled avatar.",
+        "Rejected departure released the opaque overlay and pointer blocker.",
+        "Rejected departure restored a screen camera.",
+        "The invalid fixture was preserved by the rejected departure.",
+        "Retried the real return to Maison after removing only the invalid fixture."
+    ],
+    "errors": [],
+    "expectedCaptureErrors": [
+        "[PersistentWorld] snapshot export rejected invalid identity persistentId='scene:validation:departure:72765d533a674ff1a9229fc348a0aa13' kind='ScenePlaced' runtimePrefab='validation:forbidden-on-scene-object' reason='scene-placed object must not carry a runtime prefab ID' path='Maison_Core:Owned validation departure rejection'",
+        "[PersistentWorld] snapshot export rejected invalid identity persistentId='scene:validation:departure:72765d533a674ff1a9229fc348a0aa13' kind='ScenePlaced' runtimePrefab='validation:forbidden-on-scene-object' reason='scene-placed object must not carry a runtime prefab ID' path='District_1_Core:Owned validation departure rejection'"
+    ],
+    "warnings": [
+        "The tree Träd must use the Nature/Soft Occlusion shader. Otherwise billboarding/lighting will not work correctly.",
+        "Failed to create agent because there is no valid NavMesh"
+    ]
+}

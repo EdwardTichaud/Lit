@@ -25,20 +25,26 @@ public static class CounterHitSignalValidation
     static int assertions;
     static void Require(bool condition, string message)
     { assertions++; if (!condition) throw new InvalidOperationException("CounterHit validation: " + message); }
-    public static void Run()
+    public static void Run() => Run(true);
+    public static void RunSignalFlow() => Run(false);
+    static void Run(bool validateAssets)
     {
         assertions = 0;
         Require(CounterHitSignal.RoundDamage(12.5f) == 12 && CounterHitSignal.RoundDamage(float.NaN) == 0 &&
             CounterHitSignal.RoundDamage(float.PositiveInfinity) == 0 && CounterHitSignal.RoundDamage(float.MaxValue) == int.MaxValue, "damage rounding/finite bounds");
+        if (validateAssets)
+        {
         var timelineAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
         var migrated = CombatCinematicRig.CounterHits(timelineAsset).OrderBy(m => m.time).ToArray();
-        Require(migrated.Length == 4 && migrated.All(m => m.IsValid && m.vfx != null && m.sfx != null), "migrated contacts/effects");
+        // Contact count is authored in Timeline; adding valid contacts must not fail cleanup validation.
+        Require(migrated.Length > 0 && migrated.All(m => m.IsValid && m.vfx != null && m.sfx != null), "migrated contacts/effects");
         Require(timelineAsset.GetRootTracks().OfType<AnimationTrack>().Where(t => t.name == "Enemy.Animator").All(t => t.muted), "fixed enemy animation must be muted");
         var paths = new[] { "Assets/Characters/3_Enemy/Juggernaut/BrainsProduction/Production.controller", "Assets/Characters/3_Enemy/Juggernaut_v2/StoneGolem_Humanoid.controller", "Assets/Werewolf/Werewolf Animator Controller.controller" };
         foreach (var path in paths)
         {
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             Require(controller.layers[0].stateMachine.states.Any(s => s.state.name == "Hit_1" && s.state.motion != null), "native Hit_1: " + path);
+        }
         }
         var root = new GameObject("CounterHit validation isolated"); root.hideFlags = HideFlags.HideAndDontSave;
         var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
@@ -119,6 +125,25 @@ public static class CounterHitSignalValidation
             Require(rig.TryPlay(Context(true, _ => rig.Stop()), timeline, "Player.Animator", "Enemy.Animator", out error), "reentrant interruption start");
             rig.OnNotify(director.playableGraph.GetRootPlayable(0), first, null);
             Require(calls == 4, "damage-triggered interruption safely releases feedback");
+            first.hitIndex = second.hitIndex = late.hitIndex = 0;
+            Require(first.IsValid && CombatCinematicRig.ValidateCounterHitStates(timeline, null, out error), "zero index needs no Hit_0 or Animator");
+            enemyAnimator.Play("Idle", 0, 0); enemyAnimator.Update(0);
+            Require(rig.TryPlay(Context(true), timeline, "Player.Animator", "Enemy.Animator", out error), "zero-only session starts");
+            Require(enemyAnimator.enabled == originalEnabled, "zero-only signals do not take Animator ownership");
+            var zeroOrigin = director.playableGraph.GetRootPlayable(0);
+            rig.OnNotify(zeroOrigin, first, null); rig.OnNotify(zeroOrigin, first, null);
+            Require(calls == 5 && Mathf.Approximately(total, 38), "zero index keeps damage exactly once");
+            Require(enemyAnimator.GetCurrentAnimatorStateInfo(0).IsName("Idle") && !enemyAnimator.IsInTransition(0), "zero index preserves current animation");
+            rig.Stop();
+            first.hitIndex = 1;
+            Require(rig.TryPlay(Context(true), timeline, "Player.Animator", "Enemy.Animator", out error), "mixed animated and zero signals start");
+            var mixedOrigin = director.playableGraph.GetRootPlayable(0);
+            rig.OnNotify(mixedOrigin, first, null); enemyAnimator.Update(.1f);
+            rig.OnNotify(mixedOrigin, second, null);
+            Require(calls == 7 && Mathf.Approximately(total, 54.25f) && enemyAnimator.GetCurrentAnimatorStateInfo(0).IsName("Hit_1"), "zero signal keeps previous Hit_1 and applies damage in mixed session");
+            rig.Stop();
+            first.hitIndex = -1;
+            Require(!first.IsValid && !CombatCinematicRig.ValidateCounterHitStates(timeline, enemyAnimator, out error), "negative index remains invalid");
             if (director.playableGraph.IsValid()) director.Stop();
         }
         finally
@@ -126,6 +151,6 @@ public static class CounterHitSignalValidation
             Object.DestroyImmediate(root); Object.DestroyImmediate(timeline); Object.DestroyImmediate(fallbackTimeline); Object.DestroyImmediate(definition);
             Object.DestroyImmediate(controllerFixture); Object.DestroyImmediate(clip);
         }
-        File.WriteAllText("Library/CounterHitSignals.validation.txt", "PASS " + assertions + " assertions; migrated assets, per-hit floats, indices, repeats, interruption, pool reuse, stale graph, death, observer and reentrant stop.");
+        File.WriteAllText(validateAssets ? "Library/CounterHitSignals.validation.txt" : "Library/CounterHitSignals.flow-validation.txt", "PASS " + assertions + " assertions; " + (validateAssets ? "migrated assets, " : "isolated signal flow, ") + "per-hit floats, zero/positive/negative indices, repeats, interruption, pool reuse, stale graph, death, observer and reentrant stop.");
     }
 }

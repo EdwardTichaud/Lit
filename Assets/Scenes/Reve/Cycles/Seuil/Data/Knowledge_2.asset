@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_2
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 64a561c9a971b884b8b6e43b0c451951
+  knowledgeId: reve.limbes.seuil.fragment.2
+  title: Des pierres qui se reconnaissent
+  description: "Les lignes interrompues reprennent sur ce dernier morceau. Ces fragments ne d\xE9crivent pas trois portes : ils appartiennent au m\xEAme passage."
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: reve.limbes
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: e15c870f17af3624cb3ab4b3e9e66f85, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

@@ -2,7 +2,10 @@ param(
     [string]$ProjectRoot = (Join-Path $PSScriptRoot '../../..'),
     [string]$UnityExe,
     [switch]$DialogueTestsOnly,
-    [ValidateSet('normal','busy','interrupt','disconnect','late','allgone','disable','timeline','timeline_stop','timeline_service','timeline_missing','timeline_pause','timeline_external_stop','sequence','sequence_interrupt')]
+    [switch]$TimelineTestsOnly,
+    [switch]$MenuSessionTestsOnly,
+    [switch]$RecoveryTestsOnly,
+    [ValidateSet('normal','skip','busy','interrupt','disconnect','late','allgone','disable','timeline','timeline_stop','timeline_service','timeline_missing','timeline_pause','timeline_external_stop','sequence','sequence_interrupt')]
     [string[]]$Scenarios = @('normal','busy','interrupt','disconnect','late','allgone','disable')
 )
 
@@ -51,6 +54,16 @@ $cycleSubjects = @('Assets/Narrative/Cycles/CycleController.cs','Assets/Narrativ
     'Assets/Narrative/Cycles/CycleAutoDialogueSession.cs','Assets/Narrative/Cycles/CycleProgressionService.cs','Assets/Scripts/DialoguePanelUI.cs',
     'Assets/Scripts/Timeline/TimelineManager.cs','Assets/Scripts/Timeline/TimelineBindingContract.cs',
     'Assets/Scripts/Timeline/TimelineDissolveTarget.cs','Assets/Scripts/Timeline/TimelinePlaybackParticipant.cs')
+if ($RecoveryTestsOnly) {
+    $cycleSubjects += @('Assets/Scenes/Cycles/Cycle_Belmont/BrokenAnchorTorch.cs',
+        'Assets/Scenes/Cycles/Cycle_Belmont/BrokenAnchorTorch.Recovery.cs')
+}
+if ($MenuSessionTestsOnly) {
+    $cycleSubjects += @('Assets/Persistence/Save/Session/SaveSessionManager.cs',
+        'Assets/Persistence/Save/Session/SaveMetadataWriter.cs',
+        'Assets/Persistence/Netcode/PrivateSession/PrivateLobbyState.cs',
+        'Assets/UI/MainMenu/SaveBrowser/MainMenuSaveCatalog.cs')
+}
 $cycleHashes = foreach ($cycleSubject in $cycleSubjects) {
     $cycleOriginalHash = (Get-FileHash -LiteralPath (Join-Path $cycleRepo $cycleSubject)).Hash
     $cycleCopyHash = (Get-FileHash -LiteralPath (Join-Path $cycleProject $cycleSubject)).Hash
@@ -60,21 +73,36 @@ $cycleHashes = foreach ($cycleSubject in $cycleSubjects) {
 $cycleRunDirectory = Join-Path $cycleReports ('Run-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $cycleRunDirectory | Out-Null
 $cycleHashes | Export-Csv -LiteralPath (Join-Path $cycleRunDirectory 'SourceHashes.csv') -NoTypeInformation
-if ($DialogueTestsOnly) {
+if ($DialogueTestsOnly -or $TimelineTestsOnly -or $MenuSessionTestsOnly -or $RecoveryTestsOnly) {
     # Test exact runtime copies without closing the developer's source editor.
-    foreach ($cycleTestName in @('CycleAutoDialogueTests.cs','CycleAutoDialogueControllerTests.cs')) {
-        Copy-Item -LiteralPath (Join-Path $cycleRepo ('Assets/Narrative/Cycles/Editor/' + $cycleTestName)) -Destination (Join-Path $cycleAssets ('Editor/' + $cycleTestName)) -Force
+    $cycleTestNames = if ($RecoveryTestsOnly) { @('BrokenAnchorRecoveryTests.cs') } elseif ($MenuSessionTestsOnly) { @('MainMenuSessionTests.cs') } elseif ($TimelineTestsOnly) { @('CycleTimelineRuntimeTests.cs') } else { @('CycleAutoDialogueTests.cs','CycleAutoDialogueControllerTests.cs') }
+    $cycleTestFilter = if ($RecoveryTestsOnly) { '"^BrokenAnchorRecoveryTests"' } elseif ($MenuSessionTestsOnly) { '"^(MainMenuSessionTests|SaveTransactionTests)"' } elseif ($TimelineTestsOnly) { '"^CycleTimelineRuntimeTests"' } else { '"^(CycleAutoDialogueTests|CycleAutoDialogueControllerTests)"' }
+    $cycleTestSource = if ($RecoveryTestsOnly) { 'Assets/Scenes/Cycles/Cycle_Belmont/Editor/' } elseif ($MenuSessionTestsOnly) { 'Assets/Editor/Tests/' } else { 'Assets/Narrative/Cycles/Editor/' }
+    foreach ($cycleTestName in $cycleTestNames) {
+        Copy-Item -LiteralPath (Join-Path $cycleRepo ($cycleTestSource + $cycleTestName)) -Destination (Join-Path $cycleAssets ('Editor/' + $cycleTestName)) -Force
+    }
+    if ($RecoveryTestsOnly) {
+        # Compile the real launcher as well; no request file is installed in
+        # this isolated project, so it cannot launch an unrelated suite.
+        if (Test-Path -LiteralPath (Join-Path $cycleProject 'Library/CycleTests.request')) { throw 'Unexpected pending cycle test request in isolated project.' }
+        if (Test-Path -LiteralPath (Join-Path $cycleProject 'Library/StartupDistrictValidation/SavedSceneAudit.request')) { throw 'Unexpected pending saved-scene audit request in isolated project.' }
+        foreach ($cycleEditorSource in @('Assets/Narrative/Cycles/Editor/CycleTestRunner.cs',
+            'Assets/Editor/Validation/BootstrapDistrictSavedSceneAudit.cs',
+            'Assets/Narrative/Cycles/Editor/CycleProjectValidator.cs',
+            'Assets/Editor/MainMenu/MainMenuBuildValidator.cs', 'Assets/Editor/TimelineBindingsValidator.cs')) {
+            Copy-Item -LiteralPath (Join-Path $cycleRepo $cycleEditorSource) -Destination (Join-Path $cycleAssets ('Editor/' + [IO.Path]::GetFileName($cycleEditorSource))) -Force
+        }
     }
     $cycleTestRun = Start-Process -FilePath $UnityExe -ArgumentList @('-batchmode','-nographics','-projectPath',('"'+$cycleProject+'"'),
-        '-runTests','-testPlatform','EditMode','-testFilter','"^(CycleAutoDialogueTests|CycleAutoDialogueControllerTests)"',
+        '-runTests','-testPlatform','EditMode','-testFilter',$cycleTestFilter,
         '-testResults',('"'+(Join-Path $cycleRunDirectory 'DialogueTests.xml')+'"'),
         '-logFile',('"'+(Join-Path $cycleRunDirectory 'DialogueTests.log')+'"')) -WindowStyle Hidden -PassThru
     $cycleTestRun.WaitForExit()
-    if ($cycleTestRun.ExitCode -ne 0) { throw "Dialogue tests failed; inspect $cycleRunDirectory/DialogueTests.log" }
+    if ($cycleTestRun.ExitCode -ne 0) { throw "Selected editor tests failed; inspect $cycleRunDirectory/DialogueTests.log" }
     foreach ($cycleSubjectHash in $cycleHashes) {
         if ((Get-FileHash -LiteralPath (Join-Path $cycleRepo $cycleSubjectHash.Subject)).Hash -ne $cycleSubjectHash.Hash) { throw 'A tested source changed during the run; rerun against the current worktree.' }
     }
-    Write-Output "Isolated dialogue tests passed. Reports: $cycleRunDirectory"
+    Write-Output "Selected isolated editor tests passed. Reports: $cycleRunDirectory"
     return
 }
 $cycleBuild = Start-Process -FilePath $UnityExe -ArgumentList @('-batchmode','-nographics','-projectPath',('"'+$cycleProject+'"'),

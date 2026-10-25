@@ -1,0 +1,448 @@
+VBCSCompilerPreWarmer: watching VBCSCompiler (PID 48564)
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 31056)
+VBCSCompiler prewarm took 42.56 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Pierre" at "2026-10-25T12:17:06.2708049Z"
+Built from '6000.6/staging' branch; Version is '6000.6.4f1 (12bfff696524) revision 1228799'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 10  (10.0.19045) 64bit Core' Language: 'fr' Physical Memory: 16315 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-25T12:17:06Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.6.4f1\Editor\Unity.exe
+-batchmode
+-nographics
+-projectPath
+C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject
+-quit
+-logFile
+C:/Users/pierr/git/Lit/Library/StartupDistrictValidation/PlayProbeCompileFinal.log
+Successfully changed project path to: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject
+C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProject
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-remapper-allocator-initial-capacity=32768"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-main-allocator-mimalloc-enabled=1"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Logging is directed to a specific file, skipping project log.
+Player connection [11868]  Target information:
+
+Player connection [11868]  * "[IP] 192.168.1.15 [Port] 55505 [Flags] 2 [Guid] 3759764060 [EditorId] 3759764060 [Version] 1048832 [Id] WindowsEditor(7,PC-Pierre) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [11868] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [11868] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-46628" after 0.7 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.3'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-Pierre"
+[Licensing::IpcConnector] LicenseClient-Pierre channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Pierre-6000.6.4" at "2026-10-25T12:17:08.5540119Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 44856, path: "C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              4c36c3f13cd34d64855d1d96fae20a83
+  Correlation Id:          1c1bd5bd8bc43a5498b6c67ea8a3b441
+  External correlation Id: 5002106581984291258
+  Machine Id:              0O8bEQ64cOajKQIItSuf5xVu1I4=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-Pierre-6000.6.4" (connect: 0.00s, validation: 0.00s, handshake: 0.01s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Pierre-6000.6.4-notifications" at "2026-10-25T12:17:08.5691004Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 20066728887692-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 2.31s
+[Licensing::Module] Licensing is initialized (took 1.25s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+Launching Unity Data Store - C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/Tools/Unity.DataStore.exe 
+Unity Data Store artifact dir = Library/DataStore, working dir = C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProjectUnity Data Store running and initialised
+Refreshing native plugins compatible for Editor in 2.71 ms, found 0 plugins.
+[Physics::Module] Selected backend (deferred post-plugins).
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Initialize engine version: 6000.6.4f1 (12bfff696524)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProject/Assets
+Forcing GfxDevice: Null
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
+Mono path[2] = 'C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56628
+CodeReloadManager initialized
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.4f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.005009 seconds.
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  1.527 seconds
+Domain Reload Profiling: 2404ms
+	BeginReloadAssembly (233ms)
+		CreateAndSetChildDomain (6ms)
+	RebuildCommonClasses (8ms)
+	RebuildNativeTypeToScriptingClass (36ms)
+	initialDomainReloadingComplete (108ms)
+	LoadAllAssembliesAndSetupDomain (491ms)
+		LoadAssemblies (220ms)
+		TypeCache.Refresh (350ms)
+			TypeCache.ScanAssembly (325ms)
+		AnalyzeDomain (1ms)
+	FinalizeReload (1528ms)
+		SetupLoadedEditorAssemblies (0ms)
+			BeforeProcessingInitializeOnLoad (129ms)
+			ProcessInitializeOnLoadAttributes (129ms)
+			ProcessInitializeOnLoadMethodAttributes (949ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 99 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.ai.navigation@2.0.14 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.ai.navigation@134dd6a3b97b)
+    com.unity.collab-proxy@2.13.6 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.collab-proxy@4628d2ba6ea4)
+    com.unity.dt.app-ui@2.1.13 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.dt.app-ui@9d0f103f520a)
+    com.unity.formats.fbx@5.1.6 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.formats.fbx@9f10493e557a)
+    com.unity.ide.rider@3.0.40 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.ide.rider@e4950c6d131b)
+    com.unity.inputsystem@1.20.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.inputsystem@7a4e1a2a8194)
+    com.unity.postprocessing@3.5.4 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.postprocessing@141166b789e3)
+    com.unity.probuilder@6.1.2 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.probuilder@8be9724b2335)
+    com.unity.services.multiplayer@2.3.3 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.multiplayer@3bd2e24872f4)
+    com.unity.visualscripting@1.9.12 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.visualscripting@4edfcc09512f)
+    com.unity.searcher@4.9.5 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.searcher@a463122f2c00)
+    com.unity.services.qos@1.4.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.qos@03d4b52d4980)
+    com.unity.services.core@1.18.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.core@3464cb68d709)
+    com.unity.services.wire@1.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.wire@0986c357ead1)
+    com.unity.services.deployment@1.7.2 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.deployment@c07c64f9804b)
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.services.authentication@3.8.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.authentication@6613d5ec6ae8)
+    com.unity.profiling.core@1.0.3 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.profiling.core@8a49f7027d06)
+    com.unity.settings-manager@2.1.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.settings-manager@0b8638c5ce86)
+    com.unity.nuget.mono-cecil@1.11.6 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.autodesk.fbx@5.1.3 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.autodesk.fbx@90432ec06ab5)
+    com.unity.ide.visualstudio@2.0.27 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.ide.visualstudio@dc1ddd4f09b6)
+    com.unity.performance.profile-analyzer@1.4.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.performance.profile-analyzer@2bb26871883c)
+    com.unity.testtools.codecoverage@1.3.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.testtools.codecoverage@19a841221620)
+    com.unity.2d.animation@16.0.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.animation@899988b542b9)
+    com.unity.2d.pixel-perfect@6.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.pixel-perfect@a860cb24a0cc)
+    com.unity.2d.psdimporter@15.0.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.psdimporter@e02a9153d8d9)
+    com.unity.2d.spriteshape@16.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.spriteshape@42798c9d35d3)
+    com.unity.2d.tilemap.extras@9.0.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.tilemap.extras@9446f3c60919)
+    com.unity.2d.aseprite@6.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.aseprite@ab909e3e9b5f)
+    com.unity.2d.tooling@4.0.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.tooling@4e93af4036ee)
+    com.unity.splines@2.9.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.splines@edbe9aefec91)
+    com.unity.services.deployment.api@1.1.3 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.services.deployment.api@9becf6da0f1a)
+    com.unity.2d.common@15.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.common@b779c433ed47)
+  Built-in packages:
+    com.unity.cinemachine@6.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.cinemachine@f53aa49b3acc)
+    com.unity.editorcoroutines@6.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.editorcoroutines@8cd72baa102a)
+    com.unity.feature.2d@2.0.2 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.feature.2d@11724ae7e5b5)
+    com.unity.feature.development@1.0.2 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.feature.development@767aadbc6eb7)
+    com.unity.multiplayer.center@2.0.1 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.multiplayer.center@549886182930)
+    com.unity.render-pipelines.core@17.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.render-pipelines.core@285af6b8c83f)
+    com.unity.render-pipelines.high-definition@17.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.render-pipelines.high-definition@d2ce0954bf9d)
+    com.unity.render-pipelines.universal@17.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.render-pipelines.universal@b0678dfc9e21)
+    com.unity.render-pipelines.universal-config@17.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.render-pipelines.universal-config@561422b74439)
+    com.unity.shadergraph@17.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.shadergraph@58bcb150677d)
+    com.unity.timeline@6.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.timeline@c56d56b0070b)
+    com.unity.transport@6.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.transport@b08a21757155)
+    com.unity.ugui@2.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.ugui@0727b404f3a0)
+    com.unity.visualeffectgraph@17.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.visualeffectgraph@3c55eb193cdb)
+    com.unity.modules.accessibility@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.physicscore2d@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.physicscore2d)
+    com.unity.modules.screencapture@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.terrainphysics)
+    com.unity.modules.tetgen@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.tetgen)
+    com.unity.modules.tilemap@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.tilemap)
+    com.unity.modules.timelinefoundation@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.timelinefoundation)
+    com.unity.modules.ui@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.video)
+    com.unity.modules.wind@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.collections@6.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.collections@10fff0607388)
+    com.unity.burst@2.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.burst@626e66ab421b)
+    com.unity.mathematics@1.4.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.mathematics@8306a64d0cd6)
+    com.unity.graph-authoring@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.graph-authoring@cfd2588851ee)
+    com.unity.ext.nunit@2.1.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.ext.nunit@0198eae3b53e)
+    com.unity.test-framework@1.8.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.test-framework@80f691d4262b)
+    com.unity.2d.sprite@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.sprite@752945c75a6f)
+    com.unity.2d.tilemap@1.0.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.2d.tilemap@f4c7bd71ac8a)
+    com.unity.test-framework.performance@6.6.0 (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Library\PackageCache\com.unity.test-framework.performance@b6023decb532)
+  Embedded packages:
+    com.unity.netcode.gameobjects@file:C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.unity.netcode.gameobjects (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.unity.netcode.gameobjects)
+    com.unity.render-pipelines.high-definition-config@file:C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.unity.render-pipelines.high-definition-config (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.unity.render-pipelines.high-definition-config)
+    com.opsive.shared@file:C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.opsive.shared (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.opsive.shared)
+    com.opsive.ultimatecharactercontroller@file:C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.opsive.ultimatecharactercontroller (location: C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Packages\com.opsive.ultimatecharactercontroller)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.03 seconds
+[ScriptCompilation] Requested script compilation because: AssetDatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.6.4f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProject
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 3s568ms
+[1657/2214  0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[2210/2214  0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+Assets\Editor\BootstrapDistrictPlayProbe.cs(161,20): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+
+Assets\Editor\BootstrapDistrictPlayProbe.cs(217,77): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+
+Assets\Editor\BootstrapDistrictPlayProbe.cs(217,22): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+[2211/2214  1s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 154 defines and 469 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, Unity.Netcode.Editor.CodeGen.INetworkMessageILPP, Unity.Netcode.Editor.CodeGen.INetworkSerializableILPP, Unity.Netcode.Editor.CodeGen.NetworkBehaviourILPP, Unity.Netcode.Editor.CodeGen.RuntimeAccessModifiersILPP, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+1 processor(s) skipped this assembly
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running Unity.Netcode.Editor.CodeGen.INetworkMessageILPP
+
+running Unity.Netcode.Editor.CodeGen.INetworkSerializableILPP
+
+running Unity.Netcode.Editor.CodeGen.NetworkBehaviourILPP
+
+running Unity.Netcode.Editor.CodeGen.RuntimeAccessModifiersILPP
+[2212/2214  0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[2213/2214  0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+*** Tundra build success (3.42 seconds), 5 items updated, 2214 evaluated
+Assets\Editor\BootstrapDistrictPlayProbe.cs(161,20): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+Assets\Editor\BootstrapDistrictPlayProbe.cs(217,77): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets\Editor\BootstrapDistrictPlayProbe.cs(217,22): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+AssetDatabase: script compilation time: 4.780572s
+Begin MonoManager ReloadAssembly
+'Packages/com.unity.render-pipelines.core/Editor/Deprecated.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.render-pipelines.core/Editor/Deprecated.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+Refreshing native plugins compatible for Editor in 49.44 ms, found 7 plugins.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 10.44 ms, found 7 plugins.
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-Lit
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  4.820 seconds
+Domain Reload Profiling: 8124ms
+	BeginReloadAssembly (541ms)
+		DisableScriptedObjects (31ms)
+		CreateAndSetChildDomain (166ms)
+	RebuildCommonClasses (23ms)
+	RebuildNativeTypeToScriptingClass (35ms)
+	initialDomainReloadingComplete (193ms)
+	LoadAllAssembliesAndSetupDomain (2510ms)
+		LoadAssemblies (1387ms)
+		TypeCache.Refresh (669ms)
+			TypeCache.ScanAssembly (637ms)
+		AnalyzeDomain (312ms)
+			BuildScriptInfoCaches (291ms)
+			ResolveRequiredComponents (18ms)
+	FinalizeReload (4822ms)
+		SetupLoadedEditorAssemblies (0ms)
+			LogAssemblyErrors (8ms)
+			BeforeProcessingInitializeOnLoad (221ms)
+			ProcessInitializeOnLoadAttributes (1624ms)
+			ProcessInitializeOnLoadMethodAttributes (2479ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (7ms)
+		AwakeInstancesAfterBackupRestoration (52ms)
+Starting new worker id: 0 with log in C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProject/Logs/AssetImportWorkerHW0.log
+Refreshing native plugins compatible for Editor in 18.50 ms, found 7 plugins.
+
+Asset Pipeline Refresh (id=4afb979b2da01a641816fa780f4752b3): Total: 21.126 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=9151 ms
+		Asset DB Callback time: managed=3256 ms, native=101 ms
+		Scripting: domain reloads=1, domain reload time=3587 ms, compile time=4788 ms, other=239 ms
+		Project Asset Count: scripts=3266, non-scripts=7811
+		Asset File Changes: new=0, changed=1, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 49.487ms
+	ApplyChangesToAssetFolders: 1.784ms
+	Scan: 946.588ms
+	Collect global state as custom dependencies: 25.985ms
+	OnSourceAssetsModified: 1.069ms
+	CategorizeScriptCompilationAssets: 270.677ms
+	ProcessAssetsWithTransientArtifactChanges: 388.382ms
+	CategorizeAssets: 1504.686ms
+	CompileScripts: 4787.887ms
+	ImportOutOfDateAssets: 4947.465ms (4905.242ms without children)
+		UnloadImportedAssets: 2.380ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 3.314ms
+		ImportSchedulerStart: 36.523ms
+	PostProcessAllAssets: 3266.475ms
+		VCAutoAddAssetPostprocess 5.468ms
+		XRBuildSystem.XRAssetImported 3.276ms
+		PostProcessCallbackCreateDeferredMaterials 0.590ms
+		MonoPostProcessAllAssets: 3255.549ms
+			HDRenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 1966.723ms
+			AssetPostprocessor.OnPostprocessAllAssets 103.006ms
+			AssetPostprocessorProxy.OnPostprocessAllAssets 91.965ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 78.634ms
+			NetworkPrefabProcessor.OnPostprocessAllAssets 48.812ms
+			VFXGraphPreprocessor.OnPostprocessAllAssets 48.297ms
+			SpriteSlicePostprocessor.OnPostprocessAllAssets 32.461ms
+			UniversalRenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 23.456ms
+			SpriteEditorTexturePostprocessor.OnPostprocessAllAssets 21.657ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 19.872ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 18.335ms
+			AssetChangedListener.OnPostprocessAllAssets 14.970ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 14.176ms
+			MaterialPostprocessor.OnPostprocessAllAssets 12.133ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 11.419ms
+			ShaderGraphAssetPostProcessor.OnPostprocessAllAssets 10.505ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 7.880ms
+			SpriteShapeAssetPostProcessor.OnPostprocessAllAssets 6.765ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 5.542ms
+			ThemePostprocessor.OnPostprocessAllAssets 5.467ms
+			CubeLutAssetImporter.OnPostprocessAllAssets 3.969ms
+			SpriteLibraryAssetPostprocessor.OnPostprocessAllAssets 3.647ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 3.223ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 2.503ms
+			PSDImportPostProcessor.OnPostprocessAllAssets 2.442ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 2.347ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 1.856ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 1.743ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 1.546ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 1.316ms
+			PostProcessor.OnPostprocessAllAssets 1.314ms
+			SyncVS.PostprocessSyncProject 1.174ms
+			PSDImporterAssetPostProcessor.OnPostprocessAllAssets 1.123ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.924ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 0.893ms
+			ShaderReflectionAssetPostProcessor.OnPostprocessAllAssets 0.606ms
+			UVCSAssetPostprocessor.OnPostprocessAllAssets 0.601ms
+			AssetProcessor.OnPostprocessAllAssets 0.539ms
+			SamplePostprocessor.OnPostprocessAllAssets 0.537ms
+			CinemachineSettings.OnPostprocessAllAssets 0.508ms
+			DomainReloadProcessor.OnPostprocessAllAssets 0.429ms
+			AssetEvents.OnPostprocessAllAssets 0.384ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 0.270ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.257ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 0.204ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.194ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.151ms
+			AssetReloadNotifier.OnPostprocessAllAssets 0.130ms
+	PostAssetChangesProfiler: 51.145ms
+	UnloadStreamsBegin: 1.833ms
+	PersistCurrentRevisions: 0.596ms
+	GenerateScriptTypeHashes: 3.392ms
+	GenerateScriptTypeSerializationHashes: 5.729ms
+	Untracked: 4870.262ms
+
+Application.AssetDatabase Initial Refresh End
+Shader Hidden/ChartRasterizerHardware is not supported: GPU does not support conservative rasterization
+Shader Hidden/ChartRasterizerHardware is not supported: GPU does not support conservative rasterization
+Scanning for USB devices : 4.450ms
+Initializing Unity extensions:
+Worker ready: AssetImportWorkerHW0 0
+Unloading 763 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 14324 unused Assets / (16.5 MB). Loaded Objects now: 15532.
+Memory consumption went from 0.71 GB to 0.69 GB.
+Total: 69.101000 ms (FindLiveObjects: 2.263600 ms CreateObjectMapping: 2.279000 ms MarkObjects: 46.804200 ms  DeleteObjects: 16.734000 ms)
+
+Batchmode quit successfully invoked - shutting down!
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-Pierre-6000.6.4-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-Pierre-6000.6.4 channel disconnected successfully.
+Lingering sessions upon destruction of worker manager
+Unity Data Store service was successfully shut down
+UDS shutting down local client system
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+CodeReloadManager destroyed
+Exiting batchmode successfully now!
+[ExitDontLaunchBugReporter] Exiting without the bug reporter. Application will exit with return code 0

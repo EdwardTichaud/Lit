@@ -3,6 +3,12 @@
 État du chantier : en cours, reprise le 24 octobre 2026. Ce document ne constitue pas une
 validation de parcours multijoueur.
 
+**Périmètre confirmé par l'utilisateur le 25 octobre : Bootstrap, MainMenu et
+toutes les scènes District_1.** La matrice d'acceptation, les preuves de cette
+reprise et les cases encore ouvertes sont dans
+`Bootstrap_District1_Robustness_Acceptance.md`. Le contenu futur du jeu est hors
+de cette vérification.
+
 ### Correction du 25 octobre — répliques automatiques passées
 
 Passer volontairement une réplique chronométrée avec Interagir/Valider/Annuler

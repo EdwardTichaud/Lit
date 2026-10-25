@@ -29,7 +29,10 @@ namespace Lit.Story
         [SerializeField] private UnityEvent onSequenceCompleted;
         [SerializeField] private UnityEvent onSequenceAborted;
 
+        [SerializeField] private StorySequenceNamePrompt namePrompt;
+        private bool stepFailed;
         private Coroutine playbackRoutine;
+        private Coroutine deferredPlaybackRoutine;
         private SquadCharacterController lockedPlayerController;
         private bool playerLockHeld;
         private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
@@ -56,6 +59,7 @@ namespace Lit.Story
             ResolveReferences();
             if (playOnStart &&
                 sequence != null &&
+                sequence.TryValidate(out _) &&
                 sequence.startFromBlack &&
                 (!sequence.playOnce || !StorySequenceCompletionStore.IsCompleted(sequence)))
             {
@@ -76,12 +80,40 @@ namespace Lit.Story
                 yield break;
             }
 
+            if (deferredPlaybackRoutine != null) yield break;
+
             if (startDelay > 0f)
             {
                 yield return new WaitForSecondsRealtime(startDelay);
             }
 
             Play();
+        }
+
+        // Called explicitly once the destination actors and navigation have been prepared.
+        // Owned by this runner so unloading the session cancels the deferred playback too.
+        public void PlayAfterLoading()
+        {
+            if (!isActiveAndEnabled || IsPlaying || deferredPlaybackRoutine != null) return;
+            string issue = null;
+            if (sequence == null || !sequence.TryValidate(out issue))
+            {
+                Debug.LogWarning($"StorySequenceRunner: '{sequence?.name}' non prete. " +
+                    (sequence == null ? "Sequence manquante." : issue), this);
+                return;
+            }
+            ResolveReferences();
+            if (sequence.startFromBlack) fadeController?.SetImmediate(1f);
+            deferredPlaybackRoutine = StartCoroutine(PlayAfterLoadingRoutine());
+        }
+
+        private IEnumerator PlayAfterLoadingRoutine()
+        {
+            // Avoid a synchronous completion overwriting the routine handle.
+            yield return null;
+            yield return LoadingScreenService.WaitUntilHidden();
+            deferredPlaybackRoutine = null;
+            if (!Play()) fadeController?.SetImmediate(0f);
         }
 
         public bool Play()
@@ -91,12 +123,21 @@ namespace Lit.Story
 
         public bool Play(StorySequenceAsset targetSequence)
         {
-            if (targetSequence == null || IsPlaying)
+            if (!isActiveAndEnabled || targetSequence == null || IsPlaying)
             {
                 return false;
             }
 
             ResolveReferences();
+            if (!targetSequence.TryValidate(out string issue) || bindings == null ||
+                fadeController == null || cameraDriver == null || dialoguePresenter == null ||
+                (targetSequence.RequiresNamePrompt && (namePrompt == null || !namePrompt.HasKeyboard)))
+            {
+                Debug.LogWarning($"StorySequenceRunner: '{targetSequence.name}' refusee : " +
+                    (issue ?? "rig incomplet"), this);
+                fadeController?.SetImmediate(0f);
+                return false;
+            }
             sequence = targetSequence;
             if (sequence.playOnce && StorySequenceCompletionStore.IsCompleted(sequence))
             {
@@ -109,8 +150,16 @@ namespace Lit.Story
             return true;
         }
 
+        private void CancelDeferredPlayback()
+        {
+            if (deferredPlaybackRoutine == null) return;
+            StopCoroutine(deferredPlaybackRoutine);
+            deferredPlaybackRoutine = null;
+        }
+
         public void Abort()
         {
+            CancelDeferredPlayback();
             if (playbackRoutine != null)
             {
                 StopCoroutine(playbackRoutine);
@@ -128,6 +177,7 @@ namespace Lit.Story
 
         private IEnumerator PlayRoutine(StorySequenceAsset activeSequence)
         {
+            stepFailed = false;
             advanceRequested = false;
             currentStepSkippable = false;
             launchCombatOnSequenceEnd = false;
@@ -182,6 +232,7 @@ namespace Lit.Story
                     currentStepStartedFrame = Time.frameCount;
                     advanceRequested = false;
                     yield return ExecuteStep(step, activeSequence.useUnscaledTime);
+                    if (stepFailed) { FinishPlayback(completed: false); yield break; }
                     if (deferPlayerLock &&
                         step.type == StorySequenceStepType.ProgressivePlayerStop &&
                         !playerLockHeld)
@@ -273,6 +324,11 @@ namespace Lit.Story
 
                 case StorySequenceStepType.ProgressivePlayerStop:
                     yield return ExecuteProgressivePlayerStop(step, useUnscaledTime);
+                    break;
+
+                case StorySequenceStepType.ChooseMuninName:
+                    yield return namePrompt.ChooseName();
+                    stepFailed = !namePrompt.Confirmed;
                     break;
 
                 case StorySequenceStepType.LaunchCombat:
@@ -708,6 +764,7 @@ namespace Lit.Story
 
         private void RestoreGameplay()
         {
+            namePrompt?.Cancel();
             dialoguePresenter?.HideImmediate();
             RestoreCamera();
             ReleasePlayerControl();
@@ -854,6 +911,8 @@ namespace Lit.Story
                 fadeController = GetComponent<StorySequenceFadeController>();
             }
 
+            if (namePrompt == null) namePrompt = GetComponent<StorySequenceNamePrompt>();
+
             if (bindings == null || fadeController == null)
             {
                 Debug.LogError(
@@ -864,6 +923,8 @@ namespace Lit.Story
 
         private void OnDisable()
         {
+            CancelDeferredPlayback();
+            fadeController?.SetImmediate(0f);
             if (playbackRoutine != null)
             {
                 StopCoroutine(playbackRoutine);

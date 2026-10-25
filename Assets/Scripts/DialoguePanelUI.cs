@@ -191,7 +191,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         timedConversationCompleted = false;
         timedConversation = forceTimed;
         onHiddenCallback = onHidden;
-        dialogueText.text = message;
+        dialogueText.text = Lit.Story.StorySequenceNames.Resolve(message);
         SetVisible(true);
 
         isShowing = true;
@@ -230,7 +230,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         CancelActivePresentation();
         externallyControlled = true;
-        dialogueText.text = message;
+        dialogueText.text = Lit.Story.StorySequenceNames.Resolve(message);
         SetVisible(true);
         SetCanvasAlpha(0f);
         isShowing = true;
@@ -247,7 +247,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
             return;
         }
 
-        dialogueText.text = message ?? string.Empty;
+        dialogueText.text = Lit.Story.StorySequenceNames.Resolve(message);
     }
 
     public void HideControlled()

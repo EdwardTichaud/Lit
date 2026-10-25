@@ -1,3 +1,84 @@
+## Intro video et rencontre Munin (2026-10-25)
+
+Nouvelle partie : Resources/Videos/Lit_Intro -> VideoPlayer auteur Bootstrap
+(UI_Overlay/VideoPanel/VideoPanel_Root) -> Maison preparee -> 1_Munin_Meeting.
+Le menu reference le prefab dedie ; GameFlow consomme la demande une fois et
+instancie le rig apres placement, puis PlayAfterLoading attend la fin du loading.
+Reprises et portails ne relancent pas la rencontre ; retour/annulation nettoient
+les demandes. Presentation locale au createur, sans nouvelle synchro reseau.
+
+Video : BootstrapVideoPanel pilote le lecteur auteur et la RawImage ajoutee a
+VideoPanel_Root, avec FitInParent et fond noir sur VideoPanel. UiPanel cache au
+boot ; aucun VideoPlayer/Canvas genere pour l'intro. NewGameIntroPlayer est un
+adaptateur Resources vers ce panneau partage. Lease par appelant, arret/erreur/
+annulation avec nettoyage des callbacks, focus et audio du menu. Copie identique
+StreamingAssets retiree ; Resources est la source livree. Compilation native
+runtime/Editor et 27/27 tests Unity passes : clip Resources avec audio, lecteur
+auteur unique, references UI et masquage/proportions verifies en preview. Le
+decodage/rendu, le son joue et le raccord complet restent a qualifier en Play.
+
+Timing intro : loading opaque au moins 2,5 s avant lecture ; video preparee et
+piste Music_Maison prechargee pendant cet ecran. Le repere 19 s utilise seulement
+VideoPlayer.time (pas la duree du chargement ni Time.time). Musique lancee une
+fois via AudioManager persistant, au volume musique habituel ; les autres sons
+restent muets pendant le film. La piste continue durant le chargement apres les
+28 s de video ; le ZoneRuntimeContext de Maison prend la suite sans redemarrage.
+Override d'intro nettoye a la prise de relais, annulation ou retour menu.
+Compilation runtime/Editor native et 27/27 tests Unity passes (zero echec/ignore),
+dont seuil media, pause, saut de frame, seconde lecture et restitution selective
+des canaux musique. Precision audible et raccord complet en Play restent a qualifier.
+
+Rencontre configuree : Lucian demande « Qui es-tu ? Comment t'appelles-tu ? »,
+puis ChooseMuninName ouvre les touches du clavier virtuel existant. Validation
+vide : Munin. Apres validation, Lucian reprend avec le nom choisi puis « Allez,
+il est temps d'y aller ». Dialogues texte sans doublage audio ajoute.
+
+Le nom est une variable monde story.munin.name, dans les snapshots existants,
+reinitialisee/restauree avec la partie. Balise [Munin] disponible dans les textes
+StorySequence et DialoguePanelUI sans modifier leurs assets VoiceLineData.
+Saisie clavier physique, souris ou manette ; focus/mode UI et curseur restitues
+sur fermeture/annulation. Un nom non valide n'est pas enregistre a l'abandon.
+
+Inspecteur : etapes reordonnables, champs par type, validation avant lancement.
+Compilation C# runtime/Editor et import natif passes ; 27/27 tests Unity auteur,
+nom, snapshot binaire, clavier et panneau video passes (zero echec/ignore).
+Rendu, inputs et parcours complet Bootstrap -> intro -> rencontre ->
+gameplay a qualifier en Play Mode. Details : systems/narrative.md.
+
+## CounterHit sans reaction (2026-10-25)
+
+HitIndex 0 accepte : pas de Hit_0, pas de changement d'etat ; degats/VFX/SFX
+conserves. Une Timeline avec uniquement des indices 0 ne prend pas l'autorite
+Animator des reactions. Indices negatifs et etats positifs absents refuses.
+Validation ciblee : commande CounterHitSignals validate-flow, independante de
+la configuration auteur de la Timeline : 28 assertions passees dans Unity.
+Compilation runtime/Editor reussie ; rendu en jeu a verifier. Aucun marqueur
+ou asset Timeline modifie.
+
+## Nettoyage controllers et avatars (2026-10-25)
+
+Graphes retenus : Lucian_ImpactLab, Juggernaut/BrainsProduction/Production,
+Juggernaut_v2/StoneGolem_Humanoid (dernier controller auteur) et Werewolf natif.
+References scene/prefabs et installateurs adaptees ; 15 etats compatibles
+manquants conserves. Overrides requis et Player_Model partage restent des
+dependances, pas des copies de production a supprimer. Timeline et signaux
+CounterHit conserves. Consolidation du doublon exact TwinSword_Attack15 avec
+conservation du GUID historique. Aucun autre personnage migre.
+Archive : D:/LitAssetArchive/2026-10-25-animation-cleanup-101902 ; premier import
+Generic du Golem dans l'archive voisine 2026-10-25-animation-cleanup-101544.
+Suppression finale terminee Unity ferme : quatre assets et leurs metadonnees,
+archives verifies SHA-256 et aucun GUID reference par les assets conserves.
+Rapport Library/CharacterAnimationCleanup/report.json ; controle du rendu
+apres reouverture encore requis.
+Verification Unity du nettoyage : avatar Golem valide Humanoid et assets
+retires absents. Test CounterHit actualise pour accepter le nombre de contacts
+auteur (six actuellement) : tous valides avec effets resolus. Test strict bloque
+ensuite car Enemy.Animator est maintenant demutee dans la Timeline auteur ;
+aucune modification automatique de cette piste. Les 25 assertions precedentes
+ne constituent donc pas une validation de cette nouvelle configuration.
+Le plan de schema commun ci-dessous reste non applique ; ses inventaires sont
+anterieurs au nettoyage. Rendu du Golem Humanoid a qualifier dans le jeu.
+
 ## Contrat Animator commun — prevalidation, migration non appliquee (2026-10-25)
 
 Reference choisie explicitement : Player_Model.controller. Meme structure et
@@ -25,7 +106,8 @@ CombatLab_CounterHit_Damage_Animation_VFX_SFX : Damage float, Hit Index,
 Blend Seconds, Vfx, Sfx. Horaires conserves ; 25 degats de base au total
 initialises en 6/6/7/6, editables par marqueur. Enemy.Animator conservee mais
 muette pour laisser jouer Hit_n propre a chaque ennemi. Alias natifs Hit_1
-dans les controllers actifs (StoneGolem aussi Hit_2/Hit_3), sans changer
+dans les controllers actifs. Les anciens Hit_2/Hit_3 Generic du Golem ne sont
+pas transferes au controller Humanoid ; leur disponibilite doit etre verifiee. Sans changer
 leurs motions existantes. Modification auteur precedente des clips de la
 Timeline preservee ; rig et installateur ne recreent plus les anciens impacts.
 
@@ -38,31 +120,13 @@ Compilation Unity et 25 assertions EditMode de graphe passees ; configuration
 repetee : zero difference sur sept assets, references clips auteur preservees.
 Rapports Library/CounterHitSignals*. Rendu Play Mode et host/client non valides.
 
-## Execution TwinBlades / StoneGolem (2026-10-25)
+## Retrait des adaptations Execution / Executed1 (2026-10-25)
 
-Copies nommees Execution1_Inplace_Humanoid et Executed1_Inplace_Generic
-reimportees par API Unity : Original, rotation offset 0, rotation bakee.
-La seconde etait en realite Humanoid ; son import est maintenant Generic
-avec masque Humanoid retire. GUID, fileID des clips, durees et evenements
-conserves ; FBX fournisseur originaux intacts.
-
-Cible Generic confirmee par l'utilisateur : StoneGolem. Le FBX Generic natif
-TwinBlades n'est pas directement compatible avec ce squelette. Clip adapte :
-Assets/StoneGolem/Animations/Calibrated/Twinblades_Attack_Executed1_Inplace_Generic.anim.
-Retarget Humanoid hors runtime sur le vrai squelette puis courbes Transform
-Generic ; aucune conversion du modele/prefab StoneGolem de production.
-Helpers sous FacingCalibration/Execution/EditorSources. Duree 3 s conservee,
-densite de capture 480 Hz sans changement de vitesse ; courbes reduites puis
-comparees sur 5 761 poses, quarts d'intervalles independants inclus : erreur
-maximale 3,8 mm / 0,244 degre. Racine physique immobile, evenements conserves.
-Execution Humanoid verifiee sur Lucian et Juggernaut. Aucun controller/Timeline
-reference les deux nouvelles copies FBX dans l'inventaire serialise trouve ;
-aucun remplacement global. Utiliser le .anim adapte pour StoneGolem.
-Compilation Unity et validation ciblee passees ; seconde execution sans
-modification du clip adapte ni des deux imports FBX/GUID. Rendu en contexte de jeu et
-synchronisation du couple executeur/victime restent a verifier visuellement.
-Rapports : Library/ActorFacingCalibration/execution-clips.json et
-executed-stonegolem.json. Menu Calibrate Named Execution Clips reproduit le lot.
+Retrait demande uniquement pour ce lot ; calibration du regard et RetouchedWalks
+conservees. Copies et outils specifiques retires, sources fournisseur conservees.
+StoneGolem utilise desormais l'avatar Humanoid de l'atelier sur le modele
+principal Assets/StoneGolem/Mesh/StoneGolem.fbx (GUID conserve). Les mesures
+historiques Generic ci-dessous ne qualifient pas ce nouvel import Humanoid.
 
 ## Calibration du regard, premier lot laboratoire (2026-10-24)
 

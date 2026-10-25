@@ -1,0 +1,1501 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="211" result="Passed" total="211" passed="211" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-25 12:50:53Z" end-time="2026-10-25 12:51:00Z" duration="6,9912022">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2607" result="Passed" start-time="2026-10-25 12:50:53Z" end-time="2026-10-25 12:51:00Z" duration="6.991202" total="211" passed="211" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2525" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1255" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:51:00Z" duration="6.356773" total="211" passed="211" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16480" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="2440" name="ArdentCycleTests" fullname="ArdentCycleTests" classname="ArdentCycleTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.313542" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2441" name="AuthoredScenesPassAudit" fullname="ArdentCycleTests.AuthoredScenesPassAudit" methodname="AuthoredScenesPassAudit" classname="ArdentCycleTests" runstate="Runnable" seed="874944476" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.174318" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2455" name="DevStartIsMemoryOnly" fullname="ArdentCycleTests.DevStartIsMemoryOnly" classname="ArdentCycleTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.028794" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2451" name="DevStartIsMemoryOnly(&quot;echo_relay_one_tuned&quot;)" fullname="ArdentCycleTests.DevStartIsMemoryOnly(&quot;echo_relay_one_tuned&quot;)" methodname="DevStartIsMemoryOnly" classname="ArdentCycleTests" runstate="Runnable" seed="1301284643" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.009094" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2452" name="DevStartIsMemoryOnly(&quot;false_choir_defeated&quot;)" fullname="ArdentCycleTests.DevStartIsMemoryOnly(&quot;false_choir_defeated&quot;)" methodname="DevStartIsMemoryOnly" classname="ArdentCycleTests" runstate="Runnable" seed="1456124884" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000431" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2453" name="DevStartIsMemoryOnly(&quot;voice_departure_seen&quot;)" fullname="ArdentCycleTests.DevStartIsMemoryOnly(&quot;voice_departure_seen&quot;)" methodname="DevStartIsMemoryOnly" classname="ArdentCycleTests" runstate="Runnable" seed="21994510" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000329" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2454" name="DevStartIsMemoryOnly(&quot;nora_spoken&quot;)" fullname="ArdentCycleTests.DevStartIsMemoryOnly(&quot;nora_spoken&quot;)" methodname="DevStartIsMemoryOnly" classname="ArdentCycleTests" runstate="Runnable" seed="1579966876" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000294" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2442" name="DormantBossCannotBypassGatheringThroughManualCombatOrAggro" fullname="ArdentCycleTests.DormantBossCannotBypassGatheringThroughManualCombatOrAggro" methodname="DormantBossCannotBypassGatheringThroughManualCombatOrAggro" classname="ArdentCycleTests" runstate="Runnable" seed="706025203" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.003437" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2450" name="EvidenceAndRelayPermutationsRemainParallel" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.033128" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2444" name="EvidenceAndRelayPermutationsRemainParallel(0,1,2)" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel(0,1,2)" methodname="EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" seed="497568971" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.001986" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2445" name="EvidenceAndRelayPermutationsRemainParallel(0,2,1)" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel(0,2,1)" methodname="EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" seed="1305239671" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000580" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2446" name="EvidenceAndRelayPermutationsRemainParallel(1,0,2)" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel(1,0,2)" methodname="EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" seed="1213463436" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000531" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2447" name="EvidenceAndRelayPermutationsRemainParallel(1,2,0)" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel(1,2,0)" methodname="EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" seed="1055409630" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000503" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2448" name="EvidenceAndRelayPermutationsRemainParallel(2,0,1)" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel(2,0,1)" methodname="EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" seed="663307567" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000475" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2449" name="EvidenceAndRelayPermutationsRemainParallel(2,1,0)" fullname="ArdentCycleTests.EvidenceAndRelayPermutationsRemainParallel(2,1,0)" methodname="EvidenceAndRelayPermutationsRemainParallel" classname="ArdentCycleTests" runstate="Runnable" seed="1832015110" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000408" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2456" name="FalseChoirOnlyTakesDamageDuringRevealAndRejectsDuplicateOrWrongRelay" fullname="ArdentCycleTests.FalseChoirOnlyTakesDamageDuringRevealAndRejectsDuplicateOrWrongRelay" methodname="FalseChoirOnlyTakesDamageDuringRevealAndRejectsDuplicateOrWrongRelay" classname="ArdentCycleTests" runstate="Runnable" seed="358647117" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.017568" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2443" name="MemoryIsAnEditableFourShotTimeline" fullname="ArdentCycleTests.MemoryIsAnEditableFourShotTimeline" methodname="MemoryIsAnEditableFourShotTimeline" classname="ArdentCycleTests" runstate="Runnable" seed="1733820792" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.011589" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2457" name="BelmontCycleTests" fullname="BelmontCycleTests" classname="BelmontCycleTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:55Z" duration="0.122832" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2461" name="AuthoredBossKeepsItsOwnDeathPresentationPolicy" fullname="BelmontCycleTests.AuthoredBossKeepsItsOwnDeathPresentationPolicy" classname="BelmontCycleTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.020121" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2458" name="AuthoredBossKeepsItsOwnDeathPresentationPolicy(&quot;Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/BrokenAnchor.prefab&quot;,True)" fullname="BelmontCycleTests.AuthoredBossKeepsItsOwnDeathPresentationPolicy(&quot;Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/BrokenAnchor.prefab&quot;,True)" methodname="AuthoredBossKeepsItsOwnDeathPresentationPolicy" classname="BelmontCycleTests" runstate="Runnable" seed="906463301" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.003217" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2459" name="AuthoredBossKeepsItsOwnDeathPresentationPolicy(&quot;Assets/Scenes/Cycles/Cycle_Etienne/Prefabs/Prefab_DeadWeight.prefab&quot;,False)" fullname="BelmontCycleTests.AuthoredBossKeepsItsOwnDeathPresentationPolicy(&quot;Assets/Scenes/Cycles/Cycle_Etienne/Prefabs/Prefab_DeadWeight.prefab&quot;,False)" methodname="AuthoredBossKeepsItsOwnDeathPresentationPolicy" classname="BelmontCycleTests" runstate="Runnable" seed="1412539612" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.001606" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2460" name="AuthoredBossKeepsItsOwnDeathPresentationPolicy(&quot;Assets/Scenes/Cycles/Cycle_Ardent/Prefabs/Prefab_FalseChoir.prefab&quot;,False)" fullname="BelmontCycleTests.AuthoredBossKeepsItsOwnDeathPresentationPolicy(&quot;Assets/Scenes/Cycles/Cycle_Ardent/Prefabs/Prefab_FalseChoir.prefab&quot;,False)" methodname="AuthoredBossKeepsItsOwnDeathPresentationPolicy" classname="BelmontCycleTests" runstate="Runnable" seed="543377932" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.001481" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2476" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.018312" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2470" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress(0,1,2)" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress(0,1,2)" methodname="DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" seed="1847652644" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.002616" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2471" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress(0,2,1)" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress(0,2,1)" methodname="DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" seed="1121327281" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000635" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2472" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress(1,0,2)" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress(1,0,2)" methodname="DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" seed="781723959" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000470" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2473" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress(1,2,0)" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress(1,2,0)" methodname="DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" seed="832363745" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000342" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2474" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress(2,0,1)" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress(2,0,1)" methodname="DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" seed="1379844448" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000300" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2475" name="DevTorchObjectivesStayParallelAndDoNotWriteProgress(2,1,0)" fullname="BelmontCycleTests.DevTorchObjectivesStayParallelAndDoNotWriteProgress(2,1,0)" methodname="DevTorchObjectivesStayParallelAndDoNotWriteProgress" classname="BelmontCycleTests" runstate="Runnable" seed="1470928626" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:54Z" duration="0.000304" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2469" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-25 12:50:54Z" end-time="2026-10-25 12:50:55Z" duration="0.069695" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2463" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder(0,1,2)" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder(0,1,2)" methodname="EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" seed="1961531887" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.014326" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[BrokenAnchorBoss] combat engagé | segments=3/3
+[BrokenAnchorBoss] torche 'Isolated torch 0' acceptée (événement de torche) : segments 3/3 -> 2/3.
+[BrokenAnchorBoss] torche 'Isolated torch 0' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] torche 'Isolated torch 1' acceptée (événement de torche) : segments 2/3 -> 1/3.
+[BrokenAnchorBoss] torche 'Isolated torch 1' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.
+[BrokenAnchorBoss] torche 'Isolated torch 2' acceptée (événement de torche) : segments 1/3 -> 0/3.
+[BrokenAnchorBoss] torche 'Isolated torch 2' détectée (projectile) mais combat non actif.
+]]></output>
+          </test-case>
+          <test-case id="2464" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder(0,2,1)" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder(0,2,1)" methodname="EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" seed="200519363" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.008479" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[BrokenAnchorBoss] combat engagé | segments=3/3
+[BrokenAnchorBoss] torche 'Isolated torch 0' acceptée (événement de torche) : segments 3/3 -> 2/3.
+[BrokenAnchorBoss] torche 'Isolated torch 0' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] torche 'Isolated torch 2' acceptée (événement de torche) : segments 2/3 -> 1/3.
+[BrokenAnchorBoss] torche 'Isolated torch 2' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.
+[BrokenAnchorBoss] torche 'Isolated torch 1' acceptée (événement de torche) : segments 1/3 -> 0/3.
+[BrokenAnchorBoss] torche 'Isolated torch 1' détectée (projectile) mais combat non actif.
+]]></output>
+          </test-case>
+          <test-case id="2465" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder(1,0,2)" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder(1,0,2)" methodname="EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" seed="2024938613" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.007319" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[BrokenAnchorBoss] combat engagé | segments=3/3
+[BrokenAnchorBoss] torche 'Isolated torch 1' acceptée (événement de torche) : segments 3/3 -> 2/3.
+[BrokenAnchorBoss] torche 'Isolated torch 1' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] torche 'Isolated torch 0' acceptée (événement de torche) : segments 2/3 -> 1/3.
+[BrokenAnchorBoss] torche 'Isolated torch 0' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.
+[BrokenAnchorBoss] torche 'Isolated torch 2' acceptée (événement de torche) : segments 1/3 -> 0/3.
+[BrokenAnchorBoss] torche 'Isolated torch 2' détectée (projectile) mais combat non actif.
+]]></output>
+          </test-case>
+          <test-case id="2466" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder(1,2,0)" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder(1,2,0)" methodname="EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" seed="434173771" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.006626" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[BrokenAnchorBoss] combat engagé | segments=3/3
+[BrokenAnchorBoss] torche 'Isolated torch 1' acceptée (événement de torche) : segments 3/3 -> 2/3.
+[BrokenAnchorBoss] torche 'Isolated torch 1' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] torche 'Isolated torch 2' acceptée (événement de torche) : segments 2/3 -> 1/3.
+[BrokenAnchorBoss] torche 'Isolated torch 2' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.
+[BrokenAnchorBoss] torche 'Isolated torch 0' acceptée (événement de torche) : segments 1/3 -> 0/3.
+[BrokenAnchorBoss] torche 'Isolated torch 0' détectée (projectile) mais combat non actif.
+]]></output>
+          </test-case>
+          <test-case id="2467" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder(2,0,1)" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder(2,0,1)" methodname="EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" seed="1787471574" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.006628" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[BrokenAnchorBoss] combat engagé | segments=3/3
+[BrokenAnchorBoss] torche 'Isolated torch 2' acceptée (événement de torche) : segments 3/3 -> 2/3.
+[BrokenAnchorBoss] torche 'Isolated torch 2' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] torche 'Isolated torch 0' acceptée (événement de torche) : segments 2/3 -> 1/3.
+[BrokenAnchorBoss] torche 'Isolated torch 0' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.
+[BrokenAnchorBoss] torche 'Isolated torch 1' acceptée (événement de torche) : segments 1/3 -> 0/3.
+[BrokenAnchorBoss] torche 'Isolated torch 1' détectée (projectile) mais combat non actif.
+]]></output>
+          </test-case>
+          <test-case id="2468" name="EachTorchRemovesExactlyOneHealthPointInEveryOrder(2,1,0)" fullname="BelmontCycleTests.EachTorchRemovesExactlyOneHealthPointInEveryOrder(2,1,0)" methodname="EachTorchRemovesExactlyOneHealthPointInEveryOrder" classname="BelmontCycleTests" runstate="Runnable" seed="714649450" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.006410" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[[BrokenAnchorBoss] combat engagé | segments=3/3
+[BrokenAnchorBoss] torche 'Isolated torch 2' acceptée (événement de torche) : segments 3/3 -> 2/3.
+[BrokenAnchorBoss] torche 'Isolated torch 2' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] torche 'Isolated torch 1' acceptée (événement de torche) : segments 2/3 -> 1/3.
+[BrokenAnchorBoss] torche 'Isolated torch 1' ignorée (projectile) : déjà comptabilisée.
+[BrokenAnchorBoss] résolution : troisième torche validée, tirs arrêtés et séquence Belmont autorisée.
+[BrokenAnchorBoss] torche 'Isolated torch 0' acceptée (événement de torche) : segments 1/3 -> 0/3.
+[BrokenAnchorBoss] torche 'Isolated torch 0' détectée (projectile) mais combat non actif.
+]]></output>
+          </test-case>
+        </test-suite>
+        <test-case id="2462" name="ExternalDeathPresentationRemainsOptInForFutureBosses" fullname="BelmontCycleTests.ExternalDeathPresentationRemainsOptInForFutureBosses" methodname="ExternalDeathPresentationRemainsOptInForFutureBosses" classname="BelmontCycleTests" runstate="Runnable" seed="1907936902" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.000459" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2477" name="BelmontReleaseSceneTests" fullname="BelmontReleaseSceneTests" classname="BelmontReleaseSceneTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.102294" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2478" name="SavedReleaseHasEditableClipsBoundTargetsAndPersistentHandoff" fullname="BelmontReleaseSceneTests.SavedReleaseHasEditableClipsBoundTargetsAndPersistentHandoff" methodname="SavedReleaseHasEditableClipsBoundTargetsAndPersistentHandoff" classname="BelmontReleaseSceneTests" runstate="Runnable" seed="1970287767" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.038203" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2479" name="BrokenAnchorRecoveryTests" fullname="BrokenAnchorRecoveryTests" classname="BrokenAnchorRecoveryTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.114381" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2493" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.086152" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2483" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;dead&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;dead&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1003542029" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.008026" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2484" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;far&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;far&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="767692089" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001756" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2485" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;disabled_player&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;disabled_player&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1820200326" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001418" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2486" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;disabled_torch&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;disabled_torch&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1950820375" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001307" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2487" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;disabled_collider&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;disabled_collider&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="653473289" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001857" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2488" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;unlit&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;unlit&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="2022383750" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001589" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2489" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;busy&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;busy&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1366672043" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.003721" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2490" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;unbound&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;unbound&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1984520619" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001960" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2491" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;completed_sequence&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;completed_sequence&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1073408615" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001560" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2492" name="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;wrong_sequence&quot;)" fullname="BrokenAnchorRecoveryTests.InvalidRecoveryRequestCannotChangeTheAttemptOrProgress(&quot;wrong_sequence&quot;)" methodname="InvalidRecoveryRequestCannotChangeTheAttemptOrProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="153587333" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001439" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2480" name="NearbyLivingPlayerCanRearmExactlyOneFailedReleaseWithoutGrantingProgress" fullname="BrokenAnchorRecoveryTests.NearbyLivingPlayerCanRearmExactlyOneFailedReleaseWithoutGrantingProgress" methodname="NearbyLivingPlayerCanRearmExactlyOneFailedReleaseWithoutGrantingProgress" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="2054252802" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001882" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2482" name="NormalTorchInteractionUsesTheRecoveryPath" fullname="BrokenAnchorRecoveryTests.NormalTorchInteractionUsesTheRecoveryPath" methodname="NormalTorchInteractionUsesTheRecoveryPath" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1940396509" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.002403" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2481" name="TorchWithoutAFailedAttemptCannotLaunchAnExtraRelease" fullname="BrokenAnchorRecoveryTests.TorchWithoutAFailedAttemptCannotLaunchAnExtraRelease" methodname="TorchWithoutAFailedAttemptCannotLaunchAnExtraRelease" classname="BrokenAnchorRecoveryTests" runstate="Runnable" seed="1383385077" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:55Z" duration="0.001748" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2494" name="ClairmontCycleTests" fullname="ClairmontCycleTests" classname="ClairmontCycleTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:56Z" duration="1.121111" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2495" name="AuthoredScenesAndAbilitiesAreValid" fullname="ClairmontCycleTests.AuthoredScenesAndAbilitiesAreValid" methodname="AuthoredScenesAndAbilitiesAreValid" classname="ClairmontCycleTests" runstate="Runnable" seed="1291909778" result="Passed" start-time="2026-10-25 12:50:55Z" end-time="2026-10-25 12:50:56Z" duration="0.921919" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2501" name="BothEndpointsShareDiscoveryAndTeleportInBothDirections" fullname="ClairmontCycleTests.BothEndpointsShareDiscoveryAndTeleportInBothDirections" classname="ClairmontCycleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.053942" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2499" name="BothEndpointsShareDiscoveryAndTeleportInBothDirections(&quot;Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity&quot;)" fullname="ClairmontCycleTests.BothEndpointsShareDiscoveryAndTeleportInBothDirections(&quot;Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity&quot;)" methodname="BothEndpointsShareDiscoveryAndTeleportInBothDirections" classname="ClairmontCycleTests" runstate="Runnable" seed="1001847391" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.032605" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2500" name="BothEndpointsShareDiscoveryAndTeleportInBothDirections(&quot;Assets/Scenes/District_1/District_1_AbilityShortcuts.unity&quot;)" fullname="ClairmontCycleTests.BothEndpointsShareDiscoveryAndTeleportInBothDirections(&quot;Assets/Scenes/District_1/District_1_AbilityShortcuts.unity&quot;)" methodname="BothEndpointsShareDiscoveryAndTeleportInBothDirections" classname="ClairmontCycleTests" runstate="Runnable" seed="1311225192" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.003782" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2498" name="ProofsRemainParallelAndGateTheRegister" fullname="ClairmontCycleTests.ProofsRemainParallelAndGateTheRegister" classname="ClairmontCycleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.014904" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2496" name="ProofsRemainParallelAndGateTheRegister(0,1)" fullname="ClairmontCycleTests.ProofsRemainParallelAndGateTheRegister(0,1)" methodname="ProofsRemainParallelAndGateTheRegister" classname="ClairmontCycleTests" runstate="Runnable" seed="1429233067" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001371" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2497" name="ProofsRemainParallelAndGateTheRegister(1,0)" fullname="ClairmontCycleTests.ProofsRemainParallelAndGateTheRegister(1,0)" methodname="ProofsRemainParallelAndGateTheRegister" classname="ClairmontCycleTests" runstate="Runnable" seed="1225379729" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000354" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2504" name="ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds" fullname="ClairmontCycleTests.ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds" classname="ClairmontCycleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.115173" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2502" name="ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds(&quot;Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity&quot;)" fullname="ClairmontCycleTests.ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds(&quot;Assets/Scenes/District_1/District_1_NefDesToursInterrompus_Environment.unity&quot;)" methodname="ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds" classname="ClairmontCycleTests" runstate="Runnable" seed="420358594" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.085144" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2503" name="ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds(&quot;Assets/Scenes/District_1/District_1_AbilityShortcuts.unity&quot;)" fullname="ClairmontCycleTests.ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds(&quot;Assets/Scenes/District_1/District_1_AbilityShortcuts.unity&quot;)" methodname="ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds" classname="ClairmontCycleTests" runstate="Runnable" seed="794815172" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.016552" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+      </test-suite>
+      <test-suite type="TestFixture" id="2217" name="CycleAutoDialogueControllerTests" fullname="CycleAutoDialogueControllerTests" classname="CycleAutoDialogueControllerTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.277614" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2227" name="DisableCancelsTheBarrierAndClearsOnlyTransientState" fullname="CycleAutoDialogueControllerTests.DisableCancelsTheBarrierAndClearsOnlyTransientState" methodname="DisableCancelsTheBarrierAndClearsOnlyTransientState" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="639010000" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.006223" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2225" name="EmptyLocalPresentationReportsFailureInsteadOfProgress" fullname="CycleAutoDialogueControllerTests.EmptyLocalPresentationReportsFailureInsteadOfProgress" methodname="EmptyLocalPresentationReportsFailureInsteadOfProgress" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="815956053" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.003073" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2223" name="FailedSessionLeavesTheStepUnchangedAndRearmsTheBinding" fullname="CycleAutoDialogueControllerTests.FailedSessionLeavesTheStepUnchangedAndRearmsTheBinding" methodname="FailedSessionLeavesTheStepUnchangedAndRearmsTheBinding" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="524041432" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001805" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2220" name="IntentionalDismissalCompletesButOwnerCancellationDoesNot" fullname="CycleAutoDialogueControllerTests.IntentionalDismissalCompletesButOwnerCancellationDoesNot" classname="CycleAutoDialogueControllerTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.017501" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2218" name="IntentionalDismissalCompletesButOwnerCancellationDoesNot(True)" fullname="CycleAutoDialogueControllerTests.IntentionalDismissalCompletesButOwnerCancellationDoesNot(True)" methodname="IntentionalDismissalCompletesButOwnerCancellationDoesNot" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="1433458199" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.006046" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2219" name="IntentionalDismissalCompletesButOwnerCancellationDoesNot(False)" fullname="CycleAutoDialogueControllerTests.IntentionalDismissalCompletesButOwnerCancellationDoesNot(False)" methodname="IntentionalDismissalCompletesButOwnerCancellationDoesNot" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="967799810" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001232" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2224" name="LocalPresenterWaitsWithoutReplacingAnotherOwnersDialogue" fullname="CycleAutoDialogueControllerTests.LocalPresenterWaitsWithoutReplacingAnotherOwnersDialogue" methodname="LocalPresenterWaitsWithoutReplacingAnotherOwnersDialogue" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="2085978953" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001400" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2222" name="NaturalCompletionNotElapsedTimeCommitsTheDevStep" fullname="CycleAutoDialogueControllerTests.NaturalCompletionNotElapsedTimeCommitsTheDevStep" methodname="NaturalCompletionNotElapsedTimeCommitsTheDevStep" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="2120461141" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.002353" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2226" name="OldStopCannotCancelANewerPresentation" fullname="CycleAutoDialogueControllerTests.OldStopCannotCancelANewerPresentation" methodname="OldStopCannotCancelANewerPresentation" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="1508559994" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001202" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2221" name="SkippingEarlyAcknowledgesOnceAfterTheHostGuardWithoutReplayingOrSaving" fullname="CycleAutoDialogueControllerTests.SkippingEarlyAcknowledgesOnceAfterTheHostGuardWithoutReplayingOrSaving" methodname="SkippingEarlyAcknowledgesOnceAfterTheHostGuardWithoutReplayingOrSaving" classname="CycleAutoDialogueControllerTests" runstate="Runnable" seed="1744698989" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.225617" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2228" name="CycleAutoDialogueTests" fullname="CycleAutoDialogueTests" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.055758" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2240" name="CancellationAndTimeoutRejectLateResults" fullname="CycleAutoDialogueTests.CancellationAndTimeoutRejectLateResults" methodname="CancellationAndTimeoutRejectLateResults" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1450562303" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000481" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2237" name="DisconnectedViewerDoesNotHoldUpACompletedViewer" fullname="CycleAutoDialogueTests.DisconnectedViewerDoesNotHoldUpACompletedViewer" methodname="DisconnectedViewerDoesNotHoldUpACompletedViewer" classname="CycleAutoDialogueTests" runstate="Runnable" seed="745156897" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000285" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2233" name="EarlyUnknownStaleAndDuplicateAcknowledgementsCannotAdvance" fullname="CycleAutoDialogueTests.EarlyUnknownStaleAndDuplicateAcknowledgementsCannotAdvance" methodname="EarlyUnknownStaleAndDuplicateAcknowledgementsCannotAdvance" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1026296359" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000451" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2241" name="EmptyOrDuplicateParticipantsAreHandledExplicitly" fullname="CycleAutoDialogueTests.EmptyOrDuplicateParticipantsAreHandledExplicitly" methodname="EmptyOrDuplicateParticipantsAreHandledExplicitly" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1419365664" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000361" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2232" name="EveryFrozenViewerMustFinishNaturally" fullname="CycleAutoDialogueTests.EveryFrozenViewerMustFinishNaturally" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.010697" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2230" name="EveryFrozenViewerMustFinishNaturally(1UL,2UL)" fullname="CycleAutoDialogueTests.EveryFrozenViewerMustFinishNaturally(1UL,2UL)" methodname="EveryFrozenViewerMustFinishNaturally" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1132712388" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000580" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2231" name="EveryFrozenViewerMustFinishNaturally(2UL,1UL)" fullname="CycleAutoDialogueTests.EveryFrozenViewerMustFinishNaturally(2UL,1UL)" methodname="EveryFrozenViewerMustFinishNaturally" classname="CycleAutoDialogueTests" runstate="Runnable" seed="2107357065" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000139" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2238" name="EveryoneDisconnectingCannotValidateAnUnseenLine" fullname="CycleAutoDialogueTests.EveryoneDisconnectingCannotValidateAnUnseenLine" methodname="EveryoneDisconnectingCannotValidateAnUnseenLine" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1671804509" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000442" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2244" name="InvalidClockCannotProduceAnAcknowledgement" fullname="CycleAutoDialogueTests.InvalidClockCannotProduceAnAcknowledgement" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.005528" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2242" name="InvalidClockCannotProduceAnAcknowledgement(double.NaN)" fullname="CycleAutoDialogueTests.InvalidClockCannotProduceAnAcknowledgement(double.NaN)" methodname="InvalidClockCannotProduceAnAcknowledgement" classname="CycleAutoDialogueTests" runstate="Runnable" seed="878160337" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000538" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2243" name="InvalidClockCannotProduceAnAcknowledgement(double.PositiveInfinity)" fullname="CycleAutoDialogueTests.InvalidClockCannotProduceAnAcknowledgement(double.PositiveInfinity)" methodname="InvalidClockCannotProduceAnAcknowledgement" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1233720293" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000142" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2239" name="LateArrivalDoesNotJoinTheFrozenAudienceOrConfirmForIt" fullname="CycleAutoDialogueTests.LateArrivalDoesNotJoinTheFrozenAudienceOrConfirmForIt" methodname="LateArrivalDoesNotJoinTheFrozenAudienceOrConfirmForIt" classname="CycleAutoDialogueTests" runstate="Runnable" seed="48050096" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.003669" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2236" name="RefusalOrInterruptionFailsWithoutCompletingOthers" fullname="CycleAutoDialogueTests.RefusalOrInterruptionFailsWithoutCompletingOthers" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.009413" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2234" name="RefusalOrInterruptionFailsWithoutCompletingOthers(False)" fullname="CycleAutoDialogueTests.RefusalOrInterruptionFailsWithoutCompletingOthers(False)" methodname="RefusalOrInterruptionFailsWithoutCompletingOthers" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1828455611" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000459" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2235" name="RefusalOrInterruptionFailsWithoutCompletingOthers(True)" fullname="CycleAutoDialogueTests.RefusalOrInterruptionFailsWithoutCompletingOthers(True)" methodname="RefusalOrInterruptionFailsWithoutCompletingOthers" classname="CycleAutoDialogueTests" runstate="Runnable" seed="644535528" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000134" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2229" name="TimerAloneNeverCompletesADialogue" fullname="CycleAutoDialogueTests.TimerAloneNeverCompletesADialogue" methodname="TimerAloneNeverCompletesADialogue" classname="CycleAutoDialogueTests" runstate="Runnable" seed="308217745" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000292" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2245" name="CycleGroupSequenceGateTests" fullname="CycleGroupSequenceGateTests" classname="CycleGroupSequenceGateTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.159748" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2254" name="CancellationCannotBeSentFromOutsideTheGathering" fullname="CycleGroupSequenceGateTests.CancellationCannotBeSentFromOutsideTheGathering" classname="CycleGroupSequenceGateTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.008147" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2251" name="CancellationCannotBeSentFromOutsideTheGathering(False,1.0f,False)" fullname="CycleGroupSequenceGateTests.CancellationCannotBeSentFromOutsideTheGathering(False,1.0f,False)" methodname="CancellationCannotBeSentFromOutsideTheGathering" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="575260466" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.002532" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2252" name="CancellationCannotBeSentFromOutsideTheGathering(True,1.0f,True)" fullname="CycleGroupSequenceGateTests.CancellationCannotBeSentFromOutsideTheGathering(True,1.0f,True)" methodname="CancellationCannotBeSentFromOutsideTheGathering" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1317363317" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001383" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2253" name="CancellationCannotBeSentFromOutsideTheGathering(True,9.0f,False)" fullname="CycleGroupSequenceGateTests.CancellationCannotBeSentFromOutsideTheGathering(True,9.0f,False)" methodname="CancellationCannotBeSentFromOutsideTheGathering" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1610834684" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001015" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2255" name="DeadParticipantCannotConfirmOrCancel" fullname="CycleGroupSequenceGateTests.DeadParticipantCannotConfirmOrCancel" methodname="DeadParticipantCannotConfirmOrCancel" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1259299632" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001208" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2250" name="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm" fullname="CycleGroupSequenceGateTests.HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm" classname="CycleGroupSequenceGateTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.103515" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2246" name="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(False,1.0f,True)" fullname="CycleGroupSequenceGateTests.HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(False,1.0f,True)" methodname="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="107223337" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.002034" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2247" name="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(False,5.0f,False)" fullname="CycleGroupSequenceGateTests.HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(False,5.0f,False)" methodname="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="875045739" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001289" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2248" name="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(True,5.0f,True)" fullname="CycleGroupSequenceGateTests.HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(True,5.0f,True)" methodname="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1538217434" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001450" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2249" name="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(True,9.0f,False)" fullname="CycleGroupSequenceGateTests.HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm(True,9.0f,False)" methodname="HostRequiresInteractionRangeToOpenButAllowsGatheringRangeToConfirm" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1631880083" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001581" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2259" name="InvalidGatheringRadiusCannotAcceptAPlayer" fullname="CycleGroupSequenceGateTests.InvalidGatheringRadiusCannotAcceptAPlayer" classname="CycleGroupSequenceGateTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.016890" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2256" name="InvalidGatheringRadiusCannotAcceptAPlayer(float.NaN)" fullname="CycleGroupSequenceGateTests.InvalidGatheringRadiusCannotAcceptAPlayer(float.NaN)" methodname="InvalidGatheringRadiusCannotAcceptAPlayer" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="112038345" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001800" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2257" name="InvalidGatheringRadiusCannotAcceptAPlayer(float.PositiveInfinity)" fullname="CycleGroupSequenceGateTests.InvalidGatheringRadiusCannotAcceptAPlayer(float.PositiveInfinity)" methodname="InvalidGatheringRadiusCannotAcceptAPlayer" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1666936129" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001343" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2258" name="InvalidGatheringRadiusCannotAcceptAPlayer(-8.0f)" fullname="CycleGroupSequenceGateTests.InvalidGatheringRadiusCannotAcceptAPlayer(-8.0f)" methodname="InvalidGatheringRadiusCannotAcceptAPlayer" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1977032001" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001112" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2262" name="RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations" fullname="CycleGroupSequenceGateTests.RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations" classname="CycleGroupSequenceGateTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.017532" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2260" name="RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations(True)" fullname="CycleGroupSequenceGateTests.RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations(True)" methodname="RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="990853688" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.004981" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2261" name="RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations(False)" fullname="CycleGroupSequenceGateTests.RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations(False)" methodname="RosterChangeResetsCountdownAndOnlyJoinsInvalidateSurvivingConfirmations" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1748974339" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.002038" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2263" name="StableRosterOrderDoesNotRestartTheCountdown" fullname="CycleGroupSequenceGateTests.StableRosterOrderDoesNotRestartTheCountdown" methodname="StableRosterOrderDoesNotRestartTheCountdown" classname="CycleGroupSequenceGateTests" runstate="Runnable" seed="1012269381" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001714" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2264" name="CycleProgressionTests" fullname="CycleProgressionTests" classname="CycleProgressionTests" runstate="Runnable" testcasecount="26" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:58Z" duration="2.000067" total="26" passed="26" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2268" name="AuthoredCyclesHaveNoCrossCyclePrerequisites" fullname="CycleProgressionTests.AuthoredCyclesHaveNoCrossCyclePrerequisites" methodname="AuthoredCyclesHaveNoCrossCyclePrerequisites" classname="CycleProgressionTests" runstate="Runnable" seed="1693182621" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.023622" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2291" name="CircularAndMissingDependenciesAreReported" fullname="CycleProgressionTests.CircularAndMissingDependenciesAreReported" methodname="CircularAndMissingDependenciesAreReported" classname="CycleProgressionTests" runstate="Runnable" seed="1708470328" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.003138" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2273" name="CrossCycleRequirementsAndAnyConditionsWork" fullname="CycleProgressionTests.CrossCycleRequirementsAndAnyConditionsWork" methodname="CrossCycleRequirementsAndAnyConditionsWork" classname="CycleProgressionTests" runstate="Runnable" seed="1519160332" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.003040" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2274" name="DuplicateCompletionAndSnapshotRestoreDoNotReapplyReward" fullname="CycleProgressionTests.DuplicateCompletionAndSnapshotRestoreDoNotReapplyReward" methodname="DuplicateCompletionAndSnapshotRestoreDoNotReapplyReward" classname="CycleProgressionTests" runstate="Runnable" seed="1486840717" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001595" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2271" name="EarlyEventsArePersistedAndReconciledAfterPrerequisites" fullname="CycleProgressionTests.EarlyEventsArePersistedAndReconciledAfterPrerequisites" methodname="EarlyEventsArePersistedAndReconciledAfterPrerequisites" classname="CycleProgressionTests" runstate="Runnable" seed="1312025081" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000926" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2270" name="EtienneStartsAtItsEntryTriggerWithoutCompletingBelmont" fullname="CycleProgressionTests.EtienneStartsAtItsEntryTriggerWithoutCompletingBelmont" methodname="EtienneStartsAtItsEntryTriggerWithoutCompletingBelmont" classname="CycleProgressionTests" runstate="Runnable" seed="1634857757" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000965" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2267" name="EveryAuthoredCycleIsDiscoverableBeforeItsSceneLoads" fullname="CycleProgressionTests.EveryAuthoredCycleIsDiscoverableBeforeItsSceneLoads" methodname="EveryAuthoredCycleIsDiscoverableBeforeItsSceneLoads" classname="CycleProgressionTests" runstate="Runnable" seed="1071032150" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.020498" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2277" name="LegacyNinaRewardMigratesWithoutRewritingIdentity" fullname="CycleProgressionTests.LegacyNinaRewardMigratesWithoutRewritingIdentity" classname="CycleProgressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.017793" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2275" name="LegacyNinaRewardMigratesWithoutRewritingIdentity(8)" fullname="CycleProgressionTests.LegacyNinaRewardMigratesWithoutRewritingIdentity(8)" methodname="LegacyNinaRewardMigratesWithoutRewritingIdentity" classname="CycleProgressionTests" runstate="Runnable" seed="1709399236" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.002234" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2276" name="LegacyNinaRewardMigratesWithoutRewritingIdentity(31)" fullname="CycleProgressionTests.LegacyNinaRewardMigratesWithoutRewritingIdentity(31)" methodname="LegacyNinaRewardMigratesWithoutRewritingIdentity" classname="CycleProgressionTests" runstate="Runnable" seed="560604981" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.004927" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2293" name="MultipleDialoguesAndSequencesUseIndependentSourceIds" fullname="CycleProgressionTests.MultipleDialoguesAndSequencesUseIndependentSourceIds" methodname="MultipleDialoguesAndSequencesUseIndependentSourceIds" classname="CycleProgressionTests" runstate="Runnable" seed="1565266206" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000805" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2290" name="NinaLegacyStatesMigrateOnceToNamedSteps" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.020852" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2282" name="NinaLegacyStatesMigrateOnceToNamedSteps(0,&quot;&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(0,&quot;&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="2036735216" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.001207" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2283" name="NinaLegacyStatesMigrateOnceToNamedSteps(1,&quot;scientist_defeated&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(1,&quot;scientist_defeated&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="449544436" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.002317" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2284" name="NinaLegacyStatesMigrateOnceToNamedSteps(2,&quot;aftermath_seen&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(2,&quot;aftermath_seen&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="57912206" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000484" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2285" name="NinaLegacyStatesMigrateOnceToNamedSteps(4,&quot;nina_spoken&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(4,&quot;nina_spoken&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="1483291709" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000404" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2286" name="NinaLegacyStatesMigrateOnceToNamedSteps(8,&quot;scar_reward&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(8,&quot;scar_reward&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="1409108471" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000360" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2287" name="NinaLegacyStatesMigrateOnceToNamedSteps(16,&quot;nina_spoken&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(16,&quot;nina_spoken&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="450021125" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000412" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2288" name="NinaLegacyStatesMigrateOnceToNamedSteps(20,&quot;nina_spoken&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(20,&quot;nina_spoken&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="397953604" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000478" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2289" name="NinaLegacyStatesMigrateOnceToNamedSteps(31,&quot;scar_reward&quot;)" fullname="CycleProgressionTests.NinaLegacyStatesMigrateOnceToNamedSteps(31,&quot;scar_reward&quot;)" methodname="NinaLegacyStatesMigrateOnceToNamedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="2141128097" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:56Z" duration="0.000465" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2281" name="OldNinaVisitBitsRemainUnchanged" fullname="CycleProgressionTests.OldNinaVisitBitsRemainUnchanged" classname="CycleProgressionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 12:50:56Z" end-time="2026-10-25 12:50:57Z" duration="0.013327" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2278" name="OldNinaVisitBitsRemainUnchanged(4)" fullname="CycleProgressionTests.OldNinaVisitBitsRemainUnchanged(4)" methodname="OldNinaVisitBitsRemainUnchanged" classname="CycleProgressionTests" runstate="Runnable" seed="2035231253" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:57Z" duration="0.000879" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2279" name="OldNinaVisitBitsRemainUnchanged(16)" fullname="CycleProgressionTests.OldNinaVisitBitsRemainUnchanged(16)" methodname="OldNinaVisitBitsRemainUnchanged" classname="CycleProgressionTests" runstate="Runnable" seed="1573499136" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:57Z" duration="0.000404" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2280" name="OldNinaVisitBitsRemainUnchanged(20)" fullname="CycleProgressionTests.OldNinaVisitBitsRemainUnchanged(20)" methodname="OldNinaVisitBitsRemainUnchanged" classname="CycleProgressionTests" runstate="Runnable" seed="2010312451" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:57Z" duration="0.000361" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2265" name="ParallelCyclesAndStepsDoNotInterfere" fullname="CycleProgressionTests.ParallelCyclesAndStepsDoNotInterfere" methodname="ParallelCyclesAndStepsDoNotInterfere" classname="CycleProgressionTests" runstate="Runnable" seed="1611158520" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:57Z" duration="0.000791" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2292" name="PartialMailboxDeliveryPreservesOnlyTheUnpaidBalanceAcrossReload" fullname="CycleProgressionTests.PartialMailboxDeliveryPreservesOnlyTheUnpaidBalanceAcrossReload" methodname="PartialMailboxDeliveryPreservesOnlyTheUnpaidBalanceAcrossReload" classname="CycleProgressionTests" runstate="Runnable" seed="1889100946" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:57Z" duration="0.006126" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2272" name="PersistedFactCanReconcileTwoOrderedSteps" fullname="CycleProgressionTests.PersistedFactCanReconcileTwoOrderedSteps" methodname="PersistedFactCanReconcileTwoOrderedSteps" classname="CycleProgressionTests" runstate="Runnable" seed="688781544" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:57Z" duration="0.000660" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2266" name="ProjectWideAuthoringContractPassesValidation" fullname="CycleProgressionTests.ProjectWideAuthoringContractPassesValidation" methodname="ProjectWideAuthoringContractPassesValidation" classname="CycleProgressionTests" runstate="Runnable" seed="1716859612" result="Passed" start-time="2026-10-25 12:50:57Z" end-time="2026-10-25 12:50:58Z" duration="1.872961" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2269" name="ValidationRejectsNewCrossCycleDependencies" fullname="CycleProgressionTests.ValidationRejectsNewCrossCycleDependencies" methodname="ValidationRejectsNewCrossCycleDependencies" classname="CycleProgressionTests" runstate="Runnable" seed="290282325" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000860" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2294" name="CycleTests" fullname="CycleTests" classname="CycleTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:59Z" duration="0.330069" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2320" name="CancellationEarlyCompletionAndStaleTokenDoNotGrant" fullname="CycleTests.CancellationEarlyCompletionAndStaleTokenDoNotGrant" classname="CycleTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.015992" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2317" name="CancellationEarlyCompletionAndStaleTokenDoNotGrant(False,-1.0d,1)" fullname="CycleTests.CancellationEarlyCompletionAndStaleTokenDoNotGrant(False,-1.0d,1)" methodname="CancellationEarlyCompletionAndStaleTokenDoNotGrant" classname="CycleTests" runstate="Runnable" seed="2086268749" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.004553" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2318" name="CancellationEarlyCompletionAndStaleTokenDoNotGrant(True,100.0d,1)" fullname="CycleTests.CancellationEarlyCompletionAndStaleTokenDoNotGrant(True,100.0d,1)" methodname="CancellationEarlyCompletionAndStaleTokenDoNotGrant" classname="CycleTests" runstate="Runnable" seed="1918286656" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000454" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2319" name="CancellationEarlyCompletionAndStaleTokenDoNotGrant(True,-1.0d,2)" fullname="CycleTests.CancellationEarlyCompletionAndStaleTokenDoNotGrant(True,-1.0d,2)" methodname="CancellationEarlyCompletionAndStaleTokenDoNotGrant" classname="CycleTests" runstate="Runnable" seed="246211864" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000323" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2301" name="CompletionRequiresAllConfiguredSharedMilestones" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.015117" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2295" name="CompletionRequiresAllConfiguredSharedMilestones(0,0,False)" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones(0,0,False)" methodname="CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" seed="1631815638" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000940" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2296" name="CompletionRequiresAllConfiguredSharedMilestones(8,7,False)" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones(8,7,False)" methodname="CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" seed="849049548" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000214" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2297" name="CompletionRequiresAllConfiguredSharedMilestones(8,8,True)" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones(8,8,True)" methodname="CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" seed="1175928861" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000167" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2298" name="CompletionRequiresAllConfiguredSharedMilestones(8,31,True)" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones(8,31,True)" methodname="CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" seed="171337172" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000124" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2299" name="CompletionRequiresAllConfiguredSharedMilestones(12,8,False)" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones(12,8,False)" methodname="CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" seed="1268781384" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000113" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2300" name="CompletionRequiresAllConfiguredSharedMilestones(12,12,True)" fullname="CycleTests.CompletionRequiresAllConfiguredSharedMilestones(12,12,True)" methodname="CompletionRequiresAllConfiguredSharedMilestones" classname="CycleTests" runstate="Runnable" seed="299418544" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000113" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2315" name="ConditionsCombineAllFlagsAnyFlagsAndKnowledge" fullname="CycleTests.ConditionsCombineAllFlagsAnyFlagsAndKnowledge" methodname="ConditionsCombineAllFlagsAnyFlagsAndKnowledge" classname="CycleTests" runstate="Runnable" seed="1102728350" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.001792" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2306" name="DeactivationBindingHidesTargetWhenItsConditionMatches" fullname="CycleTests.DeactivationBindingHidesTargetWhenItsConditionMatches" methodname="DeactivationBindingHidesTargetWhenItsConditionMatches" classname="CycleTests" runstate="Runnable" seed="148403417" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000667" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2321" name="DefinitionRejectsDuplicateIdsAndRewardTransitionCollision" fullname="CycleTests.DefinitionRejectsDuplicateIdsAndRewardTransitionCollision" methodname="DefinitionRejectsDuplicateIdsAndRewardTransitionCollision" classname="CycleTests" runstate="Runnable" seed="1023380706" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000584" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2303" name="DialogueDurationOverrideDoesNotChangeCycleDefault" fullname="CycleTests.DialogueDurationOverrideDoesNotChangeCycleDefault" methodname="DialogueDurationOverrideDoesNotChangeCycleDefault" classname="CycleTests" runstate="Runnable" seed="861308176" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.001053" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2309" name="DirectEnemyDefeatIsRecordedWithoutSceneMarker" fullname="CycleTests.DirectEnemyDefeatIsRecordedWithoutSceneMarker" classname="CycleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.014273" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2307" name="DirectEnemyDefeatIsRecordedWithoutSceneMarker(False)" fullname="CycleTests.DirectEnemyDefeatIsRecordedWithoutSceneMarker(False)" methodname="DirectEnemyDefeatIsRecordedWithoutSceneMarker" classname="CycleTests" runstate="Runnable" seed="115796637" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.002102" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2308" name="DirectEnemyDefeatIsRecordedWithoutSceneMarker(True)" fullname="CycleTests.DirectEnemyDefeatIsRecordedWithoutSceneMarker(True)" methodname="DirectEnemyDefeatIsRecordedWithoutSceneMarker" classname="CycleTests" runstate="Runnable" seed="1022579515" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000772" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2310" name="EncounterUsesRuntimeInstanceInsteadOfBakedCopy" fullname="CycleTests.EncounterUsesRuntimeInstanceInsteadOfBakedCopy" methodname="EncounterUsesRuntimeInstanceInsteadOfBakedCopy" classname="CycleTests" runstate="Runnable" seed="2029560593" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.001242" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2316" name="IndependentCyclesSupportSeveralDialoguesWithoutEncounter" fullname="CycleTests.IndependentCyclesSupportSeveralDialoguesWithoutEncounter" methodname="IndependentCyclesSupportSeveralDialoguesWithoutEncounter" classname="CycleTests" runstate="Runnable" seed="1483577273" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.001699" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2314" name="NinaConfigurationUsesGenericDialoguesAndKeepsPersistentKey" fullname="CycleTests.NinaConfigurationUsesGenericDialoguesAndKeepsPersistentKey" methodname="NinaConfigurationUsesGenericDialoguesAndKeepsPersistentKey" classname="CycleTests" runstate="Runnable" seed="625657901" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.000425" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2311" name="NinaPoseSetsDeadParameterAndRestoresItAfterAnimatorReset" fullname="CycleTests.NinaPoseSetsDeadParameterAndRestoresItAfterAnimatorReset" methodname="NinaPoseSetsDeadParameterAndRestoresItAfterAnimatorReset" classname="CycleTests" runstate="Runnable" seed="1964515124" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:58Z" duration="0.002647" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2313" name="NinaSceneBindsItsScientistAndDeathParameter" fullname="CycleTests.NinaSceneBindsItsScientistAndDeathParameter" methodname="NinaSceneBindsItsScientistAndDeathParameter" classname="CycleTests" runstate="Runnable" seed="1885246439" result="Passed" start-time="2026-10-25 12:50:58Z" end-time="2026-10-25 12:50:59Z" duration="0.235849" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2312" name="ReenabledControllerRestoresCompletedDisappearanceWithoutReplayingItsFade" fullname="CycleTests.ReenabledControllerRestoresCompletedDisappearanceWithoutReplayingItsFade" methodname="ReenabledControllerRestoresCompletedDisappearanceWithoutReplayingItsFade" classname="CycleTests" runstate="Runnable" seed="1699922633" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001260" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2305" name="RestoredDialogueGhostStaysHiddenDespiteActivationBinding" fullname="CycleTests.RestoredDialogueGhostStaysHiddenDespiteActivationBinding" methodname="RestoredDialogueGhostStaysHiddenDespiteActivationBinding" classname="CycleTests" runstate="Runnable" seed="533318627" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.004289" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2302" name="ScarDisappearanceUsesItsNamedRewardStep" fullname="CycleTests.ScarDisappearanceUsesItsNamedRewardStep" methodname="ScarDisappearanceUsesItsNamedRewardStep" classname="CycleTests" runstate="Runnable" seed="486364675" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002330" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2304" name="ZeroDialogueDelayStartsTheFadeWithoutSkippingItsFrames" fullname="CycleTests.ZeroDialogueDelayStartsTheFadeWithoutSkippingItsFrames" methodname="ZeroDialogueDelayStartsTheFadeWithoutSkippingItsFrames" classname="CycleTests" runstate="Runnable" seed="42981237" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001881" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2322" name="CycleTimelineBindingTests" fullname="CycleTimelineBindingTests" classname="CycleTimelineBindingTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.133401" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2327" name="DeclaredStableBindingIsResolvedByTheManagerLater" fullname="CycleTimelineBindingTests.DeclaredStableBindingIsResolvedByTheManagerLater" classname="CycleTimelineBindingTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.088833" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2325" name="DeclaredStableBindingIsResolvedByTheManagerLater(True)" fullname="CycleTimelineBindingTests.DeclaredStableBindingIsResolvedByTheManagerLater(True)" methodname="DeclaredStableBindingIsResolvedByTheManagerLater" classname="CycleTimelineBindingTests" runstate="Runnable" seed="2062684228" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.034070" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2326" name="DeclaredStableBindingIsResolvedByTheManagerLater(False)" fullname="CycleTimelineBindingTests.DeclaredStableBindingIsResolvedByTheManagerLater(False)" methodname="DeclaredStableBindingIsResolvedByTheManagerLater" classname="CycleTimelineBindingTests" runstate="Runnable" seed="792610346" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002251" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2329" name="EmptyAudioPlaceholderDoesNotRequireATarget" fullname="CycleTimelineBindingTests.EmptyAudioPlaceholderDoesNotRequireATarget" methodname="EmptyAudioPlaceholderDoesNotRequireATarget" classname="CycleTimelineBindingTests" runstate="Runnable" seed="490793826" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002003" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2330" name="IncompatibleNativeBindingIsRejected" fullname="CycleTimelineBindingTests.IncompatibleNativeBindingIsRejected" methodname="IncompatibleNativeBindingIsRejected" classname="CycleTimelineBindingTests" runstate="Runnable" seed="1799020501" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.007666" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2331" name="MissingProfileIsReportedWithoutThrowing" fullname="CycleTimelineBindingTests.MissingProfileIsReportedWithoutThrowing" methodname="MissingProfileIsReportedWithoutThrowing" classname="CycleTimelineBindingTests" runstate="Runnable" seed="1860061408" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000853" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2328" name="MutedTrackDoesNotRequireATarget" fullname="CycleTimelineBindingTests.MutedTrackDoesNotRequireATarget" methodname="MutedTrackDoesNotRequireATarget" classname="CycleTimelineBindingTests" runstate="Runnable" seed="570261787" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002123" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2324" name="NativeDirectorBindingDoesNotRequireARedundantProfileEntry" fullname="CycleTimelineBindingTests.NativeDirectorBindingDoesNotRequireARedundantProfileEntry" methodname="NativeDirectorBindingDoesNotRequireARedundantProfileEntry" classname="CycleTimelineBindingTests" runstate="Runnable" seed="1160997892" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.003035" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2323" name="UnboundActivationCannotPassAsAConfiguredSequence" fullname="CycleTimelineBindingTests.UnboundActivationCannotPassAsAConfiguredSequence" methodname="UnboundActivationCannotPassAsAConfiguredSequence" classname="CycleTimelineBindingTests" runstate="Runnable" seed="107650163" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002250" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2332" name="CycleTimelinePresentationTests" fullname="CycleTimelinePresentationTests" classname="CycleTimelinePresentationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.069389" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2336" name="CompletedDissolveStaysInvisibleUntilTheQuestCommitsOrDisablesIt" fullname="CycleTimelinePresentationTests.CompletedDissolveStaysInvisibleUntilTheQuestCommitsOrDisablesIt" methodname="CompletedDissolveStaysInvisibleUntilTheQuestCommitsOrDisablesIt" classname="CycleTimelinePresentationTests" runstate="Runnable" seed="1603090161" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.038938" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2335" name="InterruptedDissolveRestoresMaterialsBlocksAndVisibility" fullname="CycleTimelinePresentationTests.InterruptedDissolveRestoresMaterialsBlocksAndVisibility" classname="CycleTimelinePresentationTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.017608" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2333" name="InterruptedDissolveRestoresMaterialsBlocksAndVisibility(Stopped)" fullname="CycleTimelinePresentationTests.InterruptedDissolveRestoresMaterialsBlocksAndVisibility(Stopped)" methodname="InterruptedDissolveRestoresMaterialsBlocksAndVisibility" classname="CycleTimelinePresentationTests" runstate="Runnable" seed="1341231523" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001140" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2334" name="InterruptedDissolveRestoresMaterialsBlocksAndVisibility(Failed)" fullname="CycleTimelinePresentationTests.InterruptedDissolveRestoresMaterialsBlocksAndVisibility(Failed)" methodname="InterruptedDissolveRestoresMaterialsBlocksAndVisibility" classname="CycleTimelinePresentationTests" runstate="Runnable" seed="876098162" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000719" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2337" name="SharedFailureRestoresAnEffectAlreadyCompletedLocally" fullname="CycleTimelinePresentationTests.SharedFailureRestoresAnEffectAlreadyCompletedLocally" methodname="SharedFailureRestoresAnEffectAlreadyCompletedLocally" classname="CycleTimelinePresentationTests" runstate="Runnable" seed="1448737735" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001341" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2338" name="CycleTimelineRuntimeTests" fullname="CycleTimelineRuntimeTests" classname="CycleTimelineRuntimeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.117869" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2341" name="ActiveUnboundTrackFailsInsteadOfCompletingAnInvisibleSequence" fullname="CycleTimelineRuntimeTests.ActiveUnboundTrackFailsInsteadOfCompletingAnInvisibleSequence" methodname="ActiveUnboundTrackFailsInsteadOfCompletingAnInvisibleSequence" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="1158220619" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.014788" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Timeline: Isolated Timeline content: piste active 'Unbound action' sans cible compatible ni binding declare dans ''.
+]]></output>
+        </test-case>
+        <test-case id="2346" name="DestroyedNativeTargetFailsPlaybackOnSceneUnload" fullname="CycleTimelineRuntimeTests.DestroyedNativeTargetFailsPlaybackOnSceneUnload" methodname="DestroyedNativeTargetFailsPlaybackOnSceneUnload" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="61707106" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.041024" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+]]></output>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2345" name="LostServiceFailsPlaybackAndRestoresNativeParticipants" fullname="CycleTimelineRuntimeTests.LostServiceFailsPlaybackAndRestoresNativeParticipants" classname="CycleTimelineRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.026006" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2343" name="LostServiceFailsPlaybackAndRestoresNativeParticipants(&quot;OnDisable&quot;)" fullname="CycleTimelineRuntimeTests.LostServiceFailsPlaybackAndRestoresNativeParticipants(&quot;OnDisable&quot;)" methodname="LostServiceFailsPlaybackAndRestoresNativeParticipants" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="225176483" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.004683" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+]]></output>
+          </test-case>
+          <test-case id="2344" name="LostServiceFailsPlaybackAndRestoresNativeParticipants(&quot;OnDestroy&quot;)" fullname="CycleTimelineRuntimeTests.LostServiceFailsPlaybackAndRestoresNativeParticipants(&quot;OnDestroy&quot;)" methodname="LostServiceFailsPlaybackAndRestoresNativeParticipants" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="77327961" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.004898" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+]]></output>
+          </test-case>
+        </test-suite>
+        <test-case id="2342" name="NativeAnimatorBindingReceivesRestoreCallbacksOnStop" fullname="CycleTimelineRuntimeTests.NativeAnimatorBindingReceivesRestoreCallbacksOnStop" methodname="NativeAnimatorBindingReceivesRestoreCallbacksOnStop" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="899719774" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.007079" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+]]></output>
+        </test-case>
+        <test-case id="2340" name="OldHostSequenceCannotWaitOnOrCancelANewerAttempt" fullname="CycleTimelineRuntimeTests.OldHostSequenceCannotWaitOnOrCancelANewerAttempt" methodname="OldHostSequenceCannotWaitOnOrCancelANewerAttempt" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="1779842675" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.008936" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+]]></output>
+        </test-case>
+        <test-case id="2339" name="SharedControllerCancellationDoesNotDereferenceTheClearedPlaybackField" fullname="CycleTimelineRuntimeTests.SharedControllerCancellationDoesNotDereferenceTheClearedPlaybackField" methodname="SharedControllerCancellationDoesNotDereferenceTheClearedPlaybackField" classname="CycleTimelineRuntimeTests" runstate="Runnable" seed="865349328" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.005751" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[TimelineManager: lecture de '' demarree (duree 1 s, director 'Isolated Timeline content').
+]]></output>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2347" name="CycleZoneTriggerTests" fullname="CycleZoneTriggerTests" classname="CycleZoneTriggerTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.042969" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2351" name="BoxFacesAreIncludedButOutsideIsRejected" fullname="CycleZoneTriggerTests.BoxFacesAreIncludedButOutsideIsRejected" methodname="BoxFacesAreIncludedButOutsideIsRejected" classname="CycleZoneTriggerTests" runstate="Runnable" seed="1889546090" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001773" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2355" name="CollapsedTransformCannotContainAPlayer" fullname="CycleZoneTriggerTests.CollapsedTransformCannotContainAPlayer" methodname="CollapsedTransformCannotContainAPlayer" classname="CycleZoneTriggerTests" runstate="Runnable" seed="783521673" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000747" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2353" name="DisabledBehaviourCannotStartACycle" fullname="CycleZoneTriggerTests.DisabledBehaviourCannotStartACycle" methodname="DisabledBehaviourCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" seed="1466075294" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000695" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2352" name="DisabledColliderCannotStartACycle" fullname="CycleZoneTriggerTests.DisabledColliderCannotStartACycle" methodname="DisabledColliderCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" seed="416736323" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000654" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2354" name="InactiveHierarchyCannotStartACycle" fullname="CycleZoneTriggerTests.InactiveHierarchyCannotStartACycle" methodname="InactiveHierarchyCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" seed="547649195" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000591" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2350" name="NegativeScaleKeepsTheSameLocalInclusionRule" fullname="CycleZoneTriggerTests.NegativeScaleKeepsTheSameLocalInclusionRule" methodname="NegativeScaleKeepsTheSameLocalInclusionRule" classname="CycleZoneTriggerTests" runstate="Runnable" seed="488326828" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000678" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2359" name="NonFinitePositionCannotStartACycle" fullname="CycleZoneTriggerTests.NonFinitePositionCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.015885" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2356" name="NonFinitePositionCannotStartACycle(float.NaN)" fullname="CycleZoneTriggerTests.NonFinitePositionCannotStartACycle(float.NaN)" methodname="NonFinitePositionCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" seed="1265888530" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000953" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2357" name="NonFinitePositionCannotStartACycle(float.PositiveInfinity)" fullname="CycleZoneTriggerTests.NonFinitePositionCannotStartACycle(float.PositiveInfinity)" methodname="NonFinitePositionCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" seed="172343827" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000521" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2358" name="NonFinitePositionCannotStartACycle(float.NegativeInfinity)" fullname="CycleZoneTriggerTests.NonFinitePositionCannotStartACycle(float.NegativeInfinity)" methodname="NonFinitePositionCannotStartACycle" classname="CycleZoneTriggerTests" runstate="Runnable" seed="154681006" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000447" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2349" name="OffsetAndScaledParentUseTheAuthoredLocalBox" fullname="CycleZoneTriggerTests.OffsetAndScaledParentUseTheAuthoredLocalBox" methodname="OffsetAndScaledParentUseTheAuthoredLocalBox" classname="CycleZoneTriggerTests" runstate="Runnable" seed="971239383" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001341" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2348" name="RotatedVolumeRejectsPointInsideItsEnclosingWorldBox" fullname="CycleZoneTriggerTests.RotatedVolumeRejectsPointInsideItsEnclosingWorldBox" methodname="RotatedVolumeRejectsPointInsideItsEnclosingWorldBox" classname="CycleZoneTriggerTests" runstate="Runnable" seed="1412763050" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001298" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2505" name="EtienneCycleTests" fullname="EtienneCycleTests" classname="EtienneCycleTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.340358" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2515" name="AllEvidencePermutationsUnlockBrakeButNotGhost" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.018270" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2509" name="AllEvidencePermutationsUnlockBrakeButNotGhost(0,1,2)" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost(0,1,2)" methodname="AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" seed="1119239668" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001382" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2510" name="AllEvidencePermutationsUnlockBrakeButNotGhost(0,2,1)" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost(0,2,1)" methodname="AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" seed="1079703797" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000348" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2511" name="AllEvidencePermutationsUnlockBrakeButNotGhost(1,0,2)" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost(1,0,2)" methodname="AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" seed="1780825180" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000299" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2512" name="AllEvidencePermutationsUnlockBrakeButNotGhost(1,2,0)" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost(1,2,0)" methodname="AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" seed="1507499563" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000281" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2513" name="AllEvidencePermutationsUnlockBrakeButNotGhost(2,0,1)" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost(2,0,1)" methodname="AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" seed="984671789" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000275" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2514" name="AllEvidencePermutationsUnlockBrakeButNotGhost(2,1,0)" fullname="EtienneCycleTests.AllEvidencePermutationsUnlockBrakeButNotGhost(2,1,0)" methodname="AllEvidencePermutationsUnlockBrakeButNotGhost" classname="EtienneCycleTests" runstate="Runnable" seed="1714983209" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000289" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2506" name="AuthoredScenesPassReadOnlyAudit" fullname="EtienneCycleTests.AuthoredScenesPassReadOnlyAudit" methodname="AuthoredScenesPassReadOnlyAudit" classname="EtienneCycleTests" runstate="Runnable" seed="1543038166" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.233108" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2522" name="BrakeStunsFourSecondsWithSharedCooldownAndNoDamage" fullname="EtienneCycleTests.BrakeStunsFourSecondsWithSharedCooldownAndNoDamage" methodname="BrakeStunsFourSecondsWithSharedCooldownAndNoDamage" classname="EtienneCycleTests" runstate="Runnable" seed="291141234" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.010386" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2507" name="DefinitionIsIndependentAndOnlyFinalLineTerminates" fullname="EtienneCycleTests.DefinitionIsIndependentAndOnlyFinalLineTerminates" methodname="DefinitionIsIndependentAndOnlyFinalLineTerminates" classname="EtienneCycleTests" runstate="Runnable" seed="332694041" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002469" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2520" name="DevStartsNeverWriteWorldState" fullname="EtienneCycleTests.DevStartsNeverWriteWorldState" classname="EtienneCycleTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.036378" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2516" name="DevStartsNeverWriteWorldState(&quot;brake_released&quot;,&quot;brake_released&quot;)" fullname="EtienneCycleTests.DevStartsNeverWriteWorldState(&quot;brake_released&quot;,&quot;brake_released&quot;)" methodname="DevStartsNeverWriteWorldState" classname="EtienneCycleTests" runstate="Runnable" seed="1312777368" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.001596" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2517" name="DevStartsNeverWriteWorldState(&quot;dead_weight_defeated&quot;,&quot;dead_weight_defeated&quot;)" fullname="EtienneCycleTests.DevStartsNeverWriteWorldState(&quot;dead_weight_defeated&quot;,&quot;dead_weight_defeated&quot;)" methodname="DevStartsNeverWriteWorldState" classname="EtienneCycleTests" runstate="Runnable" seed="1954226635" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000489" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2518" name="DevStartsNeverWriteWorldState(&quot;last_relief_seen&quot;,&quot;last_relief_seen&quot;)" fullname="EtienneCycleTests.DevStartsNeverWriteWorldState(&quot;last_relief_seen&quot;,&quot;last_relief_seen&quot;)" methodname="DevStartsNeverWriteWorldState" classname="EtienneCycleTests" runstate="Runnable" seed="1106481755" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000465" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2519" name="DevStartsNeverWriteWorldState(&quot;etienne_spoken&quot;,&quot;etienne_spoken&quot;)" fullname="EtienneCycleTests.DevStartsNeverWriteWorldState(&quot;etienne_spoken&quot;,&quot;etienne_spoken&quot;)" methodname="DevStartsNeverWriteWorldState" classname="EtienneCycleTests" runstate="Runnable" seed="1386599229" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000688" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2508" name="ExitActivationIsIncludedInNetworkSnapshotWithoutUnrelatedWorldKeys" fullname="EtienneCycleTests.ExitActivationIsIncludedInNetworkSnapshotWithoutUnrelatedWorldKeys" methodname="ExitActivationIsIncludedInNetworkSnapshotWithoutUnrelatedWorldKeys" classname="EtienneCycleTests" runstate="Runnable" seed="494018472" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000709" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2523" name="InterruptedMemoryRestoresAnimatedTransform" fullname="EtienneCycleTests.InterruptedMemoryRestoresAnimatedTransform" methodname="InterruptedMemoryRestoresAnimatedTransform" classname="EtienneCycleTests" runstate="Runnable" seed="1532472463" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000884" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2524" name="MemoryUsesEditableTracksInsteadOfScriptedClock" fullname="EtienneCycleTests.MemoryUsesEditableTracksInsteadOfScriptedClock" methodname="MemoryUsesEditableTracksInsteadOfScriptedClock" classname="EtienneCycleTests" runstate="Runnable" seed="1057765817" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.002222" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2521" name="PoidsMortHasIndependentDataAndOrdinaryDamage" fullname="EtienneCycleTests.PoidsMortHasIndependentDataAndOrdinaryDamage" methodname="PoidsMortHasIndependentDataAndOrdinaryDamage" classname="EtienneCycleTests" runstate="Runnable" seed="627998050" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:50:59Z" duration="0.000999" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2360" name="LucCycleTests" fullname="LucCycleTests" classname="LucCycleTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:51:00Z" duration="0.203676" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2364" name="AllLucInteractionsHavePotentialLightFromAPermanentSceneWithoutBelmont" fullname="LucCycleTests.AllLucInteractionsHavePotentialLightFromAPermanentSceneWithoutBelmont" methodname="AllLucInteractionsHavePotentialLightFromAPermanentSceneWithoutBelmont" classname="LucCycleTests" runstate="Runnable" seed="178185269" result="Passed" start-time="2026-10-25 12:50:59Z" end-time="2026-10-25 12:51:00Z" duration="0.072515" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2363" name="LucIsEnabledAndTheGraveHasAuthoredInteractionAndVisibleOutline" fullname="LucCycleTests.LucIsEnabledAndTheGraveHasAuthoredInteractionAndVisibleOutline" methodname="LucIsEnabledAndTheGraveHasAuthoredInteractionAndVisibleOutline" classname="LucCycleTests" runstate="Runnable" seed="1489721107" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.019742" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2362" name="LucSceneBindsTheGhostToTheCycleController" fullname="LucCycleTests.LucSceneBindsTheGhostToTheCycleController" methodname="LucSceneBindsTheGhostToTheCycleController" classname="LucCycleTests" runstate="Runnable" seed="1163180404" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.082520" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2361" name="LucUsesNamedStepsAndARewardOwnedByTheFinalStep" fullname="LucCycleTests.LucUsesNamedStepsAndARewardOwnedByTheFinalStep" methodname="LucUsesNamedStepsAndARewardOwnedByTheFinalStep" classname="LucCycleTests" runstate="Runnable" seed="83349471" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000932" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2365" name="NinaCycleTests" fullname="NinaCycleTests" classname="NinaCycleTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.366736" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2373" name="CicatriceIsScarRewardRatherThanAStartingSkill" fullname="NinaCycleTests.CicatriceIsScarRewardRatherThanAStartingSkill" methodname="CicatriceIsScarRewardRatherThanAStartingSkill" classname="NinaCycleTests" runstate="Runnable" seed="1152963000" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000864" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2370" name="LeavingGhostModeMakesBodyVisibleAndDisablesGhostInteraction" fullname="NinaCycleTests.LeavingGhostModeMakesBodyVisibleAndDisablesGhostInteraction" methodname="LeavingGhostModeMakesBodyVisibleAndDisablesGhostInteraction" classname="NinaCycleTests" runstate="Runnable" seed="347028779" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000841" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2389" name="LetterRevealsDilemmaOnlyWhenRead" fullname="NinaCycleTests.LetterRevealsDilemmaOnlyWhenRead" methodname="LetterRevealsDilemmaOnlyWhenRead" classname="NinaCycleTests" runstate="Runnable" seed="2105788164" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000830" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2390" name="NinaBloodAndScarUseTheNamedNinaDialogueStep" fullname="NinaCycleTests.NinaBloodAndScarUseTheNamedNinaDialogueStep" methodname="NinaBloodAndScarUseTheNamedNinaDialogueStep" classname="NinaCycleTests" runstate="Runnable" seed="1079117987" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000377" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2388" name="NinaDeadRequiresAllCycleKnowledgeOnly" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.016861" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2380" name="NinaDeadRequiresAllCycleKnowledgeOnly(0,False,False,False)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(0,False,False,False)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="1409983831" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000640" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2381" name="NinaDeadRequiresAllCycleKnowledgeOnly(0,False,True,False)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(0,False,True,False)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="1128415387" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000158" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2382" name="NinaDeadRequiresAllCycleKnowledgeOnly(0,True,False,False)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(0,True,False,False)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="1361530647" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000104" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2383" name="NinaDeadRequiresAllCycleKnowledgeOnly(0,True,True,True)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(0,True,True,True)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="1436146244" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000105" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2384" name="NinaDeadRequiresAllCycleKnowledgeOnly(1,True,True,True)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(1,True,True,True)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="1953343507" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000100" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2385" name="NinaDeadRequiresAllCycleKnowledgeOnly(2,False,True,False)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(2,False,True,False)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="2103491899" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000103" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2386" name="NinaDeadRequiresAllCycleKnowledgeOnly(2,True,False,False)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(2,True,False,False)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="1865517979" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000108" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2387" name="NinaDeadRequiresAllCycleKnowledgeOnly(2,True,True,True)" fullname="NinaCycleTests.NinaDeadRequiresAllCycleKnowledgeOnly(2,True,True,True)" methodname="NinaDeadRequiresAllCycleKnowledgeOnly" classname="NinaCycleTests" runstate="Runnable" seed="996052378" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000110" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2368" name="NinaDefinitionLookupPreservesAuthoredAssetIdentity" fullname="NinaCycleTests.NinaDefinitionLookupPreservesAuthoredAssetIdentity" methodname="NinaDefinitionLookupPreservesAuthoredAssetIdentity" classname="NinaCycleTests" runstate="Runnable" seed="796494371" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000516" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2366" name="NinaMemoryIsAnEditableBoundTimelineWithoutChangingTheOptionalSaveStep" fullname="NinaCycleTests.NinaMemoryIsAnEditableBoundTimelineWithoutChangingTheOptionalSaveStep" methodname="NinaMemoryIsAnEditableBoundTimelineWithoutChangingTheOptionalSaveStep" classname="NinaCycleTests" runstate="Runnable" seed="1668181444" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.041041" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2367" name="NinaMemoryNativeGraphShowsOnlyTheCurrentCaptionAndCleansUpOnStop" fullname="NinaCycleTests.NinaMemoryNativeGraphShowsOnlyTheCurrentCaptionAndCleansUpOnStop" methodname="NinaMemoryNativeGraphShowsOnlyTheCurrentCaptionAndCleansUpOnStop" classname="NinaCycleTests" runstate="Runnable" seed="1642133853" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.229362" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2372" name="ScarBodyFallsOntoWorldAndKeepsUpright" fullname="NinaCycleTests.ScarBodyFallsOntoWorldAndKeepsUpright" methodname="ScarBodyFallsOntoWorldAndKeepsUpright" classname="NinaCycleTests" runstate="Runnable" seed="2107643728" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.032055" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2371" name="ScarEffectsUseTheAuthoredBodyRenderer" fullname="NinaCycleTests.ScarEffectsUseTheAuthoredBodyRenderer" methodname="ScarEffectsUseTheAuthoredBodyRenderer" classname="NinaCycleTests" runstate="Runnable" seed="121445331" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000737" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2375" name="ScarRejectsInteractionWithoutEligiblePlayer" fullname="NinaCycleTests.ScarRejectsInteractionWithoutEligiblePlayer" methodname="ScarRejectsInteractionWithoutEligiblePlayer" classname="NinaCycleTests" runstate="Runnable" seed="712092105" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.001413" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2374" name="ScarRewardSurvivesWorldSnapshotAndIsGrantedOnlyOnce" fullname="NinaCycleTests.ScarRewardSurvivesWorldSnapshotAndIsGrantedOnlyOnce" methodname="ScarRewardSurvivesWorldSnapshotAndIsGrantedOnlyOnce" classname="NinaCycleTests" runstate="Runnable" seed="1080013804" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.001528" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2379" name="ScientistDeathVoiceUsesForgiveMeAndIsAssignedToPrefab" fullname="NinaCycleTests.ScientistDeathVoiceUsesForgiveMeAndIsAssignedToPrefab" methodname="ScientistDeathVoiceUsesForgiveMeAndIsAssignedToPrefab" classname="NinaCycleTests" runstate="Runnable" seed="646838507" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.002284" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2369" name="ScientistUsesGhostInteractionBeforeCombat" fullname="NinaCycleTests.ScientistUsesGhostInteractionBeforeCombat" methodname="ScientistUsesGhostInteractionBeforeCombat" classname="NinaCycleTests" runstate="Runnable" seed="460714783" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000406" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2378" name="SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription" fullname="NinaCycleTests.SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription" classname="NinaCycleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.013094" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2376" name="SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription(&quot;  Une blessure persistante.  &quot;,&quot;COMPÉTENCE APPRISE\n&lt;size=140%&gt;Cicatrice&lt;/size&gt;\n\nUne blessure persistante.&quot;)" fullname="NinaCycleTests.SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription(&quot;  Une blessure persistante.  &quot;,&quot;COMPÉTENCE APPRISE\n&lt;size=140%&gt;Cicatrice&lt;/size&gt;\n\nUne blessure persistante.&quot;)" methodname="SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription" classname="NinaCycleTests" runstate="Runnable" seed="2144864403" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000724" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2377" name="SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription(&quot; &quot;,&quot;COMPÉTENCE APPRISE\n&lt;size=140%&gt;Cicatrice&lt;/size&gt;&quot;)" fullname="NinaCycleTests.SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription(&quot; &quot;,&quot;COMPÉTENCE APPRISE\n&lt;size=140%&gt;Cicatrice&lt;/size&gt;&quot;)" methodname="SkillUnlockUsesKnowledgeStyleTitleAndOptionalDescription" classname="NinaCycleTests" runstate="Runnable" seed="527388309" result="Passed" start-time="2026-10-25 12:51:00Z" end-time="2026-10-25 12:51:00Z" duration="0.000218" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[KnowledgeUnlockText: Destroy may not be called from edit mode! Use DestroyImmediate instead.
+Destroying an object in edit mode destroys it permanently
+Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

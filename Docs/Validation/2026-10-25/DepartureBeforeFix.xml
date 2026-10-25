@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-25 12:24:06Z" end-time="2026-10-25 12:24:07Z" duration="0,2433872">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="15" result="Failed" site="Child" start-time="2026-10-25 12:24:06Z" end-time="2026-10-25 12:24:07Z" duration="0.243387" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1020" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/DistrictCycleRuntimeProject/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="15" result="Failed" site="Child" start-time="2026-10-25 12:24:06Z" end-time="2026-10-25 12:24:07Z" duration="0.232073" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="5476" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1016" name="GameFlowDepartureFailureTests" fullname="GameFlowDepartureFailureTests" classname="GameFlowDepartureFailureTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-10-25 12:24:06Z" end-time="2026-10-25 12:24:07Z" duration="0.230089" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="ParameterizedMethod" id="1019" name="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" fullname="GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" classname="GameFlowDepartureFailureTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-10-25 12:24:06Z" end-time="2026-10-25 12:24:07Z" duration="0.222191" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-case id="1017" name="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(False)" fullname="GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(False)" methodname="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" classname="GameFlowDepartureFailureTests" runstate="Runnable" seed="144525551" result="Failed" start-time="2026-10-25 12:24:06Z" end-time="2026-10-25 12:24:07Z" duration="0.200298" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <failure>
+              <message><![CDATA[  A rejected capture must reveal the intact departure world.
+  Expected: 0
+  But was:  1.0f
+]]></message>
+              <stack-trace><![CDATA[at GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable (System.Boolean returnToHub) [0x0006f] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Editor\GameFlowDepartureFailureTests.cs:91
+]]></stack-trace>
+            </failure>
+            <output><![CDATA[[PersistentWorld] capture provider failed persistentId='scene:departure:uncapturable' componentType='Uncapturable departure object' provider='departure_failure_fixture' providerType='DepartureFailingProvider' error='Intentional departure capture failure.' stackTrace='System.InvalidOperationException: Intentional departure capture failure.
+  at DepartureFailingProvider.CaptureState (PersistentStateContext context) [0x00000] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Editor\GameFlowDepartureFailureTests.cs:117 
+  at PersistentNetworkObject.CaptureSnapshot (PersistentStateContext context) [0x000eb] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Persistence\Save\World\PersistentNetworkObject.cs:156 '
+]]></output>
+          </test-case>
+          <test-case id="1018" name="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(True)" fullname="GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable(True)" methodname="RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable" classname="GameFlowDepartureFailureTests" runstate="Runnable" seed="1681067453" result="Failed" start-time="2026-10-25 12:24:07Z" end-time="2026-10-25 12:24:07Z" duration="0.006945" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <failure>
+              <message><![CDATA[  A rejected capture must reveal the intact departure world.
+  Expected: 0
+  But was:  1.0f
+]]></message>
+              <stack-trace><![CDATA[at GameFlowDepartureFailureTests.RejectedCaptureKeepsTheDepartureZoneVisibleAndUsable (System.Boolean returnToHub) [0x0006f] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Editor\GameFlowDepartureFailureTests.cs:91
+]]></stack-trace>
+            </failure>
+            <output><![CDATA[[PersistentWorld] capture provider failed persistentId='scene:departure:uncapturable' componentType='Uncapturable departure object' provider='departure_failure_fixture' providerType='DepartureFailingProvider' error='Intentional departure capture failure.' stackTrace='System.InvalidOperationException: Intentional departure capture failure.
+  at DepartureFailingProvider.CaptureState (PersistentStateContext context) [0x00000] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Editor\GameFlowDepartureFailureTests.cs:117 
+  at PersistentNetworkObject.CaptureSnapshot (PersistentStateContext context) [0x000eb] in C:\Users\pierr\git\Lit\Library\DistrictCycleRuntimeProject\Assets\Persistence\Save\World\PersistentNetworkObject.cs:156 '
+Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
