@@ -32,9 +32,9 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     private ZoneManifest destinationZone;
 
     [Header("Interaction")]
-    [SerializeField, Tooltip("Collider utilise pour detecter et mesurer l'interaction. Un SphereCollider Trigger est cree au runtime s'il manque.")]
+    [SerializeField, Tooltip("Collider utilise pour detecter le portail. La portee d'utilisation est mesuree depuis interactionAnchor. Un SphereCollider Trigger est cree au runtime s'il manque.")]
     private Collider interactionCollider;
-    [SerializeField, Tooltip("Point utilise pour classer le portail parmi les interactions proches.")]
+    [SerializeField, Tooltip("Point d'utilisation du portail : sa distance au joueur limite la selection et l'activation, independamment de la taille du collider.")]
     private Transform interactionAnchor;
     [SerializeField, Min(0.1f), Tooltip("Distance maximale d'utilisation du portail.")]
     private float interactionMaxDistance = 2.25f;
@@ -117,7 +117,8 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
         return controller != null
             && isActiveAndEnabled
             && HasValidDestination()
-            && GetInteractionDetectionCollider() != null;
+            && GetInteractionDetectionCollider() != null
+            && IsWithinUseDistance(controller.transform, 0f);
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -276,7 +277,9 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
 
     private bool CanUse(GameObject character, bool requireLocalControl, float rangePadding)
     {
-        if (character == null || !HasValidDestination() || GetInteractionDetectionCollider() == null)
+        Collider collider = GetInteractionDetectionCollider();
+        if (!isActiveAndEnabled || character == null || !HasValidDestination() ||
+            collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
         {
             return false;
         }
@@ -292,11 +295,13 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
             return false;
         }
 
+        return IsWithinUseDistance(controller.transform, rangePadding);
+    }
+
+    private bool IsWithinUseDistance(Transform character, float padding)
+    {
         return CharacterInteractionDetection.IsCharacterWithinRange(
-            controller.transform,
-            GetInteractionDetectionCollider(),
-            GetInteractionAnchor(),
-            interactionMaxDistance + Mathf.Max(0f, rangePadding));
+            character, null, GetInteractionAnchor(), interactionMaxDistance + Mathf.Max(0f, padding));
     }
 
     private bool HasValidDestination()

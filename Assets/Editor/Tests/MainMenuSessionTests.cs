@@ -94,6 +94,27 @@ public sealed class MainMenuSessionTests
         });
     }
 
+    [Test] public void RenamingActiveSessionUpdatesCatalogAndEveryExistingSaveMetadata()
+    {
+        WithStorySave(manager =>
+        {
+            SaveSlotInfo second = manager.CreateSave(manager.CurrentSessionId, "Deuxieme");
+            Assert.That(manager.RenameActiveSession("Eowyn"), Is.True);
+            Assert.That(manager.CurrentSessionName, Is.EqualTo("Eowyn"));
+            Assert.That(manager.GetSession(manager.CurrentSessionId).sessionName, Is.EqualTo("Eowyn"));
+
+            foreach (SaveSlotInfo slot in manager.GetSession(manager.CurrentSessionId).saves)
+            {
+                Assert.That(slot.sessionName, Is.EqualTo("Eowyn"));
+                SaveMeta meta = UnityEngine.JsonUtility.FromJson<SaveMeta>(
+                    File.ReadAllText(Path.Combine(slot.directoryPath, "meta.json")));
+                Assert.That(meta.sessionName, Is.EqualTo("Eowyn"));
+            }
+
+            Assert.That(second, Is.Not.Null);
+        });
+    }
+
     [Test, Platform("Win")]
     public void FailedStorySaveKeepsTheCommittedCompletionState()
     {

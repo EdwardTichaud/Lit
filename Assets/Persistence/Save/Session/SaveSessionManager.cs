@@ -240,6 +240,87 @@ public class SaveSessionManager : MonoBehaviour
         return info;
     }
 
+    /// <summary>
+    /// Renames a session and every slot metadata entry that represents it.
+    /// This keeps the load browser coherent even before the next full save.
+    /// </summary>
+    public bool RenameActiveSession(string sessionName)
+    {
+        return HasActiveSave && RenameSession(CurrentSessionId, sessionName);
+    }
+
+    public bool RenameSession(string sessionId, string sessionName)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return false;
+        }
+
+        string name = string.IsNullOrWhiteSpace(sessionName) ? "Nouvelle partie" : sessionName.Trim();
+        string sessionMetaPath = GetSessionMetaPath(sessionId);
+        SessionMeta sessionMeta = ReadJson<SessionMeta>(sessionMetaPath);
+        if (sessionMeta == null)
+        {
+            LastError = "Session introuvable.";
+            return false;
+        }
+
+        try
+        {
+            sessionMeta.sessionName = name;
+            WriteJson(sessionMetaPath, sessionMeta);
+
+            string sessionPath = GetSessionPath(sessionId);
+            if (Directory.Exists(sessionPath))
+            {
+                string[] saveDirectories = Directory.GetDirectories(sessionPath);
+                for (int i = 0; i < saveDirectories.Length; i++)
+                {
+                    string saveMetaPath = Path.Combine(saveDirectories[i], saveMetaFileName);
+                    SaveMeta saveMeta = ReadJson<SaveMeta>(saveMetaPath);
+                    if (saveMeta == null)
+                    {
+                        continue;
+                    }
+
+                    saveMeta.sessionName = name;
+                    WriteJson(saveMetaPath, saveMeta);
+                }
+            }
+
+            SaveSessionInfo session = GetSession(sessionId);
+            if (session != null)
+            {
+                session.sessionName = name;
+                if (session.saves != null)
+                {
+                    for (int i = 0; i < session.saves.Count; i++)
+                    {
+                        if (session.saves[i] != null)
+                        {
+                            session.saves[i].sessionName = name;
+                        }
+                    }
+                }
+            }
+
+            if (string.Equals(CurrentSessionId, sessionId, StringComparison.Ordinal))
+            {
+                CurrentSessionName = name;
+            }
+
+            LastError = string.Empty;
+            CatalogChanged?.Invoke();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LastError = "Impossible de renommer la partie.";
+            Debug.LogWarning("SaveSessionManager: echec du renommage de session. " + ex.Message, this);
+            return false;
+        }
+    }
+
     public SaveSlotInfo CreateSave(string sessionId, string saveName)
     {
         if (string.IsNullOrWhiteSpace(sessionId))

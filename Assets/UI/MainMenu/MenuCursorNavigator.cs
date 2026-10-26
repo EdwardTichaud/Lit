@@ -152,6 +152,7 @@ public class MenuCursorNavigator : MonoBehaviour
 
     private bool CanProcessInput()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.Cinematic) return false;
         if (MainMenuNavigation.Active) return false;
         if (!isActiveAndEnabled || cursor == null)
         {

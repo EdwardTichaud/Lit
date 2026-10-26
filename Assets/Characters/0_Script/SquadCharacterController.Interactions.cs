@@ -218,10 +218,14 @@ public partial class SquadCharacterController
 
         Collider collider = candidate.GetInteractionDetectionCollider();
         Transform anchor = candidate.GetInteractionAnchor();
+        if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
         usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
         // Keep authored volumes for eligibility, but never rank an access
         // trigger's containing volume as a physical object at distance zero.
-        Vector3 rangePoint = CharacterInteractionDetection.GetInteractionPoint(
+        Vector3 rangePoint = CharacterInteractionDetection.GetInteractionRangePoint(
             collider, anchor, origin);
         Vector3 selectionPoint = CharacterInteractionSelection.SelectionPoint(collider, anchor, rangePoint);
         Vector3 toPoint = selectionPoint - origin;

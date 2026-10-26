@@ -208,6 +208,12 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private void Update()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.Cinematic)
+        {
+            ClearSyntheticUiHover();
+            SetWorldHover(null);
+            return;
+        }
         ResolveReferences();
         bool suppressed = MainMenuNavigation.Active && MainMenuNavigation.UsingGamepad;
         if (cursorGraphic != null) cursorGraphic.enabled = cursorVisible && !suppressed;

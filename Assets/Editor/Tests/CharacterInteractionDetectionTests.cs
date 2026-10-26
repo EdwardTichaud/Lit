@@ -84,6 +84,165 @@ public sealed class CharacterInteractionDetectionTests
         Assert.That(Evaluate(), Is.False);
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public void OversizedPortalColliderCannotGrantRemoteUse(bool trigger)
+    {
+        portalRoot.transform.position = origin + Vector3.forward * 30;
+        var box = portalRoot.GetComponent<BoxCollider>();
+        box.isTrigger = trigger;
+        box.size = Vector3.one * 100;
+        Physics.SyncTransforms();
+        Assert.That(Evaluate(), Is.False, "Being inside a detection volume is not being near the portal.");
+        Assert.That(CanUseAuthoritatively(), Is.False);
+        portal.SetDetectedCharacter(player);
+        Assert.That(portal.ServerTryUse(player, out _, out _), Is.False);
+    }
+
+    [Test]
+    public void MovingAwayImmediatelyInvalidatesCachedPortal()
+    {
+        Assert.That(CanUseAuthoritatively(), Is.True);
+        portal.SetDetectedCharacter(player);
+        player.transform.position += Vector3.right * 50;
+        Physics.SyncTransforms();
+        Assert.That(CanUseAuthoritatively(), Is.False);
+        Assert.That(portal.ServerTryUse(player, out _, out _), Is.False);
+    }
+
+    [Test]
+    public void AuthoredPortalAnchorDefinesUsePointInsteadOfOversizedVisualRoot()
+    {
+        var anchor = new GameObject("Portal use anchor");
+        anchor.transform.SetParent(portalRoot.transform);
+        anchor.transform.position = origin + Vector3.forward;
+        typeof(PortalController).GetField("interactionAnchor", Private).SetValue(portal, anchor.transform);
+        portalRoot.transform.position += Vector3.forward * 40;
+        portalRoot.GetComponent<BoxCollider>().size = Vector3.one * 100;
+        Physics.SyncTransforms();
+        Assert.That(CanUseAuthoritatively(), Is.False);
+        anchor.transform.position = origin + Vector3.forward;
+        Assert.That(CanUseAuthoritatively(), Is.True);
+        Assert.That(Evaluate(), Is.True);
+    }
+
+    [Test]
+    public void DisabledPortalOrColliderCannotBeUsedAuthoritatively()
+    {
+        Assert.That(CanUseAuthoritatively(), Is.True);
+        portalRoot.GetComponent<BoxCollider>().enabled = false;
+        Assert.That(CanUseAuthoritatively(), Is.False);
+        Assert.That(Evaluate(), Is.False);
+        portalRoot.GetComponent<BoxCollider>().enabled = true;
+        portal.enabled = false;
+        Assert.That(CanUseAuthoritatively(), Is.False);
+    }
+
+    [Test]
+    public void GenericTriggerUsesAnchorDistanceAndNotContainingVolume()
+    {
+        var box = portalRoot.GetComponent<BoxCollider>();
+        box.isTrigger = true;
+        box.size = Vector3.one * 100;
+        portalRoot.transform.position = origin + Vector3.forward * 30;
+        Physics.SyncTransforms();
+        Assert.That(CharacterInteractionDetection.IsCharacterWithinRange(player.transform, box, portalRoot.transform, 2), Is.False);
+        Assert.That(CharacterInteractionDetection.GetInteractionRangePoint(box, portalRoot.transform, origin), Is.EqualTo(portalRoot.transform.position));
+        portalRoot.transform.position = origin + Vector3.forward;
+        Physics.SyncTransforms();
+        Assert.That(CharacterInteractionDetection.IsCharacterWithinRange(player.transform, box, portalRoot.transform, 2), Is.True);
+    }
+
+    [Test]
+    public void ConcaveMeshEmptyBoundsDoNotCreateAnInteractionSurface()
+    {
+        var meshRoot = new GameObject("Sparse concave interaction mesh");
+        var mesh = new Mesh();
+        try
+        {
+            meshRoot.transform.position = origin;
+            mesh.vertices = new[] { new Vector3(-20,0,-20),new Vector3(20,0,-20),new Vector3(20,0,20) };
+            mesh.triangles = new[] { 0,2,1 };
+            var collider = meshRoot.AddComponent<MeshCollider>();
+            collider.sharedMesh = mesh;
+            Vector3 emptyPoint = origin + new Vector3(-19,0,19);
+            player.transform.position = emptyPoint - Vector3.up * .9f;
+            Physics.SyncTransforms();
+            Assert.That(collider.bounds.Contains(emptyPoint), Is.True);
+            Assert.That(CharacterInteractionDetection.IsCharacterWithinRange(player.transform,collider,meshRoot.transform,2), Is.False);
+        }
+        finally { Object.DestroyImmediate(meshRoot); Object.DestroyImmediate(mesh); }
+    }
+
+    [Test]
+    public void InteractRefreshesInvalidCachedSelectionBeforeDispatch()
+    {
+        Transform previous = LocalPlayerContext.LocalCharacterRoot;
+        var authority = LocalPlayerContext.LocalCharacterAuthority;
+        string source = LocalPlayerContext.LocalCharacterSource;
+        float debounce = LocalInputRouter.InputDebounceSeconds;
+        bool dispatched = false;
+        System.Action<UnityEngine.InputSystem.InputAction.CallbackContext> observer = _ =>
+        {
+            dispatched = true;
+            Assert.That(RuntimeOutlineSelectionManager.ActiveInteractable, Is.Null);
+            Assert.That(typeof(SquadCharacterController).GetField("currentDetectedInteractable", Private).GetValue(controller), Is.Null);
+        };
+        try
+        {
+            LocalPlayerContext.SetLocalCharacter(player.transform, "Interaction range test", authority);
+            LocalInputRouter.InputDebounceSeconds = 0;
+            typeof(SquadCharacterController).GetMethod("ApplyLocalInteractionTarget", Private).Invoke(controller, new object[] { portal });
+            Assert.That(RuntimeOutlineSelectionManager.ActiveInteractable, Is.SameAs(portal));
+            player.transform.position += Vector3.right * 50;
+            LocalInputRouter.PrioritizedInteract += observer;
+            typeof(LocalInputRouter).GetMethod("RaiseInteract", BindingFlags.Static | BindingFlags.NonPublic)
+                .Invoke(null, new object[] { default(UnityEngine.InputSystem.InputAction.CallbackContext) });
+            Assert.That(dispatched, Is.True);
+        }
+        finally
+        {
+            LocalInputRouter.PrioritizedInteract -= observer;
+            LocalInputRouter.InputDebounceSeconds = debounce;
+            RuntimeOutlineSelectionManager.Clear(controller);
+            if (previous != null) LocalPlayerContext.SetLocalCharacter(previous, source, authority);
+            else LocalPlayerContext.Clear("Interaction range test", authority);
+        }
+    }
+    [TestCase("Assets/Interactive/Portal/Portal_1.prefab")]
+    [TestCase("Assets/Interactive/Portal/Portal_2.prefab")]
+    public void ProductionPortalPrefabsRespectAnchorRange(string path)
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        Assert.That(prefab, Is.Not.Null);
+        var instance = Object.Instantiate(prefab);
+        try
+        {
+            instance.transform.position = origin + Vector3.forward * 1.5f;
+            var actual = instance.GetComponent<PortalController>();
+            Assert.That(actual, Is.Not.Null);
+            // Destination assignment normally comes from the scene; keep this
+            // geometry/range fixture independent of loaded destination scenes.
+            typeof(PortalController).GetField("destinationMode", Private).SetValue(actual, PortalController.DestinationMode.LocalTeleport);
+            typeof(PortalController).GetField("destinationPoints", Private).SetValue(actual, new List<Transform> { instance.transform });
+            Physics.SyncTransforms();
+            Assert.That(actual.CanBeDetectedBy(controller), Is.True, "Configured portal remains usable nearby.");
+            Assert.That((bool)typeof(PortalController).GetMethod("CanUse", Private)
+                .Invoke(actual, new object[] { player, false, .35f }), Is.True);
+            instance.transform.localScale *= 50;
+            instance.transform.position = origin + Vector3.forward * 40;
+            Physics.SyncTransforms();
+            Assert.That(actual.CanBeDetectedBy(controller), Is.False);
+            Assert.That(actual.ServerTryUse(player, out _, out _), Is.False);
+        }
+        finally { Object.DestroyImmediate(instance); }
+    }
+    private bool CanUseAuthoritatively()
+    {
+        return (bool)typeof(PortalController).GetMethod("CanUse", Private)
+            .Invoke(portal, new object[] { player, false, .35f });
+    }
+
     private bool Evaluate()
     {
         var method = typeof(SquadCharacterController).GetMethod("TryEvaluateInteractionCandidate", Private);

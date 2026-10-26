@@ -22,6 +22,91 @@ public sealed class BootstrapVideoPanelTests
         if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
     }
 
+    [Test] public void SouthAloneNeverSkipsAndStartOnlyOpensTheQuestion()
+    {
+        var skip = new VideoSkipConfirmation();
+        Assert.That(skip.Tick(false, true, true), Is.False);
+        Assert.That(skip.IsVisible, Is.False);
+        Assert.That(skip.Tick(true, false, false), Is.False);
+        Assert.That(skip.IsVisible, Is.True);
+        Assert.That(skip.Tick(false, true, true), Is.True);
+        Assert.That(skip.IsVisible, Is.False);
+    }
+
+    [Test] public void HeldOrSimultaneousSouthMustBeReleasedBeforeConfirmation()
+    {
+        var skip = new VideoSkipConfirmation();
+        Assert.That(skip.Tick(true, true, true), Is.False);
+        Assert.That(skip.Tick(false, false, true), Is.False);
+        Assert.That(skip.Tick(false, true, true), Is.False);
+        Assert.That(skip.Tick(false, false, false), Is.False);
+        Assert.That(skip.Tick(false, true, true), Is.True);
+    }
+
+    [Test] public void StartCancelsAndReleaseClearsAnUnconfirmedQuestion()
+    {
+        var skip = new VideoSkipConfirmation();
+        skip.Tick(true, false, false);
+        Assert.That(skip.Tick(true, false, false), Is.False);
+        Assert.That(skip.IsVisible, Is.False);
+        Assert.That(skip.Tick(false, true, true), Is.False);
+        skip.Tick(true, false, false);
+        skip.Reset();
+        Assert.That(skip.IsVisible, Is.False);
+        Assert.That(skip.Tick(false, true, true), Is.False);
+    }
+
+    [Test] public void CinematicProfileEnablesNoGameplayCameraOrUiMaps()
+    {
+        var maps = (System.Collections.Generic.IEnumerable<string>)typeof(InputModeCoordinator)
+            .GetMethod("GetMaps", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+            .Invoke(null, new object[] { InputMode.Cinematic });
+        Assert.That(maps, Is.Empty);
+    }
+
+    [Test] public void VideoLeaseRestoresOnlyUiModulesItDisabledAndHidesTheQuestion()
+    {
+        var previousScene = SceneManager.GetActiveScene();
+        var inputScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+        var root = new GameObject("Video input lease test");
+        SceneManager.MoveGameObjectToScene(root, inputScene);
+        var visible = Cursor.visible;
+        var locked = Cursor.lockState;
+        try
+        {
+            var video = root.AddComponent<BootstrapVideoPanel>();
+            var system = root.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            var module = root.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            var inactiveRoot = new GameObject("Inactive UI module");
+            inactiveRoot.transform.SetParent(root.transform);
+            var disabledModule = inactiveRoot.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            disabledModule.enabled = false;
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var type = typeof(BootstrapVideoPanel);
+            var owner = new object();
+            type.GetField("owner", flags).SetValue(video, owner);
+            type.GetMethod("BlockUiModules", flags).Invoke(video, null);
+            Assert.That(module.enabled, Is.False);
+            type.GetMethod("ShowSkipPrompt", flags).Invoke(video, new object[] { true });
+            Assert.That(root.transform.Find("VideoSkipConfirmation").gameObject.activeSelf, Is.True);
+            video.StopAndHide(new object());
+            Assert.That(module.enabled, Is.False, "Only the lease owner may unlock input.");
+            video.StopAndHide(owner);
+            Assert.That(module.enabled, Is.True);
+            Assert.That(disabledModule.enabled, Is.False);
+            Assert.That(root.transform.Find("VideoSkipConfirmation").gameObject.activeSelf, Is.False);
+            Assert.That(video.IsBusy, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            SceneManager.SetActiveScene(previousScene);
+            EditorSceneManager.CloseScene(inputScene, true);
+            Cursor.lockState = locked;
+            Cursor.visible = visible;
+        }
+    }
+
     [Test] public void HouseMusicCueUsesTheVideoClockAndFiresOnlyOnce()
     {
         int starts = 0;

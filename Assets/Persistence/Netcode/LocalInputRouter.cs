@@ -369,6 +369,14 @@ public static class LocalInputRouter
         }
 
         interactConsumed = false;
+        // Input callbacks may run before the detector's next frame, including
+        // immediately after a teleport. Never dispatch a cached distant target.
+        if (!InputFocusStack.HasAnyFocus())
+        {
+            GameObject character = LocalPlayerUtils.GetControlledCharacter();
+            if (character != null && character.TryGetComponent(out SquadCharacterController controller))
+                controller.RefreshLocalInteractionDetectionForExternalLocomotion();
+        }
         PrioritizedInteract?.Invoke(context);
         if (interactConsumed) return;
         if (!InputFocusStack.HasAnyFocus() &&

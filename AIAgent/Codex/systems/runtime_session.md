@@ -504,3 +504,37 @@ pause, saut du seuil et nouvelle lecture, timestamps invalides, piste Maison
 bouclee/non affectee par TimeScale, restitution musique seule et absence de
 remute au handoff. Ce lot ne mesure pas le premier echantillon sonore en Play ni
 la continuite DSP pendant le vrai chargement de toutes les sous-scenes Maison.
+
+
+## Inputs pendant les videos cinematiques
+
+BootstrapVideoPanel garde le focus Cinematic et le contexte Gamepad Cinematic
+pendant toute la lease (preparation, lecture et ecran noir de raccord). Les maps
+partagees restent desactivees. Les modules EventSystem actifs sont suspendus et
+restitues seulement s'ils ont ete suspendus par cette lease ; les curseurs et
+navigateurs qui lisaient directement les peripheriques ignorent le mode Cinematic.
+Le curseur systeme est cache, puis son etat initial restitue a la liberation.
+
+Pendant la lecture seulement, deux clones prives des actions configurees
+Player/Start et Player/Interact permettent Start -> question de passage ->
+SouthButton pour confirmer. Start une seconde fois ferme la question. La video
+continue pendant la question ; South seul, simultane avec Start ou maintenu avant
+la question ne passe rien : relachement puis nouvelle pression requis. Aucun
+menu Pause ni confirmation generale n'est ouvert, donc aucun autre input UI
+n'est reactive. Fin naturelle, erreur, StopAndHide et OnDisable nettoient question
+et actions privees ; seul le proprietaire peut liberer la lease.
+
+WasSkipped distingue un passage volontaire d'une fin naturelle/erreur. L'intro
+lance immediatement la musique de Maison si elle est passee avant le repere 19 s,
+puis conserve le chargement et la rencontre habituels. Un passage ne simule pas
+une position finale de VideoPlayer.time. Les sequences narratives interactives
+(dialogue, choix du nom) conservent leur propre politique, distincte des videos.
+
+Validation ciblee : compilation runtime/Editor reussie ; trois tests NUnit de
+confirmation executes hors Editor sur le code de production et passes. Tests
+EditMode ajoutes pour profil Cinematic sans maps et restitution des modules UI ;
+execution native bloquee par Unity Licensing au demarrage (aucun resultat pour
+cette revision).
+A qualifier en Play : Start puis South, South maintenu/simultane, Start pour
+continuer, souris/sticks/autres boutons sans effet, passage avant/apres 19 s,
+fin naturelle, seconde lecture et interruption du panneau.

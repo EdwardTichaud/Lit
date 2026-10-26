@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using TMPro;
 
 // Shared cinematic video surface authored in Bootstrap/UI_Overlay/VideoPanel.
 // A caller owns the panel through playback and the handoff to its next screen.
+[DefaultExecutionOrder(-200)]
 [DisallowMultipleComponent]
 public sealed class BootstrapVideoPanel : MonoBehaviour
 {
@@ -15,11 +19,20 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
     [SerializeField] private UiPanel panel;
     [SerializeField, Min(1f)] private float timeoutSeconds = 20f;
     private readonly Dictionary<AudioSource, bool> mutedSources = new Dictionary<AudioSource, bool>();
+    private readonly List<BaseInputModule> blockedUiModules = new List<BaseInputModule>();
+    private readonly VideoSkipConfirmation skip = new VideoSkipConfirmation();
+    private InputAction skipStart;
+    private InputAction skipConfirm;
+    private TextMeshProUGUI skipPrompt;
+    private bool acceptingSkip;
+    private bool cursorWasVisible;
+    private CursorLockMode previousCursorLock;
     private object owner;
     private int generation;
     private bool ended;
     private string playbackError;
 
+    public bool WasSkipped { get; private set; }
     public VideoPlayer Player => player;
     public bool IsBusy => owner != null;
     public bool IsOwnedBy(object requester) => owner != null && ReferenceEquals(owner, requester) && isActiveAndEnabled;
@@ -64,6 +77,13 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
             return false;
         }
         owner = requester;
+        WasSkipped = false;
+        skip.Reset();
+        cursorWasVisible = Cursor.visible;
+        previousCursorLock = Cursor.lockState;
+        Cursor.visible = false;
+        BlockUiModules();
+        GamepadInputContextStack.Push(this, GamepadInputContext.Cinematic);
         generation++;
         ended = false;
         playbackError = null;
@@ -76,6 +96,7 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         picture.color = Color.clear;
         transform.SetAsLastSibling();
         if (revealPanel) panel.Show(true); else panel.Hide(true);
+        LocalPlayerInput.EnsureInstance();
         UIManager.PushFocus(this, InputMode.Cinematic);
         return true;
     }
@@ -117,10 +138,17 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         if (beforePlayback != null) yield return beforePlayback();
         if (!Owns(requester, lease)) yield break;
         panel.Show(true);
+        // Private copies preserve the configured bindings without enabling Player/UI maps.
+        var actions = LocalPlayerInput.FindSharedActionMap("Player");
+        skipStart = actions?.FindAction("Start", false)?.Clone();
+        skipConfirm = actions?.FindAction("Interact", false)?.Clone();
+        skipStart?.Enable();
+        skipConfirm?.Enable();
+        acceptingSkip = true;
         player.Play();
         long previousFrame = -1;
         deadline = Time.realtimeSinceStartup + timeoutSeconds;
-        while (Owns(requester, lease) && !ended && playbackError == null && Time.realtimeSinceStartup < deadline)
+        while (Owns(requester, lease) && !ended && !WasSkipped && playbackError == null && Time.realtimeSinceStartup < deadline)
         {
             if (player.frame >= 0) onPlaybackTime?.Invoke(player.time);
             if (player.frame != previousFrame)
@@ -137,7 +165,7 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         }
         if (!Owns(requester, lease)) yield break;
         if (ended) onPlaybackTime?.Invoke(clip.length);
-        if (!ended) Debug.LogWarning("[VideoPanel] Lecture interrompue : " + (playbackError ?? "video bloquee"), this);
+        if (!ended && !WasSkipped) Debug.LogWarning("[VideoPanel] Lecture interrompue : " + (playbackError ?? "video bloquee"), this);
         // Keep the authored black backdrop until the caller has presented the next screen.
         ClearPlayback();
     }
@@ -148,6 +176,11 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
 
     private void ClearPlayback()
     {
+        acceptingSkip = false;
+        skipStart?.Dispose(); skipStart = null;
+        skipConfirm?.Dispose(); skipConfirm = null;
+        skip.Reset();
+        if (skipPrompt != null) skipPrompt.transform.parent.gameObject.SetActive(false);
         if (picture != null) { picture.texture = null; picture.color = Color.clear; }
         if (player == null) return;
         player.loopPointReached -= OnEnded;
@@ -183,9 +216,88 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         foreach (var pair in mutedSources)
             if (pair.Key != null) pair.Key.mute = pair.Value;
         mutedSources.Clear();
+        foreach (var module in blockedUiModules)
+            if (module != null) module.enabled = true;
+        blockedUiModules.Clear();
+        Cursor.lockState = previousCursorLock;
+        Cursor.visible = cursorWasVisible;
+        GamepadInputContextStack.Pop(this);
         UIManager.PopFocus(this);
         owner = null;
     }
 
+    private void BlockUiModules()
+    {
+        foreach (var module in FindObjectsByType<BaseInputModule>())
+        {
+            if (!module.enabled) continue;
+            blockedUiModules.Add(module);
+            module.enabled = false;
+        }
+    }
+
+    private void Update()
+    {
+        if (owner == null) return;
+        // Also catch an EventSystem created by a scene loaded during this lease.
+        BlockUiModules();
+        Cursor.visible = false;
+        if (!acceptingSkip || !UIManager.HasFocus(this)) return;
+        bool wasVisible = skip.IsVisible;
+        if (skip.Tick(skipStart != null && skipStart.WasPressedThisFrame(),
+            skipConfirm != null && skipConfirm.WasPressedThisFrame(),
+            skipConfirm != null && skipConfirm.IsPressed()))
+            WasSkipped = true;
+        if (wasVisible != skip.IsVisible) ShowSkipPrompt(skip.IsVisible);
+    }
+
+    private void ShowSkipPrompt(bool show)
+    {
+        if (show && skipPrompt == null)
+        {
+            var root = new GameObject("VideoSkipConfirmation", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            root.transform.SetParent(transform, false);
+            var rect = (RectTransform)root.transform;
+            rect.anchorMin = new Vector2(.15f, .05f);
+            rect.anchorMax = new Vector2(.85f, .2f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            root.GetComponent<Image>().color = new Color(0, 0, 0, .85f);
+            var label = new GameObject("Message", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            label.transform.SetParent(root.transform, false);
+            var textRect = (RectTransform)label.transform;
+            textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(16, 8); textRect.offsetMax = new Vector2(-16, -8);
+            skipPrompt = label.GetComponent<TextMeshProUGUI>();
+            skipPrompt.text = "Passer la cin\u00e9matique ?\nSouthButton : confirmer     Start : continuer";
+            skipPrompt.fontSize = 28;
+            skipPrompt.alignment = TextAlignmentOptions.Center;
+            skipPrompt.color = Color.white;
+            skipPrompt.raycastTarget = false;
+        }
+        if (skipPrompt != null) skipPrompt.transform.parent.gameObject.SetActive(show);
+    }
+
     private void OnDisable() { if (owner != null) Release(); }
+}
+
+// Confirmation must be a fresh South press after Start, never a held/simultaneous input.
+public sealed class VideoSkipConfirmation
+{
+    public bool IsVisible { get; private set; }
+    private bool confirmReleased;
+    public void Reset() { IsVisible = false; confirmReleased = false; }
+    public bool Tick(bool startPressed, bool southPressed, bool southHeld)
+    {
+        if (startPressed)
+        {
+            IsVisible = !IsVisible;
+            confirmReleased = !southHeld && !southPressed;
+            return false;
+        }
+        if (!IsVisible) return false;
+        if (!southHeld && !southPressed) confirmReleased = true;
+        if (!confirmReleased || !southPressed) return false;
+        Reset();
+        return true;
+    }
 }

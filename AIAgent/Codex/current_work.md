@@ -1,3 +1,18 @@
+## Inputs des videos cinematiques (2026-10-25)
+
+Le panneau video partage bloque gameplay, camera, navigation et clics UI pendant
+sa lease. Start affiche une question, SouthButton confirme le passage, Start
+ferme la question. Pression fraiche requise apres ouverture (pas de South maintenu
+ou simultane). La video continue pendant la question. Modules UI et curseur
+restitues sur sortie/erreur/desactivation, sans reactiver des modules deja fermes.
+Passage de Lit_Intro avant 19 s : musique de Maison lancee pour le raccord ;
+chargement et rencontre conserves. Details : runtime_session.md / input_camera_ucc.md.
+Compilation runtime/Editor reussie ; 3 tests de confirmation passes hors Editor
+avec le code de production et les assertions NUnit (appui frais, maintien/appuis
+simultanes, annulation/reset). Suite native bloquee au demarrage par le service
+Unity Licensing (connexion refusee/timeouts), sans resultat pour cette revision.
+Parcours manette, nettoyage runtime et rendu a qualifier en Play.
+
 ## Intro video et rencontre Munin (2026-10-25)
 
 Nouvelle partie : Resources/Videos/Lit_Intro -> VideoPlayer auteur Bootstrap

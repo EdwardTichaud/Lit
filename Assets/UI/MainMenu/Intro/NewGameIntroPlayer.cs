@@ -23,6 +23,9 @@ public sealed class NewGameIntroPlayer : MonoBehaviour
         }
         musicCue = new VideoTimeCue(HouseMusicCueSeconds, StartHouseMusic);
         yield return panel.PlayResource(IntroResourcePath, this, PreparePlayback, musicCue.Evaluate);
+        // An early skip still hands off to Maison with its music, without faking media time.
+        if (panel != null && panel.IsOwnedBy(this) && panel.WasSkipped && !musicCue.Fired)
+            StartHouseMusic();
     }
 
     private IEnumerator PreparePlayback()

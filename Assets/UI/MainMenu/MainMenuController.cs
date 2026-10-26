@@ -143,11 +143,6 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string joinInvalidMessage = "Code invalide.";
     [SerializeField] private TMP_Text joinStatusText;
 
-    [Header("Virtual Keyboard")]
-    [SerializeField] private CanvasGroup virtualKeyboardGroup;
-    [SerializeField] private RectTransform virtualKeyboardRoot;
-    [SerializeField] private VirtualKeyboardCursorController virtualKeyboardCursor;
-
     [Header("Loading Screen")]
     [SerializeField] private CanvasGroup loadingGroup;
     [SerializeField] private TMP_Text loadingText;
@@ -298,6 +293,7 @@ public class MainMenuController : MonoBehaviour
 
     private void Update()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.Cinematic) return;
         if (sessionService == null && PrivateSessionService.Instance != null)
         {
             sessionService = PrivateSessionService.Instance;
@@ -351,11 +347,6 @@ public class MainMenuController : MonoBehaviour
     {
         if (MainMenuNavigation.Active) return;
         if (titleCardIntroInputLocked)
-        {
-            return;
-        }
-
-        if (TryCancelVirtualKeyboard())
         {
             return;
         }
@@ -1102,7 +1093,6 @@ public class MainMenuController : MonoBehaviour
             confirmRoot.SetActive(false);
         }
 
-        HideVirtualKeyboard();
         SetTitleCardParticleRootsVisible(false);
         SetTitleCardIntroInputLock(true);
         SetMainMenuPointerCursorVisible(false);
@@ -1267,115 +1257,6 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void ShowVirtualKeyboard()
-    {
-        if (virtualKeyboardGroup != null)
-        {
-            StartFade(virtualKeyboardGroup, 1f, true);
-        }
-
-        if (virtualKeyboardRoot != null)
-        {
-            virtualKeyboardRoot.gameObject.SetActive(true);
-        }
-
-        if (virtualKeyboardCursor != null)
-        {
-            virtualKeyboardCursor.Activate();
-        }
-    }
-
-    private void HideVirtualKeyboard()
-    {
-        if (virtualKeyboardCursor != null)
-        {
-            virtualKeyboardCursor.Deactivate();
-        }
-
-        if (virtualKeyboardGroup != null)
-        {
-            StartFade(virtualKeyboardGroup, 0f, false);
-            return;
-        }
-
-        if (virtualKeyboardRoot != null)
-        {
-            virtualKeyboardRoot.gameObject.SetActive(false);
-        }
-    }
-
-    private bool IsVirtualKeyboardVisible()
-    {
-        if (virtualKeyboardRoot != null && virtualKeyboardRoot.gameObject.activeInHierarchy)
-        {
-            return true;
-        }
-
-        return virtualKeyboardGroup != null
-            && virtualKeyboardGroup.gameObject.activeInHierarchy
-            && virtualKeyboardGroup.alpha > 0.001f;
-    }
-
-    private bool TryCancelVirtualKeyboard()
-    {
-        if (!IsVirtualKeyboardVisible())
-        {
-            return false;
-        }
-
-        if (newGamePromptOpen)
-        {
-            CancelNewGame();
-            return true;
-        }
-
-        if (currentMenu == MenuState.Join)
-        {
-            CancelJoin();
-            return true;
-        }
-
-        HideVirtualKeyboard();
-        UpdateCursorTarget();
-        return true;
-    }
-
-    private void ApplyVirtualKeyboardImmediate(bool show)
-    {
-        if (virtualKeyboardGroup != null)
-        {
-            ApplyFadeImmediate(virtualKeyboardGroup, show ? 1f : 0f, show);
-            if (virtualKeyboardCursor != null)
-            {
-                if (show)
-                {
-                    virtualKeyboardCursor.Activate();
-                }
-                else
-                {
-                    virtualKeyboardCursor.Deactivate();
-                }
-            }
-            return;
-        }
-
-        if (virtualKeyboardRoot != null)
-        {
-            virtualKeyboardRoot.gameObject.SetActive(show);
-            if (virtualKeyboardCursor != null)
-            {
-                if (show)
-                {
-                    virtualKeyboardCursor.Activate();
-                }
-                else
-                {
-                    virtualKeyboardCursor.Deactivate();
-                }
-            }
-        }
-    }
-
     private void StartFade(CanvasGroup group, float targetAlpha, bool show, float durationOverride = -1f)
     {
         if (group == null) return;
@@ -1393,11 +1274,11 @@ public class MainMenuController : MonoBehaviour
     {
         // Visibility animation never grants input to a screen covered by a modal/operation.
         foreach (CanvasGroup group in new[] { titleCardGroup, gameOptionsGroup, soloOptionsGroup, multiOptionsGroup,
-            optionsGroup, ResolveLoadMenuGroup(), newGamePanelGroup, joinPanelGroup, virtualKeyboardGroup })
+            optionsGroup, ResolveLoadMenuGroup(), newGamePanelGroup, joinPanelGroup })
         {
             if (group == null || !group.gameObject.activeInHierarchy) continue;
             bool allowed = !OperationBusy && !deleteConfirmOpen && !loadConfirmOpen &&
-                (!newGamePromptOpen || group == newGamePanelGroup || group == virtualKeyboardGroup);
+                (!newGamePromptOpen || group == newGamePanelGroup);
             group.interactable = allowed && group.alpha > .01f;
             group.blocksRaycasts = group.interactable;
         }
@@ -1832,8 +1713,6 @@ public class MainMenuController : MonoBehaviour
             confirmRoot.SetActive(false);
         }
 
-        ApplyVirtualKeyboardImmediate(false);
-
         if (loadingGroup != null)
         {
             ApplyFadeImmediate(loadingGroup, 0f, false);
@@ -2145,31 +2024,6 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
-        if (virtualKeyboardGroup == null)
-        {
-            virtualKeyboardGroup = FindCanvasGroup("MainMenu_VirtualKeyboard");
-        }
-        if (virtualKeyboardRoot == null && virtualKeyboardGroup != null)
-        {
-            virtualKeyboardRoot = virtualKeyboardGroup.transform as RectTransform;
-        }
-        if (virtualKeyboardRoot == null)
-        {
-            Transform found = FindInHierarchy(transform, "MainMenu_VirtualKeyboard");
-            if (found != null)
-            {
-                virtualKeyboardRoot = found as RectTransform;
-                if (virtualKeyboardGroup == null)
-                {
-                    virtualKeyboardGroup = virtualKeyboardRoot.GetComponent<CanvasGroup>();
-                }
-            }
-        }
-        if (virtualKeyboardGroup == null && virtualKeyboardRoot != null)
-        {
-            virtualKeyboardGroup = virtualKeyboardRoot.gameObject.AddComponent<CanvasGroup>();
-        }
-
         if (confirmRoot == null)
         {
             Transform confirm = FindInHierarchy(transform, "MainMenu_DeleteConfirm");
@@ -2190,20 +2044,6 @@ public class MainMenuController : MonoBehaviour
         if (confirmText == null && confirmRoot != null)
         {
             confirmText = confirmRoot.GetComponentInChildren<TMP_Text>(true);
-        }
-
-        if (virtualKeyboardCursor == null)
-        {
-            Transform vkRoot = virtualKeyboardRoot != null
-                ? virtualKeyboardRoot
-                : virtualKeyboardGroup != null
-                    ? virtualKeyboardGroup.transform
-                    : null;
-
-            if (vkRoot != null)
-            {
-                virtualKeyboardCursor = vkRoot.GetComponentInChildren<VirtualKeyboardCursorController>(true);
-            }
         }
 
         if (sharedCursorNavigator == null && sharedCursor != null)
@@ -3249,13 +3089,9 @@ public class MainMenuController : MonoBehaviour
 
     private void OnNewGame()
     {
-        if (newGamePanelGroup == null)
-        {
-            CreateNewGameAndStart(string.Empty);
-            return;
-        }
-
-        ShowNewGamePrompt();
+        // Le nom de la partie est choisi dans la sequence narrative avec Munin.
+        // Le menu ne doit donc pas interrompre le lancement par une seconde saisie.
+        CreateNewGameAndStart(string.Empty);
     }
 
     private void ShowNewGamePrompt()
@@ -3272,7 +3108,6 @@ public class MainMenuController : MonoBehaviour
             StartFade(newGamePanelGroup, 1f, true);
         }
 
-        if (MainMenuNavigation.UsingGamepad) ShowVirtualKeyboard();
         if (newGamePanelGroup != null)
         {
             newGamePanelGroup.transform.SetAsLastSibling();
@@ -3311,8 +3146,6 @@ public class MainMenuController : MonoBehaviour
             StartFade(newGamePanelGroup, 0f, false);
         }
 
-        HideVirtualKeyboard();
-
         RegisterNewGameNameListener(false);
         RegisterTextInput(false);
         SetActiveMenuInteractable(true);
@@ -3339,19 +3172,8 @@ public class MainMenuController : MonoBehaviour
     private void ConfirmNewGame()
     {
         if (OperationBusy) return;
-        if (requireNewGameName && !IsNewGameNameValid())
-        {
-            SetStatus("Nom de partie requis.");
-            if (newGameNameInput != null)
-            {
-                newGameNameInput.ActivateInputField();
-            }
-            return;
-        }
-
-        string sessionName = newGameNameInput != null ? newGameNameInput.text : string.Empty;
         HideNewGamePrompt();
-        CreateNewGameAndStart(sessionName);
+        CreateNewGameAndStart(string.Empty);
     }
 
     private void CancelNewGame()
@@ -4050,11 +3872,6 @@ public class MainMenuController : MonoBehaviour
         CancelNewGame();
     }
 
-    public bool UI_TryCancelVirtualKeyboard()
-    {
-        return TryCancelVirtualKeyboard();
-    }
-
     public void UI_ConfirmLoad()
     {
         ConfirmLoad();
@@ -4093,7 +3910,6 @@ public class MainMenuController : MonoBehaviour
         // Finish editing without submitting the form. Invalid input stays editable.
         if (confirm == null || !confirm.enabled) return;
         if (input != null) input.DeactivateInputField();
-        ApplyVirtualKeyboardImmediate(false);
         UpdateCursorTarget();
         FindAnyObjectByType<MainMenuNavigation>()?.Focus(confirm.gameObject);
     }
@@ -4523,11 +4339,15 @@ public class MainMenuController : MonoBehaviour
         SetJoinStatus(message);
     }
 
-    public Transform NavigationModalRoot => IsVirtualKeyboardVisible() ? virtualKeyboardGroup.transform
-        : currentMenu == MenuState.LoadMenu && !loadConfirmOpen && !deleteConfirmOpen
+    public Transform NavigationModalRoot => currentMenu == MenuState.LoadMenu && !loadConfirmOpen && !deleteConfirmOpen
             ? (browsingSaves ? savesRoot : sessionsRoot) : null;
-    public void UI_Back() { if (!TryCancelVirtualKeyboard()) HandleBackAction(); }
-    public void UI_OpenKeyboard() { if (newGamePromptOpen || currentMenu == MenuState.Join) ShowVirtualKeyboard(); }
+    public void UI_Back() { HandleBackAction(); }
+    public void UI_OpenKeyboard()
+    {
+        if (currentMenu != MenuState.Join || joinCodeInput == null) return;
+        joinCodeInput.Select();
+        joinCodeInput.ActivateInputField();
+    }
     private void ShowLoadingScreen(string overrideMessage = null)
     {
         isLoading = true;

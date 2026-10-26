@@ -156,4 +156,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12bf94e8386b41dbbec3fab0df90fa19, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceNamePrompt
-  virtualKeyboardPrefab: {fileID: 1177172479610300591, guid: 316a9035a99caf141a5ca1563ca0bdae, type: 3}

@@ -115,31 +115,11 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(line.voiceLineText, Is.EqualTo(original));
     }
 
-    [Test] public void ModalBuildsTheExistingKeyboardWithoutMenuActionsOrInputFocus()
+    [Test] public void NamePromptDoesNotEmbedOrInstantiateItsOwnKeyboard()
     {
-        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
-        GameObject instance = null;
-        try
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/Narrative/StorySequence/Prefabs/1_Munin_Meeting.prefab");
-            instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-            instance.SetActive(false);
-            var prompt = instance.GetComponent<StorySequenceNamePrompt>();
-            typeof(StorySequenceNamePrompt).GetMethod("BuildView", System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance).Invoke(prompt, null);
-            var buttons = instance.GetComponentsInChildren<UnityEngine.UI.Button>(true);
-            Assert.That(buttons.Length, Is.EqualTo(39));
-            foreach (var action in instance.GetComponentsInChildren<MenuCursorAction>(true))
-                Assert.That(action.enabled, Is.False);
-            Assert.That(prompt.IsOpen, Is.False);
-            Assert.That(prompt.Confirmed, Is.False);
-        }
-        finally
-        {
-            if (instance != null) UnityEngine.Object.DestroyImmediate(instance);
-            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene);
-        }
+        var keyboardField = typeof(StorySequenceNamePrompt).GetField("virtualKeyboardPrefab",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.That(keyboardField, Is.Null);
     }
 
     [Test] public void OpeningMeetingIsReferencedByMenuAndDoesNotAutoplayDuringInstantiation()
@@ -158,7 +138,9 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(runner.Sequence.steps[2].type, Is.EqualTo(StorySequenceStepType.Dialogue));
         StringAssert.Contains("[Munin]", runner.Sequence.steps[2].voiceLine.voiceLineText);
         Assert.That(runner.Sequence.steps[3].type, Is.EqualTo(StorySequenceStepType.Dialogue));
-        Assert.That(runner.GetComponent<StorySequenceNamePrompt>().HasKeyboard, Is.True);
+        // The keyboard is a persistent Bootstrap panel, deliberately absent
+        // from this isolated prefab authoring fixture.
+        Assert.That(runner.GetComponent<StorySequenceNamePrompt>(), Is.Not.Null);
         Assert.That(new SerializedObject(runner).FindProperty("playOnStart").boolValue, Is.False);
         foreach (Type required in new[] { typeof(StorySequenceSceneBindings), typeof(StorySequenceCameraDriver),
                      typeof(StorySequenceDialoguePresenter), typeof(StorySequenceFadeController) })

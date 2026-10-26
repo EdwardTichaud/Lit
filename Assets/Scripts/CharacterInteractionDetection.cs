@@ -217,18 +217,43 @@ public static class CharacterInteractionDetection
 
     public static Vector3 GetInteractionPoint(Collider collider, Transform anchor, Vector3 origin)
     {
+        // Volume contact is also used by Flame influence, independently of use reach.
         if (collider != null)
         {
             if (TryGetClosestPoint(collider, origin, out Vector3 point) &&
                 (point - origin).sqrMagnitude > 0.000001f)
+                return point;
+            return collider.bounds.ClosestPoint(origin);
+        }
+        return anchor != null ? anchor.position : origin;
+    }
+
+    public static Vector3 GetInteractionRangePoint(Collider collider, Transform anchor, Vector3 origin)
+    {
+        if (collider != null)
+        {
+            // Triggers collect candidates; their extent is not the usable surface.
+            if (collider.isTrigger)
+            {
+                return anchor != null ? anchor.position : collider.bounds.center;
+            }
+
+            if (TryGetClosestPoint(collider, origin, out Vector3 point))
             {
                 return point;
             }
 
-            // Certaines portes de scene utilisent des MeshColliders non convexes,
-            // sans closest point precis. Le centre des bounds les rendait trop
-            // faciles a rejeter alors que le joueur etait contre la surface.
-            return collider.bounds.ClosestPoint(origin);
+            // A concave mesh's bounding box can contain large empty spaces.
+            // Only an actual surface hit may extend reach beyond the anchor.
+            Vector3 destination = anchor != null ? anchor.position : collider.bounds.center;
+            Vector3 direction = destination - origin;
+            if (direction.sqrMagnitude > 0.000001f &&
+                collider.Raycast(new Ray(origin, direction.normalized), out RaycastHit hit, direction.magnitude))
+            {
+                return hit.point;
+            }
+
+            return destination;
         }
 
         return anchor != null ? anchor.position : origin;
@@ -236,13 +261,15 @@ public static class CharacterInteractionDetection
 
     public static bool IsCharacterWithinRange(Transform characterRoot, Collider collider, Transform anchor, float maxDistance)
     {
-        if (characterRoot == null)
+        if (characterRoot == null || (collider == null && anchor == null) ||
+            (collider != null && !IsUsableCollider(collider, true)) ||
+            float.IsNaN(maxDistance) || float.IsInfinity(maxDistance) || maxDistance < 0f)
         {
             return false;
         }
 
         Vector3 origin = GetCharacterOrigin(characterRoot);
-        Vector3 point = GetInteractionPoint(collider, anchor, origin);
+        Vector3 point = GetInteractionRangePoint(collider, anchor, origin);
         float distance = Mathf.Max(0f, maxDistance);
         return (point - origin).sqrMagnitude <= distance * distance;
     }
@@ -277,7 +304,7 @@ public static class CharacterInteractionDetection
 
         // A large trigger is a detection zone, not a visible surface.
         return !collider.isTrigger && HasUnblockedInteractionRay(
-            origin, GetInteractionPoint(collider, anchor, origin), component.transform, characterRoot, Physics.DefaultRaycastLayers);
+            origin, GetInteractionRangePoint(collider, anchor, origin), component.transform, characterRoot, Physics.DefaultRaycastLayers);
     }
 
     public static Camera ResolveInteractionCamera()

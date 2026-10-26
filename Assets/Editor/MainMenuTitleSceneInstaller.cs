@@ -230,9 +230,6 @@ public static class MainMenuTitleSceneInstaller
     {
         DestroyNamedRoot("MainMenu_Cursor");
         DestroyObjectByName("MainMenu_Cursor");
-        DestroyObjectByName("VirtualKeyboardCursor");
-        DestroyObjectByName("MainMenu_VirtualKeyboardCursor");
-
         MenuCursorLink[] links = Object.FindObjectsByType<MenuCursorLink>(FindObjectsInactive.Include);
         for (int i = 0; i < links.Length; i++)
         {
@@ -275,7 +272,6 @@ public static class MainMenuTitleSceneInstaller
         AssignObject(controller, "loadConfirmCursorRoot", null);
         AssignObject(controller, "newGameCursorRoot", null);
         AssignObject(controller, "joinCursorRoot", null);
-        AssignObject(controller, "virtualKeyboardCursor", null);
     }
 
     private static void ConfigureCamera(Camera camera)

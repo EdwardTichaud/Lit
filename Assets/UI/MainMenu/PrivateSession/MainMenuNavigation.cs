@@ -46,6 +46,7 @@ public sealed class MainMenuNavigation : MonoBehaviour
 
     private void Update()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.Cinematic) return;
         PrivateSessionService session = PrivateSessionService.Instance;
         Active = SceneManager.GetActiveScene().name == MainMenuController.DefaultMenuSceneName ||
             (session != null && (session.IsBusy || session.Phase == PrivateSessionPhase.Lobby));

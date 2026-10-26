@@ -57,6 +57,7 @@ public class ConfirmationBox : MonoBehaviour
 
     private void Update()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.Cinematic) return;
         if (!gameObject.activeInHierarchy)
             return;
 

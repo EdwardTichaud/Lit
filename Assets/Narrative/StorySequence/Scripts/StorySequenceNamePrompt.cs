@@ -4,6 +4,7 @@ using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -13,9 +14,14 @@ namespace Lit.Story
     [DisallowMultipleComponent]
     public sealed class StorySequenceNamePrompt : MonoBehaviour, IInputModeHandler
     {
-        [SerializeField] private GameObject virtualKeyboardPrefab;
+        private const string BootstrapKeyboardName = "VirtualKeyboard";
+        private const string BootstrapKeyboardButtonsName = "VirtualKeyboardButtons";
         private readonly List<Button> keys = new List<Button>();
+        private readonly List<UnityAction> keyActions = new List<UnityAction>();
+        private readonly List<MenuCursorAction> disabledMenuActions = new List<MenuCursorAction>();
         private GameObject view;
+        private CanvasGroup bootstrapKeyboardGroup;
+        private Transform bootstrapKeyboardButtons;
         private TMP_Text nameText;
         private string draft = string.Empty;
         private bool submitted, opened, previousNavigationEvents;
@@ -28,7 +34,7 @@ namespace Lit.Story
         private CursorLockMode previousCursorLock;
 
         public bool Confirmed { get; private set; }
-        public bool HasKeyboard => virtualKeyboardPrefab != null;
+        public bool HasKeyboard => ResolveBootstrapKeyboard();
         public bool IsOpen => opened;
 
         public IEnumerator ChooseName()
@@ -37,7 +43,7 @@ namespace Lit.Story
             submitted = false;
             draft = string.Empty;
             var rules = FindAnyObjectByType<WorldRulesStateManager>();
-            if (rules == null || virtualKeyboardPrefab == null)
+            if (rules == null || !ResolveBootstrapKeyboard())
             {
                 Debug.LogError("[Story] Saisie du nom : etat du monde ou clavier manquant.", this);
                 yield break;
@@ -62,11 +68,18 @@ namespace Lit.Story
                 InputModeCoordinator.Enter(this, InputMode.UserInterface);
                 AttachKeyboard();
                 view.SetActive(true);
+                SetBootstrapKeyboardVisible(true);
                 SelectKey(0);
                 while (!submitted && opened) yield return null;
                 if (!submitted) yield break;
                 // Commit only after explicit validation. Abort/unload never commits a partial draft.
-                StorySequenceNames.SetMuninName(rules, draft);
+                string chosenName = StorySequenceNames.NormalizeName(draft);
+                StorySequenceNames.SetMuninName(rules, chosenName);
+                SaveSessionManager saves = SaveSessionManager.Instance;
+                if (saves != null && saves.HasActiveSave && !saves.RenameActiveSession(chosenName))
+                {
+                    Debug.LogWarning("[Story] Le nom choisi a ete applique au recit, mais la session n'a pas pu etre renommee.", this);
+                }
                 Confirmed = true;
             }
             finally { Close(); }
@@ -154,7 +167,8 @@ namespace Lit.Story
         {
             selected = index;
             for (int i = 0; i < keys.Count; i++)
-                keys[i].image.color = i == selected ? new Color(.45f, .32f, .12f, 1f) : new Color(.13f, .15f, .2f, 1f);
+                if (keys[i].image != null)
+                    keys[i].image.color = i == selected ? new Color(.45f, .32f, .12f, 1f) : new Color(.13f, .15f, .2f, 1f);
             eventSystem?.SetSelectedGameObject(keys[index].gameObject);
         }
 
@@ -205,38 +219,72 @@ namespace Lit.Story
             nameText.richText = false;
             Label(panel, "Entree / OK : valider  -  Vide : Munin  -  Echap : nom par defaut", new Vector2(0, -225), 22);
             Label(panel, "Manette : A pour une touche, B pour effacer, Start pour valider", new Vector2(0, -260), 20);
-            var clone = Instantiate(virtualKeyboardPrefab, panel, false);
-            Transform keyRoot = null;
-            foreach (var t in clone.GetComponentsInChildren<Transform>(true))
-                if (t.name == "VirtualKeyboardButtons") { keyRoot = t; break; }
-            if (keyRoot == null) throw new System.InvalidOperationException("VirtualKeyboardButtons absent du prefab de clavier.");
-            foreach (var action in clone.GetComponentsInChildren<MenuCursorAction>(true)) action.enabled = false;
-            foreach (var cursor in clone.GetComponentsInChildren<CursorController>(true)) cursor.enabled = false;
-            foreach (var cursor in clone.GetComponentsInChildren<VirtualKeyboardCursorController>(true)) cursor.enabled = false;
-            keyRoot.SetParent(panel, false);
-            var rect = (RectTransform)keyRoot;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
-            rect.sizeDelta = new Vector2(1050, 220); rect.anchoredPosition = new Vector2(0, -55); rect.localScale = Vector3.one;
-            var grid = keyRoot.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(72, 62); grid.spacing = new Vector2(8, 8);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = 13;
+            if (!ResolveBootstrapKeyboard())
+                throw new System.InvalidOperationException("VirtualKeyboard absent de Bootstrap/UI_Overlay.");
+
             keys.Clear();
-            foreach (Transform key in keyRoot)
+            keyActions.Clear();
+            foreach (MenuCursorAction action in bootstrapKeyboardButtons.GetComponentsInChildren<MenuCursorAction>(true))
             {
+                if (action != null && action.enabled)
+                {
+                    disabledMenuActions.Add(action);
+                    action.enabled = false;
+                }
+            }
+
+            foreach (Transform key in bootstrapKeyboardButtons)
+            {
+                Button button = key.GetComponent<Button>();
+                if (button == null)
+                    throw new System.InvalidOperationException("Chaque touche du VirtualKeyboard de Bootstrap doit avoir un Button.");
+
                 string label = key.name;
                 int index = keys.Count;
-                var button = key.GetComponent<Button>() ?? key.gameObject.AddComponent<Button>();
-                button.targetGraphic = key.GetComponent<Image>();
-                button.navigation = new Navigation { mode = Navigation.Mode.None };
-                button.transition = Selectable.Transition.None;
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => PressKey(label, index));
-                var text = key.GetComponentInChildren<TMP_Text>(true);
-                if (text != null) { text.text = label == "Erase" ? "Effacer" : label == "Blank" ? "Espace" : label; text.fontSize = 27; text.raycastTarget = false; }
+                UnityAction callback = () => PressKey(label, index);
+                button.onClick.AddListener(callback);
                 keys.Add(button);
+                keyActions.Add(callback);
             }
-            DeleteUi(clone);
             UpdateText();
+        }
+
+        private bool ResolveBootstrapKeyboard()
+        {
+            if (bootstrapKeyboardGroup != null && bootstrapKeyboardButtons != null)
+                return true;
+
+            Transform overlay = UIManager.Instance != null ? UIManager.Instance.transform : null;
+            if (overlay == null)
+            {
+                GameObject overlayObject = GameObject.Find("UI_Overlay");
+                overlay = overlayObject != null ? overlayObject.transform : null;
+            }
+
+            Transform keyboard = overlay != null ? overlay.Find(BootstrapKeyboardName) : null;
+            if (keyboard == null)
+                return false;
+
+            bootstrapKeyboardGroup = keyboard.GetComponent<CanvasGroup>();
+            bootstrapKeyboardButtons = FindChildByName(keyboard, BootstrapKeyboardButtonsName);
+            return bootstrapKeyboardGroup != null && bootstrapKeyboardButtons != null;
+        }
+
+        private static Transform FindChildByName(Transform root, string childName)
+        {
+            if (root == null) return null;
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+                if (children[i] != null && children[i].name == childName) return children[i];
+            return null;
+        }
+
+        private void SetBootstrapKeyboardVisible(bool visible)
+        {
+            if (bootstrapKeyboardGroup == null) return;
+            bootstrapKeyboardGroup.alpha = visible ? 1f : 0f;
+            bootstrapKeyboardGroup.interactable = visible;
+            bootstrapKeyboardGroup.blocksRaycasts = visible;
         }
 
         private static RectTransform Rect(string name, Transform parent, Vector2 size, Vector2 position)
@@ -274,6 +322,13 @@ namespace Lit.Story
                 Cursor.visible = previousCursorVisible;
             }
             opened = false;
+            for (int i = 0; i < keys.Count && i < keyActions.Count; i++)
+                if (keys[i] != null) keys[i].onClick.RemoveListener(keyActions[i]);
+            for (int i = 0; i < disabledMenuActions.Count; i++)
+                if (disabledMenuActions[i] != null) disabledMenuActions[i].enabled = true;
+            keyActions.Clear();
+            disabledMenuActions.Clear();
+            SetBootstrapKeyboardVisible(false);
             if (view != null) { view.SetActive(false); DeleteUi(view); view = null; }
             keys.Clear();
         }

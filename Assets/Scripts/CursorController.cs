@@ -174,6 +174,7 @@ public class CursorController : MonoBehaviour
 
     private void Update()
     {
+        if (InputModeCoordinator.CurrentMode == InputMode.Cinematic) return;
         if (usingExternalAction && moveAction == null)
         {
             return;
