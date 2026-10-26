@@ -36,6 +36,12 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
     [SerializeField] private MenuCursorLink cursorLink;
 
     private RectTransform rectTransform;
+    private System.Action virtualKeyboardHandler;
+
+    public void SetVirtualKeyboardHandler(System.Action handler)
+    {
+        virtualKeyboardHandler = handler;
+    }
 
     private void Awake()
     {
@@ -106,6 +112,12 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         lastExecutionFrame = Time.frameCount;
         if (!isActiveAndEnabled)
         {
+            return;
+        }
+
+        if (action == MenuAction.Vk_Input && virtualKeyboardHandler != null)
+        {
+            virtualKeyboardHandler();
             return;
         }
 

@@ -4,7 +4,6 @@ using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -16,9 +15,9 @@ namespace Lit.Story
     {
         private const string BootstrapKeyboardName = "VirtualKeyboard";
         private const string BootstrapKeyboardButtonsName = "VirtualKeyboardButtons";
-        private readonly List<Button> keys = new List<Button>();
-        private readonly List<UnityAction> keyActions = new List<UnityAction>();
-        private readonly List<MenuCursorAction> disabledMenuActions = new List<MenuCursorAction>();
+        private readonly List<MenuCursorAction> keys = new List<MenuCursorAction>();
+        private readonly List<Graphic> keyGraphics = new List<Graphic>();
+        private readonly List<Color> keyColors = new List<Color>();
         private GameObject view;
         private CanvasGroup bootstrapKeyboardGroup;
         private Transform bootstrapKeyboardButtons;
@@ -116,7 +115,7 @@ namespace Lit.Story
                 nextMove = Time.unscaledTime + .18f;
             }
             if (direction.sqrMagnitude <= .25f) nextMove = 0f;
-            if (pad?.buttonSouth.wasPressedThisFrame ?? false) keys[selected].onClick.Invoke();
+            if (pad?.buttonSouth.wasPressedThisFrame ?? false) keys[selected].OnCursorSubmit();
         }
 
         // This modal consumes coordinator events; polling below is the only keyboard/gamepad submit owner.
@@ -167,8 +166,8 @@ namespace Lit.Story
         {
             selected = index;
             for (int i = 0; i < keys.Count; i++)
-                if (keys[i].image != null)
-                    keys[i].image.color = i == selected ? new Color(.45f, .32f, .12f, 1f) : new Color(.13f, .15f, .2f, 1f);
+                if (keyGraphics[i] != null)
+                    keyGraphics[i].color = i == selected ? new Color(1f, .72f, .23f, keyColors[i].a) : keyColors[i];
             eventSystem?.SetSelectedGameObject(keys[index].gameObject);
         }
 
@@ -223,29 +222,24 @@ namespace Lit.Story
                 throw new System.InvalidOperationException("VirtualKeyboard absent de Bootstrap/UI_Overlay.");
 
             keys.Clear();
-            keyActions.Clear();
-            foreach (MenuCursorAction action in bootstrapKeyboardButtons.GetComponentsInChildren<MenuCursorAction>(true))
-            {
-                if (action != null && action.enabled)
-                {
-                    disabledMenuActions.Add(action);
-                    action.enabled = false;
-                }
-            }
-
+            keyGraphics.Clear();
+            keyColors.Clear();
             foreach (Transform key in bootstrapKeyboardButtons)
             {
-                Button button = key.GetComponent<Button>();
-                if (button == null)
-                    throw new System.InvalidOperationException("Chaque touche du VirtualKeyboard de Bootstrap doit avoir un Button.");
+                MenuCursorAction action = key.GetComponent<MenuCursorAction>();
+                if (action == null)
+                    throw new System.InvalidOperationException("La touche '" + key.name + "' du clavier de Bootstrap n'a pas de MenuCursorAction.");
 
                 string label = key.name;
                 int index = keys.Count;
-                UnityAction callback = () => PressKey(label, index);
-                button.onClick.AddListener(callback);
-                keys.Add(button);
-                keyActions.Add(callback);
+                action.SetVirtualKeyboardHandler(() => PressKey(label, index));
+                keys.Add(action);
+                Graphic graphic = key.GetComponent<Graphic>();
+                keyGraphics.Add(graphic);
+                keyColors.Add(graphic != null ? graphic.color : Color.white);
             }
+            if (keys.Count == 0)
+                throw new System.InvalidOperationException("Le clavier de Bootstrap ne contient aucune touche.");
             UpdateText();
         }
 
@@ -261,7 +255,12 @@ namespace Lit.Story
                 overlay = overlayObject != null ? overlayObject.transform : null;
             }
 
-            Transform keyboard = overlay != null ? overlay.Find(BootstrapKeyboardName) : null;
+            Transform keyboard = overlay != null ? FindChildByName(overlay, BootstrapKeyboardName) : null;
+            if (keyboard == null)
+            {
+                GameObject overlayObject = GameObject.Find("UI_Overlay");
+                keyboard = overlayObject != null ? FindChildByName(overlayObject.transform, BootstrapKeyboardName) : null;
+            }
             if (keyboard == null)
                 return false;
 
@@ -282,9 +281,7 @@ namespace Lit.Story
         private void SetBootstrapKeyboardVisible(bool visible)
         {
             if (bootstrapKeyboardGroup == null) return;
-            bootstrapKeyboardGroup.alpha = visible ? 1f : 0f;
-            bootstrapKeyboardGroup.interactable = visible;
-            bootstrapKeyboardGroup.blocksRaycasts = visible;
+            UIManager.TransitionCanvasGroup(this, bootstrapKeyboardGroup, visible, 0f);
         }
 
         private static RectTransform Rect(string name, Transform parent, Vector2 size, Vector2 position)
@@ -322,12 +319,13 @@ namespace Lit.Story
                 Cursor.visible = previousCursorVisible;
             }
             opened = false;
-            for (int i = 0; i < keys.Count && i < keyActions.Count; i++)
-                if (keys[i] != null) keys[i].onClick.RemoveListener(keyActions[i]);
-            for (int i = 0; i < disabledMenuActions.Count; i++)
-                if (disabledMenuActions[i] != null) disabledMenuActions[i].enabled = true;
-            keyActions.Clear();
-            disabledMenuActions.Clear();
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (keys[i] != null) keys[i].SetVirtualKeyboardHandler(null);
+                if (keyGraphics[i] != null) keyGraphics[i].color = keyColors[i];
+            }
+            keyGraphics.Clear();
+            keyColors.Clear();
             SetBootstrapKeyboardVisible(false);
             if (view != null) { view.SetActive(false); DeleteUi(view); view = null; }
             keys.Clear();

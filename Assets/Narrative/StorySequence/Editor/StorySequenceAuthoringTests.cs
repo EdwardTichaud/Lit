@@ -122,6 +122,54 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(keyboardField, Is.Null);
     }
 
+    [Test] public void NamePromptUsesExistingMenuCursorKeysWithoutButtonsAndRestoresTheirAppearance()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance;
+        var owner = new GameObject("Name prompt regression test");
+        var keyboard = new GameObject("VirtualKeyboard", typeof(RectTransform), typeof(CanvasGroup));
+        var buttons = new GameObject("VirtualKeyboardButtons", typeof(RectTransform));
+        buttons.transform.SetParent(keyboard.transform, false);
+        var key = new GameObject("A", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(MenuCursorAction));
+        key.transform.SetParent(buttons.transform, false);
+        var action = key.GetComponent<MenuCursorAction>();
+        action.Configure(null, MenuCursorAction.MenuAction.Vk_Input);
+        var image = key.GetComponent<UnityEngine.UI.Image>();
+        Color original = new Color(.2f, .4f, .6f, .8f);
+        image.color = original;
+        var prompt = owner.AddComponent<StorySequenceNamePrompt>();
+        Type type = typeof(StorySequenceNamePrompt);
+        var group = keyboard.GetComponent<CanvasGroup>();
+        try
+        {
+            type.GetField("bootstrapKeyboardGroup", flags).SetValue(prompt, group);
+            type.GetField("bootstrapKeyboardButtons", flags).SetValue(prompt, buttons.transform);
+            type.GetMethod("BuildView", flags).Invoke(prompt, null);
+            Assert.That(keyboard.GetComponentsInChildren<UnityEngine.UI.Button>(true), Is.Empty);
+            type.GetMethod("SetBootstrapKeyboardVisible", flags).Invoke(prompt, new object[] { true });
+            Assert.That(group.alpha, Is.EqualTo(1f));
+            Assert.That(group.interactable && group.blocksRaycasts, Is.True);
+            type.GetField("opened", flags).SetValue(prompt, true);
+            type.GetField("openedFrame", flags).SetValue(prompt, -1);
+            action.OnCursorSubmit();
+            Assert.That(type.GetField("draft", flags).GetValue(prompt), Is.EqualTo("A"));
+            Assert.That(image.color, Is.Not.EqualTo(original));
+            type.GetField("opened", flags).SetValue(prompt, false);
+            prompt.Cancel();
+            Assert.That(group.alpha, Is.Zero);
+            Assert.That(group.interactable || group.blocksRaycasts, Is.False);
+            Assert.That(image.color, Is.EqualTo(original));
+            Assert.That(action.enabled, Is.True);
+            Assert.That(keyboard.activeSelf, Is.True, "Closing uses alpha, not SetActive.");
+        }
+        finally
+        {
+            type.GetField("opened", flags).SetValue(prompt, false);
+            UnityEngine.Object.DestroyImmediate(owner);
+            UnityEngine.Object.DestroyImmediate(keyboard);
+        }
+    }
+
     [Test] public void OpeningMeetingIsReferencedByMenuAndDoesNotAutoplayDuringInstantiation()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
