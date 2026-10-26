@@ -437,7 +437,8 @@ namespace Lit.Story
                 audioAnchor,
                 step.dialogueMaxDisplayDuration,
                 useUnscaledTime,
-                ConsumeAdvanceRequest);
+                ConsumeAdvanceRequest,
+                actor != null ? actor.CharacterData : null);
         }
 
         private IEnumerator ExecuteCameraShot(StorySequenceStep step, bool useUnscaledTime)

@@ -17,7 +17,7 @@ MonoBehaviour:
   itemSprite: {fileID: 21300000, guid: 91f97e7330a955744a6cb6d3a81e6618, type: 3}
   description: Aussi lourd que pratique.
   canUse: 0
-  canPlace: 1
+  canPlace: 0
   isContainer: 1
   worldPrefab: {fileID: 4904099126078092212, guid: 0a338cd2bfd596c458cba357fcee02ce, type: 3}
   isFlame: 0
@@ -25,8 +25,8 @@ MonoBehaviour:
   keyId: 
   interactionCapabilities: 0
   toggleEquipOnUse: 0
-  allowDropFromInventory: 1
-  allowPlaceFromInventory: 1
+  allowDropFromInventory: 0
+  allowPlaceFromInventory: 0
   allowInstantDropWithoutPrefab: 1
   useEffects: []
   requireAllUseEffects: 0
@@ -51,7 +51,7 @@ MonoBehaviour:
   depositSuccessMessage: 
   takeSuccessMessage: 
   breakSuccessMessage: 
-  isBuilding: 1
+  isBuilding: 0
   isCraftingBuilding: 0
   availableCrafts: []
   buildingPrefab: {fileID: 4904099126078092212, guid: 0a338cd2bfd596c458cba357fcee02ce, type: 3}
@@ -60,6 +60,6 @@ MonoBehaviour:
   buildingRequirements: []
   buildingEffects: []
   buildingLevelConfigs: []
-  isHomeChest: 0
+  isHomeChest: 1
   canBreak: 0
   breakResults: []

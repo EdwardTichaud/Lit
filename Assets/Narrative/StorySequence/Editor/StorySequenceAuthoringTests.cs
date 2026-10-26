@@ -122,6 +122,69 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(keyboardField, Is.Null);
     }
 
+    [Test] public void SequenceActorResolvesCharacterDataFromItsCharacterInsteadOfItsDisplayName()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic;
+        var root = new GameObject("Speaker data test");
+        root.SetActive(false);
+        var data = ScriptableObject.CreateInstance<CharacterData>();
+        var overrideData = ScriptableObject.CreateInstance<CharacterData>();
+        try
+        {
+            var controller = root.AddComponent<SquadCharacterController>();
+            typeof(SquadCharacterController).GetField("characterData", flags).SetValue(controller, data);
+            var child = new GameObject("Speaker anchor");
+            child.transform.SetParent(root.transform);
+            var actor = child.AddComponent<StorySequenceActor>();
+            actor.ConfigureRuntime("player", "A display name unrelated to the data");
+            Assert.That(actor.CharacterData, Is.SameAs(data));
+            typeof(StorySequenceActor).GetField("characterData", flags).SetValue(actor, overrideData);
+            Assert.That(actor.CharacterData, Is.SameAs(overrideData));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(data);
+            UnityEngine.Object.DestroyImmediate(overrideData);
+        }
+    }
+
+    [Test] public void DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic;
+        var root = new GameObject("DialoguePanel", typeof(RectTransform), typeof(CanvasGroup));
+        root.SetActive(false);
+        var texture = new Texture2D(2, 2);
+        var portrait = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * .5f);
+        try
+        {
+            var ui = root.AddComponent<DialoguePanelUI>();
+            ui.dialoguePanelRoot = root;
+            var text = new GameObject("DialogueBox_Text", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+            text.transform.SetParent(root.transform, false);
+            ui.dialogueText = text.GetComponent<TMPro.TMP_Text>();
+            var image = new GameObject("DialoguePortrait_Image", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            image.transform.SetParent(root.transform, false);
+            typeof(DialoguePanelUI).GetMethod("ResolveReferences", flags).Invoke(ui, null);
+            Assert.That(ui.portraitImage, Is.SameAs(image.GetComponent<UnityEngine.UI.Image>()));
+            var setPortrait = typeof(DialoguePanelUI).GetMethod("SetPortrait", flags);
+            setPortrait.Invoke(ui, new object[] { portrait });
+            Assert.That(ui.portraitImage.sprite, Is.SameAs(portrait));
+            Assert.That(ui.portraitImage.enabled, Is.True);
+            setPortrait.Invoke(ui, new object[] { null });
+            Assert.That(ui.portraitImage.sprite, Is.Null);
+            Assert.That(ui.portraitImage.enabled, Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(portrait);
+            UnityEngine.Object.DestroyImmediate(texture);
+        }
+    }
+
     [Test] public void NamePromptUsesExistingMenuCursorKeysWithoutButtonsAndRestoresTheirAppearance()
     {
         const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic |

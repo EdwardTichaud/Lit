@@ -10,6 +10,8 @@ namespace Lit.Story
         [SerializeField] private Transform faceAnchor;
         [SerializeField] private Transform cameraAnchor;
         [SerializeField] private Animator animator;
+        [SerializeField, Tooltip("Donnees du locuteur. Sinon resolues depuis son SquadCharacterController.")]
+        private CharacterData characterData;
 
         public string ActorId => actorId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? gameObject.name : displayName;
@@ -17,6 +19,19 @@ namespace Lit.Story
         public Transform FaceAnchor => faceAnchor != null ? faceAnchor : ResolveDefaultAnchor();
         public Transform CameraAnchor => cameraAnchor != null ? cameraAnchor : FaceAnchor;
         public Animator Animator => animator != null ? animator : ResolveAnimator();
+        public CharacterData CharacterData
+        {
+            get
+            {
+                if (characterData == null)
+                {
+                    var controller = GetComponentInParent<SquadCharacterController>(true);
+                    if (controller == null) controller = GetComponentInChildren<SquadCharacterController>(true);
+                    if (controller != null) return controller.CharacterData;
+                }
+                return characterData;
+            }
+        }
 
         public bool Matches(string id)
         {

@@ -115,6 +115,8 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
         return (ucc.Anchor != null ? ucc.Anchor.position : root.position) +
             transform.right * ucc.AnchorOffset.x + root.up * ucc.AnchorOffset.y + transform.forward * ucc.AnchorOffset.z;
     }
+    public float GetRenderedGroundHeight() => ucc != null && ucc.Character != null
+        ? ucc.Character.transform.position.y : GetRenderedAnchor().y;
     public bool ShouldIgnoreTacticalCollider(Collider collider)
     {
         if (collider == null) return true;

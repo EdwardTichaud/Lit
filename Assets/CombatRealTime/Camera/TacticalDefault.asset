@@ -46,6 +46,7 @@ MonoBehaviour:
   maskFeather: 0.025
   maskFadeTime: 0.12
   occlusionRestoreDelay: 0.15
+  maskGroundClearance: 0.25
   showDiagnostics: 0
   adaptiveNearClip: 0
   nearClipPlayerMargin: 5

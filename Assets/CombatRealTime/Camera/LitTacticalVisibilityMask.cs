@@ -2,30 +2,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>Local camera presentation. Property blocks exist only during this camera's render.</summary>
+/// <summary>Local camera presentation. Every occluding layer shares the same target opening.</summary>
 public sealed class LitTacticalVisibilityMask
 {
-    private sealed class State
-    {
-        public float playerSeen = float.NegativeInfinity, enemySeen = float.NegativeInfinity;
-        public float playerStrength, enemyStrength;
-    }
     private readonly LitGameplayCameraModeController owner;
     private readonly Camera camera;
-    private readonly Dictionary<LitCameraOcclusionGroup, State> groups = new Dictionary<LitCameraOcclusionGroup, State>();
-    private readonly List<LitCameraOcclusionGroup> expired = new List<LitCameraOcclusionGroup>();
+    private readonly LitTacticalMaskStack stack = new LitTacticalMaskStack();
     private readonly List<LitCameraOcclusionGroup> visualHits = new List<LitCameraOcclusionGroup>(128);
-    private readonly RaycastHit[] hits = new RaycastHit[128];
-    private readonly Collider[] overlaps = new Collider[64];
-    private float nextQuery;
-    private int lastFrame = -1;
-    private bool active, rendering;
+    private RaycastHit[] hits = new RaycastHit[128];
+    private Collider[] overlaps = new Collider[64];
+    private float nextQuery, nextRenderQuery;
+    private int physicsRevision = -1, renderRevision = -1, lastFrame = -1, obstacleLayers;
+    private bool active, rendering, hasEnemy;
     private Vector3 player, enemy;
-    private bool hasEnemy;
-    private Transform previousEnemy;
+    private float playerGround, enemyGround;
+    private Transform previousEnemy, enemyTransform;
     private LitTacticalCameraProfile profile;
-    private Transform enemyTransform;
-    public bool Covers(LitCameraOcclusionGroup group) => active && groups.ContainsKey(group);
+    public int LayerCount => stack.Layers.Count;
+    public bool Covers(LitCameraOcclusionGroup group) => active && stack.Contains(group);
 
     public LitTacticalVisibilityMask(LitGameplayCameraModeController owner, Camera camera)
     {
@@ -38,21 +32,23 @@ public sealed class LitTacticalVisibilityMask
         float radius, int layers, LitTacticalCameraProfile settings)
     {
         if (!owner.MaskActive) { Clear(); return; }
-        active = true; profile = settings;
+        active = true; profile = settings; obstacleLayers = layers;
         player = playerAnchor; hasEnemy = lockedEnemy != null; enemyTransform = lockedEnemy;
         if (previousEnemy != lockedEnemy)
         {
-            foreach (var pair in groups) { pair.Value.enemySeen = float.NegativeInfinity; pair.Value.enemyStrength = 0; }
-            previousEnemy = lockedEnemy; nextQuery = 0;
+            stack.ResetEnemy(); previousEnemy = lockedEnemy;
+            nextQuery = nextRenderQuery = 0;
         }
+        UpdateGroundHeights();
         if (hasEnemy) enemy = lockedEnemy.position + Vector3.up;
-        if (Time.unscaledTime >= nextQuery)
+        if (Time.unscaledTime >= nextQuery || physicsRevision != LitCameraOcclusionGroup.RegistryRevision)
         {
             nextQuery = Time.unscaledTime + Mathf.Max(.01f, settings.occlusionInterval);
-            Detect(desired, player, false, layers);
-            if (hasEnemy) Detect(desired, enemy, true, layers);
+            physicsRevision = LitCameraOcclusionGroup.RegistryRevision;
+            Detect(desired, player, false);
+            if (hasEnemy) Detect(desired, enemy, true);
             // Raycasts cannot detect a collider containing their origin.
-            int count = Physics.OverlapSphereNonAlloc(desired, Mathf.Max(.01f, radius), overlaps, layers, QueryTriggerInteraction.Ignore);
+            int count = LitTacticalMaskQueries.Overlap(ref overlaps, desired, Mathf.Max(.01f, radius), layers);
             for (int i = 0; i < count; i++)
             {
                 if (owner.ShouldIgnoreTacticalCollider(overlaps[i])) continue;
@@ -60,42 +56,33 @@ public sealed class LitTacticalVisibilityMask
                 Mark(group, false); if (hasEnemy) Mark(group, true);
             }
         }
-        if (lastFrame == Time.frameCount) return;
-        lastFrame = Time.frameCount;
-        expired.Clear();
-        float step = Mathf.Min(Time.unscaledDeltaTime, .1f) / Mathf.Max(.01f, settings.maskFadeTime);
-        foreach (var pair in groups)
-        {
-            State state = pair.Value;
-            bool compatible = pair.Key != null && pair.Key.IsMaskCompatible(out _);
-            state.playerStrength = Mathf.MoveTowards(state.playerStrength,
-                compatible && Time.unscaledTime - state.playerSeen <= settings.occlusionRestoreDelay ? 1 : 0, step);
-            state.enemyStrength = Mathf.MoveTowards(state.enemyStrength,
-                compatible && hasEnemy && Time.unscaledTime - state.enemySeen <= settings.occlusionRestoreDelay ? 1 : 0, step);
-            if (!compatible || (state.playerStrength == 0 && state.enemyStrength == 0 &&
-                Time.unscaledTime - Mathf.Max(state.playerSeen, state.enemySeen) > settings.occlusionRestoreDelay)) expired.Add(pair.Key);
-        }
-        foreach (var group in expired) { if (group != null) group.RestoreMask(this); groups.Remove(group); }
     }
 
-    private void Detect(Vector3 origin, Vector3 target, bool isEnemy, int layers)
+    private void UpdateGroundHeights()
     {
-        if (camera != null && owner.ZoneMaskActive)
+        playerGround = owner.GetRenderedGroundHeight() + Mathf.Max(0, profile.maskGroundClearance);
+        enemyGround = hasEnemy ? enemyTransform.position.y + Mathf.Max(0, profile.maskGroundClearance) : 0;
+    }
+    private void Detect(Vector3 origin, Vector3 target, bool isEnemy)
+    {
+        if (camera != null)
         {
-            LitMaisonVisibilityZone.Collect(camera, target, profile.maskRadius + profile.maskFeather, visualHits);
+            // Include ALL configured groups, not only the automatic zone's entries.
+            LitCameraOcclusionGroup.Collect(camera, target, profile.maskRadius + profile.maskFeather,
+                isEnemy ? enemyGround : playerGround, visualHits);
             foreach (var group in visualHits) Mark(group, isEnemy);
         }
         Vector3 delta = target - origin;
         if (delta.sqrMagnitude < .0001f) return;
-        int count = Physics.RaycastNonAlloc(origin, delta.normalized, hits, delta.magnitude, layers, QueryTriggerInteraction.Ignore);
+        int count = LitTacticalMaskQueries.Raycast(ref hits, origin, delta.normalized, delta.magnitude, obstacleLayers);
         for (int i = 0; i < count; i++)
-            if (!owner.ShouldIgnoreTacticalCollider(hits[i].collider)) Mark(hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>(), isEnemy);
+            if (!owner.ShouldIgnoreTacticalCollider(hits[i].collider))
+                Mark(hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>(), isEnemy);
     }
     private void Mark(LitCameraOcclusionGroup group, bool isEnemy)
     {
-        if (group == null || !group.CanBypassCameraCollision()) return;
-        if (!groups.TryGetValue(group, out State state)) { state = new State(); groups.Add(group, state); }
-        if (isEnemy) state.enemySeen = Time.unscaledTime; else state.playerSeen = Time.unscaledTime;
+        if (group != null && group.IsAboveProtectedGround(isEnemy ? enemyGround : playerGround))
+            stack.Mark(group, isEnemy, Time.unscaledTime);
     }
     public static Vector4 ProjectTarget(Camera camera, Vector3 target, float strength)
     {
@@ -104,23 +91,36 @@ public sealed class LitTacticalVisibilityMask
     }
     private void BeginRender(ScriptableRenderContext context, Camera renderedCamera)
     {
-        // Nested reflections are excluded by the HLSL camera-pose guard. Do not
-        // clear the parent's effect while HDRP renders a nested reflection.
         if (renderedCamera != camera) return;
         RestoreBlocks();
         if (!active || !owner.MaskActive || profile == null) return;
-        // Displayed character and camera poses must share one interpolation instant.
-        player = owner.GetRenderedAnchor();
-        hasEnemy = enemyTransform != null;
+        // Query and project the actual displayed pose too: a simulation-pose-only
+        // query can miss the second wall on the edge of the interpolated opening.
+        player = owner.GetRenderedAnchor(); hasEnemy = enemyTransform != null;
         if (hasEnemy) enemy = enemyTransform.position + Vector3.up;
+        UpdateGroundHeights();
+        if (Time.unscaledTime >= nextRenderQuery || renderRevision != LitCameraOcclusionGroup.RegistryRevision)
+        {
+            nextRenderQuery = Time.unscaledTime + Mathf.Max(.01f, profile.occlusionInterval);
+            renderRevision = LitCameraOcclusionGroup.RegistryRevision;
+            Detect(camera.transform.position, player, false);
+            if (hasEnemy) Detect(camera.transform.position, enemy, true);
+        }
+        if (lastFrame != Time.frameCount)
+        {
+            lastFrame = Time.frameCount;
+            stack.Advance(Time.unscaledTime, Time.unscaledDeltaTime, profile.maskFadeTime,
+                profile.occlusionRestoreDelay, hasEnemy);
+        }
         rendering = true;
+        Vector4 position = camera.transform.position, forward = camera.transform.forward;
+        position.w = playerGround; forward.w = enemyGround;
         var data = new LitTacticalMaskProperties.Data
         {
             settings = new Vector4(profile.maskRadius, profile.maskFeather, camera.aspect, .05f),
-            cameraPosition = camera.transform.position,
-            cameraForward = camera.transform.forward
+            cameraPosition = position, cameraForward = forward
         };
-        foreach (var pair in groups)
+        foreach (var pair in stack.Layers)
         {
             if (pair.Key == null) continue;
             data.target0 = ProjectTarget(camera, player, pair.Value.playerStrength);
@@ -133,12 +133,14 @@ public sealed class LitTacticalVisibilityMask
     private void RestoreBlocks()
     {
         if (!rendering) return;
-        foreach (var pair in groups) if (pair.Key != null) pair.Key.RestoreMask(this);
+        foreach (var pair in stack.Layers) if (pair.Key != null) pair.Key.RestoreMask(this);
         rendering = false;
     }
     public void Clear()
     {
-        RestoreBlocks(); groups.Clear(); expired.Clear(); visualHits.Clear(); active = false; nextQuery = 0; lastFrame = -1; previousEnemy = enemyTransform = null;
+        RestoreBlocks(); stack.Clear(); visualHits.Clear(); active = false;
+        nextQuery = nextRenderQuery = 0; lastFrame = physicsRevision = renderRevision = -1;
+        previousEnemy = enemyTransform = null;
     }
     public void Dispose()
     {

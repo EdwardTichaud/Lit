@@ -174,8 +174,8 @@ namespace Lit.Story
         private void UpdateText()
         {
             if (nameText == null) return;
-            nameText.text = string.IsNullOrWhiteSpace(draft) ? "Munin (par defaut)" : draft;
-            nameText.color = string.IsNullOrWhiteSpace(draft) ? new Color(.6f, .62f, .68f) : Color.white;
+            nameText.text = draft;
+            nameText.color = Color.white;
         }
 
         private bool TryBuildView()

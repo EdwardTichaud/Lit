@@ -3796,6 +3796,7 @@ MonoBehaviour:
   faceAnchor: {fileID: 8186569390409486965}
   cameraAnchor: {fileID: 8186569390409486965}
   animator: {fileID: 963045829911085934}
+  characterData: {fileID: 0}
 --- !u!114 &4886044154287277720
 MonoBehaviour:
   m_ObjectHideFlags: 0

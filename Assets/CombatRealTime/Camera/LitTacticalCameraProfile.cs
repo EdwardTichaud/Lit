@@ -55,6 +55,8 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Min(.01f)] public float maskFadeTime = .12f;
     [Min(.01f)] public float occlusionInterval = .05f;
     [Min(0)] public float occlusionRestoreDelay = .15f;
+    [Min(0), Tooltip("Preserve walkable geometry up to this height above the character's feet.")]
+    public float maskGroundClearance = .25f;
     [Header("Developer: adaptive near clip (IgnoreObstacles follow only)")]
     public bool adaptiveNearClip = false;
     [Min(0)] public float nearClipPlayerMargin = 5;

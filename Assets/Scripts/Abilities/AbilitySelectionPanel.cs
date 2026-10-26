@@ -4,31 +4,35 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-/// <summary>Local Maison loadout menu. Selection requests never bypass host validation.</summary>
+/// <summary>Pause submenu for exploration abilities. Equipping remains Maison-only and host-validated.</summary>
 public sealed class AbilitySelectionPanel : MonoBehaviour
 {
     private AbilityService service;
-    private GameObject canvasRoot, menu, launcher;
+    private GameObject canvasRoot, menu;
     private RectTransform content;
     private bool open;
     private bool dirty = true;
     private float refreshAt;
     private TMP_Text status;
+    private PausePanelController pauseOwner;
+    private GameObject previousSelection;
+    private int openedFrame;
+    public bool IsOpen => open;
+    public event System.Action Closed;
     private void Awake()
     {
         service = GetComponent<AbilityService>();
-        service.Changed += MarkDirty;
+        if (service != null) service.Changed += MarkDirty;
     }
     private void MarkDirty() => dirty = true;
     private void Update()
     {
-        bool home = service != null && service.IsReady && service.IsInMaison() && LocalPlayerUtils.GetControlledCharacter() != null;
-        if (!home) { Close(); if (canvasRoot != null) canvasRoot.SetActive(false); return; }
-        if (canvasRoot == null) Build();
-        canvasRoot.SetActive(true);
-        launcher.SetActive(!open && !InputFocusStack.HasAnyFocus());
-        if (!open && Keyboard.current?.f6Key.wasPressedThisFrame == true) Open();
-        if (open && (Keyboard.current?.escapeKey.wasPressedThisFrame == true || Gamepad.current?.buttonEast.wasPressedThisFrame == true)) Close();
+        if (!open) return;
+        if (service == null || !service.IsReady || LocalPlayerUtils.GetControlledCharacter() == null ||
+            pauseOwner == null || !pauseOwner.IsOpen)
+        { Close(); return; }
+        if (Time.frameCount > openedFrame && InputFocusStack.HasFocus(this) &&
+            (Keyboard.current?.escapeKey.wasPressedThisFrame == true || Gamepad.current?.buttonEast.wasPressedThisFrame == true)) Close();
         if (open && (dirty || Time.unscaledTime >= refreshAt))
         { dirty = false; refreshAt = Time.unscaledTime + 1f; RefreshStatus(); }
     }
@@ -36,13 +40,9 @@ public sealed class AbilitySelectionPanel : MonoBehaviour
     {
         canvasRoot = new GameObject("Maison_Abilities", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         canvasRoot.transform.SetParent(transform, false);
-        var canvas = canvasRoot.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 70;
+        var canvas = canvasRoot.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = short.MaxValue;
         var scaler = canvasRoot.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
-        launcher = Button(canvasRoot.transform, "Capacités [F6]", Open).gameObject;
-        var launchRect = launcher.GetComponent<RectTransform>();
-        launchRect.anchorMin = launchRect.anchorMax = new Vector2(1, 0);
-        launchRect.pivot = new Vector2(1, 0); launchRect.anchoredPosition = new Vector2(-24, 24); launchRect.sizeDelta = new Vector2(210, 56);
         menu = new GameObject("AbilitySelection", typeof(RectTransform), typeof(Image)); menu.transform.SetParent(canvasRoot.transform, false);
         menu.GetComponent<Image>().color = new Color(.035f, .045f, .055f, .98f);
         var rect = menu.GetComponent<RectTransform>(); rect.sizeDelta = new Vector2(760, 690);
@@ -70,23 +70,35 @@ public sealed class AbilitySelectionPanel : MonoBehaviour
     }
     public void Open()
     {
-        if (service == null || !service.IsInMaison() || InputFocusStack.HasAnyFocus()) return;
+        PausePanelController.Instance?.UI_OpenAbilitiesPanel();
+    }
+    public bool OpenFromPause(PausePanelController owner)
+    {
+        if (open) return pauseOwner == owner;
+        if (owner == null || !owner.IsOpen || service == null || !service.IsReady ||
+            LocalPlayerUtils.GetControlledCharacter() == null || !InputFocusStack.HasFocus(owner)) return false;
         if (canvasRoot == null) Build();
+        pauseOwner = owner;
+        previousSelection = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        openedFrame = Time.frameCount;
+        canvasRoot.SetActive(true);
         open = true; menu.SetActive(true); InputFocusStack.Push(this); dirty = true;
         RefreshStatus();
         var first = System.Array.Find(menu.GetComponentsInChildren<Button>(), button => button.interactable);
         if (first != null && EventSystem.current != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
+        return true;
     }
     private void RefreshStatus()
     {
         var equipped = service.Equipped(service.LocalPlayerId);
+        bool canEquip = service.IsInMaison();
         status.text = "Une seule capacité équipée par joueur. Changement à la Maison uniquement.\nÉquipée : " + (equipped != null ? equipped.DisplayName : "Synchronisation…");
         foreach (var row in content.GetComponentsInChildren<AbilityMenuRow>())
         {
             bool unlocked = service.IsUnlocked(row.ability);
-            row.GetComponent<Button>().interactable = unlocked && row.ability != equipped;
+            row.GetComponent<Button>().interactable = canEquip && unlocked && row.ability != equipped;
             row.GetComponentInChildren<TMP_Text>().text = row.ability.DisplayName +
-                (row.ability == equipped ? " — ÉQUIPÉE" : unlocked ? " — Équiper" : " — VERROUILLÉE") + "\n<size=75%>" + row.ability.description +
+                (row.ability == equipped ? " — ÉQUIPÉE" : unlocked ? (canEquip ? " — Équiper" : " — À la Maison") : " — VERROUILLÉE") + "\n<size=75%>" + row.ability.description +
                 (!unlocked && row.ability.unlockCycle != null ? "\nDéblocage : " + row.ability.unlockCycle.title : "") + "</size>";
         }
     }
@@ -94,6 +106,11 @@ public sealed class AbilitySelectionPanel : MonoBehaviour
     {
         if (!open) return;
         open = false; InputFocusStack.Pop(this); if (menu != null) menu.SetActive(false);
+        if (canvasRoot != null) canvasRoot.SetActive(false);
+        pauseOwner = null;
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(previousSelection);
+        previousSelection = null;
+        Closed?.Invoke();
     }
     private void OnDisable() => Close();
     private void OnDestroy() { Close(); if (service != null) service.Changed -= MarkDirty; }

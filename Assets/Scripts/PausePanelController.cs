@@ -90,6 +90,7 @@ public class PausePanelController : MonoBehaviour
     private bool defaultPauseOptionsCaptured;
     private bool audioOptionsOpen;
     private bool knowledgePanelOpen;
+    private AbilitySelectionPanel activeAbilityPanel;
     private RectTransform pauseCursorItemsParent;
     private LayoutGroup pauseCursorLayoutGroup;
     private CursorController.ItemFilter pauseCursorItemFilter;
@@ -147,7 +148,7 @@ public class PausePanelController : MonoBehaviour
         SetAudioOptionsOpen(false, false);
         RefreshStaticAudioOptions();
 
-        if (startClosed)
+        if (startClosed || IsMainMenuLoaded())
         {
             ApplyPanelImmediate(0f, false);
             isOpen = false;
@@ -194,6 +195,7 @@ public class PausePanelController : MonoBehaviour
 
     private void OnDisable()
     {
+        CloseAbilitiesPanel();
         RestoreAfterScreenshot(restorePanelActivation: false);
         CloseKnowledgePanel(true);
         isOpen = false;
@@ -345,12 +347,24 @@ public class PausePanelController : MonoBehaviour
 
     private bool CanToggle()
     {
+        if (activeAbilityPanel != null && activeAbilityPanel.IsOpen) return false;
+        if (IsMainMenuLoaded())
+        {
+            return false;
+        }
+
         if (isOpen)
         {
             return HasPauseInputFocus();
         }
 
         return true;
+    }
+
+    private static bool IsMainMenuLoaded()
+    {
+        Scene menuScene = SceneManager.GetSceneByName(MainMenuController.DefaultMenuSceneName);
+        return menuScene.IsValid() && menuScene.isLoaded;
     }
 
     private bool HasPauseInputFocus()
@@ -365,6 +379,11 @@ public class PausePanelController : MonoBehaviour
 
     public void OpenPanel()
     {
+        if (IsMainMenuLoaded())
+        {
+            return;
+        }
+
         if (isOpen && panelState != PanelState.Closing)
         {
             return;
@@ -405,6 +424,7 @@ public class PausePanelController : MonoBehaviour
 
         isOpen = false;
         InputFocusStack.Pop(this);
+        CloseAbilitiesPanel();
         LockGameplayInput(false);
         ReleasePauseTime();
         ApplyCursorSizing(false);
@@ -552,6 +572,38 @@ public class PausePanelController : MonoBehaviour
         SetKnowledgePanelVisible(true, false);
         SetCursorState(true);
         cursorController?.SelectFirst();
+    }
+
+    public void UI_OpenAbilitiesPanel()
+    {
+        if (!isOpen || knowledgePanelOpen || activeAbilityPanel != null || !HasPauseInputFocus()) return;
+        AbilityService service = AbilityService.Instance;
+        AbilitySelectionPanel panel = service != null ? service.GetComponent<AbilitySelectionPanel>() : null;
+        if (panel == null || !panel.OpenFromPause(this)) return;
+        activeAbilityPanel = panel;
+        panel.Closed += OnAbilitiesPanelClosed;
+        SetCursorState(false);
+        UIManager.TransitionCanvasGroup(this, panelCanvasGroup, false, 0f);
+    }
+
+    private void CloseAbilitiesPanel()
+    {
+        if (activeAbilityPanel == null) return;
+        AbilitySelectionPanel panel = activeAbilityPanel;
+        activeAbilityPanel = null;
+        panel.Closed -= OnAbilitiesPanelClosed;
+        panel.Close();
+    }
+
+    private void OnAbilitiesPanelClosed()
+    {
+        if (activeAbilityPanel != null) activeAbilityPanel.Closed -= OnAbilitiesPanelClosed;
+        activeAbilityPanel = null;
+        if (!isOpen || !isActiveAndEnabled) return;
+        UIManager.TransitionCanvasGroup(this, panelCanvasGroup, true, 0f);
+        SetCursorState(true);
+        cursorController?.Refresh();
+        FocusPauseOption(FindInHierarchy(pausePanel.transform, "AbilitiesButton") as RectTransform);
     }
 
     public void CloseKnowledgePanel()
@@ -724,6 +776,7 @@ public class PausePanelController : MonoBehaviour
     {
         ConfigurePauseAction("ResumeButton", PauseCursorAction.PauseAction.Resume);
         ConfigurePauseAction("KnowledgeButton", PauseCursorAction.PauseAction.Knowledge);
+        ConfigurePauseAction("AbilitiesButton", PauseCursorAction.PauseAction.Abilities);
         ConfigurePauseAction("SaveButton", PauseCursorAction.PauseAction.Save);
         ConfigurePauseAction("QuitButton", PauseCursorAction.PauseAction.Quit);
     }

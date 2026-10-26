@@ -6,6 +6,13 @@ using UnityEngine;
 public sealed class LitCameraOcclusionGroup : MonoBehaviour
 {
     [SerializeField] private Renderer[] renderers = new Renderer[0];
+    [SerializeField, Tooltip("Only cut geometry above the protected character's feet (upper floors/stairs).")]
+    private bool overheadSurface;
+    private static readonly HashSet<LitCameraOcclusionGroup> activeGroups = new HashSet<LitCameraOcclusionGroup>();
+    private static readonly Dictionary<Renderer, LitCameraOcclusionGroup> rendererLeases = new Dictionary<Renderer, LitCameraOcclusionGroup>();
+    private readonly List<Renderer> leasedRenderers = new List<Renderer>();
+    public static int RegistryRevision { get; private set; }
+    public bool OverheadSurface => overheadSurface;
     private readonly HashSet<object> owners = new HashSet<object>();
     private bool[] previous;
     private sealed class MaskSlot
@@ -53,10 +60,15 @@ public sealed class LitCameraOcclusionGroup : MonoBehaviour
 
     public void ApplyMask(object owner, LitTacticalMaskProperties.Data data)
     {
-        if (!isActiveAndEnabled || maskOwner != null || !IsMaskCompatible(out _)) return;
+        if (owner == null || !isActiveAndEnabled || maskOwner != null || !IsMaskCompatible(out _)) return;
+        data.overheadSurface = overheadSurface;
         int count = 0;
         foreach (Renderer renderer in renderers)
         {
+            // Parent and child groups can reference the same mesh. Write it once
+            // so restoration cannot accidentally restore another group's mask.
+            if (rendererLeases.TryGetValue(renderer, out var holder) && holder != null) continue;
+            rendererLeases[renderer] = this; leasedRenderers.Add(renderer);
             materials.Clear(); renderer.GetSharedMaterials(materials);
             for (int index = 0; index < materials.Count; index++)
             {
@@ -90,7 +102,9 @@ public sealed class LitCameraOcclusionGroup : MonoBehaviour
             for (int i = 0; i < slot.values.Length; i++) slot.block.SetVector(LitTacticalMaskProperties.Vectors[i], slot.values[i]);
             slot.renderer.SetPropertyBlock(slot.block, slot.index);
         }
-        maskOwner = null;
+        foreach (var renderer in leasedRenderers)
+            if (rendererLeases.TryGetValue(renderer, out var holder) && holder == this) rendererLeases.Remove(renderer);
+        leasedRenderers.Clear(); maskOwner = null;
     }
     public void SetHidden(object owner, bool hidden)
     {
@@ -107,14 +121,44 @@ public sealed class LitCameraOcclusionGroup : MonoBehaviour
         }
         else if (owners.Remove(owner) && owners.Count == 0) Restore();
     }
-    public void Configure(Renderer[] explicitRenderers) { RestoreMask(maskOwner); Restore(); owners.Clear(); renderers = explicitRenderers; slots.Clear(); warnedIncompatible = false; }
+    public void Configure(Renderer[] explicitRenderers, bool overheadOnly = false)
+    {
+        RestoreMask(maskOwner); Restore(); owners.Clear(); renderers = explicitRenderers;
+        overheadSurface = overheadOnly; slots.Clear(); warnedIncompatible = false; RegistryRevision++;
+    }
+    public bool IsAboveProtectedGround(float height)
+    {
+        if (!overheadSurface) return true;
+        if (renderers == null) return false;
+        foreach (var renderer in renderers) if (renderer != null && renderer.bounds.max.y > height) return true;
+        return false;
+    }
+    public static void Collect(Camera camera, Vector3 target, float radius, float protectedGroundHeight,
+        List<LitCameraOcclusionGroup> results)
+    {
+        results.Clear();
+        foreach (var group in activeGroups)
+        {
+            if (group == null || !group.isActiveAndEnabled || group.renderers == null || !group.IsAboveProtectedGround(protectedGroundHeight)) continue;
+            foreach (var renderer in group.renderers)
+            {
+                if (renderer == null || !renderer.gameObject.activeInHierarchy || renderer.forceRenderingOff ||
+                    (camera.cullingMask & (1 << renderer.gameObject.layer)) == 0) continue;
+                // All layers, not just the first ray hit; includes colliderless
+                // and explicitly authored groups outside the automatic zones.
+                if (LitTacticalMaskGeometry.IntersectsOpening(camera, renderer.bounds, target, radius))
+                { results.Add(group); break; }
+            }
+        }
+    }
     private void Restore()
     {
         for (int i = 0; previous != null && i < previous.Length && i < renderers.Length; i++)
             if (renderers[i] != null) renderers[i].forceRenderingOff = previous[i];
         previous = null;
     }
-    private void OnDisable() { RestoreMask(maskOwner); Restore(); owners.Clear(); }
+    private void OnEnable() { activeGroups.Add(this); RegistryRevision++; }
+    private void OnDisable() { activeGroups.Remove(this); RegistryRevision++; RestoreMask(maskOwner); Restore(); owners.Clear(); }
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1, .6f, 0);

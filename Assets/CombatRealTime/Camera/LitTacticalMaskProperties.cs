@@ -12,9 +12,10 @@ public static class LitTacticalMaskProperties
     public struct Data
     {
         public Vector4 target0, target1, settings, cameraPosition, cameraForward;
+        public bool overheadSurface;
         public void Write(MaterialPropertyBlock block)
         {
-            block.SetFloat(Enabled, 1);
+            block.SetFloat(Enabled, overheadSurface ? 2 : 1);
             block.SetVector(Vectors[0], target0); block.SetVector(Vectors[1], target1);
             block.SetVector(Vectors[2], settings); block.SetVector(Vectors[3], cameraPosition);
             block.SetVector(Vectors[4], cameraForward);

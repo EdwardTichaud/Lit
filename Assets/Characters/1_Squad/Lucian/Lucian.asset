@@ -255,7 +255,7 @@ MonoBehaviour:
   uniqueId: 0f3452bd8cf87c440ab2208e8ebc72ce
   characterId: lucian
   characterName: Lucian
-  portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
+  portrait: {fileID: 21300000, guid: f54518ae18ba1d043915ea770fa60539, type: 3}
   worldPrefab: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
   combatSkills:
   - {fileID: 11400000, guid: 9125f3af4fd08b244b22941a76c9e2d3, type: 2}

@@ -13,7 +13,8 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
         Save = 14,
         Resume = 16,
         AudioOptionsBack = 17,
-        Knowledge = 18
+        Knowledge = 18,
+        Abilities = 19
     }
 
     [SerializeField] private PausePanelController controller;
@@ -106,6 +107,9 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
                 break;
             case PauseAction.Knowledge:
                 controller.UI_OpenKnowledgePanel();
+                break;
+            case PauseAction.Abilities:
+                controller.UI_OpenAbilitiesPanel();
                 break;
         }
     }

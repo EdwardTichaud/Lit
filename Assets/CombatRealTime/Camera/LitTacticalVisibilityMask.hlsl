@@ -32,8 +32,13 @@ void LitTacticalMask_float(float3 PositionAbsolute, float OriginalAlpha, float E
     uv.y *= _ProjectionParams.x;
     uv = uv * 0.5 + 0.5;
     float depth = dot(PositionAbsolute - CameraPosition.xyz, CameraForward.xyz);
-    float opening = max(LitTacticalOpening(uv, depth, Target0, Settings),
-        LitTacticalOpening(uv, depth, Target1, Settings));
+    // Mode 2 is for walkable surfaces: an upper floor can occlude the player,
+    // but the floor supporting either protected character must never disappear.
+    float opening0 = Enabled < 1.5 || PositionAbsolute.y > CameraPosition.w
+        ? LitTacticalOpening(uv, depth, Target0, Settings) : 0;
+    float opening1 = Enabled < 1.5 || PositionAbsolute.y > CameraForward.w
+        ? LitTacticalOpening(uv, depth, Target1, Settings) : 0;
+    float opening = max(opening0, opening1);
     // Stable ordered dither: no frame-dependent noise fighting temporal AA.
     uint2 pixel = (uint2)floor(uv * _ScreenParams.xy);
     uint low = ((pixel.x ^ pixel.y) & 1u) * 2u + (pixel.y & 1u);

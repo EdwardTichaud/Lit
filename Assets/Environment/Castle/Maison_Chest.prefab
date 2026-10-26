@@ -61,6 +61,10 @@ PrefabInstance:
       value: Maison_Chest
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
+      propertyPath: m_TagString
+      value: MaisonChest
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
@@ -147,7 +151,7 @@ MonoBehaviour:
     quantity: 5
   destroyWhenStorageEmpty: 0
   allowTake: 1
-  maxStoredQuantity: 0
+  maxStoredQuantity: 100
   isLocked: 0
   lockId: 
   consumeKeyOnUse: 0
@@ -176,6 +180,7 @@ MonoBehaviour:
   takeAllSuccessMessage: "Objets recup\xE9r\xE9s."
   depositNoSpaceMessage: Pas assez de place dans le coffre.
   showWorldInteractionUi: 1
+  requireLitInfluenceForInteraction: 0
   actionBox: {fileID: 0}
   actionBoxOffset: {x: 0, y: 0}
   actionBoxFadeDuration: 0.15
@@ -186,7 +191,7 @@ MonoBehaviour:
   actionBoxDisabledAlpha: 0.25
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: '{0}/{1}'
-  interactionTrigger: {fileID: 7434141378917972205}
+  interactionTrigger: {fileID: 1040901325205510312}
   interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
@@ -234,13 +239,13 @@ MonoBehaviour:
   targetCamera: {fileID: 0}
   destroyPanelOnExit: 0
   craftingPanel: {fileID: 0}
-  openCraftingPanelOnInteract: 1
+  openCraftingPanelOnInteract: 0
   craftingPanelTag: CraftingConstructionPanel
   interactionTrigger: {fileID: 1040901325205510312}
   interactionMaxDistance: 2
   closePanelOnExit: 1
   openOnProximity: 1
-  consumeInteractOnProximity: 1
+  consumeInteractOnProximity: 0
   openPanelRefreshInterval: 0.15
   logBuildingSyncEvents: 0
 --- !u!64 &7434141378917972205 stripped

@@ -15,6 +15,7 @@ namespace Lit.Story
         [SerializeField] private TMP_Text speakerText;
         [SerializeField] private TMP_Text dialogueText;
         [SerializeField] private TMP_Text continueHintText;
+        [SerializeField] private Image portraitImage;
         [SerializeField, Tooltip("DialoguePanel principal de la scene. Auto-resolu si vide.")]
         private DialoguePanelUI dialoguePanel;
         [SerializeField, Tooltip("Ajoute le nom du locuteur avant le texte dans DialoguePanel.")]
@@ -44,7 +45,8 @@ namespace Lit.Story
             Transform audioAnchor,
             float maximumDisplayDuration,
             bool useUnscaledTime,
-            Func<bool> consumeSkipRequest)
+            Func<bool> consumeSkipRequest,
+            CharacterData speakerData = null)
         {
             if (line == null)
             {
@@ -54,6 +56,7 @@ namespace Lit.Story
             StopAudio();
             ResolveDialoguePanel();
             activeSpeakerName = speakerName;
+            Sprite portrait = speakerData != null ? speakerData.portrait : null;
             SetSpeaker(speakerName);
             SetDialogue(line.voiceLineText);
             SetContinueHint(false);
@@ -68,10 +71,11 @@ namespace Lit.Story
             PlayAudio(line.voiceLineAudioClip, audioAnchor);
             usingDialoguePanel = dialoguePanel != null &&
                                  dialoguePanel.ShowControlledMessage(
-                                     BuildDialoguePanelText(activeSpeakerName, GetCurrentDialogue()));
+                                     BuildDialoguePanelText(activeSpeakerName, GetCurrentDialogue()), portrait);
             if (!usingDialoguePanel)
             {
                 EnsureUi();
+                SetPortrait(portrait);
                 SetSpeaker(speakerName);
                 SetDialogue(line.voiceLineText);
                 yield return FadeCanvasTo(1f, uiFadeDuration, useUnscaledTime);
@@ -128,6 +132,7 @@ namespace Lit.Story
             }
 
             usingDialoguePanel = false;
+            SetPortrait(null);
             SetContinueHint(false);
         }
 
@@ -138,6 +143,7 @@ namespace Lit.Story
             ResolveDialoguePanel(createIfMissing: false);
             dialoguePanel?.HideControlledImmediate();
             usingDialoguePanel = false;
+            SetPortrait(null);
             if (canvasGroup != null)
             {
                 SetCanvasAlpha(0f);
@@ -370,6 +376,13 @@ namespace Lit.Story
             }
         }
 
+        private void SetPortrait(Sprite portrait)
+        {
+            if (portraitImage == null) return;
+            portraitImage.sprite = portrait;
+            portraitImage.enabled = portrait != null;
+        }
+
         private void SetDialogue(string value)
         {
             activeDialogueText = StorySequenceNames.Resolve(value);
@@ -437,6 +450,7 @@ namespace Lit.Story
         {
             StopAudio();
             EndMusicDucking();
+            SetPortrait(null);
         }
     }
 }

@@ -86,7 +86,8 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
         foreach (var root in scene.GetRootGameObjects())
         foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
         {
-            if (!(districtOne ? IsDistrictArchitecture(renderer.transform, scene.name) : IsArchitecture(renderer.name)) ||
+            bool overhead = IsOverheadSurface(renderer.transform);
+            if (!(overhead || (districtOne ? IsDistrictArchitecture(renderer.transform, scene.name) : IsArchitecture(renderer.name))) ||
                 renderer.GetComponentInParent<Animator>() != null ||
                 renderer.GetComponent<LitCameraOcclusionGroup>() != null) continue;
             var originals = renderer.sharedMaterials;
@@ -105,7 +106,7 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
             }
             renderer.sharedMaterials = assigned;
             var group = renderer.gameObject.AddComponent<LitCameraOcclusionGroup>();
-            group.Configure(new Renderer[] { renderer });
+            group.Configure(new Renderer[] { renderer }, overhead);
             entries.Add(new Entry { renderer = renderer, group = group, original = originals, assigned = assigned, scene = scene });
         }
         unsupported += failed;
@@ -118,7 +119,7 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
         ? LitDistrictOneVisibilityInstaller.IsDistrictScene(path, name)
         : path.StartsWith("Assets/Scenes/Maison/", StringComparison.Ordinal) && Array.IndexOf(environmentScenes, name) >= 0;
 
-    public static bool IsDistrictArchitecture(Transform item, string sceneName)
+    private static bool IsPresentationHierarchy(Transform item)
     {
         // Narrative traces sometimes reuse a rock mesh. Inspect the whole
         // hierarchy before accepting the mesh name as environmental architecture.
@@ -129,8 +130,29 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
                 key.Contains("enemies") || key.Contains("characters") || key.Contains("blood") ||
                 key.Contains("memory_") || key.Contains("souvenir") || key.Contains("visualonly") ||
                 key.Contains("glitter") || key.Contains("stars") || key.StartsWith("vfx") ||
-                key == "sword" || key == "bow" || key.StartsWith("sm_sword") || key.StartsWith("sm_bow")) return false;
+                key.Contains("portal") || key.Contains("portail") || key.Contains("canvas") ||
+                key == "sword" || key == "bow" || key.StartsWith("sm_sword") || key.StartsWith("sm_bow")) return true;
         }
+        return false;
+    }
+    public static bool IsOverheadSurface(Transform item)
+    {
+        if (IsPresentationHierarchy(item)) return false;
+        for (var current = item; current != null; current = current.parent)
+        {
+            string key = current.name.ToLowerInvariant();
+            if (key.Contains("roof") || key.Contains("toit") || key.Contains("ceiling") || key.Contains("plafond")) return false;
+            if (key.Contains("floor") || key.Contains("stairs") || key.Contains("ground") || key.Contains("terrain") ||
+                key.Contains("path") || key.Contains("plane") || key.Contains("marche") || key.Contains("walkable") ||
+                key.Contains("platform") || key.Contains("plateforme") || key.Contains("plancher") ||
+                key.StartsWith("sol_") || key == "sol") return true;
+            if (IsArchitecture(current.name) || key.Contains("mur") || key.Contains("pilier") || key.Contains("guardrail")) return false;
+        }
+        return false;
+    }
+    public static bool IsDistrictArchitecture(Transform item, string sceneName)
+    {
+        if (IsPresentationHierarchy(item)) return false;
         for (var current = item; current != null; current = current.parent)
         {
             string key = current.name.ToLowerInvariant();

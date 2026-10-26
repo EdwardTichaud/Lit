@@ -15,6 +15,8 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     public GameObject dialoguePanelRoot;
     [Tooltip("Texte affiche dans le panel.")]
     public TMP_Text dialogueText;
+    [Tooltip("Image du portrait du personnage qui parle.")]
+    public Image portraitImage;
 
     [Header("Behavior")]
     [Tooltip("Duree par defaut si le panel ne demande pas Interact pour fermer.")]
@@ -88,6 +90,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     private void OnDisable()
     {
         timedConversationCompleted = false;
+        SetPortrait(null);
         LocalInputRouter.Interact -= OnInteractPerformed;
         InputFocusStack.Pop(this);
         isShowing = false;
@@ -191,6 +194,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         timedConversationCompleted = false;
         timedConversation = forceTimed;
         onHiddenCallback = onHidden;
+        SetPortrait(null);
         dialogueText.text = Lit.Story.StorySequenceNames.Resolve(message);
         SetVisible(true);
 
@@ -215,7 +219,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         return true;
     }
 
-    public bool ShowControlledMessage(string message)
+    public bool ShowControlledMessage(string message, Sprite portrait = null)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -230,6 +234,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         CancelActivePresentation();
         externallyControlled = true;
+        SetPortrait(portrait);
         dialogueText.text = Lit.Story.StorySequenceNames.Resolve(message);
         SetVisible(true);
         SetCanvasAlpha(0f);
@@ -282,6 +287,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         isShowing = false;
         externallyControlled = false;
+        SetPortrait(null);
         InputFocusStack.Pop(this);
         InvokeAndClearHiddenCallback();
     }
@@ -414,6 +420,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         isShowing = false;
         externallyControlled = false;
+        SetPortrait(null);
         InputFocusStack.Pop(this);
         hideRoutine = null;
         InvokeAndClearHiddenCallback();
@@ -460,7 +467,24 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         EnsureRuntimeFallback();
 
+        if (portraitImage == null && dialoguePanelRoot != null)
+        {
+            foreach (Image image in dialoguePanelRoot.GetComponentsInChildren<Image>(true))
+            {
+                if (image.name != "DialoguePortrait_Image") continue;
+                portraitImage = image;
+                break;
+            }
+        }
+
         EnsureCanvasGroup();
+    }
+
+    private void SetPortrait(Sprite portrait)
+    {
+        if (portraitImage == null) return;
+        portraitImage.sprite = portrait;
+        portraitImage.enabled = portrait != null;
     }
 
     private void EnsureRuntimeFallback()
