@@ -167,7 +167,7 @@ public partial class LitBrainsEnemy
                 return;
             }
             agent.isStopped = false;
-            MoveTo(fov.CurrentTarget.position, runSpeed, desired);
+            MoveTo(fov.CurrentTarget.position, runSpeed, ResolveVisibleApproachDistance(desired));
             return;
         }
         StopFluidMovement();

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Creation_0
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 314590aa02b3e4744a9ecd03e31b821f
+  knowledgeId: reve.limbes.creation.proof.0
+  title: Les deux faces d'une arche
+  description: "Les deux faces de cette arche se contredisent. La pierre tient ensemble des formes incompatibles : les incoh\xE9rences appartiennent au lieu lui-m\xEAme."
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: reve.limbes
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: 56116ea466f51ce4e9c955687965e992, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

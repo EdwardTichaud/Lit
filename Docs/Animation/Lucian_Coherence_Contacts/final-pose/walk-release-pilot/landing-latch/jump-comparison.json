@@ -1,0 +1,51 @@
+{
+  "reference": {
+    "free": {
+      "airborne_samples": 59,
+      "apex_over_start_m": 2.729075999999999,
+      "native_ik_in_air": 0,
+      "grounded_landing_clip_samples": 40,
+      "grounded_landing_suppressed_samples": 14,
+      "grounded_landing_locked_planar_span_m": 0.1605800000002091,
+      "grounded_landing_unlocked_max_mps": 5.29828644,
+      "grounded_landing_unlocked_after_first_lock": 25
+    },
+    "torch": {
+      "airborne_samples": 59,
+      "apex_over_start_m": 2.7284369999999996,
+      "native_ik_in_air": 0,
+      "grounded_landing_clip_samples": 40,
+      "grounded_landing_suppressed_samples": 13,
+      "grounded_landing_locked_planar_span_m": 0.16272000000003572,
+      "grounded_landing_unlocked_max_mps": 5.295263,
+      "grounded_landing_unlocked_after_first_lock": 26
+    },
+    "root_motion_samples": 0
+  },
+  "release_pilot": {
+    "free": {
+      "airborne_samples": 58,
+      "apex_over_start_m": 2.7299086,
+      "native_ik_in_air": 0,
+      "grounded_landing_clip_samples": 40,
+      "grounded_landing_suppressed_samples": 38,
+      "grounded_landing_locked_planar_span_m": 0.0,
+      "grounded_landing_unlocked_max_mps": 5.300992,
+      "grounded_landing_unlocked_after_first_lock": 0
+    },
+    "torch": {
+      "airborne_samples": 58,
+      "apex_over_start_m": 2.7299299999999995,
+      "native_ik_in_air": 0,
+      "grounded_landing_clip_samples": 40,
+      "grounded_landing_suppressed_samples": 38,
+      "grounded_landing_locked_planar_span_m": 0.0,
+      "grounded_landing_unlocked_max_mps": 5.2981205,
+      "grounded_landing_unlocked_after_first_lock": 0
+    },
+    "root_motion_samples": 0
+  },
+  "editor_errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ]
+}

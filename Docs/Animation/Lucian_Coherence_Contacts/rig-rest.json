@@ -1,0 +1,2114 @@
+{
+    "avatar": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+    "bones": [
+        {
+            "human": "Hips",
+            "path": "root/pelvis",
+            "referencePath": "root/pelvis",
+            "actualPosition": {
+                "x": -2.328306384496992e-12,
+                "y": -2.38418573772492e-9,
+                "z": 0.9457166194915771
+            },
+            "referencePosition": {
+                "x": -2.328306384496992e-12,
+                "y": -2.38418573772492e-9,
+                "z": 0.9457166194915771
+            },
+            "avatarPosition": {
+                "x": -2.328306384496992e-12,
+                "y": -2.38418573772492e-9,
+                "z": 0.9457166194915771
+            },
+            "actualScale": {
+                "x": 0.9999998807907104,
+                "y": 0.9999998807907104,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 0.9999998807907104,
+                "y": 0.9999998807907104,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.9457167387008667,
+            "actualSegmentLength": 0.9457167387008667
+        },
+        {
+            "human": "LeftUpperLeg",
+            "path": "root/pelvis/thigh_l",
+            "referencePath": "root/pelvis/thigh_l",
+            "actualPosition": {
+                "x": -0.09910815209150314,
+                "y": -0.01767292246222496,
+                "z": -0.00162264343816787
+            },
+            "referencePosition": {
+                "x": -0.09910815209150314,
+                "y": -0.01767292246222496,
+                "z": -0.00162264343816787
+            },
+            "avatarPosition": {
+                "x": -0.09910815209150314,
+                "y": -0.01767292246222496,
+                "z": -0.00162264343816787
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000003576278687,
+                "z": 1.000000238418579
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000003576278687,
+                "z": 1.000000238418579
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.10068459063768387,
+            "actualSegmentLength": 0.10068460553884506
+        },
+        {
+            "human": "RightUpperLeg",
+            "path": "root/pelvis/thigh_r",
+            "referencePath": "root/pelvis/thigh_r",
+            "actualPosition": {
+                "x": 0.09904556721448898,
+                "y": -0.01778191700577736,
+                "z": -0.0016483544604852796
+            },
+            "referencePosition": {
+                "x": 0.09904556721448898,
+                "y": -0.01778191700577736,
+                "z": -0.0016483544604852796
+            },
+            "avatarPosition": {
+                "x": 0.09904556721448898,
+                "y": -0.01778191700577736,
+                "z": -0.0016483544604852796
+            },
+            "actualScale": {
+                "x": 1.0000004768371582,
+                "y": 1.0000003576278687,
+                "z": 1.0000003576278687
+            },
+            "referenceScale": {
+                "x": 1.0000004768371582,
+                "y": 1.0000003576278687,
+                "z": 1.0000003576278687
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.1006426140666008,
+            "actualSegmentLength": 0.1006426215171814
+        },
+        {
+            "human": "LeftLowerLeg",
+            "path": "root/pelvis/thigh_l/calf_l",
+            "referencePath": "root/pelvis/thigh_l/calf_l",
+            "actualPosition": {
+                "x": -0.000021228790501481853,
+                "y": 0.42018425464630127,
+                "z": -0.00002463340752001386
+            },
+            "referencePosition": {
+                "x": -0.000021228790501481853,
+                "y": 0.42018425464630127,
+                "z": -0.00002463340752001386
+            },
+            "avatarPosition": {
+                "x": -0.000021228790501481853,
+                "y": 0.42018425464630127,
+                "z": -0.00002463340752001386
+            },
+            "actualScale": {
+                "x": 1.0000007152557373,
+                "y": 1.0000007152557373,
+                "z": 1.000000238418579
+            },
+            "referenceScale": {
+                "x": 1.0000007152557373,
+                "y": 1.0000007152557373,
+                "z": 1.000000238418579
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.42018452286720276,
+            "actualSegmentLength": 0.42018452286720276
+        },
+        {
+            "human": "RightLowerLeg",
+            "path": "root/pelvis/thigh_r/calf_r",
+            "referencePath": "root/pelvis/thigh_r/calf_r",
+            "actualPosition": {
+                "x": 0.000003337860107421875,
+                "y": 0.4198548495769501,
+                "z": -0.000003976821972173639
+            },
+            "referencePosition": {
+                "x": 0.000003337860107421875,
+                "y": 0.4198548495769501,
+                "z": -0.000003976821972173639
+            },
+            "avatarPosition": {
+                "x": 0.000003337860107421875,
+                "y": 0.4198548495769501,
+                "z": -0.000003976821972173639
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.4198550283908844,
+            "actualSegmentLength": 0.4198550283908844
+        },
+        {
+            "human": "LeftFoot",
+            "path": "root/pelvis/thigh_l/calf_l/foot_l",
+            "referencePath": "root/pelvis/thigh_l/calf_l/foot_l",
+            "actualPosition": {
+                "x": 0.000024032591682043858,
+                "y": 0.44840148091316223,
+                "z": 0.00003085613207076676
+            },
+            "referencePosition": {
+                "x": 0.000024032591682043858,
+                "y": 0.44840148091316223,
+                "z": 0.00003085613207076676
+            },
+            "avatarPosition": {
+                "x": 0.000024032591682043858,
+                "y": 0.44840148091316223,
+                "z": 0.00003085613207076676
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999997019767761,
+                "z": 0.9999998211860657
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999997019767761,
+                "z": 0.9999998211860657
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.44840192794799805,
+            "actualSegmentLength": 0.44840192794799805
+        },
+        {
+            "human": "RightFoot",
+            "path": "root/pelvis/thigh_r/calf_r/foot_r",
+            "referencePath": "root/pelvis/thigh_r/calf_r/foot_r",
+            "actualPosition": {
+                "x": -0.00000860214186104713,
+                "y": 0.4487086534500122,
+                "z": 0.000010969638424285222
+            },
+            "referencePosition": {
+                "x": -0.00000860214186104713,
+                "y": 0.4487086534500122,
+                "z": 0.000010969638424285222
+            },
+            "avatarPosition": {
+                "x": -0.00000860214186104713,
+                "y": 0.4487086534500122,
+                "z": 0.000010969638424285222
+            },
+            "actualScale": {
+                "x": 0.9999997019767761,
+                "y": 0.9999997615814209,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 0.9999997019767761,
+                "y": 0.9999997615814209,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.4487089216709137,
+            "actualSegmentLength": 0.4487089216709137
+        },
+        {
+            "human": "Spine",
+            "path": "root/pelvis/spine_01",
+            "referencePath": "root/pelvis/spine_01",
+            "actualPosition": {
+                "x": -0.000028817352358601056,
+                "y": 0.07655026018619537,
+                "z": 0.008136734366416931
+            },
+            "referencePosition": {
+                "x": -0.000028817352358601056,
+                "y": 0.07655026018619537,
+                "z": 0.008136734366416931
+            },
+            "avatarPosition": {
+                "x": -0.000028817352358601056,
+                "y": 0.07655026018619537,
+                "z": 0.008136734366416931
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000003576278687,
+                "z": 1.0000003576278687
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000003576278687,
+                "z": 1.0000003576278687
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.07698147743940353,
+            "actualSegmentLength": 0.07698147743940353
+        },
+        {
+            "human": "Chest",
+            "path": "root/pelvis/spine_01/spine_02",
+            "referencePath": "root/pelvis/spine_01/spine_02",
+            "actualPosition": {
+                "x": 3.678723992095456e-10,
+                "y": 0.039680857211351395,
+                "z": 3.6120414392826206e-7
+            },
+            "referencePosition": {
+                "x": 3.678723992095456e-10,
+                "y": 0.039680857211351395,
+                "z": 3.6120414392826206e-7
+            },
+            "avatarPosition": {
+                "x": 3.678723992095456e-10,
+                "y": 0.039680857211351395,
+                "z": 3.6120414392826206e-7
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999998807907104,
+                "z": 0.9999998807907104
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999998807907104,
+                "z": 0.9999998807907104
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.039680883288383484,
+            "actualSegmentLength": 0.039680883288383484
+        },
+        {
+            "human": "Neck",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/neck_01",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/neck_01",
+            "actualPosition": {
+                "x": -0.00046090935938991606,
+                "y": 0.30841341614723206,
+                "z": 0.0022382496390491724
+            },
+            "referencePosition": {
+                "x": -0.00046090935938991606,
+                "y": 0.30841341614723206,
+                "z": 0.0022382496390491724
+            },
+            "avatarPosition": {
+                "x": -0.00046090935938991606,
+                "y": 0.30841341614723206,
+                "z": 0.0022382496390491724
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.3084220588207245,
+            "actualSegmentLength": 0.3084220588207245
+        },
+        {
+            "human": "Head",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head",
+            "actualPosition": {
+                "x": 6.642657979227806e-9,
+                "y": 0.0888349637389183,
+                "z": 5.626678216685832e-7
+            },
+            "referencePosition": {
+                "x": 6.642657979227806e-9,
+                "y": 0.0888349637389183,
+                "z": 5.626678216685832e-7
+            },
+            "avatarPosition": {
+                "x": 6.642657979227806e-9,
+                "y": 0.0888349637389183,
+                "z": 5.626678216685832e-7
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999998211860657,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999998211860657,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.0888349637389183,
+            "actualSegmentLength": 0.0888349637389183
+        },
+        {
+            "human": "LeftShoulder",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l",
+            "actualPosition": {
+                "x": -0.06208076700568199,
+                "y": 0.23324023187160492,
+                "z": 0.0017122221179306507
+            },
+            "referencePosition": {
+                "x": -0.06208076700568199,
+                "y": 0.23324023187160492,
+                "z": 0.0017122221179306507
+            },
+            "avatarPosition": {
+                "x": -0.06208076700568199,
+                "y": 0.23324023187160492,
+                "z": 0.0017122221179306507
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.24136696755886078,
+            "actualSegmentLength": 0.24136696755886078
+        },
+        {
+            "human": "RightShoulder",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r",
+            "actualPosition": {
+                "x": 0.06133957579731941,
+                "y": 0.2333010882139206,
+                "z": 0.0017305373912677169
+            },
+            "referencePosition": {
+                "x": 0.06133957579731941,
+                "y": 0.2333010882139206,
+                "z": 0.0017305373912677169
+            },
+            "avatarPosition": {
+                "x": 0.06133957579731941,
+                "y": 0.2333010882139206,
+                "z": 0.0017305373912677169
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.24123629927635193,
+            "actualSegmentLength": 0.24123629927635193
+        },
+        {
+            "human": "LeftUpperArm",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l",
+            "actualPosition": {
+                "x": 0.0000010895728337345645,
+                "y": 0.11775453388690948,
+                "z": -0.000003449916675890563
+            },
+            "referencePosition": {
+                "x": 0.0000010895728337345645,
+                "y": 0.11775453388690948,
+                "z": -0.000003449916675890563
+            },
+            "avatarPosition": {
+                "x": 0.0000010895728337345645,
+                "y": 0.11775453388690948,
+                "z": -0.000003449916675890563
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 0.9999998807907104
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 0.9999998807907104
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.11775459349155426,
+            "actualSegmentLength": 0.11775460839271545
+        },
+        {
+            "human": "RightUpperArm",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r",
+            "actualPosition": {
+                "x": -3.4451483088560053e-7,
+                "y": 0.11741605401039124,
+                "z": -5.912780807193485e-7
+            },
+            "referencePosition": {
+                "x": -3.4451483088560053e-7,
+                "y": 0.11741605401039124,
+                "z": -5.912780807193485e-7
+            },
+            "avatarPosition": {
+                "x": -3.4451483088560053e-7,
+                "y": 0.11741605401039124,
+                "z": -5.912780807193485e-7
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 0.9999998211860657,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 0.9999998211860657,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.1174161434173584,
+            "actualSegmentLength": 0.1174161434173584
+        },
+        {
+            "human": "LeftLowerArm",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l",
+            "actualPosition": {
+                "x": 0.000009145140211330727,
+                "y": 0.2774784564971924,
+                "z": 0.000029449462090269662
+            },
+            "referencePosition": {
+                "x": 0.000009145140211330727,
+                "y": 0.2774784564971924,
+                "z": 0.000029449462090269662
+            },
+            "avatarPosition": {
+                "x": 0.000009145140211330727,
+                "y": 0.2774784564971924,
+                "z": 0.000029449462090269662
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000003576278687
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000003576278687
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.2774784564971924,
+            "actualSegmentLength": 0.27747851610183716
+        },
+        {
+            "human": "RightLowerArm",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r",
+            "actualPosition": {
+                "x": -0.0000079798692240729,
+                "y": 0.27749019861221313,
+                "z": 0.000024709701392566785
+            },
+            "referencePosition": {
+                "x": -0.0000079798692240729,
+                "y": 0.27749019861221313,
+                "z": 0.000024709701392566785
+            },
+            "avatarPosition": {
+                "x": -0.0000079798692240729,
+                "y": 0.27749019861221313,
+                "z": 0.000024709701392566785
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 1.0000001192092896,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 1.0000001192092896,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.2774902284145355,
+            "actualSegmentLength": 0.2774902880191803
+        },
+        {
+            "human": "LeftHand",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l",
+            "actualPosition": {
+                "x": 0.0000036764145079359878,
+                "y": 0.24496673047542572,
+                "z": -0.000009813308679440524
+            },
+            "referencePosition": {
+                "x": 0.0000036764145079359878,
+                "y": 0.24496673047542572,
+                "z": -0.000009813308679440524
+            },
+            "avatarPosition": {
+                "x": 0.0000036764145079359878,
+                "y": 0.24496673047542572,
+                "z": -0.000009813308679440524
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 0.9999998807907104
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 0.9999998807907104
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.24496686458587646,
+            "actualSegmentLength": 0.24496683478355408
+        },
+        {
+            "human": "RightHand",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r",
+            "actualPosition": {
+                "x": -0.000004720687684311997,
+                "y": 0.24551504850387573,
+                "z": -0.000013828277587890625
+            },
+            "referencePosition": {
+                "x": -0.000004720687684311997,
+                "y": 0.24551504850387573,
+                "z": -0.000013828277587890625
+            },
+            "avatarPosition": {
+                "x": -0.000004720687684311997,
+                "y": 0.24551504850387573,
+                "z": -0.000013828277587890625
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000003576278687,
+                "z": 1.0000003576278687
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000003576278687,
+                "z": 1.0000003576278687
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.2455151230096817,
+            "actualSegmentLength": 0.2455151230096817
+        },
+        {
+            "human": "LeftToes",
+            "path": "root/pelvis/thigh_l/calf_l/foot_l/ball_l",
+            "referencePath": "root/pelvis/thigh_l/calf_l/foot_l/ball_l",
+            "actualPosition": {
+                "x": -0.000002002715973503655,
+                "y": 0.15132778882980347,
+                "z": 7.534026735811494e-7
+            },
+            "referencePosition": {
+                "x": -0.000002002715973503655,
+                "y": 0.15132778882980347,
+                "z": 7.534026735811494e-7
+            },
+            "avatarPosition": {
+                "x": -0.000002002715973503655,
+                "y": 0.15132778882980347,
+                "z": 7.534026735811494e-7
+            },
+            "actualScale": {
+                "x": 0.9999998807907104,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 0.9999998807907104,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.15132781863212585,
+            "actualSegmentLength": 0.15132781863212585
+        },
+        {
+            "human": "RightToes",
+            "path": "root/pelvis/thigh_r/calf_r/foot_r/ball_r",
+            "referencePath": "root/pelvis/thigh_r/calf_r/foot_r/ball_r",
+            "actualPosition": {
+                "x": 0.000005092620540381176,
+                "y": 0.15129975974559784,
+                "z": 0.0000015664099919376895
+            },
+            "referencePosition": {
+                "x": 0.000005092620540381176,
+                "y": 0.15129975974559784,
+                "z": 0.0000015664099919376895
+            },
+            "avatarPosition": {
+                "x": 0.000005092620540381176,
+                "y": 0.15129975974559784,
+                "z": 0.0000015664099919376895
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.15129980444908142,
+            "actualSegmentLength": 0.15129980444908142
+        },
+        {
+            "human": "LeftEye",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head/CC_Base_FacialBone/CC_Base_L_Eye",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head/CC_Base_FacialBone/CC_Base_L_Eye",
+            "actualPosition": {
+                "x": 0.07558376342058182,
+                "y": 0.07375802844762802,
+                "z": 0.03381705656647682
+            },
+            "referencePosition": {
+                "x": 0.07558376342058182,
+                "y": 0.07375802844762802,
+                "z": 0.03381705656647682
+            },
+            "avatarPosition": {
+                "x": 0.07558376342058182,
+                "y": 0.07375802844762802,
+                "z": 0.03381705656647682
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.11089097708463669,
+            "actualSegmentLength": 0.11089098453521729
+        },
+        {
+            "human": "RightEye",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head/CC_Base_FacialBone/CC_Base_R_Eye",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head/CC_Base_FacialBone/CC_Base_R_Eye",
+            "actualPosition": {
+                "x": 0.07559026777744293,
+                "y": 0.07375543564558029,
+                "z": -0.03379106521606445
+            },
+            "referencePosition": {
+                "x": 0.07559026777744293,
+                "y": 0.07375543564558029,
+                "z": -0.03379106521606445
+            },
+            "avatarPosition": {
+                "x": 0.07559026777744293,
+                "y": 0.07375543564558029,
+                "z": -0.03379106521606445
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.11088572442531586,
+            "actualSegmentLength": 0.11088573187589645
+        },
+        {
+            "human": "Jaw",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head/CC_Base_FacialBone/CC_Base_JawRoot",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/neck_01/head/CC_Base_FacialBone/CC_Base_JawRoot",
+            "actualPosition": {
+                "x": 0.024634243920445442,
+                "y": 0.013118182308971882,
+                "z": 0.000011867353350680787
+            },
+            "referencePosition": {
+                "x": 0.024634243920445442,
+                "y": 0.013118182308971882,
+                "z": 0.000011867353350680787
+            },
+            "avatarPosition": {
+                "x": 0.024634243920445442,
+                "y": 0.013118182308971882,
+                "z": 0.000011867353350680787
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.027909623458981514,
+            "actualSegmentLength": 0.027909625321626663
+        },
+        {
+            "human": "LeftThumbProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/thumb_01_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/thumb_01_l",
+            "actualPosition": {
+                "x": -0.007106809411197901,
+                "y": 0.025205841287970543,
+                "z": 0.023417452350258827
+            },
+            "referencePosition": {
+                "x": -0.007106809411197901,
+                "y": 0.025205841287970543,
+                "z": 0.023417452350258827
+            },
+            "avatarPosition": {
+                "x": -0.007106809411197901,
+                "y": 0.025205841287970543,
+                "z": 0.023417452350258827
+            },
+            "actualScale": {
+                "x": 0.9999998211860657,
+                "y": 0.9999998807907104,
+                "z": 0.9999998211860657
+            },
+            "referenceScale": {
+                "x": 0.9999998211860657,
+                "y": 0.9999998807907104,
+                "z": 0.9999998211860657
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.03513147309422493,
+            "actualSegmentLength": 0.03513147309422493
+        },
+        {
+            "human": "LeftThumbIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/thumb_01_l/thumb_02_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/thumb_01_l/thumb_02_l",
+            "actualPosition": {
+                "x": 5.722045557376987e-7,
+                "y": 0.05982799455523491,
+                "z": -8.010864007701457e-7
+            },
+            "referencePosition": {
+                "x": 5.722045557376987e-7,
+                "y": 0.05982799455523491,
+                "z": -8.010864007701457e-7
+            },
+            "avatarPosition": {
+                "x": 5.722045557376987e-7,
+                "y": 0.05982799455523491,
+                "z": -8.010864007701457e-7
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.05982786789536476,
+            "actualSegmentLength": 0.05982787162065506
+        },
+        {
+            "human": "LeftThumbDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/thumb_01_l/thumb_02_l/thumb_03_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/thumb_01_l/thumb_02_l/thumb_03_l",
+            "actualPosition": {
+                "x": -2.193450825416221e-7,
+                "y": 0.027340391650795937,
+                "z": 3.814697180359872e-8
+            },
+            "referencePosition": {
+                "x": -2.193450825416221e-7,
+                "y": 0.027340391650795937,
+                "z": 3.814697180359872e-8
+            },
+            "avatarPosition": {
+                "x": -2.193450825416221e-7,
+                "y": 0.027340391650795937,
+                "z": 3.814697180359872e-8
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 1.000000238418579,
+                "z": 1.000000238418579
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 1.000000238418579,
+                "z": 1.000000238418579
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.027340514585375786,
+            "actualSegmentLength": 0.027340514585375786
+        },
+        {
+            "human": "LeftIndexProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/index_01_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/index_01_l",
+            "actualPosition": {
+                "x": -0.0008940505795180798,
+                "y": 0.10467620939016342,
+                "z": 0.022662285715341568
+            },
+            "referencePosition": {
+                "x": -0.0008940505795180798,
+                "y": 0.10467620939016342,
+                "z": 0.022662285715341568
+            },
+            "avatarPosition": {
+                "x": -0.0008940505795180798,
+                "y": 0.10467620939016342,
+                "z": 0.022662285715341568
+            },
+            "actualScale": {
+                "x": 0.9999998211860657,
+                "y": 0.9999998211860657,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 0.9999998211860657,
+                "y": 0.9999998211860657,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.10710491240024567,
+            "actualSegmentLength": 0.10710495710372925
+        },
+        {
+            "human": "LeftIndexIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/index_01_l/index_02_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/index_01_l/index_02_l",
+            "actualPosition": {
+                "x": -1.5258788721439487e-7,
+                "y": 0.042057111859321594,
+                "z": 3.623962356869015e-7
+            },
+            "referencePosition": {
+                "x": -1.5258788721439487e-7,
+                "y": 0.042057111859321594,
+                "z": 3.623962356869015e-7
+            },
+            "avatarPosition": {
+                "x": -1.5258788721439487e-7,
+                "y": 0.042057111859321594,
+                "z": 3.623962356869015e-7
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.04205719381570816,
+            "actualSegmentLength": 0.04205719381570816
+        },
+        {
+            "human": "LeftIndexDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/index_01_l/index_02_l/index_03_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/index_01_l/index_02_l/index_03_l",
+            "actualPosition": {
+                "x": 7.629394360719743e-8,
+                "y": 0.02762962318956852,
+                "z": -3.623962356869015e-7
+            },
+            "referencePosition": {
+                "x": 7.629394360719743e-8,
+                "y": 0.02762962318956852,
+                "z": -3.623962356869015e-7
+            },
+            "avatarPosition": {
+                "x": 7.629394360719743e-8,
+                "y": 0.02762962318956852,
+                "z": -3.623962356869015e-7
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 1.0,
+                "z": 0.9999998807907104
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 1.0,
+                "z": 0.9999998807907104
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.027629584074020386,
+            "actualSegmentLength": 0.027629584074020386
+        },
+        {
+            "human": "LeftMiddleProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/middle_01_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/middle_01_l",
+            "actualPosition": {
+                "x": -0.000013332366506801918,
+                "y": 0.1029844656586647,
+                "z": -0.000016403197150793858
+            },
+            "referencePosition": {
+                "x": -0.000013332366506801918,
+                "y": 0.1029844656586647,
+                "z": -0.000016403197150793858
+            },
+            "avatarPosition": {
+                "x": -0.000013332366506801918,
+                "y": 0.1029844656586647,
+                "z": -0.000016403197150793858
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.10298439115285873,
+            "actualSegmentLength": 0.10298444330692291
+        },
+        {
+            "human": "LeftMiddleIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/middle_01_l/middle_02_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/middle_01_l/middle_02_l",
+            "actualPosition": {
+                "x": 2.0980834847250662e-7,
+                "y": 0.048379287123680115,
+                "z": -2.5749204723979346e-7
+            },
+            "referencePosition": {
+                "x": 2.0980834847250662e-7,
+                "y": 0.048379287123680115,
+                "z": -2.5749204723979346e-7
+            },
+            "avatarPosition": {
+                "x": 2.0980834847250662e-7,
+                "y": 0.048379287123680115,
+                "z": -2.5749204723979346e-7
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 0.9999998211860657
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 0.9999998211860657
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.04837946966290474,
+            "actualSegmentLength": 0.04837946966290474
+        },
+        {
+            "human": "LeftMiddleDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/middle_01_l/middle_02_l/middle_03_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/middle_01_l/middle_02_l/middle_03_l",
+            "actualPosition": {
+                "x": 3.623962356869015e-7,
+                "y": 0.027440108358860016,
+                "z": -1.907348590179936e-8
+            },
+            "referencePosition": {
+                "x": 3.623962356869015e-7,
+                "y": 0.027440108358860016,
+                "z": -1.907348590179936e-8
+            },
+            "avatarPosition": {
+                "x": 3.623962356869015e-7,
+                "y": 0.027440108358860016,
+                "z": -1.907348590179936e-8
+            },
+            "actualScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999997019767761,
+                "z": 0.9999997615814209
+            },
+            "referenceScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999997019767761,
+                "z": 0.9999997615814209
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.027439896017313004,
+            "actualSegmentLength": 0.027439896017313004
+        },
+        {
+            "human": "LeftRingProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/ring_01_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/ring_01_l",
+            "actualPosition": {
+                "x": -0.004409122280776501,
+                "y": 0.09649940580129623,
+                "z": -0.019887857139110565
+            },
+            "referencePosition": {
+                "x": -0.004409122280776501,
+                "y": 0.09649940580129623,
+                "z": -0.019887857139110565
+            },
+            "avatarPosition": {
+                "x": -0.004409122280776501,
+                "y": 0.09649940580129623,
+                "z": -0.019887857139110565
+            },
+            "actualScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999998807907104,
+                "z": 0.9999997615814209
+            },
+            "referenceScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999998807907104,
+                "z": 0.9999997615814209
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.0986260250210762,
+            "actualSegmentLength": 0.09862609207630157
+        },
+        {
+            "human": "LeftRingIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/ring_01_l/ring_02_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/ring_01_l/ring_02_l",
+            "actualPosition": {
+                "x": 4.6253202867774235e-7,
+                "y": 0.04269874468445778,
+                "z": -7.629394076502649e-7
+            },
+            "referencePosition": {
+                "x": 4.6253202867774235e-7,
+                "y": 0.04269874468445778,
+                "z": -7.629394076502649e-7
+            },
+            "avatarPosition": {
+                "x": 4.6253202867774235e-7,
+                "y": 0.04269874468445778,
+                "z": -7.629394076502649e-7
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.042698848992586136,
+            "actualSegmentLength": 0.042698848992586136
+        },
+        {
+            "human": "LeftRingDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/ring_01_l/ring_02_l/ring_03_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/ring_01_l/ring_02_l/ring_03_l",
+            "actualPosition": {
+                "x": -7.24792471373803e-7,
+                "y": 0.0268865954130888,
+                "z": 4.768371297814156e-8
+            },
+            "referencePosition": {
+                "x": -7.24792471373803e-7,
+                "y": 0.0268865954130888,
+                "z": 4.768371297814156e-8
+            },
+            "avatarPosition": {
+                "x": -7.24792471373803e-7,
+                "y": 0.0268865954130888,
+                "z": 4.768371297814156e-8
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.026886550709605217,
+            "actualSegmentLength": 0.026886550709605217
+        },
+        {
+            "human": "LeftLittleProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/pinky_01_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/pinky_01_l",
+            "actualPosition": {
+                "x": -0.011860771104693413,
+                "y": 0.08679282665252686,
+                "z": -0.03805893659591675
+            },
+            "referencePosition": {
+                "x": -0.011860771104693413,
+                "y": 0.08679282665252686,
+                "z": -0.03805893659591675
+            },
+            "avatarPosition": {
+                "x": -0.011860771104693413,
+                "y": 0.08679282665252686,
+                "z": -0.03805893659591675
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999998807907104,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999998807907104,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.09550981968641281,
+            "actualSegmentLength": 0.09550989419221878
+        },
+        {
+            "human": "LeftLittleIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/pinky_01_l/pinky_02_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/pinky_01_l/pinky_02_l",
+            "actualPosition": {
+                "x": -4.768371297814156e-8,
+                "y": 0.0363408662378788,
+                "z": -6.961822123230377e-7
+            },
+            "referencePosition": {
+                "x": -4.768371297814156e-8,
+                "y": 0.0363408662378788,
+                "z": -6.961822123230377e-7
+            },
+            "avatarPosition": {
+                "x": -4.768371297814156e-8,
+                "y": 0.0363408662378788,
+                "z": -6.961822123230377e-7
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.03634097799658775,
+            "actualSegmentLength": 0.03634097799658775
+        },
+        {
+            "human": "LeftLittleDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/pinky_01_l/pinky_02_l/pinky_03_l",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_l/upperarm_l/lowerarm_l/hand_l/pinky_01_l/pinky_02_l/pinky_03_l",
+            "actualPosition": {
+                "x": 3.8146970382513246e-7,
+                "y": 0.02005920372903347,
+                "z": -3.623962356869015e-7
+            },
+            "referencePosition": {
+                "x": 3.8146970382513246e-7,
+                "y": 0.02005920372903347,
+                "z": -3.623962356869015e-7
+            },
+            "avatarPosition": {
+                "x": 3.8146970382513246e-7,
+                "y": 0.02005920372903347,
+                "z": -3.623962356869015e-7
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.020059317350387573,
+            "actualSegmentLength": 0.020059317350387573
+        },
+        {
+            "human": "RightThumbProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/thumb_01_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/thumb_01_r",
+            "actualPosition": {
+                "x": 0.007031450048089027,
+                "y": 0.024971390143036842,
+                "z": 0.023444127291440964
+            },
+            "referencePosition": {
+                "x": 0.007031450048089027,
+                "y": 0.024971390143036842,
+                "z": 0.023444127291440964
+            },
+            "avatarPosition": {
+                "x": 0.007031450048089027,
+                "y": 0.024971390143036842,
+                "z": 0.023444127291440964
+            },
+            "actualScale": {
+                "x": 0.9999997019767761,
+                "y": 0.9999997019767761,
+                "z": 0.9999997615814209
+            },
+            "referenceScale": {
+                "x": 0.9999997019767761,
+                "y": 0.9999997019767761,
+                "z": 0.9999997615814209
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.034966353327035904,
+            "actualSegmentLength": 0.034966353327035904
+        },
+        {
+            "human": "RightThumbIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/thumb_01_r/thumb_02_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/thumb_01_r/thumb_02_r",
+            "actualPosition": {
+                "x": -9.72747784544481e-7,
+                "y": 0.059848058968782425,
+                "z": -7.629394076502649e-7
+            },
+            "referencePosition": {
+                "x": -9.72747784544481e-7,
+                "y": 0.059848058968782425,
+                "z": -7.629394076502649e-7
+            },
+            "avatarPosition": {
+                "x": -9.72747784544481e-7,
+                "y": 0.059848058968782425,
+                "z": -7.629394076502649e-7
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000003576278687,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000003576278687,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.05984792485833168,
+            "actualSegmentLength": 0.059848010540008545
+        },
+        {
+            "human": "RightThumbDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/thumb_01_r/thumb_02_r/thumb_03_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/thumb_01_r/thumb_02_r/thumb_03_r",
+            "actualPosition": {
+                "x": 2.5749204723979346e-7,
+                "y": 0.027479171752929688,
+                "z": 1.5258788721439487e-7
+            },
+            "referencePosition": {
+                "x": 2.5749204723979346e-7,
+                "y": 0.027479171752929688,
+                "z": 1.5258788721439487e-7
+            },
+            "avatarPosition": {
+                "x": 2.5749204723979346e-7,
+                "y": 0.027479171752929688,
+                "z": 1.5258788721439487e-7
+            },
+            "actualScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999997019767761,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 0.9999999403953552,
+                "y": 0.9999997019767761,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.027479074895381927,
+            "actualSegmentLength": 0.027479074895381927
+        },
+        {
+            "human": "RightIndexProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r",
+            "actualPosition": {
+                "x": 0.0007697868277318776,
+                "y": 0.10445663332939148,
+                "z": 0.022649506106972694
+            },
+            "referencePosition": {
+                "x": 0.0007697868277318776,
+                "y": 0.10445663332939148,
+                "z": 0.022649506106972694
+            },
+            "avatarPosition": {
+                "x": 0.0007697868277318776,
+                "y": 0.10445663332939148,
+                "z": 0.022649506106972694
+            },
+            "actualScale": {
+                "x": 0.9999998807907104,
+                "y": 1.0,
+                "z": 0.9999999403953552
+            },
+            "referenceScale": {
+                "x": 0.9999998807907104,
+                "y": 1.0,
+                "z": 0.9999999403953552
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.10688680410385132,
+            "actualSegmentLength": 0.10688687860965729
+        },
+        {
+            "human": "RightIndexIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r/index_02_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r/index_02_r",
+            "actualPosition": {
+                "x": 6.67572024326546e-8,
+                "y": 0.04215148836374283,
+                "z": 3.0517577442878974e-7
+            },
+            "referencePosition": {
+                "x": 6.67572024326546e-8,
+                "y": 0.04215148836374283,
+                "z": 3.0517577442878974e-7
+            },
+            "avatarPosition": {
+                "x": 6.67572024326546e-8,
+                "y": 0.04215148836374283,
+                "z": 3.0517577442878974e-7
+            },
+            "actualScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999997615814209,
+                "z": 0.9999998211860657
+            },
+            "referenceScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999997615814209,
+                "z": 0.9999998211860657
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.04215143620967865,
+            "actualSegmentLength": 0.04215143620967865
+        },
+        {
+            "human": "RightIndexDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r/index_02_r/index_03_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r/index_02_r/index_03_r",
+            "actualPosition": {
+                "x": 9.53674295089968e-9,
+                "y": 0.02760719321668148,
+                "z": -7.152556946721234e-8
+            },
+            "referencePosition": {
+                "x": 9.53674295089968e-9,
+                "y": 0.02760719321668148,
+                "z": -7.152556946721234e-8
+            },
+            "avatarPosition": {
+                "x": 9.53674295089968e-9,
+                "y": 0.02760719321668148,
+                "z": -7.152556946721234e-8
+            },
+            "actualScale": {
+                "x": 1.000000238418579,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.000000238418579,
+                "y": 1.000000238418579,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.027607396245002747,
+            "actualSegmentLength": 0.027607396245002747
+        },
+        {
+            "human": "RightMiddleProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/middle_01_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/middle_01_r",
+            "actualPosition": {
+                "x": 0.000013046264029981103,
+                "y": 0.10279159247875214,
+                "z": -0.000010347365787310991
+            },
+            "referencePosition": {
+                "x": 0.000013046264029981103,
+                "y": 0.10279159247875214,
+                "z": -0.000010347365787310991
+            },
+            "avatarPosition": {
+                "x": 0.000013046264029981103,
+                "y": 0.10279159247875214,
+                "z": -0.000010347365787310991
+            },
+            "actualScale": {
+                "x": 0.9999998211860657,
+                "y": 0.9999998211860657,
+                "z": 0.9999996423721313
+            },
+            "referenceScale": {
+                "x": 0.9999998211860657,
+                "y": 0.9999998211860657,
+                "z": 0.9999996423721313
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.10279156267642975,
+            "actualSegmentLength": 0.10279162228107452
+        },
+        {
+            "human": "RightMiddleIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/middle_01_r/middle_02_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/middle_01_r/middle_02_r",
+            "actualPosition": {
+                "x": -4.24385063979571e-7,
+                "y": 0.04855689778923988,
+                "z": -3.2424927098873013e-7
+            },
+            "referencePosition": {
+                "x": -4.24385063979571e-7,
+                "y": 0.04855689778923988,
+                "z": -3.2424927098873013e-7
+            },
+            "avatarPosition": {
+                "x": -4.24385063979571e-7,
+                "y": 0.04855689778923988,
+                "z": -3.2424927098873013e-7
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.000000238418579
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 1.0000001192092896,
+                "z": 1.000000238418579
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.04855699837207794,
+            "actualSegmentLength": 0.04855699837207794
+        },
+        {
+            "human": "RightMiddleDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/middle_01_r/middle_02_r/middle_03_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/middle_01_r/middle_02_r/middle_03_r",
+            "actualPosition": {
+                "x": 4.434585605395114e-7,
+                "y": 0.02719070389866829,
+                "z": -4.768371297814156e-8
+            },
+            "referencePosition": {
+                "x": 4.434585605395114e-7,
+                "y": 0.02719070389866829,
+                "z": -4.768371297814156e-8
+            },
+            "avatarPosition": {
+                "x": 4.434585605395114e-7,
+                "y": 0.02719070389866829,
+                "z": -4.768371297814156e-8
+            },
+            "actualScale": {
+                "x": 0.9999998211860657,
+                "y": 1.0,
+                "z": 0.9999998807907104
+            },
+            "referenceScale": {
+                "x": 0.9999998211860657,
+                "y": 1.0,
+                "z": 0.9999998807907104
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.02719077095389366,
+            "actualSegmentLength": 0.02719077095389366
+        },
+        {
+            "human": "RightRingProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/ring_01_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/ring_01_r",
+            "actualPosition": {
+                "x": 0.004062709864228964,
+                "y": 0.09527259320020676,
+                "z": -0.02025379054248333
+            },
+            "referencePosition": {
+                "x": 0.004062709864228964,
+                "y": 0.09527259320020676,
+                "z": -0.02025379054248333
+            },
+            "avatarPosition": {
+                "x": 0.004062709864228964,
+                "y": 0.09527259320020676,
+                "z": -0.02025379054248333
+            },
+            "actualScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999997615814209,
+                "z": 0.9999997019767761
+            },
+            "referenceScale": {
+                "x": 0.9999997615814209,
+                "y": 0.9999997615814209,
+                "z": 0.9999997019767761
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.09748629480600357,
+            "actualSegmentLength": 0.09748634696006775
+        },
+        {
+            "human": "RightRingIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/ring_01_r/ring_02_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/ring_01_r/ring_02_r",
+            "actualPosition": {
+                "x": 3.814697180359872e-8,
+                "y": 0.04374610632658005,
+                "z": 6.67572024326546e-8
+            },
+            "referencePosition": {
+                "x": 3.814697180359872e-8,
+                "y": 0.04374610632658005,
+                "z": 6.67572024326546e-8
+            },
+            "avatarPosition": {
+                "x": 3.814697180359872e-8,
+                "y": 0.04374610632658005,
+                "z": 6.67572024326546e-8
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.000000238418579,
+                "z": 1.0000003576278687
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.000000238418579,
+                "z": 1.0000003576278687
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.04374617338180542,
+            "actualSegmentLength": 0.04374617338180542
+        },
+        {
+            "human": "RightRingDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/ring_01_r/ring_02_r/ring_03_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/ring_01_r/ring_02_r/ring_03_r",
+            "actualPosition": {
+                "x": 6.866454782539222e-7,
+                "y": 0.026873091235756874,
+                "z": 4.768371297814156e-8
+            },
+            "referencePosition": {
+                "x": 6.866454782539222e-7,
+                "y": 0.026873091235756874,
+                "z": 4.768371297814156e-8
+            },
+            "avatarPosition": {
+                "x": 6.866454782539222e-7,
+                "y": 0.026873091235756874,
+                "z": 4.768371297814156e-8
+            },
+            "actualScale": {
+                "x": 1.0,
+                "y": 0.9999998807907104,
+                "z": 0.9999998211860657
+            },
+            "referenceScale": {
+                "x": 1.0,
+                "y": 0.9999998807907104,
+                "z": 0.9999998211860657
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.026873240247368813,
+            "actualSegmentLength": 0.026873240247368813
+        },
+        {
+            "human": "RightLittleProximal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/pinky_01_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/pinky_01_r",
+            "actualPosition": {
+                "x": 0.011914948932826519,
+                "y": 0.0865393802523613,
+                "z": -0.038066521286964417
+            },
+            "referencePosition": {
+                "x": 0.011914948932826519,
+                "y": 0.0865393802523613,
+                "z": -0.038066521286964417
+            },
+            "avatarPosition": {
+                "x": 0.011914948932826519,
+                "y": 0.0865393802523613,
+                "z": -0.038066521286964417
+            },
+            "actualScale": {
+                "x": 0.9999997019767761,
+                "y": 0.9999997019767761,
+                "z": 0.9999996423721313
+            },
+            "referenceScale": {
+                "x": 0.9999997019767761,
+                "y": 0.9999997019767761,
+                "z": 0.9999996423721313
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.09528941661119461,
+            "actualSegmentLength": 0.09528946131467819
+        },
+        {
+            "human": "RightLittleIntermediate",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/pinky_01_r/pinky_02_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/pinky_01_r/pinky_02_r",
+            "actualPosition": {
+                "x": 5.2452087118126656e-8,
+                "y": 0.036290284246206284,
+                "z": -1.1444091541079615e-7
+            },
+            "referencePosition": {
+                "x": 5.2452087118126656e-8,
+                "y": 0.036290284246206284,
+                "z": -1.1444091541079615e-7
+            },
+            "avatarPosition": {
+                "x": 5.2452087118126656e-8,
+                "y": 0.036290284246206284,
+                "z": -1.1444091541079615e-7
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0000001192092896
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.036290332674980164,
+            "actualSegmentLength": 0.036290332674980164
+        },
+        {
+            "human": "RightLittleDistal",
+            "path": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/pinky_01_r/pinky_02_r/pinky_03_r",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/pinky_01_r/pinky_02_r/pinky_03_r",
+            "actualPosition": {
+                "x": -1.907348590179936e-8,
+                "y": 0.020000990480184555,
+                "z": -2.8610228852699038e-8
+            },
+            "referencePosition": {
+                "x": -1.907348590179936e-8,
+                "y": 0.020000990480184555,
+                "z": -2.8610228852699038e-8
+            },
+            "avatarPosition": {
+                "x": -1.907348590179936e-8,
+                "y": 0.020000990480184555,
+                "z": -2.8610228852699038e-8
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.000000238418579,
+                "z": 1.0000003576278687
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.000000238418579,
+                "z": 1.0000003576278687
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.020001158118247986,
+            "actualSegmentLength": 0.020001158118247986
+        },
+        {
+            "human": "UpperChest",
+            "path": "root/pelvis/spine_01/spine_02/spine_03",
+            "referencePath": "root/pelvis/spine_01/spine_02/spine_03",
+            "actualPosition": {
+                "x": -6.798654417217165e-10,
+                "y": 0.13605143129825592,
+                "z": 0.000002051591764029581
+            },
+            "referencePosition": {
+                "x": -6.798654417217165e-10,
+                "y": 0.13605143129825592,
+                "z": 0.000002051591764029581
+            },
+            "avatarPosition": {
+                "x": -6.798654417217165e-10,
+                "y": 0.13605143129825592,
+                "z": 0.000002051591764029581
+            },
+            "actualScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0
+            },
+            "referenceScale": {
+                "x": 1.0000001192092896,
+                "y": 1.0000001192092896,
+                "z": 1.0
+            },
+            "referencePositionError": 0.0,
+            "avatarPositionError": 0.0,
+            "referenceRotationError": 0.0,
+            "referenceSegmentLength": 0.1360514760017395,
+            "actualSegmentLength": 0.1360514760017395
+        }
+    ],
+    "skins": [
+        {
+            "renderer": "cape",
+            "mesh": "Assets/Characters/5_Clothes/Cape/cape.fbx",
+            "referenceMesh": "",
+            "bones": 12,
+            "maximumBindTranslationError": 0.0019000160973519087,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.0,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": false
+        },
+        {
+            "renderer": "CC_Base_Body",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 63,
+            "maximumBindTranslationError": 0.1219882145524025,
+            "maximumBindRotationError": 90.08051300048828,
+            "referenceBindTranslationError": 0.1280421018600464,
+            "referenceBindRotationError": 4.21029806137085,
+            "maximumSourceMatrixPositionDifference": 0.03170149773359299,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Hair_Base",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 3,
+            "maximumBindTranslationError": 2.892730951309204,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.0317494161427021,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Real_Hair",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 6,
+            "maximumBindTranslationError": 2.8927321434020996,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174976631999016,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.031701475381851196,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Bang",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 3,
+            "maximumBindTranslationError": 2.892759084701538,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174933046102524,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Bun",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 1,
+            "maximumBindTranslationError": 2.892730951309204,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174933046102524,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "CC_Base_Eye",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 2,
+            "maximumBindTranslationError": 2.892948627471924,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.031753361225128174,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "CC_Base_Teeth",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 2,
+            "maximumBindTranslationError": 2.8930773735046387,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.031021133065223694,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.031701475381851196,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "CC_Base_Tongue",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 3,
+            "maximumBindTranslationError": 2.8927323818206787,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174695372581482,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.03170151636004448,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Eyebrows",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 1,
+            "maximumBindTranslationError": 2.892730951309204,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174933046102524,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Lash_Low_Short_Sparse",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 1,
+            "maximumBindTranslationError": 2.892730951309204,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174933046102524,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Lash_Up_Short_Sparse",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 1,
+            "maximumBindTranslationError": 2.892730951309204,
+            "maximumBindRotationError": 0.0,
+            "referenceBindTranslationError": 0.03174933046102524,
+            "referenceBindRotationError": 0.0,
+            "maximumSourceMatrixPositionDifference": 0.0317014716565609,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Dress",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 8,
+            "maximumBindTranslationError": 2.9022676944732666,
+            "maximumBindRotationError": 1.428727149963379,
+            "referenceBindTranslationError": 0.043942682445049286,
+            "referenceBindRotationError": 1.428727149963379,
+            "maximumSourceMatrixPositionDifference": 0.031701475381851196,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        },
+        {
+            "renderer": "Pants",
+            "mesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "referenceMesh": "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.Fbx",
+            "bones": 13,
+            "maximumBindTranslationError": 2.9022676944732666,
+            "maximumBindRotationError": 1.4966856241226196,
+            "referenceBindTranslationError": 0.043949805200099945,
+            "referenceBindRotationError": 1.4966856241226196,
+            "maximumSourceMatrixPositionDifference": 0.031701475381851196,
+            "maximumSourceMatrixRotationDifference": 0.0,
+            "referenceCompared": true
+        }
+    ]
+}

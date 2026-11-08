@@ -30,8 +30,11 @@ public static partial class BootstrapDistrictPlayProbe
     {
         public string run, clone, utc, status, reason, oldPlayScene, fixtureId, actorEntity, diagnostics;
         public int stage, oldOptions, limbesRouteIndex;
+        public int limbesWalkIndex;
+        public float limbesBossPeak;
         public double started, stageStarted;
-        public bool oldOptionsEnabled, passed, restored, recovery, limbes, limbesCycles, limbesRoutes;
+        public bool oldOptionsEnabled, passed, restored, recovery, limbes, limbesCycles, limbesRoutes, limbesExpansion, passageDiscovery, courts, secretContent, districtConnection, moonriseCombat, fracture;
+        public bool grapple;
         public bool fullProductionReadiness = false;
         public string scope = "Real editor Bootstrap/menu solo creation, authored portal, all District_1 manifest scenes and return to menu. Public menu handlers and a UCC portal approach fixture; not manual input, cycle completion, multiplayer or visual quality proof. Saves isolated under this run directory.";
         public List<SceneEntry> scenes = new();
@@ -58,8 +61,9 @@ public static partial class BootstrapDistrictPlayProbe
     public static void RunLimbes() => Begin(false, true);
     public static void RunLimbesCycles() => Begin(false, true, true);
     public static void RunLimbesRoutes() => Begin(false, true, true, true);
+    public static void RunLimbesExpansion() => Begin(false, true, true, false, true);
 
-    private static void Begin(bool recovery, bool limbes = false, bool limbesCycles = false, bool limbesRoutes = false)
+    private static void Begin(bool recovery, bool limbes = false, bool limbesCycles = false, bool limbesRoutes = false, bool limbesExpansion = false, bool passageDiscovery = false, bool courts = false, bool secretContent = false, bool districtConnection = false, bool moonriseCombat = false, bool fracture = false, bool grapple = false)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling ||
             EditorApplication.isUpdating || !string.IsNullOrEmpty(SessionState.GetString(Key, ""))) return;
@@ -81,17 +85,24 @@ public static partial class BootstrapDistrictPlayProbe
         report = new Report
         {
             run = Path.GetFullPath(Root + "/PlayRuns/" + id), clone = "Assets/__StartupDistrictValidation/" + id + "/Bootstrap.unity",
-            recovery = recovery, limbes = limbes, limbesCycles = limbesCycles, limbesRoutes = limbesRoutes, fixtureId = "scene:validation:departure:" + id,
-            utc = DateTime.UtcNow.ToString("O"), status = "Preparing", started = EditorApplication.timeSinceStartup,
+            recovery = recovery, limbes = limbes, limbesCycles = limbesCycles, limbesRoutes = limbesRoutes, limbesExpansion = limbesExpansion, passageDiscovery = passageDiscovery, courts = courts, secretContent = secretContent, districtConnection = districtConnection, moonriseCombat = moonriseCombat, fixtureId = "scene:validation:departure:" + id,
+            fracture = fracture, grapple = grapple, utc = DateTime.UtcNow.ToString("O"), status = "Preparing", started = EditorApplication.timeSinceStartup,
             oldOptions = (int)EditorSettings.enterPlayModeOptions, oldOptionsEnabled = EditorSettings.enterPlayModeOptionsEnabled,
             oldPlayScene = AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene),
             scenes = setup.Select(scene => new SceneEntry { path = scene.path, loaded = scene.isLoaded, active = scene.isActive }).ToList()
         };
         Directory.CreateDirectory(report.run);
+        if (moonriseCombat) report.scope = "Actual Bootstrap/Maison portal and marker-owned Moonrise Juggernaut, paid Flame interaction, natural pursuit/impacts, virtual gamepad counter and attacks, Knocked Out, death presentation, exploration, ladder and save reload. Bounded UCC approach fixtures are reported; not continuous manual traversal, measured 15-20 minute pacing or multiplayer qualification.";
+        if (fracture) report.scope = "Real Bootstrap/Maison/District campaign, isolated save, embedded fracture. One bounded approach fixture and orientation-only UCC alignment at consoles, physical gamepad movement/A interactions, dark/light entrance, unchanged actor/camera, shared-world persistence capture and return menu. Not a manual-input, camera-focus, multiplayer or cold-save reload qualification.";
         if (limbes) report.scope = "Actual Bootstrap/menu solo creation, authored Maison/Limbes portals, six loaded Limbes scenes, one driven UCC jump and void recovery. Isolated save. Does not prove all routes, cycle completion, save continuation or multiplayer.";
         if (limbesCycles) report.scope = "Actual Bootstrap/menu, isolated solo session created through public SaveSessionManager/GameFlow services (intro presentation omitted), authored portals, real pickup inventory/knowledge handlers after range/light checks, both voluntary cycle interactions, permanent bridge, zone departure and re-entry. Fixture approaches use UCC positioning; not manual input, all jumps or multiplayer.";
         if (limbesRoutes) report.scope = "Actual Bootstrap and isolated session, authored portal, every authored jump link tested individually with standard walking input, actual UCC physics and landing. Fixtures position the actor at takeoff points; no sprint, optional ability, continuous manual traversal or multiplayer test.";
+        if (limbesExpansion) report.scope = "Real isolated Bootstrap/portal session, thirteen actual pickups, five exploration cycles, six scene-bound StorySequences, gated arena, live flying/projectile/melee boss, production damage path, completion and zone reload. UCC positioning and scripted dialogue advance are fixtures; not continuous manual traversal, cold save, visual or multiplayer proof.";
+        if (courts) report.scope = "Real isolated Bootstrap/Maison session then production TravelToZone fixture to Courts. Nine real world-readable UI openings (not injected knowledge), three family memory runners, four world interactions, Brains damage and finale, six playOnce presentations, zone departure/re-entry. Positions and dialogue advance are fixtures. Does not qualify campaign gates, secrets, whole traversal, cold saves, balance or multiplayer.";
+        if (secretContent) report.scope = "Courts local-cycle flow plus actual secret notes in Courts/Limbes, authored onward portal, six Courts and two Limbes passages travelled in both directions with real UCC, saved failed/successful Observer fixtures versus read count, individual Sauf-Conduit, recognitions, optional episode and re-entry retention. Does not claim full District, cold-save, continuous manual routes or multiplayer qualification.";
+        if (districtConnection) report.scope = "Actual Maison-to-District portal, free District-to-Courts entrance with Clairmont incomplete, five Courts cycles, ten authored notes read through production UI, ten secret passages travelled both ways with real UCC, Courts-to-Limbes portal and campaign re-entry. Approaches, dialogue advance, damage and Observer results are fixtures. Does not qualify every District quest/prefab, cold save, manual input, art, balance or multiplayer.";
         if (recovery) report.scope += " Also injects one invalid-identity scene object before each departure (Maison to District_1 and District_1 to Maison), requires actual rejection, visible same world, restored navigation/control and a successful retry after removing only that fixture.";
+        if (passageDiscovery) report.scope = "Actual Bootstrap/menu, isolated solo save and production Maison avatar. Temporary passage/knowledge/recognition fixture validates failed-attempt persistence, knowledge recognition while already nearby, playOnce dialogue, individual ability gates and real UCC traversal. Does not qualify authored twenty notes/passages, Zone 2, cold saves, client cooperation or visual quality.";
         File.WriteAllText(Root + "/latest-play-run.txt", report.run);
         foreach (var path in setup.Select(scene => scene.path).Concat(new[] { Bootstrap }).Concat(EditorBuildSettings.scenes
                      .Where(scene => Path.GetFileName(scene.path).StartsWith("District_1", StringComparison.Ordinal)).Select(scene => scene.path)).Distinct())
@@ -100,6 +111,7 @@ public static partial class BootstrapDistrictPlayProbe
         Write();
         try
         {
+            PrepareMoonriseLadderResume();
             Directory.CreateDirectory(Path.GetDirectoryName(report.clone));
             File.Copy(Bootstrap, report.clone, false);
             AssetDatabase.ImportAsset(report.clone, ImportAssetOptions.ForceSynchronousImport);
@@ -179,6 +191,8 @@ public static partial class BootstrapDistrictPlayProbe
                 else if (mode == "limbes-cycles") RunLimbesCycles();
                 else if (mode == "limbes-routes") RunLimbesRoutes();
                 else if (mode == "run") Run();
+                else if (mode == "fracture") Begin(false, fracture: true);
+                else if (mode == "grapple") Begin(false, limbes: true, limbesCycles: true, limbesExpansion: true, grapple: true);
                 else File.WriteAllText(Root + "/PlayProbe.result", "NOT RUN: unknown probe mode.");
             }
             return;
@@ -223,13 +237,26 @@ public static partial class BootstrapDistrictPlayProbe
         if (!string.Equals(Path.GetFullPath(saves.GetSavesRoot()), Path.Combine(report.run, "Saves"), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Unexpected save root: aborting before any menu action.");
         var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuController>();
+        if (report.moonriseCombat && report.stage >= 260) { TickMoonriseCombat(); return; }
+        if (report.fracture && report.stage >= 400) { TickFracture(); return; }
+        if (report.grapple && report.stage >= 500) { TickGrapple(); return; }
+        if (report.districtConnection && report.stage >= 230) { TickDistrictConnection(); return; }
+        if (report.courts && report.stage >= 160) { TickCourts(); return; }
+        if (report.passageDiscovery && report.stage >= 140) { TickSecretPassageDiscovery(); return; }
         if (report.limbes && report.stage >= 60) { TickLimbes(); return; }
         switch (report.stage)
         {
             case 0:
                 if (flow.IsTransitioning || !SceneManager.GetSceneByName("MainMenu").isLoaded || menu == null || Time.frameCount < 10) return;
                 Check(!flow.HasGameplaySession && !saves.HasActiveSave, "Bootstrap reached the actual menu with no active slot.");
-                if (report.limbesCycles)
+                if (MoonriseLadderResumeRequested)
+                {
+                    var resumedSlot = saves.Sessions.Single().saves.Single();
+                    saves.SetActiveSave(resumedSlot.sessionId, resumedSlot.saveId);
+                    Check(GameFlowService.StartOrLoadGame(), "Load the copied validation snapshot through the production session service, without a destination or pose override.");
+                    Advance(285); return;
+                }
+                if (report.limbesCycles || report.moonriseCombat || report.fracture)
                 {
                     Check(saves.TryCreateNewGame("Validation Limbes cycles",SaveSessionType.Solo,"Validation",out var slot,out string error),"Created isolated cycle-test slot through production save service: "+error);
                     saves.SetActiveSave(slot.sessionId,slot.saveId);
@@ -251,6 +278,27 @@ public static partial class BootstrapDistrictPlayProbe
                 if (!ZoneReady("Assets/Scenes/Maison/ZoneManifest_Maison.asset") || !ControlReady(out var actor)) return;
                 Check(saves.HasActiveSave && saves.CurrentSessionType == SaveSessionType.Solo, "Actual menu created an isolated solo session and spawned the controlled avatar.");
                 Check(Camera.allCameras.Any(camera => camera.isActiveAndEnabled && camera.targetTexture == null), "A screen camera is enabled after Maison loading.");
+                if (report.fracture)
+                {
+                    UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset"));
+                    Advance(400); return;
+                }
+                if (report.moonriseCombat)
+                {
+                    UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset"));
+                    Advance(260); return;
+                }
+                if (report.districtConnection)
+                {
+                    UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset"));
+                    Advance(230); return;
+                }
+                if (report.courts)
+                {
+                    Check(GameFlowService.TravelToZone(AssetDatabase.LoadAssetAtPath<ZoneManifest>(CourtsAuthoring.Folder + "/ZoneManifest_District_2_Courts.asset"), CourtsSpawnPoses()), "Production zone loading accepted Courts (entry fixture, not campaign gate proof).");
+                    Advance(160); return;
+                }
+                if (report.passageDiscovery) { BeginSecretPassageDiscovery(actor); Advance(140); return; }
                 if (report.limbesCycles)
                     foreach(string id in LimbesProofIds)
                         Check(ItemRegistry.Resolve(id)!=null,"Limbes proof definition resolves from startup catalog before loading cycle scenes: "+id);
@@ -290,8 +338,11 @@ public static partial class BootstrapDistrictPlayProbe
             case 5:
                 if (flow.IsTransitioning || flow.HasGameplaySession || !SceneManager.GetSceneByName("MainMenu").isLoaded || menu == null) return;
                 Check(LocalPlayerContext.LocalCharacterRoot == null, "Returning to MainMenu released the controlled avatar.");
-                Check(report.errors.Count == 0, "No runtime Error/Exception/Assert was observed during this probe.");
-                Finish(true, report.limbesRoutes ? "Every authored Limbes jump link traversed with actual UCC physics and landing." : report.limbesCycles ? "Actual pickups, both cycles, bridge activation and zone reload retention completed." : report.limbes ? "Actual Maison/Limbes portals, first UCC jump, fall recovery and return to menu completed." : report.recovery ? "Both real departure rejections recovered, retries completed and MainMenu restored." : "Solo startup, authored portal to District_1 and return to menu completed."); return;
+                Check(report.errors.Count == 0, "No runtime Error/Exception/Assert was observed during this probe (including prefab and scene loading errors).");
+                if (report.districtConnection)
+                    Check(!report.warnings.Any(warning => warning.Contains("Failed to create agent because there is no valid NavMesh")),
+                        "No NavMesh agent was enabled before navigation was ready.");
+                Finish(true, report.courts ? "Courts local content flow and zone re-entry verified; see scope for exclusions." : report.passageDiscovery ? "Knowledge discovery, failed attempt, one-time recognition, individual ability gate and actual UCC traversal verified in a production session." : report.limbesRoutes ? "Every authored Limbes jump link traversed with actual UCC physics and landing." : report.limbesCycles ? "Actual pickups, both cycles, bridge activation and zone reload retention completed." : report.limbes ? "Actual Maison/Limbes portals, first UCC jump, fall recovery and return to menu completed." : report.recovery ? "Both real departure rejections recovered, retries completed and MainMenu restored." : "Solo startup, authored portal to District_1 and return to menu completed."); return;
         }
     }
 
@@ -394,6 +445,8 @@ public static partial class BootstrapDistrictPlayProbe
     }
     private static void Finish(bool passed, string reason)
     {
+        CleanupFracture();
+        CleanupMoonriseCombat();
         report.passed = passed; report.reason = reason; report.status = "Stopping"; Write();
         if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
         else if (!EditorApplication.isPlayingOrWillChangePlaymode) Restore();
@@ -417,7 +470,14 @@ public static partial class BootstrapDistrictPlayProbe
             report.status = report.passed ? "Passed" : "Failed";
         }
         catch (Exception error) { report.passed = false; report.status = "Needs inspection"; report.errors.Add(error.ToString()); }
-        finally { Write(); SessionState.EraseString(Key); report = null; }
+        finally
+        {
+            Write();
+            bool quitBatch = Application.isBatchMode && (report.limbesExpansion || report.passageDiscovery || report.courts || report.moonriseCombat);
+            int exitCode = report.passed && report.restored ? 0 : 1;
+            SessionState.EraseString(Key); report = null;
+            if (quitBatch) EditorApplication.delayCall += () => EditorApplication.Exit(exitCode);
+        }
     }
     private static void Write()
     {
@@ -431,6 +491,9 @@ public static partial class BootstrapDistrictPlayProbe
                 "; input=" + InputModeCoordinator.CurrentMode + "; nav=" + NavMeshWorldService.Instance?.State +
                 "; navZone=" + NavMeshWorldService.Instance?.LastReport.zoneId;
             if(report.limbesRoutes) report.diagnostics+="; jumpProbe="+actor?.GetComponent<LimbesJumpProbeDriver>()?.reason;
+            if(report.limbesExpansion)
+                report.diagnostics += "; inputDetails=" + InputModeCoordinator.Diagnostics + "; sequences=" +
+                    string.Join(",", UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceRunner>().Where(r => r.IsPlaying).Select(r => r.Sequence.sequenceId));
         }
         File.WriteAllText(Path.Combine(report.run, "result.json"), JsonUtility.ToJson(report, true));
         File.WriteAllText(Root + "/PlayProbe.result", report.status + " stage=" + report.stage + " " + report.reason + "\n" + report.run);

@@ -381,6 +381,14 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         runtimeInstance.SetActive(active);
+        // Restored corpses retain their scene identity just like final death does.
+        // OnDisable otherwise unregisters this actor before FinalizeReferences can resolve it.
+        if (!active)
+        {
+            var persistent = runtimeInstance.GetComponent<PersistentNetworkObject>();
+            if (persistent != null && persistent.PersistentId == markerId && NetworkObjectRegistry.Instance != null)
+                NetworkObjectRegistry.Instance.Register(persistent);
+        }
     }
 
     private void SetRuntimeInstance(GameObject instance)

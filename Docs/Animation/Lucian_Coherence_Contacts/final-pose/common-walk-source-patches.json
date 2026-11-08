@@ -1,0 +1,577 @@
+{
+  "scope": "Prepared native geometry at 120 samples/cycle with constant virtual translation. Source stance masks are estimates. Contact-patch path accumulates median movement of identical vertices near both adjacent sole minima; gaps and tolerances explicit. Not actual UCC, mixed-cycle or artistic acceptance.",
+  "profile_sha256": "3ed0a688a9a363ba0a19b32172a32c36b07cbfe6134a3ca180969712694ab842",
+  "geometry_sha256": "3ac096bd1b49c5bf308e5d3be55867872a40ec028128bfc8957e1137136cc91f",
+  "cycles": [
+    {
+      "clip": "Assets\\Characters\\1_Squad\\Lucian\\Animation\\CoherencePilot\\Lucian_Common_Walk_Loop_Stride03.anim",
+      "native_speed": 1.7965591,
+      "duration": 1.0000002,
+      "expected_direction": [
+        0.0,
+        1.0
+      ],
+      "feet": {
+        "left": [
+          {
+            "start_phase": 0.24166666666666667,
+            "end_phase": 0.5,
+            "duration": 0.25833338499999997,
+            "fixed_vertex": "0:4445",
+            "fixed_vertex_path_m": 0.026705394136253714,
+            "contact_patches": [
+              {
+                "tolerance_m": 0.001,
+                "path_m": 0.026741755214885237,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 1,
+                "fitted_velocity_x": 0.011376558224042464,
+                "fitted_velocity_z": 1.846623717644057,
+                "longitudinal_path_m": 0.022967663494639468,
+                "lateral_path_m": 0.011035594438022479,
+                "required_speed_mps": {
+                  "min": 1.6913117948498522,
+                  "median": 1.846623717644057,
+                  "max": 2.094853283473743
+                }
+              },
+              {
+                "tolerance_m": 0.002,
+                "path_m": 0.026741755214885237,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 1,
+                "fitted_velocity_x": 0.011376558224042464,
+                "fitted_velocity_z": 1.846623717644057,
+                "longitudinal_path_m": 0.022900620637564595,
+                "lateral_path_m": 0.011029111417301195,
+                "required_speed_mps": {
+                  "min": 1.6913117948498522,
+                  "median": 1.846623717644057,
+                  "max": 2.094853283473743
+                }
+              },
+              {
+                "tolerance_m": 0.005,
+                "path_m": 0.02702027680024771,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 2,
+                "fitted_velocity_x": 0.011740784400402665,
+                "fitted_velocity_z": 1.8438367869932135,
+                "longitudinal_path_m": 0.022851392939740978,
+                "lateral_path_m": 0.011092026328090789,
+                "required_speed_mps": {
+                  "min": 1.6878122299318659,
+                  "median": 1.8438367869932135,
+                  "max": 2.094853283473743
+                }
+              },
+              {
+                "tolerance_m": 0.01,
+                "path_m": 0.02670843516290037,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 3,
+                "fitted_velocity_x": 0.009490517531199972,
+                "fitted_velocity_z": 1.84104985634237,
+                "longitudinal_path_m": 0.02265396238385331,
+                "lateral_path_m": 0.011255367773391582,
+                "required_speed_mps": {
+                  "min": 1.6843126650138793,
+                  "median": 1.84104985634237,
+                  "max": 2.093303153801094
+                }
+              },
+              {
+                "tolerance_m": 0.02,
+                "path_m": 0.026445191524149102,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 4,
+                "fitted_velocity_x": 0.007636650861800911,
+                "fitted_velocity_z": 1.8406515694086174,
+                "longitudinal_path_m": 0.02166773434576419,
+                "lateral_path_m": 0.01189283673476159,
+                "required_speed_mps": {
+                  "min": 1.6745853388261513,
+                  "median": 1.8406515694086174,
+                  "max": 2.080272719633994
+                }
+              },
+              {
+                "tolerance_m": 0.03,
+                "path_m": 0.026408889375359592,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": 0.007636650861800911,
+                "fitted_velocity_z": 1.839410034761267,
+                "longitudinal_path_m": 0.020473345401695764,
+                "lateral_path_m": 0.012302934155654031,
+                "required_speed_mps": {
+                  "min": 1.6709251073489004,
+                  "median": 1.839410034761267,
+                  "max": 2.0434833145547735
+                }
+              }
+            ]
+          },
+          {
+            "start_phase": 0.5916666666666667,
+            "end_phase": 0.6916666666666667,
+            "duration": 0.10000002,
+            "fixed_vertex": "0:4887",
+            "fixed_vertex_path_m": 0.04929499613135767,
+            "contact_patches": [
+              {
+                "tolerance_m": 0.001,
+                "path_m": 0.05397165646010577,
+                "coverage": 0.9166666666666666,
+                "covered_pairs": 11,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 0,
+                "fitted_velocity_x": -0.003998080545665015,
+                "fitted_velocity_z": 2.362904908374812,
+                "longitudinal_path_m": 0.053625721077693866,
+                "lateral_path_m": 0.0016487185880517362,
+                "required_speed_mps": {
+                  "min": 2.2621099612269364,
+                  "median": 2.362904908374812,
+                  "max": 2.516588972368772
+                }
+              },
+              {
+                "tolerance_m": 0.002,
+                "path_m": 0.05417966237773952,
+                "coverage": 0.9166666666666666,
+                "covered_pairs": 11,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 0,
+                "fitted_velocity_x": -0.003998080545665015,
+                "fitted_velocity_z": 2.3615240996119184,
+                "longitudinal_path_m": 0.05372131371238287,
+                "lateral_path_m": 0.0016957853844568882,
+                "required_speed_mps": {
+                  "min": 2.2621099612269364,
+                  "median": 2.3615240996119184,
+                  "max": 2.516588972368772
+                }
+              },
+              {
+                "tolerance_m": 0.005,
+                "path_m": 0.058455289826949065,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 2,
+                "fitted_velocity_x": -0.004906593848177106,
+                "fitted_velocity_z": 2.3617449035801883,
+                "longitudinal_path_m": 0.05768039887341431,
+                "lateral_path_m": 0.0017289499835308978,
+                "required_speed_mps": {
+                  "min": 2.241064490348144,
+                  "median": 2.3617449035801883,
+                  "max": 2.508424255565432
+                }
+              },
+              {
+                "tolerance_m": 0.01,
+                "path_m": 0.05581001182049199,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 4,
+                "fitted_velocity_x": -0.008118821909383627,
+                "fitted_velocity_z": 2.3371165057927055,
+                "longitudinal_path_m": 0.05542751323309458,
+                "lateral_path_m": 0.001978499495966967,
+                "required_speed_mps": {
+                  "min": 2.19014508742746,
+                  "median": 2.3371165057927055,
+                  "max": 2.4932300096687463
+                }
+              },
+              {
+                "tolerance_m": 0.02,
+                "path_m": 0.05434343388078505,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": -0.012396956052882418,
+                "fitted_velocity_z": 2.3250309064243697,
+                "longitudinal_path_m": 0.053796860737640395,
+                "lateral_path_m": 0.00206146031520021,
+                "required_speed_mps": {
+                  "min": 2.1848101318033684,
+                  "median": 2.3250309064243697,
+                  "max": 2.484624365004826
+                }
+              },
+              {
+                "tolerance_m": 0.03,
+                "path_m": 0.05198783627935606,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": -0.013993096139946717,
+                "fitted_velocity_z": 2.299364114628892,
+                "longitudinal_path_m": 0.05187008963762724,
+                "lateral_path_m": 0.0022065433892423554,
+                "required_speed_mps": {
+                  "min": 2.1779139996305514,
+                  "median": 2.299364114628892,
+                  "max": 2.484624365004826
+                }
+              }
+            ]
+          },
+          {
+            "start_phase": 1.2416666666666667,
+            "end_phase": 1.5,
+            "duration": 0.25833338499999997,
+            "fixed_vertex": "0:4445",
+            "fixed_vertex_path_m": 0.026705394136253457,
+            "contact_patches": [
+              {
+                "tolerance_m": 0.001,
+                "path_m": 0.026741755214885997,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 1,
+                "fitted_velocity_x": 0.011376558224042464,
+                "fitted_velocity_z": 1.8466237176440703,
+                "longitudinal_path_m": 0.022967663494639856,
+                "lateral_path_m": 0.011035594438022479,
+                "required_speed_mps": {
+                  "min": 1.6913117948498122,
+                  "median": 1.8466237176440703,
+                  "max": 2.0948532834737232
+                }
+              },
+              {
+                "tolerance_m": 0.002,
+                "path_m": 0.026741755214885997,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 1,
+                "fitted_velocity_x": 0.011376558224042464,
+                "fitted_velocity_z": 1.8466237176440703,
+                "longitudinal_path_m": 0.022900620637564817,
+                "lateral_path_m": 0.011029111417301195,
+                "required_speed_mps": {
+                  "min": 1.6913117948498122,
+                  "median": 1.8466237176440703,
+                  "max": 2.0948532834737232
+                }
+              },
+              {
+                "tolerance_m": 0.005,
+                "path_m": 0.027020276800248134,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 2,
+                "fitted_velocity_x": 0.011740784400402665,
+                "fitted_velocity_z": 1.8438367869932202,
+                "longitudinal_path_m": 0.022851392939740922,
+                "lateral_path_m": 0.011092026328090789,
+                "required_speed_mps": {
+                  "min": 1.6878122299318459,
+                  "median": 1.8438367869932202,
+                  "max": 2.0948532834737232
+                }
+              },
+              {
+                "tolerance_m": 0.01,
+                "path_m": 0.026708435162899575,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 3,
+                "fitted_velocity_x": 0.009490517531199972,
+                "fitted_velocity_z": 1.84104985634237,
+                "longitudinal_path_m": 0.022653962383852644,
+                "lateral_path_m": 0.011255367773391582,
+                "required_speed_mps": {
+                  "min": 1.6843126650138793,
+                  "median": 1.84104985634237,
+                  "max": 2.093303153801081
+                }
+              },
+              {
+                "tolerance_m": 0.02,
+                "path_m": 0.026445191524149626,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 4,
+                "fitted_velocity_x": 0.007636650861800911,
+                "fitted_velocity_z": 1.840651569408604,
+                "longitudinal_path_m": 0.021667734345763856,
+                "lateral_path_m": 0.01189283673476159,
+                "required_speed_mps": {
+                  "min": 1.6745853388261247,
+                  "median": 1.840651569408604,
+                  "max": 2.0802727196339807
+                }
+              },
+              {
+                "tolerance_m": 0.03,
+                "path_m": 0.026408889375360685,
+                "coverage": 1.0,
+                "covered_pairs": 31,
+                "total_pairs": 31,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": 0.007636650861800911,
+                "fitted_velocity_z": 1.8394100347612736,
+                "longitudinal_path_m": 0.020473345401695875,
+                "lateral_path_m": 0.012302934155654031,
+                "required_speed_mps": {
+                  "min": 1.6709251073488738,
+                  "median": 1.8394100347612736,
+                  "max": 2.043483314554767
+                }
+              }
+            ]
+          },
+          {
+            "start_phase": 1.5916666666666666,
+            "end_phase": 1.6916666666666667,
+            "duration": 0.10000002,
+            "fixed_vertex": "0:4887",
+            "fixed_vertex_path_m": 0.04929499613135796,
+            "contact_patches": [
+              {
+                "tolerance_m": 0.001,
+                "path_m": 0.053971656460106106,
+                "coverage": 0.9166666666666666,
+                "covered_pairs": 11,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 0,
+                "fitted_velocity_x": -0.003998080545665015,
+                "fitted_velocity_z": 2.3629049083747855,
+                "longitudinal_path_m": 0.05362572107769403,
+                "lateral_path_m": 0.0016487185880517362,
+                "required_speed_mps": {
+                  "min": 2.2621099612269764,
+                  "median": 2.3629049083747855,
+                  "max": 2.516588972368772
+                }
+              },
+              {
+                "tolerance_m": 0.002,
+                "path_m": 0.05417966237773996,
+                "coverage": 0.9166666666666666,
+                "covered_pairs": 11,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 0,
+                "fitted_velocity_x": -0.003998080545665015,
+                "fitted_velocity_z": 2.361524099611945,
+                "longitudinal_path_m": 0.05372131371238331,
+                "lateral_path_m": 0.0016957853844568882,
+                "required_speed_mps": {
+                  "min": 2.2621099612269764,
+                  "median": 2.361524099611945,
+                  "max": 2.516588972368772
+                }
+              },
+              {
+                "tolerance_m": 0.005,
+                "path_m": 0.05845528982694984,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 2,
+                "fitted_velocity_x": -0.004906593848177106,
+                "fitted_velocity_z": 2.361744903580192,
+                "longitudinal_path_m": 0.05768039887341492,
+                "lateral_path_m": 0.0017289499835308978,
+                "required_speed_mps": {
+                  "min": 2.241064490348184,
+                  "median": 2.361744903580192,
+                  "max": 2.508424255565439
+                }
+              },
+              {
+                "tolerance_m": 0.01,
+                "path_m": 0.055810011820490994,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 4,
+                "fitted_velocity_x": -0.008118821909383627,
+                "fitted_velocity_z": 2.337116505792702,
+                "longitudinal_path_m": 0.055427513233093695,
+                "lateral_path_m": 0.001978499495966967,
+                "required_speed_mps": {
+                  "min": 2.19014508742742,
+                  "median": 2.337116505792702,
+                  "max": 2.4932300096687463
+                }
+              },
+              {
+                "tolerance_m": 0.02,
+                "path_m": 0.05434343388078461,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": -0.012396956052882418,
+                "fitted_velocity_z": 2.3250309064243764,
+                "longitudinal_path_m": 0.053796860737640895,
+                "lateral_path_m": 0.00206146031520021,
+                "required_speed_mps": {
+                  "min": 2.184810131803355,
+                  "median": 2.3250309064243764,
+                  "max": 2.4846243650048327
+                }
+              },
+              {
+                "tolerance_m": 0.03,
+                "path_m": 0.051987836279355173,
+                "coverage": 1.0,
+                "covered_pairs": 12,
+                "total_pairs": 12,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": -0.013993096139946717,
+                "fitted_velocity_z": 2.2993641146288857,
+                "longitudinal_path_m": 0.05187008963762696,
+                "lateral_path_m": 0.0022065433892423554,
+                "required_speed_mps": {
+                  "min": 2.1779139996305648,
+                  "median": 2.2993641146288857,
+                  "max": 2.4846243650048327
+                }
+              }
+            ]
+          }
+        ],
+        "right": [
+          {
+            "start_phase": 0.7666666666666667,
+            "end_phase": 1.1916666666666667,
+            "duration": 0.42500008499999997,
+            "fixed_vertex": "0:5401",
+            "fixed_vertex_path_m": 0.04802287089131653,
+            "contact_patches": [
+              {
+                "tolerance_m": 0.001,
+                "path_m": 0.0691568658221994,
+                "coverage": 1.0,
+                "covered_pairs": 51,
+                "total_pairs": 51,
+                "minimum_patch_vertices": 1,
+                "fitted_velocity_x": -0.01993182791427756,
+                "fitted_velocity_z": 1.8661492966048148,
+                "longitudinal_path_m": 0.05562636634065021,
+                "lateral_path_m": 0.019884453570655505,
+                "required_speed_mps": {
+                  "min": 1.7407905874186644,
+                  "median": 1.8661492966048148,
+                  "max": 2.261155112894337
+                }
+              },
+              {
+                "tolerance_m": 0.002,
+                "path_m": 0.06892221656826131,
+                "coverage": 1.0,
+                "covered_pairs": 51,
+                "total_pairs": 51,
+                "minimum_patch_vertices": 1,
+                "fitted_velocity_x": -0.019629639803937185,
+                "fitted_velocity_z": 1.861466631816972,
+                "longitudinal_path_m": 0.05549675705086854,
+                "lateral_path_m": 0.019723239632121723,
+                "required_speed_mps": {
+                  "min": 1.7407905874186644,
+                  "median": 1.861466631816972,
+                  "max": 2.261155112894337
+                }
+              },
+              {
+                "tolerance_m": 0.005,
+                "path_m": 0.06576644479082808,
+                "coverage": 1.0,
+                "covered_pairs": 51,
+                "total_pairs": 51,
+                "minimum_patch_vertices": 2,
+                "fitted_velocity_x": -0.025559906164570347,
+                "fitted_velocity_z": 1.8614113038072992,
+                "longitudinal_path_m": 0.054200185203976625,
+                "lateral_path_m": 0.02042020589259394,
+                "required_speed_mps": {
+                  "min": 1.7295990316330738,
+                  "median": 1.8614113038072992,
+                  "max": 2.2711488141664575
+                }
+              },
+              {
+                "tolerance_m": 0.01,
+                "path_m": 0.06490714182694925,
+                "coverage": 1.0,
+                "covered_pairs": 51,
+                "total_pairs": 51,
+                "minimum_patch_vertices": 4,
+                "fitted_velocity_x": -0.025559906164570347,
+                "fitted_velocity_z": 1.8571717458837913,
+                "longitudinal_path_m": 0.053449921425992586,
+                "lateral_path_m": 0.020465801123062892,
+                "required_speed_mps": {
+                  "min": 1.7149809971724521,
+                  "median": 1.8571717458837913,
+                  "max": 2.2700074854061514
+                }
+              },
+              {
+                "tolerance_m": 0.02,
+                "path_m": 0.06291176479321131,
+                "coverage": 1.0,
+                "covered_pairs": 51,
+                "total_pairs": 51,
+                "minimum_patch_vertices": 5,
+                "fitted_velocity_x": -0.029424987916397048,
+                "fitted_velocity_z": 1.8565315710065264,
+                "longitudinal_path_m": 0.05145314896203668,
+                "lateral_path_m": 0.020947126498213394,
+                "required_speed_mps": {
+                  "min": 1.7149809971724521,
+                  "median": 1.8565315710065264,
+                  "max": 2.2528955449061763
+                }
+              },
+              {
+                "tolerance_m": 0.03,
+                "path_m": 0.062339652606762906,
+                "coverage": 1.0,
+                "covered_pairs": 51,
+                "total_pairs": 51,
+                "minimum_patch_vertices": 6,
+                "fitted_velocity_x": -0.0297572103072461,
+                "fitted_velocity_z": 1.8564929476979726,
+                "longitudinal_path_m": 0.05095980731683536,
+                "lateral_path_m": 0.021126085552526225,
+                "required_speed_mps": {
+                  "min": 1.7097272726598047,
+                  "median": 1.8564929476979726,
+                  "max": 2.249720491897107
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

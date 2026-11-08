@@ -1,0 +1,179 @@
+{
+  "scope": "Consecutive final poses, first 0.45 simulated seconds of each input handoff. Foot distances are world-space.",
+  "run": "Library/LucianCoherence/play-cadence-stop-support-handoffs-contacts-20261105-180327",
+  "root_motion_frames": 0,
+  "trials": {
+    "exploration_stop": {
+      "frames": 109,
+      "sample_pairs_first_045s": 26,
+      "peak_foot_step": {
+        "time_from_trial_s": 0.08297562999999997,
+        "step_duration_s": 0.0166179999999998,
+        "state_changed": false,
+        "prior_clips": "Lucian_Common_Walk_Loop_Stride03:1",
+        "next_clips": "Common_Idle_Inplace:0.6270723|Lucian_Common_Walk_Loop_Stride03:0.234038815",
+        "previous_blend": 1.35,
+        "next_blend": 0.366912484,
+        "support_before": "True",
+        "support_after": "True",
+        "root_step_cm": 1.0070000000041546,
+        "left_step_cm": 15.074886067900744,
+        "left_angle_deg": 19.15825213007446,
+        "right_step_cm": 27.588701949168914,
+        "right_angle_deg": 66.47327083507965
+      },
+      "peak_rotation_deg": 66.47327083507965,
+      "handoffs": [
+        {
+          "time_from_trial_s": 0.20294380000000034,
+          "step_duration_s": 0.016752720000000387,
+          "state_changed": true,
+          "prior_clips": "Common_Idle_Inplace:0.0277777314",
+          "next_clips": "TwinSword_Common_Walk_Stop_Inplace:1",
+          "previous_blend": 0.0,
+          "next_blend": 0.0,
+          "support_before": "True",
+          "support_after": "True",
+          "root_step_cm": 0.0,
+          "left_step_cm": 3.3718807363141776,
+          "left_angle_deg": 3.0659819450622665,
+          "right_step_cm": 2.848507054579374,
+          "right_angle_deg": 2.735547085600143
+        }
+      ]
+    },
+    "combat_stop_locked": {
+      "frames": 109,
+      "sample_pairs_first_045s": 27,
+      "peak_foot_step": {
+        "time_from_trial_s": 0.04948664000000047,
+        "step_duration_s": 0.01848983999999998,
+        "state_changed": false,
+        "prior_clips": "Lucian_Strafe_Walk_FL_Stride03:0.9006103|Lucian_Strafe_Walk_L_Stride03:0.0480628237|Lucian_Strafe_Run_FL_Stride03:0.0357922874|Lucian_Strafe_Run_L_Stride03:0.0155345816",
+        "next_clips": "Twinblades_Idle_Inplace:0.7916666",
+        "previous_blend": 0.237528041,
+        "next_blend": 0.030210875,
+        "support_before": "True",
+        "support_after": "False",
+        "root_step_cm": 0.25060574614602604,
+        "left_step_cm": 77.7721712557914,
+        "left_angle_deg": 56.515007533901596,
+        "right_step_cm": 72.75880146002778,
+        "right_angle_deg": 73.49820090759161
+      },
+      "peak_rotation_deg": 73.49820090759161,
+      "handoffs": [
+        {
+          "time_from_trial_s": 0.11630582999999994,
+          "step_duration_s": 0.016400529999999414,
+          "state_changed": true,
+          "prior_clips": "Twinblades_Idle_Inplace:0.166666627",
+          "next_clips": "Twinblades_Idle_Inplace:1",
+          "previous_blend": 0.0,
+          "next_blend": 0.0,
+          "support_before": "False",
+          "support_after": "False",
+          "root_step_cm": 9.999999992515995e-05,
+          "left_step_cm": 0.9486264194076952,
+          "left_angle_deg": 2.079591078847293,
+          "right_step_cm": 0.9612686825204544,
+          "right_angle_deg": 2.1464092433381428
+        }
+      ]
+    },
+    "unlock_moving": {
+      "frames": 109,
+      "sample_pairs_first_045s": 27,
+      "peak_foot_step": {
+        "time_from_trial_s": 0.09998700000000049,
+        "step_duration_s": 0.01672079999999987,
+        "state_changed": false,
+        "prior_clips": "Lucian_Common_Walk_Loop_Stride03:0.9215682|Lucian_Common_Run_Stride02:0.07843181",
+        "next_clips": "Lucian_Common_Walk_Loop_Stride03:0.88822484|Lucian_Common_Run_Stride02:0.111775152",
+        "previous_blend": 1.49902046,
+        "next_blend": 1.5623728,
+        "support_before": "True",
+        "support_after": "False",
+        "root_step_cm": 3.5127466404480896,
+        "left_step_cm": 19.890402877268325,
+        "left_angle_deg": 17.443514952745943,
+        "right_step_cm": 19.081684037048902,
+        "right_angle_deg": 8.417965801734551
+      },
+      "peak_rotation_deg": 24.694210767622938,
+      "handoffs": [
+        {
+          "time_from_trial_s": 0.08326620000000062,
+          "step_duration_s": 0.016967799999999755,
+          "state_changed": true,
+          "prior_clips": "Lucian_Strafe_Walk_FL_Stride03:0.159711838|Lucian_Strafe_Walk_L_Stride03:0.00695478637",
+          "next_clips": "Lucian_Common_Walk_Loop_Stride03:0.9215682|Lucian_Common_Run_Stride02:0.07843181",
+          "previous_blend": 1.421202,
+          "next_blend": 1.49902046,
+          "support_before": "True",
+          "support_after": "True",
+          "root_step_cm": 3.3680343584952284,
+          "left_step_cm": 14.598988758807632,
+          "left_angle_deg": 17.751411182206585,
+          "right_step_cm": 7.718818967299823,
+          "right_angle_deg": 7.056406076307387
+        },
+        {
+          "time_from_trial_s": 0.18340579999999918,
+          "step_duration_s": 0.017090799999998296,
+          "state_changed": true,
+          "prior_clips": "Lucian_Common_Walk_Loop_Stride03:0.09188622|Lucian_Common_Run_Stride02:0.01922488",
+          "next_clips": "TwinSword_Common_Walk_Start_Inplace:1",
+          "previous_blend": 1.67874551,
+          "next_blend": 1.69941664,
+          "support_before": "False",
+          "support_after": "False",
+          "root_step_cm": 3.9527959724689725,
+          "left_step_cm": 2.9269158136224114,
+          "left_angle_deg": 3.551597262721464,
+          "right_step_cm": 7.7786942284698695,
+          "right_angle_deg": 3.434758644527422
+        }
+      ]
+    },
+    "exploration_brake_after_unlock": {
+      "frames": 109,
+      "sample_pairs_first_045s": 27,
+      "peak_foot_step": {
+        "time_from_trial_s": 0.08323389999999975,
+        "step_duration_s": 0.016615899999999684,
+        "state_changed": false,
+        "prior_clips": "Lucian_Common_Walk_Loop_Stride03:1",
+        "next_clips": "Common_Idle_Inplace:0.6127376|Lucian_Common_Walk_Loop_Stride03:0.248373538",
+        "previous_blend": 1.35,
+        "next_blend": 0.3893856,
+        "support_before": "True",
+        "support_after": "True",
+        "root_step_cm": 0.797729503032165,
+        "left_step_cm": 4.391989585598032,
+        "left_angle_deg": 24.379748862810395,
+        "right_step_cm": 32.8245882723603,
+        "right_angle_deg": 70.20351688578347
+      },
+      "peak_rotation_deg": 70.20351688578347,
+      "handoffs": [
+        {
+          "time_from_trial_s": 0.19999409999999962,
+          "step_duration_s": 0.017059299999999666,
+          "state_changed": true,
+          "prior_clips": "Common_Idle_Inplace:0.0277777314",
+          "next_clips": "TwinSword_Common_Walk_Stop_Inplace:1",
+          "previous_blend": 0.0,
+          "next_blend": 0.0,
+          "support_before": "True",
+          "support_after": "True",
+          "root_step_cm": 0.0,
+          "left_step_cm": 3.3798949465988812,
+          "left_angle_deg": 3.0735050409469102,
+          "right_step_cm": 2.835512151273686,
+          "right_angle_deg": 2.726448742607481
+        }
+      ]
+    }
+  }
+}

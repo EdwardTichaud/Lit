@@ -131,10 +131,6 @@ Material:
         m_Texture: {fileID: 2800000, guid: bf0a6ea7669b93047a183b9c3fb814b7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _DetailMap:
-        m_Texture: {fileID: 2800000, guid: c9aa32c0c1aab96488fb5a84db65c635, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _DetailMask:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}

@@ -1,0 +1,219 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-stop-support-handoffs-contacts-20261105-180327",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261105_180329_549.csv",
+    "samples": 763,
+    "jumpFreeAirborneSamples": 0,
+    "jumpTorchAirborneSamples": 0,
+    "nativeIKAirborneSamples": 0,
+    "rootSpaceGoalSamples": 570,
+    "supportBlendSamples": 570,
+    "supportDataset": "LucianFootSupports",
+    "wholeBodyPolicyEnabled": true,
+    "existingIKVariant": "Existing UCC IK unchanged",
+    "maximumObtainedSpeed": 2.482909917831421,
+    "trials": [
+        {
+            "name": "exploration_approach",
+            "frames": 109,
+            "movingFrames": 107,
+            "simulatedSeconds": 1.8166656494140625
+        },
+        {
+            "name": "exploration_stop",
+            "frames": 109,
+            "movingFrames": 5,
+            "simulatedSeconds": 1.8166656494140625
+        },
+        {
+            "name": "combat_approach",
+            "frames": 109,
+            "movingFrames": 107,
+            "simulatedSeconds": 1.8166656494140625
+        },
+        {
+            "name": "combat_stop_locked",
+            "frames": 109,
+            "movingFrames": 2,
+            "simulatedSeconds": 1.8166656494140625
+        },
+        {
+            "name": "combat_resume",
+            "frames": 109,
+            "movingFrames": 107,
+            "simulatedSeconds": 1.8166656494140625
+        },
+        {
+            "name": "unlock_moving",
+            "frames": 109,
+            "movingFrames": 109,
+            "simulatedSeconds": 1.8166656494140625
+        },
+        {
+            "name": "exploration_brake_after_unlock",
+            "frames": 109,
+            "movingFrames": 5,
+            "simulatedSeconds": 1.8166656494140625
+        }
+    ],
+    "contactEvents": [
+        {
+            "kind": "grounded",
+            "trial": "exploration_approach",
+            "source": "",
+            "time": 1.7284314632415771,
+            "height": 0.0,
+            "phase": 0.12874998152256012,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "land",
+            "trial": "exploration_approach",
+            "source": "  at LucianCoherencePlayProbe.ObserveLand (System.Single height) [0x00000] in C:\\Users\\pierr\\git\\Lit\\Assets\\Characters\\AnimationPresentation\\Editor\\LucianCoherencePlayProbe.cs:360 \r\n  at Opsive.Shared.Events.InvokableAction`1[T1].Invoke (T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.Shared.Events.EventHandler.ExecuteEvent[T1] (System.Object obj, Opsive.Shared.Runtime.Utility.StringHash eventName, T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateGroundState (System.Boolean grounded, System.Boolean sendEvents) [0x00088] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:841 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.DetectGroundCollision (System.Boolean sendGroundedEvents) [0x006a0] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:1318 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.UpdateCharacter () [0x0002a] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:601 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateCharacter () [0x00080] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:588 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.Move (System.Single horizontalMovement, System.Single forwardMovement, System.Single deltaYawRotation) [0x00065] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:568 \r\n  at Opsive.UltimateCharacterController.SimulationManager+SmoothedCharacter.Move (System.Boolean preMove) [0x0004d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:175 \r\n  at Opsive.UltimateCharacterController.SimulationManager.MoveCharacters (System.Boolean preMove, System.Single interpAmount) [0x0000c] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:783 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedMove () [0x0001d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:722 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedUpdate () [0x00000] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:711 ",
+            "time": 1.7284314632415771,
+            "height": 0.5849981307983398,
+            "phase": 0.12874998152256012,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "grounded",
+            "trial": "exploration_stop",
+            "source": "",
+            "time": 3.4879908561706543,
+            "height": 0.0,
+            "phase": 1.4345149993896484,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "land",
+            "trial": "exploration_stop",
+            "source": "  at LucianCoherencePlayProbe.ObserveLand (System.Single height) [0x00000] in C:\\Users\\pierr\\git\\Lit\\Assets\\Characters\\AnimationPresentation\\Editor\\LucianCoherencePlayProbe.cs:360 \r\n  at Opsive.Shared.Events.InvokableAction`1[T1].Invoke (T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.Shared.Events.EventHandler.ExecuteEvent[T1] (System.Object obj, Opsive.Shared.Runtime.Utility.StringHash eventName, T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateGroundState (System.Boolean grounded, System.Boolean sendEvents) [0x00088] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:841 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.DetectGroundCollision (System.Boolean sendGroundedEvents) [0x006a0] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:1318 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.UpdateCharacter () [0x0002a] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:601 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateCharacter () [0x00080] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:588 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.Move (System.Single horizontalMovement, System.Single forwardMovement, System.Single deltaYawRotation) [0x00065] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:568 \r\n  at Opsive.UltimateCharacterController.SimulationManager+SmoothedCharacter.Move (System.Boolean preMove) [0x0004d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:175 \r\n  at Opsive.UltimateCharacterController.SimulationManager.MoveCharacters (System.Boolean preMove, System.Single interpAmount) [0x0000c] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:783 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedMove () [0x0001d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:722 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedUpdate () [0x00000] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:711 ",
+            "time": 3.4879908561706543,
+            "height": 0.5999994277954102,
+            "phase": 1.4345149993896484,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "grounded",
+            "trial": "combat_approach",
+            "source": "",
+            "time": 5.251114368438721,
+            "height": 0.0,
+            "phase": 0.5920709371566772,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "land",
+            "trial": "combat_approach",
+            "source": "  at LucianCoherencePlayProbe.ObserveLand (System.Single height) [0x00000] in C:\\Users\\pierr\\git\\Lit\\Assets\\Characters\\AnimationPresentation\\Editor\\LucianCoherencePlayProbe.cs:360 \r\n  at Opsive.Shared.Events.InvokableAction`1[T1].Invoke (T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.Shared.Events.EventHandler.ExecuteEvent[T1] (System.Object obj, Opsive.Shared.Runtime.Utility.StringHash eventName, T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateGroundState (System.Boolean grounded, System.Boolean sendEvents) [0x00088] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:841 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.DetectGroundCollision (System.Boolean sendGroundedEvents) [0x006a0] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:1318 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.UpdateCharacter () [0x0002a] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:601 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateCharacter () [0x00080] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:588 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.Move (System.Single horizontalMovement, System.Single forwardMovement, System.Single deltaYawRotation) [0x00065] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:568 \r\n  at Opsive.UltimateCharacterController.SimulationManager+SmoothedCharacter.Move (System.Boolean preMove) [0x0004d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:175 \r\n  at Opsive.UltimateCharacterController.SimulationManager.MoveCharacters (System.Boolean preMove, System.Single interpAmount) [0x0000c] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:783 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedMove () [0x0001d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:722 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedUpdate () [0x00000] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:711 ",
+            "time": 5.251114368438721,
+            "height": 0.6000003814697266,
+            "phase": 0.5920709371566772,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "grounded",
+            "trial": "combat_stop_locked",
+            "source": "",
+            "time": 7.069265365600586,
+            "height": 0.0,
+            "phase": 1.6848392486572266,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "land",
+            "trial": "combat_stop_locked",
+            "source": "  at LucianCoherencePlayProbe.ObserveLand (System.Single height) [0x00000] in C:\\Users\\pierr\\git\\Lit\\Assets\\Characters\\AnimationPresentation\\Editor\\LucianCoherencePlayProbe.cs:360 \r\n  at Opsive.Shared.Events.InvokableAction`1[T1].Invoke (T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.Shared.Events.EventHandler.ExecuteEvent[T1] (System.Object obj, Opsive.Shared.Runtime.Utility.StringHash eventName, T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateGroundState (System.Boolean grounded, System.Boolean sendEvents) [0x00088] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:841 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.DetectGroundCollision (System.Boolean sendGroundedEvents) [0x006a0] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:1318 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.UpdateCharacter () [0x0002a] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:601 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateCharacter () [0x00080] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:588 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.Move (System.Single horizontalMovement, System.Single forwardMovement, System.Single deltaYawRotation) [0x00065] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:568 \r\n  at Opsive.UltimateCharacterController.SimulationManager+SmoothedCharacter.Move (System.Boolean preMove) [0x0004d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:175 \r\n  at Opsive.UltimateCharacterController.SimulationManager.MoveCharacters (System.Boolean preMove, System.Single interpAmount) [0x0000c] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:783 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedMove () [0x0001d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:722 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedUpdate () [0x00000] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:711 ",
+            "time": 7.069265365600586,
+            "height": 0.5999994277954102,
+            "phase": 1.6848392486572266,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "grounded",
+            "trial": "combat_resume",
+            "source": "",
+            "time": 8.891594886779785,
+            "height": 0.0,
+            "phase": 0.8916661739349365,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "land",
+            "trial": "combat_resume",
+            "source": "  at LucianCoherencePlayProbe.ObserveLand (System.Single height) [0x00000] in C:\\Users\\pierr\\git\\Lit\\Assets\\Characters\\AnimationPresentation\\Editor\\LucianCoherencePlayProbe.cs:360 \r\n  at Opsive.Shared.Events.InvokableAction`1[T1].Invoke (T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.Shared.Events.EventHandler.ExecuteEvent[T1] (System.Object obj, Opsive.Shared.Runtime.Utility.StringHash eventName, T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateGroundState (System.Boolean grounded, System.Boolean sendEvents) [0x00088] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:841 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.DetectGroundCollision (System.Boolean sendGroundedEvents) [0x006a0] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:1318 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.UpdateCharacter () [0x0002a] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:601 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateCharacter () [0x00080] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:588 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.Move (System.Single horizontalMovement, System.Single forwardMovement, System.Single deltaYawRotation) [0x00065] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:568 \r\n  at Opsive.UltimateCharacterController.SimulationManager+SmoothedCharacter.Move (System.Boolean preMove) [0x0004d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:175 \r\n  at Opsive.UltimateCharacterController.SimulationManager.MoveCharacters (System.Boolean preMove, System.Single interpAmount) [0x0000c] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:783 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedMove () [0x0001d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:722 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedUpdate () [0x00000] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:711 ",
+            "time": 8.891594886779785,
+            "height": 0.6000003814697266,
+            "phase": 0.8916661739349365,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "grounded",
+            "trial": "exploration_brake_after_unlock",
+            "source": "",
+            "time": 12.571497917175293,
+            "height": 0.0,
+            "phase": 1.345974326133728,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        },
+        {
+            "kind": "land",
+            "trial": "exploration_brake_after_unlock",
+            "source": "  at LucianCoherencePlayProbe.ObserveLand (System.Single height) [0x00000] in C:\\Users\\pierr\\git\\Lit\\Assets\\Characters\\AnimationPresentation\\Editor\\LucianCoherencePlayProbe.cs:360 \r\n  at Opsive.Shared.Events.InvokableAction`1[T1].Invoke (T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.Shared.Events.EventHandler.ExecuteEvent[T1] (System.Object obj, Opsive.Shared.Runtime.Utility.StringHash eventName, T1 arg1) [0x00000] in <375bcb88620648d1bac1c8c8ec1b8a5a>:0 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateGroundState (System.Boolean grounded, System.Boolean sendEvents) [0x00088] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:841 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.DetectGroundCollision (System.Boolean sendGroundedEvents) [0x006a0] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:1318 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.UpdateCharacter () [0x0002a] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:601 \r\n  at Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion.UpdateCharacter () [0x00080] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\UltimateCharacterLocomotion.cs:588 \r\n  at Opsive.UltimateCharacterController.Character.CharacterLocomotion.Move (System.Single horizontalMovement, System.Single forwardMovement, System.Single deltaYawRotation) [0x00065] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Character\\CharacterLocomotion.cs:568 \r\n  at Opsive.UltimateCharacterController.SimulationManager+SmoothedCharacter.Move (System.Boolean preMove) [0x0004d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:175 \r\n  at Opsive.UltimateCharacterController.SimulationManager.MoveCharacters (System.Boolean preMove, System.Single interpAmount) [0x0000c] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:783 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedMove () [0x0001d] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:722 \r\n  at Opsive.UltimateCharacterController.SimulationManager.FixedUpdate () [0x00000] in .\\Packages\\com.opsive.ultimatecharactercontroller\\Runtime\\Game\\SimulationManager.cs:711 ",
+            "time": 12.571497917175293,
+            "height": 0.6000003814697266,
+            "phase": 1.345974326133728,
+            "jumpPhase": 0,
+            "grounded": true,
+            "jumpActive": false,
+            "impulseApplied": false,
+            "leftGround": false
+        }
+    ],
+    "errors": []
+}

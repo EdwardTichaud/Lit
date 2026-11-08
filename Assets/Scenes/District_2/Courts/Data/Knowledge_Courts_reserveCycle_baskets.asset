@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Courts_reserveCycle_baskets
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: d449fb266521425429dd7cdd30e17ac5
+  knowledgeId: district2.courts.reserve.baskets
+  title: "Les paniers de la r\xE9serve"
+  description: "Un panier pour la maison, un autre pour ceux qui ne peuvent pas venir. Rapporter les paniers vides, pas les provisions donn\xE9es. \u2014 Agathe"
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  cycles:
+  - {fileID: 11400000, guid: 7fa29fdca0a42884a828d6dfbc2c2ace, type: 2}
+  districtId: district2.courts
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: e2f40cde42528d34f9a49059cc41a89d, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

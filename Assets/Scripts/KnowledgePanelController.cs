@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Affiche les connaissances actuellement debloquees et leur description au survol.
@@ -17,6 +18,9 @@ public sealed class KnowledgePanelController : MonoBehaviour
     private readonly List<KnowledgePanelSlot> pooledSlots = new List<KnowledgePanelSlot>();
     private KnowledgeManager knowledgeManager;
     private KnowledgeSO displayedKnowledge;
+    private readonly List<TMP_Text> activeHeaders = new List<TMP_Text>();
+    private readonly List<TMP_Text> pooledHeaders = new List<TMP_Text>();
+    private CycleProgressionService cycleService;
 
     public RectTransform KnowledgeListContent => knowledgeListContent;
 
@@ -29,6 +33,7 @@ public sealed class KnowledgePanelController : MonoBehaviour
     private void OnEnable()
     {
         BindKnowledgeManager();
+        BindCycleService();
         Refresh();
     }
 
@@ -40,18 +45,21 @@ public sealed class KnowledgePanelController : MonoBehaviour
             BindKnowledgeManager();
             Refresh();
         }
+        if (cycleService != CycleProgressionService.Instance) { BindCycleService(); Refresh(); }
 
     }
 
     private void OnDisable()
     {
         UnbindKnowledgeManager();
+        UnbindCycleService();
         ClearDescription();
     }
 
     private void OnDestroy()
     {
         UnbindKnowledgeManager();
+        UnbindCycleService();
     }
 
     [ContextMenu("Refresh Knowledge List")]
@@ -66,18 +74,22 @@ public sealed class KnowledgePanelController : MonoBehaviour
             return;
         }
 
-        IReadOnlyList<KnowledgeSO> unlockedKnowledge = knowledgeManager.UnlockedKnowledge;
-        for (int i = 0; i < unlockedKnowledge.Count; i++)
+        var definitions = new HashSet<CycleDefinition>(CycleCatalog.LoadDefinitions());
+        if (cycleService != null) foreach (var cycle in cycleService.Definitions) definitions.Add(cycle);
+        foreach (var group in KnowledgeCycleGrouping.Build(knowledgeManager.UnlockedKnowledge, definitions))
         {
-            KnowledgeSO knowledge = unlockedKnowledge[i];
-            if (knowledge == null)
+            TMP_Text header = GetHeader();
+            header.text = group.Title + " (" + group.Entries.Count + ")";
+            var passages = SecretPassageNotes.Catalog;
+            if (passages != null && group.Cycle == passages.notesCycle)
+                header.text = group.Title + " (" + passages.CountRead(CycleProgressionService.Instance) + "/" + passages.entries.Length + " notes lues)";
+            activeHeaders.Add(header);
+            foreach (var knowledge in group.Entries)
             {
-                continue;
+                KnowledgePanelSlot slot = GetSlot();
+                slot.Initialize(this, knowledge);
+                activeSlots.Add(slot);
             }
-
-            KnowledgePanelSlot slot = GetSlot();
-            slot.Initialize(this, knowledge);
-            activeSlots.Add(slot);
         }
 
         if (displayedKnowledge != null && !knowledgeManager.HasKnowledge(displayedKnowledge))
@@ -148,6 +160,53 @@ public sealed class KnowledgePanelController : MonoBehaviour
         knowledgeManager = null;
     }
 
+    private void BindCycleService()
+    {
+        UnbindCycleService();
+        cycleService = CycleProgressionService.Instance;
+        if (cycleService != null) cycleService.Changed += Refresh;
+    }
+
+    private void UnbindCycleService()
+    {
+        if (cycleService != null) cycleService.Changed -= Refresh;
+        cycleService = null;
+    }
+
+    private TMP_Text GetHeader()
+    {
+        TMP_Text header;
+        if (pooledHeaders.Count > 0)
+        {
+            int last = pooledHeaders.Count - 1;
+            header = pooledHeaders[last]; pooledHeaders.RemoveAt(last);
+            header.gameObject.SetActive(true);
+        }
+        else
+        {
+            var root = new GameObject("KnowledgeCycleHeader", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            root.layer = knowledgeListContent.gameObject.layer;
+            root.transform.SetParent(knowledgeListContent, false);
+            header = root.GetComponent<TMP_Text>();
+            TMP_Text style = slotPrefab.GetComponentInChildren<TMP_Text>(true);
+            if (style != null)
+            {
+                header.font = style.font; header.fontSharedMaterial = style.fontSharedMaterial;
+                header.color = style.color; header.fontSize = Mathf.Max(16, style.fontSize);
+            }
+            else header.fontSize = 20;
+            header.fontStyle = FontStyles.Bold;
+            header.raycastTarget = false;
+            header.alignment = TextAlignmentOptions.MidlineLeft;
+            header.margin = new Vector4(8, 8, 0, 4);
+            var layout = root.GetComponent<LayoutElement>();
+            layout.minHeight = 30; layout.preferredHeight = header.fontSize * 2;
+            layout.flexibleWidth = 1;
+        }
+        header.transform.SetAsLastSibling();
+        return header;
+    }
+
     private KnowledgePanelSlot GetSlot()
     {
         KnowledgePanelSlot slot;
@@ -183,6 +242,13 @@ public sealed class KnowledgePanelController : MonoBehaviour
         }
 
         activeSlots.Clear();
+        foreach (var header in activeHeaders)
+        {
+            if (header == null) continue;
+            header.gameObject.SetActive(false);
+            pooledHeaders.Add(header);
+        }
+        activeHeaders.Clear();
     }
 
     private void ResolveReferences()

@@ -1,3 +1,932 @@
+## Grappin et capacites d'exploration (2026-11-07)
+
+Cumul solo, repartition multijoueur autoritaire et migration de l'equipement
+ajoutes sans modifier les kits de combat. Ancrages Observateur/Bondisseur
+aller-retour poses aux Limbes sous les cinq cycles de l'acces final.
+Bondisseur reste verrouille tant qu'un evenement narratif explicite ne le donne ;
+le profil natif de validation l'accorde seulement dans sa sauvegarde isolee.
+Pont a pied conserve : aucun blocage de campagne avant ce deblocage narratif.
+Compilation runtime/editeur et 15/15 tests passent. Recette native solo passee :
+114 controles, scan et arcs UCC aller/retour, boss, verrous, capture/restauration
+du cumul, ReturnToHub/re-entree ; zero erreur runtime, editeur restaure.
+Preuve : PlayRuns/795613cf0b754adca78db9d8f7ac258e/result.json sous
+Library/StartupDistrictValidation. Fixtures de deblocage, camera, approche,
+dialogue et degats declarees ; aucune qualification manuelle/reseau, save froide,
+Domain Reload desactive ou parite visuelle exacte Expedition 33 revendiquee.
+Details : systems/grapple.md.
+
+## Lucian : coherence animation, objectif actif (2026-11-04)
+
+Production visuelle non activee. Candidat Cadence01 : controller/override/profil/
+prefab/scene isoles, supportValidated=false. UCC reste autorite physique ; vitesses
+5,2948/8,7402 m/s, sauts/esquives/actions/cinematiques a conserver. Clips fournisseur,
+Avatar et ressources protegees intacts ; 229/234 identiques, cinq scripts changes
+pour les corrections explicites de cet objectif, aucun manquant. Pas de reset Git.
+
+Premier parcours dans la Maison via Bootstrap dans une copie jetable.
+Smoke general arrete au lancement du Basic, avant course/saut. Parcours
+marche/torche independant termine avant/apres masque, mais phases et
+trajets non apparies et camera trop proche du decor. Aucune conclusion
+visuelle de production. Controller scratch restaure octet pour octet.
+Preuves dans Docs/Animation/Lucian_Coherence_Contacts/final-pose/production-reference/.
+
+Repetition Maison : memes spawn et stick, prises de 54 images. 1,282 m UCC
+en reference et 1,289 m avec le masque, torche rangee comme equipee.
+47/53 paires strictes ; resultats opposes entre pieds, et ecarts aussi
+torche rangee. Masque seul non valide, copie restauree et hash confirme.
+Preuve production : 71 % Idle a 1,51 m/s a stick partiel. Tester le candidat
+de cadence au meme point a supprime l'Idle parasite (70,94 % -> 0 %).
+1,512 m/s et 1,251 m traces avant/apres, 15 images de boucle par prise,
+torche rangee/equipee. Pas de certification visuelle ni de non-regression
+des actions. Prefab, CharacterData et controller restaures dans la copie.
+
+District_1_Core, parcours de 5,116 m sur plan constant, 1,539 m/s,
+165 images stabilisees par prise. Cadence01 : 70,94 % -> 0 % Idle et
+33 a 57 images sous -2 cm -> 0 sur chaque pied/prise. Au pied gauche,
+sommet 0:4887, derive horizontale 1,36 a 1,37 cm (phase .32-.54),
+puis 8,90 a 8,91 cm (.54-.69). Isoler cette fin de pas par rapport
+a la source avant retouche. Captures masquees par le decor. Aucun
+deploiement. Preuves dans production-reference/district/.
+
+Fin du pas gauche : relecture a 240 intervalles/cycle sur CC5 des FBX
+Root/Inplace et de Stride03. Decalage du Blend Tree -0,039576 applique
+a la phase : rotation runtime vs copie <0,80 deg. Avant bascule pointe,
+sommet 0:4887 recule en source (-5,62 cm) et copie (-9,86 cm) dans la
+fenetre etat .54-.69. Milieu presque stable dans la copie (-0,80 cm).
+Cadence unique insuffisante ; localiser la retouche et verifier l'appui
+oppose. Aucune modification des animations ou du runtime. Mesures dans
+district/walk-release-source.json.
+
+Pilote ReleasePilot isole sous Animation de Lucian. FootT gauche seul :
+deplacement cumule 9,60 -> 0,81 cm sur phases clip .50-.642.
+Pied droit, bassin, rotation, evenements, duree et Root nuls/inchanges
+selon leurs tests respectifs. Six paires sur CC5, rapport final-pose/
+walk-release-pilot/. Aucun consommateur. Prochaine verification :
+export des objectifs du pilote et passage Play Mode avec UCC, melanges
+et raccords avant tout binding.
+
+Pilote UCC sol plat (copie) : 80 + 80 cas support passent, 12 sequences
+terminees, 2143 images. Fenetres gauche phase .50-.642 : 8,64-8,89 cm
+-> 0,35-0,44 cm a 1,489 m/s. Aucun passage sous -2 cm sur les melanges
+2,48-4,47 m/s. Sortie code 1 (exception UnityEditor.Search uniquement,
+rapport brut conserve). Assets de liaison restaures et hash verifies.
+Le pilote doit encore passer dans le District et les transitions/actions
+restent a valider. Mesures dans final-pose/walk-release-pilot/play/.
+
+District, pilote vs Cadence01 : 8,90-8,91 -> 0,42-0,43 cm au sommet
+0:4887, torche rangee/equipee, 1,539 m/s dans toutes les prises.
+Captures de phase occultent le modele, validation visuelle ouverte.
+Deux processus code 0. Override, profil et support qualifies reportes
+dans Cadence01 uniquement avec sauvegardes avant modification dans
+Library/LucianCoherence/preview-before-release-*. Pas de bascule en jeu.
+
+Camera gameplay District capturee aux memes phases, Lucian et lueur de
+torche visibles. Cape/eclairage cachent les pieds, vue rapprochee non
+exploitable. Mesures reproduites 8,90 -> 0,42-0,43 cm a 1,539 m/s.
+Preuves dans production-reference/district-rendered/. Recentrer sur
+les raccords et les limites de mouvement plutot que repeter ce cadrage.
+
+Contrat post-pilote : apex saut 2,730/2,729 m, ecart reference <1 mm,
+IK natif en vol et Root = 0. Exception UnityEditor.Search (code 1).
+Reception verrouillee conserve 16-17 cm de derive planaire comme avant,
+et le clip est encore visible a la restitution. Aucun reglage retouche.
+District Basic + Dodge avant/apres en mode Combat explicite : code 0 x2,
+retour Exploration et verrous UCC liberes. 3,5013/3,5007 m d'esquive.
+Pas de validation des impacts, combos, interruptions, Timeline ou reseau.
+
+Reception corrigee pour Lucian via holdLandingThroughContactLoss.
+UCC perdait le contact et liberait/reprenait le verrou pendant le clip.
+Essai final torche rangee/equipee : 0 cm apres acquisition (avant 16 cm),
+aucune reouverture, course reprise, apex ~2,729 m. Un premier echantillon
+au sol precede l'acquisition. Exception UnityEditor.Search (code 1).
+Clips et reglages du saut intacts. Preuves final-pose/walk-release-pilot/landing-scoped/.
+
+Mur statique UCC, torche equipee et stick identique. 1,489 m/s et cadence
+0,829 avant/apres. Mur : 30 images a 0 m, LitSpeed 0, Idle seul, aucun
+Root. Trois sequences completes, code 1 (UnityEditor.Search).
+Voir final-pose/walk-release-pilot/wall/. Pentes et plateformes ouvertes.
+
+Walk_Start -> Locomotion en preview Cadence01 : offset destination 0,775,
+seule transition modifiee. 13,66 -> 4,28 cm isole sur CC5 et
+13,85 -> 4,56 cm en UCC a 1,489 m/s. IK seul 14,02 cm isole.
+80 + 80 cas support passent, 12 parcours completes, code 1 Search.
+Sauvegardes preview-before-walk-start-* ; aucune bascule en jeu.
+Preuves final-pose/walk-start-handoff/.
+
+Run_Start en copie : meme clip de course que la boucle, reset de phase.
+Offset 0,70 : sprint 24,36 -> 11,74 cm sans torche et 23,80 -> 11,64
+avec torche, physique 8,74 m/s. Les deux semelles peuvent rester hautes
+dans ce raccord ; variante non integree. Sans sprint 5,30 m/s joue
+Walk_Start ; LitSpeed 3,25 mais LocomotionTier reste 1,1 et ne declenche
+pas WalkStartToRun (>2,5). Reproduit torche rangee et equipee. Prochaine
+correction du tier dans le chemin mesure. Preuves final-pose/run-start-handoff/.
+
+Tier corrige pendant les seuls departs mesures. Course ordinaire passe
+Walk_Start -> Run_Start, et marche lente conserve Walk_Start. Fondu
+Run_Start -> Locomotion ~6 cm en course, ~12 en sprint. Plus grand
+deplacement sur depart complet 23,62 cm sans torche et 14,08 cm avec,
+seam initial encore a traiter. Vitesses UCC identiques. Code + offset
+0,70 et certificat dans la preview, sans bascule gameplay. 10 sequences,
+code 1 Search. Voir comparison-tier.json dans le dossier run-start-handoff.
+
+Pose sortante Locomotion figee pendant le fondu d'entree Walk/Run_Start
+dans le seul chemin mesure. Pic premier fondu : course 23,62 -> 3,49 cm,
+marche lente 12,64 -> 2,99, sprint <3 cm. Vitesses equivalentes.
+Reste Walk_Start -> Run_Start a ~14,57 cm. 10 sequences, code 1 Search.
+Voir run-start-handoff/comparison-outgoing.json.
+
+Contre Iluvilirae_Test : ChargedEnemy_Lab sans Hit_1 refuse la Timeline
+avant/apres. Fixture jetable, copie de son controller et Hit_1 natif
+meme avatar : LucianCadence joue CombatLab_CounterSkill_2, quatre signaux
+camera et fin naturelle. Assertion jeton cinematographique echoue,
+restitution du controller/commandes non qualifiee. Scene et donnees
+scratch restaurees. Voir final-pose/walk-release-pilot/counter/.
+
+Suivi contre : observer l'instant du lancement revele le jeton actif et
+Root actif sur LucianCadence, puis controller restaure et Root/jeton
+inactifs en gameplay apres fin naturelle. Controle VFX 0/4, code 1.
+Degats et entree post-sortie non verifies. Aucun changement de Timeline.
+
+Causes confirmees : Moving Legs superposait une allure/phase au corps ; masque
+Upper Body Flame absent ; CharacterIK annulait des objectifs natifs ou redressait
+brutalement le pied. Opt-in candidat : corps entier en locomotion, torche bras/
+doigts, cadence sur vitesse obtenue et cooperation du seul solveur UCC. Pas de
+nouveau moteur physique, Root gameplay, foot-lock ou BakeMesh runtime. Rig CC5
+55 os verifie ; aucune reconstruction d'avatar justifiee. 18 copies : 17 Stride03
+et Common Run Stride02. Source musculaire/rotations conservees ; Walk_BL seul
+corrige pour son residuel XZ. Ancien binding SupportIK refuse (retour de pied aplati).
+
+Donnees NativeFootSupportSet : 18 cycles/121 phases, maintenant 35/34 sommets
+utiles. Rotation anatomique, hauteurs de semelles sources ; Foot IK integre off
+dans les deux etats de cycles, une passe UCC. Empreintes rig/Avatar/meshes/clips/
+phases/controller et certificat numerique ; installateurs/prebuild proteges.
+Objectifs non qualifies (Idle partiel) jamais forces a poids un. Raccords Idle
+et melanges necessitent toujours une validation visuelle et des donnees completes.
+
+Raccord de direction borne a 360 degres/s, marche/course 0,18 s, delta acteur
+non cumule par plusieurs appels. Sept tests passent. UCC ajoutait une variation
+de pied de 14 a 53 degres ; le candidat conserve la rotation native et ajoute
+l'inclinaison du contact physique. Normale de capsule : terrains mixtes a verifier.
+Pic dynamique ancien ~140 degres, dernier parcours ~33 ; pas une preuve artistique.
+
+Nouveau diagnostic confirme source/copie sur le vrai avatar : courses FL ~-30
+et FR ~+35 degres, incorrectement placees a +/-45 dans l'arbre ; vitesses de
+surface ~4,02/4,07 plutot que 3,31/3,43. Deux positions et references du candidat
+corrigees, sans reecrire les clips ni modifier UCC. Premier gate refuse puis
+rollback : nouvelle combinaison demandait un sommet supplementaire. Regeneration
+explicitement liee a l'ancien controller verifie ; 80 cas de preparation + 80
+de comparaison passent. Hauteur <=3,27 mm, ecart runtime/prototype <=0,14 um,
+rotations identiques. Reapplication sans aucune ecriture d'asset verifiee.
+
+matchSimpleDirectionalBlend active sur ce seul profil : remplace la fenetre
+angulaire fixe par les voisins reels du SimpleDirectional2D. Tests avec le vrai
+controller : 32 angles/allures concordent aux poids Unity a 0,001 m/s. Cadence
+des gaits melanges maintenant corrigee : distance/cycle divisee par duree du
+melange (l'ancienne moyenne de vitesses perdait jusqu'a 10,14 %). Tests reels :
+160 cas exploration/combat supplementaires, erreur de reference <=2,4e-7. Mode
+opt-in seulement ; prebuild controle timeScale=1 et binding du multiplicateur.
+Recette finale 205454 : 3049 releves, zero erreur, 2096 supports, Root off,
+vitesses physiques preservees avec/sans torche. Indicateur proche-sol diagonal
+ameliore, mais pas une qualification d'appui : exploration max 3,37 cm, avant
+combat 4,90 cm. Analyse actuelle ne qualifie pas les contacts des clips melanges.
+
+Saut : filtre de contact premature UCC corrige, buffering/coyote utilisateur
+conserves. 7 tests contacts et recettes Domain Reload on/off passes avant ce lot.
+Recette 202342 : deux sauts ~2,730 m, 59 frames aeriennes chacun, zero maintien IK
+natif en vol. Pas de changement de parametres physiques ou de clips de saut.
+Galerie avant/apres 202743/202835 : 23 captures/version, phases non synchronisees,
+cape deformee et ombres peu lisibles. Verifier ClearTransformMotion apres le
+placement initial de fixture, sans retoucher le gameplay Cloth par supposition.
+
+Nouveaux essais analogiques 210807/212006 : 2146/2144 releves sans erreur,
+vitesses 1,489/2,481/3,476/4,468 m/s. Diagnostic de patchs de semelles ajoute,
+read-only et opt-in : points communs a deux minima, couverture explicite.
+Pose finale verifiee apres UCC, avec les deux passes IK identifiees sur chaque
+image qualifiee. La compensation de ColliderSpacing ramene le decalage vertical
+de ~10 mm a moins de 0,07 mm sur 1733 images. Vitesses medianes preservees.
+Fenetre proche du sol : marche lente stable jusqu'a 15,96 cm, raccord du
+demarrage 20,08 cm, arret ~11 cm. Diagonale FL avec torche jusqu'a 1,40 cm
+sur la recette. Les limites de fenetre changent avec la hauteur de semelle.
+Prochain controle : comparer les memes sommets aux memes phases dans le clip
+isole et en Play Mode, puis mesurer le raccord Walk_Start → boucle separement.
+Pas de validation visuelle de ce lot ni d'activation en production.
+
+Essai de maintien de la direction sortante du combat rejete et retire. Les
+poids sortants sont stabilises, mais une image de marche qualifiee suivie
+d'un melange Idle/marche non qualifie deplace la rupture a l'interieur de
+Locomotion. L'audit sur le meme avatar, les memes poids et les memes phases
+mesure 18,53 cm d'ecart au pied a 22 % de marche selon la solution IK.
+Les cibles natives du clip Idle sont environ 9 cm sous le plan de reference.
+Qualifier la pose Idle actuelle pour le melange continu avant d'activer une
+correction. Audit et rapport dans Docs/Animation/Lucian_Coherence.md.
+
+Prototype Idle–marche qualifie hors flux (7 poids, erreur de hauteur <=
+2,22 mm), puis retire du candidat apres test Play Mode. Au retour de
+Walk_Stop, l'activation des objectifs coincide avec un deplacement de pied
+de 17,55 cm sans mouvement de capsule. La couverture de l'arbre seul est
+insuffisante. Suite : evaluer les deux etats et leurs phases pendant le fondu.
+Les deux assets du candidat ont retrouve leurs octets precedents.
+
+Audit complet de Walk_Stop vers le repos sur l'avatar : poids et phases
+Unity identiques dans trois variantes. Le melange des objectifs des deux
+etats avec recalage au sol reduit le pas maximal mesure de 18,12 a 1,46 cm
+et la derniere bascule a 1,58 mm. Bassin identique, semelle basse a moins
+de 0,73 mm du plan. Prototype Editor seulement. Suite : valider la meme
+politique sur l'entree de l'arret et le fondu en Play Mode avec UCC.
+
+Recette UCC temporaire (2144 images) : 180/180 appuis qualifies pendant
+l'arret. Sortie Walk_Stop a 7,1 mm au pied gauche contre 17,6 cm sur
+l'ancien prototype. Rupture principale restante avant Walk_Stop, au
+deverrouillage combat : 30,7 cm sur le pied, 0,95 cm capsule, IK actif
+des deux cotes. Le LitSpeed passe de 1,35 a 0,29 sur cette image.
+Isoler arret exploration, arret sous verrouillage et deverrouillage
+en mouvement. Essai Editor en memoire, production non activee.
+
+Recettes separees a 60 Hz : arret exploration, arret sous verrouillage,
+deverrouillage en mouvement. Le pic sous verrouillage vient du clip
+Idle au centre de l'arbre sortant, selectionne des que la direction
+tombe a zero. Garder direction et tier sortants pendant ce seul fondu
+reduit le pic de 79,72 a 23,35 cm et de 73,31 a 25,11 degres.
+Objectifs actifs sur les deux etats ; poids FL 56 % → 23 % sur une image.
+Qualifier une duree de fondu visuelle et une seule commande de transition
+avant integration. Preuves dans Docs/Animation/Lucian_Coherence.md.
+
+Fondu fixe de 140 ms essaye en Editor : pic 8,08 cm et 9,76 degres,
+vitesses UCC identiques sur 763 echantillons. Les pieds se replacent
+encore d'environ 60 cm dans le plan pendant le fondu. Ne pas valider
+sur le seul pic par image. Retouche de raccord d'arret combat necessaire
+pour rendre visible un pas de replacement avec appui. Aucune activation.
+
+Reponse progressive de l'arbre exploration (140 ms) : pic d'arret
+21,57 → 8,56 cm et arret apres deverrouillage 28,35 → 8,70 cm.
+Vitesses UCC identiques sur 763 images, mais trajet de semelle proche
+du sol jusqu'a 26,78 cm et pic au deverrouillage de 21,92 cm.
+Option de test. Le raccord de combat demande un replacement des pieds
+en sens opposes, confirme dans le repere local. Preuves archivees.
+
+Audit source du replacement : meilleur raccord FL → CombatIdle laisse
+2,73 cm au pied droit, 25,02 cm au gauche et 62,27 degres au bassin.
+Walk_Stop donne un donneur de levee/repose gauche (variation 11,66 cm
+contre 1,28 cm a droite), mais laisse 13,76 cm a l'entree et 18,08 cm
+a la sortie combat. Retoucher une copie de raccord pour cette phase
+et qualifier une variante d'appui gauche. Assets d'origine intacts.
+
+Clip pilote cree sous Lucian/Animation/CoherencePilot : CombatBrake FL,
+appui droit puis transfert a gauche, 0,667 s. Une phase d'entree. Les
+121 poses isolent les appuis au plan, sans trajectoire physique, et
+la relecture conserve les poses. Verifier visuellement le transfert de
+poids et la continuite des jambes, puis tester le raccord d'entree et
+les interruptions. Clip non reference par les controllers.
+
+Planche pilote/témoin : sept instants synchronises sur le vrai maillage.
+Le pas gauche se degage, mais le bassin reste a ~26 cm de la cheville
+d'appui droit. Retoucher le transfert de poids et verifier en mouvement.
+La capture de diagnostic fige les meshes et omet cape/equipement.
+Phase native independante sur 18 cycles : objectifs exportes coherents avec
+Unity <=1,96 mm et 0,22 degre ; signe des offsets correct. Cela ne valide pas
+encore tous les os du calcul custom apres UCC. Appuis minimaux souvent a -1 cm,
+UCC reecrit aussi les hanches en LateUpdate ; contribution exacte a mesurer.
+Non-regression 213151 : deux sauts 59 frames aeriennes, apex 2,730125/2,729076 m,
+zero maintien IK natif en vol, zero erreur. Preuves gait-timing/.
+
+PRIORITE : comparaison independante des poses osseuses finales, clips seuls,
+natif Foot IK true versus calcul custom avec Foot IK d'etat false, puis
+objectif/os dans UCC avec ordre de lecture garanti apres la pose finale. Helper
+CreateMuscleController accepte maintenant stateName et builtInFootIK pour cet
+audit, defaults inchanges. Ne pas retoucher les clips/Avatar avant ce controle.
+Idle et transitions n'ont toujours pas toutes leurs donnees de support.
+
+Suite concrete : vrais patchs de contact runtime et raccords Idle/actions,
+vitesse effective des melanges marche/course, captures en sequence lisibles,
+terrain/temps/interruption/cinematiques/reseau puis integration au jeu. Refaire
+les sauts apres changements de raccords ; pas d'activation de production avant
+validation visuelle complete. Preuves et details : Docs/Animation/Lucian_Coherence.md,
+notamment Lucian_Coherence_Contacts/surface-calibration/.
+
+## Direction validee : labyrinthes de fracture (2026-11-01)
+
+2026-11-02 : integration continue District_1 installee. Nouvelle additive
+District_1_Fracture_Environment branchee physiquement au belvedere proche du
+spawn ; aucun portail ou deuxieme Lucian/camera. Entree camouflee dans le noir,
+revelee par la meme influence Flame/torche que les interactions, retour sur.
+Indices/portes via variables monde existantes et routage serveur du service
+commun. Navigation du quartier recalculee dans un nouvel asset. Entree finale
+(-92.98,-93.84,61.02), au nord du passage secret existant laisse intact.
+Recette campagne c54d6cdc9d9042f09720c9f15d80dc42 passee/restauree : 36 controles,
+aucune erreur, lumiere, deux enigmes, porte, retour a pied, meme acteur/camera,
+sauvegarde isolee reussie et retour menu. Approche et rotations UCC de fixture,
+confirmations UI automatiques ; pas une recette manette humaine, focus camera,
+host/client ou rechargement froid. Details systems/fracture_labyrinth.md.
+Compilation finale et 15/15 EditMode passes apres garde JoinSync et decalage HUD.
+
+Revision des murs terminee : vrais volumes fermes a six faces, epaisseur conforme
+aux colliders, texture pierre du pack avec densite UV constante (1 repetition/4m).
+Remplace les deux faces planes ; materiau et meshes propres au prototype.
+Compilation Unity et 14/14 EditMode passes (fermeture, normales, epaisseur et UV),
+parcours complet passe a 18:28:17 UTC ; capture Galeries inspectee, dessus et
+tranches visibles. Enigmes et passages inchanges ; aucune recette multi/humaine.
+
+Habillage ModularDungeonCollection installe dans Fracture_01_Graybox : sols,
+murs, portes, etageres et pupitres/leviers. Conserve les supports de collision
+et les enigmes ; pack source et campagne non modifies. Compilation Unity,
+14/14 EditMode, parcours complet (18:21:26 UTC) et preview Play passes.
+Captures entree/Archives/Galeries inspectees ; orientation des etageres corrigee.
+Habillage du prototype, pas une validation artistique finale ou multijoueur.
+
+Porte de depart ajoutee apres le premier pupitre : fermee avant toute tentative,
+ouverte au demarrage, conservee ouverte apres la fin pour revenir au pupitre.
+Nouvelle session : porte fermee. Compilation, 14/14 EditMode et parcours complet
+passes (18:05:13 UTC), avec assertions fermeture initiale, collider solide,
+ouverture au pupitre et maintien de l'ouverture apres la fin.
+
+NOUVELLE REVISION : deux enigmes Archives → Galeries uniquement. Six bibliotheques,
+trois indices numerotes (1=Y, 2=—, 3=O), carnet des seuls indices trouves, puis
+trois cases et validation ouvrant la porte physique des Galeries. Ancien parcours
+piece/reparation/preparatifs retire du montage actif. Migration scene effectuee,
+compilation Unity, 14/14 EditMode et parcours physique UCC passes (17:47:58 UTC).
+Captures Archives/Galeries inspectees. Fouilles vides/repetees, ordre 3/1/2,
+mauvais code, bon code, passage et fin testes. Les resultats ci-dessous sont
+anterieurs a cette revision ; reset/reprise seulement valides sur le modele.
+Solo seulement a ce stade : faits partiels des indices pas encore repliques.
+
+Clarification des aides : actions concretement numerotees aux Archives,
+utilite de chaque action, prochaine etape adaptee aux conditions manquantes,
+selecteurs nommant le pupitre a utiliser ensuite. Bandeau objectif permanent.
+Revision compilee, 13/13 EditMode et preview Play passes ; capture inspectee.
+Les tests verifient aussi la prochaine action de la porte selon piece/reparation.
+Aucune regle d'enigme changee ; parcours complet precedent non relance pour
+cette seule revision de presentation.
+
+Aide de conception aux enigmes ajoutee dans la graybox : panneau automatique
+a proximite, solutions explicites, commandes et etats actualises pour chaque
+poste ; selecteurs expliquant aussi le mecanisme associe. Ne prend aucun focus
+et precise les effets boss non raccordes. Compilation et 13/13 EditMode passes ;
+preview Play passee (distance/desactivation/absence de focus), captures entree
+et archives inspectees ; parcours complet avec aide active passe a 17:24:44 UTC.
+
+Camera de la graybox raccordee a la pile GameplaySessionRoot (copie locale,
+profil partage inchange) : ancien LateUpdate fixe retire, orbite/zoom/inspection
+et recentrage habituels. CameraTests.xml passe : binding, vraie pose UCC,
+stick droit, zoom LB/RB, L3 aller/retour, R3 laisse a la torche, C si autorise.
+Capture Camera-gameplay.png inspectee. Regression du parcours complet UCC passee
+avec entrees de test relatives a la camera (WalkTests.xml, 17:14:25 UTC).
+Le ressenti avec une manette physique reste a qualifier par le joueur.
+
+Realisation reprise sur demande : scene de test independante confirmee par
+l'utilisateur, gardien provisoire Juggernaut ; campagne inchangee. Audit initial
+dans Docs/Design/Premier_Labyrinthe_Audit.md. Socle FractureAttempt ajoute,
+12 cas NUnit initiaux passes hors Editor sur la source ; voir les preuves
+actualisees du montage ci-dessous, aucune recette reseau a ce stade.
+Graybox independante creee et importee sous FractureLabyrinth/Prototype : vrai
+Lucian/UCC, 184 cellules, 15 postes, archives O/Y/—, piece, commandes et deux
+raccourcis. Pas de combat/boss/recompense/reseau raccorde ; jalon 1 seulement.
+Tests natifs : 13/13 EditMode passes (colliders/Exposure persistante inclus),
+parcours UCC complet avec gamepad simule passe (WalkTests.xml), preview Play
+passee et capture inspectee apres correction de l'exposition du seul test.
+Topologie passee. Controle humain/clavier/manette et combats/multi non qualifies.
+Details : systems/fracture_labyrinth.md. Audit
+du service Savoirs : le nom arrive au RPC mais n'est pas annonce au HUD ; ce
+raccord reste requis. Compilation C# runtime/Editor reussie avec refs Unity.
+Contrat de cycle de vie confirme par l'utilisateur : abandon au depart sans
+reprise intermediaire, nouvelles entrees entre tentatives, pas de migration d'hote.
+
+Plan de premiere livraison redige : Docs/Design/Premier_Labyrinthe_Plan.md.
+Objectif, graybox proposee, Savoir transversal, deux preparatifs, contrats a
+arbitrer, jalons 0-5 et acceptation jouee 1/2/3/4. Aucun choix d'emplacement,
+nom canonique, economie ou delai de production impose par le plan initial.
+
+Lore et GameDesign mis a jour : anomalies espace-temps rejouables, manifestations
+reformees sans annuler histoire/Savoirs, epoque partagee. Boss plus puissant
+apres un temps sans lumiere ; accumulation latente distincte de son activation
+par Flame. Lumiere arrete la croissance sans reset automatique, preparatifs
+facultatifs contre temps ; croissance bornee a equilibrer pour ne pas imposer
+le rush. Premiere decouverte sans exigence de score puis reprises chrono
+labyrinthe+boss, recompense garantie et bonus collectif, contenu solo integral.
+XP/loot repetes, variantes et parametres restent a arbitrer/prototyper.
+Direction initialement documentaire ; socle et graybox en cours au-dessus,
+sans assimilation a une livraison complete.
+Details : systems/narrative.md et Docs/Design/GameDesign.md / Lore.md.
+
+## Clairmont — regression du test de passage (2026-10-30)
+
+Echec reproduit seul :6/7 Clairmont, decouverte de District_1_AbilityShortcuts.
+Cause : test ancien contrat Observateur garanti ; scene maintenant munie de
+KnowledgePassageDiscovery mais acteur sans identite, sans WorldRules ni manager
+de savoirs. Test adapte avec services isoles, identite stable et tentative
+reussie persistante pour verifier la livraison reelle du savoir puis autorisations
+Sauf-Conduit aux deux extremites. Les tests de registre gardent les vrais cas
+jet frais/succes/echec/non-repetition. Aucun changement de runtime ni de scene.
+Nettoyage restaure references, joueur local et services sans sauvegarder d'asset.
+35/35 tests cibles passes, ClairmontPassageVerifiedTests.xml.
+Suite large de regression143/143 passee, ClairmontCycleBroadRegressionTests.xml/log.
+Tous les processus Unity termines. Aucun changement du contrat de gameplay ;
+le test autoritaire utilise les vraies scenes mais ne certifie pas une traversee
+UCC en Play Mode, inutile ici puisque seul le montage du test a change.
+
+## Luc — dechargement avec marge (2026-10-30)
+
+Demande utilisateur : decharger la scene apres completion avec une marge.
+Champ completionUnloadDelay ajoute et expose dans Fin et dechargement ; Luc5s,
+autres definitions0 par defaut. Debut apres fin des presentations/confirmation
+clients ; reset si presentation bloquante ou completion annulee. Gate autoritaire
+GameFlowService et capture existantes conservees.
+Native c4739d26a4f6404694f04303e55ffcd3, MoonriseLucUnloadMargin.log :33 checks,
+zero erreur/restauree, Unity termine. Vrai prologue/A collier/tombe/Luc,
+scene encore chargee a la fin du dialogue, puis dechargee apres marge (observee
+a9.034s avec effets inclus), joueur/collier/recompense preserves.
+Tests EditMode cibles62/62 passes, LucCompletionMarginTargetedTests.xml.
+Suite large142/143 : echec distinct ClairmontCycleTests.ServerRequiresDiscoveryAndEquippedAbilityAtBothEnds
+sur District_1_AbilityShortcuts (decouverte du passage), maintenant corrige dans
+le perimetre Clairmont ci-dessus ; suite large143/143 apres correction.
+Tous les processus Unity termines.
+Le full f159... plus bas est une preuve anterieure a cette correction ; sa
+reprise avec skip scene et la fin du parcours restent a requalifier.
+
+## Nettoyage cible autorise (2026-10-29)
+
+Flame : retrait du calcul de destination Munin jamais appele, de son offset
+et du controleur temporaire jamais assigne (annulation inoperante). Aucun
+asset reserialise, aucune suppression du lore ni des anciens ennemis encore
+references. Compilation Unity et14/14 tests EditMode passes :
+Logs/FlameDeadCodeCleanupTests.xml (portee, outline, prefabs et torche portee).
+Processus Unity termine. Aucun parcours Play Mode supplementaire pour ce code
+inaccessible ; cela ne qualifie pas le parcours Moonrise integral ci-dessous.
+
+## Moonrise — combat de reference et parcours 15-20 minutes (2026-10-29)
+
+OBJECTIF INTEGRAL REPRIS : finaliser le combat ameliore dans une vraie rencontre
+Moonrise, verifier poursuite/attaques/contre/Knocked Out/mort puis exploration
+(interactions, echelles, torche et sauvegarde), peaufiner un parcours continu de
+15-20 minutes. Details, anciens essais et limites : systems/moonrise_combat_route.md.
+Ne pas declarer complete sur tests ou preuves anciennes ; pas de duree humaine prouvee.
+
+DERNIERE PREUVE : 3f4bb70de86b42ffb2cdef1650706c0e, probe natif passage dans le
+dos,36 checks/zero erreur/restaure ; Unity termine. Lucian marche au stick apres
+vrai contre, atteint hors cone pendant KO, cible conservee puis retournement et
+deplacement NavMesh apres reprise. Condition du probe corrigee : verifier cette
+reprise AVANT d'exiger un ecart2.85m que la poursuite empeche de maintenir.
+Captures inspectees : decor masquant/trop sombre, PAS de qualification visuelle
+du combat ; cette lisibilite reste a traiter independamment de la regle Flame.
+
+Correction lisibilite verifiee fonctionnellement : masque/near clip ne protegeaient que
+la cible verrouillee alors que cette rencontre se joue sans lock. Resolution
+visuelle separee ajoutee : verrou vivant prioritaire, sinon cible du combat
+actif ; aucun verrou automatique ni changement de vue/input. Tests66/66 passes,
+Logs/MoonriseUnlockedVisibilityTests.xml. Recette native29a0d1fa226c4562a17bb506123ee14b,
+37 checks/zero erreur/restauree, processus termine,
+Logs/MoonriseUnlockedVisibilityNative.log : masque cible et corps near clip
+explicitement verifies sans lock, contre/KO/dos/reprise toujours passes.
+Captures inspectees : ouverture cible elargie mais personnages encore trop
+sombres ; eclairage/lisibilite non qualifies. Pas de hausse du fill ni changement
+des lumieres pour faire passer le test. Piste suivante : diagnostiquer les lumieres
+et ombres effectivement recues par les deux corps dans cette rencontre.
+
+Diagnostic ombres natif : bb8ee958d6eb4221ba928838f8c152e9 (34 checks) et
+56289825de1a4e4cb5f1af6a356a183e (35),zero erreur/restaures. Captures baseline /
+ombres locales .75 / sans ombres : forte contribution des ombres au manque de
+lisibilite, .75 garde une ambiance sombre mais attenue les bandes noires du
+brasero. Decouverte code : FlameLightReceiver force HD shadowDimmer1 malgre
+LitContrastLight auteur. Guard de propriete artistique ajoute ; sans profil,
+comportement historique conserve. Tests15/15 passes, MoonriseShadowOwnershipTests.xml.
+Validation native du fix e821d550cc5a4050b5470ad69eca71f0,35 checks/zero erreur/
+restauree, Unity termine, MoonriseShadowOwnershipNative.log. Le warm Point Light
+de Flame_Base_2 conserve desormais shadowDimmer0.78 auteur (avant1) apres allumage
+et contre ; Moon reste1 et aucun changement d'intensite/fill. Capture baseline
+inspectee : ombres attenuees mais corps encore sombres. Ne pas conclure que la
+correction de propriete artistique suffit a qualifier la lisibilite finale.
+
+ETAT FULL : premier -moonriseFullRoute depuis nouvelle partie, SANS seed,
+6e3c1832b11a40d0a09f1a3d7489aea4, arrete/restaure en ECHEC265,50 checks valides,
+zero erreur runtime. MoonriseFreshFullRoute.log / moonrise-combat.txt : Juggernaut
+sort de sa Flame et se fige a61PV en Strike, (-10.47,-94.22,43.50), dormant=true,
+combat=false et joueur Exploration. Contre/Y, degats Timeline, KO/Mixamo/VFX,
+deux secondes jouables, degats pendant KO sans Hurt/attaque et retrait VFX passes
+avant ce point. AUCUNE mort/save/suite validee dans ce full. Ne pas confondre avec
+les anciennes recettes qui passaient. CSV : prologue guide termine en12.056s.
+
+REGLE CHOISIE PAR UTILISATEUR : limiter les deplacements a la zone eclairee.
+Implementation en verification : politique de segment dans l'union connexe des
+Flames fixes allumees (marge interieure.08m), pas de dash traversant un trou sombre.
+Trajets NavMesh clips puis revalides, garde de vitesse pour l'evitement, avances/
+rush/knockback/placement de contre bornes avant mouvement. La limite n'arrete
+pas l'horloge ni l'animation ; extinction garde la dormance existante.
+Tests45/45 passes, MoonriseLitTerritoryTestsVerified.xml/log. Premier passage
+42/45 : seules assertions nouvelles supposaient5m alors que Flame defaut6m ;
+fixture configuree explicitement5m, logique runtime inchangee pour ce retest.
+Run ecf3e43... annule/restaure avant Play pour corriger le stop du chemin clippe
+(distance d'arret .05m, pas la distance d'attaque mesuree depuis la limite).
+Run4dd6b7c0a7b54ba1b683e492defb742b termine/restaure : echec265, aucun degat
+pendant KO ; aucun gel Flame constate a ce stade. Pilote X corrige : fenetre
+modulo120ms pouvait etre sautee par les frames lentes ; appui et relachement
+sur mises a jour distinctes maintenant, sans changer les inputs de jeu.
+Nouveau full frais f1592fc8c7074ec4aa86786373d3a885 termine/restaure :76 checks,
+zero erreur runtime, MoonriseLitTerritoryFullRouteInputVerified.log. Limite
+atteinte vers(-9.51,-94.18,43.13),55PV/Strike/dormantfalse, puis vraie mort
+InPlace_Death_v2/disparition, A victoire, X torche, echelle montee, save/menu/reprise
+conservant pose/PV/fuel/Flame allumee/marker vaincu. Luc et connaissances/collier
+conserves. Echec distinct272 : scene District_1_Cycle_Luc encore chargee alors
+que son etape terminale est accomplie. Ne pas masquer cette assertion ni declarer
+full passe. Suite descente/leviers/Stillhaven non executee dans ce full.
+Tous les Unity termines. Rendu/duree15-20min toujours non qualifies.
+
+Corrections deja presentes a conserver :
+- Lucian inventaire initial1000 points ; couts reels Ancient20/Common10.
+- Vrai Juggernaut_Combat equipe de4 attaques, KO/Mixamo et VFX, HUD ICombatTarget.
+- UCC ne remplace plus un fondu d'attaque par Idle ; gates interaction apres combat.
+- Policy Flame compte les colliders physiques, pas le capteur trigger5m. Marker
+  actuel (-9,-94,43), meme identite c54e94b14c7826c4482529b6d4d739ec/marker fileID
+  900000000000000100 dans District_1_Enemies. Ne pas agrandir la Flame pour tester.
+- Camera commune ICombatTarget/near clip, profil partage mask .26/adaptiveNearClip.
+- Brains poursuit hors cone apres acquisition et freine a .05 si LOS masquee pour
+  contourner ; attaques et impacts exigent toujours LOS. Cover natif cdbbe749...
+  passe, obstacle temporaire ; passage dos/retournement prouve fonctionnellement
+  par3f4bb70..., lisibilite des personnages insuffisante sur captures.
+- Ladder choisit l'extremite locale AVANT selection. Retour haut marche2.8m/A
+  descente apres reprise prouve par e50c5c... ; montee/reprise par ancien run41d77...
+  (ce dernier precede les dernieres cameras/chase/UI et n'est pas un full courant).
+- Deux leviers D1 overrides Timed20s (ancien1s impossible en solo), opt-in selection
+  commune/outline/A et label Actionner. Autres leviers gardent le mode historique.
+- Sortie libre Stillhaven cote couloir (-47,-94.227,36), meme objet/identite ;
+  quatre destinations monde conservees (1199/1201,.1,0/2). Arche ouverte et
+  WorldInteractionPrompt Rejoindre Stillhaven. Label/style via prefab UI commun.
+- Collier Jon deplace d'une position masquee par Table vers vrai sol libre voisin
+  (-6.74,-93.83584,54.54), dessous mesh+3cm ; seul Transform de Luc change.
+  Pas de migration des anciennes poses sauvegardees pour ce placement ni marker.
+
+PREUVES recentes, toujours focalisees :
+- 5ef834706be3485bbf6bf1382e745539 :31 checks/zero erreur/restaure, reprise du seed
+  post-victoire, retour echelle, leviers solo/A, UI et portail/A vers Stillhaven.
+  MoonriseReadableInteractionsNative.log ; captures levier/arche controlees.
+- b9b9f55490de400ea0844021514bd058 :30 checks/zero erreur/restaure, prologue FRAIS,
+  collier/A unique + connaissance, tombe/A non bloquante, Luc/A/fin/reward/control.
+  Le recap raw mentionne UI/B par ancien libelle, checks montrent NON bloquant.
+- UI de lecture : b0d684... confirme InfoBox masquant l'epitaphe a .3/.8/1.3s.
+  InfoBoxUI corrige : toast sans focus masque et fade/hold suspendus pendant
+  DialoguePanelUI, puis reprise alpha/temps restants ; modales inchangees.
+- edaf950a2dc54f1498ec80fd8c46e2c6 :34 checks/zero erreur/restaure apres fix UI,
+  MoonriseReadingPriorityNative.log. Images .8s/apres inspectees : epitaphe lisible
+  puis vrai toast Collier de Jon repris. Observation .3s uniquement dans probe,
+  pas d'attente ajoutee au produit. Tests priority/dialogue/inventaire :18/18,
+  Logs/MoonriseReadingPriorityTests.xml. Precedents tests UI/detection36 et Luc8
+  sont detailles dans le document systeme. Tous les processus sont termines.
+
+PROCHAINES ACTIONS : qualifier les limites de mouvement puis terminer le full courant ;
+independamment, traiter la lisibilite du combat sur les captures Moonrise.
+Les hooks full existent jusqu'a Stillhaven : verif Luc/reward/collier
+et skip scene terminale apres save/menu/reprise, reutilisation du pad, haut/retour
+par A puis leviers/portail. Ces hooks apres mort n'ont PAS encore ete executes.
+Mesurer ensuite le parcours humain/ressenti et sa vraie duree15-20min ; les
+budgets du doc sont des cibles, pas des mesures. Aucun timer artificiel de remplissage.
+
+Execution : pas de prise de main PC, uniquement Unity6000.6.4f1 cache/CLI et saves
+isoles Library/StartupDistrictValidation/PlayRuns. Un seul Unity a la fois ;
+verifier PID et restauration. Pas de scripts modifies durant Play, annulation
+possede via cancel.request. CWD C:/Users/pierr/git/Lit ; worktree tres modifie a
+preserver, pas de reset/stage/commit. Nettoyage autorise des reliquats verifies ;
+72 dossiers de fixtures vides/meta identifies mais suppression rejetee par revue
+« blocked by policy », pas contourner ce refus. Anciennes cameras/helpers sans
+usage deja retires ; ne pas supprimer les ennemis historiques encore references.
+
+## Defauts visibles et bloquants — perimetre precedent (2026-10-29)
+
+Objectif integral : traiter les defauts parmi les 97 signalements et distinguer
+les scenes utilisees des anciens prototypes. Campagne et AnimationLab traitees ;
+choix utilisateur demande sur la remise en etat des anciennes scenes hors parcours.
+Ne pas declarer l'objectif integral termine sans clarifier ce dernier perimetre.
+Lire systems/scene_integrity.md pour le detail et les limites.
+
+Corrections : sol du balcon / collider conserve, cadres UI item/building, logo
+absent desactive, orbe de chargement et trois templates de portail ; anciennes
+liaisons Timeline supprimees seulement si leur piste est detruite (D1 et AnimationLab).
+Phase suivante : cinq defaults de mesh de demonstration retires des VFX personnage,
+masque radial doux retrouve dans le projet pour LightBall/Grapple/Trail ; sept
+controles de particules explicitement non rendus. Pour Lightning, le controle est
+Pos/Thunder ; la racine a ete restauree et preservee.
+
+Validation courante : 36 tests passes (complete-integrity-tests-verified.xml), dont
+rendus GPU des surfaces restaurees et controle des bords transparents du masque.
+Recette 41103eaab9914592b708f741c41c4a7e passee/restauree : 227 controles, zero
+erreur, collision physique du balcon, materiaux reellement affiches, sauvegarde
+et reprise. Neuf elements Rooms/Nef restent incompatibles avec le masque tactique,
+hors des references cassees ciblees ; pas de certification artistique globale.
+
+Qualification des peaux : parcours de 53 scenes et des references / Resources,
+854 assets visites, 121 racines prefab, 733 ScriptableObjects, aucune erreur.
+40 affectations observees : exclusivement les quatre materiaux HQ LitStandard,
+SSS desactive. Les cartes SSS source restent conservees pour un usage ulterieur.
+Emplacements d'armes explicitement vides et geometrie ProBuilder generee verifies.
+Inventaire final : 66 signaux bruts, aucun directement dans une scene de jeu active.
+Registre des 97 initiaux : 31 corriges, 20 qualifies non bloquants dans la configuration
+actuelle, 46 hors parcours et dependances associees. Aucun nouveau signal de jeu
+non qualifie. Les 20 restants sont les 16 cartes SSS inactives/importees, les trois
+sockets d'armes explicitement vides et la geometrie ProBuilder generee.
+Registre resolution-ledger.json (avec empreintes des preuves), rapports
+native-current-qualified.json / triage-current-qualified.json. Les anciennes scenes
+ont toujours de vrais defauts d'assets ; ne pas annoncer leur reparation sans
+le choix utilisateur demande. Aucun besoin d'intervention sur le PC.
+Complement de qualification : prototype-impact.json regroupe les 46 signaux hors
+parcours sur 20 objets/materiaux, dont cinq objets CommonAreas sans modele ni
+collision. Aucun changement de ces anciennes scenes pendant l'attente du choix.
+Question de perimetre toujours sans reponse a cette reprise ; ne pas relancer
+les tests deja valides uniquement pour attendre une reponse.
+Apres trois tours consecutifs avec ce meme choix non tranche, les relances du but
+sont arretees en statut blocked. Reprise attendue : conserver ces scenes comme
+prototypes documentes ou les remettre aussi en etat. L'objectif n'est pas declare
+termine ; les corrections du parcours actuel et leurs preuves sont conservees.
+Rapports, preuves et sauvegardes avant correction : Library/SceneIntegrity.
+
+## Audit global des scenes — etat precedent (2026-10-28)
+
+Objectif utilisateur : analyser les scenes de jeu, identifier les prefabs manquants
+ou incoherences et les corriger. Travail en cours, pas de certification globale.
+Lire systems/scene_integrity.md pour les outils, limites et etat de la restauration.
+Audit statique des 65 scenes : 13 GUID prefab manquants, 1 214 instances ; douze
+prefabs Dungeon_Environment retrouves avec leurs dependances/GUID/fileIDs dans
+une copie locale exacte. 64 assets restaures a leur emplacement d'origine.
+Le prefab restant d'Ulric/District_5, des materiaux VFX et de l'UI sont recuperes
+dans Git. Aucun remplacement par un placeholder vide. Les imports de packs
+restent exclus de Git selon la politique existante, mais sont presents localement.
+Audit statique actualise : aucun prefab de scene manquant, aucune duplication de
+GUID, douze GUID de scene encore non resolus. Recuperations complementaires :
+97 dependances originales depuis le cache Asset Store, neuf textures depuis Git,
+et dependances UI/flammes depuis les sauvegardes locales.
+Audit natif SceneIntegrityAudit : 65 scenes, 222 prefabs dependants et 2 111
+materiaux ; 97 points restants contre 769 initialement (pas une certification).
+Treize shaders de materiaux Lucian recuperes via la conversion HDRP existante,
+shader WhiteCastle adapte a HDRP actuel, dix prefabs de collision repares.
+FlameGuidance reutilise ses lignes auteurs et un materiau partage sans doublons.
+Quatre tests cibles passent ; pas de shader manquant dans le dernier audit.
+Les nombreux slots vides de particules doivent etre distingues des racines sans
+emission ; de vrais meshes et textures restent a traiter. Recette campagne
+stricte 45ff570e28814bcc9eff0d16b02ac875 passee/restauree : 228 controles,
+zero erreur, sans les anciennes exemptions des erreurs de prefabs D1. Inclut
+Maison -> Moonrise -> Stillhaven -> Limbes, retours, dix notes/passages,
+sauvegarde production et reprise de Stillhaven depuis le menu. Positions et
+dialogues sont des fixtures ; pas de validation visuelle ni multijoueur.
+Derniere passe native terminee : racine sans emission de VFX_RainSplash rendue
+explicitement non rendue, trois anciennes references mesh cassees supprimees
+uniquement quand le renderer de particules n'utilise pas le mode Mesh. 84 racines
+ou slots facultatifs identifies explicitement, sans masquer de reference cassee.
+Override Nina qui reactivait le NavMeshAgent du scientifique avant le chargement
+du NavMesh retire ; dernier parcours confirme zero avertissement de creation
+d'agent sans NavMesh. Six avertissements de materiaux incompatibles avec le
+masque tactique subsistent (dix elements D1, rencontres deux fois).
+Artefacts : Library/SceneIntegrity.
+
+## District_2 — Stillhaven, integration campagne (2026-10-28)
+
+Nom public : Stillhaven, dans la continuite de District_1 — Moonrise. Les scenes
+District_2_Courts* et identifiants de sauvegarde restent stables. Identite ajoutee
+aux details des sauvegardes, au message de chargement et a la presentation d'arrivee.
+Manifeste ajoute au catalogue GameFlowService de Bootstrap, qui l'omettait :
+le portail pouvait fonctionner sans garantir une reprise depuis une sauvegarde.
+Enregistrement aussi prevu dans l'outil auteur et controle par le validateur.
+Recette campagne etendue a sauvegarde production, retour au menu et reprise
+sans destination explicite, puis verification de la progression restauree.
+Validation native : 90 controles auteur passes. Recette Play
+1bdb8179ca59482785e018130819f4ee passee/restauree : 223 assertions, aucune
+nouvelle erreur runtime. Circuit reel Maison -> Moonrise -> Stillhaven -> Limbes,
+retours et dix notes, puis sauvegarde monde/personnages/metadata dans Stillhaven,
+menu et reprise par StartOrLoadGame sans scene imposee. Groupe complet, cycles,
+acces ouverts, dix faits Read et souvenirs retrouves. Rapports copies dans
+Library/District2Integration. Approches UCC, avance des dialogues et degats sont
+des fixtures ; pas une validation de parcours manuel, reseau ou redemarrage du
+processus. Les 66 erreurs de prefabs D1 preexistantes sont isolees dans le rapport.
+Le decor de Stillhaven reste un blockout, sans certification artistique globale.
+Regression native : 53/53 tests passes, aucun echec/ignore (notes, decouverte,
+persistance des tentatives/markers et catalogue de sauvegardes).
+
+## District_2 — proposition validee, construction en cours (2026-10-27)
+
+Objectif integral : construire la zone 2, pas uniquement ses systemes. District 1
+sert de tutoriel ; Limbes devient la troisieme zone. Histoire de famille avec un
+jeune qui a decouvert et amenage des passages ; liste diegetique non exhaustive,
+mais vingt passages prevus dans le jeu. Vingt notes forment un cycle transversal.
+Lire la note donne une connaissance ; Observateur permet un d6 cache, reussite
+sur 2+, une seule tentative par personnage et passage. Connaissance partagee,
+Sauf-Conduit individuel. Premiere reconnaissance proche : outline/interaction
+et replique unique. Origine des notes dans les Limbes volontairement ouverte.
+
+Reponse utilisateur : reutiliser au maximum les assets des zones precedentes,
+centrer la famille sur liberte ET altruisme, reserver des passages aux zones
+suivantes. Proposition concrete integralement validee par l'utilisateur :
+dans Docs/Design/Zone_2_Proposal.md : cours interconnectees, famille Mirage/Alix,
+cinq cycles locaux, repartition 2 D1 + 6 zone 2 + 2 Limbes + 10 futurs.
+
+Noms actualises le 2026-10-28 : Alix Mirage, sa mere Agathe et son pere Abel.
+Notes, savoirs, repliques et outils auteur harmonises ; Abel remplace l'ancien
+grand-pere. Chemins d'assets, GUID et identifiants de progression preserves ;
+certaines cles techniques conservent donc les anciens prenoms.
+Correction validee apres audit : un seul passage D1 etait ancien, le second est
+nouvellement cree. Acces D1 -> Cours libre des sa decouverte, sans Clairmont.
+Noms, evenements, parcours et compteur de notes lues sont approuves ; ne pas confondre cette
+validation avec une livraison du contenu complet.
+Socle valide engage : KnowledgeCycleGrouping et panneau classes par cycle,
+liaisons explicites optionnelles dans KnowledgeSO ; les anciens liens des
+etapes/conditions/recompenses sont reconnus sans reecriture des assets.
+Compilation Unity runtime/Editor reussie ; 25/25 tests natifs passes, aucun
+echec/ignore : 9 journal dont le vrai panneau en Play, et 16 du registre de
+tentatives. Rapport Library/Zone2FoundationTests.xml et .log. Le panneau groupe,
+rafraichit/reouvre sans doublon, conserve les descriptions et retire les entrees
+retirees du manager. Rendu du vrai menu de production non qualifie par ce test UI.
+SecretPassageAttemptLedger conserve echec/succes par identites stables dans les
+variables monde existantes ; aucun nouveau fichier de save, aucun chiffre du de
+expose. Seuil exact 2+, pas de nouveau jet apres restauration/equipement/approche,
+independance des personnages/passages et voie connaissance deja acquise testees.
+Raccord ajoute : SecretPassageDefinition et KnowledgePassageDiscovery branches
+a TrouEtroit/WorldInteractionService pour les futures instances configurees.
+Identite issue du CharacterData serveur ; connaissance partagee par le service
+existant, capacite de traversee individuelle. Accuse de tentative cible au
+proprietaire pour eviter les requetes repetees. Detection a proximite des deux
+extremites, meme si le personnage est deja dans le volume lors de la lecture.
+Premiere reconnaissance via StorySequenceRunner playOnce, annulation propre en
+sortant/desactivant. L'ancien passage D1 est migre sans changement d'identite.
+37/37 tests cibles passes, zero echec/ignore, dont controles outline de proximite
+et accuse par personnage : Library/Zone2DiscoveryVerifiedTests.xml et .log.
+Compilation runtime/Editor reussie. Essai Play reel
+ff6068aeabc44800995baf13b2a4bacc reussi/restaure, zero erreur runtime : menu,
+Lucian/UCC Maison, passage temporaire et echec deja tire, connaissance injectee
+par KnowledgeReveal (fixture de lecture), reconnaissance automatique/replique
+unique, refus avec Observateur puis traversee reelle avec Sauf-Conduit.
+Pas une preuve des vingt notes auteur, du reseau client ou d'une save froide.
+Regression elargie Clairmont : cinq controles de scenes echouent sur des prefabs
+manquants dans Nef/AbilityShortcuts. Decors non reconstruits ; AbilityShortcuts
+recoit uniquement la migration du passage, sans changer ses references manquantes.
+Rapport Zone2DiscoveryRegressionTests.xml. Aucune reconstruction de decor tentee.
+Premier blockout fonctionnel natif sous Assets/Scenes/District_2/Courts : Core et
+Environment, manifeste, cinq cycles Resources/Narrative/Courts_*, neuf documents
+a connaissance uniquement sur lecture, six presentations, Gargouille Brains
+avec SceneMarker, acces commun, retour optionnel et portail de suite conditionnels.
+CourtsProgression derive les acces des cycles persistants ; pas de second store.
+LimbesMemorySequence accepte maintenant un nom de Core configurable, defaut
+Reve_Limbes conserve pour les anciennes scenes. Recuperation de chute reutilisee.
+Compilation runtime/Editor native reussie. Verification native : 57 controles
+auteur passes (references, cycles independants, lectures, sols, catalogue,
+presentation, spawns, navigation). Library/Zone2Courts/AuthoringVerification.txt.
+Essai Play 96bc5b9f00714d93aec44e0af735a0f1 passe/restaure, zero erreur runtime :
+neuf lectures via vraie UI (sans injection de connaissance), trois souvenirs,
+quatre interactions, cinq cycles, defaite Brains via chemin normal de degats,
+six completions playOnce et conservation des acces apres depart/retour de zone.
+Approches UCC, entree TravelToZone et avance des textes sont des fixtures ; pas
+une preuve du raccord campagne, des parcours continus, de l'equilibrage ou reseau.
+Premiere capture surexposee corrigee : profil HDRP et lumiere du Reve reutilises
+dans l'Environment, sans vortex ni autres decors Limbes. Seconde recette
+fc7429f15af74b898a9eadb49aba4bcc passee/restauree, 105 assertions, zero erreur
+ou warning runtime. Capture native de la camera de jeu examinee : texture et
+personnage maintenant lisibles. Le decor reste un blockout, pas une finition
+artistique. Capture sous ce run/Limbes_live_172.png (nom du helper reutilise).
+Lot passages en cours : SecretPassageCatalog reference vingt identites, dix
+reservations futures sans faux assets, six passages physiques des Cours, deux
+des Limbes, un ancien passage D1 migre et un nouveau. Trois scenes additives de notes/
+passages sont dans les manifestes. Notes croisees garanties a la lecture, episode
+facultatif dans le recoin de reserve. Global SecretNotesCycle attend des faits
+Read : Knowledge/Observateur ne le valident jamais. InventoryPanelController
+signale uniquement les ouvertures reussies ; WorldInteractionService derive
+l'acteur de l'emetteur et verifie possession/proximite. Le journal affiche les
+notes lues / 20. Pas de nouveau format de sauvegarde.
+Ancien Detected restaure : KnowledgePassageDiscovery importe
+la connaissance, sans jet ni lecture factice. ID D1 1734355439 preserve ; scene
+AbilityShortcuts n'a que des ajouts, ses references de prefab manquantes restent.
+Regression native finale : 44/44 tests passes, aucun echec/ignore, dont compteur
+independant d'Observateur et lecture ulterieure, restauration, refus a distance,
+migration legacy et vrai panneau de connaissances. Library/Zone2SecretsFinalTests.xml.
+Audit auteur : 77 controles sur neuf passages (Library/Zone2Secrets).
+Essai Play fcf774f6b1a7493887585fbcc850a9d0 passe/restaure : 174 assertions, zero
+erreur ou warning runtime. Cinq cycles locaux encore valides, six lectures de
+notes Cours et deux Limbes, portail reel Cours -> Limbes, huit nouveaux passages
+en aller-retour UCC, reconnaissance playOnce, refus sans Sauf-Conduit, et episode
+du recoin facultatif. Faits Read et connaissances conserves entre zones, cycle
+global correctement incomplet. Echec/succes Observateur preenregistres par fixture
+(seuil d6 teste separement), approches et avance des textes pilotees. Pas une
+partie manuelle continue ni une recette reseau/save froide/D1 complet. Migration
+legacy attend la fin de la restauration du monde avant d'accorder le savoir.
+DECISIONS APPLIQUEES : second passage D1 ajoute, sa note 02 placee dans les
+Limbes ; portail D1 -> Cours actif sans condition de quete. Emplacements tires
+des collisions reelles du District complet, sans ajouter de sol de secours.
+Nouveau raccourci : entree du quartier vers couloir ouest ; portail pres de ce
+couloir, quatre destinations Cours explicites. L'ancien passage 1734355439 reste
+intact. Catalogue : dix notes/passages auteurs et dix futurs reserves.
+Audit actualise : 87 controles passes sur dix passages et acces libre.
+Retour repete aux Cours : corrige la conservation de l'identite de la Gargouille
+inactive pendant restauration. PersistentNetworkObject.ApplyTransformState se
+reinscrit apres activation/desactivation ; SceneMarker conserve aussi son acteur
+inactif. Aucun changement de format ni nouvel identifiant. Regression native :
+45/45 tests passes, dont le vrai ordre transform/actif puis etat du personnage.
+Library/Zone2DistrictFinalTests.xml. Circuit cible
+d9b24819aa944d898a704580f5deb0aa passe/restaure : 210 assertions, aucune erreur
+nouvelle/inattendue. Clairmont incomplet au premier acces, dix notes vraiment
+lues, dix passages en aller-retour UCC, second retour Cours conserve apres D1.
+Les 66 diagnostics d'assets D1 preexistants sont conserves dans le rapport ; ce
+succes cible n'est pas une certification globale du District ni de sa finition.
+Les erreurs de prefab D1 connues (GUID abc000000000, cinq scenes) sont conservees
+separement dans preexistingDistrictAssetErrors du test cible. Elles ne donnent
+jamais fullProductionReadiness ; toute nouvelle erreur reste un echec.
+Prefabs D1 manquants preexistants, multijoueur et finition artistique toujours
+ouverts. Les decisions sont appliquees et les raccords fonctionnels qualifies ;
+la livraison integrale artistique/multijoueur n'est pas encore acquise.
+La zone 2 n'est pas encore livree. La proposition est validee ; prochaine etape :
+construction du contenu complet, et non seulement du socle technique.
+
+## Extension des Limbes — implementee et validee en solo automatise (2026-10-27)
+
+Objectif : cinq cycles minimum, six sequences, parcours 3D et boss Ange avec
+vol/projectiles/melee. Contenu installe ; parcours automatise solo reussi.
+Choix utilisateur valides : Azazel/ames/rituel reveles, secret Lucian-Munin
+conserve, boss Gargouille angelique. Extension native creee : Creation,
+Captivite, Invocation, neuf preuves et trois branches hautes. Cinq cycles
+d'exploration ouvrent le pont d'arene ; sixieme cycle pour boss et conclusion.
+Six StorySequences liees, arrivee existante incluse. Catalogue de session
+enrichi, NavMesh rebati. LimbesAngelBoss raccorde a IEnemyEncounterActor/Brains,
+sans deuxieme EnemyController. Sources auteur sous Editor/Validation, jamais
+executees en Play. Controle auteur natif passe : 43 verifications.
+Les escaliers initiaux sont remplaces par six rampes continues avec raccords
+plats aux paliers ; les preuves suivent leur vrai sol. La torche du palier
+Captivite est decalee hors du trajet UCC. Le boss a un SceneMarker standard,
+un deverrouillage replique et libere sa suspension apres sa mort.
+LimbesCompletionAudit ajoute sous Editor/Validation : inspection des scenes
+sauvees du manifeste, definitions, runners et bindings Timeline, sans sauvegarde
+ni regeneration. Rapport Library/ReveLimbesCompletion/audit.json via menu
+Tools/Lit/Limbes/Audit saved zone completion. Compilation C# isolee de l'outil
+reussie avec references Unity. Audit natif execute via Unity 6000.6.4f1,
+sortie 0 pour la base. Audit apres extension : dix scenes, six cycles et six
+StorySequences ; l'audit reconnait maintenant les acteurs generiques Brains.
+Verification native des references, sols et arene/NavMesh passee. Rapport
+Library/ReveLimbesCompletion/AuthoringVerification.txt.
+Essai complet 0b3f9181064946948db4c514563d0564 reussi/restaure : treize collectes,
+trois branches UCC completes, cinq cycles, pont, six sequences, vol a cinq metres,
+tirs et melee infligeant des degats reels, defaite via sante normale, conclusion,
+portail final, retour dans la zone avec six cycles conserves puis menu. Aucune
+erreur runtime observee. La victoire utilise Submit. Modele d'ange recentre a
+3,5 m, materiaux locaux repetables pour les nouvelles plateformes ; capture de
+combat examinee. Controle cible e83f82523fb84de88e49bf0bba7b7f69 reussi/restaure :
+terrasse et boss examines dans les captures, puis conclusion et retour encore
+valides. Ce second essai omet explicitement les montées deja validees par le
+premier. Logs Library/LimbesFinalQualification.log et
+Library/LimbesPresentationQualification.log ; rapports sous
+Library/StartupDistrictValidation/PlayRuns/<id>/result.json.
+Aucun decor de la base n'a ete deplace. Les approches, l'avance des dialogues
+et la survie face au boss sont des fixtures ; ce n'est pas une partie manuelle
+continue. Sauvegarde froide, multijoueur, finition artistique et equilibrage
+manuel restent a qualifier.
+
+## Saut plateforme : premiere passe de reactivite (2026-10-27)
+
+Lucian campagne et ImpactLab : decollage avance de 0,5 a 0,13 de Jump_Start.
+Hauteur 100, inertie, gravite, trajectoire et clips conserves. Fenetres locales
+reglables dans PlayerSettings.jump : coyoteSeconds 0,10 et inputBufferSeconds
+0,15. Un rebord ne donne qu'un saut ; pas de double saut ni de vol stationnaire.
+Un appui proche du sol peut attendre la recuperation d'atterrissage existante
+(attente bornee), sans liberation anticipee de verrous. Une autre action,
+cinematique, traversee ou desactivation annule la demande ; pause locale respectee.
+Compilation C# runtime/Editor avec references Unity reussie. Onze assertions
+de fenetres passees hors Editor sur la source de production (adaptateur Max).
+Tests natifs demandes : Library/PlatformJumpValidation/Tests.request ; aucun
+resultat XML natif a ce stade. Play/manette encore requis : rebords, plafonds,
+plateformes mobiles, repetitions au sol et restitution apres combat/cinematique.
+La recuperation d'atterrissage reste inchangee ; ceci n'est pas une copie du
+modele physique d'Astro Bot. Details : systems/input_camera_ucc.md.
+
+## Premiere arrivee Limbes (2026-10-27)
+
+Rig Limbes_First_Arrival ajoute au Core Reve_Limbes : trois points/cibles en
+surplomb, 10,5 s de vues, retour explicite camera gameplay avant les deux textes
+exacts de Lucian. Dialogue conserve la camera normale, avance Interagir.
+playOnce / sequenceId limbes.first_arrival suivent le store et la sauvegarde
+existants. StorySequenceOnZoneArrival attend Environment+Lighting, loading,
+transition, Core actif et Lucian libre ; abort/nettoyage sur depart/desactivation.
+Aucun spawn de joueur, Camera, scene, aucun changement de musique/Netcode.
+Compilation runtime/Editor et tests C# reussie ; controle YAML des references
+locales passe. Tests Unity natifs demandes Library/LimbesArrival/Tests.request,
+non executes a ce stade ; rendu des trois plans et restitution UCC a qualifier
+en Play. Aucun projet de test cree. Details : systems/narrative.md.
+
+## Retrouvailles Maison (2026-10-26)
+
+Installe dans Maison_Core : Maison_Companions_Reunion, Vesta/Soren/Aurell aux
+points d'attente 2/3/4. Prefabs narratifs visuels separes, pas trois joueurs,
+pas de recrutement ni d'autorite reseau/UCC ajoutee. Instanciation par Core,
+sans doublon ; conversation commune a 3 m de Lucian, apres loading/intro et
+uniquement en exploration. Trois acteurs requis, garde d'etage 1,5 m et
+binding explicite du Lucian local. Sequence playOnce sauvegardee par le store
+existant ; 17 VoiceLineData modifiables sous StorySequence/MaisonReunion.
+Amitie ancienne, trois anges rencontres recemment, attirance inexpliquee,
+nom [Munin] personnalise conserve. Avance avec Interagir, sans audio ajoute.
+Mise en scene ajoutee : neuf profils dedies, trois plans larges CameraShot,
+portraits/duos/contrechamp distribues selon le dialogue et trois repliques
+gardant le plan precedent. Transitions 0,75-1,15 s, respiration finale 0,8 s.
+Nouvelles options opt-in du profil : axe reel locuteur/interlocuteur et origine
+centree entre sujets ; profils existants inchanges. Les PNJ visuels regardent
+Lucian au depart, sans tourner/teleporter le joueur. Aucun evitement d'obstacle
+automatique ajoute : visibilite des visages/murs/meubles a verifier en jeu.
+Compilation runtime/Editor avec nouveaux tests reussie ; import/installation
+native passes. Tests cibles demandes dans Library/MaisonCompanionReunion,
+encore en attente de refresh/import du dernier fichier de tests dans Unity.
+Suite existante StorySequence/VideoPanel 34/35 : echec video sans lien avec
+la reunion (OpenScene additif refuse sur scene temporaire sans nom).
+Rendu/poses/camera/proximite, annulation et non-rejeu en Play restent a qualifier.
+Aucun nouveau projet cree, autres changements de camera/masque preserves.
+Details : systems/narrative.md.
+
 ## Inputs des videos cinematiques (2026-10-25)
 
 Le panneau video partage bloque gameplay, camera, navigation et clics UI pendant

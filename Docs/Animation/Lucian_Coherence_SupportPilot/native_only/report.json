@@ -1,0 +1,11 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-noik-20261102-213737",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261102_213805_570.csv",
+    "samples": 1219,
+    "wholeBodyPolicyEnabled": true,
+    "existingIKVariant": "UCC CharacterIK removed from initialized runtime fixture; native Humanoid Foot IK retained",
+    "maximumObtainedSpeed": 8.75080394744873,
+    "errors": []
+}

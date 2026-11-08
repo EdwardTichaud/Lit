@@ -1,0 +1,136 @@
+{
+  "reference": {
+    "trials": {
+      "start_run": {
+        "start_frames": 0,
+        "median_loop_speed_mps": 5.294952,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": null,
+        "phase_switch_pairs": []
+      },
+      "start_sprint": {
+        "start_frames": 28,
+        "median_loop_speed_mps": 8.74016,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 24.357,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 16.423,
+            "lowest_sole_cm": 5.607,
+            "delta_ms": 16.31
+          },
+          {
+            "step_cm": 24.357,
+            "lowest_sole_cm": 1.171,
+            "delta_ms": 17.14
+          },
+          {
+            "step_cm": 19.935,
+            "lowest_sole_cm": 0.007,
+            "delta_ms": 14.92
+          }
+        ]
+      },
+      "start_run_torch": {
+        "start_frames": 0,
+        "median_loop_speed_mps": 5.29779911,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": null,
+        "phase_switch_pairs": []
+      },
+      "start_sprint_torch": {
+        "start_frames": 28,
+        "median_loop_speed_mps": 8.739892000000001,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 23.802,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 16.501,
+            "lowest_sole_cm": 5.568,
+            "delta_ms": 16.37
+          },
+          {
+            "step_cm": 23.802,
+            "lowest_sole_cm": 1.206,
+            "delta_ms": 16.75
+          },
+          {
+            "step_cm": 21.141,
+            "lowest_sole_cm": 0.005,
+            "delta_ms": 16.6
+          }
+        ]
+      }
+    },
+    "editor_errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ]
+  },
+  "phase": {
+    "trials": {
+      "start_run": {
+        "start_frames": 0,
+        "median_loop_speed_mps": 5.29525373,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": null,
+        "phase_switch_pairs": []
+      },
+      "start_sprint": {
+        "start_frames": 29,
+        "median_loop_speed_mps": 8.7399755,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 11.74,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 9.754,
+            "lowest_sole_cm": 12.81,
+            "delta_ms": 16.67
+          },
+          {
+            "step_cm": 11.74,
+            "lowest_sole_cm": 8.34,
+            "delta_ms": 16.89
+          },
+          {
+            "step_cm": 11.026,
+            "lowest_sole_cm": 4.637,
+            "delta_ms": 16.41
+          }
+        ]
+      },
+      "start_run_torch": {
+        "start_frames": 0,
+        "median_loop_speed_mps": 5.297232,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": null,
+        "phase_switch_pairs": []
+      },
+      "start_sprint_torch": {
+        "start_frames": 29,
+        "median_loop_speed_mps": 8.7398475,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 11.644,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 9.776,
+            "lowest_sole_cm": 12.759,
+            "delta_ms": 16.66
+          },
+          {
+            "step_cm": 11.254,
+            "lowest_sole_cm": 8.468,
+            "delta_ms": 16.23
+          },
+          {
+            "step_cm": 11.644,
+            "lowest_sole_cm": 4.523,
+            "delta_ms": 17.33
+          }
+        ]
+      }
+    },
+    "editor_errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ]
+  }
+}

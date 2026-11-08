@@ -1,0 +1,11 @@
+{
+  "maximum_flat_ground_rotation_added_degrees": 1.758027537185658e-05,
+  "qualified_feet": 4192,
+  "steady_ucc_speeds": {
+    "walk": 5.29480171,
+    "run": 8.740238,
+    "torch_walk": 5.29785347,
+    "torch_run": 8.740238
+  },
+  "scope": "Flat ground only; source motion and stance/visual acceptance remain separate."
+}

@@ -1,0 +1,17 @@
+{
+    "original": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Walk_Loop_Stride03.anim",
+    "candidate": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Walk_Loop_ReleasePilot.anim",
+    "status": "PASS offline only",
+    "beforePath": 0.09599664807319641,
+    "afterPath": 0.00813774298876524,
+    "rightFootDeviation": 0.0,
+    "pelvisDeviation": 0.0,
+    "minimumSole": 0.09989012032747269,
+    "maximumFootRotation": 0.0,
+    "maxLeftCorrection": 0.09593987464904785,
+    "leftAnkleError": 4.588009119288472e-7,
+    "boundaryError": 3.717085519383545e-7,
+    "rootTravel": 0.0,
+    "eventsPreserved": true,
+    "durationPreserved": true
+}

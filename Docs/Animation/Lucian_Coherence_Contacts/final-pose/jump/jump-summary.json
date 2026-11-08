@@ -1,0 +1,16 @@
+{
+  "samples": 1553,
+  "errors": [],
+  "root_motion_samples": 0,
+  "native_ik_airborne_samples": 0,
+  "jumps": {
+    "jump_free": {
+      "airborne": 59,
+      "root_apex_m": 2.729075999999999
+    },
+    "jump_torch": {
+      "airborne": 59,
+      "root_apex_m": 2.7284369999999996
+    }
+  }
+}

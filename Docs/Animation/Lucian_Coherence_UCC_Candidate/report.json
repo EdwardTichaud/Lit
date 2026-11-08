@@ -1,0 +1,9 @@
+{
+    "run": "Library/LucianCoherence/play-candidate-20261102-195854",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "samples": 1214,
+    "wholeBodyPolicyEnabled": true,
+    "maximumObtainedSpeed": 8.74657154083252,
+    "errors": []
+}

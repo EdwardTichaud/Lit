@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: Courts_reserveCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: district2.courts.reserve
+  title: "La r\xE9serve commune"
+  description: "Lire les usages de la r\xE9serve dans ses objets et ses comptes : laisser \xE0 disposition plut\xF4t que poss\xE9der pour soi."
+  category: 1
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: baskets
+    title: "Les paniers de la r\xE9serve"
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: d449fb266521425429dd7cdd30e17ac5, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: ledger
+    title: Le registre des parts
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 39b963d2cbfaa06429842d0e83d27626, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: shared
+    title: "Comprendre le partage des t\xE2ches"
+    description: 
+    kind: 1
+    sourceId: shared
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: baskets
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: ledger
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: 
+  dialogueSeconds: 4
+  dialogues:
+  - id: shared
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: baskets
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+        - kind: 0
+          stepId: ledger
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Lucian \u2014 Porter, r\xE9parer, r\xE9partir\u2026 Chacun aidait \xE0 sa mani\xE8re. La libert\xE9 de Alix lui permettait aussi de choisir d'aider."
+    unavailableLine: "Les paniers et le registre racontent peut-\xEAtre les m\xEAmes trajets."
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

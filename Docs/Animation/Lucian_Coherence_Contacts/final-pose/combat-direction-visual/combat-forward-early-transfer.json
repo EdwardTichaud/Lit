@@ -1,0 +1,20 @@
+{
+    "status": "REVIEW",
+    "duration": 0.1666666716337204,
+    "donorPhase": 0.5583333373069763,
+    "landingTime": 0.06666667014360428,
+    "releaseTime": 0.06666667014360428,
+    "landingReach": 0.22719129920005798,
+    "donorSwingHeight": 0.3586282432079315,
+    "firstStanceDrift": 0.0002203649200964719,
+    "secondStanceDrift": 0.006151656620204449,
+    "solePenetration": 5.438923835754395e-7,
+    "peakStanceHeight": 0.0019027218222618103,
+    "maximumSwingRisePerFrame": 0.08637575805187225,
+    "maximumKneePlaneChangePerFrame": 13.763035774230957,
+    "endpointHipsDistance": 0.0034650254528969526,
+    "endpointHipsAngle": 0.9404444098472595,
+    "endpointFeetDistance": 0.11391931772232056,
+    "rootDisplacement": 0.0,
+    "rootYaw": 0.0
+}

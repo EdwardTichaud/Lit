@@ -1,0 +1,14 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-contacts-20261102-223511",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261102_223514_725.csv",
+    "samples": 3055,
+    "jumpFreeAirborneSamples": 0,
+    "jumpTorchAirborneSamples": 0,
+    "nativeIKAirborneSamples": 0,
+    "wholeBodyPolicyEnabled": true,
+    "existingIKVariant": "Existing UCC IK unchanged",
+    "maximumObtainedSpeed": 8.750106811523438,
+    "errors": []
+}

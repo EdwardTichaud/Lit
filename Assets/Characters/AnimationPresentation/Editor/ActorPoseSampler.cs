@@ -15,6 +15,8 @@ public sealed class ActorPoseSampler : IDisposable
         public Vector3[] bonePositions;
         public Quaternion[] boneRotations;
         public Vector3 leftSole, rightSole;
+        public Vector3 leftGoal,rightGoal;
+        public Quaternion leftGoalRotation,rightGoalRotation;
     }
     private readonly Animator source;
     private GameObject root;
@@ -34,8 +36,9 @@ public sealed class ActorPoseSampler : IDisposable
         t.gameObject.SetActive(original.gameObject.activeSelf);
         return t;
     }
-    public Frame[] Sample(AnimationClip clip, bool rootMotion = false, int sampleCount = 0, bool measureSoles = false, bool applyFootIK = false, Action<Animator> poseCorrection = null)
+    public Frame[] Sample(AnimationClip clip, bool rootMotion = false, int sampleCount = 0, bool measureSoles = false, bool applyFootIK = false, Action<Animator> poseCorrection = null, bool manualSoles = true, int cycles = 1, RuntimeAnimatorController controller = null, Action<AnimatorControllerPlayable> configureController = null,bool captureIKGoals=false,Action<Animator> modifyIKGoals=null,Action<Animator,ActorSoleSampler,int> geometrySample=null,bool warmControllerPose=false)
     {
+        if(cycles<1)throw new ArgumentOutOfRangeException(nameof(cycles));
         if (root != null) UnityEngine.Object.DestroyImmediate(root);
         var map = new Dictionary<Transform,Transform>();
         root = Clone(source.transform,map).gameObject;
@@ -59,22 +62,43 @@ public sealed class ActorPoseSampler : IDisposable
         animator.fireEvents = false;
         animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         animator.Rebind();
-        var soles = measureSoles ? new ActorSoleSampler(animator,true) : null;
+        ActorIKGoalCapture goalCapture=null;
+        if(captureIKGoals||modifyIKGoals!=null){goalCapture=root.AddComponent<ActorIKGoalCapture>();goalCapture.animator=animator;goalCapture.beforeCapture=modifyIKGoals;}
+        var soles = measureSoles ? new ActorSoleSampler(animator,manualSoles) : null;
         var graph = PlayableGraph.Create("Actor pose audit");
         try
         {
             graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
-            var playable = AnimationClipPlayable.Create(graph, clip);
-            playable.SetApplyFootIK(applyFootIK);
-            playable.SetApplyPlayableIK(false);
+            Playable playable;
+            if(controller==null)
+            {
+                var direct=AnimationClipPlayable.Create(graph,clip);
+                direct.SetApplyFootIK(applyFootIK);direct.SetApplyPlayableIK(goalCapture!=null);playable=direct;
+            }
+            else
+            {
+                var controlled=AnimatorControllerPlayable.Create(graph,controller);
+                configureController?.Invoke(controlled);playable=controlled;
+            }
             AnimationPlayableOutput.Create(graph, "Pose", animator).SetSourcePlayable(playable);
-            graph.Play(); graph.Evaluate(0);
-            int count = sampleCount > 0 ? sampleCount : Mathf.Max(2, Mathf.CeilToInt(clip.length * 60));
+            graph.Play();
+            if(warmControllerPose&&controller!=null)
+            {
+                // Resolve the initial controller pose at zero time before an IK
+                // callback reads its muscles. No measured callbacks are consumed.
+                if(goalCapture!=null)goalCapture.beforeCapture=null;
+                graph.Evaluate(0);
+                if(goalCapture!=null)goalCapture.beforeCapture=modifyIKGoals;
+            }
+            graph.Evaluate(0);
+            float duration=clip.length*cycles;
+            int count = sampleCount > 0 ? sampleCount : Mathf.Max(2, Mathf.CeilToInt(duration * 60));
             var frames = new Frame[count + 1];
             for (int i = 0; i <= count; i++)
             {
-                if (i > 0) graph.Evaluate(clip.length / count);
+                if (i > 0) graph.Evaluate(duration / count);
                 poseCorrection?.Invoke(animator);
+                if(goalCapture!=null&&goalCapture.evaluations==0)throw new InvalidOperationException("The native IK callback was not evaluated");
                 Transform left = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
                 Transform right = animator.GetBoneTransform(HumanBodyBones.RightFoot);
                 Transform lt = animator.GetBoneTransform(HumanBodyBones.LeftToes);
@@ -90,7 +114,8 @@ public sealed class ActorPoseSampler : IDisposable
                 }
                 Vector3 leftSole = new Vector3(float.NaN,float.NaN,float.NaN),rightSole = leftSole;
                 soles?.Sample(out leftSole,out rightSole);
-                frames[i] = new Frame { time = clip.length * i / count, root = root.transform.position,
+                geometrySample?.Invoke(animator,soles,i);
+                frames[i] = new Frame { time = duration * i / count, root = root.transform.position,
                     rotation = root.transform.rotation, delta = animator.deltaPosition,
                     body = hips.position, bodyRotation = hips.rotation,
                     leftFoot = left.position, rightFoot = right.position,
@@ -98,7 +123,8 @@ public sealed class ActorPoseSampler : IDisposable
                     rightToe = rt != null ? rt.position : right.position,
                     leftRotation = left.rotation, rightRotation = right.rotation,
                     bonePositions = positions, boneRotations = rotations,
-                    leftSole = leftSole, rightSole = rightSole };
+                    leftSole = leftSole, rightSole = rightSole,leftGoal=goalCapture!=null?goalCapture.left:default,rightGoal=goalCapture!=null?goalCapture.right:default,
+                    leftGoalRotation=goalCapture!=null?goalCapture.leftRotation:default,rightGoalRotation=goalCapture!=null?goalCapture.rightRotation:default };
             }
             return frames;
         }

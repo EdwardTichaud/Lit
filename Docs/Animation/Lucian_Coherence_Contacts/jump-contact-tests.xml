@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0,1639546">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2870" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.163955" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2845" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1518" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.081481" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="20016" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="2276" name="PlayerJumpContactTests" fullname="PlayerJumpContactTests" classname="PlayerJumpContactTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.052703" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2280" name="ActualFlightAndContactStillRequestLanding" fullname="PlayerJumpContactTests.ActualFlightAndContactStillRequestLanding" methodname="ActualFlightAndContactStillRequestLanding" classname="PlayerJumpContactTests" runstate="Runnable" seed="1805707282" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.018682" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2279" name="ImpulseWaitingForTheMotorCannotLandBeforeFlight" fullname="PlayerJumpContactTests.ImpulseWaitingForTheMotorCannotLandBeforeFlight" methodname="ImpulseWaitingForTheMotorCannotLandBeforeFlight" classname="PlayerJumpContactTests" runstate="Runnable" seed="1430305875" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.000784" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2282" name="InactiveJumpCannotBeRevivedByALateLandWithStaleFlightFlag" fullname="PlayerJumpContactTests.InactiveJumpCannotBeRevivedByALateLandWithStaleFlightFlag" methodname="InactiveJumpCannotBeRevivedByALateLandWithStaleFlightFlag" classname="PlayerJumpContactTests" runstate="Runnable" seed="1575771869" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.000395" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2277" name="LandDuringPreparationCannotCancelTakeoff" fullname="PlayerJumpContactTests.LandDuringPreparationCannotCancelTakeoff" methodname="LandDuringPreparationCannotCancelTakeoff" classname="PlayerJumpContactTests" runstate="Runnable" seed="663657512" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.000397" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2281" name="PredictedLandingStillAcceptsItsContact" fullname="PlayerJumpContactTests.PredictedLandingStillAcceptsItsContact" methodname="PredictedLandingStillAcceptsItsContact" classname="PlayerJumpContactTests" runstate="Runnable" seed="116887695" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.005768" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2278" name="ReacquiredContactDuringPreparationClearsStaleAirborneFlag" fullname="PlayerJumpContactTests.ReacquiredContactDuringPreparationClearsStaleAirborneFlag" methodname="ReacquiredContactDuringPreparationClearsStaleAirborneFlag" classname="PlayerJumpContactTests" runstate="Runnable" seed="2110634197" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.000720" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2283" name="ResetRejectsLateContactNotifications" fullname="PlayerJumpContactTests.ResetRejectsLateContactNotifications" methodname="ResetRejectsLateContactNotifications" classname="PlayerJumpContactTests" runstate="Runnable" seed="1415212455" result="Passed" start-time="2026-11-04 18:14:54Z" end-time="2026-11-04 18:14:54Z" duration="0.000687" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

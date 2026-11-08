@@ -1,0 +1,1338 @@
+{
+  "run": "Library/LucianCoherence/play-cadence-directional-geometry-contacts-20261104-205454",
+  "samples": 3049,
+  "matched_frames": 3049,
+  "scope": "Near-plane mesh vertex windows, plus source-native stance-mask subsets. Not visual acceptance. Heights in [-3,+3] cm; capture within 2 cm. Short or split contacts are reported separately.",
+  "near_ground": {
+    "walk": [
+      {
+        "duration": 0.1828774000000024,
+        "path": 0.1312629761740737,
+        "factor": 1.0350144574393687,
+        "first_phase": 0.365499735,
+        "last_phase": 0.609143555,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.1839860999999985,
+        "path": 0.13716871884880533,
+        "factor": 1.0363219588508934,
+        "first_phase": 0.3641351500000001,
+        "last_phase": 0.60925663,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.17724000000000473,
+        "path": 0.10623142325674868,
+        "factor": 1.030049057416726,
+        "first_phase": 0.37136745000000015,
+        "last_phase": 0.6075003099999998,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.21665399999999835,
+        "path": 0.15574084475283545,
+        "factor": 0.9978777788497116,
+        "first_phase": 0.8758679,
+        "last_phase": 0.16451978999999994,
+        "samples": 14,
+        "side": "right"
+      },
+      {
+        "duration": 0.21677779999999558,
+        "path": 0.15947254066335315,
+        "factor": 0.9985106495329431,
+        "first_phase": 0.8748579000000001,
+        "last_phase": 0.16367054000000003,
+        "samples": 14,
+        "side": "right"
+      },
+      {
+        "duration": 0.2018443999999988,
+        "path": 0.10993070268642945,
+        "factor": 0.9754269081078664,
+        "first_phase": 0.894129,
+        "last_phase": 0.1630387299999998,
+        "samples": 14,
+        "side": "right"
+      }
+    ],
+    "run": [
+      {
+        "duration": 0.10013510000000281,
+        "path": 0.04348127632971648,
+        "factor": 1.0137336593575317,
+        "first_phase": 0.3955679999999999,
+        "last_phase": 0.6157779999999997,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.0991287000000014,
+        "path": 0.053032847730237344,
+        "factor": 1.0236915426590083,
+        "first_phase": 0.3862032900000001,
+        "last_phase": 0.6042094200000001,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.0998076999999995,
+        "path": 0.08480814793533642,
+        "factor": 1.0359008148688287,
+        "first_phase": 0.37514161999999995,
+        "last_phase": 0.5946464499999999,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.09939589999999754,
+        "path": 0.10780968022330442,
+        "factor": 1.0322177364562612,
+        "first_phase": 0.3653890000000004,
+        "last_phase": 0.58399,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.09969999999999857,
+        "path": 0.039513676698413255,
+        "factor": 1.0159564814308575,
+        "first_phase": 0.3910750000000007,
+        "last_phase": 0.6103380000000005,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.11621089999999867,
+        "path": 0.09295857611342369,
+        "factor": 1.0664015574626557,
+        "first_phase": 0.883121,
+        "last_phase": 0.13861369999999962,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.1331901000000002,
+        "path": 0.16445105269706906,
+        "factor": 1.0149369660124121,
+        "first_phase": 0.8720564800000004,
+        "last_phase": 0.16497100000000042,
+        "samples": 9,
+        "side": "right"
+      },
+      {
+        "duration": 0.1330621999999977,
+        "path": 0.1626957252304355,
+        "factor": 1.0473953270260985,
+        "first_phase": 0.86121655,
+        "last_phase": 0.1538524600000004,
+        "samples": 9,
+        "side": "right"
+      },
+      {
+        "duration": 0.11722950000000054,
+        "path": 0.06699387708093776,
+        "factor": 1.0531423864335336,
+        "first_phase": 0.88704348,
+        "last_phase": 0.1448590000000003,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11614000000000146,
+        "path": 0.11099821917277203,
+        "factor": 1.0679760478750777,
+        "first_phase": 0.877948,
+        "last_phase": 0.13336900000000007,
+        "samples": 8,
+        "side": "right"
+      }
+    ],
+    "torch_walk": [
+      {
+        "duration": 0.18349400000000315,
+        "path": 0.13805578086557133,
+        "factor": 1.035539913663914,
+        "first_phase": 0.363727927,
+        "last_phase": 0.608336866,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.18390409999999946,
+        "path": 0.14175328051024563,
+        "factor": 1.0368969658504856,
+        "first_phase": 0.3630832399999999,
+        "last_phase": 0.6082384599999999,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.1832575000000034,
+        "path": 0.14089630184119284,
+        "factor": 1.0359753072214335,
+        "first_phase": 0.3630666699999998,
+        "last_phase": 0.6073620000000002,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.2167973000000032,
+        "path": 0.16110495340633316,
+        "factor": 0.9967983025550307,
+        "first_phase": 0.87490207,
+        "last_phase": 0.16390799999999994,
+        "samples": 14,
+        "side": "right"
+      },
+      {
+        "duration": 0.21717069999999694,
+        "path": 0.16164628419540042,
+        "factor": 0.9969305811641203,
+        "first_phase": 0.8744143200000001,
+        "last_phase": 0.1639134900000001,
+        "samples": 14,
+        "side": "right"
+      },
+      {
+        "duration": 0.21659999999999968,
+        "path": 0.15728062801066792,
+        "factor": 1.004801108471888,
+        "first_phase": 0.8739724199999999,
+        "last_phase": 0.1627139999999998,
+        "samples": 14,
+        "side": "right"
+      }
+    ],
+    "torch_run": [
+      {
+        "duration": 0.09951659999999407,
+        "path": 0.045745323255948336,
+        "factor": 1.014083901763409,
+        "first_phase": 0.39880400000000016,
+        "last_phase": 0.6176643400000001,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.10012340000000108,
+        "path": 0.04812862622967194,
+        "factor": 1.021879856563286,
+        "first_phase": 0.38781,
+        "last_phase": 0.6080069999999997,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.10004629999999537,
+        "path": 0.07965647532907093,
+        "factor": 1.0353327707780293,
+        "first_phase": 0.37781800000000043,
+        "last_phase": 0.5978469999999998,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.10035700000000247,
+        "path": 0.10517861049381376,
+        "factor": 1.036715927271232,
+        "first_phase": 0.3665494900000006,
+        "last_phase": 0.5872580000000003,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.10002140000000281,
+        "path": 0.040293799483992435,
+        "factor": 1.014262393663756,
+        "first_phase": 0.3931699999999996,
+        "last_phase": 0.6131480000000007,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.11673520000000082,
+        "path": 0.08626318828511749,
+        "factor": 1.0648365285062449,
+        "first_phase": 0.8845152900000004,
+        "last_phase": 0.14123868999999978,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11626430000000454,
+        "path": 0.1194704616415376,
+        "factor": 1.072434761251698,
+        "first_phase": 0.87487125,
+        "last_phase": 0.13056300000000043,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.13373320000000177,
+        "path": 0.1661773746158668,
+        "factor": 1.0388583502987139,
+        "first_phase": 0.8638997100000001,
+        "last_phase": 0.15801144000000011,
+        "samples": 9,
+        "side": "right"
+      },
+      {
+        "duration": 0.11639660000000163,
+        "path": 0.05032234331558518,
+        "factor": 1.0387119223417538,
+        "first_phase": 0.8909926400000003,
+        "last_phase": 0.14697899999999997,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11669669999999854,
+        "path": 0.10520253918187544,
+        "factor": 1.0700378923023646,
+        "first_phase": 0.8795769999999994,
+        "last_phase": 0.13621900000000053,
+        "samples": 8,
+        "side": "right"
+      }
+    ],
+    "combat_F": [
+      {
+        "duration": 0.14760370000000478,
+        "path": 0.26052766009782696,
+        "factor": 0.8120365256887937,
+        "first_phase": 0.41470885,
+        "last_phase": 0.6104478799999999,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.1494636999999983,
+        "path": 0.2594232633680687,
+        "factor": 0.8181322586209707,
+        "first_phase": 0.4097411599999998,
+        "last_phase": 0.6079468700000001,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.15055519999999945,
+        "path": 0.2588314667242448,
+        "factor": 0.8345006010434051,
+        "first_phase": 0.40332174,
+        "last_phase": 0.6029715499999999,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.15212249999999727,
+        "path": 0.056222015459421355,
+        "factor": 0.9486416008504203,
+        "first_phase": 0.9038749,
+        "last_phase": 0.10560821999999992,
+        "samples": 10,
+        "side": "right"
+      },
+      {
+        "duration": 0.14999770000000012,
+        "path": 0.049584867244351585,
+        "factor": 0.9513376407109136,
+        "first_phase": 0.9014945000000001,
+        "last_phase": 0.100406,
+        "samples": 10,
+        "side": "right"
+      },
+      {
+        "duration": 0.16696170000000166,
+        "path": 0.05390118507067925,
+        "factor": 0.969712203174913,
+        "first_phase": 0.89508557,
+        "last_phase": 0.11650038000000018,
+        "samples": 11,
+        "side": "right"
+      }
+    ],
+    "combat_FR": [
+      {
+        "duration": 0.2164841000000024,
+        "path": 0.09946787474215693,
+        "factor": 1.0050383052377168,
+        "first_phase": 0.3484530000000001,
+        "last_phase": 0.6239509999999999,
+        "samples": 14,
+        "side": "left"
+      },
+      {
+        "duration": 0.2166441999999975,
+        "path": 0.09907424689686391,
+        "factor": 1.0117638624551677,
+        "first_phase": 0.34572029000000004,
+        "last_phase": 0.621416,
+        "samples": 14,
+        "side": "left"
+      },
+      {
+        "duration": 0.21641569999999888,
+        "path": 0.09995998742989691,
+        "factor": 1.013232134431283,
+        "first_phase": 0.34240099999999973,
+        "last_phase": 0.61780262,
+        "samples": 14,
+        "side": "left"
+      },
+      {
+        "duration": 0.21717840000000166,
+        "path": 0.13995803864231063,
+        "factor": 1.009518526267823,
+        "first_phase": 0.8606699999999998,
+        "last_phase": 0.13691138999999986,
+        "samples": 14,
+        "side": "right"
+      },
+      {
+        "duration": 0.21592330000000004,
+        "path": 0.14175720894701002,
+        "factor": 1.0116400481699686,
+        "first_phase": 0.8584209999999999,
+        "last_phase": 0.13320299999999996,
+        "samples": 14,
+        "side": "right"
+      },
+      {
+        "duration": 0.21681999999999846,
+        "path": 0.14656790210615991,
+        "factor": 1.0119752680153165,
+        "first_phase": 0.854203,
+        "last_phase": 0.13013029000000031,
+        "samples": 14,
+        "side": "right"
+      }
+    ],
+    "combat_R": [
+      {
+        "duration": 0.14962000000001296,
+        "path": 0.18423235418801637,
+        "factor": 0.8277128460203755,
+        "first_phase": 0.34276599999999924,
+        "last_phase": 0.6297329999999999,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.15004539999999622,
+        "path": 0.15260296034050722,
+        "factor": 0.8480903449193105,
+        "first_phase": 0.33289809999999953,
+        "last_phase": 0.6206931999999998,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.1500999999999948,
+        "path": 0.1828496976103197,
+        "factor": 0.864809241058627,
+        "first_phase": 0.3245573000000004,
+        "last_phase": 0.6124276999999996,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.15020390000000816,
+        "path": 0.18766509916083987,
+        "factor": 0.8961114728184952,
+        "first_phase": 0.3152609000000002,
+        "last_phase": 0.6033621,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.11715499999999679,
+        "path": 0.31562810016236664,
+        "factor": 0.6305104455892814,
+        "first_phase": 0.8945190000000007,
+        "last_phase": 0.11921199999999921,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11701510000000326,
+        "path": 0.3084092278711108,
+        "factor": 0.6389502236925619,
+        "first_phase": 0.8853720000000003,
+        "last_phase": 0.1097999999999999,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11692999999999643,
+        "path": 0.29919510414499967,
+        "factor": 0.6538425706980949,
+        "first_phase": 0.876296,
+        "last_phase": 0.10056690000000046,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11641609999999503,
+        "path": 0.31526952826249066,
+        "factor": 0.6287059826894879,
+        "first_phase": 0.8996983000000007,
+        "last_phase": 0.12297919999999962,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11565000000000225,
+        "path": 0.3092581429375767,
+        "factor": 0.6300499921132898,
+        "first_phase": 0.8928127000000003,
+        "last_phase": 0.11462309999999931,
+        "samples": 8,
+        "side": "right"
+      }
+    ],
+    "combat_BR": [
+      {
+        "duration": 0.23296600000000467,
+        "path": 0.41691326775116466,
+        "factor": 0.6197850531704023,
+        "first_phase": 0.1918640000000007,
+        "last_phase": 0.5623120999999998,
+        "samples": 15,
+        "side": "left"
+      },
+      {
+        "duration": 0.23377000000000692,
+        "path": 0.39539153951884015,
+        "factor": 0.6574910811163756,
+        "first_phase": 0.1984482000000014,
+        "last_phase": 0.570170000000001,
+        "samples": 15,
+        "side": "left"
+      },
+      {
+        "duration": 0.2494700000000023,
+        "path": 0.47119095372166403,
+        "factor": 0.582810751381872,
+        "first_phase": 0.17989730000000037,
+        "last_phase": 0.576595300000001,
+        "samples": 16,
+        "side": "left"
+      },
+      {
+        "duration": 0.3663999999999987,
+        "path": 0.7694981104149218,
+        "factor": 0.4483851094392668,
+        "first_phase": 0.8475275,
+        "last_phase": 0.4301566999999995,
+        "samples": 23,
+        "side": "right"
+      },
+      {
+        "duration": 0.36706999999999823,
+        "path": 0.7973554896045492,
+        "factor": 0.4021790542871354,
+        "first_phase": 0.8539323999999997,
+        "last_phase": 0.4376099999999994,
+        "samples": 23,
+        "side": "right"
+      },
+      {
+        "duration": 0.3834949000000023,
+        "path": 0.858329627798576,
+        "factor": 0.37360741341684645,
+        "first_phase": 0.8347587999999995,
+        "last_phase": 0.44457630000000137,
+        "samples": 24,
+        "side": "right"
+      }
+    ],
+    "combat_B": [
+      {
+        "duration": 0.18321000000000254,
+        "path": 0.21845389609633484,
+        "factor": 0.6976957393724809,
+        "first_phase": 0.3995342000000015,
+        "last_phase": 0.6800212999999999,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.1835400000000078,
+        "path": 0.22130627415411402,
+        "factor": 0.6939995351617831,
+        "first_phase": 0.39437679999999986,
+        "last_phase": 0.6753615999999987,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.183329999999998,
+        "path": 0.22211893226306975,
+        "factor": 0.6908301946490757,
+        "first_phase": 0.39010809999999907,
+        "last_phase": 0.6707667999999991,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.18300610000000006,
+        "path": 0.2272455120507005,
+        "factor": 0.6922083608913332,
+        "first_phase": 0.38508609999999877,
+        "last_phase": 0.6652546000000008,
+        "samples": 12,
+        "side": "left"
+      },
+      {
+        "duration": 0.4334999999999951,
+        "path": 1.703289418879621,
+        "factor": -0.05437783097636156,
+        "first_phase": 0.3995342000000015,
+        "last_phase": 0.06319999999999837,
+        "samples": 27,
+        "side": "right"
+      },
+      {
+        "duration": 0.4499500000000012,
+        "path": 1.75363601512299,
+        "factor": -0.021803116632837734,
+        "first_phase": 0.39437679999999986,
+        "last_phase": 0.08322139999999933,
+        "samples": 28,
+        "side": "right"
+      },
+      {
+        "duration": 0.4335800000000063,
+        "path": 1.6580607663412095,
+        "factor": -0.0076771875566474055,
+        "first_phase": 0.4152355000000014,
+        "last_phase": 0.07901569999999936,
+        "samples": 27,
+        "side": "right"
+      }
+    ],
+    "combat_BL": [
+      {
+        "duration": 0.3003247999999985,
+        "path": 0.44422305263645184,
+        "factor": 0.7084073510807011,
+        "first_phase": 0.3520354999999995,
+        "last_phase": 0.7797641999999989,
+        "samples": 19,
+        "side": "left"
+      },
+      {
+        "duration": 0.3001900000000006,
+        "path": 0.44139020231690757,
+        "factor": 0.7048303340812349,
+        "first_phase": 0.3493670999999985,
+        "last_phase": 0.7769146000000013,
+        "samples": 19,
+        "side": "left"
+      },
+      {
+        "duration": 0.2836199999999991,
+        "path": 0.4198576765953126,
+        "factor": 0.7047007933116957,
+        "first_phase": 0.36973190000000145,
+        "last_phase": 0.7736663999999998,
+        "samples": 18,
+        "side": "left"
+      },
+      {
+        "duration": 0.3166360000000026,
+        "path": 0.39358956348798524,
+        "factor": 0.7650223745372209,
+        "first_phase": 0.7111930999999991,
+        "last_phase": 0.16215520000000083,
+        "samples": 20,
+        "side": "right"
+      },
+      {
+        "duration": 0.16617000000000814,
+        "path": 0.9103115220090734,
+        "factor": -0.7195229850401245,
+        "first_phase": 0.28151129999999824,
+        "last_phase": 0.5181770000000014,
+        "samples": 11,
+        "side": "right"
+      },
+      {
+        "duration": 0.31630470000000344,
+        "path": 0.38240067774841485,
+        "factor": 0.7730184568000094,
+        "first_phase": 0.7087287999999994,
+        "last_phase": 0.15922550000000157,
+        "samples": 20,
+        "side": "right"
+      },
+      {
+        "duration": 0.1664300000000054,
+        "path": 0.9075982649825969,
+        "factor": -0.7238852977220044,
+        "first_phase": 0.2783470000000001,
+        "last_phase": 0.5153828000000011,
+        "samples": 11,
+        "side": "right"
+      },
+      {
+        "duration": 0.3334600000000023,
+        "path": 0.4328177886254967,
+        "factor": 0.7620131425255148,
+        "first_phase": 0.705286000000001,
+        "last_phase": 0.18020999999999887,
+        "samples": 21,
+        "side": "right"
+      },
+      {
+        "duration": 0.15020999999998708,
+        "path": 0.8482085104319249,
+        "factor": -0.7010029456406347,
+        "first_phase": 0.29859539999999996,
+        "last_phase": 0.5125312999999991,
+        "samples": 10,
+        "side": "right"
+      }
+    ],
+    "combat_L": [
+      {
+        "duration": 0.16631549999999606,
+        "path": 0.3119417951011568,
+        "factor": 1.303201009490882,
+        "first_phase": 0.4227962000000005,
+        "last_phase": 0.7119864999999983,
+        "samples": 11,
+        "side": "left"
+      },
+      {
+        "duration": 0.1546761000000032,
+        "path": 0.29133940922225793,
+        "factor": 1.365778466402996,
+        "first_phase": 0.43736840000000043,
+        "last_phase": 0.7063351000000004,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.16750000000000398,
+        "path": 0.3159509140942668,
+        "factor": 1.3001479229276744,
+        "first_phase": 0.42201999999999984,
+        "last_phase": 0.7132873999999987,
+        "samples": 11,
+        "side": "left"
+      },
+      {
+        "duration": 0.05137000000000569,
+        "path": 0.08476655420088595,
+        "factor": 1.075301828744985,
+        "first_phase": 0.3202609999999986,
+        "last_phase": 0.40957639999999884,
+        "samples": 4,
+        "side": "left"
+      },
+      {
+        "duration": 0.15026000000000295,
+        "path": 0.2711783994931883,
+        "factor": 1.3398338707498858,
+        "first_phase": 0.4364623999999999,
+        "last_phase": 0.6977215000000001,
+        "samples": 10,
+        "side": "left"
+      },
+      {
+        "duration": 0.06729470000000504,
+        "path": 0.6970569853736768,
+        "factor": -0.8136604832830601,
+        "first_phase": 0.45139500000000155,
+        "last_phase": 0.5684031999999988,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.2002181999999948,
+        "path": 0.2214135886629346,
+        "factor": 0.9942356180796414,
+        "first_phase": 0.8278922999999985,
+        "last_phase": 0.1760483000000015,
+        "samples": 13,
+        "side": "right"
+      },
+      {
+        "duration": 0.06579610000000002,
+        "path": 0.7214277183085778,
+        "factor": -0.780318933242644,
+        "first_phase": 0.46555139999999895,
+        "last_phase": 0.5799637000000004,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.18357000000000312,
+        "path": 0.18493899076895587,
+        "factor": 0.9823870843893648,
+        "first_phase": 0.8422240999999993,
+        "last_phase": 0.16142650000000103,
+        "samples": 12,
+        "side": "right"
+      },
+      {
+        "duration": 0.06596439999999859,
+        "path": 0.6830705457228365,
+        "factor": -0.816801116398606,
+        "first_phase": 0.4521656000000007,
+        "last_phase": 0.5668700000000015,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.19924470000000838,
+        "path": 0.2192082340152056,
+        "factor": 0.9931800330653121,
+        "first_phase": 0.8289374999999986,
+        "last_phase": 0.175392200000001,
+        "samples": 13,
+        "side": "right"
+      },
+      {
+        "duration": 0.0667399999999958,
+        "path": 0.732633519134859,
+        "factor": -0.7787020641042902,
+        "first_phase": 0.46537000000000006,
+        "last_phase": 0.5814266000000003,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.1832200000000057,
+        "path": 0.18293736840461006,
+        "factor": 0.981507434974932,
+        "first_phase": 0.8420963000000015,
+        "last_phase": 0.16067499999999768,
+        "samples": 12,
+        "side": "right"
+      }
+    ],
+    "combat_FL": [
+      {
+        "duration": 0.20017499999998734,
+        "path": 0.11399137377362398,
+        "factor": 1.0361849168270427,
+        "first_phase": 0.34898760000000095,
+        "last_phase": 0.6009000000000029,
+        "samples": 13,
+        "side": "left"
+      },
+      {
+        "duration": 0.21653999999999485,
+        "path": 0.13034368113554828,
+        "factor": 1.039601988105871,
+        "first_phase": 0.3353424000000018,
+        "last_phase": 0.6078568000000004,
+        "samples": 14,
+        "side": "left"
+      },
+      {
+        "duration": 0.20112000000000307,
+        "path": 0.11652691846056637,
+        "factor": 1.0351514592691413,
+        "first_phase": 0.3404600000000002,
+        "last_phase": 0.5935555000000008,
+        "samples": 13,
+        "side": "left"
+      },
+      {
+        "duration": 0.23390549999999166,
+        "path": 0.14024134115610173,
+        "factor": 1.0510946161786643,
+        "first_phase": 0.8522200000000026,
+        "last_phase": 0.14658000000000015,
+        "samples": 15,
+        "side": "right"
+      },
+      {
+        "duration": 0.2333859000000018,
+        "path": 0.14180023431265346,
+        "factor": 1.0582399276399685,
+        "first_phase": 0.8385162000000008,
+        "last_phase": 0.1322059999999965,
+        "samples": 15,
+        "side": "right"
+      },
+      {
+        "duration": 0.23322000000000287,
+        "path": 0.13777886622444,
+        "factor": 1.058783128619,
+        "first_phase": 0.8454628,
+        "last_phase": 0.13895800000000236,
+        "samples": 15,
+        "side": "right"
+      }
+    ]
+  },
+  "source_stance": {
+    "walk": [
+      {
+        "duration": 0.13337769999999693,
+        "path": 0.02767145452922916,
+        "factor": 0.9872346448865142,
+        "first_phase": 0.4099278,
+        "last_phase": 0.587629437,
+        "samples": 9,
+        "side": "left"
+      },
+      {
+        "duration": 0.13344509999999588,
+        "path": 0.026989752266711884,
+        "factor": 0.9870383630516976,
+        "first_phase": 0.40908659,
+        "last_phase": 0.5868751999999999,
+        "samples": 9,
+        "side": "left"
+      },
+      {
+        "duration": 0.13219840000000005,
+        "path": 0.027194115382288997,
+        "factor": 0.9848537204856778,
+        "first_phase": 0.40998840000000003,
+        "last_phase": 0.58611631,
+        "samples": 9,
+        "side": "left"
+      },
+      {
+        "duration": 0.1500358999999989,
+        "path": 0.032921466856398754,
+        "factor": 1.0167176117772359,
+        "first_phase": 0.898151159,
+        "last_phase": 0.0980432,
+        "samples": 10,
+        "side": "right"
+      },
+      {
+        "duration": 0.1501576,
+        "path": 0.03243365095333232,
+        "factor": 1.0180275630295137,
+        "first_phase": 0.8969132900000001,
+        "last_phase": 0.0969681699999998,
+        "samples": 10,
+        "side": "right"
+      },
+      {
+        "duration": 0.1474460000000022,
+        "path": 0.03173016769617642,
+        "factor": 1.013084277571968,
+        "first_phase": 0.8997030000000001,
+        "last_phase": 0.0961432499999999,
+        "samples": 10,
+        "side": "right"
+      }
+    ],
+    "run": [
+      {
+        "duration": 0.08375930000000409,
+        "path": 0.02074279792837047,
+        "factor": 0.9927251557373938,
+        "first_phase": 0.3955679999999999,
+        "last_phase": 0.5797569999999999,
+        "samples": 6,
+        "side": "left"
+      },
+      {
+        "duration": 0.06642000000000081,
+        "path": 0.01818849611153806,
+        "factor": 0.9854061787481576,
+        "first_phase": 0.4212655999999999,
+        "last_phase": 0.5673346500000003,
+        "samples": 5,
+        "side": "left"
+      },
+      {
+        "duration": 0.06621169999999665,
+        "path": 0.021144998491224774,
+        "factor": 0.9764806012700536,
+        "first_phase": 0.41150474999999975,
+        "last_phase": 0.5571184200000001,
+        "samples": 5,
+        "side": "left"
+      },
+      {
+        "duration": 0.08291589999999616,
+        "path": 0.023212528379831853,
+        "factor": 0.9880249465997236,
+        "first_phase": 0.40163300000000035,
+        "last_phase": 0.58399,
+        "samples": 6,
+        "side": "left"
+      },
+      {
+        "duration": 0.06639859999999942,
+        "path": 0.016575777368647078,
+        "factor": 0.9921659732684923,
+        "first_phase": 0.42754399999999926,
+        "last_phase": 0.5735720000000004,
+        "samples": 5,
+        "side": "left"
+      },
+      {
+        "duration": 0.08324369999999703,
+        "path": 0.029820224750279956,
+        "factor": 1.0148034171654772,
+        "first_phase": 0.9187884300000002,
+        "last_phase": 0.1018049999999997,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.08348540000000071,
+        "path": 0.03303177332332537,
+        "factor": 1.0086001527654767,
+        "first_phase": 0.90852165,
+        "last_phase": 0.09212971000000003,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.0835262999999955,
+        "path": 0.020555349231888127,
+        "factor": 1.0151412745909867,
+        "first_phase": 0.8978013999999996,
+        "last_phase": 0.08150200000000041,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.0666532999999987,
+        "path": 0.01713190728543911,
+        "factor": 1.0096994660838106,
+        "first_phase": 0.9251923599999996,
+        "last_phase": 0.07177700000000087,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.08376200000000011,
+        "path": 0.031213083076311383,
+        "factor": 1.0079439412715172,
+        "first_phase": 0.9132639999999999,
+        "last_phase": 0.09747699999999959,
+        "samples": 6,
+        "side": "right"
+      }
+    ],
+    "torch_walk": [
+      {
+        "duration": 0.13392349999999453,
+        "path": 0.026726237977641086,
+        "factor": 0.9874643910382668,
+        "first_phase": 0.407762319,
+        "last_phase": 0.586287,
+        "samples": 9,
+        "side": "left"
+      },
+      {
+        "duration": 0.1330658999999983,
+        "path": 0.02668287412716613,
+        "factor": 0.9867628686868424,
+        "first_phase": 0.40830326000000006,
+        "last_phase": 0.5856856100000001,
+        "samples": 9,
+        "side": "left"
+      },
+      {
+        "duration": 0.13288999999999618,
+        "path": 0.02650824316900357,
+        "factor": 0.9868191667182314,
+        "first_phase": 0.40805500000000006,
+        "last_phase": 0.5852040000000001,
+        "samples": 9,
+        "side": "left"
+      },
+      {
+        "duration": 0.14974399999999832,
+        "path": 0.033749438199537705,
+        "factor": 1.0170641495797126,
+        "first_phase": 0.8969285,
+        "last_phase": 0.09654509999999994,
+        "samples": 10,
+        "side": "right"
+      },
+      {
+        "duration": 0.1500727000000026,
+        "path": 0.032825467810798356,
+        "factor": 1.0174521806073924,
+        "first_phase": 0.89686394,
+        "last_phase": 0.09692299999999987,
+        "samples": 10,
+        "side": "right"
+      },
+      {
+        "duration": 0.15021130000000227,
+        "path": 0.029556849044942584,
+        "factor": 1.0208509783846103,
+        "first_phase": 0.89626837,
+        "last_phase": 0.0965069999999999,
+        "samples": 10,
+        "side": "right"
+      }
+    ],
+    "torch_run": [
+      {
+        "duration": 0.0828246999999962,
+        "path": 0.02201021423989303,
+        "factor": 0.991493162482292,
+        "first_phase": 0.39880400000000016,
+        "last_phase": 0.5809526399999996,
+        "samples": 6,
+        "side": "left"
+      },
+      {
+        "duration": 0.06707000000000107,
+        "path": 0.017694244078300152,
+        "factor": 0.9889691940683937,
+        "first_phase": 0.42395448999999985,
+        "last_phase": 0.5714579999999998,
+        "samples": 5,
+        "side": "left"
+      },
+      {
+        "duration": 0.066670000000002,
+        "path": 0.02107850263208771,
+        "factor": 0.978293857196011,
+        "first_phase": 0.41387129000000034,
+        "last_phase": 0.5604963300000003,
+        "samples": 5,
+        "side": "left"
+      },
+      {
+        "duration": 0.08370590000000533,
+        "path": 0.025091055905147777,
+        "factor": 0.9901685021606882,
+        "first_phase": 0.4031690000000001,
+        "last_phase": 0.5872580000000003,
+        "samples": 6,
+        "side": "left"
+      },
+      {
+        "duration": 0.0834368000000012,
+        "path": 0.01881967552064956,
+        "factor": 0.993980113344764,
+        "first_phase": 0.3931699999999996,
+        "last_phase": 0.5766679999999997,
+        "samples": 6,
+        "side": "left"
+      },
+      {
+        "duration": 0.08315500000000497,
+        "path": 0.029767145518236022,
+        "factor": 1.0187311412203723,
+        "first_phase": 0.9212956400000003,
+        "last_phase": 0.10417271000000028,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.08321379999999579,
+        "path": 0.03191310664294357,
+        "factor": 1.0076339509275296,
+        "first_phase": 0.9114880000000003,
+        "last_phase": 0.09449799999999975,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.08323299999999989,
+        "path": 0.022406351117519076,
+        "factor": 1.0134988714822382,
+        "first_phase": 0.9012019999999996,
+        "last_phase": 0.08425140000000031,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.06656000000000262,
+        "path": 0.016789422515465235,
+        "factor": 1.0125940816164567,
+        "first_phase": 0.927047,
+        "last_phase": 0.07342148000000037,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.08364290000000096,
+        "path": 0.03069842318459569,
+        "factor": 1.010913856804559,
+        "first_phase": 0.9161629999999992,
+        "last_phase": 0.10011699999999912,
+        "samples": 6,
+        "side": "right"
+      }
+    ],
+    "combat_F": [
+      {
+        "duration": 0.04974550000000022,
+        "path": 0.03878049390828232,
+        "factor": 1.033945542608259,
+        "first_phase": 0.4587088800000001,
+        "last_phase": 0.52467668,
+        "samples": 4,
+        "side": "left"
+      },
+      {
+        "duration": 0.0503436999999991,
+        "path": 0.03879388233178965,
+        "factor": 1.0738116260080512,
+        "first_phase": 0.4530501400000002,
+        "last_phase": 0.5198082899999998,
+        "samples": 4,
+        "side": "left"
+      },
+      {
+        "duration": 0.049956799999996804,
+        "path": 0.03968652231186318,
+        "factor": 1.1243214876430663,
+        "first_phase": 0.447905,
+        "last_phase": 0.5141506200000001,
+        "samples": 4,
+        "side": "left"
+      },
+      {
+        "duration": 0.13503269999999645,
+        "path": 0.04902500913743862,
+        "factor": 0.9362309790521717,
+        "first_phase": 0.9038749,
+        "last_phase": 0.08294749000000001,
+        "samples": 9,
+        "side": "right"
+      },
+      {
+        "duration": 0.11685650000000436,
+        "path": 0.03644999937727378,
+        "factor": 0.9480625623241343,
+        "first_phase": 0.92270732,
+        "last_phase": 0.07767200000000019,
+        "samples": 8,
+        "side": "right"
+      },
+      {
+        "duration": 0.11719999999999686,
+        "path": 0.03925297985090351,
+        "factor": 0.943338327355924,
+        "first_phase": 0.9170825499999999,
+        "last_phase": 0.0725030000000002,
+        "samples": 8,
+        "side": "right"
+      }
+    ],
+    "combat_B": [
+      {
+        "duration": 0.06703000000000259,
+        "path": 0.022159016493001008,
+        "factor": 1.1138935168096662,
+        "first_phase": 0.5267599999999995,
+        "last_phase": 0.6293754999999983,
+        "samples": 5,
+        "side": "left"
+      },
+      {
+        "duration": 0.0833899999999943,
+        "path": 0.02922659582083049,
+        "factor": 1.1214901775387158,
+        "first_phase": 0.5219115999999993,
+        "last_phase": 0.6495761999999985,
+        "samples": 6,
+        "side": "left"
+      },
+      {
+        "duration": 0.09995580000000359,
+        "path": 0.041091747385322994,
+        "factor": 1.1437071096703686,
+        "first_phase": 0.4922867000000011,
+        "last_phase": 0.6452980000000004,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.10008999999999446,
+        "path": 0.04109663835968491,
+        "factor": 1.1421502709615305,
+        "first_phase": 0.4867744000000016,
+        "last_phase": 0.6400070000000007,
+        "samples": 7,
+        "side": "left"
+      },
+      {
+        "duration": 0.08311999999999387,
+        "path": 0.0379593563483646,
+        "factor": 0.8791870154669968,
+        "first_phase": 0.8846111000000008,
+        "last_phase": 0.01185999999999865,
+        "samples": 6,
+        "side": "right"
+      },
+      {
+        "duration": 0.06669999999999732,
+        "path": 0.034369789053012655,
+        "factor": 0.8628716060069718,
+        "first_phase": 0.9052900000000008,
+        "last_phase": 0.00741999999999976,
+        "samples": 5,
+        "side": "right"
+      },
+      {
+        "duration": 0.06713539999999796,
+        "path": 0.033072712535068334,
+        "factor": 0.8691031545750277,
+        "first_phase": 0.8996467999999993,
+        "last_phase": 0.0024319000000012636,
+        "samples": 5,
+        "side": "right"
+      }
+    ]
+  },
+  "source_stance_phase_offset": 0.9838151,
+  "directional_stance_masks": [
+    "Lucian_Common_Run_Stride02",
+    "Lucian_Common_Walk_Loop_Stride03",
+    "Lucian_Strafe_Run_BL_Stride03",
+    "Lucian_Strafe_Run_BR_Stride03",
+    "Lucian_Strafe_Run_B_Stride03",
+    "Lucian_Strafe_Run_FL_Stride03",
+    "Lucian_Strafe_Run_FR_Stride03",
+    "Lucian_Strafe_Run_F_Stride03",
+    "Lucian_Strafe_Run_L_Stride03",
+    "Lucian_Strafe_Run_R_Stride03",
+    "Lucian_Strafe_Walk_BL_Stride03",
+    "Lucian_Strafe_Walk_BR_Stride03",
+    "Lucian_Strafe_Walk_B_Stride03",
+    "Lucian_Strafe_Walk_FL_Stride03",
+    "Lucian_Strafe_Walk_FR_Stride03",
+    "Lucian_Strafe_Walk_F_Stride03",
+    "Lucian_Strafe_Walk_L_Stride03",
+    "Lucian_Strafe_Walk_R_Stride03"
+  ],
+  "directional_stance_offsets": {
+    "Lucian_Common_Walk_Loop_Stride03": 0.9604243,
+    "Lucian_Common_Run_Stride02": 0.9838151,
+    "Lucian_Strafe_Walk_F_Stride03": 0.050794344,
+    "Lucian_Strafe_Walk_B_Stride03": 0.73168504,
+    "Lucian_Strafe_Walk_FL_Stride03": 0.78479856,
+    "Lucian_Strafe_Walk_FR_Stride03": 0.78479856,
+    "Lucian_Strafe_Walk_BL_Stride03": 0.72344327,
+    "Lucian_Strafe_Walk_BR_Stride03": 0.709707,
+    "Lucian_Strafe_Walk_L_Stride03": 0.7045984,
+    "Lucian_Strafe_Walk_R_Stride03": 0.80036634,
+    "Lucian_Strafe_Run_F_Stride03": 0.99161536,
+    "Lucian_Strafe_Run_B_Stride03": 0.9898654,
+    "Lucian_Strafe_Run_FL_Stride03": 0.97450644,
+    "Lucian_Strafe_Run_FR_Stride03": 0.96700156,
+    "Lucian_Strafe_Run_BL_Stride03": 0.974229,
+    "Lucian_Strafe_Run_BR_Stride03": 0.4894216,
+    "Lucian_Strafe_Run_L_Stride03": 0.057441525,
+    "Lucian_Strafe_Run_R_Stride03": 0.6222864
+  }
+}

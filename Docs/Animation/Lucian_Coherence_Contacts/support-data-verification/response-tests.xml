@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0,2536803">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2877" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.253680" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2853" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1525" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.183986" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="27820" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="2153" name="LocomotionPresentationResponseTests" fullname="LocomotionPresentationResponseTests" classname="LocomotionPresentationResponseTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.078079" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2154" name="AbruptDirectionAndGaitChangesAreBounded" fullname="LocomotionPresentationResponseTests.AbruptDirectionAndGaitChangesAreBounded" methodname="AbruptDirectionAndGaitChangesAreBounded" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="1328811854" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.033082" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2157" name="ActorPauseKeepsThePresentedPose" fullname="LocomotionPresentationResponseTests.ActorPauseKeepsThePresentedPose" methodname="ActorPauseKeepsThePresentedPose" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="16045506" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.002893" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2160" name="ActorTimeScalingDoesNotChangeTheResultAtEqualActorTime" fullname="LocomotionPresentationResponseTests.ActorTimeScalingDoesNotChangeTheResultAtEqualActorTime" methodname="ActorTimeScalingDoesNotChangeTheResultAtEqualActorTime" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="1682010151" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.003865" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2159" name="DisabledResponsePreservesImmediateBehaviour" fullname="LocomotionPresentationResponseTests.DisabledResponsePreservesImmediateBehaviour" methodname="DisabledResponsePreservesImmediateBehaviour" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="254905980" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.000658" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2156" name="LatestTargetWinsWithoutExtraTimeInSameFrame" fullname="LocomotionPresentationResponseTests.LatestTargetWinsWithoutExtraTimeInSameFrame" methodname="LatestTargetWinsWithoutExtraTimeInSameFrame" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="871994042" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.000958" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2155" name="RefreshesInOneFrameDoNotApplyTimeTwice" fullname="LocomotionPresentationResponseTests.RefreshesInOneFrameDoNotApplyTimeTwice" methodname="RefreshesInOneFrameDoNotApplyTimeTwice" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="1409643148" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.000385" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2158" name="ReturningAfterAnActionDoesNotUseAStaleDirection" fullname="LocomotionPresentationResponseTests.ReturningAfterAnActionDoesNotUseAStaleDirection" methodname="ReturningAfterAnActionDoesNotUseAStaleDirection" classname="LocomotionPresentationResponseTests" runstate="Runnable" seed="2069603944" result="Passed" start-time="2026-11-04 20:16:24Z" end-time="2026-11-04 20:16:24Z" duration="0.000285" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

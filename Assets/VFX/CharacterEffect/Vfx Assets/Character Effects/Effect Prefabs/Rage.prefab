@@ -243,7 +243,7 @@ VisualEffect:
         m_Overridden: 1
     m_NamedObject:
       m_Array:
-      - m_Value: {fileID: -664032772943106202, guid: 8e758bfa6efa28e4ba889fa7ce593840, type: 3}
+      - m_Value: {fileID: 0}
         m_Name: Mesh Renderer
         m_Overridden: 1
       - m_Value: {fileID: 2800000, guid: 547285f6e03c65a429b8a24b011eda62, type: 3}

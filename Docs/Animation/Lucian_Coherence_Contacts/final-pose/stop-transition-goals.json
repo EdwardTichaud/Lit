@@ -1,0 +1,3640 @@
+{
+    "scope": "Actual Lucian avatar, Walk_Stop and Locomotion motions, authored unconditional transition. Isolated Animator without UCC or production writes.",
+    "authored": [
+        {
+            "stopPhase": 0.75,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0,
+            "rightStep": 0.0,
+            "footAngle": 0.0,
+            "lowerSole": -0.021724477410316467
+        },
+        {
+            "stopPhase": 0.7585833072662354,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00031654792837798595,
+            "rightStep": 0.0018706187838688493,
+            "footAngle": 0.6342709064483643,
+            "lowerSole": -0.021609585732221603
+        },
+        {
+            "stopPhase": 0.7671666145324707,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00031225086422637105,
+            "rightStep": 0.0018755508353933692,
+            "footAngle": 0.6379621624946594,
+            "lowerSole": -0.02150574140250683
+        },
+        {
+            "stopPhase": 0.775749921798706,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00029905358678661287,
+            "rightStep": 0.0018104827031493187,
+            "footAngle": 0.5974143147468567,
+            "lowerSole": -0.021415535360574722
+        },
+        {
+            "stopPhase": 0.7843332290649414,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00024833829957060516,
+            "rightStep": 0.0013724506134167314,
+            "footAngle": 0.2438931167125702,
+            "lowerSole": -0.021379422396421432
+        },
+        {
+            "stopPhase": 0.7929165363311768,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00023362941283266991,
+            "rightStep": 0.00137881760019809,
+            "footAngle": 0.24708139896392822,
+            "lowerSole": -0.021355055272579193
+        },
+        {
+            "stopPhase": 0.8014998435974121,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00021248088160064071,
+            "rightStep": 0.0012812722707167268,
+            "footAngle": 0.22381167113780975,
+            "lowerSole": -0.02135011926293373
+        },
+        {
+            "stopPhase": 0.8100831508636475,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00018441886641085148,
+            "rightStep": 0.0008039121166802943,
+            "footAngle": 0.2406626045703888,
+            "lowerSole": -0.02139616385102272
+        },
+        {
+            "stopPhase": 0.8186664581298828,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00016799912555143237,
+            "rightStep": 0.0008121055434457958,
+            "footAngle": 0.2340678572654724,
+            "lowerSole": -0.021455781534314156
+        },
+        {
+            "stopPhase": 0.8272497653961182,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00016722205327823758,
+            "rightStep": 0.000662654172629118,
+            "footAngle": 0.2272818237543106,
+            "lowerSole": -0.021533599123358727
+        },
+        {
+            "stopPhase": 0.8358330726623535,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00020849723659921438,
+            "rightStep": 0.00024183143978007138,
+            "footAngle": 0.2406626045703888,
+            "lowerSole": -0.02163892798125744
+        },
+        {
+            "stopPhase": 0.8444163799285889,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00019317421538289636,
+            "rightStep": 0.00024988362565636635,
+            "footAngle": 0.24708139896392822,
+            "lowerSole": -0.021759353578090668
+        },
+        {
+            "stopPhase": 0.8529996871948242,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0001748712529661134,
+            "rightStep": 0.00014766459935344756,
+            "footAngle": 0.1938265860080719,
+            "lowerSole": -0.021888364106416702
+        },
+        {
+            "stopPhase": 0.8615829944610596,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.000182540257810615,
+            "rightStep": 0.00012712263560388237,
+            "footAngle": 0.0,
+            "lowerSole": -0.022021224722266197
+        },
+        {
+            "stopPhase": 0.8701663017272949,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00017812600708566606,
+            "rightStep": 0.00012767537555191666,
+            "footAngle": 0.0,
+            "lowerSole": -0.022165469825267792
+        },
+        {
+            "stopPhase": 0.8787496089935303,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00018313400505576283,
+            "rightStep": 0.0001950396690517664,
+            "footAngle": 0.0,
+            "lowerSole": -0.022297512739896774
+        },
+        {
+            "stopPhase": 0.8873329162597656,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00019481022900436074,
+            "rightStep": 0.00029980146791785955,
+            "footAngle": 0.0,
+            "lowerSole": -0.022408826276659966
+        },
+        {
+            "stopPhase": 0.895916223526001,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00017148347978945822,
+            "rightStep": 0.00029512643232010305,
+            "footAngle": 0.0,
+            "lowerSole": -0.022531267255544662
+        },
+        {
+            "stopPhase": 0.9044995307922363,
+            "idlePhase": 0.0014561666175723076,
+            "stopWeight": 0.9718778133392334,
+            "idleWeight": 0.0281221866607666,
+            "leftStep": 0.002876970451325178,
+            "rightStep": 0.0007759779691696167,
+            "footAngle": 0.7651459574699402,
+            "lowerSole": -0.02182168886065483
+        },
+        {
+            "stopPhase": 0.9130828380584717,
+            "idlePhase": 0.004233944229781628,
+            "stopWeight": 0.9182319641113281,
+            "idleWeight": 0.08176803588867188,
+            "leftStep": 0.00541645148769021,
+            "rightStep": 0.001361743314191699,
+            "footAngle": 1.4798563718795776,
+            "lowerSole": -0.020343471318483353
+        },
+        {
+            "stopPhase": 0.921666145324707,
+            "idlePhase": 0.007011721841990948,
+            "stopWeight": 0.8645861148834229,
+            "idleWeight": 0.13541388511657715,
+            "leftStep": 0.005390511825680733,
+            "rightStep": 0.0013547298731282353,
+            "footAngle": 1.484081506729126,
+            "lowerSole": -0.018855692818760872
+        },
+        {
+            "stopPhase": 0.9302494525909424,
+            "idlePhase": 0.009789499454200268,
+            "stopWeight": 0.8109402656555176,
+            "idleWeight": 0.18905973434448242,
+            "leftStep": 0.005338276270776987,
+            "rightStep": 0.001344688585959375,
+            "footAngle": 1.4867161512374878,
+            "lowerSole": -0.017335712909698486
+        },
+        {
+            "stopPhase": 0.9388327598571777,
+            "idlePhase": 0.012567277066409588,
+            "stopWeight": 0.7572944164276123,
+            "idleWeight": 0.2427055835723877,
+            "leftStep": 0.005306783597916365,
+            "rightStep": 0.0013393689878284931,
+            "footAngle": 1.491446852684021,
+            "lowerSole": -0.015793034806847572
+        },
+        {
+            "stopPhase": 0.9474160671234131,
+            "idlePhase": 0.015345054678618908,
+            "stopWeight": 0.7036486268043518,
+            "idleWeight": 0.2963513731956482,
+            "leftStep": 0.005302658770233393,
+            "rightStep": 0.0013317373814061284,
+            "footAngle": 1.494592308998108,
+            "lowerSole": -0.014242756180465221
+        },
+        {
+            "stopPhase": 0.9559993743896484,
+            "idlePhase": 0.018122833222150803,
+            "stopWeight": 0.6500027775764465,
+            "idleWeight": 0.34999722242355347,
+            "leftStep": 0.005343077704310417,
+            "rightStep": 0.001285417703911662,
+            "footAngle": 1.4987759590148926,
+            "lowerSole": -0.012662341818213463
+        },
+        {
+            "stopPhase": 0.9645826816558838,
+            "idlePhase": 0.020900610834360123,
+            "stopWeight": 0.5963569283485413,
+            "idleWeight": 0.40364307165145874,
+            "leftStep": 0.00535435788333416,
+            "rightStep": 0.0012688225833699107,
+            "footAngle": 1.501906156539917,
+            "lowerSole": -0.01106874831020832
+        },
+        {
+            "stopPhase": 0.9731659889221191,
+            "idlePhase": 0.023678388446569443,
+            "stopWeight": 0.542711079120636,
+            "idleWeight": 0.457288920879364,
+            "leftStep": 0.005349939223378897,
+            "rightStep": 0.0012680554063990712,
+            "footAngle": 1.502427101135254,
+            "lowerSole": -0.009469592012465
+        },
+        {
+            "stopPhase": 0.9817492961883545,
+            "idlePhase": 0.026456166058778763,
+            "stopWeight": 0.4890652298927307,
+            "idleWeight": 0.5109347701072693,
+            "leftStep": 0.00536923436447978,
+            "rightStep": 0.0012564999051392078,
+            "footAngle": 1.50918447971344,
+            "lowerSole": -0.007856803946197033
+        },
+        {
+            "stopPhase": 0.9903326034545898,
+            "idlePhase": 0.029233943670988083,
+            "stopWeight": 0.43541938066482544,
+            "idleWeight": 0.5645806193351746,
+            "leftStep": 0.005368310492485762,
+            "rightStep": 0.0012540682218968868,
+            "footAngle": 1.5107395648956299,
+            "lowerSole": -0.006239354144781828
+        },
+        {
+            "stopPhase": 0.9989159107208252,
+            "idlePhase": 0.0320117212831974,
+            "stopWeight": 0.38177353143692017,
+            "idleWeight": 0.6182264685630798,
+            "leftStep": 0.005360730458050966,
+            "rightStep": 0.0012539298040792346,
+            "footAngle": 1.5102213621139526,
+            "lowerSole": -0.004618540871888399
+        },
+        {
+            "stopPhase": 1.0074992179870605,
+            "idlePhase": 0.03478949889540672,
+            "stopWeight": 0.3281276822090149,
+            "idleWeight": 0.6718723177909851,
+            "leftStep": 0.0053300270810723305,
+            "rightStep": 0.0012556345900520682,
+            "footAngle": 1.5102213621139526,
+            "lowerSole": -0.0029960048850625753
+        },
+        {
+            "stopPhase": 1.016082525253296,
+            "idlePhase": 0.03756727650761604,
+            "stopWeight": 0.2744818329811096,
+            "idleWeight": 0.7255181670188904,
+            "leftStep": 0.005323802120983601,
+            "rightStep": 0.0012551561230793595,
+            "footAngle": 1.50814688205719,
+            "lowerSole": -0.0013714204542338848
+        },
+        {
+            "stopPhase": 1.0246658325195313,
+            "idlePhase": 0.04034505411982536,
+            "stopWeight": 0.22083598375320435,
+            "idleWeight": 0.7791640162467957,
+            "leftStep": 0.005319346208125353,
+            "rightStep": 0.0012550386600196362,
+            "footAngle": 1.5076277256011963,
+            "lowerSole": 0.0002543071750551462
+        },
+        {
+            "stopPhase": 1.0332491397857666,
+            "idlePhase": 0.04312283173203468,
+            "stopWeight": 0.16719013452529907,
+            "idleWeight": 0.8328098654747009,
+            "leftStep": 0.005313892383128405,
+            "rightStep": 0.0012549386592581868,
+            "footAngle": 1.505549669265747,
+            "lowerSole": 0.0018804658902809024
+        },
+        {
+            "stopPhase": 1.041832447052002,
+            "idlePhase": 0.045900609344244,
+            "stopWeight": 0.1135442852973938,
+            "idleWeight": 0.8864557147026062,
+            "leftStep": 0.005307237152010202,
+            "rightStep": 0.0012548284139484167,
+            "footAngle": 1.4998201131820679,
+            "lowerSole": 0.0035061670932918787
+        },
+        {
+            "stopPhase": 1.0504157543182373,
+            "idlePhase": 0.04867838695645332,
+            "stopWeight": 0.059898436069488525,
+            "idleWeight": 0.9401015639305115,
+            "leftStep": 0.005299779586493969,
+            "rightStep": 0.0012551333056762815,
+            "footAngle": 1.4956393241882324,
+            "lowerSole": 0.005131527781486511
+        },
+        {
+            "stopPhase": 1.0589990615844727,
+            "idlePhase": 0.05145616456866264,
+            "stopWeight": 0.006252586841583252,
+            "idleWeight": 0.9937474131584167,
+            "leftStep": 0.005290369037538767,
+            "rightStep": 0.0012550282990559936,
+            "footAngle": 1.4919716119766235,
+            "lowerSole": 0.006754175294190645
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.054233942180871964,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.1811676025390625,
+            "rightStep": 0.1596677452325821,
+            "footAngle": 11.380193710327148,
+            "lowerSole": -0.024412432685494423
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.057011719793081284,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001027114994940348,
+            "rightStep": 0.00010502522491151467,
+            "footAngle": 0.0,
+            "lowerSole": -0.024408379569649696
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.059789497405290604,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010218931856798008,
+            "rightStep": 0.00010530116560403258,
+            "footAngle": 0.0,
+            "lowerSole": -0.02440296858549118
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06256727874279022,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010370468226028606,
+            "rightStep": 0.00010642511188052595,
+            "footAngle": 0.0,
+            "lowerSole": -0.02439691312611103
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06534505635499954,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010480493074283004,
+            "rightStep": 0.00010774156544357538,
+            "footAngle": 0.0,
+            "lowerSole": -0.024393204599618912
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06812283396720886,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010495005699340254,
+            "rightStep": 0.00010780052252812311,
+            "footAngle": 0.0,
+            "lowerSole": -0.02438848279416561
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07090061157941818,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010622116678860039,
+            "rightStep": 0.00010844436474144459,
+            "footAngle": 0.0,
+            "lowerSole": -0.024384206160902977
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.0736783891916275,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001064930620486848,
+            "rightStep": 0.00010883130016736686,
+            "footAngle": 0.0,
+            "lowerSole": -0.024380067363381386
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07645616680383682,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010674163786461577,
+            "rightStep": 0.00011015256313839927,
+            "footAngle": 0.0,
+            "lowerSole": -0.024375509470701218
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07923394441604614,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010814754932653159,
+            "rightStep": 0.00011039595847250894,
+            "footAngle": 0.0,
+            "lowerSole": -0.024372931569814682
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.08201172202825546,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010814270353876054,
+            "rightStep": 0.00011170825746376067,
+            "footAngle": 0.0,
+            "lowerSole": -0.02436899207532406
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.08478949964046478,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010893002763623372,
+            "rightStep": 0.000111609828309156,
+            "footAngle": 0.0,
+            "lowerSole": -0.02436555176973343
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.0875672772526741,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010953440505545586,
+            "rightStep": 0.00011282777995802462,
+            "footAngle": 0.0,
+            "lowerSole": -0.024362629279494286
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09034505486488342,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011105093290098011,
+            "rightStep": 0.00011387503036530688,
+            "footAngle": 0.0,
+            "lowerSole": -0.024359820410609245
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09312283247709274,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011024310515495017,
+            "rightStep": 0.00011351632565492764,
+            "footAngle": 0.0,
+            "lowerSole": -0.024356795474886894
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09590061008930206,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011119778355350718,
+            "rightStep": 0.00011419197107898071,
+            "footAngle": 0.0,
+            "lowerSole": -0.024353019893169403
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09867838770151138,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011229611118324101,
+            "rightStep": 0.00011553848162293434,
+            "footAngle": 0.0,
+            "lowerSole": -0.024351611733436584
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1014561653137207,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011215735139558092,
+            "rightStep": 0.00011500774417072535,
+            "footAngle": 0.0,
+            "lowerSole": -0.024348188191652298
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10423394292593002,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001132375982706435,
+            "rightStep": 0.00011605111649259925,
+            "footAngle": 0.0,
+            "lowerSole": -0.02434653975069523
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10701172053813934,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001137124199885875,
+            "rightStep": 0.00011642949539236724,
+            "footAngle": 0.0,
+            "lowerSole": -0.024343885481357574
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10978949815034866,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011388527491362765,
+            "rightStep": 0.00011598166747717187,
+            "footAngle": 0.0,
+            "lowerSole": -0.024342719465494156
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.11256727576255798,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011396420450182632,
+            "rightStep": 0.00011706927034538239,
+            "footAngle": 0.0,
+            "lowerSole": -0.024340981617569923
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1153450533747673,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000113934394903481,
+            "rightStep": 0.00011640497541520745,
+            "footAngle": 0.0,
+            "lowerSole": -0.02433880604803562
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.11812283098697662,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011434102634666488,
+            "rightStep": 0.000117410825623665,
+            "footAngle": 0.0,
+            "lowerSole": -0.024337025359272957
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12090060859918594,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011445044947322458,
+            "rightStep": 0.00011697590525727719,
+            "footAngle": 0.0,
+            "lowerSole": -0.024335647001862526
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12367838621139526,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011538042599568143,
+            "rightStep": 0.00011757508764276281,
+            "footAngle": 0.0,
+            "lowerSole": -0.024336013942956924
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12645617127418518,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011504399299155921,
+            "rightStep": 0.00011779124906752259,
+            "footAngle": 0.0,
+            "lowerSole": -0.024333463981747627
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1292339563369751,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011362657824065536,
+            "rightStep": 0.00011579803685890511,
+            "footAngle": 0.0,
+            "lowerSole": -0.02433313988149166
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13201174139976501,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011497297236928716,
+            "rightStep": 0.00011750612611649558,
+            "footAngle": 0.0,
+            "lowerSole": -0.02433350682258606
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13478952646255493,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011447105498518795,
+            "rightStep": 0.00011718965834006667,
+            "footAngle": 0.0,
+            "lowerSole": -0.024331603199243546
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13756731152534485,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011398422793718055,
+            "rightStep": 0.00011675649875542149,
+            "footAngle": 0.0,
+            "lowerSole": -0.024331897497177124
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14034509658813477,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011436202476033941,
+            "rightStep": 0.00011662705219350755,
+            "footAngle": 0.0,
+            "lowerSole": -0.024332135915756226
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14312288165092468,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011329857079545036,
+            "rightStep": 0.0001157895676442422,
+            "footAngle": 0.0,
+            "lowerSole": -0.02433176338672638
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1459006667137146,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011332015856169164,
+            "rightStep": 0.00011584881576709449,
+            "footAngle": 0.0,
+            "lowerSole": -0.024332184344530106
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14867845177650452,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011307583190500736,
+            "rightStep": 0.00011580748105188832,
+            "footAngle": 0.0,
+            "lowerSole": -0.024332234635949135
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15145623683929443,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011282893683528528,
+            "rightStep": 0.000114716291136574,
+            "footAngle": 0.0,
+            "lowerSole": -0.02433287911117077
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15423402190208435,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011241354513913393,
+            "rightStep": 0.00011473560152808204,
+            "footAngle": 0.0,
+            "lowerSole": -0.024334197863936424
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15701180696487427,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011188114149263129,
+            "rightStep": 0.00011386593541828915,
+            "footAngle": 0.0,
+            "lowerSole": -0.02433587610721588
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15978959202766418,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011100423580501229,
+            "rightStep": 0.00011296752927592024,
+            "footAngle": 0.0,
+            "lowerSole": -0.024337414652109146
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1625673770904541,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011034646740881726,
+            "rightStep": 0.00011262825864832848,
+            "footAngle": 0.0,
+            "lowerSole": -0.0243380106985569
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.16534516215324402,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00011049103341065347,
+            "rightStep": 0.00011276866280240938,
+            "footAngle": 0.0,
+            "lowerSole": -0.024339377880096436
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.16812294721603394,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001099346554838121,
+            "rightStep": 0.00011161015572724864,
+            "footAngle": 0.0,
+            "lowerSole": -0.02434173785150051
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.17090073227882385,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010976895282510668,
+            "rightStep": 0.00011140770220663399,
+            "footAngle": 0.0,
+            "lowerSole": -0.02434374950826168
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.17367851734161377,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010827664664248005,
+            "rightStep": 0.00011047905718442053,
+            "footAngle": 0.0,
+            "lowerSole": -0.02434578537940979
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1764563024044037,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010821670002769679,
+            "rightStep": 0.00010965206456603482,
+            "footAngle": 0.0,
+            "lowerSole": -0.02434869110584259
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1792340874671936,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010757316340459511,
+            "rightStep": 0.00010908644617302343,
+            "footAngle": 0.0,
+            "lowerSole": -0.024350445717573166
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18201187252998352,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010674992518033832,
+            "rightStep": 0.00010800953896250576,
+            "footAngle": 0.0,
+            "lowerSole": -0.024352598935365677
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18478965759277344,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010656486847437918,
+            "rightStep": 0.00010755234688986093,
+            "footAngle": 0.0,
+            "lowerSole": -0.024356411769986153
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18756744265556335,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001058031411957927,
+            "rightStep": 0.00010649445175658911,
+            "footAngle": 0.0,
+            "lowerSole": -0.02435939945280552
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.19034522771835327,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010529224527999759,
+            "rightStep": 0.00010541308438405395,
+            "footAngle": 0.0,
+            "lowerSole": -0.024362528696656227
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1931230127811432,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010434036812512204,
+            "rightStep": 0.00010473477595951408,
+            "footAngle": 0.0,
+            "lowerSole": -0.0243658646941185
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1959007978439331,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010370375821366906,
+            "rightStep": 0.00010486328392289579,
+            "footAngle": 0.0,
+            "lowerSole": -0.02436935342848301
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.19867858290672302,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010220749391010031,
+            "rightStep": 0.00010205765283899382,
+            "footAngle": 0.0,
+            "lowerSole": -0.024372648447752
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20145636796951294,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010086436668643728,
+            "rightStep": 0.00010092362208524719,
+            "footAngle": 0.0,
+            "lowerSole": -0.024376221001148224
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20423415303230286,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010036794265033677,
+            "rightStep": 0.00009956111898645759,
+            "footAngle": 0.0,
+            "lowerSole": -0.024380695074796677
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20701193809509277,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009908460197038949,
+            "rightStep": 0.00009895930270431563,
+            "footAngle": 0.0,
+            "lowerSole": -0.02438516356050968
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2097897231578827,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009675482579041272,
+            "rightStep": 0.00009593215509084985,
+            "footAngle": 0.0,
+            "lowerSole": -0.02438904531300068
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2125675082206726,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009679054346634075,
+            "rightStep": 0.00009616325405659154,
+            "footAngle": 0.0,
+            "lowerSole": -0.024394236505031586
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.21534529328346252,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009444244642509148,
+            "rightStep": 0.00009402602154295892,
+            "footAngle": 0.0,
+            "lowerSole": -0.02439839392900467
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.21812307834625244,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009335266804555431,
+            "rightStep": 0.00009220703941537067,
+            "footAngle": 0.0,
+            "lowerSole": -0.024403300136327744
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.22090086340904236,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009198240149999037,
+            "rightStep": 0.00009049935033544898,
+            "footAngle": 0.0,
+            "lowerSole": -0.02440842241048813
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.22367864847183228,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008977115066954866,
+            "rightStep": 0.00008868354780133814,
+            "footAngle": 0.0,
+            "lowerSole": -0.024413976818323135
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2264564335346222,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008869666635291651,
+            "rightStep": 0.00008729670662432909,
+            "footAngle": 0.0,
+            "lowerSole": -0.02441975101828575
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2292342185974121,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008662882464705035,
+            "rightStep": 0.00008513767534168437,
+            "footAngle": 0.0,
+            "lowerSole": -0.024426110088825226
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23201200366020203,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000853055389598012,
+            "rightStep": 0.0000832237783470191,
+            "footAngle": 0.0,
+            "lowerSole": -0.024432696402072906
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23478978872299194,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008278089808300138,
+            "rightStep": 0.00008128325862344354,
+            "footAngle": 0.0,
+            "lowerSole": -0.02443889155983925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23756757378578186,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008039502426981926,
+            "rightStep": 0.00007889459084253758,
+            "footAngle": 0.0,
+            "lowerSole": -0.02444533444941044
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.24034535884857178,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007922537042759359,
+            "rightStep": 0.00007647394522791728,
+            "footAngle": 0.0,
+            "lowerSole": -0.024453498423099518
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2431231439113617,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007720111170783639,
+            "rightStep": 0.0000750421459088102,
+            "footAngle": 0.0,
+            "lowerSole": -0.024459877982735634
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2459009289741516,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000743713098927401,
+            "rightStep": 0.00007184331479948014,
+            "footAngle": 0.0,
+            "lowerSole": -0.024468062445521355
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.24867871403694153,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007283715240191668,
+            "rightStep": 0.00007078620546963066,
+            "footAngle": 0.0,
+            "lowerSole": -0.024475283920764923
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.25145649909973145,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007159540837164968,
+            "rightStep": 0.00006917667633388191,
+            "footAngle": 0.0,
+            "lowerSole": -0.024483704939484596
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.25423428416252136,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006858470442239195,
+            "rightStep": 0.00006544782809214666,
+            "footAngle": 0.0,
+            "lowerSole": -0.02449163608253002
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2570120692253113,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006694282637909055,
+            "rightStep": 0.00006471214874181896,
+            "footAngle": 0.0,
+            "lowerSole": -0.02450055442750454
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2597898542881012,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006378557736752555,
+            "rightStep": 0.00006134410068625584,
+            "footAngle": 0.0,
+            "lowerSole": -0.024507446214556694
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2625676393508911,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006302975089056417,
+            "rightStep": 0.0000595136771153193,
+            "footAngle": 0.0,
+            "lowerSole": -0.024516265839338303
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.26534542441368103,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000060964976000832394,
+            "rightStep": 0.000057545363233657554,
+            "footAngle": 0.0,
+            "lowerSole": -0.024524206295609474
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.26812320947647095,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005797341509605758,
+            "rightStep": 0.000054992899094941095,
+            "footAngle": 0.0,
+            "lowerSole": -0.024533623829483986
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.27090099453926086,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005701892587239854,
+            "rightStep": 0.000053375584684545174,
+            "footAngle": 0.0,
+            "lowerSole": -0.024541163817048073
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2736787796020508,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000550409677089192,
+            "rightStep": 0.0000513957129442133,
+            "footAngle": 0.0,
+            "lowerSole": -0.024550601840019226
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2764565646648407,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005225407221587375,
+            "rightStep": 0.000048074103688122705,
+            "footAngle": 0.0,
+            "lowerSole": -0.02455926313996315
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2792343497276306,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000049914378905668855,
+            "rightStep": 0.00004612498378264718,
+            "footAngle": 0.0,
+            "lowerSole": -0.02456803433597088
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.28201213479042053,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000047816818550927565,
+            "rightStep": 0.0000438646056863945,
+            "footAngle": 0.0,
+            "lowerSole": -0.024577898904681206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.28478991985321045,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00004498638736549765,
+            "rightStep": 0.00004064254608238116,
+            "footAngle": 0.0,
+            "lowerSole": -0.024586569517850876
+        }
+    ],
+    "blendedGoals": [
+        {
+            "stopPhase": 0.75,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0,
+            "rightStep": 0.0,
+            "footAngle": 0.0,
+            "lowerSole": -0.021724477410316467
+        },
+        {
+            "stopPhase": 0.7585833072662354,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0003161732165608555,
+            "rightStep": 0.0018704697722569108,
+            "footAngle": 0.636734127998352,
+            "lowerSole": -0.021609771996736526
+        },
+        {
+            "stopPhase": 0.7671666145324707,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0003124478389509022,
+            "rightStep": 0.0018765672575682402,
+            "footAngle": 0.636734127998352,
+            "lowerSole": -0.02150590717792511
+        },
+        {
+            "stopPhase": 0.775749921798706,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00029922169051133096,
+            "rightStep": 0.0018096298445016146,
+            "footAngle": 0.5961027145385742,
+            "lowerSole": -0.021416442468762398
+        },
+        {
+            "stopPhase": 0.7843332290649414,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0002476067456882447,
+            "rightStep": 0.0013726857723668218,
+            "footAngle": 0.2438931167125702,
+            "lowerSole": -0.021380381658673286
+        },
+        {
+            "stopPhase": 0.7929165363311768,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00023398191842716187,
+            "rightStep": 0.001379172783344984,
+            "footAngle": 0.2533376216888428,
+            "lowerSole": -0.021355699747800827
+        },
+        {
+            "stopPhase": 0.8014998435974121,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0002121787692885846,
+            "rightStep": 0.0012813357170671225,
+            "footAngle": 0.22381167113780975,
+            "lowerSole": -0.021351302042603493
+        },
+        {
+            "stopPhase": 0.8100831508636475,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00018382054986432195,
+            "rightStep": 0.0008043034467846155,
+            "footAngle": 0.22381167113780975,
+            "lowerSole": -0.021397534757852554
+        },
+        {
+            "stopPhase": 0.8186664581298828,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00016801373567432165,
+            "rightStep": 0.000812155136372894,
+            "footAngle": 0.2306998074054718,
+            "lowerSole": -0.021457131952047348
+        },
+        {
+            "stopPhase": 0.8272497653961182,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00016726383182685822,
+            "rightStep": 0.0006621814682148397,
+            "footAngle": 0.2438931167125702,
+            "lowerSole": -0.021535277366638184
+        },
+        {
+            "stopPhase": 0.8358330726623535,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00020836057956330478,
+            "rightStep": 0.00024233563453890383,
+            "footAngle": 0.24708139896392822,
+            "lowerSole": -0.021640971302986145
+        },
+        {
+            "stopPhase": 0.8444163799285889,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00019317421538289636,
+            "rightStep": 0.00024950047372840345,
+            "footAngle": 0.2502290904521942,
+            "lowerSole": -0.021761324256658554
+        },
+        {
+            "stopPhase": 0.8529996871948242,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0001750871742842719,
+            "rightStep": 0.00014824046229477972,
+            "footAngle": 0.1978234350681305,
+            "lowerSole": -0.021889900788664818
+        },
+        {
+            "stopPhase": 0.8615829944610596,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0001820864126784727,
+            "rightStep": 0.00012773506750818342,
+            "footAngle": 0.0,
+            "lowerSole": -0.022022707387804985
+        },
+        {
+            "stopPhase": 0.8701663017272949,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00017891888273879886,
+            "rightStep": 0.00012743135448545218,
+            "footAngle": 0.0,
+            "lowerSole": -0.022167518734931946
+        },
+        {
+            "stopPhase": 0.8787496089935303,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00017937930533662438,
+            "rightStep": 0.00019503783551044762,
+            "footAngle": 0.0,
+            "lowerSole": -0.022298892959952354
+        },
+        {
+            "stopPhase": 0.8873329162597656,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00019508463446982205,
+            "rightStep": 0.0003002381999976933,
+            "footAngle": 0.0,
+            "lowerSole": -0.0224100723862648
+        },
+        {
+            "stopPhase": 0.895916223526001,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00017140727140940726,
+            "rightStep": 0.0002950153429992497,
+            "footAngle": 0.0,
+            "lowerSole": -0.022532455623149872
+        },
+        {
+            "stopPhase": 0.9044995307922363,
+            "idlePhase": 0.0014561666175723076,
+            "stopWeight": 0.9718778133392334,
+            "idleWeight": 0.0281221866607666,
+            "leftStep": 0.008400443941354752,
+            "rightStep": 0.00520695885643363,
+            "footAngle": 0.4714679419994354,
+            "lowerSole": -0.019255608320236206
+        },
+        {
+            "stopPhase": 0.9130828380584717,
+            "idlePhase": 0.004233944229781628,
+            "stopWeight": 0.9182319641113281,
+            "idleWeight": 0.08176803588867188,
+            "leftStep": 0.01595611684024334,
+            "rightStep": 0.009779396466910839,
+            "footAngle": 0.9202535152435303,
+            "lowerSole": -0.012874661013484001
+        },
+        {
+            "stopPhase": 0.921666145324707,
+            "idlePhase": 0.007011721841990948,
+            "stopWeight": 0.8645861148834229,
+            "idleWeight": 0.13541388511657715,
+            "leftStep": 0.015910554677248,
+            "rightStep": 0.009745881892740726,
+            "footAngle": 0.9219529032707214,
+            "lowerSole": -0.006477542221546173
+        },
+        {
+            "stopPhase": 0.9302494525909424,
+            "idlePhase": 0.009789499454200268,
+            "stopWeight": 0.8109402656555176,
+            "idleWeight": 0.18905973434448242,
+            "leftStep": 0.015849115327000618,
+            "rightStep": 0.009674811735749245,
+            "footAngle": 0.923649251461029,
+            "lowerSole": -0.00003919540540664457
+        },
+        {
+            "stopPhase": 0.9388327598571777,
+            "idlePhase": 0.012567277066409588,
+            "stopWeight": 0.7572944164276123,
+            "idleWeight": 0.2427055835723877,
+            "leftStep": 0.01580735296010971,
+            "rightStep": 0.009626644663512707,
+            "footAngle": 0.9253425002098083,
+            "lowerSole": 0.006429311353713274
+        },
+        {
+            "stopPhase": 0.9474160671234131,
+            "idlePhase": 0.015345054678618908,
+            "stopWeight": 0.7036486268043518,
+            "idleWeight": 0.2963513731956482,
+            "leftStep": 0.015788264572620392,
+            "rightStep": 0.009605150669813156,
+            "footAngle": 0.9253425002098083,
+            "lowerSole": 0.012914790771901608
+        },
+        {
+            "stopPhase": 0.9559993743896484,
+            "idlePhase": 0.018122833222150803,
+            "stopWeight": 0.6500027775764465,
+            "idleWeight": 0.34999722242355347,
+            "leftStep": 0.015815462917089462,
+            "rightStep": 0.009537535719573498,
+            "footAngle": 0.9270326495170593,
+            "lowerSole": 0.019438914954662323
+        },
+        {
+            "stopPhase": 0.9645826816558838,
+            "idlePhase": 0.020900610834360123,
+            "stopWeight": 0.5963569283485413,
+            "idleWeight": 0.40364307165145874,
+            "leftStep": 0.01581495814025402,
+            "rightStep": 0.009505551308393478,
+            "footAngle": 0.9278765916824341,
+            "lowerSole": 0.025987913832068443
+        },
+        {
+            "stopPhase": 0.9731659889221191,
+            "idlePhase": 0.023678388446569443,
+            "stopWeight": 0.542711079120636,
+            "idleWeight": 0.457288920879364,
+            "leftStep": 0.015798650681972504,
+            "rightStep": 0.009493554010987282,
+            "footAngle": 0.9261879920959473,
+            "lowerSole": 0.032553527504205704
+        },
+        {
+            "stopPhase": 0.9817492961883545,
+            "idlePhase": 0.026456166058778763,
+            "stopWeight": 0.4890652298927307,
+            "idleWeight": 0.5109347701072693,
+            "leftStep": 0.01580788940191269,
+            "rightStep": 0.009477557614445686,
+            "footAngle": 0.9320846796035767,
+            "lowerSole": 0.03914349153637886
+        },
+        {
+            "stopPhase": 0.9903326034545898,
+            "idlePhase": 0.029233943670988083,
+            "stopWeight": 0.43541938066482544,
+            "idleWeight": 0.5645806193351746,
+            "leftStep": 0.01579759269952774,
+            "rightStep": 0.009466156363487244,
+            "footAngle": 0.9329240322113037,
+            "lowerSole": 0.04575185850262642
+        },
+        {
+            "stopPhase": 0.9989159107208252,
+            "idlePhase": 0.0320117212831974,
+            "stopWeight": 0.38177353143692017,
+            "idleWeight": 0.6182264685630798,
+            "leftStep": 0.015782155096530914,
+            "rightStep": 0.00945622380822897,
+            "footAngle": 0.9346004128456116,
+            "lowerSole": 0.05237695947289467
+        },
+        {
+            "stopPhase": 1.0074992179870605,
+            "idlePhase": 0.03478949889540672,
+            "stopWeight": 0.3281276822090149,
+            "idleWeight": 0.6718723177909851,
+            "leftStep": 0.015745511278510094,
+            "rightStep": 0.009443067945539951,
+            "footAngle": 0.9371094107627869,
+            "lowerSole": 0.05901758000254631
+        },
+        {
+            "stopPhase": 1.016082525253296,
+            "idlePhase": 0.03756727650761604,
+            "stopWeight": 0.2744818329811096,
+            "idleWeight": 0.7255181670188904,
+            "leftStep": 0.01573294773697853,
+            "rightStep": 0.009433051571249962,
+            "footAngle": 0.9371094107627869,
+            "lowerSole": 0.06567548215389252
+        },
+        {
+            "stopPhase": 1.0246658325195313,
+            "idlePhase": 0.04034505411982536,
+            "stopWeight": 0.22083598375320435,
+            "idleWeight": 0.7791640162467957,
+            "leftStep": 0.01572326198220253,
+            "rightStep": 0.009423764422535896,
+            "footAngle": 0.9371094107627869,
+            "lowerSole": 0.07235020399093628
+        },
+        {
+            "stopPhase": 1.0332491397857666,
+            "idlePhase": 0.04312283173203468,
+            "stopWeight": 0.16719013452529907,
+            "idleWeight": 0.8328098654747009,
+            "leftStep": 0.01571393385529518,
+            "rightStep": 0.00941416621208191,
+            "footAngle": 0.9387784600257874,
+            "lowerSole": 0.0790412649512291
+        },
+        {
+            "stopPhase": 1.041832447052002,
+            "idlePhase": 0.045900609344244,
+            "stopWeight": 0.1135442852973938,
+            "idleWeight": 0.8864557147026062,
+            "leftStep": 0.01570446416735649,
+            "rightStep": 0.009404453448951244,
+            "footAngle": 0.9379442930221558,
+            "lowerSole": 0.08574873954057693
+        },
+        {
+            "stopPhase": 1.0504157543182373,
+            "idlePhase": 0.04867838695645332,
+            "stopWeight": 0.059898436069488525,
+            "idleWeight": 0.9401015639305115,
+            "leftStep": 0.015694452449679375,
+            "rightStep": 0.0093944501131773,
+            "footAngle": 0.9387784600257874,
+            "lowerSole": 0.09247320145368576
+        },
+        {
+            "stopPhase": 1.0589990615844727,
+            "idlePhase": 0.05145616456866264,
+            "stopWeight": 0.006252586841583252,
+            "idleWeight": 0.9937474131584167,
+            "leftStep": 0.015684375539422035,
+            "rightStep": 0.009384971112012863,
+            "footAngle": 0.9421074390411377,
+            "lowerSole": 0.09921345859766006
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.054233942180871964,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0017523744609206915,
+            "rightStep": 0.0010196000803261995,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000040382146835
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.057011719793081284,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000936498399823904,
+            "rightStep": 0.00010501232463866472,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000015050172806
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.059789497405290604,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009446847252547741,
+            "rightStep": 0.00010561839008005336,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06256727874279022,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009531476825941354,
+            "rightStep": 0.00010653556091710925,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06534505635499954,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009580180631019175,
+            "rightStep": 0.00010755148832686245,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000002846121788
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06812283396720886,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000966182051342912,
+            "rightStep": 0.00010758019197965041,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000017285346985
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07090061157941818,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009749719174578786,
+            "rightStep": 0.00010862465569516644,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000036656856537
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.0736783891916275,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009745682473294437,
+            "rightStep": 0.00010896188905462623,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07645616680383682,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009818431863095611,
+            "rightStep": 0.00010983299580402672,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07923394441604614,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009871436486719176,
+            "rightStep": 0.00011041358084185049,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000025480985641
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.08201172202825546,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009940777817973867,
+            "rightStep": 0.00011139491107314825,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000021010637283
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.08478949964046478,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000996032395050861,
+            "rightStep": 0.00011183558672200888,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000536441803
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.0875672772526741,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010030264820670709,
+            "rightStep": 0.0001128123258240521,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999989718198776
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09034505486488342,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010078831837745383,
+            "rightStep": 0.00011362558143446222,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000010579824448
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09312283247709274,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010140359518118203,
+            "rightStep": 0.00011390830331947654,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999994188547134
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09590061008930206,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010205358557868749,
+            "rightStep": 0.00011474405619082972,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000019520521164
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09867838770151138,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010225987352896482,
+            "rightStep": 0.00011556874960660934,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018775463104
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1014561653137207,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010252845095237717,
+            "rightStep": 0.00011530110350577161,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000029951334
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10423394292593002,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010351485980208963,
+            "rightStep": 0.00011590670328587294,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000042617321014
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10701172053813934,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010339057189412415,
+            "rightStep": 0.00011580740829231218,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000023990869522
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10978949815034866,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010389644739916548,
+            "rightStep": 0.00011632211680989712,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000044107437134
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.11256727576255798,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010377325088484213,
+            "rightStep": 0.00011668312072288245,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000029951334
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1153450533747673,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010395106073701754,
+            "rightStep": 0.0001167631708085537,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000000894069672
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.11812283098697662,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001040195711539127,
+            "rightStep": 0.00011723022907972336,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000038892030716
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12090060859918594,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010463278886163607,
+            "rightStep": 0.00011744233779609203,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000008344650269
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12367838621139526,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010416368604637682,
+            "rightStep": 0.00011799163621617481,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000025480985641
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12645617127418518,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010463140642968938,
+            "rightStep": 0.00011692771658999845,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1292339563369751,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001042078947648406,
+            "rightStep": 0.00011682443437166512,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000021755695343
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13201174139976501,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010409222886664793,
+            "rightStep": 0.00011710458056768402,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000013560056686
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13478952646255493,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010359916632296517,
+            "rightStep": 0.00011656918650260195,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000006854534149
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13756731152534485,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010357458086218685,
+            "rightStep": 0.00011676535359583795,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000009089708328
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14034509658813477,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001027821926982142,
+            "rightStep": 0.00011643731704680249,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000009834766388
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14312288165092468,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010278648551320657,
+            "rightStep": 0.00011596867261687294,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1459006667137146,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010253252548864111,
+            "rightStep": 0.00011565841123228893,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999995678663254
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14867845177650452,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010181562538491562,
+            "rightStep": 0.00011551807983778417,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15145623683929443,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010188715532422066,
+            "rightStep": 0.00011492065095808357,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15423402190208435,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000101342229754664,
+            "rightStep": 0.00011430637823650613,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000019520521164
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15701180696487427,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010091837611980736,
+            "rightStep": 0.00011417368659749627,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999999403953552
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15978959202766418,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010023848881246522,
+            "rightStep": 0.0001138320512836799,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1625673770904541,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009977127774618566,
+            "rightStep": 0.00011273864220129326,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000029951334
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.16534516215324402,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000990830158116296,
+            "rightStep": 0.00011236127465963364,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999996423721313
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.16812294721603394,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009803951979847625,
+            "rightStep": 0.00011153658851981163,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000387430191
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.17090073227882385,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009762666013557464,
+            "rightStep": 0.0001110122975660488,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000021755695343
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.17367851734161377,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009710931772133335,
+            "rightStep": 0.00011045239079976454,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000610947609
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1764563024044037,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009651081199990585,
+            "rightStep": 0.00010930495045613497,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000038892030716
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1792340874671936,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009607683750800788,
+            "rightStep": 0.00010915446910075843,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000011324882507
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18201187252998352,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009524342021904886,
+            "rightStep": 0.00010802604811033234,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000610947609
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18478965759277344,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009471630619373173,
+            "rightStep": 0.0001075197069440037,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000014305114746
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18756744265556335,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009421170398127288,
+            "rightStep": 0.00010658587416401133,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000461935997
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.19034522771835327,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009357667295262218,
+            "rightStep": 0.00010594548803055659,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000002384185791
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1931230127811432,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009244206012226641,
+            "rightStep": 0.00010422103514429182,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000610947609
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1959007978439331,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000913332260097377,
+            "rightStep": 0.00010365864727646112,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.19867858290672302,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009054042311618105,
+            "rightStep": 0.00010240308620268479,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20145636796951294,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008936759695643559,
+            "rightStep": 0.00010075188765767962,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999984502792358
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20423415303230286,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008817230991553515,
+            "rightStep": 0.00009983544441638514,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000017285346985
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20701193809509277,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008741503552300856,
+            "rightStep": 0.00009813008364289999,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2097897231578827,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008565359894419089,
+            "rightStep": 0.00009640970529289916,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2125675082206726,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008507205347996205,
+            "rightStep": 0.0000959097160375677,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000008344650269
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.21534529328346252,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008360080391867086,
+            "rightStep": 0.00009386747842654586,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999997913837433
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.21812307834625244,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008192106179194525,
+            "rightStep": 0.00009199088526656851,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000000894069672
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.22090086340904236,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008029369928408414,
+            "rightStep": 0.00009037239942699671,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.22367864847183228,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000788010293035768,
+            "rightStep": 0.00008830521983327344,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000015795230865
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2264564335346222,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000776877423049882,
+            "rightStep": 0.00008682719635544345,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2292342185974121,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007621293480042368,
+            "rightStep": 0.0000851420481922105,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000044107437134
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23201200366020203,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007437683234456927,
+            "rightStep": 0.00008314423030242324,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000026971101761
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23478978872299194,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007204687426565215,
+            "rightStep": 0.00008071911724982783,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000020265579224
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23756757378578186,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007044267113087699,
+            "rightStep": 0.00007857241871533915,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999985247850418
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.24034535884857178,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006864966417197138,
+            "rightStep": 0.00007636909140273929,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2431231439113617,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006676167686237022,
+            "rightStep": 0.00007358985749306157,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000036656856537
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2459009289741516,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000653145179967396,
+            "rightStep": 0.00007204096618806943,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999998658895493
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.24867871403694153,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006330810720100999,
+            "rightStep": 0.00006976102304179221,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000014305114746
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.25145649909973145,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006121287879068404,
+            "rightStep": 0.00006777145608793944,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999983012676239
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.25423428416252136,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005934891669312492,
+            "rightStep": 0.00006559436587849632,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000000894069672
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2570120692253113,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005718587271985598,
+            "rightStep": 0.00006376195960910991,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999983757734299
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2597898542881012,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000055333293857984245,
+            "rightStep": 0.00006093443153076805,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000011324882507
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2625676393508911,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005379433059715666,
+            "rightStep": 0.00005905464058741927,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.26534542441368103,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005179516665521078,
+            "rightStep": 0.00005645055716740899,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000461935997
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.26812320947647095,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00004961549711879343,
+            "rightStep": 0.000054735763114877045,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000050067901611
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.27090099453926086,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000048081295972224325,
+            "rightStep": 0.000052120165491942316,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2736787796020508,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000045372380554908887,
+            "rightStep": 0.000050250819185748696,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000461935997
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2764565646648407,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000043400788854341954,
+            "rightStep": 0.00004733255264000036,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000020265579224
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2792343497276306,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00004140740929869935,
+            "rightStep": 0.00004489832281251438,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999992698431015
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.28201213479042053,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000039166450733318925,
+            "rightStep": 0.0000423629826400429,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000017285346985
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.28478991985321045,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00003653198291431181,
+            "rightStep": 0.00003980265319114551,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        }
+    ],
+    "groundedGoals": [
+        {
+            "stopPhase": 0.75,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0,
+            "rightStep": 0.0,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000088065862656
+        },
+        {
+            "stopPhase": 0.7585833072662354,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00029557052766904235,
+            "rightStep": 0.001981006935238838,
+            "footAngle": 0.6330357193946838,
+            "lowerSole": 0.10000041127204895
+        },
+        {
+            "stopPhase": 0.7671666145324707,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00029554343200288713,
+            "rightStep": 0.0019767398480325937,
+            "footAngle": 0.636734127998352,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 0.775749921798706,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00028628340805880725,
+            "rightStep": 0.0018962996546179056,
+            "footAngle": 0.5974143147468567,
+            "lowerSole": 0.10000015795230865
+        },
+        {
+            "stopPhase": 0.7843332290649414,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0002449268940836191,
+            "rightStep": 0.0014063278213143349,
+            "footAngle": 0.23738813400268555,
+            "lowerSole": 0.10000038892030716
+        },
+        {
+            "stopPhase": 0.7929165363311768,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0002329921117052436,
+            "rightStep": 0.0013999000657349825,
+            "footAngle": 0.2438931167125702,
+            "lowerSole": 0.10000032931566238
+        },
+        {
+            "stopPhase": 0.8014998435974121,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00021208245016168803,
+            "rightStep": 0.0012838668189942837,
+            "footAngle": 0.22028686106204987,
+            "lowerSole": 0.10000044107437134
+        },
+        {
+            "stopPhase": 0.8100831508636475,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00017861007654573768,
+            "rightStep": 0.000767066259868443,
+            "footAngle": 0.24708139896392822,
+            "lowerSole": 0.10000015795230865
+        },
+        {
+            "stopPhase": 0.8186664581298828,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00015696760965511203,
+            "rightStep": 0.0007633491768501699,
+            "footAngle": 0.24708139896392822,
+            "lowerSole": 0.10000039637088776
+        },
+        {
+            "stopPhase": 0.8272497653961182,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00014851881132926792,
+            "rightStep": 0.0005973187508061528,
+            "footAngle": 0.2340678572654724,
+            "lowerSole": 0.10000022500753403
+        },
+        {
+            "stopPhase": 0.8358330726623535,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00018049056234303862,
+            "rightStep": 0.0001654644001973793,
+            "footAngle": 0.2502290904521942,
+            "lowerSole": 0.10000050812959671
+        },
+        {
+            "stopPhase": 0.8444163799285889,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0001524450199212879,
+            "rightStep": 0.00016401131870225072,
+            "footAngle": 0.2438931167125702,
+            "lowerSole": 0.10000038892030716
+        },
+        {
+            "stopPhase": 0.8529996871948242,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00012018120469292626,
+            "rightStep": 0.00011230170639464632,
+            "footAngle": 0.17693865299224854,
+            "lowerSole": 0.10000036656856537
+        },
+        {
+            "stopPhase": 0.8615829944610596,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0001258186821360141,
+            "rightStep": 0.0002466774021741003,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 0.8701663017272949,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00010601376561680809,
+            "rightStep": 0.0002582925371825695,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999986737966537
+        },
+        {
+            "stopPhase": 0.8787496089935303,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00012369400064926594,
+            "rightStep": 0.0003183844673912972,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000001639127731
+        },
+        {
+            "stopPhase": 0.8873329162597656,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.00016215431969612837,
+            "rightStep": 0.00040378040284849703,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000049322843552
+        },
+        {
+            "stopPhase": 0.895916223526001,
+            "idlePhase": 0.0,
+            "stopWeight": 1.0,
+            "idleWeight": 0.0,
+            "leftStep": 0.0001223848230438307,
+            "rightStep": 0.0004101615340914577,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000073164701462
+        },
+        {
+            "stopPhase": 0.9044995307922363,
+            "idlePhase": 0.0014561666175723076,
+            "stopWeight": 0.9718778133392334,
+            "idleWeight": 0.0281221866607666,
+            "leftStep": 0.007723982911556959,
+            "rightStep": 0.004082264378666878,
+            "footAngle": 0.4731251299381256,
+            "lowerSole": 0.0999218225479126
+        },
+        {
+            "stopPhase": 0.9130828380584717,
+            "idlePhase": 0.004233944229781628,
+            "stopWeight": 0.9182319641113281,
+            "idleWeight": 0.08176803588867188,
+            "leftStep": 0.014609457924962044,
+            "rightStep": 0.007823901250958443,
+            "footAngle": 0.923649251461029,
+            "lowerSole": 0.0997839942574501
+        },
+        {
+            "stopPhase": 0.921666145324707,
+            "idlePhase": 0.007011721841990948,
+            "stopWeight": 0.8645861148834229,
+            "idleWeight": 0.13541388511657715,
+            "leftStep": 0.014560648240149021,
+            "rightStep": 0.0078100538812577724,
+            "footAngle": 0.9244962930679321,
+            "lowerSole": 0.09966245293617249
+        },
+        {
+            "stopPhase": 0.9302494525909424,
+            "idlePhase": 0.009789499454200268,
+            "stopWeight": 0.8109402656555176,
+            "idleWeight": 0.18905973434448242,
+            "leftStep": 0.014483075588941574,
+            "rightStep": 0.007802926003932953,
+            "footAngle": 0.9244962930679321,
+            "lowerSole": 0.09955786168575287
+        },
+        {
+            "stopPhase": 0.9388327598571777,
+            "idlePhase": 0.012567277066409588,
+            "stopWeight": 0.7572944164276123,
+            "idleWeight": 0.2427055835723877,
+            "leftStep": 0.014431117102503777,
+            "rightStep": 0.007796254009008408,
+            "footAngle": 0.9261879920959473,
+            "lowerSole": 0.09946950525045395
+        },
+        {
+            "stopPhase": 0.9474160671234131,
+            "idlePhase": 0.015345054678618908,
+            "stopWeight": 0.7036486268043518,
+            "idleWeight": 0.2963513731956482,
+            "leftStep": 0.014410154893994331,
+            "rightStep": 0.007787122391164303,
+            "footAngle": 0.9278765916824341,
+            "lowerSole": 0.09939740598201752
+        },
+        {
+            "stopPhase": 0.9559993743896484,
+            "idlePhase": 0.018122833222150803,
+            "stopWeight": 0.6500027775764465,
+            "idleWeight": 0.34999722242355347,
+            "leftStep": 0.014430812560021877,
+            "rightStep": 0.007776262704282999,
+            "footAngle": 0.9270326495170593,
+            "lowerSole": 0.09934049099683762
+        },
+        {
+            "stopPhase": 0.9645826816558838,
+            "idlePhase": 0.020900610834360123,
+            "stopWeight": 0.5963569283485413,
+            "idleWeight": 0.40364307165145874,
+            "leftStep": 0.01442655362188816,
+            "rightStep": 0.00776724424213171,
+            "footAngle": 0.928719699382782,
+            "lowerSole": 0.09930163621902466
+        },
+        {
+            "stopPhase": 0.9731659889221191,
+            "idlePhase": 0.023678388446569443,
+            "stopWeight": 0.542711079120636,
+            "idleWeight": 0.457288920879364,
+            "leftStep": 0.014408540911972523,
+            "rightStep": 0.007757129613310099,
+            "footAngle": 0.928719699382782,
+            "lowerSole": 0.09927962720394135
+        },
+        {
+            "stopPhase": 0.9817492961883545,
+            "idlePhase": 0.026456166058778763,
+            "stopWeight": 0.4890652298927307,
+            "idleWeight": 0.5109347701072693,
+            "leftStep": 0.014415048994123936,
+            "rightStep": 0.007743555586785078,
+            "footAngle": 0.9320846796035767,
+            "lowerSole": 0.09927451610565186
+        },
+        {
+            "stopPhase": 0.9903326034545898,
+            "idlePhase": 0.029233943670988083,
+            "stopWeight": 0.43541938066482544,
+            "idleWeight": 0.5645806193351746,
+            "leftStep": 0.01440354622900486,
+            "rightStep": 0.007734245155006647,
+            "footAngle": 0.9362739324569702,
+            "lowerSole": 0.09928596764802933
+        },
+        {
+            "stopPhase": 0.9989159107208252,
+            "idlePhase": 0.0320117212831974,
+            "stopWeight": 0.38177353143692017,
+            "idleWeight": 0.6182264685630798,
+            "leftStep": 0.01438699197024107,
+            "rightStep": 0.007726305164396763,
+            "footAngle": 0.9371094107627869,
+            "lowerSole": 0.09931454062461853
+        },
+        {
+            "stopPhase": 1.0074992179870605,
+            "idlePhase": 0.03478949889540672,
+            "stopWeight": 0.3281276822090149,
+            "idleWeight": 0.6718723177909851,
+            "leftStep": 0.01434695441275835,
+            "rightStep": 0.007726478390395641,
+            "footAngle": 0.9387784600257874,
+            "lowerSole": 0.0993599221110344
+        },
+        {
+            "stopPhase": 1.016082525253296,
+            "idlePhase": 0.03756727650761604,
+            "stopWeight": 0.2744818329811096,
+            "idleWeight": 0.7255181670188904,
+            "leftStep": 0.014333270490169525,
+            "rightStep": 0.007716715801507235,
+            "footAngle": 0.9379442930221558,
+            "lowerSole": 0.09942202270030975
+        },
+        {
+            "stopPhase": 1.0246658325195313,
+            "idlePhase": 0.04034505411982536,
+            "stopWeight": 0.22083598375320435,
+            "idleWeight": 0.7791640162467957,
+            "leftStep": 0.014322936534881592,
+            "rightStep": 0.007705127354711294,
+            "footAngle": 0.9387784600257874,
+            "lowerSole": 0.09950076788663864
+        },
+        {
+            "stopPhase": 1.0332491397857666,
+            "idlePhase": 0.04312283173203468,
+            "stopWeight": 0.16719013452529907,
+            "idleWeight": 0.8328098654747009,
+            "leftStep": 0.014312410727143288,
+            "rightStep": 0.0076940045692026615,
+            "footAngle": 0.9404444098472595,
+            "lowerSole": 0.09959670901298523
+        },
+        {
+            "stopPhase": 1.041832447052002,
+            "idlePhase": 0.045900609344244,
+            "stopWeight": 0.1135442852973938,
+            "idleWeight": 0.8864557147026062,
+            "leftStep": 0.014301953837275505,
+            "rightStep": 0.007681910414248705,
+            "footAngle": 0.9379442930221558,
+            "lowerSole": 0.09970869868993759
+        },
+        {
+            "stopPhase": 1.0504157543182373,
+            "idlePhase": 0.04867838695645332,
+            "stopWeight": 0.059898436069488525,
+            "idleWeight": 0.9401015639305115,
+            "leftStep": 0.014291467145085335,
+            "rightStep": 0.0076695941388607025,
+            "footAngle": 0.9396117329597473,
+            "lowerSole": 0.09983725100755692
+        },
+        {
+            "stopPhase": 1.0589990615844727,
+            "idlePhase": 0.05145616456866264,
+            "stopWeight": 0.006252586841583252,
+            "idleWeight": 0.9937474131584167,
+            "leftStep": 0.014280574396252632,
+            "rightStep": 0.007658602669835091,
+            "footAngle": 0.9396117329597473,
+            "lowerSole": 0.09998191893100739
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.054233942180871964,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0015816072700545192,
+            "rightStep": 0.0008012116886675358,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000040382146835
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.057011719793081284,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000936498399823904,
+            "rightStep": 0.00010501232463866472,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000015050172806
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.059789497405290604,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009446847252547741,
+            "rightStep": 0.00010561839008005336,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06256727874279022,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009531476825941354,
+            "rightStep": 0.00010653556091710925,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06534505635499954,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009580180631019175,
+            "rightStep": 0.00010755148832686245,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000002846121788
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.06812283396720886,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000966182051342912,
+            "rightStep": 0.00010758019197965041,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000017285346985
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07090061157941818,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009749719174578786,
+            "rightStep": 0.00010862465569516644,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000036656856537
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.0736783891916275,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009745682473294437,
+            "rightStep": 0.00010896188905462623,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07645616680383682,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009818431863095611,
+            "rightStep": 0.00010983299580402672,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.07923394441604614,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009871436486719176,
+            "rightStep": 0.00011041358084185049,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000025480985641
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.08201172202825546,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009940777817973867,
+            "rightStep": 0.00011139491107314825,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000021010637283
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.08478949964046478,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000996032395050861,
+            "rightStep": 0.00011183558672200888,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000536441803
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.0875672772526741,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010030264820670709,
+            "rightStep": 0.0001128123258240521,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999989718198776
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09034505486488342,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010078831837745383,
+            "rightStep": 0.00011362558143446222,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000010579824448
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09312283247709274,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010140359518118203,
+            "rightStep": 0.00011390830331947654,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999994188547134
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09590061008930206,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010205358557868749,
+            "rightStep": 0.00011474405619082972,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000019520521164
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.09867838770151138,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010225987352896482,
+            "rightStep": 0.00011556874960660934,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018775463104
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1014561653137207,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010252845095237717,
+            "rightStep": 0.00011530110350577161,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000029951334
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10423394292593002,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010351485980208963,
+            "rightStep": 0.00011590670328587294,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000042617321014
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10701172053813934,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010339057189412415,
+            "rightStep": 0.00011580740829231218,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000023990869522
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.10978949815034866,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010389644739916548,
+            "rightStep": 0.00011632211680989712,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000044107437134
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.11256727576255798,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010377325088484213,
+            "rightStep": 0.00011668312072288245,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000029951334
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1153450533747673,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010395106073701754,
+            "rightStep": 0.0001167631708085537,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000000894069672
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.11812283098697662,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001040195711539127,
+            "rightStep": 0.00011723022907972336,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000038892030716
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12090060859918594,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010463278886163607,
+            "rightStep": 0.00011744233779609203,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000008344650269
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12367838621139526,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010416368604637682,
+            "rightStep": 0.00011799163621617481,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000025480985641
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.12645617127418518,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010463140642968938,
+            "rightStep": 0.00011692771658999845,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1292339563369751,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001042078947648406,
+            "rightStep": 0.00011682443437166512,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000021755695343
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13201174139976501,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010409222886664793,
+            "rightStep": 0.00011710458056768402,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000013560056686
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13478952646255493,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010359916632296517,
+            "rightStep": 0.00011656918650260195,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000006854534149
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.13756731152534485,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010357458086218685,
+            "rightStep": 0.00011676535359583795,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000009089708328
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14034509658813477,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0001027821926982142,
+            "rightStep": 0.00011643731704680249,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000009834766388
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14312288165092468,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010278648551320657,
+            "rightStep": 0.00011596867261687294,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1459006667137146,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010253252548864111,
+            "rightStep": 0.00011565841123228893,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999995678663254
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.14867845177650452,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010181562538491562,
+            "rightStep": 0.00011551807983778417,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15145623683929443,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010188715532422066,
+            "rightStep": 0.00011492065095808357,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15423402190208435,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000101342229754664,
+            "rightStep": 0.00011430637823650613,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000019520521164
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15701180696487427,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010091837611980736,
+            "rightStep": 0.00011417368659749627,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999999403953552
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.15978959202766418,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00010023848881246522,
+            "rightStep": 0.0001138320512836799,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1625673770904541,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009977127774618566,
+            "rightStep": 0.00011273864220129326,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000029951334
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.16534516215324402,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000990830158116296,
+            "rightStep": 0.00011236127465963364,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999996423721313
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.16812294721603394,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009803951979847625,
+            "rightStep": 0.00011153658851981163,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000387430191
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.17090073227882385,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009762666013557464,
+            "rightStep": 0.0001110122975660488,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000021755695343
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.17367851734161377,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009710931772133335,
+            "rightStep": 0.00011045239079976454,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000610947609
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1764563024044037,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009651081199990585,
+            "rightStep": 0.00010930495045613497,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000038892030716
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1792340874671936,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009607683750800788,
+            "rightStep": 0.00010915446910075843,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000011324882507
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18201187252998352,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009524342021904886,
+            "rightStep": 0.00010802604811033234,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000610947609
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18478965759277344,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009471630619373173,
+            "rightStep": 0.0001075197069440037,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000014305114746
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.18756744265556335,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009421170398127288,
+            "rightStep": 0.00010658587416401133,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000461935997
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.19034522771835327,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009357667295262218,
+            "rightStep": 0.00010594548803055659,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000002384185791
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1931230127811432,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009244206012226641,
+            "rightStep": 0.00010422103514429182,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000610947609
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.1959007978439331,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000913332260097377,
+            "rightStep": 0.00010365864727646112,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.19867858290672302,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00009054042311618105,
+            "rightStep": 0.00010240308620268479,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20145636796951294,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008936759695643559,
+            "rightStep": 0.00010075188765767962,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999984502792358
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20423415303230286,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008817230991553515,
+            "rightStep": 0.00009983544441638514,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000017285346985
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.20701193809509277,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008741503552300856,
+            "rightStep": 0.00009813008364289999,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000018030405045
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2097897231578827,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008565359894419089,
+            "rightStep": 0.00009640970529289916,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2125675082206726,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008507205347996205,
+            "rightStep": 0.0000959097160375677,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000008344650269
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.21534529328346252,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008360080391867086,
+            "rightStep": 0.00009386747842654586,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999997913837433
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.21812307834625244,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008192106179194525,
+            "rightStep": 0.00009199088526656851,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000000894069672
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.22090086340904236,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00008029369928408414,
+            "rightStep": 0.00009037239942699671,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000003069639206
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.22367864847183228,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000788010293035768,
+            "rightStep": 0.00008830521983327344,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000015795230865
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2264564335346222,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000776877423049882,
+            "rightStep": 0.00008682719635544345,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000007599592209
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2292342185974121,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007621293480042368,
+            "rightStep": 0.0000851420481922105,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000044107437134
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23201200366020203,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007437683234456927,
+            "rightStep": 0.00008314423030242324,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000026971101761
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23478978872299194,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007204687426565215,
+            "rightStep": 0.00008071911724982783,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000020265579224
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.23756757378578186,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00007044267113087699,
+            "rightStep": 0.00007857241871533915,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999985247850418
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.24034535884857178,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006864966417197138,
+            "rightStep": 0.00007636909140273929,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2431231439113617,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006676167686237022,
+            "rightStep": 0.00007358985749306157,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000036656856537
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2459009289741516,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.0000653145179967396,
+            "rightStep": 0.00007204096618806943,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999998658895493
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.24867871403694153,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006330810720100999,
+            "rightStep": 0.00006976102304179221,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000014305114746
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.25145649909973145,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00006121287879068404,
+            "rightStep": 0.00006777145608793944,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999983012676239
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.25423428416252136,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005934891669312492,
+            "rightStep": 0.00006559436587849632,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000000894069672
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2570120692253113,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005718587271985598,
+            "rightStep": 0.00006376195960910991,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999983757734299
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2597898542881012,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000055333293857984245,
+            "rightStep": 0.00006093443153076805,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000011324882507
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2625676393508911,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005379433059715666,
+            "rightStep": 0.00005905464058741927,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000016540288925
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.26534542441368103,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00005179516665521078,
+            "rightStep": 0.00005645055716740899,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000461935997
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.26812320947647095,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00004961549711879343,
+            "rightStep": 0.000054735763114877045,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000050067901611
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.27090099453926086,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000048081295972224325,
+            "rightStep": 0.000052120165491942316,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2736787796020508,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000045372380554908887,
+            "rightStep": 0.000050250819185748696,
+            "footAngle": 0.0,
+            "lowerSole": 0.1000000461935997
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2764565646648407,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000043400788854341954,
+            "rightStep": 0.00004733255264000036,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000020265579224
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.2792343497276306,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00004140740929869935,
+            "rightStep": 0.00004489832281251438,
+            "footAngle": 0.0,
+            "lowerSole": 0.09999992698431015
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.28201213479042053,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.000039166450733318925,
+            "rightStep": 0.0000423629826400429,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000017285346985
+        },
+        {
+            "stopPhase": 1.0,
+            "idlePhase": 0.28478991985321045,
+            "stopWeight": 0.0,
+            "idleWeight": 1.0,
+            "leftStep": 0.00003653198291431181,
+            "rightStep": 0.00003980265319114551,
+            "footAngle": 0.0,
+            "lowerSole": 0.10000012069940567
+        }
+    ],
+    "maxHipsDifference": 0.0
+}

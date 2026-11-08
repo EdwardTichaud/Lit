@@ -1,0 +1,143 @@
+{
+    "run": "Library/LucianCoherence/play-baseline-contract-20261104-180237",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261104_180249_792.csv",
+    "samples": 1495,
+    "jumpFreeAirborneSamples": 25,
+    "jumpTorchAirborneSamples": 49,
+    "nativeIKAirborneSamples": 0,
+    "rootSpaceGoalSamples": 0,
+    "wholeBodyPolicyEnabled": false,
+    "existingIKVariant": "Existing UCC IK unchanged",
+    "maximumObtainedSpeed": 8.7468900680542,
+    "trials": [
+        {
+            "name": "idle",
+            "frames": 59,
+            "movingFrames": 0,
+            "simulatedSeconds": 1.208191990852356
+        },
+        {
+            "name": "walk",
+            "frames": 52,
+            "movingFrames": 50,
+            "simulatedSeconds": 1.2080488204956055
+        },
+        {
+            "name": "run",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2094290256500244
+        },
+        {
+            "name": "stop",
+            "frames": 70,
+            "movingFrames": 11,
+            "simulatedSeconds": 1.2107056379318237
+        },
+        {
+            "name": "torch_equip",
+            "frames": 63,
+            "movingFrames": 0,
+            "simulatedSeconds": 1.2101290225982666
+        },
+        {
+            "name": "torch_walk",
+            "frames": 66,
+            "movingFrames": 62,
+            "simulatedSeconds": 1.2075234651565552
+        },
+        {
+            "name": "torch_run",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2168301343917847
+        },
+        {
+            "name": "torch_stop",
+            "frames": 69,
+            "movingFrames": 11,
+            "simulatedSeconds": 1.2052336931228638
+        },
+        {
+            "name": "combat_F",
+            "frames": 69,
+            "movingFrames": 67,
+            "simulatedSeconds": 1.207815170288086
+        },
+        {
+            "name": "combat_FR",
+            "frames": 69,
+            "movingFrames": 69,
+            "simulatedSeconds": 1.2009669542312622
+        },
+        {
+            "name": "combat_R",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2028228044509888
+        },
+        {
+            "name": "combat_BR",
+            "frames": 71,
+            "movingFrames": 71,
+            "simulatedSeconds": 1.2144948244094849
+        },
+        {
+            "name": "combat_B",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2076683044433594
+        },
+        {
+            "name": "combat_BL",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2145637273788452
+        },
+        {
+            "name": "combat_L",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2148514986038208
+        },
+        {
+            "name": "combat_FL",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2077531814575195
+        },
+        {
+            "name": "combat_stop",
+            "frames": 70,
+            "movingFrames": 4,
+            "simulatedSeconds": 1.2110539674758911
+        },
+        {
+            "name": "jump_free",
+            "frames": 104,
+            "movingFrames": 90,
+            "simulatedSeconds": 1.8056886196136475
+        },
+        {
+            "name": "landing_free",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2125959396362305
+        },
+        {
+            "name": "jump_torch",
+            "frames": 103,
+            "movingFrames": 75,
+            "simulatedSeconds": 1.802181601524353
+        },
+        {
+            "name": "landing_torch",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2109698057174683
+        }
+    ],
+    "errors": []
+}

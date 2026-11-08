@@ -7815,7 +7815,7 @@ MonoBehaviour:
   damage: {x: 5, y: 10}
   attackTime: {x: 3, y: 5}
   escaping: 0
-  VFX_KnockedOut: {fileID: 0}
+  VFX_KnockedOut: {fileID: 8536472074939748950, guid: 0b5e711e6f5f4c94798d120d558ae598, type: 3}
   characterData: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
   lockPoint: {fileID: 158977838910440850}
   combatProfile: {fileID: 11400000, guid: bc75aebe3dba82e4ebdb047552d2c5e3, type: 2}

@@ -1,0 +1,11 @@
+{
+  "samples": 1573,
+  "jump_free_airborne": 59,
+  "jump_torch_airborne": 59,
+  "native_ik_airborne": 0,
+  "apex_m": {
+    "jump_free": 2.7301249999999992,
+    "jump_torch": 2.729075999999999
+  },
+  "errors": []
+}

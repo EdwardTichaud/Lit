@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f1bfbd2cc9d45c6b4501ccbc85a1d29, type: 3}
+  m_Name: ZoneManifest_District_2_Courts
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneManifest
+  primaryScene: {fileID: 102900000, guid: 26169649ada98b0468b6420dfe518f1f, type: 3}
+  loadingScenes:
+  - {fileID: 102900000, guid: d439c5fb48044a945a2ee833450cc966, type: 3}
+  - {fileID: 102900000, guid: ada27dad8a8268c4186caddfc69cc8c6, type: 3}
+  postLoadingScenes: []
+  primarySceneName: District_2_Courts
+  loadingMessage: Chargement de Stillhaven...
+  music: {fileID: 0}
+  ambience: {fileID: 0}
+  presentationAudioFadeDuration: 1
+  loadingSceneNames:
+  - District_2_Courts_Environment
+  - District_2_Courts_Secrets
+  postLoadingSceneNames: []
+  editorSceneReferencesMigrated: 1
+  bakedNavMeshData: {fileID: 23800000, guid: decd97d5c89e49d438096be30f5d10e7, type: 2}
+  bakedNavMeshVersion: 20261027165446
+  bakedNavMeshAgentTypeId: 0

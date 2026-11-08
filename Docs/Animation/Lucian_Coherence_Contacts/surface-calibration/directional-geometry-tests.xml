@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0,3000205">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2879" result="Passed" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0.300021" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2857" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1527" result="Passed" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0.257021" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="10744" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="2153" name="LocomotionDirectionalGeometryTests" fullname="LocomotionDirectionalGeometryTests" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0.202272" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2156" name="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" fullname="LocomotionDirectionalGeometryTests.MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0.195100" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2154" name="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(False)" fullname="LocomotionDirectionalGeometryTests.MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(False)" methodname="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" seed="425750439" result="Passed" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0.126061" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2155" name="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(True)" fullname="LocomotionDirectionalGeometryTests.MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(True)" methodname="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" seed="1440144544" result="Passed" start-time="2026-11-04 20:53:27Z" end-time="2026-11-04 20:53:27Z" duration="0.053331" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

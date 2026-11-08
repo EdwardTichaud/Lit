@@ -167,7 +167,7 @@ public static class LucianCC5HqIntegration
         return report;
     }
 
-    private static bool ConfigureMaterialForHq(Material material, Material source)
+    internal static bool ConfigureMaterialForHq(Material material, Material source)
     {
         string materialName = material.name.ToLowerInvariant();
         bool isHairOrAlpha = materialName.Contains("hair") ||
@@ -810,17 +810,16 @@ public static class LucianCC5HqIntegration
 
         foreach (string propertyName in propertyNames)
         {
-            try
+            if (material.HasProperty(propertyName))
             {
                 Texture texture = material.GetTexture(propertyName);
-                if (texture != null)
-                {
-                    return texture;
-                }
+                if (texture != null) return texture;
             }
-            catch (ArgumentException)
-            {
-            }
+            var entries = new SerializedObject(material).FindProperty("m_SavedProperties.m_TexEnvs");
+            for (int i = 0; i < entries.arraySize; i++)
+                if (entries.GetArrayElementAtIndex(i).FindPropertyRelative("first").stringValue == propertyName &&
+                    entries.GetArrayElementAtIndex(i).FindPropertyRelative("second.m_Texture").objectReferenceValue is Texture saved)
+                    return saved;
         }
 
         return null;
@@ -846,14 +845,15 @@ public static class LucianCC5HqIntegration
 
         foreach (string propertyName in propertyNames)
         {
-            try
+            if (material.HasProperty(propertyName))
             {
                 color = material.GetColor(propertyName);
                 return true;
             }
-            catch (ArgumentException)
-            {
-            }
+            var entries = new SerializedObject(material).FindProperty("m_SavedProperties.m_Colors");
+            for (int i = 0; i < entries.arraySize; i++)
+                if (entries.GetArrayElementAtIndex(i).FindPropertyRelative("first").stringValue == propertyName)
+                { color = entries.GetArrayElementAtIndex(i).FindPropertyRelative("second").colorValue; return true; }
         }
 
         return false;

@@ -1,0 +1,118 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-contacts-20261104-175638",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261104_175644_601.csv",
+    "samples": 3000,
+    "jumpFreeAirborneSamples": 0,
+    "jumpTorchAirborneSamples": 0,
+    "nativeIKAirborneSamples": 0,
+    "wholeBodyPolicyEnabled": true,
+    "existingIKVariant": "Existing UCC IK unchanged",
+    "maximumObtainedSpeed": 8.747345924377441,
+    "trials": [
+        {
+            "name": "idle",
+            "frames": 178,
+            "movingFrames": 0,
+            "simulatedSeconds": 3.0159361362457275
+        },
+        {
+            "name": "walk",
+            "frames": 161,
+            "movingFrames": 159,
+            "simulatedSeconds": 3.01285457611084
+        },
+        {
+            "name": "run",
+            "frames": 178,
+            "movingFrames": 178,
+            "simulatedSeconds": 3.005614757537842
+        },
+        {
+            "name": "stop",
+            "frames": 178,
+            "movingFrames": 11,
+            "simulatedSeconds": 3.0067853927612305
+        },
+        {
+            "name": "torch_equip",
+            "frames": 174,
+            "movingFrames": 0,
+            "simulatedSeconds": 3.014692544937134
+        },
+        {
+            "name": "torch_walk",
+            "frames": 175,
+            "movingFrames": 172,
+            "simulatedSeconds": 3.009279251098633
+        },
+        {
+            "name": "torch_run",
+            "frames": 177,
+            "movingFrames": 177,
+            "simulatedSeconds": 3.0018157958984375
+        },
+        {
+            "name": "torch_stop",
+            "frames": 177,
+            "movingFrames": 11,
+            "simulatedSeconds": 3.0086770057678223
+        },
+        {
+            "name": "combat_F",
+            "frames": 178,
+            "movingFrames": 176,
+            "simulatedSeconds": 3.0089399814605713
+        },
+        {
+            "name": "combat_FR",
+            "frames": 178,
+            "movingFrames": 178,
+            "simulatedSeconds": 3.0099430084228516
+        },
+        {
+            "name": "combat_R",
+            "frames": 178,
+            "movingFrames": 178,
+            "simulatedSeconds": 3.002295970916748
+        },
+        {
+            "name": "combat_BR",
+            "frames": 178,
+            "movingFrames": 178,
+            "simulatedSeconds": 3.0002501010894775
+        },
+        {
+            "name": "combat_B",
+            "frames": 179,
+            "movingFrames": 179,
+            "simulatedSeconds": 3.0155322551727295
+        },
+        {
+            "name": "combat_BL",
+            "frames": 178,
+            "movingFrames": 178,
+            "simulatedSeconds": 3.002277374267578
+        },
+        {
+            "name": "combat_L",
+            "frames": 177,
+            "movingFrames": 177,
+            "simulatedSeconds": 3.0045740604400635
+        },
+        {
+            "name": "combat_FL",
+            "frames": 178,
+            "movingFrames": 178,
+            "simulatedSeconds": 3.002140522003174
+        },
+        {
+            "name": "combat_stop",
+            "frames": 178,
+            "movingFrames": 3,
+            "simulatedSeconds": 3.000527858734131
+        }
+    ],
+    "errors": []
+}

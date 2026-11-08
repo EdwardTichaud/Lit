@@ -1,0 +1,156 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: Courts_familyCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: district2.courts.family
+  title: Les portes qu'on laisse ouvertes
+  description: "Reconstituer trois aspects de la vie des Mirage, puis r\xE9tablir au pr\xE9sent un acc\xE8s utilisable par tous."
+  category: 0
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: curiosity
+    title: Le carnet de Alix
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 366571bf7b5f2f845b565c321f7ec4dd, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: ties
+    title: Le billet d'Agathe
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 06f601e0374b54f49b21666f01f62827, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: help
+    title: Les allers-retours
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 5a6c3dc0066798540bbece91398f959f, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: memory_curiosity
+    title: Comprendre les explorations de Alix
+    description: 
+    kind: 8
+    sourceId: curiosity_memory
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: curiosity
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: memory_ties
+    title: Retrouver les liens de la maison
+    description: 
+    kind: 8
+    sourceId: ties_memory
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: ties
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: memory_help
+    title: Suivre les gestes d'entraide
+    description: 
+    kind: 8
+    sourceId: help_memory
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: help
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: restored
+    title: "R\xE9tablir l'acc\xE8s commun"
+    description: 
+    kind: 3
+    sourceId: restore
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: memory_curiosity
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: memory_ties
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: memory_help
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: 
+  dialogueSeconds: 4
+  dialogues: []
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

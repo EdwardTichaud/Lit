@@ -156,7 +156,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -325,6 +325,14 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 484044257
       objectReference: {fileID: 0}
+    - target: {fileID: 3031482695602594374, guid: 49b7dd8147ac0e3449e5228452b068e0, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3031482695602594374, guid: 49b7dd8147ac0e3449e5228452b068e0, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1551517637
+      objectReference: {fileID: 0}
     - target: {fileID: 3079651260450595314, guid: 49b7dd8147ac0e3449e5228452b068e0, type: 3}
       propertyPath: m_Name
       value: Fragment_2
@@ -439,6 +447,14 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 4122945349
       objectReference: {fileID: 0}
+    - target: {fileID: 6115108150124212742, guid: 6fb2a64a7c738a2478a9412fad96ee05, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6115108150124212742, guid: 6fb2a64a7c738a2478a9412fad96ee05, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3409157362
+      objectReference: {fileID: 0}
     - target: {fileID: 7396470811547224867, guid: 6fb2a64a7c738a2478a9412fad96ee05, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -542,6 +558,14 @@ PrefabInstance:
     - target: {fileID: 6788037850446032082, guid: 1abadd007783f89449be2deed675b3a9, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3011533227
+      objectReference: {fileID: 0}
+    - target: {fileID: 6788037850446032082, guid: 1abadd007783f89449be2deed675b3a9, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6788037850446032082, guid: 1abadd007783f89449be2deed675b3a9, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 784791668
       objectReference: {fileID: 0}
     - target: {fileID: 8014030015752238831, guid: 1abadd007783f89449be2deed675b3a9, type: 3}
       propertyPath: m_LocalPosition.x

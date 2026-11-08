@@ -1,0 +1,42 @@
+{
+  "scope": "Last 30 recorded samples per stage, unchanged gamepad input. Temporary static wall on lab floor.",
+  "stages": {
+    "wall_approach": {
+      "samples": 30,
+      "speed_median_mps": 1.4888709750000002,
+      "input_y": 0.28125,
+      "lit_speed": 1.35,
+      "cadence": 0.8289504,
+      "planar_path_m": 0.719789999999989,
+      "clips": [
+        "Lucian_Common_Walk_Loop_ReleasePilot:1"
+      ]
+    },
+    "wall_blocked": {
+      "samples": 30,
+      "speed_median_mps": 0.0,
+      "input_y": 0.28125,
+      "lit_speed": 0.0,
+      "cadence": 1.0,
+      "planar_path_m": 0.0,
+      "clips": [
+        "Common_Idle_Inplace:1"
+      ]
+    },
+    "wall_cleared": {
+      "samples": 30,
+      "speed_median_mps": 1.489411535,
+      "input_y": 0.28125,
+      "lit_speed": 1.35,
+      "cadence": 0.8289504,
+      "planar_path_m": 0.7205200000000787,
+      "clips": [
+        "Lucian_Common_Walk_Loop_ReleasePilot:1"
+      ]
+    }
+  },
+  "root_motion_samples": 0,
+  "editor_errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ]
+}

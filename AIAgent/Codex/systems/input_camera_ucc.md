@@ -1,5 +1,48 @@
 # Input, UCC et caméra
 
+## Caméra du prototype de fracture (2026-11-01)
+
+Fracture_01_Graybox copie la caméra de GameplaySessionRoot dans sa scène de
+test, avec binder UCC, contrôleur de modes et profil de gameplay inchangés.
+Le bootstrap de graybox ne réécrit plus la pose en LateUpdate. Les commandes
+existantes d'orbite, zoom, inspection et recentrage s'appliquent donc aussi ici ;
+aucune modification de PlayerInputs ou des caméras de campagne. Le joueur est
+détaché de sa caméra avant destruction, puis le binder suit la nouvelle instance.
+Validation et limites de focus : systems/fracture_labyrinth.md.
+
+## Visibilite tactique du combat libre (2026-10-29)
+
+Le masque du decor et le near clip adaptatif protegent la cible verrouillee
+vivante en priorite ; a defaut, ils protegent la cible vivante du combat actif.
+Cette resolution de presentation est distincte du verrouillage manuel : elle
+ne change ni mode de vue, ni inputs, ni cible de gameplay. A la sortie du combat,
+une ancienne cible non verrouillee ne conserve pas cette protection.
+
+## Saut plateforme : tolerance des appuis (2026-10-27)
+
+PlayerScriptedJumpController garde l'impulsion et la gravite existantes ; UCC
+reste proprietaire des collisions/positions. JumpRequestWindow gere uniquement
+les fenetres en temps local : 0,10 s apres un rebord, 0,15 s avant reception.
+Les valeurs sont exposees dans CharacterData.playerSettings.jump, 0 desactive
+chaque aide. Aucun maintien de bouton ne produit une repetition automatique.
+L'impulsion de coyote est immediate, sans attente supplementaire de Jump_Start ;
+la fenetre est consommee avant l'impulsion et ne permet pas un second saut.
+Au sol, Lucian et sa copie ImpactLab decollent a 0,13 au lieu de 0,5 du clip.
+Hauteur 100, inertie, gravite, clips et timings de recuperation preserves.
+
+Seul un appui encore valide au contact peut etre reserve pendant l'atterrissage.
+Le lancement attend la fin du saut precedent et la liberation reelle du verrou
+de reception. Reservation bornee par maximumSettleSeconds + 0,25 s ; aucun
+verrou n'est dispose par ce systeme. Un verrou concurrent, une cinematique,
+traversee, vol ou desactivation purge la demande et l'ancien contact sol.
+Etat par acteur, sans singleton/event supplementaire ; OnDisable/OnEnable
+reinitialisent les fenetres. La pause n'ecoule pas leur duree.
+
+PlatformJumpTests couvre les fenetres et les fiches Lucian ; demande de tests
+native via Library/PlatformJumpValidation/Tests.request. Compilation runtime et
+Editor reussie, onze assertions de logique hors Editor passees. Le parcours
+physique complet et le ressenti manette ne sont pas encore qualifies.
+
 ## Separation Exploration Et Combat (Regle Actuelle)
 
 Apres retour auteur, les commandes offensives ne sont plus admises en exploration.
@@ -1186,3 +1229,212 @@ cette revision).
 A qualifier en Play : Start puis South, South maintenu/simultane, Start pour
 continuer, souris/sticks/autres boutons sans effet, passage avant/apres 19 s,
 fin naturelle, seconde lecture et interruption du panneau.
+
+### Cibles de camera communes (Moonrise, 2026-10-29)
+
+Le choix de vue verrouillee, le masque tactique et la protection du near clip
+resolvent LockedCombatTarget via ICombatTarget/SkillTargetingContract.Alive, puis
+son Root physique. LockedEnemy ne couvrait pas les acteurs Brains. Le lock camera
+se synchronise par un seul chemin sur HasLockedCombatTarget, y compris les acteurs
+historiques adaptes ; les abonnements EnemyController devenus redondants sont
+retires. La comparaison utilise une copie temporaire puis restaure le profil.
+
+Reglage retenu du profil partage GameplayCombatCamera : ouverture .26 de hauteur
+ecran et near clip adaptatif actif (marge5, securite corps .5). Il retire les
+geometries tres proches de l'objectif en suivant le joueur, sans changer les
+colliders ni les ombres. Cinematique/inspection restaurent le near clip initial.
+Validation Moonrise : comparaison triple 8a828f7bdeab45418ca3503d2a67587c, puis
+smoke configure 8959b273591c4618ad2a3df85cb0f1ea : 38 controles, zero erreur,
+restauration confirmee, corps Brains protege par assertions natives. Cette recette
+focalisee ne couvre pas toute la victoire/reprise. Camera/contrats apres nettoyage
+65/65 (MoonriseCameraCleanupTests.xml). L'alias MaisonMaskActive sans appelant et
+l'ancien renderedAimSharpness sans effet sont retires, ainsi que ses valeurs de
+profils GameplayCombatCamera/CombatFeelCamera. Aucun autre amortissement ajoute.
+
+## Audit de coherence Lucian (2026-11-02, correction encore ouverte)
+
+La couche Moving Legs prend une vitesse planaire en m/s pour un arbre copie
+qui attend LitSpeed. Sonde Unity sur avatar CC5 : marche en Base Layer et
+course possible dans les jambes, avec bassin conserve (jusqu'a 62,8 cm de
+difference aux pieds a phase egale). Le profil calibre reste absent de
+Lucian.asset. Ce test controle les parametres, pas la vitesse UCC reelle ; la
+reproduction jouee et les corrections restent requises. Outil explicite
+LucianCoherenceAudit, rapports Library/LucianCoherence, suivi
+Docs/Animation/Lucian_Coherence.md. Aucun changement runtime dans ce lot.
+
+### Candidat Lucian : bassin et jambes sous une autorite (2026-11-02)
+
+preserveWholeBodyLocomotion est opt-in dans PlayerLocomotionSettings. Quand actif,
+Moving Legs ne remplace pas Locomotion, CombatLocomotion, CombatIdle, departs,
+arrets et rotations (etat courant ou destination). Les actions mobiles gardent
+leur ancien contrat. Aucun moteur physique n'est ajoute. False par defaut ;
+Lucian.asset pas encore active. Essai en copie runtime : 1 214 releves sans
+erreur, vitesses libres 5,2948/8,7372 m/s inchangees, torche active verifiee.
+Les appuis et la cadence restent a corriger ; candidat non qualifie pour le jeu.
+Preuves et limites : Docs/Animation/Lucian_Coherence.md.
+
+### Cadence01 : essai uniquement (2026-11-02)
+
+chooseGaitFromObtainedSpeed est opt-in ; false conserve le calcul historique
+exact. Le profil interpole les cycles mesures par vitesse obtenue, puis leur
+cadence, sans changer Animator.speed ou UCC. Controller/prefab/scene distincts
+sous AnimationPresentation/LucianCoherencePreview/Cadence01. Positions des
+arbres directionnels normalisees pour supprimer Idle parasite dans les angles.
+1 217 releves UCC sans erreur, 5,2948/8,7372 m/s et cadence 1/1,6484, torche
+verifiee ; appuis encore non qualifies, aucun deploiement dans Lucian.asset.
+Recorder : colonnes finales unscaled_time/frame, pour alignement exact des
+poses et du pilotage. Les objectifs IK Humanoid doivent etre coherents avec
+les muscles dans les copies retouchees ; l'IK UCC existant reste dans la recette.
+Preuves et limites dans Docs/Animation/Lucian_Coherence.md.
+
+### Conflit du poids IK confirme (pilote isole)
+
+SupportIK retouche les objectifs de pieds, en preservant les muscles et le corps
+source. Controle clip persiste et controller complet sur quatre cycles : <1 mm
+de penetration, torche masquee sans ecart de bassin/pieds. Upper Body Flame avait
+un masque nul dans les controllers effectifs ; masque bras/doigts dans la copie.
+
+CharacterIK.PositionLowerBody ecrit les poids IK des pieds, y compris zero quand
+son correcteur sol n'intervient pas : cela peut annuler la presentation Humanoid
+native requise par ces objectifs. Controle UCC 213737 sans son instance runtime :
+course <1 mm. Controle 213846 avec IK UCC et poids 1 : course -1 cm, Idle conserve,
+mais melanges/entrees et directions non qualifies. Ce poids global n'est pas une
+configuration de production. La future adaptation doit etre bornee aux cycles
+valides, liberer l'autorite pour les actions/saut/cinematiques et conserver le
+correcteur de terrain. Aucun second moteur ni verrouillage de pieds ajoute.
+
+Attention aux tests : enabled=false ne garantit pas l'absence de CharacterIK ;
+les retries LookSource le reactivent. La sonde noik retire l'instance temporaire
+apres initialisation et verifie son absence a chaque releve. Aucun prefab modifie.
+
+### Cooperation IK bornee dans Cadence01 (lot non livre)
+
+LitPresentationCharacterIK derive du solveur UCC existant. Apres son evaluation,
+il retient les poids natifs uniquement pour les clips de nativeFootIKClips,
+dans les deux etats de cycles mesures et sur sol. Une action, une transition
+hors cycles, le vol, une cinematique ou un bridge inactif garde le solveur UCC
+habituel. Aucun changement du parametre OverrideFootIKWeight ou des poids de
+lissage internes UCC : rien a restaurer dans leur configuration apres l'action.
+La liste opt-in est vide sur les autres profils ; prefab de production inchange.
+
+Les 18 copies sont preparees avec manifeste avant branchement. Reparation XZ
+mesuree de Walk_BL uniquement (3,25 cm), RootT.y et rotations conservees. Gate
+de pose, evenements, physique extraite et deux cycles persistes ; sources et
+avatar empreintes, branchement refuse si donnees changees. Reapplication verifiee
+sans ecriture de controller/override/profil/prefab. Test UCC 215326 sans erreur :
+1222 releves, directions reduites a ~2-3,4 cm de penetration (encore non conformes
+partout), override -1. Sauts compares 215832/215925 : ecart apex <1 mm, aucun
+maintien IK natif en vol. Details et preuves Docs/Animation/Lucian_Coherence.md.
+
+### Limite de ce premier lot et pilote Stride02
+
+Un minimum de semelle correct ne suffit pas : le relevement FK par clamp avait
+aplati du retour de pied. Stride02 exploration repart de la pose native Humanoid
+IK et interpole la correction verticale entre ses appuis ; pas de foot-lock.
+La cooperation UCC conserve aussi son poids de correction : interpolation des
+objectifs natifs/corriges avant retention du poids de retarget a 1. Cela conserve
+le lissage de terrain au lieu d'appliquer brutalement sa rotation de pied.
+
+ActorFootContactTracker est exclusivement un diagnostic : identite d'un sommet,
+chemin/net dans le monde et hauteur. Aucun write de pose. Minimum/sommet tenu
+verifies contre BakeMesh ; la distinction appui/balancement reste necessaire.
+Cadence exploration du pilote calibree par 33 fenetres et quatre scenarios :
+4,96776 m/s, jamais une vitesse physique UCC. Rebinding preserve cette valeur.
+Resultats 223511 : appuis detectes medianes 2,1-3,6 cm, pointes jusqu'a 3,8 cm ;
+non qualifie pour livraison. Directions encore sur le lot precedent, a reprendre.
+Sauts 224023 compares a reference : ecart max 2,2 mm, zero retention IK en vol.
+Rig local 55 os identique au modele CC5 ; pas de reconstruction du squelette.
+
+### Verification Stride03 / melanges natifs (4 novembre, candidat uniquement)
+
+Les directions utilisent maintenant 17 Stride03 et Common Run Stride02 ; retour
+de pied natif preserve et phases d'appui alignees dans les arbres de base.
+Le melange Humanoid peut toutefois relever deux pieds dont les sources ont
+un appui. NativeFootGoalCurves est un essai de donnees d'effecteurs locaux au
+personnage : export Editor, melange runtime des seuls cycles qualifies hors
+transition, avant le solveur UCC existant. Aucun delta Root runtime, aucune
+translation physique et aucun point d'appui verrouille dans le monde.
+Reconstruction des 18 clips seuls <=2,66 mm, mais melanges encore non conformes
+(marche, pire hauteur du pied le plus bas 3,98 cm). Ne pas activer en production
+sur cette seule preuve. Validation UCC/actions/terrain/reseau et visuelle requise.
+
+### Contacts UCC pendant la preparation du saut
+
+Le candidat Cadence01 utilise maintenant NativeFootSupportSet : donnees de forme
+locale exportees par l'Editor, rotation anatomique et objectifs Y preservant les
+semelles sources. Foot IK integre des deux etats de cycles desactive ; une seule
+passe LitPresentationCharacterIK/UCC. Profils et donnees lies par empreintes,
+verification du rig/meshes/controller et certificat de comparaison 80 cas.
+Installateurs et prebuild refusent les donnees perimees. Production non activee,
+supportValidated=false : les changements dynamiques de poids et les raccords
+ne sont pas qualifies par ces seules mesures statiques.
+
+Un OnCharacterLand peut etre emis pendant une reprise de contact, avant que le
+saut demande ait quitte le sol. Ce signal ne suffit pas a declencher Jump_End.
+PlayerScriptedJumpController conserve la preparation lors de ce contact et
+exige une impulsion suivie d'un vol, ou une reception deja anticipee, pour
+traiter OnLanded. La vraie reception conserve son traitement habituel.
+Buffering/coyote, hauteur, impulsion, gravite et clips restent inchanges.
+Tests Editor de contacts : 7/7. Recette UCC 181118 (Domain Reload desactive) :
+deux sauts exerces, aucune conservation IK native en vol, retour du mouvement
+maintenu apres reception. Preuves/limites dans Docs/Animation/Lucian_Coherence.md.
+Recette 181604 avec Domain Reload active egalement passee (1 566 releves,
+deux sauts, zero maintien IK natif en vol). Les reglages temporaires du test
+retrouvent leur empreinte initiale ; aucun reglage physique sauvegarde.
+
+### Raccord de direction mesure et orientation des pieds (candidat Lucian)
+
+LocomotionPresentationResponse borne les changements de direction et d'allure
+pour les seuls etats de locomotion de combat d'un profil calibre. Zero dans les
+nouveaux champs garde la reponse immediate. Candidat : 360 degres/seconde,
+0,18 seconde marche/course. Cadence recalculee sur le melange effectivement
+presente, vitesse obtenue et delta acteur unique par image. Pas d'Animator.speed
+ni changement UCC. Les ecritures input ne remplacent plus la direction mesuree.
+Reset sur interruption de l'evaluation/profil/desactivation ; pas d'etat statique.
+
+Dans le chemin NativeFootSupportSet, l'orientation de terrain est l'inclinaison
+entre Up physique et GroundedRaycastHit.normal appliquee a l'objectif natif.
+Le redressement UCC complet supprimait le pitch/roll source et ajoutait jusqu'a
+53 degres par image sur sol plat. Les poids et la correction de position UCC
+restent actifs ; les actions et autres profils conservent le comportement UCC.
+Normale de capsule, pas un nouveau sondage/foot-lock par pied : surfaces mixtes,
+pentes et marches a qualifier. Production non activee. Preuves et limites dans
+Docs/Animation/Lucian_Coherence.md (recette 202140, maximum total 35,51 degres).
+
+
+### Calibration des directions natives de Lucian (candidat uniquement)
+
+Les deux courses diagonales avant sont placees selon leur contact mesure sur le
+vrai Avatar : FL ~-30, FR ~+35 degres et references ~4,02/4,07 m/s. Vitesses UCC
+inchangees. matchSimpleDirectionalBlend selectionne les voisins geometriques
+reels pour la cadence ; defaut false sur les autres profils. Tests sur les poids
+Unity de chaque allure : 32 cas. Les allures melangees restent a qualifier avec
+la duree effective de leurs cycles ; ne pas etendre cette preuve aux actions.
+
+Un changement de domaine du controller peut demander de nouveaux sommets de
+semelle. Repreparation exige explicitement la signature du controller auparavant
+verifie, sources et rig identiques, donnees precedentes intactes/certifiees.
+Deux gates de 80 cas avant restitution du certificat. Echec : restauration
+controller, profil et donnees completes ; pas de simple changement de hash.
+La mesure approuvee est figee par empreintes pour une reapplication sans ecriture.
+Etat et preuves : Docs/Animation/Lucian_Coherence.md. Production toujours off.
+
+### Duree effective des gaits et diagnostic de surface
+
+Pour matchSimpleDirectionalBlend, le profil calcule maintenant les distances
+ponderees par cycle et la duree ponderee, puis leur quotient. La moyenne directe
+des vitesses etait fausse pendant marche/course. Applies a Evaluate et
+CadenceForPresentedBlend (exploration/combat), sans Animator.speed ou changement
+physique. 160 cas d'horloge Unity passent, en plus des 32 directions. Le contrat
+prebuild impose les timeScale unitaires et le binding de cadence qualifies.
+
+ActorContactPatchTracker est un diagnostic de surface sans ecriture de pose.
+Active seulement dans la recette analogique via recordFlatContactPatches ;
+identites de sommets, distance entre points communs, hauteur/couverture explicites.
+La bande de collecte sert au diagnostic de surface. Le recorder s'execute
+apres UCC et controle les identifiants d'image de la resolution et de la passe
+finale. Le solveur precompense ColliderSpacing dans les objectifs qualifies,
+car UCC applique ensuite cet espacement aux hanches. La capsule et l'offset
+auteur restent sous les regles UCC. Les poses isolees ont ete comparees sur
+18 cycles. Appuis en mouvement, Idle et raccords restent a qualifier.
+Etat/preuves dans Docs/Animation/Lucian_Coherence.md, section gait-timing.

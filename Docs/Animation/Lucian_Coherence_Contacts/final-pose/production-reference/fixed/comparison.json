@@ -1,0 +1,110 @@
+{
+  "walk_off": {
+    "broad": {
+      "frames_reference": 54,
+      "frames_mask": 54,
+      "paired": 47,
+      "paired_clips": [
+        "Common_Idle_Inplace",
+        "TwinSword_Common_Walk_Start_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "left_ankle_relative_delta_median_cm": 9.899,
+      "left_ankle_relative_delta_max_cm": 14.671,
+      "left_sole_delta_median_cm": -0.0,
+      "left_sole_delta_max_abs_cm": 8.672,
+      "left_sole_below_floor_2cm_reference": 11,
+      "left_sole_below_floor_2cm_mask": 7,
+      "left_sole_valid_pairs": 47,
+      "right_ankle_relative_delta_median_cm": 9.209,
+      "right_ankle_relative_delta_max_cm": 25.069,
+      "right_sole_delta_median_cm": -1.671,
+      "right_sole_delta_max_abs_cm": 11.596,
+      "right_sole_below_floor_2cm_reference": 19,
+      "right_sole_below_floor_2cm_mask": 29,
+      "right_sole_valid_pairs": 47,
+      "reference_travel_m": 1.251,
+      "mask_travel_m": 1.258
+    },
+    "strict": {
+      "frames_reference": 54,
+      "frames_mask": 54,
+      "paired": 47,
+      "paired_clips": [
+        "Common_Idle_Inplace",
+        "TwinSword_Common_Walk_Start_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "left_ankle_relative_delta_median_cm": 9.899,
+      "left_ankle_relative_delta_max_cm": 14.671,
+      "left_sole_delta_median_cm": -0.0,
+      "left_sole_delta_max_abs_cm": 8.672,
+      "left_sole_below_floor_2cm_reference": 11,
+      "left_sole_below_floor_2cm_mask": 7,
+      "left_sole_valid_pairs": 47,
+      "right_ankle_relative_delta_median_cm": 9.209,
+      "right_ankle_relative_delta_max_cm": 25.069,
+      "right_sole_delta_median_cm": -1.671,
+      "right_sole_delta_max_abs_cm": 11.596,
+      "right_sole_below_floor_2cm_reference": 19,
+      "right_sole_below_floor_2cm_mask": 29,
+      "right_sole_valid_pairs": 47,
+      "reference_travel_m": 1.251,
+      "mask_travel_m": 1.258
+    }
+  },
+  "walk_on": {
+    "broad": {
+      "frames_reference": 54,
+      "frames_mask": 54,
+      "paired": 54,
+      "paired_clips": [
+        "Common_Idle_Inplace",
+        "TwinSword_Common_Walk_Start_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "left_ankle_relative_delta_median_cm": 11.847,
+      "left_ankle_relative_delta_max_cm": 23.208,
+      "left_sole_delta_median_cm": -0.584,
+      "left_sole_delta_max_abs_cm": 9.042,
+      "left_sole_below_floor_2cm_reference": 29,
+      "left_sole_below_floor_2cm_mask": 22,
+      "left_sole_valid_pairs": 54,
+      "right_ankle_relative_delta_median_cm": 11.235,
+      "right_ankle_relative_delta_max_cm": 25.745,
+      "right_sole_delta_median_cm": -0.0,
+      "right_sole_delta_max_abs_cm": 11.199,
+      "right_sole_below_floor_2cm_reference": 10,
+      "right_sole_below_floor_2cm_mask": 9,
+      "right_sole_valid_pairs": 54,
+      "reference_travel_m": 1.251,
+      "mask_travel_m": 1.258
+    },
+    "strict": {
+      "frames_reference": 54,
+      "frames_mask": 54,
+      "paired": 53,
+      "paired_clips": [
+        "Common_Idle_Inplace",
+        "TwinSword_Common_Walk_Start_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "left_ankle_relative_delta_median_cm": 11.893,
+      "left_ankle_relative_delta_max_cm": 23.208,
+      "left_sole_delta_median_cm": -0.598,
+      "left_sole_delta_max_abs_cm": 9.042,
+      "left_sole_below_floor_2cm_reference": 29,
+      "left_sole_below_floor_2cm_mask": 22,
+      "left_sole_valid_pairs": 53,
+      "right_ankle_relative_delta_median_cm": 11.205,
+      "right_ankle_relative_delta_max_cm": 25.745,
+      "right_sole_delta_median_cm": -0.0,
+      "right_sole_delta_max_abs_cm": 11.199,
+      "right_sole_below_floor_2cm_reference": 10,
+      "right_sole_below_floor_2cm_mask": 9,
+      "right_sole_valid_pairs": 53,
+      "reference_travel_m": 1.251,
+      "mask_travel_m": 1.258
+    }
+  }
+}

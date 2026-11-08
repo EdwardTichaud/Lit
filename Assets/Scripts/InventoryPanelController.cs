@@ -1905,6 +1905,7 @@ public class InventoryPanelController : MonoBehaviour
             UpdateReadableBookPages();
             SetReadablePanelVisible(bookPanelCanvasGroup, true);
             RefreshReadableActionInputs();
+            SecretPassageNotes.ReportOpened(item, revealer);
             PlayUiActionAudio(ActionAudioCue.InventoryReadOpen);
             return false;
         }
@@ -1923,6 +1924,7 @@ public class InventoryPanelController : MonoBehaviour
             SetReadablePanelVisible(bookPanelCanvasGroup, false);
             SetReadablePanelVisible(parchoPanelCanvasGroup, true);
             RefreshReadableActionInputs();
+            SecretPassageNotes.ReportOpened(item, revealer);
             PlayUiActionAudio(ActionAudioCue.InventoryReadOpen);
             return false;
         }

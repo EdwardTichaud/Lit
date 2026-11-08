@@ -42,7 +42,8 @@ public class FlameLightReceiver : MonoBehaviour
     private HDAdditionalLightData targetHdLight;
 
     public SquadCharacterController Owner => owner;
-    public bool ControlsShadowing => configureFlameShadowing;
+    public bool ControlsShadowing => configureFlameShadowing &&
+        (targetLight == null || targetLight.GetComponent<LitContrastLight>() == null);
     public Color CurrentFlameColor => targetLight != null ? targetLight.color : revealColor;
 
     /// <summary>Uses this component only as a world-reveal source; HDRP profiles own the artistic light setup.</summary>
@@ -163,7 +164,9 @@ public class FlameLightReceiver : MonoBehaviour
 
     private void ApplyShadowing()
     {
-        if (targetLight == null || !configureFlameShadowing)
+        // A profiled light has one artistic owner, including during parent Awake
+        // before the child's OnEnable. Legacy receivers must not reset it to black shadows.
+        if (targetLight == null || !ControlsShadowing)
         {
             return;
         }

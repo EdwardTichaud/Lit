@@ -1,0 +1,112 @@
+{
+  "status": "RECORDED WITH ERRORS",
+  "errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ],
+  "trials": [
+    {
+      "trial": "brake_0",
+      "phase_before_transition": 0.5373,
+      "selected_state": "-1764354592",
+      "selected_support": "left",
+      "clip": "Lucian_Run_Stop_LeftSupport_TwoTickPilot",
+      "torch": false,
+      "rest_orientation_error_deg_at_tick_18": 120.6,
+      "rest_orientation_error_deg_at_tick_28": 107.02,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.798,
+      "max_first_support_height_cm": 0.395
+    },
+    {
+      "trial": "brake_1",
+      "phase_before_transition": 0.0458,
+      "selected_state": "-1764354592",
+      "selected_support": "right",
+      "clip": "Lucian_Run_Stop_RightSupport_TwoTickPilot",
+      "torch": true,
+      "rest_orientation_error_deg_at_tick_18": 60.79,
+      "rest_orientation_error_deg_at_tick_28": 28.86,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.738,
+      "max_first_support_height_cm": 0.068
+    },
+    {
+      "trial": "brake_2",
+      "phase_before_transition": 0.4929,
+      "selected_state": "-1764354592",
+      "selected_support": "left",
+      "clip": "Lucian_Run_Stop_LeftSupport_TwoTickPilot",
+      "torch": false,
+      "rest_orientation_error_deg_at_tick_18": 120.6,
+      "rest_orientation_error_deg_at_tick_28": 107.02,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.026,
+      "max_first_support_height_cm": 0.023
+    },
+    {
+      "trial": "brake_3",
+      "phase_before_transition": 0.9822,
+      "selected_state": "-1764354592",
+      "selected_support": "right",
+      "clip": "Lucian_Run_Stop_RightSupport_TwoTickPilot",
+      "torch": true,
+      "rest_orientation_error_deg_at_tick_18": 60.79,
+      "rest_orientation_error_deg_at_tick_28": 28.86,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.897,
+      "max_first_support_height_cm": 0.004
+    },
+    {
+      "trial": "brake_4",
+      "phase_before_transition": 0.1799,
+      "selected_state": "-1112163239",
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": false,
+      "rest_orientation_error_deg_at_tick_18": null,
+      "rest_orientation_error_deg_at_tick_28": null,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    },
+    {
+      "trial": "brake_5",
+      "phase_before_transition": 0.3356,
+      "selected_state": "-1112163239",
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": true,
+      "rest_orientation_error_deg_at_tick_18": null,
+      "rest_orientation_error_deg_at_tick_28": null,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    },
+    {
+      "trial": "brake_6",
+      "phase_before_transition": 0.6689,
+      "selected_state": "-1112163239",
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": false,
+      "rest_orientation_error_deg_at_tick_18": null,
+      "rest_orientation_error_deg_at_tick_28": null,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    },
+    {
+      "trial": "brake_7",
+      "phase_before_transition": 0.8466,
+      "selected_state": "-1112163239",
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": true,
+      "rest_orientation_error_deg_at_tick_18": null,
+      "rest_orientation_error_deg_at_tick_28": null,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    }
+  ]
+}

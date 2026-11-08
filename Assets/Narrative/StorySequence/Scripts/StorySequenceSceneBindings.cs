@@ -40,6 +40,22 @@ namespace Lit.Story
 
         private StorySequenceActor runtimeLocalPlayerActor;
 
+        // Explicit scene-owned presentation bindings take precedence over squad/global searches.
+        public void BindRuntimeActor(string actorId, StorySequenceActor actor)
+        {
+            if (string.IsNullOrWhiteSpace(actorId) || actor == null) return;
+            string id = actorId.Trim();
+            for (int i = 0; i < actors.Count; i++)
+            {
+                var binding = actors[i];
+                if (binding == null || !string.Equals(binding.actorId, id, StringComparison.OrdinalIgnoreCase)) continue;
+                binding.actor = actor;
+                binding.useLocalPlayer = false;
+                return;
+            }
+            actors.Add(new StorySequenceActorBinding { actorId = id, actor = actor });
+        }
+
         public StorySequenceActor ResolveActor(string actorId)
         {
             if (string.IsNullOrWhiteSpace(actorId))

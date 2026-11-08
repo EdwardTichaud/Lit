@@ -1,0 +1,22 @@
+{
+    "status": "PASS_OFFLINE",
+    "duration": 0.6666666865348816,
+    "rightStanceSolePath": 0.000011625427760009188,
+    "leftStanceSolePath": 0.000019547876945580356,
+    "minimumSole": -8.195638656616211e-7,
+    "maximumLowerSole": 0.000010967254638671875,
+    "endpointFeet": 2.6034422262455337e-7,
+    "endpointHips": 8.429369557916289e-8,
+    "endpointHipsAngle": 0.0,
+    "rootDistance": 0.0,
+    "rootYaw": 0.0,
+    "maximumGoalError": 6.791174769205099e-7,
+    "maximumSwingLift": 0.6005040407180786,
+    "reconstructedLift": false,
+    "previewAsset": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Run_Stop_LeftSupport_LeadPilot.anim",
+    "persistedPoseDifference": 0.0,
+    "persistedRotationDifference": 0.0,
+    "peakSwingPelvisToSupport": 0.06320410966873169,
+    "subframeMinimumSole": -0.000179387629032135,
+    "subframeMaximumLowerSole": 0.00006840378046035767
+}

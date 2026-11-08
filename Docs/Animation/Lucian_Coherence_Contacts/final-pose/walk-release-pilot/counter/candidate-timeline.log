@@ -1,0 +1,3 @@
+[LucianCounter] timeline=CombatLab_CounterSkill_2 controller=
+[CounterSkill] Impossible de lancer le rig : CounterHit invalide ou etat manquant sur la victime : Base Layer.Hit_1
+[CounterCameraHandoffValidation] FAIL System.InvalidOperationException: Real cinematic counter refused

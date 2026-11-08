@@ -69,6 +69,11 @@ public class TrouEtroit : MonoBehaviour
     private Canvas interactionCanvas;
     private uint networkId;
     private float nextRequestAt;
+    private KnowledgePassageDiscovery knowledgeDiscovery;
+    private KnowledgePassageDiscovery KnowledgeDiscovery
+    {
+        get { if (knowledgeDiscovery == null) knowledgeDiscovery = GetComponent<KnowledgePassageDiscovery>(); return knowledgeDiscovery; }
+    }
 
     public bool IsDetected => detected;
 
@@ -105,8 +110,13 @@ public class TrouEtroit : MonoBehaviour
     {
         // Selection du perso controle pour l'interaction.
         RefreshCurrentCharacter();
-        if (!detected && currentCharacter != null && HasAbility(currentCharacter, observateurAbility))
-            RequestPassage(false);
+        var discovery = KnowledgeDiscovery;
+        if (!detected && currentCharacter != null)
+        {
+            bool observer = HasAbility(currentCharacter, observateurAbility);
+            if (discovery != null ? discovery.ShouldRequest(currentCharacter, observer) : observer) RequestPassage(false);
+        }
+        if (discovery != null) SetGlow(detected && discovery.IsKnown && currentCharacter != null);
     }
 
     private void LateUpdate()
@@ -283,6 +293,7 @@ public class TrouEtroit : MonoBehaviour
     public void RestoreDetectedState(bool detectedState)
     {
         detected = detectedState;
+        KnowledgeDiscovery?.RestoreLegacyDetection(detectedState);
         UpdateGlow();
         ApplyVisibility();
 
@@ -297,7 +308,8 @@ public class TrouEtroit : MonoBehaviour
 
     private void UpdateGlow()
     {
-        SetGlow(detected);
+        var discovery = KnowledgeDiscovery;
+        SetGlow(detected && (discovery == null || discovery.IsKnown && currentCharacter != null));
     }
 
     private void SetGlow(bool visible)
@@ -350,6 +362,9 @@ public class TrouEtroit : MonoBehaviour
 
     private bool CanShowInteraction()
     {
+        var discovery = KnowledgeDiscovery;
+        if (discovery != null && (!discovery.isActiveAndEnabled || !discovery.IsKnown ||
+            InputModeCoordinator.CurrentMode != InputMode.Exploration)) return false;
         if (requireDetection && !detected)
         {
             return false;
@@ -361,7 +376,8 @@ public class TrouEtroit : MonoBehaviour
     private void RefreshCurrentCharacter()
     {
         GameObject controlled = GetControlledCharacter();
-        if (controlled != null && charactersInRange.Contains(controlled))
+        if (controlled != null && (charactersInRange.Contains(controlled) ||
+            KnowledgeDiscovery != null && IsInsideInteractionVolume(controlled.transform.position)))
         {
             if (currentCharacter != controlled)
             {
@@ -369,7 +385,8 @@ public class TrouEtroit : MonoBehaviour
                 interactionTarget = controlled.transform;
             }
 
-            ShowInteraction((!requireDetection || detected) && HasAbility(controlled, saufConduitAbility));
+            ShowInteraction((!requireDetection || detected) &&
+                (KnowledgeDiscovery == null || KnowledgeDiscovery.IsKnown) && HasAbility(controlled, saufConduitAbility));
             return;
         }
 
@@ -671,8 +688,15 @@ public class TrouEtroit : MonoBehaviour
         if (controller == null || controller.CurrentHp <= 0 || trigger == null || !trigger.enabled ||
             movement != null && (movement.IsCombatLockActive || movement.IsExternalLockActive) ||
             !IsInsideInteractionVolume(character.transform.position, trigger)) return false;
-        if (!HasAbility(character, travel ? saufConduitAbility : observateurAbility)) return false;
-        if (travel) return !requireDetection || detected;
+        var discovery = KnowledgeDiscovery;
+        if (travel) return HasAbility(character, saufConduitAbility) && (!requireDetection || detected) &&
+            (discovery == null || discovery.isActiveAndEnabled && discovery.IsKnown);
+        bool observer = HasAbility(character, observateurAbility);
+        if (discovery != null)
+        {
+            if (!discovery.ServerTryDiscover(character, observer)) return false;
+        }
+        else if (!observer) return false;
         Detect();
         return true;
     }
@@ -695,7 +719,7 @@ public class TrouEtroit : MonoBehaviour
         {
             bool wasDetected = detected;
             Detect();
-            if (!wasDetected) LocalPlayerUtils.GetControlledCharacter()?.GetComponentInChildren<AbilityFeedbackAnchor>()?.Show(observateurAbility, true);
+            if (!wasDetected && KnowledgeDiscovery == null) LocalPlayerUtils.GetControlledCharacter()?.GetComponentInChildren<AbilityFeedbackAnchor>()?.Show(observateurAbility, true);
         }
     }
 

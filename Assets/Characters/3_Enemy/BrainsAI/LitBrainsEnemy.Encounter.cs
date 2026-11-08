@@ -11,8 +11,22 @@ public interface ILitBrainsEncounterPolicy
     bool FilterIncomingDamage(int requested, SquadCharacterController source, out int permitted);
 }
 
+public interface ILitBrainsMovementPolicy
+{
+    Vector3 ConstrainStep(Vector3 position, Vector3 step);
+}
+
 public partial class LitBrainsEnemy
 {
+    private Vector3 ConstrainEncounterStep(Vector3 position, Vector3 step)
+    {
+        if (encounterPolicies == null) RefreshEncounterPolicies();
+        foreach (var component in encounterPolicies)
+            if (component != null && component.isActiveAndEnabled && component is ILitBrainsMovementPolicy movement)
+                step = movement.ConstrainStep(position, step);
+        return step;
+    }
+
     private MonoBehaviour[] encounterPolicies;
     public void RefreshEncounterPolicies() => encounterPolicies = GetComponents<MonoBehaviour>();
     public bool HasSimulationAuthority

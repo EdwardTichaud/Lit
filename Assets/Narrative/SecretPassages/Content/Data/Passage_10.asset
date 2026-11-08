@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69cb216f1234d81468b59e932c2dee4d, type: 3}
+  m_Name: Passage_10
+  m_EditorClassIdentifier: Assembly-CSharp::SecretPassageDefinition
+  passageId: limbes.2
+  knowledge: {fileID: 11400000, guid: 7e3d2450aaf0d0743aa7fba5fc6439f8, type: 2}
+  note: {fileID: 11400000, guid: 129e1183a03ec0c4b92d66ce81b25c91, type: 2}

@@ -415,7 +415,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return false;
         }
 
-        if (IsInputSuppressedByUcc)
+        if (IsInputSuppressedByUcc && !(scriptedJumpController != null && scriptedJumpController.CanBufferDuringLanding))
         {
             return false;
         }
@@ -1380,6 +1380,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        measuredCombatResponse.Reset();
         RestoreActionTakeoff();
         ReleaseTargetCollisionBypasses();
         RestoreExplorationMovementType();
@@ -1815,6 +1816,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void SetCombatAnimatorInput(Vector2 localInput)
     {
+        // The measured path owns these parameters from obtained velocity.
+        // Input can arrive after that update and must not replace it before Animator evaluation.
+        if (IsMeasuredLocomotionPresentationActive) return;
         SetAnimatorFloat(horizontalMovementParam, localInput.x);
         SetAnimatorFloat(forwardMovementParam, localInput.y);
         SetAnimatorFloat(combatMoveMagnitudeParam, localInput.magnitude);
@@ -1868,6 +1872,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private void EnterCombatIdleFromLocomotion()
     {
         if (combatIdlePresentationActive || animator == null ||
+            GetComponent<PlayerActionPresentationController>()?.IsActionActive == true ||
             !animator.HasState(0, CombatLocomotionStateHash) ||
             !animator.HasState(0, CombatIdleStateHash))
         {
@@ -1875,12 +1880,18 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        if (state.fullPathHash != CombatLocomotionStateHash)
+        if (state.fullPathHash != CombatLocomotionStateHash || HasNonLocomotionCombatDestination())
         {
             return;
         }
 
-        animator.CrossFade(CombatIdleStateHash, 0.04f, 0);
+#if UNITY_EDITOR
+        float fixedFade = GetComponent<LitPresentationCharacterIK>()?.CombatBrakeFadeForProbe ?? 0;
+        if (fixedFade > 0)
+            animator.CrossFadeInFixedTime(CombatIdleStateHash, fixedFade, 0);
+        else
+#endif
+            animator.CrossFade(CombatIdleStateHash, 0.04f, 0);
         combatIdlePresentationActive = true;
     }
 
@@ -1889,6 +1900,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (!combatIdlePresentationActive || animator == null ||
             !animator.HasState(0, CombatLocomotionStateHash))
         {
+            return;
+        }
+
+        // The current state can still be Idle while a skill's entry blend is
+        // pending. Never replace that destination with a locomotion request.
+        if (GetComponent<PlayerActionPresentationController>()?.IsActionActive == true || HasNonLocomotionCombatDestination())
+        {
+            combatIdlePresentationActive = false;
             return;
         }
 
@@ -1905,6 +1924,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         animator.CrossFade(CombatLocomotionStateHash, 0.03f, 0);
         combatIdlePresentationActive = false;
+    }
+
+    private bool HasNonLocomotionCombatDestination()
+    {
+        if (!animator.IsInTransition(0)) return false;
+        int destination = animator.GetNextAnimatorStateInfo(0).fullPathHash;
+        return destination != CombatIdleStateHash && destination != CombatLocomotionStateHash;
     }
 
     private void RefreshSquadFacadeSystems()

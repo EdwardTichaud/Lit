@@ -31,9 +31,18 @@ public static class CharacterInteractionDetection
     private static readonly List<Renderer> visibilityRenderers = new List<Renderer>(16);
     private static Flame[] activeFlames = System.Array.Empty<Flame>();
     private static int activeFlamesFrame = -1;
+    private static readonly List<PlayerTorchInfluence> activeTorches = new(4);
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetInfluenceCache()
+    {
+        activeFlames = System.Array.Empty<Flame>();
+        activeFlamesFrame = -1;
+        activeTorches.Clear();
+    }
 
     /// <summary>
-    /// World interactions are readable only under an active Flame influence.
+    /// World interactions are readable under a fixed Flame or equipped player torch.
     /// Les Flames et les torches de puzzle restent exemptes : elles doivent
     /// être atteignables pour pouvoir restaurer une zone sombre.
     /// Portals remain usable independently of lighting.
@@ -62,6 +71,12 @@ public static class CharacterInteractionDetection
                 return true;
             }
         }
+
+        // Carried torches already reveal the world through LitInfluenceSource.
+        // The shared selection gate must recognize that same physical source.
+        PlayerTorchInfluence.CopyActiveInfluenceTorches(activeTorches);
+        for (int index = 0; index < activeTorches.Count; index++)
+            if (activeTorches[index].ProvidesLitInfluenceTo(collider, fallbackPoint)) return true;
 
         return false;
     }

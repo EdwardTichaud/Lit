@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-04 21:17:53Z" end-time="2026-11-04 21:17:55Z" duration="1,0742154">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2881" result="Passed" start-time="2026-11-04 21:17:53Z" end-time="2026-11-04 21:17:55Z" duration="1.074215" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2860" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1529" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:55Z" duration="1.012006" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="28536" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="2153" name="LocomotionDirectionalGeometryTests" fullname="LocomotionDirectionalGeometryTests" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:55Z" duration="0.922123" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2159" name="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" fullname="LocomotionDirectionalGeometryTests.MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:54Z" duration="0.258968" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2157" name="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(False)" fullname="LocomotionDirectionalGeometryTests.MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(False)" methodname="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" seed="1416605516" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:54Z" duration="0.162077" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2158" name="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(True)" fullname="LocomotionDirectionalGeometryTests.MeasuredNativeSpeedMatchesActualUnityDirectionalWeights(True)" methodname="MeasuredNativeSpeedMatchesActualUnityDirectionalWeights" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" seed="1334642124" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:54Z" duration="0.074787" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="2156" name="MixedCadenceMatchesTheControllersActualPhaseClock" fullname="LocomotionDirectionalGeometryTests.MixedCadenceMatchesTheControllersActualPhaseClock" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:55Z" duration="0.653523" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2154" name="MixedCadenceMatchesTheControllersActualPhaseClock(False)" fullname="LocomotionDirectionalGeometryTests.MixedCadenceMatchesTheControllersActualPhaseClock(False)" methodname="MixedCadenceMatchesTheControllersActualPhaseClock" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" seed="2104985037" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:54Z" duration="0.328851" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2155" name="MixedCadenceMatchesTheControllersActualPhaseClock(True)" fullname="LocomotionDirectionalGeometryTests.MixedCadenceMatchesTheControllersActualPhaseClock(True)" methodname="MixedCadenceMatchesTheControllersActualPhaseClock" classname="LocomotionDirectionalGeometryTests" runstate="Runnable" seed="1807096874" result="Passed" start-time="2026-11-04 21:17:54Z" end-time="2026-11-04 21:17:55Z" duration="0.319038" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

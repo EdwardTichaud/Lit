@@ -231,8 +231,10 @@ MonoBehaviour:
       stopDashDuration: 0.18
       stopDashDeceleration: 65
     jump:
+      coyoteSeconds: 0.1
+      inputBufferSeconds: 0.15
       jumpHeight: 100
-      jumpStartTakeoffNormalizedTime: 0.5
+      jumpStartTakeoffNormalizedTime: 0.13
       jumpStartPlanarSlowdown: 0
       apexGravityEntryVelocity: 25
       apexGravityMultiplier: 0.25

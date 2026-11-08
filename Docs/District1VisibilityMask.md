@@ -1,5 +1,7 @@
 # Masque circulaire — toutes les scènes District_1
 
+Mise à jour multi-couches : voir `LayeredVisibilityMask.md`. Les sols et marches sont désormais préparés comme surfaces protégées pour permettre la découpe des étages supérieurs, sans découper le sol d'appui du personnage. Les exclusions complètes de sols décrites pour le raccord initial sont remplacées par cette protection par fragment.
+
 Le masque tactique de Maison s'étend automatiquement aux scènes de `Assets/Scenes/District_1/`, aux scènes `District_1_*` des cycles et à la scène racine `District_1_Indoor_Lights`. Aucun composant à placer manuellement et aucune obligation de charger `District_1_Core` : l'installateur s'abonne aux chargements de scène et crée un unique `District_1_TacticalVisibility` local, persistant entre les chargements additifs. Il réutilise aussi une instance existante après un rechargement du domaine en Play.
 
 La préparation est différée d'une frame pour inclure les décors construits dans `Start`. Elle conserve tous les LOD, y compris les enfants initialement inactifs. Les scènes d'environnement incluent les meshes sans nom architectural (par exemple ceux d'OldBarn). Les murs, piliers, plafonds, conduits et garde-corps sont reconnus en français et en anglais dans toute la hiérarchie ; les sols, marches, terrain, personnages animés, flammes, armes, traces narratives et VFX restent exclus. Les scènes de cycles restent couvertes sans transformer leurs personnages ou souvenirs en décor découpable.

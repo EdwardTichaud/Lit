@@ -1,0 +1,7 @@
+Begin MonoManager ReloadAssembly
+	BeginReloadAssembly (240ms)
+Begin MonoManager ReloadAssembly
+	BeginReloadAssembly (458ms)
+Begin MonoManager ReloadAssembly
+	BeginReloadAssembly (755ms)
+[PlayModeTiming] Enter Play Mode: 22,59s

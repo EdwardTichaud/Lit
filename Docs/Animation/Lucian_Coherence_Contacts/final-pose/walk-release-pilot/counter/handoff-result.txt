@@ -1,0 +1,2 @@
+FAIL System.InvalidOperationException: Expected four runtime hit bursts, observed 0
+  at CounterCameraHandoffValidation.Tick () [0x0052c] in C:\Users\pierr\AppData\Local\Temp\LucianProductionValidation-20261105-184857\Assets\Characters\3_Enemy\Iluvilirae\Editor\CounterCameraHandoffValidation.cs:132 

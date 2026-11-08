@@ -19,9 +19,6 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     [Min(.001f)] public float zoomTime = .12f;
     [Min(.001f)] public float recenterTime = .25f;
     [Min(.001f)] public float transitionTime = .3f;
-    // Legacy serialized field: aim now shares UCC interpolation, with no second damping control.
-    [HideInInspector]
-    public float renderedAimSharpness = 28f;
     [Header("Input")]
     public float panSpeed = 10;
     public float mouseOrbitSensitivity = .12f;

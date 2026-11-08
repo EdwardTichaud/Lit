@@ -1,0 +1,284 @@
+{
+  "run": "Library/LucianCoherence/play-cadence-mixed-gaits-contacts-20261104-214815",
+  "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+  "scope": "Qualified goals with both IK passes stamped on the same frame. Uniform-scale Animator-local bone errors. No sole, transition or visual verdict.",
+  "matched_frames": 1742,
+  "missing_frames": 0,
+  "wrong_pass_frames": 0,
+  "state_handoffs": [
+    {
+      "trial": "explore_035",
+      "frame": "186",
+      "from_clips": "Lucian_Common_Walk_Loop_Stride03:0.102992117",
+      "to_clips": "TwinSword_Common_Walk_Start_Inplace:1",
+      "from_phase": 1.5695281,
+      "to_phase": 0.107713774,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.016384100000003343,
+      "world_displacement_m": {
+        "root": 0.024300000020501734,
+        "left": 0.05237793397357836,
+        "right": 0.009444732923774107
+      }
+    },
+    {
+      "trial": "explore_035",
+      "frame": "218",
+      "from_clips": "TwinSword_Common_Walk_Start_Inplace:0.08693546",
+      "to_clips": "Lucian_Common_Walk_Loop_Stride03:1",
+      "from_phase": 0.7730451,
+      "to_phase": 0.06060324,
+      "qualified_before": false,
+      "qualified_after": true,
+      "dt": 0.016375099999997644,
+      "world_displacement_m": {
+        "root": 0.024440000000026885,
+        "left": 0.09761137435764093,
+        "right": 0.031105488663561484
+      }
+    },
+    {
+      "trial": "combat_035",
+      "frame": "908",
+      "from_clips": "Lucian_Common_Walk_Loop_Stride03:0.155064508|Lucian_Common_Run_Stride02:0.0170368087",
+      "to_clips": "Twinblades_Idle_Inplace:1",
+      "from_phase": 12.6312046,
+      "to_phase": 0.0417461,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.017261500000003593,
+      "world_displacement_m": {
+        "root": 0.026119999999991705,
+        "left": 0.13082257926296284,
+        "right": 0.10757616018891816
+      }
+    },
+    {
+      "trial": "combat_035",
+      "frame": "911",
+      "from_clips": "Twinblades_Idle_Inplace:0.446156442",
+      "to_clips": "Lucian_Strafe_Walk_F_Stride03:0.791748464|Lucian_Strafe_Run_F_Stride03:0.2082516",
+      "from_phase": 0.05813795,
+      "to_phase": 0.02391784,
+      "qualified_before": false,
+      "qualified_after": true,
+      "dt": 0.017208099999997728,
+      "world_displacement_m": {
+        "root": 0.0256400000195675,
+        "left": 0.1339961363920486,
+        "right": 0.14176505356317107
+      }
+    },
+    {
+      "trial": "stop",
+      "frame": "1973",
+      "from_clips": "Lucian_Strafe_Walk_F_Stride03:0.0222067|Lucian_Strafe_Walk_FL_Stride03:0.1425683",
+      "to_clips": "Common_Idle_Inplace:0.6710366|Lucian_Common_Walk_Loop_Stride03:0.328963369",
+      "from_phase": 19.1439514,
+      "to_phase": 0.0535242148,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.016509999999996694,
+      "world_displacement_m": {
+        "root": 0.0027081545376335878,
+        "left": 0.10401395872185155,
+        "right": 0.1806403362733845
+      }
+    },
+    {
+      "trial": "stop",
+      "frame": "1982",
+      "from_clips": "Common_Idle_Inplace:0.02654332",
+      "to_clips": "TwinSword_Common_Walk_Stop_Inplace:1",
+      "from_phase": 0.120183915,
+      "to_phase": 0.205940589,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.016479500000002645,
+      "world_displacement_m": {
+        "root": 0.0,
+        "left": 0.03400518414890062,
+        "right": 0.020835783666568596
+      }
+    },
+    {
+      "trial": "stop",
+      "frame": "2016",
+      "from_clips": "TwinSword_Common_Walk_Stop_Inplace:0.0271091461",
+      "to_clips": "Common_Idle_Inplace:1",
+      "from_phase": 1.05566251,
+      "to_phase": 0.0587934181,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.016834400000007577,
+      "world_displacement_m": {
+        "root": 0.0,
+        "left": 0.0025564334530914995,
+        "right": 0.0006100131145509407
+      }
+    }
+  ],
+  "trials": {
+    "explore_035": {
+      "native": {
+        "feet": 284,
+        "min_y_mm": -10.028727999999626,
+        "median_y_mm": -9.9998054999995,
+        "max_y_mm": -9.27156999999995,
+        "max_horizontal_mm": 0.06658317724284861
+      },
+      "final": {
+        "feet": 284,
+        "min_y_mm": -10.028727999999626,
+        "median_y_mm": -10.000179999999512,
+        "max_y_mm": -9.974240999999745,
+        "max_horizontal_mm": 0.06658317724284861
+      }
+    },
+    "explore_05": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -10.02926900000034,
+        "median_y_mm": -9.999449999999548,
+        "max_y_mm": -9.963900000000248,
+        "max_horizontal_mm": 0.071365107057984
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.02926900000034,
+        "median_y_mm": -9.999449999999548,
+        "max_y_mm": -9.963900000000248,
+        "max_horizontal_mm": 0.071365107057984
+      }
+    },
+    "explore_065": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -10.026500000000105,
+        "median_y_mm": -10.00079950000027,
+        "max_y_mm": -9.965127999999934,
+        "max_horizontal_mm": 0.08724810105254174
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.026500000000105,
+        "median_y_mm": -10.000958000000947,
+        "max_y_mm": -9.965127999999934,
+        "max_horizontal_mm": 0.08724810105254174
+      }
+    },
+    "explore_08": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -10.06175000000098,
+        "median_y_mm": -10.001556000000022,
+        "max_y_mm": -9.943328999999778,
+        "max_horizontal_mm": 0.13696223408098135
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.06175000000098,
+        "median_y_mm": -10.001556000000022,
+        "max_y_mm": -9.943328999999778,
+        "max_horizontal_mm": 0.13696223408098135
+      }
+    },
+    "combat_035": {
+      "native": {
+        "feet": 344,
+        "min_y_mm": -10.05704199999985,
+        "median_y_mm": -10.002251500000085,
+        "max_y_mm": -9.953780999999468,
+        "max_horizontal_mm": 0.13018978306738163
+      },
+      "final": {
+        "feet": 344,
+        "min_y_mm": -10.05704199999985,
+        "median_y_mm": -10.002251500000085,
+        "max_y_mm": -9.953780999999468,
+        "max_horizontal_mm": 0.13018978306738163
+      }
+    },
+    "combat_05": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -10.067541999999541,
+        "median_y_mm": -9.999680499999803,
+        "max_y_mm": -9.948171999999644,
+        "max_horizontal_mm": 0.15893241073590558
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.067541999999541,
+        "median_y_mm": -9.999680499999803,
+        "max_y_mm": -9.948171999999644,
+        "max_horizontal_mm": 0.15893241073590558
+      }
+    },
+    "combat_065": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -10.054400000000129,
+        "median_y_mm": -10.001250000000184,
+        "max_y_mm": -9.948033000000189,
+        "max_horizontal_mm": 0.1235098863826745
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.054400000000129,
+        "median_y_mm": -10.001250000000184,
+        "max_y_mm": -9.948033000000189,
+        "max_horizontal_mm": 0.1235098863826745
+      }
+    },
+    "combat_08": {
+      "native": {
+        "feet": 360,
+        "min_y_mm": -10.053778000000928,
+        "median_y_mm": -9.999925500000062,
+        "max_y_mm": -9.937831000000674,
+        "max_horizontal_mm": 0.12824272082989344
+      },
+      "final": {
+        "feet": 360,
+        "min_y_mm": -10.053778000000928,
+        "median_y_mm": -9.999925500000062,
+        "max_y_mm": -9.937831000000674,
+        "max_horizontal_mm": 0.12824272082989344
+      }
+    },
+    "combat_FR_05": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -10.053300000000931,
+        "median_y_mm": -10.002243999999619,
+        "max_y_mm": -9.95569999999979,
+        "max_horizontal_mm": 0.12684195127209158
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.053300000000931,
+        "median_y_mm": -10.002243999999619,
+        "max_y_mm": -9.95569999999979,
+        "max_horizontal_mm": 0.12684195127209158
+      }
+    },
+    "combat_FL_05": {
+      "native": {
+        "feet": 324,
+        "min_y_mm": -10.05211499999964,
+        "median_y_mm": -9.999700499998958,
+        "max_y_mm": -9.862851999999227,
+        "max_horizontal_mm": 0.08990683284616705
+      },
+      "final": {
+        "feet": 324,
+        "min_y_mm": -10.05211499999964,
+        "median_y_mm": -9.999700499998958,
+        "max_y_mm": -9.95798599999939,
+        "max_horizontal_mm": 0.08990683284616705
+      }
+    }
+  }
+}

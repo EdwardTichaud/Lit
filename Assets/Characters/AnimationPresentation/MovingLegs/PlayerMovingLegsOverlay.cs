@@ -11,6 +11,12 @@ public sealed class PlayerMovingLegsOverlay : MonoBehaviour
     private RuntimeAnimatorController controller;
     private int layer = -1;
     public float Weight => animator != null && layer >= 0 ? animator.GetLayerWeight(layer) : 0;
+    public static bool IsWholeBodyLocomotion(int shortNameHash)
+    {
+        foreach (var name in WholeBodyStates) if (shortNameHash == Animator.StringToHash(name)) return true;
+        return false;
+    }
+    private static readonly string[] WholeBodyStates = { "Locomotion", "CombatLocomotion", "CombatIdle", "Walk_Start", "Run_Start", "Walk_Stop", "Run_Stop", "WalkStartToRun", "Turn_L90", "Turn_R90", "Turn_L180", "Turn_R180" };
 
     private void Update() => Refresh(Time.deltaTime);
 
@@ -30,6 +36,15 @@ public sealed class PlayerMovingLegsOverlay : MonoBehaviour
             bridge.IsCinematicMotionSessionActive || GetComponent<PlayerActionPresentationController>()?.IsDeathAnimationLocked == true ||
             health != null && health.CurrentHp <= 0;
         if (blocked) { animator.SetLayerWeight(layer, 0); return; }
+        if (bridge.PreserveWholeBodyLocomotion &&
+            (IsWholeBodyLocomotion(animator.GetCurrentAnimatorStateInfo(0).shortNameHash) ||
+             animator.IsInTransition(0) && IsWholeBodyLocomotion(animator.GetNextAnimatorStateInfo(0).shortNameHash)))
+        {
+            // One complete gait owns pelvis and legs. A second unsynchronised gait distorts their relationship.
+            // Clear immediately: fading the mismatched pose out would still damage starts/stops and handoffs.
+            animator.SetLayerWeight(layer, 0);
+            return;
+        }
 
         Vector3 velocity = bridge.PlanarVelocity;
         float speed = velocity.magnitude;

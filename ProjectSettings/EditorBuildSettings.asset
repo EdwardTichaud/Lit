@@ -137,6 +137,36 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_AccesReve.unity
     guid: 3e2f45b23169c6d4d9ca4fd7f8acacef
+  - enabled: 1
+    path: Assets/Scenes/Reve/Reve_Limbes_Progression.unity
+    guid: 147bd4b0ef8ce4840ac15ecc34e9997d
+  - enabled: 1
+    path: Assets/Scenes/Reve/Reve_Limbes_Cycle_Creation.unity
+    guid: 4b21f769725fe634e952550b90e0ebe2
+  - enabled: 1
+    path: Assets/Scenes/Reve/Reve_Limbes_Cycle_Captivite.unity
+    guid: e183a25cadd69554d9e1e80578202207
+  - enabled: 1
+    path: Assets/Scenes/Reve/Reve_Limbes_Cycle_Invocation.unity
+    guid: b4ddeeb5a1698a54fa07253a807cbbb2
+  - enabled: 1
+    path: Assets/Scenes/District_2/Courts/District_2_Courts.unity
+    guid: 26169649ada98b0468b6420dfe518f1f
+  - enabled: 1
+    path: Assets/Scenes/District_2/Courts/District_2_Courts_Environment.unity
+    guid: d439c5fb48044a945a2ee833450cc966
+  - enabled: 1
+    path: Assets/Scenes/District_2/Courts/District_2_Courts_Secrets.unity
+    guid: ada27dad8a8268c4186caddfc69cc8c6
+  - enabled: 1
+    path: Assets/Scenes/Reve/Reve_Limbes_Secrets.unity
+    guid: 3dac53cc3a0398e48a227632b4a8e3fd
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_SecretNotes.unity
+    guid: cca91f091e8091841af9b9a49880cab0
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Fracture_Environment.unity
+    guid: 187190b8a62ea6649a3abf5777543a19
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

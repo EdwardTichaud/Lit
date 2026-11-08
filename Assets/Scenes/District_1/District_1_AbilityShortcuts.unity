@@ -256,6 +256,7 @@ GameObject:
   - component: {fileID: 207182793}
   - component: {fileID: 207182792}
   - component: {fileID: 207182791}
+  - component: {fileID: 207182798}
   m_Layer: 0
   m_Name: Raccourci_Couloir_Ouest
   m_TagString: Untagged
@@ -278,6 +279,7 @@ Transform:
   m_Children:
   - {fileID: 1260425461}
   - {fileID: 505095354}
+  - {fileID: 4830075704066556417}
   m_Father: {fileID: 1677167414}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &207182791
@@ -429,6 +431,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &207182798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 207182789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fefbc39d49847b647a3c8c82a2a824fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgePassageDiscovery
+  definition: {fileID: 11400000, guid: 21849291123991547beece13fbaaec76, type: 2}
+  firstRecognition: {fileID: 2612744173582795255}
+  worldRules: {fileID: 0}
 --- !u!1 &505095353
 GameObject:
   m_ObjectHideFlags: 0
@@ -1175,6 +1192,150 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2000656682}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1952811862461600380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6343073687975273573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9109231d0ee6054bbfe367635ebae06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceDialoguePresenter
+  canvasGroup: {fileID: 0}
+  speakerText: {fileID: 0}
+  dialogueText: {fileID: 0}
+  continueHintText: {fileID: 0}
+  portraitImage: {fileID: 0}
+  dialoguePanel: {fileID: 0}
+  showSpeakerName: 1
+  createRuntimeUiWhenMissing: 1
+  sortingOrder: 32737
+  panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
+  speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
+  uiFadeDuration: 0.15
+  duckMusic: 1
+  musicDuckMultiplier: 0.45
+--- !u!114 &2612744173582795255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6343073687975273573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
+  sequence: {fileID: 11400000, guid: 4fc052ecbc1dbf5438ba6957f10622de, type: 2}
+  playOnStart: 0
+  startDelay: 0
+  bindings: {fileID: 0}
+  cameraDriver: {fileID: 0}
+  dialoguePresenter: {fileID: 0}
+  fadeController: {fileID: 0}
+  onSequenceStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSequenceCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSequenceAborted:
+    m_PersistentCalls:
+      m_Calls: []
+  namePrompt: {fileID: 0}
+--- !u!4 &4830075704066556417
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6343073687975273573}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 207182790}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6343073687975273573
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4830075704066556417}
+  - component: {fileID: 6988322387660919955}
+  - component: {fileID: 8920318397997986730}
+  - component: {fileID: 1952811862461600380}
+  - component: {fileID: 7866411938480940252}
+  - component: {fileID: 2612744173582795255}
+  m_Layer: 0
+  m_Name: Reconnaissance_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &6988322387660919955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6343073687975273573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad6a29de2919a844488319fc463cb884, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceSceneBindings
+  actors: []
+  cameraPoints: []
+  directors: []
+  events: []
+  searchSceneWhenBindingMissing: 1
+--- !u!114 &7866411938480940252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6343073687975273573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bd37c89cf364884f8c1a611db80fa51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceFadeController
+  canvasGroup: {fileID: 0}
+  fadeImage: {fileID: 0}
+  fadeColor: {r: 0, g: 0, b: 0, a: 1}
+  sortingOrder: 32747
+--- !u!114 &8920318397997986730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6343073687975273573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07d4bcf678a3f9c429eafb1745344878, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraDriver
+  controlledCamera: {fileID: 0}
+  uccCameraController: {fileID: 0}
+  uccCameraHandler: {fileID: 0}
+  uccCameraBinder: {fileID: 0}
+  additionalGameplayCameraBehaviours: []
+  fallbackLocalOffset: {x: 0.85, y: 1.65, z: 2.4}
+  fallbackFieldOfView: 45
+  fallbackFollowSharpness: 12
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

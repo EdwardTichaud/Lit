@@ -26,6 +26,8 @@ public static class MainMenuSaveCatalog
         if (scene.StartsWith("District_", StringComparison.OrdinalIgnoreCase))
         {
             string[] parts = scene.Split('_');
+            if (parts.Length > 1 && parts[1] == "1") return "District 1 — Moonrise";
+            if (parts.Length > 1 && parts[1] == "2") return "District 2 — Stillhaven";
             return parts.Length > 1 ? "District " + parts[1] : "District";
         }
         return scene.Replace('_', ' ');

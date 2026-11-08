@@ -1,0 +1,60 @@
+{
+  "status": "RECORDED WITH ERRORS",
+  "errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ],
+  "cases": [
+    {
+      "stop": "brake_left_early",
+      "interruption": "resume_left",
+      "selected_foot": -1,
+      "brake_ticks_before_interruption": 8,
+      "state_before_interruption": "-1269438207",
+      "next_before_interruption": "-1764354592",
+      "selector_clears_at_tick": 2,
+      "stop_state_leaves_at_tick": 2,
+      "run_speed_reaches_5_m_s_at_tick": 11,
+      "airborne_at_tick": null,
+      "apex_m_above_last_brake_pose": 0.0,
+      "peak_relative_ankle_cm_first_20_ticks": 15.834,
+      "end_state": "-1269438207",
+      "end_selector": 0.0
+    },
+    {
+      "stop": "brake_right_late",
+      "interruption": "resume_right",
+      "selected_foot": 1,
+      "brake_ticks_before_interruption": 17,
+      "state_before_interruption": "-1764354592",
+      "next_before_interruption": "0",
+      "selector_clears_at_tick": 7,
+      "stop_state_leaves_at_tick": 7,
+      "run_speed_reaches_5_m_s_at_tick": 12,
+      "airborne_at_tick": null,
+      "apex_m_above_last_brake_pose": 0.0,
+      "peak_relative_ankle_cm_first_20_ticks": 18.3,
+      "end_state": "-1269438207",
+      "end_selector": 0.0
+    },
+    {
+      "stop": "brake_jump",
+      "interruption": "interrupt_jump",
+      "selected_foot": -1,
+      "brake_ticks_before_interruption": 17,
+      "state_before_interruption": "-1764354592",
+      "next_before_interruption": "0",
+      "selector_clears_at_tick": 5,
+      "stop_state_leaves_at_tick": 5,
+      "run_speed_reaches_5_m_s_at_tick": 12,
+      "airborne_at_tick": 8,
+      "apex_m_above_last_brake_pose": 2.7285,
+      "peak_relative_ankle_cm_first_20_ticks": 39.777,
+      "end_state": "492708173",
+      "end_selector": 0.0
+    }
+  ],
+  "followup_selected": [
+    -1.0
+  ],
+  "followup_end_selector": 0.0
+}

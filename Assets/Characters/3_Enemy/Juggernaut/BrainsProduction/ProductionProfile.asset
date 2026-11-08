@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LitBrainsCombatProfile
   locomotionState: Base Layer.CombatLocomotion
   hurtState: Base Layer.Hit
-  knockoutState: Base Layer.Hit
+  knockoutState: Base Layer.Knocked Out
   deathState: Base Layer.Death
   hurtBlendSeconds: 0.06
   productionSourceProfile: {fileID: 11400000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d05, type: 2}

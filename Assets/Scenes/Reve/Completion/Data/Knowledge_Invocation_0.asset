@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Invocation_0
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: cfa030f86ca3fec4d99dfa92dc8c45a4
+  knowledgeId: reve.limbes.invocation.proof.0
+  title: Le visage sous la protection
+  description: "La statue repr\xE9sente une d\xE9esse des Enfers. La secte fondatrice voulait l'amener dans le Monde des R\xEAves ; la statue devait servir d'ancre."
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: reve.limbes
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: b2ec0ca228988cb458c03b9631ab6f1c, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

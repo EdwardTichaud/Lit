@@ -38,6 +38,34 @@ public sealed class LitBrainsProductionPolicyTests
     public void Cleanup() => Object.DestroyImmediate(root);
 
     [Test]
+    public void NearbyCoverKeepsApproachMovingUntilTheTargetIsVisible()
+    {
+        var data = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
+        var target = new GameObject("Close target beyond cover");
+        var wall = new GameObject("Physical cover between actors");
+        try
+        {
+            root.transform.position = new Vector3(12000, 0, 0);
+            target.transform.position = root.transform.position + Vector3.right * 1.5f;
+            wall.transform.position = root.transform.position + new Vector3(.75f, 1.25f, 0);
+            wall.AddComponent<BoxCollider>().size = new Vector3(.2f, 3, 2);
+            enemy.ConfigureCharacterData(data);
+            enemy.fov.useExternalDetection = true;
+            enemy.fov.SetExternalTarget(target.transform);
+            Assert.That(enemy.fov.CurrentTarget, Is.SameAs(target.transform));
+            var method = typeof(LitBrainsEnemy).GetMethod("ResolveVisibleApproachDistance", BindingFlags.Instance | BindingFlags.NonPublic);
+            Physics.SyncTransforms();
+            Assert.That((float)method.Invoke(enemy, new object[] { 2.4f }), Is.LessThan(Vector3.Distance(root.transform.position, target.transform.position)),
+                "A close target behind real cover must not be considered already within the navigation stopping range.");
+            wall.SetActive(false);
+            Physics.SyncTransforms();
+            Assert.That((float)method.Invoke(enemy, new object[] { 2.4f }), Is.EqualTo(2.4f),
+                "Removing cover restores the authored attack approach distance.");
+        }
+        finally { Object.DestroyImmediate(target); Object.DestroyImmediate(wall); Object.DestroyImmediate(data); }
+    }
+
+    [Test]
     public void LockPointPreservesExplicitNestedAnchorAndFallsBackToRoot()
     {
         Assert.AreSame(root.transform, enemy.LockPoint);

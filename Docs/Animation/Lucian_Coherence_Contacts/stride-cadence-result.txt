@@ -1,0 +1,4 @@
+source=Library/LucianCoherence/play-cadence-contacts-20261102-222937
+contacts=33
+factor=0.9363047
+native_speed=4.96775961

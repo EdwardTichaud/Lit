@@ -20,6 +20,8 @@ public sealed class LitTacticalVisibilityMask
     private LitTacticalCameraProfile profile;
     public int LayerCount => stack.Layers.Count;
     public bool Covers(LitCameraOcclusionGroup group) => active && stack.Contains(group);
+    public bool Covers(LitCameraOcclusionGroup group, Vector3 contact) => Covers(group) &&
+        (!group.OverheadSurface || contact.y > playerGround);
 
     public LitTacticalVisibilityMask(LitGameplayCameraModeController owner, Camera camera)
     {

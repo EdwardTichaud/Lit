@@ -1,0 +1,540 @@
+{
+  "walk_off": {
+    "cadence": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8566602,
+      "sustained_clips": [
+        "Lucian_Common_Walk_Loop_Stride03"
+      ],
+      "travel_m": 5.114,
+      "normalized_phase_span": 2.3415412958,
+      "left_near_surface_windows": [
+        {
+          "frames": 41,
+          "first_frame": 331,
+          "phase": 0.12,
+          "path_cm": 66.93,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 372,
+          "phase": 0.705,
+          "path_cm": 9.44,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.79
+        },
+        {
+          "frames": 41,
+          "first_frame": 401,
+          "phase": 0.119,
+          "path_cm": 67.2,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 442,
+          "phase": 0.704,
+          "path_cm": 9.35,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 21,
+          "first_frame": 471,
+          "phase": 0.119,
+          "path_cm": 56.44,
+          "root_path_cm": 51.3,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.96
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.01
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 16,
+          "first_frame": 327,
+          "phase": 0.063,
+          "path_cm": 6.15,
+          "root_path_cm": 38.48,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 30,
+          "first_frame": 372,
+          "phase": 0.705,
+          "path_cm": 13.22,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.9
+        },
+        {
+          "frames": 11,
+          "first_frame": 402,
+          "phase": 0.133,
+          "path_cm": 4.9,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.72
+        },
+        {
+          "frames": 30,
+          "first_frame": 442,
+          "phase": 0.704,
+          "path_cm": 13.35,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.86
+        },
+        {
+          "frames": 11,
+          "first_frame": 472,
+          "phase": 0.133,
+          "path_cm": 4.92,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.69
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.0
+      },
+      "same_vertex_release_windows": [
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 8.9
+        },
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 8.9
+        }
+      ]
+    },
+    "pilot": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8566602,
+      "sustained_clips": [
+        "Lucian_Common_Walk_Loop_ReleasePilot"
+      ],
+      "travel_m": 5.109,
+      "normalized_phase_span": 2.3415412958,
+      "left_near_surface_windows": [
+        {
+          "frames": 41,
+          "first_frame": 334,
+          "phase": 0.12,
+          "path_cm": 58.08,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 375,
+          "phase": 0.705,
+          "path_cm": 7.34,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.79
+        },
+        {
+          "frames": 41,
+          "first_frame": 404,
+          "phase": 0.119,
+          "path_cm": 58.33,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 445,
+          "phase": 0.704,
+          "path_cm": 7.3,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 21,
+          "first_frame": 474,
+          "phase": 0.119,
+          "path_cm": 56.44,
+          "root_path_cm": 51.3,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.96
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.01
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 16,
+          "first_frame": 330,
+          "phase": 0.063,
+          "path_cm": 6.15,
+          "root_path_cm": 38.48,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 30,
+          "first_frame": 375,
+          "phase": 0.705,
+          "path_cm": 13.22,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.9
+        },
+        {
+          "frames": 11,
+          "first_frame": 405,
+          "phase": 0.133,
+          "path_cm": 4.9,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.72
+        },
+        {
+          "frames": 30,
+          "first_frame": 445,
+          "phase": 0.704,
+          "path_cm": 13.35,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.86
+        },
+        {
+          "frames": 11,
+          "first_frame": 475,
+          "phase": 0.133,
+          "path_cm": 4.92,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.69
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.0
+      },
+      "same_vertex_release_windows": [
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 0.43
+        },
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 0.42
+        }
+      ]
+    }
+  },
+  "walk_on": {
+    "cadence": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8566602,
+      "sustained_clips": [
+        "Lucian_Common_Walk_Loop_Stride03"
+      ],
+      "travel_m": 5.114,
+      "normalized_phase_span": 2.3415412958,
+      "left_near_surface_windows": [
+        {
+          "frames": 41,
+          "first_frame": 607,
+          "phase": 0.12,
+          "path_cm": 66.93,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 648,
+          "phase": 0.705,
+          "path_cm": 9.44,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.79
+        },
+        {
+          "frames": 41,
+          "first_frame": 677,
+          "phase": 0.119,
+          "path_cm": 67.2,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 718,
+          "phase": 0.704,
+          "path_cm": 9.35,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 21,
+          "first_frame": 747,
+          "phase": 0.119,
+          "path_cm": 56.44,
+          "root_path_cm": 51.3,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.96
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.01
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 11,
+          "first_frame": 603,
+          "phase": 0.063,
+          "path_cm": 3.4,
+          "root_path_cm": 25.65,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.74
+        },
+        {
+          "frames": 8,
+          "first_frame": 614,
+          "phase": 0.22,
+          "path_cm": 3.42,
+          "root_path_cm": 17.96,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.37
+        },
+        {
+          "frames": 30,
+          "first_frame": 648,
+          "phase": 0.705,
+          "path_cm": 13.22,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.9
+        },
+        {
+          "frames": 11,
+          "first_frame": 678,
+          "phase": 0.133,
+          "path_cm": 4.9,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.72
+        },
+        {
+          "frames": 30,
+          "first_frame": 718,
+          "phase": 0.704,
+          "path_cm": 13.35,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.86
+        },
+        {
+          "frames": 11,
+          "first_frame": 748,
+          "phase": 0.133,
+          "path_cm": 4.92,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.69
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.0
+      },
+      "same_vertex_release_windows": [
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 8.9
+        },
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 8.9
+        }
+      ]
+    },
+    "pilot": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8566602,
+      "sustained_clips": [
+        "Lucian_Common_Walk_Loop_ReleasePilot"
+      ],
+      "travel_m": 5.109,
+      "normalized_phase_span": 2.3415412958,
+      "left_near_surface_windows": [
+        {
+          "frames": 41,
+          "first_frame": 610,
+          "phase": 0.12,
+          "path_cm": 58.08,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 651,
+          "phase": 0.705,
+          "path_cm": 7.34,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.79
+        },
+        {
+          "frames": 41,
+          "first_frame": 680,
+          "phase": 0.119,
+          "path_cm": 58.34,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 721,
+          "phase": 0.704,
+          "path_cm": 7.3,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 21,
+          "first_frame": 750,
+          "phase": 0.119,
+          "path_cm": 56.44,
+          "root_path_cm": 51.3,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.96
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.01
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 11,
+          "first_frame": 606,
+          "phase": 0.063,
+          "path_cm": 3.4,
+          "root_path_cm": 25.65,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.74
+        },
+        {
+          "frames": 8,
+          "first_frame": 617,
+          "phase": 0.22,
+          "path_cm": 3.42,
+          "root_path_cm": 17.96,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.37
+        },
+        {
+          "frames": 30,
+          "first_frame": 651,
+          "phase": 0.705,
+          "path_cm": 13.22,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.9
+        },
+        {
+          "frames": 11,
+          "first_frame": 681,
+          "phase": 0.133,
+          "path_cm": 4.9,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.72
+        },
+        {
+          "frames": 30,
+          "first_frame": 721,
+          "phase": 0.704,
+          "path_cm": 13.35,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.86
+        },
+        {
+          "frames": 11,
+          "first_frame": 751,
+          "phase": 0.133,
+          "path_cm": 4.92,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.69
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.0
+      },
+      "same_vertex_release_windows": [
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 0.43
+        },
+        {
+          "phase_span": 0.1285,
+          "frames": 10,
+          "path_cm": 0.42
+        }
+      ]
+    }
+  }
+}

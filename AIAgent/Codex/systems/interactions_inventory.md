@@ -1,5 +1,27 @@
 # Interactions et inventaire
 
+Les capacites d'exploration sont cumulables en solo et reparties entre les
+joueurs presents en multi. Les appels HasEquipped existants restent la porte
+d'entree. Le grappin a distance utilise le prompt commun et la confirmation
+prioritaire seulement lorsqu'un depart valide est cible ; details : grapple.md.
+
+Nettoyage Flame : le calcul de destination et le controleur temporaire du
+deplacement de Munin, sans appel ni affectation, sont retires. Les anciens points
+d'entree encore references restent conserves ; aucun asset n'est reserialise.
+
+`FlameLightReceiver` laisse les ombres a `LitContrastLight` lorsque ce profil est
+present sur la lumiere cible, meme avant son OnEnable. Le receiver ne doit pas
+ecraser shadowDimmer, biais, near plane ou mode d'ombres pendant Awake/OnEnable/
+OnValidate. Sans profil, son comportement historique de configuration est conserve.
+
+Le filtre commun de lumiere reconnait les Flames fixes et les torches portees
+via PlayerTorchInfluence. La torche doit avoir un proprietaire joueur, etre
+equipee, et posseder une Light active dont la portee couvre la cible. Le meme
+LitInfluenceSource sert a la revelation et a la selection ; ranger la torche ou
+eteindre sa Light retire cette eligibility. Le registre se reconstruit aussi
+quand le Domain Reload/Scene Reload est desactive. Les autres prerequis des
+interactions restent evalues par leurs composants.
+
 Les `PortalController` sont exempts du filtre commun d'influence des Flames :
 leur detection reste possible sans Flame allumee, sous reserve des controles
 habituels de portee, ligne de vue du personnage, etat actif et destination valide.
@@ -188,6 +210,23 @@ recherches globales et changements de hierarchie pendant le demontage de scene.
 
 ## Libelles d'interaction dans le monde
 
+Les notifications passives InfoBoxUI.TryShowToast laissent la priorite visuelle
+a DialoguePanelUI (lecture ou dialogue) : alpha masque, fade/temps d'affichage
+suspendus, puis reprise avec le message et le temps restants. Elles ne prennent
+aucun focus et ne changent pas le mode d'input. Les InfoBox modales gardant le
+focus ne sont pas suspendues par cette regle. Annuler une notification pendant
+l'attente ne la ressuscite pas a la fin du dialogue.
+Cas confirme dans Moonrise : message de recuperation recouvrait l'epitaphe de
+Jon sur les trois captures .3/.8/1.3s. Apres correction, 34 controles natifs
+passes, epitaphe lisible et message repris ensuite ; MoonriseReadingPriorityNative.log.
+Tests InfoBox priorite/annulation/modale, prompts, lecture/inventaire et dialogues
+de cycles : 18/18 passes, Logs/MoonriseReadingPriorityTests.xml.
+
+L'echelle choisit son ancre d'interaction parmi ses deux extremites selon la
+position du personnage local, y compris avant sa selection. Le trigger ne peut
+donc plus imposer la portee vers l'extremite du bas au joueur deja en haut.
+Les controles de sol, cooldown et sortie du rayon apres passage restent distincts.
+
 Les prompts de GhostController, LadderController, StabReading,
 HubCompanionSwapTrigger, LabyrinthStartTrigger, ReturnHomeTrigger et TrouEtroit
 utilisent tous UI/World/UI_World_InteractionBox.prefab via
@@ -200,6 +239,25 @@ leur style. Sans reference locale, le texte du prefab commun sert de defaut.
 Les instances affichent leur CanvasGroup et ne capturent pas les raycasts UI.
 Les anciens fallbacks qui construisaient du TMP a la volee ont ete retires.
 Pour ajouter un nouveau prompt monde, utiliser cette meme fabrique.
+
+WorldInteractionPrompt est un adaptateur optionnel pour un interactif deja
+selectionne : target, label et worldOffset se reglent dans l'Inspector. Il cree
+une seule UI depuis la meme fabrique, conserve son echelle mondiale, la masque
+quand la cible n'est plus selectionnee/focus UI/suspension de combat et la detruit
+sur OnDisable. Il n'ecoute aucun input et ne porte aucune logique de gameplay.
+Moonrise l'utilise sur les deux leviers (Actionner) et la sortie (Rejoindre
+Stillhaven). Le portail de base reste utilisable sans ce composant.
+
+Lever propose une migration explicite useSharedInteractionSelection : false
+conserve l'ecoute directe existante, true active ICharacterDetectedInteractable /
+ILocalInteractHandler et retire l'abonnement direct de cette instance. Les deux
+chemins utilisent la meme validation locale et le meme RPC autoritaire. Seules
+les deux instances de District_1_Enigme_Levers sont migrees actuellement ; le
+prefab et les autres scenes ne changent pas. Leurs timers locaux restent a 20 s.
+Recette native MoonriseReadableInteractionsNative : selection, texte, A, masque
+apres eloignement et arrivee Stillhaven passes ; captures controlees.
+36/36 tests EditMode passent dans MoonriseReadableInteractionTests.xml, dont
+reselection sans doublon, suspension, cible detruite et destruction de l'UI.
 Validation : compilation C# runtime/editeur reussie. WorldInteractionUiTests
 verifie le style commun, le libelle historique, la visibilite et la preservation
 du prefab source ; test ajoute et compile, non execute dans Unity.

@@ -14,7 +14,18 @@ public sealed class ActorSoleSampler : IDisposable
         public Vector3[] sourceVertices;
         public BoneWeight[] weights;
         public Matrix4x4[] bindposes;
+        public Vector3[] lastVertices;
+        public Matrix4x4[] lastMatrices;
     }
+    public readonly struct ContactPoint
+    {
+        internal readonly ActorSoleSampler owner;
+        internal readonly int skin;
+        public readonly int vertex;
+        internal ContactPoint(ActorSoleSampler owner,int skin,int vertex){this.owner=owner;this.skin=skin;this.vertex=vertex;}
+        public string Id=>skin+":"+vertex;
+    }
+    private ContactPoint? leftPoint,rightPoint;
     private readonly List<Skin> skins = new List<Skin>();
     private readonly bool manualSkinning;
     public ActorSoleSampler(Animator actor,bool manualSkinning = false)
@@ -73,42 +84,83 @@ public sealed class ActorSoleSampler : IDisposable
     }
     public bool Sample(out Vector3 left,out Vector3 right)
     {
+        leftPoint=rightPoint=null;
         left = right = new Vector3(0,float.PositiveInfinity,0);
-        foreach (var skin in skins)
+        for(int skinIndex=0;skinIndex<skins.Count;skinIndex++)
         {
-            if (skin.renderer == null) continue;
+            var skin=skins[skinIndex];
+            if (skin.renderer == null || !skin.renderer.enabled || !skin.renderer.gameObject.activeInHierarchy) continue;
+            int li,ri;
             if (manualSkinning)
             {
                 var bones = skin.renderer.bones;
                 var matrices = new Matrix4x4[bones.Length];
                 for (int i = 0; i < bones.Length; i++) matrices[i] = bones[i] != null ? bones[i].localToWorldMatrix * skin.bindposes[i] : Matrix4x4.identity;
-                ManualLowest(skin,matrices,skin.left,ref left); ManualLowest(skin,matrices,skin.right,ref right);
-                continue;
+                skin.lastMatrices=matrices;
+                li=ManualLowest(skin,matrices,skin.left,ref left);ri=ManualLowest(skin,matrices,skin.right,ref right);
             }
-            skin.renderer.BakeMesh(skin.baked);
-            var vertices = skin.baked.vertices;
-            Lowest(skin.renderer.transform,vertices,skin.left,ref left);
-            Lowest(skin.renderer.transform,vertices,skin.right,ref right);
+            else
+            {
+                skin.renderer.BakeMesh(skin.baked);
+                skin.lastVertices=skin.baked.vertices;
+                li=Lowest(skin.renderer.transform,skin.lastVertices,skin.left,ref left);
+                ri=Lowest(skin.renderer.transform,skin.lastVertices,skin.right,ref right);
+            }
+            if(li>=0)leftPoint=new ContactPoint(this,skinIndex,li);
+            if(ri>=0)rightPoint=new ContactPoint(this,skinIndex,ri);
         }
         return !float.IsInfinity(left.y) && !float.IsInfinity(right.y);
     }
-    private static void ManualLowest(Skin skin,Matrix4x4[] matrices,int[] indices,ref Vector3 lowest)
+    public ContactPoint? CaptureLowest(bool left)=>left?leftPoint:rightPoint;
+    public SkinnedMeshRenderer[] FootRenderers()=>skins.Select(s=>s.renderer).ToArray();
+    public IEnumerable<ContactPoint> FootPoints(bool left)
     {
+        for(int i=0;i<skins.Count;i++)foreach(int vertex in left?skins[i].left:skins[i].right)
+            yield return new ContactPoint(this,i,vertex);
+    }
+    public bool TryPosition(ContactPoint point,out Vector3 position)
+    {
+        position=default;
+        if(point.owner!=this||point.skin<0||point.skin>=skins.Count)return false;
+        var skin=skins[point.skin];
+        if(skin.renderer==null||!skin.renderer.enabled||!skin.renderer.gameObject.activeInHierarchy)return false;
+        if(manualSkinning)
+        {
+            if(skin.lastMatrices==null||point.vertex<0||point.vertex>=skin.sourceVertices.Length)return false;
+            position=ManualPoint(skin,skin.lastMatrices,point.vertex);
+        }
+        else
+        {
+            if(skin.lastVertices==null||point.vertex<0||point.vertex>=skin.lastVertices.Length)return false;
+            position=skin.renderer.transform.TransformPoint(skin.lastVertices[point.vertex]);
+        }
+        return true;
+    }
+    private static Vector3 ManualPoint(Skin skin,Matrix4x4[] matrices,int index)
+    {
+        var w=skin.weights[index];var v=skin.sourceVertices[index];
+        return matrices[w.boneIndex0].MultiplyPoint3x4(v)*w.weight0+matrices[w.boneIndex1].MultiplyPoint3x4(v)*w.weight1+
+            matrices[w.boneIndex2].MultiplyPoint3x4(v)*w.weight2+matrices[w.boneIndex3].MultiplyPoint3x4(v)*w.weight3;
+    }
+    private static int ManualLowest(Skin skin,Matrix4x4[] matrices,int[] indices,ref Vector3 lowest)
+    {
+        int selected=-1;
         foreach (int index in indices)
         {
-            var w = skin.weights[index]; var v = skin.sourceVertices[index];
-            Vector3 point = matrices[w.boneIndex0].MultiplyPoint3x4(v)*w.weight0 + matrices[w.boneIndex1].MultiplyPoint3x4(v)*w.weight1 +
-                matrices[w.boneIndex2].MultiplyPoint3x4(v)*w.weight2 + matrices[w.boneIndex3].MultiplyPoint3x4(v)*w.weight3;
-            if (point.y < lowest.y) lowest = point;
+            var point=ManualPoint(skin,matrices,index);
+            if(point.y<lowest.y){lowest=point;selected=index;}
         }
+        return selected;
     }
-    private static void Lowest(Transform transform,Vector3[] vertices,int[] indices,ref Vector3 lowest)
+    private static int Lowest(Transform transform,Vector3[] vertices,int[] indices,ref Vector3 lowest)
     {
+        int selected=-1;
         foreach (int index in indices)
         {
             var position = transform.TransformPoint(vertices[index]);
-            if (position.y < lowest.y) lowest = position;
+            if(position.y<lowest.y){lowest=position;selected=index;}
         }
+        return selected;
     }
     public void Dispose()
     {

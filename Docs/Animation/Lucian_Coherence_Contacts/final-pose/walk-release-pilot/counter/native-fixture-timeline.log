@@ -1,0 +1,9 @@
+[LucianCounter] timeline=CombatLab_CounterSkill_2 controller=
+[LightSkill Debug] Rig 'CombatLab_CounterRig (Runtime)' | TryPlay | token=1 | timeline='CombatLab_CounterSkill_2' | type=TimelineAsset | placement=True.
+[CombatCinematic Camera] PlayableDirector.played | rig='CombatLab_CounterRig (Runtime)' | timeline='CombatLab_CounterSkill_2' | brain='CombatLab_GameplayCamera' | gameplayCamera='CombatLab_GameplayCamera' | active='CounterSkill_VirtualCamera(Clone)' | player='LucianCadence(Clone)' | enemyLockPoint='ChargedEnemy_Lab(Clone)' | token=1.
+[CombatCinematicRig] CameraShake t=0,368
+[CombatCinematicRig] CameraShake t=0,767
+[CombatCinematicRig] CameraShake t=1,284
+[CombatCinematicRig] CameraShake t=1,851
+[CombatCinematic Camera] Restitution camera: Fin Timeline: Completed | rig='CombatLab_CounterRig (Runtime)' | timeline='CombatLab_CounterSkill_2' | brain='CombatLab_GameplayCamera' | gameplayCamera='CombatLab_GameplayCamera' | active='CounterSkill_VirtualCamera(Clone)' | player='LucianCadence(Clone)' | enemyLockPoint='ChargedEnemy_Lab(Clone)' | token=1.
+[CounterCameraHandoffValidation] FAIL System.InvalidOperationException: Player Timeline never acquired cinematic authority

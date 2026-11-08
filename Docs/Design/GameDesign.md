@@ -260,6 +260,83 @@ Ils rejouent afin de :
 La rejouabilité vient principalement de la coopération, des rôles complémentaires
 et des décisions de parcours, pas d'une génération procédurale de campagne.
 
+### Expéditions dans les labyrinthes de fracture
+
+Plan de première livraison : [Premier labyrinthe — objectif et production](Premier_Labyrinthe_Plan.md).
+
+**Direction retenue (2026-11-01).** Les labyrinthes sont des anomalies de
+l'espace-temps issues de la fracture existante. Leur reformation justifie les
+expéditions répétées, sans annuler les résolutions narratives, les recrutements
+ni les Savoirs persistants. Cela n'implique pas de génération procédurale : une
+architecture auteur interconnectée et des variantes configurées suffisent.
+Le même contenu fondamental est réalisable seul ou jusqu'à quatre joueurs,
+dans une époque commune ; les spécialisations restent des accélérateurs et
+jamais des conditions d'accès essentielles.
+
+La première traversée privilégie découverte et compréhension, sans exigence de
+score. Les reprises peuvent être des expéditions chronométrées : explorer,
+combattre, résoudre des énigmes, ouvrir l'accès au gardien, choisir les
+préparatifs facultatifs, puis le vaincre. Le temps de performance couvre le
+labyrinthe ET le combat du boss. La montée en puissance dans l'obscurité est
+un état du gardien, distinct de ce temps de performance.
+
+**Obscurité et puissance.** Plus le gardien reste sans lumière pendant une
+expédition, plus sa puissance latente augmente. Il reste soumis à la règle
+d'activation des Gargouilles par l'influence d'une Flame : puissance accumulée
+et activité sont deux états distincts. Lui apporter la lumière interrompt la
+croissance, sans remise à zéro automatique. Les Ancient Flames ne sont pas
+détournées en interrupteurs locaux : leur rôle de progression temporelle
+globale reste intact. Les moyens de lumière du labyrinthe doivent être
+explicitement configurés, pas déduits de n'importe quel VFX lumineux de skill.
+
+Les détours facultatifs coûtent du temps mais modifient concrètement le combat :
+neutraliser un renfort, retirer une protection ou préparer une interruption.
+Le frein du Poids mort constitue un précédent de préparation environnementale,
+pas une obligation de réutiliser son mécanisme dans chaque labyrinthe.
+Un gardien reste battable sans préparatif ; les préparatifs ne suppriment pas
+le combat. La croissance doit être bornée et lisible pour éviter une spirale
+où explorer rendrait la victoire impossible. Une préparation doit pouvoir
+compenser son coût malgré cette croissance : le meilleur parcours ne doit être
+ni toujours le rush, ni toujours le nettoyage complet.
+
+**Énigmes et Savoirs.** Leviers, pièces à récupérer et clés peuvent assurer la
+progression matérielle d'une expédition. Ils ne remplacent pas les Savoirs :
+comprendre une règle, un symbole ou un réseau doit modifier les possibilités
+dans plusieurs espaces. Un Savoir révélé est partagé immédiatement avec toute
+l'équipe et son révélateur annoncé. Le déblocage permet de comprendre/agir ;
+il n'exécute pas automatiquement les manipulations locales. Les objets de
+tentative et l'état des mécanismes sont distincts des connaissances persistantes.
+Des raccourcis limitent les retours, sans imposer un parcours unique.
+
+**Solo et coopération.** Seul, Lucian utilise ses supports déjà recrutés sans
+faire apparaître de compagnons physiques. Toutes les manipulations essentielles
+sont réalisables successivement ; aucune présence simultanée n'est obligatoire.
+À deux, découverte et sécurisation peuvent être réparties ; à trois, un joueur
+peut préparer le boss pendant que deux ouvrent l'accès ; à quatre, plusieurs
+branches peuvent être explorées de front. Rester ensemble ou former deux groupes
+doit aussi rester pertinent face aux combats et aux risques de séparation.
+Les découvertes et modifications d'une zone doivent bénéficier aux joueurs
+ailleurs : la coopération ne repose pas uniquement sur quatre tâches isolées.
+
+**Récompenses.** Une victoire donne une récompense garantie ; des paliers de
+performance donnent un bonus de loot et/ou d'XP, sans réserver un Savoir ou
+un objet essentiel aux meilleurs temps. La performance est collective et ne
+dépend pas des dégâts individuels infligés au boss. Les objectifs de temps
+doivent être adaptés au nombre de joueurs, sur mesures de prototype.
+La cadence de gains d'XP/équipement répétés, la récompense des nouveaux records
+et la limitation du farming restent à arbitrer : l'accord sur cette boucle
+ne définit pas encore une économie de progression infinie.
+
+**À prototyper, non implémenté.** Un secteur auteur interconnecté, un Savoir
+transversal, deux préparatifs facultatifs et un gardien. Vérifier les parcours
+direct, partiellement préparé et sécurisé à 1/2/3/4 joueurs. Les valeurs de
+croissance, ses paliers, le début exact de l'accumulation, son comportement en
+combat/après perte de lumière, les pauses, abandons et reprises de sauvegarde
+restent à définir. Ne pas accumuler des heures de puissance hors session par
+défaut. La découverte initiale doit rester accueillante malgré cette règle.
+Ni ces valeurs ni les variantes de reformation ne sont des décisions techniques
+actées ou des comportements déjà présents dans le jeu.
+
 ### Personnages jouables et spécialisations
 
 Le jeu ne doit pas proposer uniquement quatre personnages. L'objectif est de

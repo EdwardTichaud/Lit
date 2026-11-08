@@ -1,0 +1,50 @@
+{
+  "walk_off": {
+    "reference": {
+      "sustained_walk_frames": 15,
+      "median_speed_m_s": 1.512451,
+      "median_idle_weight": 0.709375,
+      "median_cadence": 1.0,
+      "sustained_clips": [
+        "Common_Idle_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "travel_m": 1.251
+    },
+    "candidate": {
+      "sustained_walk_frames": 15,
+      "median_speed_m_s": 1.512451,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8417836,
+      "sustained_clips": [
+        "Lucian_Common_Run_Stride02",
+        "Lucian_Common_Walk_Loop_Stride03"
+      ],
+      "travel_m": 1.251
+    }
+  },
+  "walk_on": {
+    "reference": {
+      "sustained_walk_frames": 15,
+      "median_speed_m_s": 1.512451,
+      "median_idle_weight": 0.709375,
+      "median_cadence": 1.0,
+      "sustained_clips": [
+        "Common_Idle_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "travel_m": 1.251
+    },
+    "candidate": {
+      "sustained_walk_frames": 15,
+      "median_speed_m_s": 1.512451,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8417836,
+      "sustained_clips": [
+        "Lucian_Common_Run_Stride02",
+        "Lucian_Common_Walk_Loop_Stride03"
+      ],
+      "travel_m": 1.251
+    }
+  }
+}

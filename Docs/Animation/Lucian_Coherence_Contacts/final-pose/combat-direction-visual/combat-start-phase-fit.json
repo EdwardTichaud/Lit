@@ -1,0 +1,16 @@
+{
+    "existing": {
+        "phase": 0.0,
+        "cost": 0.5357043743133545,
+        "firstIncomingLeftSole": 0.48143270611763,
+        "firstIncomingRightSole": 0.10000084340572357,
+        "support": "right"
+    },
+    "chosen": {
+        "phase": 0.4416666626930237,
+        "cost": 0.38749295473098755,
+        "firstIncomingLeftSole": 0.10000082105398178,
+        "firstIncomingRightSole": 0.530577540397644,
+        "support": "left"
+    }
+}

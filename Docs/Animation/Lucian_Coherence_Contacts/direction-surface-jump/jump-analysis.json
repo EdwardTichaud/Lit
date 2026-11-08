@@ -1,0 +1,16 @@
+{
+  "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+  "samples": 1573,
+  "nativeIKAirborneSamples": 0,
+  "errors": [],
+  "jump_metrics": {
+    "jump_free": {
+      "apex_above_floor_rest": 2.7298636999999992,
+      "airborne_samples": 59
+    },
+    "jump_torch": {
+      "apex_above_floor_rest": 2.729896199999999,
+      "airborne_samples": 59
+    }
+  }
+}

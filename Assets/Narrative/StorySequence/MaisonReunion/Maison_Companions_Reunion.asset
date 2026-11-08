@@ -1,0 +1,690 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
+  m_Name: Maison_Companions_Reunion
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
+  sequenceId: maison.companions.first_reunion
+  displayName: Comme au bon vieux temps
+  description: 'Retrouvailles de Lucian, Vesta, Soren et Aurell : une vieille amitie, quatre rencontres recentes, une attirance inexpliquee.'
+  playOnce: 1
+  waitForLocalPlayer: 1
+  localPlayerWaitTimeout: 0
+  lockPlayerControl: 1
+  stopActiveAbilitiesOnLock: 1
+  useUnscaledTime: 1
+  startFromBlack: 0
+  openingFadeDuration: 1
+  fadeToBlackBeforeGameplay: 0
+  closingFadeDuration: 0.5
+  fadeFromBlackAfterGameplayRestore: 0
+  gameplayFadeInDuration: 0.75
+  steps:
+  - label: "Retrouvailles - plan ensemble"
+    type: 2
+    skippable: 0
+    actorId: Vesta
+    listenerId: Aurell
+    speakerNameOverride: ""
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    cameraTransitionDuration: 1.15
+    cameraHoldDuration: 1.5
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_01_Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    voiceLine: {fileID: 11400000, guid: 7d97e05c50a67ec449321e99573f73f7, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 1.15
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_02_Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    voiceLine: {fileID: 11400000, guid: 9bbd5badd14efb2428b26ac6a225b034, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0002, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.8
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_03_Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: 6a4971c0b7447b14e9635db494f556d3, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0002, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.8
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_04_Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    voiceLine: {fileID: 11400000, guid: da9ad84a1f208c84bb48c891363c9062, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0005, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 1.05
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_05_Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: 51705608b7b140b41b132b4f468069e6, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0006, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.95
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_06_Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    voiceLine: {fileID: 11400000, guid: 4ea2fed12e813934b8a64747a216354f, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0003, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.85
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_07_Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    voiceLine: {fileID: 11400000, guid: 19ec5736abff3714e852f77a04bcedfe, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0004, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.75
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_08_Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    voiceLine: {fileID: 11400000, guid: 137e8b5a249f2e74586a3f0d3e0cfccf, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0005, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 1.05
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_09_Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: ee97579d24dfa594d8c2e1b42bc68cf7, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0007, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.85
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_10_Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    voiceLine: {fileID: 11400000, guid: c20869f1c21f7da4baa9eb2f06cd0be3, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0008, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.95
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_11_Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    voiceLine: {fileID: 11400000, guid: d0a3b279868b9d446946d5015a26f733, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0009, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.85
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_12_Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    voiceLine: {fileID: 11400000, guid: a42e52fa3fe9c1345a0841b795851c21, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0005, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 1.05
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_13_Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: ce0b4ff8ca424074c8db3ca3e2da3914, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0006, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.95
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_14_Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    voiceLine: {fileID: 11400000, guid: dfbb94c639b87884db4e07a829ca9c04, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0002, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.8
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_15_Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    voiceLine: {fileID: 11400000, guid: 39dc770222c76074389409ea805e367d, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0003, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.85
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: "Retrouver notre place - retour au groupe"
+    type: 2
+    skippable: 0
+    actorId: Vesta
+    listenerId: Aurell
+    speakerNameOverride: ""
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    cameraTransitionDuration: 1.15
+    cameraHoldDuration: 1.4
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_16_Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    voiceLine: {fileID: 11400000, guid: 05f7639df77506f45b9c361377bf5e74, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 1.15
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Reunion_17_Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: 71c2daf50b2025d41b195fdb8c5ee991, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0006, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.95
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: "Ensemble - respiration avant reprise"
+    type: 2
+    skippable: 0
+    actorId: Vesta
+    listenerId: Aurell
+    speakerNameOverride: ""
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
+    cameraTransitionDuration: 1.15
+    cameraHoldDuration: 1.95
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50

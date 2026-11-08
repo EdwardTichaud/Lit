@@ -1,0 +1,2371 @@
+{
+  "run": "Library/LucianCoherence/play-cadence-mixed-gaits-stop-support-contacts-20261105-175825",
+  "scope": "Actual mesh, flat plane only. Common vertices within 2 mm of adjacent sole minima, minimum within +/-2 cm of floor. Median point displacement accumulated; coverage and short windows explicit. No source stance mask or dominant-clip requirement. Not slope, visual or artistic acceptance.",
+  "trials": {
+    "idle": {
+      "samples": 140,
+      "speed": {
+        "count": 140,
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      },
+      "cadence": {
+        "count": 140,
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "mixed_gait_frames": 0,
+      "contacts": {
+        "left": {
+          "contact_frames": 140,
+          "covered_frames": 140,
+          "contact_pair_coverage": 1.0,
+          "measured_path_m": 0.0343034016675,
+          "covered_seconds": 2.3169746000000018,
+          "path_rate_m_per_second": 0.014805255813982584,
+          "sole_height_m": {
+            "count": 140,
+            "min": -2.47955322e-05,
+            "median": 3.3378601349999998e-06,
+            "max": 2.47955322e-05
+          }
+        },
+        "right": {
+          "contact_frames": 140,
+          "covered_frames": 140,
+          "contact_pair_coverage": 1.0,
+          "measured_path_m": 0.0389830768412,
+          "covered_seconds": 2.3169746000000018,
+          "path_rate_m_per_second": 0.01682499102113591,
+          "sole_height_m": {
+            "count": 140,
+            "min": -1.52587891e-05,
+            "median": -9.536743e-07,
+            "max": 1.52587891e-05
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [],
+          "path_m": {
+            "count": 0
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        },
+        "right": {
+          "full_windows": [],
+          "path_m": {
+            "count": 0
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 2.3169746000000018,
+              "path_m": 0.0343034016675,
+              "coverage": 1.0,
+              "samples": 140,
+              "start_phase": 0.355469316,
+              "end_phase": 1.51395631,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.6052055000000038,
+              "end_seconds_in_trial": 2.9221801000000056
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.0343034016675,
+            "median": 0.0343034016675,
+            "max": 0.0343034016675
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 2.3169746000000018,
+              "path_m": 0.0389830768412,
+              "coverage": 1.0,
+              "samples": 140,
+              "start_phase": 0.355469316,
+              "end_phase": 1.51395631,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.6052055000000038,
+              "end_seconds_in_trial": 2.9221801000000056
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.0389830768412,
+            "median": 0.0389830768412,
+            "max": 0.0389830768412
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "explore_035": {
+      "samples": 143,
+      "speed": {
+        "count": 143,
+        "min": 1.48925841,
+        "median": 1.48925841,
+        "max": 1.48925841
+      },
+      "cadence": {
+        "count": 143,
+        "min": 0.8289504,
+        "median": 0.8289504,
+        "max": 0.8289504
+      },
+      "mixed_gait_frames": 0,
+      "contacts": {
+        "left": {
+          "contact_frames": 106,
+          "covered_frames": 103,
+          "contact_pair_coverage": 0.9716981132075472,
+          "measured_path_m": 1.515867584683,
+          "covered_seconds": 1.7132453999999981,
+          "path_rate_m_per_second": 0.8847930277139525,
+          "sole_height_m": {
+            "count": 143,
+            "min": -6.389618e-05,
+            "median": 0.0001783371,
+            "max": 0.0804414749
+          }
+        },
+        "right": {
+          "contact_frames": 89,
+          "covered_frames": 87,
+          "contact_pair_coverage": 0.9775280898876404,
+          "measured_path_m": 0.411412241031,
+          "covered_seconds": 1.4352355999999986,
+          "path_rate_m_per_second": 0.28665136304520344,
+          "sole_height_m": {
+            "count": 143,
+            "min": -0.0105485916,
+            "median": 0.0071144104,
+            "max": 0.0761899948
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.8663323999999974,
+              "path_m": 0.78703177,
+              "coverage": 0.9804633879559422,
+              "samples": 53
+            },
+            {
+              "duration": 0.8638382000000036,
+              "path_m": 0.7972891,
+              "coverage": 0.9999999999999959,
+              "samples": 53
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.78703177,
+            "median": 0.792160435,
+            "max": 0.7972891
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.7331399999999988,
+              "path_m": 0.183160976,
+              "coverage": 0.9999986878358856,
+              "samples": 45
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.183160976,
+            "median": 0.183160976,
+            "max": 0.183160976
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.609954799999997,
+              "path_m": 0.153515837635,
+              "coverage": 0.9722517143893237,
+              "samples": 38,
+              "start_phase": 0.2729218,
+              "end_phase": 0.778544545,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.8894777000000005,
+              "end_seconds_in_trial": 1.4994324999999975
+            },
+            {
+              "duration": 0.600315099999996,
+              "path_m": 0.159635099048,
+              "coverage": 1.0,
+              "samples": 37,
+              "start_phase": 1.2762903,
+              "end_phase": 1.77391911,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.0998848999999993,
+              "end_seconds_in_trial": 2.7001999999999953
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.153515837635,
+            "median": 0.1565754683415,
+            "max": 0.159635099048
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.2334668000000022,
+              "path_m": 0.08170324142,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 0.7724526,
+              "end_phase": 0.2401816,
+              "base_states": [
+                "-1269438207",
+                "-1345828404"
+              ],
+              "crosses_base_state": true,
+              "start_seconds_in_trial": 0.6165132,
+              "end_seconds_in_trial": 0.8499800000000022
+            },
+            {
+              "duration": 0.538747199999996,
+              "path_m": 0.072469521568,
+              "coverage": 1.0,
+              "samples": 33,
+              "start_phase": 0.79265976,
+              "end_phase": 1.23925209,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.5164600000000021,
+              "end_seconds_in_trial": 2.055207199999998
+            },
+            {
+              "duration": 0.25064230000000265,
+              "path_m": 0.017666852523,
+              "coverage": 1.0,
+              "samples": 16,
+              "start_phase": 1.80099428,
+              "end_phase": 2.00876427,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.732859999999995,
+              "end_seconds_in_trial": 2.983502299999998
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.017666852523,
+            "median": 0.072469521568,
+            "max": 0.08170324142
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "explore_05": {
+      "samples": 144,
+      "speed": {
+        "count": 144,
+        "min": 2.48108,
+        "median": 2.48108,
+        "max": 2.48108
+      },
+      "cadence": {
+        "count": 144,
+        "min": 1.04736245,
+        "median": 1.04736245,
+        "max": 1.04736245
+      },
+      "mixed_gait_frames": 144,
+      "contacts": {
+        "left": {
+          "contact_frames": 38,
+          "covered_frames": 36,
+          "contact_pair_coverage": 0.9473684210526315,
+          "measured_path_m": 0.2272760875559,
+          "covered_seconds": 0.6004925000000085,
+          "path_rate_m_per_second": 0.3784828079549649,
+          "sole_height_m": {
+            "count": 144,
+            "min": -2.28881836e-05,
+            "median": 0.076455593,
+            "max": 0.2096405
+          }
+        },
+        "right": {
+          "contact_frames": 65,
+          "covered_frames": 62,
+          "contact_pair_coverage": 0.9538461538461539,
+          "measured_path_m": 0.344691296892,
+          "covered_seconds": 1.0322192000000001,
+          "path_rate_m_per_second": 0.33393226641395546,
+          "sole_height_m": {
+            "count": 144,
+            "min": -0.000201225281,
+            "median": 0.02913618085,
+            "max": 0.18990612
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.30022000000000304,
+              "path_m": 0.125809461,
+              "coverage": 1.0000016654453299,
+              "samples": 19
+            },
+            {
+              "duration": 0.3002725000000055,
+              "path_m": 0.122807816,
+              "coverage": 1.0000046624316064,
+              "samples": 19
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.122807816,
+            "median": 0.12430863850000001,
+            "max": 0.125809461
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.33275700000000086,
+              "path_m": 0.108880438,
+              "coverage": 0.9999971210222448,
+              "samples": 21
+            },
+            {
+              "duration": 0.3499999999999943,
+              "path_m": 0.132515743,
+              "coverage": 1.0000065714285877,
+              "samples": 22
+            },
+            {
+              "duration": 0.34946220000000494,
+              "path_m": 0.126430586,
+              "coverage": 0.999995421536278,
+              "samples": 22
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.108880438,
+            "median": 0.126430586,
+            "max": 0.132515743
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.18392000000000053,
+              "path_m": 0.0339450852969,
+              "coverage": 1.0,
+              "samples": 12,
+              "start_phase": 3.38449955,
+              "end_phase": 3.58582115,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.2498257999999964,
+              "end_seconds_in_trial": 1.433745799999997
+            },
+            {
+              "duration": 0.18276210000000503,
+              "path_m": 0.033091321789,
+              "coverage": 1.0,
+              "samples": 12,
+              "start_phase": 4.38855267,
+              "end_phase": 4.588608,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.167091399999997,
+              "end_seconds_in_trial": 2.349853500000002
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.033091321789,
+            "median": 0.03351820354295,
+            "max": 0.0339450852969
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.23336480000000392,
+              "path_m": 0.022871511172,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 2.89238715,
+              "end_phase": 3.14782953,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.8002509999999958,
+              "end_seconds_in_trial": 1.0336157999999998
+            },
+            {
+              "duration": 0.2337951000000018,
+              "path_m": 0.023958830100000002,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 3.89554214,
+              "end_phase": 4.15146,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.7166938999999957,
+              "end_seconds_in_trial": 1.9504889999999975
+            },
+            {
+              "duration": 0.23357010000000145,
+              "path_m": 0.02484845191,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 4.8988986,
+              "end_phase": 5.15456867,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.6333197999999953,
+              "end_seconds_in_trial": 2.8668898999999968
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.022871511172,
+            "median": 0.023958830100000002,
+            "max": 0.02484845191
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "explore_065": {
+      "samples": 143,
+      "speed": {
+        "count": 143,
+        "min": 3.47595358,
+        "median": 3.47595358,
+        "max": 3.47595358
+      },
+      "cadence": {
+        "count": 143,
+        "min": 1.05356479,
+        "median": 1.05356479,
+        "max": 1.05356479
+      },
+      "mixed_gait_frames": 143,
+      "contacts": {
+        "left": {
+          "contact_frames": 42,
+          "covered_frames": 39,
+          "contact_pair_coverage": 0.9285714285714286,
+          "measured_path_m": 0.248557500408,
+          "covered_seconds": 0.649826400000002,
+          "path_rate_m_per_second": 0.3824983109458145,
+          "sole_height_m": {
+            "count": 143,
+            "min": -5.62667847e-05,
+            "median": 0.111696243,
+            "max": 0.396318436
+          }
+        },
+        "right": {
+          "contact_frames": 39,
+          "covered_frames": 37,
+          "contact_pair_coverage": 0.9487179487179487,
+          "measured_path_m": 0.21450565644,
+          "covered_seconds": 0.5997375999999974,
+          "path_rate_m_per_second": 0.35766584659691325,
+          "sole_height_m": {
+            "count": 143,
+            "min": -0.000179290771,
+            "median": 0.123901367,
+            "max": 0.3590498
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.21653750000000116,
+              "path_m": 0.101057425,
+              "coverage": 0.999999889164689,
+              "samples": 14
+            },
+            {
+              "duration": 0.21706410000000176,
+              "path_m": 0.09756112,
+              "coverage": 0.9999990786131757,
+              "samples": 14
+            },
+            {
+              "duration": 0.2162247999999991,
+              "path_m": 0.09211441,
+              "coverage": 0.9999993987738729,
+              "samples": 14
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.09211441,
+            "median": 0.09756112,
+            "max": 0.101057425
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.25037309999999735,
+              "path_m": 0.09198436,
+              "coverage": 1.0000029555890895,
+              "samples": 16
+            },
+            {
+              "duration": 0.24974759999999918,
+              "path_m": 0.08712992,
+              "coverage": 1.0000025225467664,
+              "samples": 16
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.08712992,
+            "median": 0.08955714000000001,
+            "max": 0.09198436
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.16648869999999505,
+              "path_m": 0.032576592951,
+              "coverage": 1.0,
+              "samples": 11,
+              "start_phase": 6.39686441,
+              "end_phase": 6.593049,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.9160308000000015,
+              "end_seconds_in_trial": 1.0825194999999965
+            },
+            {
+              "duration": 0.1497799999999998,
+              "path_m": 0.030164706084,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 7.39819765,
+              "end_phase": 7.574693,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.7657927999999998,
+              "end_seconds_in_trial": 1.9155727999999996
+            },
+            {
+              "duration": 0.15010069999999587,
+              "path_m": 0.029789486443,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 8.399738,
+              "end_phase": 8.57661152,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.6157264,
+              "end_seconds_in_trial": 2.7658270999999957
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.029789486443,
+            "median": 0.030164706084,
+            "max": 0.032576592951
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.0828969000000015,
+              "path_m": 0.01706209323,
+              "coverage": 1.0,
+              "samples": 6,
+              "start_phase": 6.043393,
+              "end_phase": 6.14107752,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.6160658999999953,
+              "end_seconds_in_trial": 0.6989627999999968
+            },
+            {
+              "duration": 0.20006940000000384,
+              "path_m": 0.03069794131,
+              "coverage": 1.0,
+              "samples": 13,
+              "start_phase": 6.90736771,
+              "end_phase": 7.14312267,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.3492583999999965,
+              "end_seconds_in_trial": 1.5493278000000004
+            },
+            {
+              "duration": 0.1998405999999946,
+              "path_m": 0.02980746977,
+              "coverage": 1.0,
+              "samples": 13,
+              "start_phase": 7.90878,
+              "end_phase": 8.144267,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.1990890000000007,
+              "end_seconds_in_trial": 2.3989295999999953
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.01706209323,
+            "median": 0.02980746977,
+            "max": 0.03069794131
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "explore_08": {
+      "samples": 145,
+      "speed": {
+        "count": 145,
+        "min": 4.46777534,
+        "median": 4.46777534,
+        "max": 4.46777534
+      },
+      "cadence": {
+        "count": 145,
+        "min": 1.0231986,
+        "median": 1.0231986,
+        "max": 1.0231986
+      },
+      "mixed_gait_frames": 145,
+      "contacts": {
+        "left": {
+          "contact_frames": 33,
+          "covered_frames": 30,
+          "contact_pair_coverage": 0.9090909090909091,
+          "measured_path_m": 0.189969723104,
+          "covered_seconds": 0.483431699999997,
+          "path_rate_m_per_second": 0.39296083211754873,
+          "sole_height_m": {
+            "count": 145,
+            "min": -0.000185966492,
+            "median": 0.207118034,
+            "max": 0.596344948
+          }
+        },
+        "right": {
+          "contact_frames": 43,
+          "covered_frames": 40,
+          "contact_pair_coverage": 0.9302325581395349,
+          "measured_path_m": 0.250429089949,
+          "covered_seconds": 0.6658424999999966,
+          "path_rate_m_per_second": 0.3761085991792372,
+          "sole_height_m": {
+            "count": 145,
+            "min": -0.0005502701,
+            "median": 0.152439117,
+            "max": 0.532237053
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.1664652999999987,
+              "path_m": 0.04399007,
+              "coverage": 1.0000027573314154,
+              "samples": 11
+            },
+            {
+              "duration": 0.18357089999999943,
+              "path_m": 0.08543399,
+              "coverage": 0.999999792995516,
+              "samples": 12
+            },
+            {
+              "duration": 0.1333954999999989,
+              "path_m": 0.06054566,
+              "coverage": 1.000004865231594,
+              "samples": 9
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.04399007,
+            "median": 0.06054566,
+            "max": 0.08543399
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.23316959999999654,
+              "path_m": 0.132949889,
+              "coverage": 0.9999998112961701,
+              "samples": 15
+            },
+            {
+              "duration": 0.21654290000000032,
+              "path_m": 0.07865485,
+              "coverage": 0.9999925649836576,
+              "samples": 14
+            },
+            {
+              "duration": 0.2161299999999997,
+              "path_m": 0.0796264,
+              "coverage": 1.0000144265025692,
+              "samples": 14
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.07865485,
+            "median": 0.0796264,
+            "max": 0.132949889
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.1336999999999975,
+              "path_m": 0.028210040514,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 10.4087353,
+              "end_phase": 10.5732555,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.2664576000000025,
+              "end_seconds_in_trial": 1.4001576
+            },
+            {
+              "duration": 0.15010570000000456,
+              "path_m": 0.0341522676,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 11.39326,
+              "end_phase": 11.5779629,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.066557599999996,
+              "end_seconds_in_trial": 2.2166633000000004
+            },
+            {
+              "duration": 0.11695799999999679,
+              "path_m": 0.02679286486,
+              "coverage": 1.0,
+              "samples": 8,
+              "start_phase": 12.3980885,
+              "end_phase": 12.5420027,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.883159599999999,
+              "end_seconds_in_trial": 3.000117599999996
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.02679286486,
+            "median": 0.028210040514,
+            "max": 0.0341522676
+          },
+          "short_segments": 1,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.16664999999999708,
+              "path_m": 0.034672133354,
+              "coverage": 1.0,
+              "samples": 11,
+              "start_phase": 9.896173,
+              "end_phase": 10.1012363,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.8499076000000017,
+              "end_seconds_in_trial": 1.0165575999999987
+            },
+            {
+              "duration": 0.2002791999999971,
+              "path_m": 0.048590269221,
+              "coverage": 1.0,
+              "samples": 13,
+              "start_phase": 10.9008083,
+              "end_phase": 11.1472492,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.6663513000000023,
+              "end_seconds_in_trial": 1.8666304999999994
+            },
+            {
+              "duration": 0.14984000000000464,
+              "path_m": 0.023318816774,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 11.9062052,
+              "end_phase": 12.0905848,
+              "base_states": [
+                "-1269438207"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.4834175999999957,
+              "end_seconds_in_trial": 2.6332576000000003
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.023318816774,
+            "median": 0.034672133354,
+            "max": 0.048590269221
+          },
+          "short_segments": 2,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "combat_035": {
+      "samples": 143,
+      "speed": {
+        "count": 143,
+        "min": 1.48925841,
+        "median": 1.48925841,
+        "max": 1.48925841
+      },
+      "cadence": {
+        "count": 143,
+        "min": 1.03830969,
+        "median": 1.03830969,
+        "max": 1.03830969
+      },
+      "mixed_gait_frames": 143,
+      "contacts": {
+        "left": {
+          "contact_frames": 80,
+          "covered_frames": 77,
+          "contact_pair_coverage": 0.9625,
+          "measured_path_m": 0.119378813644,
+          "covered_seconds": 1.267267700000005,
+          "path_rate_m_per_second": 0.09420173310185333,
+          "sole_height_m": {
+            "count": 143,
+            "min": -1.90734863e-05,
+            "median": 0.0139017105,
+            "max": 0.09575558
+          }
+        },
+        "right": {
+          "contact_frames": 70,
+          "covered_frames": 68,
+          "contact_pair_coverage": 0.9714285714285714,
+          "measured_path_m": 0.183205566484,
+          "covered_seconds": 1.1334915000000052,
+          "path_rate_m_per_second": 0.16162941361624605,
+          "sole_height_m": {
+            "count": 143,
+            "min": -3.81469727e-05,
+            "median": 0.0220890045,
+            "max": 0.0598487854
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.533443400000003,
+              "path_m": 0.0499155968,
+              "coverage": 0.9699369492620906,
+              "samples": 33
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.0499155968,
+            "median": 0.0499155968,
+            "max": 0.0499155968
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.5663109000000048,
+              "path_m": 0.09340435,
+              "coverage": 0.9999999999999913,
+              "samples": 35
+            },
+            {
+              "duration": 0.5671806000000004,
+              "path_m": 0.09518963,
+              "coverage": 1.000000059945632,
+              "samples": 35
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.09340435,
+            "median": 0.09429699,
+            "max": 0.09518963
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.15024189999999749,
+              "path_m": 0.0153276967,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 0.47173506,
+              "end_phase": 0.611536,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.616790800000004,
+              "end_seconds_in_trial": 0.7670327000000015
+            },
+            {
+              "duration": 0.2502767000000006,
+              "path_m": 0.021217416042,
+              "coverage": 1.0,
+              "samples": 16,
+              "start_phase": 1.38664138,
+              "end_phase": 1.6195339,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.600015500000005,
+              "end_seconds_in_trial": 1.8502922000000055
+            },
+            {
+              "duration": 0.23086929999999484,
+              "path_m": 0.01979387314,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 2.395111,
+              "end_phase": 2.609939,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.683780700000007,
+              "end_seconds_in_trial": 2.9146500000000017
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.0153276967,
+            "median": 0.01979387314,
+            "max": 0.021217416042
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.2505568999999994,
+              "path_m": 0.029643565564,
+              "coverage": 1.0,
+              "samples": 16,
+              "start_phase": 0.8748933,
+              "end_phase": 1.1080426,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.050052700000002,
+              "end_seconds_in_trial": 1.3006096000000014
+            },
+            {
+              "duration": 0.2495357000000027,
+              "path_m": 0.03078726354,
+              "coverage": 1.0,
+              "samples": 16,
+              "start_phase": 1.88326478,
+              "end_phase": 2.11546,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.133715500000001,
+              "end_seconds_in_trial": 2.3832512000000037
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.029643565564,
+            "median": 0.030215414551999997,
+            "max": 0.03078726354
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "combat_05": {
+      "samples": 145,
+      "speed": {
+        "count": 145,
+        "min": 2.48413181,
+        "median": 2.48413181,
+        "max": 2.48413181
+      },
+      "cadence": {
+        "count": 145,
+        "min": 1.117937,
+        "median": 1.117937,
+        "max": 1.117937
+      },
+      "mixed_gait_frames": 145,
+      "contacts": {
+        "left": {
+          "contact_frames": 45,
+          "covered_frames": 42,
+          "contact_pair_coverage": 0.9333333333333333,
+          "measured_path_m": 0.39969639196,
+          "covered_seconds": 0.7001102999999986,
+          "path_rate_m_per_second": 0.5709048873584645,
+          "sole_height_m": {
+            "count": 145,
+            "min": -5.054474e-05,
+            "median": 0.0956535339,
+            "max": 0.238201141
+          }
+        },
+        "right": {
+          "contact_frames": 42,
+          "covered_frames": 39,
+          "contact_pair_coverage": 0.9285714285714286,
+          "measured_path_m": 0.34351411893,
+          "covered_seconds": 0.6498644999999925,
+          "path_rate_m_per_second": 0.5285934512963917,
+          "sole_height_m": {
+            "count": 145,
+            "min": -0.000111579895,
+            "median": 0.09257984,
+            "max": 0.2390089
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.23332630000000165,
+              "path_m": 0.141667649,
+              "coverage": 0.9999985342415251,
+              "samples": 15
+            },
+            {
+              "duration": 0.23376799999999776,
+              "path_m": 0.143897846,
+              "coverage": 1.0000019805961562,
+              "samples": 15
+            },
+            {
+              "duration": 0.23301599999999922,
+              "path_m": 0.144714445,
+              "coverage": 1.0000041542211726,
+              "samples": 15
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.141667649,
+            "median": 0.143897846,
+            "max": 0.144714445
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.2670783999999955,
+              "path_m": 0.1325982,
+              "coverage": 1.0000000000000169,
+              "samples": 17
+            },
+            {
+              "duration": 0.2663219999999953,
+              "path_m": 0.1354994,
+              "coverage": 1.0000041303384801,
+              "samples": 17
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.1325982,
+            "median": 0.1340488,
+            "max": 0.1354994
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.14897609999999872,
+              "path_m": 0.06709613178,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 3.437065,
+              "end_phase": 3.5993576,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.6839059000000063,
+              "end_seconds_in_trial": 0.832882000000005
+            },
+            {
+              "duration": 0.1499640000000042,
+              "path_m": 0.06689922433,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 4.434729,
+              "end_phase": 4.59810162,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.5996819000000002,
+              "end_seconds_in_trial": 1.7496459000000044
+            },
+            {
+              "duration": 0.16089290000000034,
+              "path_m": 0.07096257077,
+              "coverage": 1.0,
+              "samples": 11,
+              "start_phase": 5.42173672,
+              "end_phase": 5.597017,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.5056759,
+              "end_seconds_in_trial": 2.6665688000000003
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.06689922433,
+            "median": 0.06709613178,
+            "max": 0.07096257077
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.16620249999999714,
+              "path_m": 0.02816638497,
+              "coverage": 1.0,
+              "samples": 11,
+              "start_phase": 3.9086113,
+              "end_phase": 4.089675,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.1167489000000046,
+              "end_seconds_in_trial": 1.2829514000000017
+            },
+            {
+              "duration": 0.16666320000000212,
+              "path_m": 0.02851155461,
+              "coverage": 1.0,
+              "samples": 11,
+              "start_phase": 4.90666676,
+              "end_phase": 5.088235,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.032882700000002,
+              "end_seconds_in_trial": 2.199545900000004
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.02816638497,
+            "median": 0.02833896979,
+            "max": 0.02851155461
+          },
+          "short_segments": 1,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "combat_065": {
+      "samples": 143,
+      "speed": {
+        "count": 143,
+        "min": 3.47290182,
+        "median": 3.47290182,
+        "max": 3.47290182
+      },
+      "cadence": {
+        "count": 143,
+        "min": 1.10098481,
+        "median": 1.10098481,
+        "max": 1.10098481
+      },
+      "mixed_gait_frames": 143,
+      "contacts": {
+        "left": {
+          "contact_frames": 29,
+          "covered_frames": 26,
+          "contact_pair_coverage": 0.896551724137931,
+          "measured_path_m": 0.39388494351,
+          "covered_seconds": 0.43381089999999745,
+          "path_rate_m_per_second": 0.907964607413051,
+          "sole_height_m": {
+            "count": 143,
+            "min": -9.346008e-05,
+            "median": 0.235713959,
+            "max": 0.389076233
+          }
+        },
+        "right": {
+          "contact_frames": 36,
+          "covered_frames": 33,
+          "contact_pair_coverage": 0.9166666666666666,
+          "measured_path_m": 0.107595448224,
+          "covered_seconds": 0.5503001000000012,
+          "path_rate_m_per_second": 0.1955214040920577,
+          "sole_height_m": {
+            "count": 143,
+            "min": -0.000121116638,
+            "median": 0.117474556,
+            "max": 0.417744637
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.183227500000001,
+              "path_m": 0.185114145,
+              "coverage": 1.00000021285014,
+              "samples": 12
+            },
+            {
+              "duration": 0.18325339999999812,
+              "path_m": 0.185276777,
+              "coverage": 1.0000045947305856,
+              "samples": 12
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.185114145,
+            "median": 0.185195461,
+            "max": 0.185276777
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.18312250000000319,
+              "path_m": 0.038791813,
+              "coverage": 0.9999903234173672,
+              "samples": 12
+            },
+            {
+              "duration": 0.18347419999999914,
+              "path_m": 0.03723226,
+              "coverage": 1.0000070854648822,
+              "samples": 12
+            },
+            {
+              "duration": 0.18370339999999885,
+              "path_m": 0.0360879749,
+              "coverage": 1.0000053129120154,
+              "samples": 12
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.0360879749,
+            "median": 0.03723226,
+            "max": 0.038791813
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.13327999999999918,
+              "path_m": 0.11374384885,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 7.429914,
+              "end_phase": 7.586505,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.2333330000000018,
+              "end_seconds_in_trial": 1.366613000000001
+            },
+            {
+              "duration": 0.1495962999999989,
+              "path_m": 0.14437141996,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 8.428833,
+              "end_phase": 8.604601,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.0835267,
+              "end_seconds_in_trial": 2.233122999999999
+            },
+            {
+              "duration": 0.05011329999999958,
+              "path_m": 0.0347913571,
+              "coverage": 1.0,
+              "samples": 4,
+              "start_phase": 9.427317,
+              "end_phase": 9.486192,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.933349700000001,
+              "end_seconds_in_trial": 2.9834630000000004
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.0347913571,
+            "median": 0.11374384885,
+            "max": 0.14437141996
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.1332000000000022,
+              "path_m": 0.02776573932,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 6.92107773,
+              "end_phase": 7.07757568,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.8002529999999979,
+              "end_seconds_in_trial": 0.9334530000000001
+            },
+            {
+              "duration": 0.1337061999999989,
+              "path_m": 0.02877965665,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 7.919054,
+              "end_phase": 8.076148,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.6496467999999993,
+              "end_seconds_in_trial": 1.7833529999999982
+            },
+            {
+              "duration": 0.1332092999999972,
+              "path_m": 0.02846822424,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 8.918069,
+              "end_phase": 9.074576,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.499919900000002,
+              "end_seconds_in_trial": 2.633129199999999
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.02776573932,
+            "median": 0.02846822424,
+            "max": 0.02877965665
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "combat_08": {
+      "samples": 144,
+      "speed": {
+        "count": 144,
+        "min": 4.46777534,
+        "median": 4.46777534,
+        "max": 4.46777534
+      },
+      "cadence": {
+        "count": 144,
+        "min": 1.04136622,
+        "median": 1.04136622,
+        "max": 1.04136622
+      },
+      "mixed_gait_frames": 144,
+      "contacts": {
+        "left": {
+          "contact_frames": 31,
+          "covered_frames": 28,
+          "contact_pair_coverage": 0.9032258064516129,
+          "measured_path_m": 0.62246556985,
+          "covered_seconds": 0.4669772000000023,
+          "path_rate_m_per_second": 1.3329677976783383,
+          "sole_height_m": {
+            "count": 144,
+            "min": -0.000155448914,
+            "median": 0.2914648055,
+            "max": 0.552868843
+          }
+        },
+        "right": {
+          "contact_frames": 31,
+          "covered_frames": 28,
+          "contact_pair_coverage": 0.9032258064516129,
+          "measured_path_m": 0.12831489585,
+          "covered_seconds": 0.4673813999999936,
+          "path_rate_m_per_second": 0.2745400134665217,
+          "sole_height_m": {
+            "count": 144,
+            "min": -0.000164031982,
+            "median": 0.2060170175,
+            "max": 0.5973158
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.16704730000000012,
+              "path_m": 0.240904808,
+              "coverage": 0.9999898232416798,
+              "samples": 11
+            },
+            {
+              "duration": 0.1499959000000004,
+              "path_m": 0.199770734,
+              "coverage": 1.0000120736633442,
+              "samples": 10
+            },
+            {
+              "duration": 0.1499340000000018,
+              "path_m": 0.204377085,
+              "coverage": 0.9999924033241173,
+              "samples": 10
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.199770734,
+            "median": 0.204377085,
+            "max": 0.240904808
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.16639999999999588,
+              "path_m": 0.04769627,
+              "coverage": 1.0000054627404094,
+              "samples": 11
+            },
+            {
+              "duration": 0.15008919999999648,
+              "path_m": 0.0447090827,
+              "coverage": 1.0000004264131164,
+              "samples": 10
+            },
+            {
+              "duration": 0.15089220000000125,
+              "path_m": 0.0419743061,
+              "coverage": 0.9999877395915677,
+              "samples": 10
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.0419743061,
+            "median": 0.0447090827,
+            "max": 0.04769627
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.11658860000000004,
+              "path_m": 0.1525373197,
+              "coverage": 1.0,
+              "samples": 8,
+              "start_phase": 10.4501867,
+              "end_phase": 10.593462,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.7665596000000008,
+              "end_seconds_in_trial": 0.8831482000000008
+            },
+            {
+              "duration": 0.13227279999999553,
+              "path_m": 0.17596693879,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 11.4344006,
+              "end_phase": 11.5969543,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.5674591000000007,
+              "end_seconds_in_trial": 1.6997318999999962
+            },
+            {
+              "duration": 0.13317870000000198,
+              "path_m": 0.18228159446,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 12.4371748,
+              "end_phase": 12.60084,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.383457199999995,
+              "end_seconds_in_trial": 2.516635899999997
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.1525373197,
+            "median": 0.17596693879,
+            "max": 0.18228159446
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.13374709999999368,
+              "path_m": 0.03514577638,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 10.9208937,
+              "end_phase": 11.0852547,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.1495971000000011,
+              "end_seconds_in_trial": 1.2833441999999948
+            },
+            {
+              "duration": 0.11702330000000671,
+              "path_m": 0.030636861760000002,
+              "coverage": 1.0,
+              "samples": 8,
+              "start_phase": 11.9244118,
+              "end_phase": 12.068223,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.9662018999999944,
+              "end_seconds_in_trial": 2.083225200000001
+            },
+            {
+              "duration": 0.13349219999999917,
+              "path_m": 0.04129190928,
+              "coverage": 1.0,
+              "samples": 9,
+              "start_phase": 12.90761,
+              "end_phase": 13.0716581,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.766269699999995,
+              "end_seconds_in_trial": 2.8997618999999943
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.030636861760000002,
+            "median": 0.03514577638,
+            "max": 0.04129190928
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "combat_FR_05": {
+      "samples": 145,
+      "speed": {
+        "count": 145,
+        "min": 1.80698407,
+        "median": 1.80698407,
+        "max": 1.80698407
+      },
+      "cadence": {
+        "count": 145,
+        "min": 1.06438351,
+        "median": 1.06438351,
+        "max": 1.06438351
+      },
+      "mixed_gait_frames": 145,
+      "contacts": {
+        "left": {
+          "contact_frames": 50,
+          "covered_frames": 48,
+          "contact_pair_coverage": 0.96,
+          "measured_path_m": 0.1391159533337,
+          "covered_seconds": 0.799016800000004,
+          "path_rate_m_per_second": 0.17410892153168658,
+          "sole_height_m": {
+            "count": 145,
+            "min": -3.9100647e-05,
+            "median": 0.06007576,
+            "max": 0.134062767
+          }
+        },
+        "right": {
+          "contact_frames": 78,
+          "covered_frames": 75,
+          "contact_pair_coverage": 0.9615384615384616,
+          "measured_path_m": 0.23751083341999998,
+          "covered_seconds": 1.2370991000000089,
+          "path_rate_m_per_second": 0.191990143247213,
+          "sole_height_m": {
+            "count": 145,
+            "min": -0.000330925,
+            "median": 0.013712883,
+            "max": 0.10192585
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.39986600000000294,
+              "path_m": 0.07673631,
+              "coverage": 0.9999954984919874,
+              "samples": 25
+            },
+            {
+              "duration": 0.399150800000001,
+              "path_m": 0.07477149,
+              "coverage": 1.0000001202552995,
+              "samples": 25
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.07477149,
+            "median": 0.0757539,
+            "max": 0.07673631
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.4327506999999997,
+              "path_m": 0.09005745,
+              "coverage": 0.9626332204661951,
+              "samples": 27
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.09005745,
+            "median": 0.09005745,
+            "max": 0.09005745
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.2501675999999975,
+              "path_m": 0.0209043368717,
+              "coverage": 1.0,
+              "samples": 16,
+              "start_phase": 14.3578033,
+              "end_phase": 14.6048222,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.183002700000003,
+              "end_seconds_in_trial": 1.4331703000000005
+            },
+            {
+              "duration": 0.26651700000000034,
+              "path_m": 0.023788589122,
+              "coverage": 1.0,
+              "samples": 17,
+              "start_phase": 15.3454685,
+              "end_phase": 15.6086321,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.1832656999999998,
+              "end_seconds_in_trial": 2.4497827
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.0209043368717,
+            "median": 0.02234646299685,
+            "max": 0.023788589122
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.2662963000000005,
+              "path_m": 0.017983129804,
+              "coverage": 1.0,
+              "samples": 17,
+              "start_phase": 13.8644629,
+              "end_phase": 14.1274052,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 0.6833687000000026,
+              "end_seconds_in_trial": 0.9496650000000031
+            },
+            {
+              "duration": 0.26678000000000424,
+              "path_m": 0.016769388353,
+              "coverage": 0.939386385786064,
+              "samples": 17,
+              "start_phase": 14.8680964,
+              "end_phase": 15.1315145,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.6998026999999993,
+              "end_seconds_in_trial": 1.9665827000000036
+            },
+            {
+              "duration": 0.2665264000000036,
+              "path_m": 0.018450166213,
+              "coverage": 1.0,
+              "samples": 17,
+              "start_phase": 15.8558769,
+              "end_phase": 16.1190472,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.700182699999999,
+              "end_seconds_in_trial": 2.9667091000000028
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.016769388353,
+            "median": 0.017983129804,
+            "max": 0.018450166213
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "combat_FL_05": {
+      "samples": 131,
+      "speed": {
+        "count": 131,
+        "min": 1.80476391,
+        "median": 1.80698407,
+        "max": 1.80698407
+      },
+      "cadence": {
+        "count": 131,
+        "min": 1.05541468,
+        "median": 1.05567789,
+        "max": 1.05567789
+      },
+      "mixed_gait_frames": 131,
+      "contacts": {
+        "left": {
+          "contact_frames": 47,
+          "covered_frames": 45,
+          "contact_pair_coverage": 0.9574468085106383,
+          "measured_path_m": 0.068779227436,
+          "covered_seconds": 0.7500100000000032,
+          "path_rate_m_per_second": 0.09170441385581486,
+          "sole_height_m": {
+            "count": 131,
+            "min": -4.386902e-05,
+            "median": 0.0534610748,
+            "max": 0.12994194
+          }
+        },
+        "right": {
+          "contact_frames": 63,
+          "covered_frames": 59,
+          "contact_pair_coverage": 0.9365079365079365,
+          "measured_path_m": 0.1153927728201,
+          "covered_seconds": 0.9822300000000013,
+          "path_rate_m_per_second": 0.11748039951956249,
+          "sole_height_m": {
+            "count": 131,
+            "min": -0.000189781189,
+            "median": 0.0230722427,
+            "max": 0.104829788
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [
+            {
+              "duration": 0.36710000000000775,
+              "path_m": 0.0346896164,
+              "coverage": 0.9999889594115833,
+              "samples": 23
+            },
+            {
+              "duration": 0.3829099999999954,
+              "path_m": 0.041878473,
+              "coverage": 0.9999844689352709,
+              "samples": 24
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.0346896164,
+            "median": 0.0382840447,
+            "max": 0.041878473
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [
+            {
+              "duration": 0.21555999999999642,
+              "path_m": 0.0107527,
+              "coverage": 1.0000042354796974,
+              "samples": 14
+            },
+            {
+              "duration": 0.4504299999999972,
+              "path_m": 0.058728233,
+              "coverage": 0.9627573651843854,
+              "samples": 28
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.0107527,
+            "median": 0.0347404665,
+            "max": 0.058728233
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 1
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.2335281000000009,
+              "path_m": 0.014138218121000001,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 17.3538456,
+              "end_phase": 17.5809822,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.0274757999999977,
+              "end_seconds_in_trial": 2.2610038999999986
+            },
+            {
+              "duration": 0.24911000000000172,
+              "path_m": 0.014983277245000001,
+              "coverage": 1.0,
+              "samples": 16,
+              "start_phase": 18.3437557,
+              "end_phase": 18.5860577,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 3.0452299999999966,
+              "end_seconds_in_trial": 3.2943399999999983
+            }
+          ],
+          "path_m": {
+            "count": 2,
+            "min": 0.014138218121000001,
+            "median": 0.014560747683000001,
+            "max": 0.014983277245000001
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 0.14890470000000278,
+              "path_m": 0.004405100035,
+              "coverage": 1.0,
+              "samples": 10,
+              "start_phase": 16.98214,
+              "end_phase": 17.1269646,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 1.645310000000002,
+              "end_seconds_in_trial": 1.7942147000000048
+            },
+            {
+              "duration": 0.2834000000000003,
+              "path_m": 0.009548453231,
+              "coverage": 0.9407904022583023,
+              "samples": 18,
+              "start_phase": 17.8563576,
+              "end_phase": 18.1319942,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 2.5441199999999995,
+              "end_seconds_in_trial": 2.82752
+            },
+            {
+              "duration": 0.23313000000000272,
+              "path_m": 0.0075750606711,
+              "coverage": 1.0,
+              "samples": 15,
+              "start_phase": 18.8615627,
+              "end_phase": 19.0883141,
+              "base_states": [
+                "1451526088"
+              ],
+              "crosses_base_state": false,
+              "start_seconds_in_trial": 3.5775899999999936,
+              "end_seconds_in_trial": 3.8107199999999963
+            }
+          ],
+          "path_m": {
+            "count": 3,
+            "min": 0.004405100035,
+            "median": 0.0075750606711,
+            "max": 0.009548453231
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    },
+    "stop": {
+      "samples": 143,
+      "speed": {
+        "count": 143,
+        "min": 0.0,
+        "median": 0.0,
+        "max": 1.18035768e-24
+      },
+      "cadence": {
+        "count": 143,
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "mixed_gait_frames": 0,
+      "contacts": {
+        "left": {
+          "contact_frames": 143,
+          "covered_frames": 143,
+          "contact_pair_coverage": 1.0,
+          "measured_path_m": 0.2832536905064,
+          "covered_seconds": 2.3663899999999956,
+          "path_rate_m_per_second": 0.11969865090133093,
+          "sole_height_m": {
+            "count": 143,
+            "min": -0.000725746155,
+            "median": -3.81469727e-06,
+            "max": 5.4359436e-05
+          }
+        },
+        "right": {
+          "contact_frames": 143,
+          "covered_frames": 143,
+          "contact_pair_coverage": 1.0,
+          "measured_path_m": 0.1886182718764,
+          "covered_seconds": 2.3663899999999956,
+          "path_rate_m_per_second": 0.07970717923774204,
+          "sole_height_m": {
+            "count": 143,
+            "min": -2.57492065e-05,
+            "median": 6.67572e-06,
+            "max": 0.0187625885
+          }
+        }
+      },
+      "windows": {
+        "left": {
+          "full_windows": [],
+          "path_m": {
+            "count": 0
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        },
+        "right": {
+          "full_windows": [],
+          "path_m": {
+            "count": 0
+          },
+          "short_windows": 0,
+          "poor_coverage_windows": 0,
+          "cross_trial_windows": 0
+        }
+      },
+      "surface_band": {
+        "left": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 2.3663899999999956,
+              "path_m": 0.2832536905064,
+              "coverage": 1.0,
+              "samples": 143,
+              "start_phase": 0.7984482,
+              "end_phase": 1.15033019,
+              "base_states": [
+                "-1112163239",
+                "-1269438207"
+              ],
+              "crosses_base_state": true,
+              "start_seconds_in_trial": 0.6166300000000007,
+              "end_seconds_in_trial": 2.9830199999999962
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.2832536905064,
+            "median": 0.2832536905064,
+            "max": 0.2832536905064
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        },
+        "right": {
+          "height_limits_m": [
+            -0.02,
+            0.002
+          ],
+          "windows": [
+            {
+              "duration": 2.199950000000001,
+              "path_m": 0.0395386185884,
+              "coverage": 1.0,
+              "samples": 133,
+              "start_phase": 1.05559409,
+              "end_phase": 1.15033019,
+              "base_states": [
+                "-1112163239",
+                "-1269438207"
+              ],
+              "crosses_base_state": true,
+              "start_seconds_in_trial": 0.783069999999995,
+              "end_seconds_in_trial": 2.9830199999999962
+            }
+          ],
+          "path_m": {
+            "count": 1,
+            "min": 0.0395386185884,
+            "median": 0.0395386185884,
+            "max": 0.0395386185884
+          },
+          "short_segments": 0,
+          "poor_coverage_segments": 0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+    "scope": "Read-only native IK on Lucian's actual avatar. Source stance masks, identical surface vertices within 2 mm of both adjacent sole minima. No physics, blend, runtime or visual acceptance.",
+    "status": "ROLLED_BACK_AFTER_FAILED_GATE",
+    "rows": [
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FL_Inplace.FBX",
+            "kind": "provider",
+            "requestedDirection": {
+                "x": -0.7071067690849304,
+                "y": 0.7071067690849304
+            },
+            "measuredVelocity": {
+                "x": -2.0032920837402344,
+                "y": 3.489504337310791
+            },
+            "nativeSpeed": 3.3071024417877197,
+            "measuredSpeed": 4.023657321929932,
+            "measuredAngle": -29.85973358154297,
+            "angleDifference": -15.1402587890625,
+            "leftPairs": 44,
+            "rightPairs": 53,
+            "missingPatchPairs": 0
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_FL_Stride03.anim",
+            "kind": "candidate",
+            "requestedDirection": {
+                "x": -0.7071067690849304,
+                "y": 0.7071067690849304
+            },
+            "measuredVelocity": {
+                "x": -2.0033369064331055,
+                "y": 3.484971284866333
+            },
+            "nativeSpeed": 3.3071024417877197,
+            "measuredSpeed": 4.019749164581299,
+            "measuredAngle": -29.8924560546875,
+            "angleDifference": -15.10754680633545,
+            "leftPairs": 44,
+            "rightPairs": 53,
+            "missingPatchPairs": 0
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FR_Inplace.FBX",
+            "kind": "provider",
+            "requestedDirection": {
+                "x": 0.7071067690849304,
+                "y": 0.7071067690849304
+            },
+            "measuredVelocity": {
+                "x": 2.3265717029571533,
+                "y": 3.3282926082611084
+            },
+            "nativeSpeed": 3.4299802780151367,
+            "measuredSpeed": 4.060845851898193,
+            "measuredAngle": 34.95465087890625,
+            "angleDifference": 10.04533576965332,
+            "leftPairs": 61,
+            "rightPairs": 57,
+            "missingPatchPairs": 0
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_FR_Stride03.anim",
+            "kind": "candidate",
+            "requestedDirection": {
+                "x": 0.7071067690849304,
+                "y": 0.7071067690849304
+            },
+            "measuredVelocity": {
+                "x": 2.333360433578491,
+                "y": 3.334238052368164
+            },
+            "nativeSpeed": 3.4299802780151367,
+            "measuredSpeed": 4.069608688354492,
+            "measuredAngle": 34.98502731323242,
+            "angleDifference": 10.014924049377441,
+            "leftPairs": 61,
+            "rightPairs": 57,
+            "missingPatchPairs": 0
+        }
+    ]
+}

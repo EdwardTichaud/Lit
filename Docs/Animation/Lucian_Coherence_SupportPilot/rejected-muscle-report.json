@@ -1,0 +1,19 @@
+{
+    "source": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Common_Run_Loop_Inplace.FBX",
+    "candidate": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Run_Support.anim",
+    "status": "Pilot pose/IK/support contract failed; inspect report, no asset installed",
+    "floor": 0.10000038146972656,
+    "manualBakeDifference": 4.807936306860938e-7,
+    "maximumDesiredPoseError": 0.06491459906101227,
+    "maximumUpperBodyPositionError": 0.2514941692352295,
+    "maximumIKPoseError": 0.06491473317146301,
+    "minimumSoleFK": -0.14472831785678864,
+    "minimumSoleIK": -0.14482983946800232,
+    "maximumRootMotion": 0.0,
+    "eventsPreserved": true,
+    "maximumProjectionIterations": 12,
+    "minimumSubframeSoleFK": -0.14992675185203552,
+    "minimumSubframeSoleIK": -0.15134970843791962,
+    "maximumAnkleHorizontalChange": 0.8084365725517273,
+    "maximumFootRotationChange": 168.99221801757813
+}

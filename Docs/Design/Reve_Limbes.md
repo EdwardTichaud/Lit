@@ -1,7 +1,63 @@
 # Reve — Les Limbes
 
-Statut : base créée et intégrée le 25 octobre 2026. Portails, récupération,
-objets, deux cycles et 19 liaisons de saut validés en solo.
+Statut : base créée le 25 octobre, extension jouable intégrée le 27 octobre 2026.
+Cinq cycles d'exploration et un cycle final, six séquences et boss ; parcours
+automatisé solo validé. La recette manuelle et multijoueur reste distincte.
+
+## Extension du 27 octobre 2026 — contenu implémenté
+
+Direction validée : révéler Azazel, les âmes captives et le rituel. Le secret
+Lucian–Munin et le sacrifice restent réservés à la suite. Le boss est une
+Gargouille à forme d'Ange, sans lui attribuer une nature divine.
+
+La scène permanente `Reve_Limbes_Progression` et trois scènes de cycles ajoutent
+trois branches à plusieurs niveaux. Les cinq cycles d'exploration suivants
+ouvrent ensemble le pont vers l'arène :
+
+| Cycle | Parcours et résolution | Révélation |
+| --- | --- | --- |
+| Le seuil éparpillé | Trois fragments et stèle existants. | Reconstitution d'un passage. |
+| La chambre à l'envers | Fragment et miroir existants ; compte désormais pour l'accès final. | Persistance d'un point de vue. |
+| Le monde inachevé | Branche ouest, palier intermédiaire et terrasse ; trois preuves puis souvenir. | Azazel et l'imperfection du Rêve. |
+| La lignée captive | Branche est sur plusieurs niveaux ; trois preuves puis souvenir. | Âmes arrachées aux Enfers et générations. |
+| Le visage de la statue | Branche haute au nord ; trois preuves puis souvenir. | Déesse, Chanteurs, ancre et interruption du rituel. |
+
+Les neuf nouvelles preuves sont récupérables et accordent des connaissances.
+Chaque souvenir attend ses trois preuves et la proximité du joueur. Les six
+séquences sont l'arrivée existante, les trois souvenirs, l'introduction du boss
+et la conclusion. Les textes ne révèlent pas l'origine de l'armée.
+
+Le sixième cycle `reve.limbes.ange` porte introduction, défaite et conclusion.
+La Gargouille alterne neuf secondes de vol avec tirs visés et neuf secondes de
+descente/poursuite et mêlée. Le balayage est annoncé pendant 1,1 seconde. Les
+projectiles visent la position au lancement. Les dégâts utilisent les services
+de santé existants ; le boss s'appuie sur l'acteur Brains et requiert une Flame.
+
+Le boss attend la fin de son introduction. Le portail final apparaît après la
+défaite et la conclusion ; les anciens portails de retraite restent disponibles.
+Les effets d'accès et de sortie sont dérivés des cycles persistants existants.
+Les nouvelles preuves sont ajoutées au catalogue de session pour l'inventaire.
+
+Création et 43 contrôles auteur réussis dans Unity 6000.6.4f1 : dix scènes au
+manifeste, six cycles, six séquences, références, sols, NavMesh et modèle d'ange
+recentré à 3,5 m. Les montées utilisent six rampes continues, raccordées aux
+paliers ; la torche du palier Captivité est hors du trajet. Les nouveaux sols
+utilisent un matériau répétable local, sans conversion du pack source.
+
+L'essai complet `0b3f9181064946948db4c514563d0564` est réussi : treize objets
+récupérés réellement, trois branches parcourues avec UCC, cinq cycles ouvrant
+le pont, six séquences, vol à cinq mètres, tirs et mêlée infligeant des dégâts,
+défaite par la santé de production, conclusion et portail final. Les six cycles
+et la sortie sont conservés après départ puis retour ; retour au menu réussi.
+Le contrôle ciblé `e83f82523fb84de88e49bf0bba7b7f69` réussit également, avec
+captures de la terrasse et du combat examinées. Il ne répète pas les montées.
+Les deux essais ne signalent aucune erreur runtime et restaurent l'éditeur.
+
+Rapports : `Library/ReveLimbesCompletion` et
+`Library/StartupDistrictValidation/PlayRuns/<identifiant>/result.json`.
+Les approches, l'avancement des dialogues et la survie au boss sont pilotés
+par la fixture. Ceci ne qualifie pas un parcours manuel continu, l'équilibrage,
+la finition artistique, une reprise après redémarrage ou le multijoueur.
 
 ## Demande et direction
 
@@ -13,9 +69,10 @@ Accès demandé par le joueur : **portail depuis la Maison**.
 
 Le concept fourni montre des îles de ruines, des arches, des piliers détachés et
 des structures inclinées autour d'un tourbillon lumineux. Les fragments de décor
-se contredisent ; le parcours praticable doit rester compréhensible. Le lieu ne
-révèle pas automatiquement l'origine du château ou le rituel : il reprend
-l'instabilité et les incohérences du Monde des Rêves décrites dans `Lore.md`.
+se contredisent ; le parcours praticable doit rester compréhensible. Le lieu
+reprend l'instabilité et les incohérences du Monde des Rêves décrites dans
+`Lore.md`. L'extension validée révèle désormais Azazel, les âmes captives et le
+rituel, sans révéler le secret Lucian–Munin ni l'origine de l'armée.
 
 ## Architecture retenue
 
@@ -172,6 +229,7 @@ intervalles sont de 0,75 m et les principales traversées latérales ont été
 rapprochées. La dalle Saut_09 est raccourcie pour éviter son chevauchement avec
 le sol surélevé de l'île voisine. La chambre facultative est rapprochée de
 1,6 m ; ses interactions restent dans leur plateforme et leur zone de lumière.
+Ce détour, facultatif dans la base, est requis par l'accès final de l'extension.
 
 Le NavMesh a été rebâti et les six îles initialement accessibles disposent de
 chemins complets. Les 868 identifiants d'objets de la scène d'environnement

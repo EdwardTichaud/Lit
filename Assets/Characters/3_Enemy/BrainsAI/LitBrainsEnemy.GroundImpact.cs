@@ -20,6 +20,7 @@ public partial class LitBrainsEnemy
             float before = 1 - elapsed / .25f;
             float after = 1 - (elapsed + dt) / .25f;
             var step = direction * distance * (before * before - after * after);
+            step = ConstrainEncounterStep(transform.position, step);
             int mask = LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction");
             if (agent.Raycast(transform.position + step, out _) || Physics.SphereCast(transform.position + Vector3.up * agent.height * .5f,
                 agent.radius, direction, out _, step.magnitude + .04f, mask, QueryTriggerInteraction.Ignore)) break;

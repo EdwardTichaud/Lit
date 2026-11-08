@@ -1,0 +1,206 @@
+{
+  "run": "Library/LucianCoherence/play-cadence-contacts-20261102-222937",
+  "candidateHash": "ad5a83b3975b5a37909cc15c4165a416",
+  "avatarHash": "ea8ad6a8eb9dfada5d71363899d2eff6",
+  "previousNativeSpeed": 4.651336669921875,
+  "windows": [
+    {
+      "scenario": "walk",
+      "side": "left",
+      "factor": 0.9306737746048704,
+      "duration": 0.13573170999999995
+    },
+    {
+      "scenario": "walk",
+      "side": "left",
+      "factor": 0.9309059321129911,
+      "duration": 0.13359041000000005
+    },
+    {
+      "scenario": "walk",
+      "side": "left",
+      "factor": 0.9225925575365349,
+      "duration": 0.11695999999999884
+    },
+    {
+      "scenario": "walk",
+      "side": "right",
+      "factor": 0.9522776656883721,
+      "duration": 0.13367899999999988
+    },
+    {
+      "scenario": "walk",
+      "side": "right",
+      "factor": 0.9516101589962476,
+      "duration": 0.13364400000000032
+    },
+    {
+      "scenario": "walk",
+      "side": "right",
+      "factor": 0.9489137749729993,
+      "duration": 0.13379100000000044
+    },
+    {
+      "scenario": "run",
+      "side": "left",
+      "factor": 0.9218740971074502,
+      "duration": 0.06687999999999938
+    },
+    {
+      "scenario": "run",
+      "side": "left",
+      "factor": 0.9243627792430951,
+      "duration": 0.06682679999999941
+    },
+    {
+      "scenario": "run",
+      "side": "left",
+      "factor": 0.9175653122330465,
+      "duration": 0.06483749999999944
+    },
+    {
+      "scenario": "run",
+      "side": "left",
+      "factor": 0.9252868128175401,
+      "duration": 0.06682489999999852
+    },
+    {
+      "scenario": "run",
+      "side": "left",
+      "factor": 0.9207879728149609,
+      "duration": 0.06668950000000073
+    },
+    {
+      "scenario": "run",
+      "side": "right",
+      "factor": 0.951753969171884,
+      "duration": 0.06683100000000053
+    },
+    {
+      "scenario": "run",
+      "side": "right",
+      "factor": 0.9692998247616202,
+      "duration": 0.10028259999999989
+    },
+    {
+      "scenario": "run",
+      "side": "right",
+      "factor": 0.9577170191070853,
+      "duration": 0.06666379999999883
+    },
+    {
+      "scenario": "run",
+      "side": "right",
+      "factor": 0.9675476391562443,
+      "duration": 0.10017780000000087
+    },
+    {
+      "scenario": "run",
+      "side": "right",
+      "factor": 0.9545672943023643,
+      "duration": 0.0668097000000003
+    },
+    {
+      "scenario": "run",
+      "side": "right",
+      "factor": 0.9363046594529293,
+      "duration": 0.06691080000000049
+    },
+    {
+      "scenario": "torch_walk",
+      "side": "left",
+      "factor": 0.9313018792889922,
+      "duration": 0.13379670000000132
+    },
+    {
+      "scenario": "torch_walk",
+      "side": "left",
+      "factor": 0.930891266159624,
+      "duration": 0.1336422000000006
+    },
+    {
+      "scenario": "torch_walk",
+      "side": "left",
+      "factor": 0.9305645987386264,
+      "duration": 0.13374619999999737
+    },
+    {
+      "scenario": "torch_walk",
+      "side": "right",
+      "factor": 0.9502324476918729,
+      "duration": 0.134101900000001
+    },
+    {
+      "scenario": "torch_walk",
+      "side": "right",
+      "factor": 0.9507219757695405,
+      "duration": 0.13369180000000114
+    },
+    {
+      "scenario": "torch_walk",
+      "side": "right",
+      "factor": 0.9503949435362571,
+      "duration": 0.13364740000000097
+    },
+    {
+      "scenario": "torch_run",
+      "side": "left",
+      "factor": 0.9312863227979965,
+      "duration": 0.07980150000000208
+    },
+    {
+      "scenario": "torch_run",
+      "side": "left",
+      "factor": 0.9200691012500112,
+      "duration": 0.0669632
+    },
+    {
+      "scenario": "torch_run",
+      "side": "left",
+      "factor": 0.9292515546776111,
+      "duration": 0.06680490000000106
+    },
+    {
+      "scenario": "torch_run",
+      "side": "left",
+      "factor": 0.9191122106878749,
+      "duration": 0.06664840000000183
+    },
+    {
+      "scenario": "torch_run",
+      "side": "left",
+      "factor": 0.9317629364386598,
+      "duration": 0.06682590000000133
+    },
+    {
+      "scenario": "torch_run",
+      "side": "right",
+      "factor": 0.9574390308749375,
+      "duration": 0.06690569999999951
+    },
+    {
+      "scenario": "torch_run",
+      "side": "right",
+      "factor": 0.9378888074077747,
+      "duration": 0.06689260000000274
+    },
+    {
+      "scenario": "torch_run",
+      "side": "right",
+      "factor": 0.9517793368069591,
+      "duration": 0.0836067000000007
+    },
+    {
+      "scenario": "torch_run",
+      "side": "right",
+      "factor": 0.940838107897983,
+      "duration": 0.06696510000000089
+    },
+    {
+      "scenario": "torch_run",
+      "side": "right",
+      "factor": 0.9521731201686988,
+      "duration": 0.08358379999999954
+    }
+  ]
+}

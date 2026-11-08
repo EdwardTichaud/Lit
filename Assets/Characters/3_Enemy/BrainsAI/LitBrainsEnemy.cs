@@ -278,6 +278,13 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         }
     }
 
+    private float ResolveVisibleApproachDistance(float preferred)
+    {
+        // Melee range is a valid stopping distance only once the target is
+        // visible. Otherwise NavMesh must still follow its route around cover.
+        return HasAttackLineOfSight() ? preferred : Mathf.Min(preferred, .05f);
+    }
+
     private bool HasAttackLineOfSight()
     {
         var target = fov != null ? fov.CurrentTarget : null;
@@ -370,6 +377,8 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         Vector3 pose = hit.position;
         if (reconcileNavigationGroundHeight || presentationProfile != null && presentationProfile.IsUsable(anim.avatar) && presentationProfile.alignNavMeshGround)
             pose.y += agent.baseOffset;
+        Vector3 placement = pose - transform.position;
+        if ((ConstrainEncounterStep(transform.position, placement) - placement).sqrMagnitude > .000001f) return false;
         transform.SetPositionAndRotation(pose, rotation);
         return true;
     }

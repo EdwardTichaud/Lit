@@ -190,24 +190,27 @@ public static partial class ActorFacingCalibration
             File.WriteAllText(ReportFolder + "/walk-retouch-" + label + ".json", JsonUtility.ToJson(report, true));
         }
     }
-    static bool IsLegMuscle(string name) => new[] { "Left Upper Leg", "Right Upper Leg", "Left Lower Leg", "Right Lower Leg", "Left Foot", "Right Foot", "Left Toes", "Right Toes" }.Any(name.StartsWith);
+    internal static bool IsLegMuscle(string name) => new[] { "Left Upper Leg", "Right Upper Leg", "Left Lower Leg", "Right Lower Leg", "Left Foot", "Right Foot", "Left Toes", "Right Toes" }.Any(name.StartsWith);
     static float SoleCorrection(float height, float minimum, float floor)
     {
         // Keep the swing arc; a smooth envelope only edits the low portion of each authored step.
         float weight = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.015f, .065f, height - minimum));
         return Mathf.Clamp(floor - height, -.1f, .1f) * weight;
     }
-    static void SolveLeg(Animator animator, bool left, float dy)
+    internal static void SolveLeg(Animator animator, bool left, float dy)
+        => SolveLeg(animator,left,animator.GetBoneTransform(left?HumanBodyBones.LeftFoot:HumanBodyBones.RightFoot).position+Vector3.up*dy);
+
+    internal static void SolveLeg(Animator animator, bool left, Vector3 goal, Vector3? kneeHint = null)
     {
         var thigh = animator.GetBoneTransform(left ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
         var knee = animator.GetBoneTransform(left ? HumanBodyBones.LeftLowerLeg : HumanBodyBones.RightLowerLeg);
         var ankle = animator.GetBoneTransform(left ? HumanBodyBones.LeftFoot : HumanBodyBones.RightFoot);
         var ankleRotation = ankle.rotation;
-        Vector3 origin = thigh.position, goal = ankle.position + Vector3.up * dy;
+        Vector3 origin = thigh.position;
         float upper = Vector3.Distance(origin, knee.position), lower = Vector3.Distance(knee.position, ankle.position);
         var direction = (goal - origin).normalized;
         float distance = Mathf.Clamp(Vector3.Distance(origin, goal), Mathf.Abs(upper - lower) + .0001f, upper + lower - .0001f);
-        var pole = Vector3.ProjectOnPlane(knee.position - origin, direction).normalized;
+        var pole = Vector3.ProjectOnPlane((kneeHint ?? knee.position) - origin, direction).normalized;
         if (pole.sqrMagnitude < .5f) throw new InvalidOperationException("Ambiguous knee plane");
         float along = (upper * upper - lower * lower + distance * distance) / (2f * distance);
         var kneeGoal = origin + direction * along + pole * Mathf.Sqrt(Mathf.Max(0f, upper * upper - along * along));

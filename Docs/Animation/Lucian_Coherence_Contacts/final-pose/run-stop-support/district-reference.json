@@ -1,0 +1,47 @@
+{
+  "run": "632fb4db3c5d4e94b420d904fe1a585a",
+  "manifest": "Assets/Scenes/Maison/ZoneManifest_District_1.asset",
+  "trace": "Library/ActorAnimationValidation/Player_Model_Lucian(Clone)_play_20261106_201209_034.csv",
+  "takes": {
+    "0": {
+      "torch": false,
+      "approach_ticks": 74,
+      "release_phase": 0.6563,
+      "release_speed_m_s": 5.2956,
+      "release_angle_deg": 0.0,
+      "brake_net_cm": 53.558,
+      "selected_sides": [],
+      "settled_speed_m_s": 0.0,
+      "settled_selector": 0.0,
+      "state_sequence": [
+        "-1269438207",
+        "-1112163239"
+      ],
+      "left_max_sole_height_first_15_cm": 53.234,
+      "right_max_sole_height_first_15_cm": -0.983,
+      "first_fade_tick": 5,
+      "fixed_vertex_path_fade_to_15_cm": 4.475,
+      "fixed_vertex_frames_fade_to_15": 3
+    },
+    "1": {
+      "torch": true,
+      "approach_ticks": 51,
+      "release_phase": 0.273,
+      "release_speed_m_s": 5.2956,
+      "release_angle_deg": 0.0,
+      "brake_net_cm": 52.887,
+      "selected_sides": [],
+      "settled_speed_m_s": 0.0,
+      "settled_selector": 0.0,
+      "state_sequence": [
+        "-1269438207",
+        "-1112163239"
+      ],
+      "left_max_sole_height_first_15_cm": 12.822,
+      "right_max_sole_height_first_15_cm": 27.885,
+      "first_fade_tick": 5,
+      "fixed_vertex_path_fade_to_15_cm": 27.843,
+      "fixed_vertex_frames_fade_to_15": 3
+    }
+  }
+}

@@ -1,0 +1,1647 @@
+{
+    "status": "REVIEW",
+    "scope": "Editor-only continuous geometry prototype; static actor, complete candidate controller and actual mesh. No asset writes, runtime implementation, transitions, terrain, torch, UCC or visual acceptance.",
+    "sourceSteps": 120,
+    "cases": [
+        {
+            "gait": 0.0,
+            "angle": 0.0,
+            "maxHeightError": 0.00002562999725341797,
+            "minSole": -0.00012584030628204346,
+            "maxLowerSole": 0.00009918212890625,
+            "maxCorrection": 0.0005462057888507843,
+            "maxCorrectionStep": 0.0005598403513431549,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.76837158203125e-7,
+            "maxFootRotationStep": 4.424979209899902,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:1"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 22.5,
+            "maxHeightError": 0.0012196823954582214,
+            "minSole": -0.0007947385311126709,
+            "maxLowerSole": 0.003232903778553009,
+            "maxCorrection": 0.04617606848478317,
+            "maxCorrectionStep": 0.007812514901161194,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.81384028919274e-7,
+            "maxFootRotationStep": 3.348189115524292,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,4999999",
+                "Lucian_Strafe_Walk_FR_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 45.0,
+            "maxHeightError": 0.00006336718797683716,
+            "minSole": -0.00003819912672042847,
+            "maxLowerSole": 0.006427384912967682,
+            "maxCorrection": 0.0007790178060531616,
+            "maxCorrectionStep": 0.0010024160146713257,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.382563076887891e-7,
+            "maxFootRotationStep": 4.075953483581543,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:1"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 67.5,
+            "maxHeightError": 0.0006021931767463684,
+            "minSole": -0.00042732805013656616,
+            "maxLowerSole": 0.0031270012259483337,
+            "maxCorrection": 0.0070554763078689575,
+            "maxCorrectionStep": 0.002820529043674469,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.349911020857689e-7,
+            "maxFootRotationStep": 3.9415993690490723,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,5",
+                "Lucian_Strafe_Walk_R_Stride03:0,4999999"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 90.0,
+            "maxHeightError": 0.00003419816493988037,
+            "minSole": -0.000008098781108856201,
+            "maxLowerSole": 0.0011238232254981995,
+            "maxCorrection": 0.00007564201951026917,
+            "maxCorrectionStep": 0.00008152425289154053,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.5320112462832185e-7,
+            "maxFootRotationStep": 4.567410469055176,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_R_Stride03:0,9999999"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 112.5,
+            "maxHeightError": 0.0010520145297050476,
+            "minSole": -0.000760689377784729,
+            "maxLowerSole": 0.003986962139606476,
+            "maxCorrection": 0.046703021973371506,
+            "maxCorrectionStep": 0.004364393651485443,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.805480102731963e-7,
+            "maxFootRotationStep": 2.842128276824951,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,4999999",
+                "Lucian_Strafe_Walk_R_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 135.0,
+            "maxHeightError": 0.00012834370136260986,
+            "minSole": -0.00009429454803466797,
+            "maxLowerSole": 0.00797300785779953,
+            "maxCorrection": 0.0006486140191555023,
+            "maxCorrectionStep": 0.0007288157939910889,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.127385520609096e-7,
+            "maxFootRotationStep": 4.344274997711182,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:1"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 157.5,
+            "maxHeightError": 0.0002522319555282593,
+            "minSole": -0.00025235116481781006,
+            "maxLowerSole": 0.007498584687709808,
+            "maxCorrection": 0.009747020900249481,
+            "maxCorrectionStep": 0.005925428122282028,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.974064609086781e-7,
+            "maxFootRotationStep": 4.012266635894775,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,4999999",
+                "Lucian_Strafe_Walk_BR_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 180.0,
+            "maxHeightError": 0.00011257827281951904,
+            "minSole": -0.0000402107834815979,
+            "maxLowerSole": 0.008555687963962555,
+            "maxCorrection": 0.0008931756019592285,
+            "maxCorrectionStep": 0.0008768811821937561,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.238326027916628e-7,
+            "maxFootRotationStep": 4.218100547790527,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,9999998"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 202.5,
+            "maxHeightError": 0.0007258206605911255,
+            "minSole": -0.00031711161136627197,
+            "maxLowerSole": 0.009827949106693268,
+            "maxCorrection": 0.013729855418205261,
+            "maxCorrectionStep": 0.005752980709075928,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.300734417483909e-7,
+            "maxFootRotationStep": 3.553041934967041,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,4999999",
+                "Lucian_Strafe_Walk_BL_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 225.0,
+            "maxHeightError": 0.00011955201625823975,
+            "minSole": -0.00005877763032913208,
+            "maxLowerSole": 0.009625837206840515,
+            "maxCorrection": 0.0004755929112434387,
+            "maxCorrectionStep": 0.00048582255840301514,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.5417996830110496e-7,
+            "maxFootRotationStep": 4.384455680847168,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,9999999"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 247.5,
+            "maxHeightError": 0.0006890296936035156,
+            "minSole": -0.00021473318338394165,
+            "maxLowerSole": 0.007801257073879242,
+            "maxCorrection": 0.0153079554438591,
+            "maxCorrectionStep": 0.0025300681591033936,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.5982821461620915e-7,
+            "maxFootRotationStep": 4.219028472900391,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,5000002",
+                "Lucian_Strafe_Walk_L_Stride03:0,4999998"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 270.0,
+            "maxHeightError": 0.00005622208118438721,
+            "minSole": -0.00002596527338027954,
+            "maxLowerSole": 0.005803659558296204,
+            "maxCorrection": 0.0007792860269546509,
+            "maxCorrectionStep": 0.0007995739579200745,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.960094770467549e-7,
+            "maxFootRotationStep": 4.535589218139648,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_L_Stride03:1"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 292.5,
+            "maxHeightError": 0.0013875067234039307,
+            "minSole": -0.0009739100933074951,
+            "maxLowerSole": 0.008118219673633575,
+            "maxCorrection": 0.019759193062782288,
+            "maxCorrectionStep": 0.002769187092781067,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.397430413722759e-7,
+            "maxFootRotationStep": 3.082331418991089,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,5000002",
+                "Lucian_Strafe_Walk_L_Stride03:0,4999997"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 315.0,
+            "maxHeightError": 0.00006035715341567993,
+            "minSole": -0.000034578144550323486,
+            "maxLowerSole": 0.012592673301696777,
+            "maxCorrection": 0.00046369433403015137,
+            "maxCorrectionStep": 0.00047650933265686035,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 3.934019332518801e-7,
+            "maxFootRotationStep": 4.064027786254883,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,9999998"
+            ]
+        },
+        {
+            "gait": 0.0,
+            "angle": 337.5,
+            "maxHeightError": 0.0005522146821022034,
+            "minSole": -0.0005487725138664246,
+            "maxLowerSole": 0.006286367774009705,
+            "maxCorrection": 0.04785521328449249,
+            "maxCorrectionStep": 0.008654490113258362,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.53866868813202e-7,
+            "maxFootRotationStep": 3.9623985290527344,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,5000001",
+                "Lucian_Strafe_Walk_FL_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 0.0,
+            "maxHeightError": 0.0007063448429107666,
+            "minSole": -0.00009854882955551147,
+            "maxLowerSole": 0.07346291840076447,
+            "maxCorrection": 0.09303396940231323,
+            "maxCorrectionStep": 0.010282352566719055,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.331201577973843e-7,
+            "maxFootRotationStep": 4.084970474243164,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,7500001",
+                "Lucian_Strafe_Run_F_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 22.5,
+            "maxHeightError": 0.0018715262413024902,
+            "minSole": -0.000922076404094696,
+            "maxLowerSole": 0.060792118310928345,
+            "maxCorrection": 0.0761692076921463,
+            "maxCorrectionStep": 0.010938391089439392,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.851466428590356e-7,
+            "maxFootRotationStep": 3.311279535293579,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,375",
+                "Lucian_Strafe_Walk_FR_Stride03:0,3750001",
+                "Lucian_Strafe_Run_F_Stride03:0,125",
+                "Lucian_Strafe_Run_FR_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 45.0,
+            "maxHeightError": 0.0027590394020080566,
+            "minSole": -0.0006652548909187317,
+            "maxLowerSole": 0.04115524888038635,
+            "maxCorrection": 0.05748642981052399,
+            "maxCorrectionStep": 0.011022739112377167,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.127385520609096e-7,
+            "maxFootRotationStep": 3.9972145557403564,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,7500001",
+                "Lucian_Strafe_Run_FR_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 67.5,
+            "maxHeightError": 0.0014972090721130371,
+            "minSole": -0.0003649890422821045,
+            "maxLowerSole": 0.04752194881439209,
+            "maxCorrection": 0.047224581241607666,
+            "maxCorrectionStep": 0.01024029403924942,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.640832796416362e-7,
+            "maxFootRotationStep": 3.649768352508545,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,375",
+                "Lucian_Strafe_Walk_R_Stride03:0,375",
+                "Lucian_Strafe_Run_FR_Stride03:0,125",
+                "Lucian_Strafe_Run_R_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 90.0,
+            "maxHeightError": 0.0006075501441955566,
+            "minSole": -0.0002940148115158081,
+            "maxLowerSole": 0.04772272706031799,
+            "maxCorrection": 0.04521048814058304,
+            "maxCorrectionStep": 0.004905238747596741,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.7087729626582586e-7,
+            "maxFootRotationStep": 4.112473964691162,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_R_Stride03:0,75",
+                "Lucian_Strafe_Run_R_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 112.5,
+            "maxHeightError": 0.0009283348917961121,
+            "minSole": -0.00018395483493804932,
+            "maxLowerSole": 0.03736279904842377,
+            "maxCorrection": 0.03216616064310074,
+            "maxCorrectionStep": 0.004587918519973755,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.539354563348752e-7,
+            "maxFootRotationStep": 2.789308786392212,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,375",
+                "Lucian_Strafe_Walk_R_Stride03:0,3750001",
+                "Lucian_Strafe_Run_BR_Stride03:0,125",
+                "Lucian_Strafe_Run_R_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 135.0,
+            "maxHeightError": 0.0013147369027137756,
+            "minSole": -0.00011820346117019653,
+            "maxLowerSole": 0.030607163906097412,
+            "maxCorrection": 0.027582891285419464,
+            "maxCorrectionStep": 0.004244998097419739,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.755784400207631e-7,
+            "maxFootRotationStep": 4.2920613288879395,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,7500001",
+                "Lucian_Strafe_Run_BR_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 157.5,
+            "maxHeightError": 0.0007121562957763672,
+            "minSole": -0.0000227317214012146,
+            "maxLowerSole": 0.023533008992671967,
+            "maxCorrection": 0.023483984172344208,
+            "maxCorrectionStep": 0.00443490594625473,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.059816317043442e-7,
+            "maxFootRotationStep": 4.248981952667236,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,3749999",
+                "Lucian_Strafe_Walk_BR_Stride03:0,3750001",
+                "Lucian_Strafe_Run_B_Stride03:0,125",
+                "Lucian_Strafe_Run_BR_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 180.0,
+            "maxHeightError": 0.0006120055913925171,
+            "minSole": -0.00023154914379119873,
+            "maxLowerSole": 0.04476387798786163,
+            "maxCorrection": 0.029252275824546814,
+            "maxCorrectionStep": 0.005462482571601868,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.042232373853039e-7,
+            "maxFootRotationStep": 4.352916240692139,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,7499999",
+                "Lucian_Strafe_Run_B_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 202.5,
+            "maxHeightError": 0.0008345320820808411,
+            "minSole": -0.00011805444955825806,
+            "maxLowerSole": 0.02716246247291565,
+            "maxCorrection": 0.028440508991479874,
+            "maxCorrectionStep": 0.006555873900651932,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.066394805908203e-7,
+            "maxFootRotationStep": 3.3596255779266357,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,375",
+                "Lucian_Strafe_Walk_BL_Stride03:0,375",
+                "Lucian_Strafe_Run_B_Stride03:0,125",
+                "Lucian_Strafe_Run_BL_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 225.0,
+            "maxHeightError": 0.0010904744267463684,
+            "minSole": -0.00005377829074859619,
+            "maxLowerSole": 0.01029989868402481,
+            "maxCorrection": 0.027064993977546692,
+            "maxCorrectionStep": 0.005382265895605087,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.495276695910434e-7,
+            "maxFootRotationStep": 3.954091787338257,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,75",
+                "Lucian_Strafe_Run_BL_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 247.5,
+            "maxHeightError": 0.0008407086133956909,
+            "minSole": -0.00026973336935043335,
+            "maxLowerSole": 0.01455342024564743,
+            "maxCorrection": 0.02011262997984886,
+            "maxCorrectionStep": 0.003074735403060913,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.851466428590356e-7,
+            "maxFootRotationStep": 3.9629909992218018,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,3750002",
+                "Lucian_Strafe_Walk_L_Stride03:0,3749999",
+                "Lucian_Strafe_Run_BL_Stride03:0,125",
+                "Lucian_Strafe_Run_L_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 270.0,
+            "maxHeightError": 0.0011146515607833862,
+            "minSole": -0.0010301321744918823,
+            "maxLowerSole": 0.017653904855251312,
+            "maxCorrection": 0.005772706121206284,
+            "maxCorrectionStep": 0.001274053007364273,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.495276695910434e-7,
+            "maxFootRotationStep": 4.607515335083008,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_L_Stride03:0,7500001",
+                "Lucian_Strafe_Run_L_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 292.5,
+            "maxHeightError": 0.0020631998777389526,
+            "minSole": -0.0008082613348960876,
+            "maxLowerSole": 0.0457000732421875,
+            "maxCorrection": 0.031099602580070496,
+            "maxCorrectionStep": 0.002935849130153656,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.88112561924936e-7,
+            "maxFootRotationStep": 2.9950037002563477,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,3750002",
+                "Lucian_Strafe_Walk_L_Stride03:0,3749998",
+                "Lucian_Strafe_Run_FL_Stride03:0,1250001",
+                "Lucian_Strafe_Run_L_Stride03:0,1249999"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 315.0,
+            "maxHeightError": 0.001784205436706543,
+            "minSole": -0.0003989860415458679,
+            "maxLowerSole": 0.056306853890419006,
+            "maxCorrection": 0.059791818261146545,
+            "maxCorrectionStep": 0.008751779794692993,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.851466428590356e-7,
+            "maxFootRotationStep": 4.244741916656494,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,7499999",
+                "Lucian_Strafe_Run_FL_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.25,
+            "angle": 337.5,
+            "maxHeightError": 0.0012574419379234314,
+            "minSole": -0.0006584674119949341,
+            "maxLowerSole": 0.06638438999652863,
+            "maxCorrection": 0.07817482948303223,
+            "maxCorrectionStep": 0.009981989860534668,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.006849844197859e-7,
+            "maxFootRotationStep": 3.7698349952697754,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,3750001",
+                "Lucian_Strafe_Walk_FL_Stride03:0,375",
+                "Lucian_Strafe_Run_F_Stride03:0,125",
+                "Lucian_Strafe_Run_FL_Stride03:0,125"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 0.0,
+            "maxHeightError": 0.0011813342571258545,
+            "minSole": -0.0001834779977798462,
+            "maxLowerSole": 0.14150434732437134,
+            "maxCorrection": 0.1461392492055893,
+            "maxCorrectionStep": 0.008665263652801514,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.851466428590356e-7,
+            "maxFootRotationStep": 4.073263645172119,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,5",
+                "Lucian_Strafe_Run_F_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 22.5,
+            "maxHeightError": 0.00248689204454422,
+            "minSole": -0.0009832829236984253,
+            "maxLowerSole": 0.1097833514213562,
+            "maxCorrection": 0.11851464211940765,
+            "maxCorrectionStep": 0.01020212471485138,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.755784400207631e-7,
+            "maxFootRotationStep": 3.8438639640808105,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,25",
+                "Lucian_Strafe_Walk_FR_Stride03:0,25",
+                "Lucian_Strafe_Run_F_Stride03:0,25",
+                "Lucian_Strafe_Run_FR_Stride03:0,2500001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 45.0,
+            "maxHeightError": 0.00392526388168335,
+            "minSole": -0.0012562945485115051,
+            "maxLowerSole": 0.06353084743022919,
+            "maxCorrection": 0.08864764869213104,
+            "maxCorrectionStep": 0.011818960309028625,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.497296911016747e-7,
+            "maxFootRotationStep": 5.024338245391846,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,5",
+                "Lucian_Strafe_Run_FR_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 67.5,
+            "maxHeightError": 0.0020954906940460205,
+            "minSole": -0.0006591454148292542,
+            "maxLowerSole": 0.08038391172885895,
+            "maxCorrection": 0.08282884955406189,
+            "maxCorrectionStep": 0.010600447654724121,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.8703767535917e-7,
+            "maxFootRotationStep": 3.238858222961426,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,25",
+                "Lucian_Strafe_Walk_R_Stride03:0,25",
+                "Lucian_Strafe_Run_FR_Stride03:0,25",
+                "Lucian_Strafe_Run_R_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 90.0,
+            "maxHeightError": 0.0007519572973251343,
+            "minSole": -0.0007209405303001404,
+            "maxLowerSole": 0.08570688962936401,
+            "maxCorrection": 0.03898511826992035,
+            "maxCorrectionStep": 0.00822141021490097,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.306152388584451e-7,
+            "maxFootRotationStep": 5.583239555358887,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_R_Stride03:0,5",
+                "Lucian_Strafe_Run_R_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 112.5,
+            "maxHeightError": 0.0009329617023468018,
+            "minSole": -0.0002773478627204895,
+            "maxLowerSole": 0.06985485553741455,
+            "maxCorrection": 0.04283031448721886,
+            "maxCorrectionStep": 0.00543927401304245,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.865748337579134e-7,
+            "maxFootRotationStep": 2.691041946411133,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,25",
+                "Lucian_Strafe_Walk_R_Stride03:0,25",
+                "Lucian_Strafe_Run_BR_Stride03:0,25",
+                "Lucian_Strafe_Run_R_Stride03:0,2500001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 135.0,
+            "maxHeightError": 0.0016308054327964783,
+            "minSole": -0.00017139315605163574,
+            "maxLowerSole": 0.053327515721321106,
+            "maxCorrection": 0.041080739349126816,
+            "maxCorrectionStep": 0.004886399954557419,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.2832738245124347e-7,
+            "maxFootRotationStep": 4.239205837249756,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,5",
+                "Lucian_Strafe_Run_BR_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 157.5,
+            "maxHeightError": 0.0007644444704055786,
+            "minSole": -0.000019706785678863525,
+            "maxLowerSole": 0.045985519886016846,
+            "maxCorrection": 0.034828510135412216,
+            "maxCorrectionStep": 0.004915054887533188,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.080072469354491e-7,
+            "maxFootRotationStep": 4.461276531219482,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,2499999",
+                "Lucian_Strafe_Walk_BR_Stride03:0,25",
+                "Lucian_Strafe_Run_B_Stride03:0,25",
+                "Lucian_Strafe_Run_BR_Stride03:0,2500001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 180.0,
+            "maxHeightError": 0.0007718130946159363,
+            "minSole": -0.0004565715789794922,
+            "maxLowerSole": 0.08499932289123535,
+            "maxCorrection": 0.04839600622653961,
+            "maxCorrectionStep": 0.005945146083831787,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.7033174155330926e-7,
+            "maxFootRotationStep": 4.413818836212158,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,4999999",
+                "Lucian_Strafe_Run_B_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 202.5,
+            "maxHeightError": 0.0011780336499214172,
+            "minSole": -0.00014360249042510986,
+            "maxLowerSole": 0.05212859809398651,
+            "maxCorrection": 0.0360262356698513,
+            "maxCorrectionStep": 0.007907673716545105,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.826228519050346e-7,
+            "maxFootRotationStep": 4.278908729553223,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,25",
+                "Lucian_Strafe_Walk_BL_Stride03:0,25",
+                "Lucian_Strafe_Run_B_Stride03:0,25",
+                "Lucian_Strafe_Run_BL_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 225.0,
+            "maxHeightError": 0.001568727195262909,
+            "minSole": -0.00008882582187652588,
+            "maxLowerSole": 0.017317429184913635,
+            "maxCorrection": 0.03534824773669243,
+            "maxCorrectionStep": 0.00889856368303299,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.022929485676286e-7,
+            "maxFootRotationStep": 4.817019462585449,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,5",
+                "Lucian_Strafe_Run_BL_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 247.5,
+            "maxHeightError": 0.0012783557176589966,
+            "minSole": -0.0002837255597114563,
+            "maxLowerSole": 0.02106042206287384,
+            "maxCorrection": 0.02543051540851593,
+            "maxCorrectionStep": 0.005234900861978531,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.399486440182955e-7,
+            "maxFootRotationStep": 3.662400722503662,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,2500001",
+                "Lucian_Strafe_Walk_L_Stride03:0,2499999",
+                "Lucian_Strafe_Run_BL_Stride03:0,2500001",
+                "Lucian_Strafe_Run_L_Stride03:0,2499999"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 270.0,
+            "maxHeightError": 0.001505441963672638,
+            "minSole": -0.00137251615524292,
+            "maxLowerSole": 0.026520222425460815,
+            "maxCorrection": 0.00724923238158226,
+            "maxCorrectionStep": 0.003561113029718399,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.824071311304579e-7,
+            "maxFootRotationStep": 5.176764965057373,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_L_Stride03:0,5",
+                "Lucian_Strafe_Run_L_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 292.5,
+            "maxHeightError": 0.0017226338386535645,
+            "minSole": -0.0007406175136566162,
+            "maxLowerSole": 0.07046873867511749,
+            "maxCorrection": 0.05437755584716797,
+            "maxCorrectionStep": 0.003897368907928467,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.655271652609372e-7,
+            "maxFootRotationStep": 2.8627097606658936,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,2500001",
+                "Lucian_Strafe_Walk_L_Stride03:0,2499999",
+                "Lucian_Strafe_Run_FL_Stride03:0,2500001",
+                "Lucian_Strafe_Run_L_Stride03:0,2499999"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 315.0,
+            "maxHeightError": 0.002842336893081665,
+            "minSole": -0.0008404850959777832,
+            "maxLowerSole": 0.07965633273124695,
+            "maxCorrection": 0.09207618236541748,
+            "maxCorrectionStep": 0.010761544108390808,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.238943797143293e-7,
+            "maxFootRotationStep": 4.922167778015137,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,4999999",
+                "Lucian_Strafe_Run_FL_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 0.5,
+            "angle": 337.5,
+            "maxHeightError": 0.002173207700252533,
+            "minSole": -0.0007463917136192322,
+            "maxLowerSole": 0.11842238903045654,
+            "maxCorrection": 0.11798329651355743,
+            "maxCorrectionStep": 0.008895471692085266,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.120885475662362e-7,
+            "maxFootRotationStep": 3.995255947113037,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,25",
+                "Lucian_Strafe_Walk_FL_Stride03:0,25",
+                "Lucian_Strafe_Run_F_Stride03:0,2500001",
+                "Lucian_Strafe_Run_FL_Stride03:0,25"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 0.0,
+            "maxHeightError": 0.0011671334505081177,
+            "minSole": -0.00020822882652282715,
+            "maxLowerSole": 0.21505782008171082,
+            "maxCorrection": 0.09806704521179199,
+            "maxCorrectionStep": 0.00810202956199646,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.288572649282287e-7,
+            "maxFootRotationStep": 5.969437122344971,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,2500001",
+                "Lucian_Strafe_Run_F_Stride03:0,75"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 22.5,
+            "maxHeightError": 0.0028470754623413086,
+            "minSole": -0.0007817000150680542,
+            "maxLowerSole": 0.1547679305076599,
+            "maxCorrection": 0.09206821024417877,
+            "maxCorrectionStep": 0.007483035326004028,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.617164902105287e-7,
+            "maxFootRotationStep": 5.603118419647217,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,125",
+                "Lucian_Strafe_Walk_FR_Stride03:0,125",
+                "Lucian_Strafe_Run_F_Stride03:0,3749999",
+                "Lucian_Strafe_Run_FR_Stride03:0,3750001"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 45.0,
+            "maxHeightError": 0.002988070249557495,
+            "minSole": -0.0011920854449272156,
+            "maxLowerSole": 0.08333684504032135,
+            "maxCorrection": 0.06552539765834808,
+            "maxCorrectionStep": 0.008365795016288757,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.95742244261055e-7,
+            "maxFootRotationStep": 7.186825752258301,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,2500001",
+                "Lucian_Strafe_Run_FR_Stride03:0,75"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 67.5,
+            "maxHeightError": 0.0017518997192382813,
+            "minSole": -0.0007131472229957581,
+            "maxLowerSole": 0.11094272136688232,
+            "maxCorrection": 0.10527925193309784,
+            "maxCorrectionStep": 0.010617971420288086,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.397430413722759e-7,
+            "maxFootRotationStep": 4.894892692565918,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03:0,125",
+                "Lucian_Strafe_Walk_R_Stride03:0,125",
+                "Lucian_Strafe_Run_FR_Stride03:0,375",
+                "Lucian_Strafe_Run_R_Stride03:0,3749999"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 90.0,
+            "maxHeightError": 0.0009482651948928833,
+            "minSole": -0.0008859336376190186,
+            "maxLowerSole": 0.12220066785812378,
+            "maxCorrection": 0.030823253095149994,
+            "maxCorrectionStep": 0.010328937321901321,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.372689884097781e-7,
+            "maxFootRotationStep": 8.599214553833008,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_R_Stride03:0,25",
+                "Lucian_Strafe_Run_R_Stride03:0,7499999"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 112.5,
+            "maxHeightError": 0.0007135719060897827,
+            "minSole": -0.00018168240785598755,
+            "maxLowerSole": 0.09866258502006531,
+            "maxCorrection": 0.05596946179866791,
+            "maxCorrectionStep": 0.007754318416118622,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.470348358154297e-7,
+            "maxFootRotationStep": 4.2522969245910645,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,125",
+                "Lucian_Strafe_Walk_R_Stride03:0,125",
+                "Lucian_Strafe_Run_BR_Stride03:0,3749999",
+                "Lucian_Strafe_Run_R_Stride03:0,3750001"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 135.0,
+            "maxHeightError": 0.0011499673128128052,
+            "minSole": -0.00012730062007904053,
+            "maxLowerSole": 0.07503604888916016,
+            "maxCorrection": 0.03669918328523636,
+            "maxCorrectionStep": 0.006546918302774429,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.805480102731963e-7,
+            "maxFootRotationStep": 4.259471416473389,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03:0,2500001",
+                "Lucian_Strafe_Run_BR_Stride03:0,75"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 157.5,
+            "maxHeightError": 0.0004228651523590088,
+            "minSole": -0.00003018975257873535,
+            "maxLowerSole": 0.0645403116941452,
+            "maxCorrection": 0.042958471924066544,
+            "maxCorrectionStep": 0.006350334733724594,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.119259185448755e-7,
+            "maxFootRotationStep": 4.660731792449951,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,125",
+                "Lucian_Strafe_Walk_BR_Stride03:0,125",
+                "Lucian_Strafe_Run_B_Stride03:0,3749999",
+                "Lucian_Strafe_Run_BR_Stride03:0,3750001"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 180.0,
+            "maxHeightError": 0.0006316900253295898,
+            "minSole": -0.0004660114645957947,
+            "maxLowerSole": 0.10931235551834106,
+            "maxCorrection": 0.024410009384155273,
+            "maxCorrectionStep": 0.005408205091953278,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.953375309924013e-7,
+            "maxFootRotationStep": 6.0582380294799805,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,25",
+                "Lucian_Strafe_Run_B_Stride03:0,7499999"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 202.5,
+            "maxHeightError": 0.0008948370814323425,
+            "minSole": -0.00009781867265701294,
+            "maxLowerSole": 0.06896522641181946,
+            "maxCorrection": 0.04434943571686745,
+            "maxCorrectionStep": 0.007029499858617783,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.693725597666344e-7,
+            "maxFootRotationStep": 5.66855525970459,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03:0,125",
+                "Lucian_Strafe_Walk_BL_Stride03:0,125",
+                "Lucian_Strafe_Run_B_Stride03:0,3749999",
+                "Lucian_Strafe_Run_BL_Stride03:0,375"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 225.0,
+            "maxHeightError": 0.0011542737483978271,
+            "minSole": -0.00011935830116271973,
+            "maxLowerSole": 0.0253487229347229,
+            "maxCorrection": 0.022818204015493393,
+            "maxCorrectionStep": 0.01179853081703186,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.042232373853039e-7,
+            "maxFootRotationStep": 6.577572345733643,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,25",
+                "Lucian_Strafe_Run_BL_Stride03:0,7499999"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 247.5,
+            "maxHeightError": 0.0012843906879425049,
+            "minSole": -0.00023389607667922974,
+            "maxLowerSole": 0.027948439121246338,
+            "maxCorrection": 0.028973624110221863,
+            "maxCorrectionStep": 0.008481774479150772,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.164063736629032e-7,
+            "maxFootRotationStep": 4.614985466003418,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03:0,1250001",
+                "Lucian_Strafe_Walk_L_Stride03:0,125",
+                "Lucian_Strafe_Run_BL_Stride03:0,3750001",
+                "Lucian_Strafe_Run_L_Stride03:0,3749999"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 270.0,
+            "maxHeightError": 0.001107431948184967,
+            "minSole": -0.000995144248008728,
+            "maxLowerSole": 0.03414389491081238,
+            "maxCorrection": 0.003598645329475403,
+            "maxCorrectionStep": 0.0023850388824939728,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.623090828521526e-7,
+            "maxFootRotationStep": 7.600799560546875,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_L_Stride03:0,2500001",
+                "Lucian_Strafe_Run_L_Stride03:0,75"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 292.5,
+            "maxHeightError": 0.0011837035417556763,
+            "minSole": -0.0006735473871231079,
+            "maxLowerSole": 0.09301799535751343,
+            "maxCorrection": 0.07056652009487152,
+            "maxCorrectionStep": 0.005387634038925171,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.543374411194236e-7,
+            "maxFootRotationStep": 4.069994926452637,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,1250001",
+                "Lucian_Strafe_Walk_L_Stride03:0,125",
+                "Lucian_Strafe_Run_FL_Stride03:0,3750002",
+                "Lucian_Strafe_Run_L_Stride03:0,3749998"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 315.0,
+            "maxHeightError": 0.0022831857204437256,
+            "minSole": -0.0008533820509910583,
+            "maxLowerSole": 0.09929732978343964,
+            "maxCorrection": 0.06679558753967285,
+            "maxCorrectionStep": 0.007515549659729004,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.20475168741541e-7,
+            "maxFootRotationStep": 6.802788257598877,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03:0,25",
+                "Lucian_Strafe_Run_FL_Stride03:0,7499999"
+            ]
+        },
+        {
+            "gait": 0.75,
+            "angle": 337.5,
+            "maxHeightError": 0.0028471946716308594,
+            "minSole": -0.0006023645401000977,
+            "maxLowerSole": 0.1678096354007721,
+            "maxCorrection": 0.09092849493026733,
+            "maxCorrectionStep": 0.010298855602741241,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.960464477539063e-7,
+            "maxFootRotationStep": 5.786129474639893,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03:0,125",
+                "Lucian_Strafe_Walk_FL_Stride03:0,125",
+                "Lucian_Strafe_Run_F_Stride03:0,3750001",
+                "Lucian_Strafe_Run_FL_Stride03:0,375"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 0.0,
+            "maxHeightError": 0.00036428868770599365,
+            "minSole": -0.0003506690263748169,
+            "maxLowerSole": 0.2834596633911133,
+            "maxCorrection": 0.002499625086784363,
+            "maxCorrectionStep": 0.0025208592414855957,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.953375309924013e-7,
+            "maxFootRotationStep": 8.102502822875977,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_F_Stride03:1"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 22.5,
+            "maxHeightError": 0.0025417953729629517,
+            "minSole": -0.0002991035580635071,
+            "maxLowerSole": 0.20587760210037231,
+            "maxCorrection": 0.035124942660331726,
+            "maxCorrectionStep": 0.011857878416776657,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.755784400207631e-7,
+            "maxFootRotationStep": 6.960968971252441,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_F_Stride03:0,4999999",
+                "Lucian_Strafe_Run_FR_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 45.0,
+            "maxHeightError": 0.0001140013337135315,
+            "minSole": -0.00016590207815170288,
+            "maxLowerSole": 0.10206763446331024,
+            "maxCorrection": 0.0028554871678352356,
+            "maxCorrectionStep": 0.0029110610485076904,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 8.107108442345634e-7,
+            "maxFootRotationStep": 8.465346336364746,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_FR_Stride03:1"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 67.5,
+            "maxHeightError": 0.0009992718696594238,
+            "minSole": -0.00020773708820343018,
+            "maxLowerSole": 0.1418963223695755,
+            "maxCorrection": 0.10564218461513519,
+            "maxCorrectionStep": 0.16260182857513428,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.8703767535917e-7,
+            "maxFootRotationStep": 179.77316284179688,
+            "status": "REVIEW",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_FR_Stride03:0,5",
+                "Lucian_Strafe_Run_R_Stride03:0,4999999"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 90.0,
+            "maxHeightError": 0.000002168118953704834,
+            "minSole": -0.00020982325077056885,
+            "maxLowerSole": 0.1613447368144989,
+            "maxCorrection": 0.0035035908222198486,
+            "maxCorrectionStep": 0.0035035088658332825,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.495276695910434e-7,
+            "maxFootRotationStep": 11.379228591918945,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_R_Stride03:0,9999999"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 112.5,
+            "maxHeightError": 0.0005224645137786865,
+            "minSole": -0.0001333281397819519,
+            "maxLowerSole": 0.12835738062858582,
+            "maxCorrection": 0.06972891837358475,
+            "maxCorrectionStep": 0.011942803859710693,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.232408852862136e-7,
+            "maxFootRotationStep": 6.151615619659424,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_BR_Stride03:0,4999999",
+                "Lucian_Strafe_Run_R_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 135.0,
+            "maxHeightError": 0.000051841139793395996,
+            "minSole": -0.00009423494338989258,
+            "maxLowerSole": 0.0969134122133255,
+            "maxCorrection": 0.0014110393822193146,
+            "maxCorrectionStep": 0.001511506736278534,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.600092609052808e-7,
+            "maxFootRotationStep": 5.611636161804199,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_BR_Stride03:1"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 157.5,
+            "maxHeightError": 0.00030376017093658447,
+            "minSole": -0.00004702061414718628,
+            "maxLowerSole": 0.07975880801677704,
+            "maxCorrection": 0.0492837019264698,
+            "maxCorrectionStep": 0.007031388580799103,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.78656454308657e-7,
+            "maxFootRotationStep": 5.3836188316345215,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_B_Stride03:0,4999999",
+                "Lucian_Strafe_Run_BR_Stride03:0,5000001"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 180.0,
+            "maxHeightError": 0.0002341940999031067,
+            "minSole": -0.0002545565366744995,
+            "maxLowerSole": 0.13735242187976837,
+            "maxCorrection": 0.0010232515633106232,
+            "maxCorrectionStep": 0.0010514892637729645,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.415910777628596e-7,
+            "maxFootRotationStep": 8.122200965881348,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_B_Stride03:0,9999998"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 202.5,
+            "maxHeightError": 0.00014797598123550415,
+            "minSole": -0.0001177564263343811,
+            "maxLowerSole": 0.08417773246765137,
+            "maxCorrection": 0.06280364096164703,
+            "maxCorrectionStep": 0.010033123195171356,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.549127083919302e-7,
+            "maxFootRotationStep": 7.930032253265381,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_B_Stride03:0,4999999",
+                "Lucian_Strafe_Run_BL_Stride03:0,5"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 225.0,
+            "maxHeightError": 0.00008948147296905518,
+            "minSole": -0.0001895502209663391,
+            "maxLowerSole": 0.03121243417263031,
+            "maxCorrection": 0.0024073347449302673,
+            "maxCorrectionStep": 0.0029187239706516266,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.73331823513945e-7,
+            "maxFootRotationStep": 9.075891494750977,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_BL_Stride03:0,9999999"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 247.5,
+            "maxHeightError": 0.0007553249597549438,
+            "minSole": -0.000147894024848938,
+            "maxLowerSole": 0.037107959389686584,
+            "maxCorrection": 0.025092769414186478,
+            "maxCorrectionStep": 0.011039741337299347,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.447228315664688e-7,
+            "maxFootRotationStep": 6.109208106994629,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_BL_Stride03:0,5000002",
+                "Lucian_Strafe_Run_L_Stride03:0,4999998"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 270.0,
+            "maxHeightError": 0.00009440630674362183,
+            "minSole": -0.0001565292477607727,
+            "maxLowerSole": 0.044469088315963745,
+            "maxCorrection": 0.0005507282912731171,
+            "maxCorrectionStep": 0.0006713569164276123,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.543552674680541e-7,
+            "maxFootRotationStep": 10.542266845703125,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_L_Stride03:1"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 292.5,
+            "maxHeightError": 0.0005327016115188599,
+            "minSole": -0.0005351975560188293,
+            "maxLowerSole": 0.11618289351463318,
+            "maxCorrection": 0.07484139502048492,
+            "maxCorrectionStep": 0.007655218243598938,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 4.805480102731963e-7,
+            "maxFootRotationStep": 5.638084888458252,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_FL_Stride03:0,5000002",
+                "Lucian_Strafe_Run_L_Stride03:0,4999997"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 315.0,
+            "maxHeightError": 0.00007128715515136719,
+            "minSole": -0.00046462565660476685,
+            "maxLowerSole": 0.1258034110069275,
+            "maxCorrection": 0.0017061270773410797,
+            "maxCorrectionStep": 0.0017033293843269348,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 5.397430413722759e-7,
+            "maxFootRotationStep": 8.409451484680176,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_FL_Stride03:0,9999998"
+            ]
+        },
+        {
+            "gait": 1.0,
+            "angle": 337.5,
+            "maxHeightError": 0.0030735284090042114,
+            "minSole": -0.00023286789655685425,
+            "maxLowerSole": 0.21876218914985657,
+            "maxCorrection": 0.04263031482696533,
+            "maxCorrectionStep": 0.012728739529848099,
+            "maxPelvisDifference": 0.0,
+            "maxRootDifference": 0.0,
+            "maxFootXZDifference": 6.034510420249717e-7,
+            "maxFootRotationStep": 7.288651943206787,
+            "status": "PASS_NUMERIC_PROTOTYPE",
+            "samples": 241,
+            "clips": [
+                "Lucian_Strafe_Run_F_Stride03:0,5000001",
+                "Lucian_Strafe_Run_FL_Stride03:0,5"
+            ]
+        }
+    ],
+    "leftFeatures": [
+        "0:4442",
+        "0:4445",
+        "0:4446",
+        "0:4456",
+        "0:4478",
+        "0:4480",
+        "0:4481",
+        "0:4541",
+        "0:4552",
+        "0:4571",
+        "0:4572",
+        "0:4585",
+        "0:4590",
+        "0:4591",
+        "0:4592",
+        "0:4593",
+        "0:4595",
+        "0:4597",
+        "0:4599",
+        "0:4600",
+        "0:4602",
+        "0:4603",
+        "0:4609",
+        "0:4610",
+        "0:4692",
+        "0:4705",
+        "0:4768",
+        "0:4797",
+        "0:4884",
+        "0:4887",
+        "0:4890",
+        "0:4891",
+        "0:4899",
+        "0:4902",
+        "0:4908",
+        "0:4924"
+    ],
+    "rightFeatures": [
+        "0:4959",
+        "0:4994",
+        "0:4995",
+        "0:5055",
+        "0:5066",
+        "0:5085",
+        "0:5086",
+        "0:5099",
+        "0:5104",
+        "0:5105",
+        "0:5106",
+        "0:5107",
+        "0:5109",
+        "0:5111",
+        "0:5113",
+        "0:5114",
+        "0:5116",
+        "0:5117",
+        "0:5123",
+        "0:5125",
+        "0:5128",
+        "0:5206",
+        "0:5219",
+        "0:5282",
+        "0:5311",
+        "0:5376",
+        "0:5398",
+        "0:5401",
+        "0:5404",
+        "0:5405",
+        "0:5413",
+        "0:5438",
+        "0:6618"
+    ],
+    "leftGoalToBone": {
+        "x": -0.04796178638935089,
+        "y": 0.6040651202201843,
+        "z": 0.7946770787239075,
+        "w": 0.03597224876284599
+    },
+    "rightGoalToBone": {
+        "x": 0.048076193779706955,
+        "y": 0.6043240427970886,
+        "z": 0.7944647073745728,
+        "w": -0.03615507483482361
+    },
+    "maximumGoalToBoneAngleDeviation": 0.0,
+    "coherentRotations": false,
+    "minimumQuaternionLoopDot": 1.0
+}

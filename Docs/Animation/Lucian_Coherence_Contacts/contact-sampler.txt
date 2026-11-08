@@ -1,0 +1,3 @@
+samples=121
+minimum_error_m=3.770713E-07
+held_vertex_error_m=4.17234844E-07

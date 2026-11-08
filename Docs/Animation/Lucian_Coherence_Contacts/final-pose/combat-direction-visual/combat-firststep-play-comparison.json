@@ -1,0 +1,1438 @@
+{
+  "reference": {
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "traces": {
+      "plain_F": [
+        {
+          "tick": 1,
+          "phase": 0.683333039,
+          "clips": "Twinblades_Idle_Inplace:1",
+          "speed": 0.0,
+          "support": false,
+          "left": [
+            999.8003,
+            9.489408,
+            1000.41925
+          ],
+          "right": [
+            1000.36853,
+            9.489465,
+            999.74115
+          ]
+        },
+        {
+          "tick": 2,
+          "phase": 0.691666365,
+          "clips": "Twinblades_Idle_Inplace:1",
+          "speed": 0.0,
+          "support": false,
+          "left": [
+            999.8003,
+            9.48941,
+            1000.41925
+          ],
+          "right": [
+            1000.36859,
+            9.48946,
+            999.74115
+          ]
+        },
+        {
+          "tick": 3,
+          "phase": 0.6999997,
+          "clips": "Twinblades_Idle_Inplace:1",
+          "speed": 3.305055,
+          "support": false,
+          "left": [
+            999.8003,
+            9.48941,
+            1000.46332
+          ],
+          "right": [
+            1000.36865,
+            9.489458,
+            999.7853
+          ]
+        },
+        {
+          "tick": 4,
+          "phase": 0.708333,
+          "clips": "Twinblades_Idle_Inplace:0.444444418",
+          "speed": 3.74145651,
+          "support": false,
+          "left": [
+            999.7926,
+            9.62476,
+            1000.10754
+          ],
+          "right": [
+            1000.25854,
+            9.434991,
+            1000.01776
+          ]
+        },
+        {
+          "tick": 5,
+          "phase": 0.0401947238,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.323731571|Lucian_Strafe_Run_F_Stride03:0.676268458",
+          "speed": 3.79638815,
+          "support": true,
+          "left": [
+            999.917,
+            9.875047,
+            1000.00525
+          ],
+          "right": [
+            1000.13458,
+            9.499993,
+            1000.10425
+          ]
+        },
+        {
+          "tick": 6,
+          "phase": 0.0601203367,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            999.915833,
+            9.876377,
+            1000.13214
+          ],
+          "right": [
+            1000.13354,
+            9.499991,
+            1000.098
+          ]
+        },
+        {
+          "tick": 7,
+          "phase": 0.08004595,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            999.9157,
+            9.879839,
+            1000.25745
+          ],
+          "right": [
+            1000.13312,
+            9.499805,
+            1000.09393
+          ]
+        },
+        {
+          "tick": 8,
+          "phase": 0.09997157,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            999.9161,
+            9.886532,
+            1000.37366
+          ],
+          "right": [
+            1000.13226,
+            9.510024,
+            1000.09637
+          ]
+        },
+        {
+          "tick": 9,
+          "phase": 0.119897187,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            999.915039,
+            9.891331,
+            1000.45947
+          ],
+          "right": [
+            1000.12836,
+            9.525301,
+            1000.10266
+          ]
+        },
+        {
+          "tick": 10,
+          "phase": 0.1398228,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06769,
+            9.89054,
+            1000.40625
+          ],
+          "right": [
+            1000.12488,
+            9.543676,
+            1000.10956
+          ]
+        },
+        {
+          "tick": 11,
+          "phase": 0.1597484,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06573,
+            9.863514,
+            1000.50513
+          ],
+          "right": [
+            1000.11755,
+            9.564787,
+            1000.12219
+          ]
+        },
+        {
+          "tick": 12,
+          "phase": 0.179674014,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.0564,
+            9.823417,
+            1000.59753
+          ],
+          "right": [
+            1000.12347,
+            9.588455,
+            1000.13489
+          ]
+        },
+        {
+          "tick": 13,
+          "phase": 0.199599624,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05194,
+            9.778377,
+            1000.70428
+          ],
+          "right": [
+            1000.12347,
+            9.614904,
+            1000.14026
+          ]
+        },
+        {
+          "tick": 14,
+          "phase": 0.219525233,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05573,
+            9.733837,
+            1000.80957
+          ],
+          "right": [
+            1000.12207,
+            9.64483452,
+            1000.1449
+          ]
+        },
+        {
+          "tick": 15,
+          "phase": 0.239450842,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.04987,
+            9.695301,
+            1000.92108
+          ],
+          "right": [
+            1000.11829,
+            9.6794,
+            1000.15784
+          ]
+        },
+        {
+          "tick": 16,
+          "phase": 0.259376466,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.04645,
+            9.661543,
+            1001.03021
+          ],
+          "right": [
+            1000.12317,
+            9.721645,
+            1000.17133
+          ]
+        },
+        {
+          "tick": 17,
+          "phase": 0.2793021,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.04706,
+            9.63057,
+            1001.13544
+          ],
+          "right": [
+            1000.11896,
+            9.76931,
+            1000.18915
+          ]
+        },
+        {
+          "tick": 18,
+          "phase": 0.2992277,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05,
+            9.601579,
+            1001.23773
+          ],
+          "right": [
+            1000.11414,
+            9.820837,
+            1000.21631
+          ]
+        },
+        {
+          "tick": 19,
+          "phase": 0.319153339,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05981,
+            9.575911,
+            1001.335
+          ],
+          "right": [
+            1000.10925,
+            9.875072,
+            1000.26215
+          ]
+        },
+        {
+          "tick": 20,
+          "phase": 0.339078963,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06158,
+            9.554553,
+            1001.43188
+          ],
+          "right": [
+            1000.10516,
+            9.925826,
+            1000.31616
+          ]
+        }
+      ],
+      "torch_F": [
+        {
+          "tick": 1,
+          "phase": 0.6416664,
+          "clips": "Twinblades_Idle_Inplace:1",
+          "speed": 0.0,
+          "support": false,
+          "left": [
+            999.800232,
+            9.489398,
+            1005.67096
+          ],
+          "right": [
+            1000.36859,
+            9.489461,
+            1004.99286
+          ]
+        },
+        {
+          "tick": 2,
+          "phase": 0.649999738,
+          "clips": "Twinblades_Idle_Inplace:0.7222222",
+          "speed": 0.0,
+          "support": false,
+          "left": [
+            999.800354,
+            9.489397,
+            1005.67096
+          ],
+          "right": [
+            1000.36853,
+            9.489464,
+            1004.99286
+          ]
+        },
+        {
+          "tick": 3,
+          "phase": 0.658333063,
+          "clips": "Twinblades_Idle_Inplace:0.444444418",
+          "speed": 3.305055,
+          "support": false,
+          "left": [
+            999.7929,
+            9.5985,
+            1005.30658
+          ],
+          "right": [
+            1000.26068,
+            9.434853,
+            1005.18958
+          ]
+        },
+        {
+          "tick": 4,
+          "phase": 0.6666664,
+          "clips": "Twinblades_Idle_Inplace:0.166666627",
+          "speed": 3.74145651,
+          "support": false,
+          "left": [
+            999.8466,
+            9.719691,
+            1005.24225
+          ],
+          "right": [
+            1000.18695,
+            9.439299,
+            1005.24036
+          ]
+        },
+        {
+          "tick": 5,
+          "phase": 0.0595827177,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.323731571|Lucian_Strafe_Run_F_Stride03:0.676268458",
+          "speed": 3.79638815,
+          "support": true,
+          "left": [
+            999.9157,
+            9.874985,
+            1005.2951
+          ],
+          "right": [
+            1000.13367,
+            9.500001,
+            1005.26337
+          ]
+        },
+        {
+          "tick": 6,
+          "phase": 0.0794995353,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.323731571|Lucian_Strafe_Run_F_Stride03:0.676268458",
+          "speed": 3.79638815,
+          "support": true,
+          "left": [
+            999.9156,
+            9.878312,
+            1005.42041
+          ],
+          "right": [
+            1000.1333,
+            9.499819,
+            1005.25922
+          ]
+        },
+        {
+          "tick": 7,
+          "phase": 0.09942515,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            999.9161,
+            9.886346,
+            1005.53534
+          ],
+          "right": [
+            1000.13232,
+            9.50964451,
+            1005.26093
+          ]
+        },
+        {
+          "tick": 8,
+          "phase": 0.119350769,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            999.915039,
+            9.891271,
+            1005.62134
+          ],
+          "right": [
+            1000.12866,
+            9.52488,
+            1005.26721
+          ]
+        },
+        {
+          "tick": 9,
+          "phase": 0.139276385,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06775,
+            9.890685,
+            1005.56812
+          ],
+          "right": [
+            1000.12482,
+            9.543103,
+            1005.274
+          ]
+        },
+        {
+          "tick": 10,
+          "phase": 0.159202,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.0658,
+            9.864577,
+            1005.66705
+          ],
+          "right": [
+            1000.11749,
+            9.564176,
+            1005.28656
+          ]
+        },
+        {
+          "tick": 11,
+          "phase": 0.1791276,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.0564,
+            9.824607,
+            1005.75934
+          ],
+          "right": [
+            1000.12347,
+            9.58774948,
+            1005.29938
+          ]
+        },
+        {
+          "tick": 12,
+          "phase": 0.199053213,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05212,
+            9.779629,
+            1005.86591
+          ],
+          "right": [
+            1000.12347,
+            9.614218,
+            1005.30469
+          ]
+        },
+        {
+          "tick": 13,
+          "phase": 0.218978822,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05579,
+            9.734949,
+            1005.97119
+          ],
+          "right": [
+            1000.12213,
+            9.643949,
+            1005.30939
+          ]
+        },
+        {
+          "tick": 14,
+          "phase": 0.238904431,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05,
+            9.696278,
+            1006.0827
+          ],
+          "right": [
+            1000.11835,
+            9.678359,
+            1005.32227
+          ]
+        },
+        {
+          "tick": 15,
+          "phase": 0.258830041,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.04645,
+            9.662371,
+            1006.19196
+          ],
+          "right": [
+            1000.12329,
+            9.720367,
+            1005.33551
+          ]
+        },
+        {
+          "tick": 16,
+          "phase": 0.278755665,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.04694,
+            9.63139248,
+            1006.29718
+          ],
+          "right": [
+            1000.11908,
+            9.767929,
+            1005.35321
+          ]
+        },
+        {
+          "tick": 17,
+          "phase": 0.2986813,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.04987,
+            9.60236,
+            1006.3996
+          ],
+          "right": [
+            1000.11432,
+            9.819393,
+            1005.38013
+          ]
+        },
+        {
+          "tick": 18,
+          "phase": 0.3186069,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05981,
+            9.576586,
+            1006.49695
+          ],
+          "right": [
+            1000.10944,
+            9.873628,
+            1005.42554
+          ]
+        },
+        {
+          "tick": 19,
+          "phase": 0.338532537,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06152,
+            9.55511951,
+            1006.59393
+          ],
+          "right": [
+            1000.10522,
+            9.92447948,
+            1005.47919
+          ]
+        },
+        {
+          "tick": 20,
+          "phase": 0.358458161,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06073,
+            9.539971,
+            1006.6908
+          ],
+          "right": [
+            1000.1026,
+            9.961057,
+            1005.54816
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "traces": {
+      "plain_F": [
+        {
+          "tick": 1,
+          "phase": 0.683333039,
+          "clips": "Twinblades_Idle_Inplace:1",
+          "speed": 0.0,
+          "support": false,
+          "left": [
+            999.8003,
+            9.489408,
+            1000.41925
+          ],
+          "right": [
+            1000.36853,
+            9.489465,
+            999.74115
+          ]
+        },
+        {
+          "tick": 2,
+          "phase": 0.0,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 0.0,
+          "support": true,
+          "left": [
+            999.6907,
+            9.500008,
+            1000.27686
+          ],
+          "right": [
+            1000.20862,
+            9.500001,
+            999.658936
+          ]
+        },
+        {
+          "tick": 3,
+          "phase": 0.1,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.305055,
+          "support": true,
+          "left": [
+            999.9046,
+            9.55652,
+            1000.43469
+          ],
+          "right": [
+            1000.20856,
+            9.500005,
+            999.649353
+          ]
+        },
+        {
+          "tick": 4,
+          "phase": 0.2,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.74145651,
+          "support": true,
+          "left": [
+            999.9926,
+            9.580013,
+            1000.431
+          ],
+          "right": [
+            1000.20862,
+            9.500011,
+            999.6457
+          ]
+        },
+        {
+          "tick": 5,
+          "phase": 0.3,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.79638815,
+          "support": true,
+          "left": [
+            1000.04376,
+            9.55658,
+            1000.45691
+          ],
+          "right": [
+            1000.20862,
+            9.499983,
+            999.6449
+          ]
+        },
+        {
+          "tick": 6,
+          "phase": 0.4,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05823,
+            9.501814,
+            1000.47559
+          ],
+          "right": [
+            1000.20862,
+            9.500075,
+            999.645
+          ]
+        },
+        {
+          "tick": 7,
+          "phase": 0.5,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05841,
+            9.499993,
+            1000.47522
+          ],
+          "right": [
+            1000.38013,
+            9.526662,
+            999.8325
+          ]
+        },
+        {
+          "tick": 8,
+          "phase": 0.6,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05853,
+            9.500003,
+            1000.475
+          ],
+          "right": [
+            1000.33966,
+            9.593325,
+            999.962158
+          ]
+        },
+        {
+          "tick": 9,
+          "phase": 0.700000048,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05859,
+            9.500003,
+            1000.47473
+          ],
+          "right": [
+            1000.2691,
+            9.679841,
+            1000.10547
+          ]
+        },
+        {
+          "tick": 10,
+          "phase": 0.8000001,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05865,
+            9.499996,
+            1000.47449
+          ],
+          "right": [
+            1000.19562,
+            9.766393,
+            1000.21765
+          ]
+        },
+        {
+          "tick": 11,
+          "phase": 0.9000001,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05878,
+            9.500002,
+            1000.4743
+          ],
+          "right": [
+            1000.15137,
+            9.832911,
+            1000.30652
+          ]
+        },
+        {
+          "tick": 12,
+          "phase": 0.558333337,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05872,
+            9.499942,
+            1000.4743
+          ],
+          "right": [
+            1000.13251,
+            9.859576,
+            1000.34119
+          ]
+        },
+        {
+          "tick": 13,
+          "phase": 0.578258932,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05389,
+            9.499919,
+            1000.44592
+          ],
+          "right": [
+            1000.13245,
+            9.85528,
+            1000.47858
+          ]
+        },
+        {
+          "tick": 14,
+          "phase": 0.5981845,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05737,
+            9.499818,
+            1000.41028
+          ],
+          "right": [
+            1000.13092,
+            9.842723,
+            1000.61139
+          ]
+        },
+        {
+          "tick": 15,
+          "phase": 0.6181101,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06409,
+            9.517549,
+            1000.37781
+          ],
+          "right": [
+            1000.12964,
+            9.824638,
+            1000.73535
+          ]
+        },
+        {
+          "tick": 16,
+          "phase": 0.6380357,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06488,
+            9.555706,
+            1000.37988
+          ],
+          "right": [
+            1000.12976,
+            9.801668,
+            1000.85022
+          ]
+        },
+        {
+          "tick": 17,
+          "phase": 0.6579613,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06519,
+            9.597341,
+            1000.39056
+          ],
+          "right": [
+            1000.1322,
+            9.773977,
+            1000.95764
+          ]
+        },
+        {
+          "tick": 18,
+          "phase": 0.6778869,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06354,
+            9.638396,
+            1000.40936
+          ],
+          "right": [
+            1000.1297,
+            9.742549,
+            1001.0556
+          ]
+        },
+        {
+          "tick": 19,
+          "phase": 0.6978125,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06293,
+            9.680297,
+            1000.43195
+          ],
+          "right": [
+            1000.13452,
+            9.708476,
+            1001.16168
+          ]
+        },
+        {
+          "tick": 20,
+          "phase": 0.7177381,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06232,
+            9.721723,
+            1000.45874
+          ],
+          "right": [
+            1000.13928,
+            9.676007,
+            1001.26556
+          ]
+        }
+      ],
+      "torch_F": [
+        {
+          "tick": 1,
+          "phase": 0.6416664,
+          "clips": "Twinblades_Idle_Inplace:1",
+          "speed": 0.0,
+          "support": false,
+          "left": [
+            999.800232,
+            9.489398,
+            1005.67096
+          ],
+          "right": [
+            1000.36859,
+            9.489461,
+            1004.99286
+          ]
+        },
+        {
+          "tick": 2,
+          "phase": 0.0,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 0.0,
+          "support": true,
+          "left": [
+            999.6907,
+            9.500008,
+            1005.52856
+          ],
+          "right": [
+            1000.20862,
+            9.500001,
+            1004.91064
+          ]
+        },
+        {
+          "tick": 3,
+          "phase": 0.1,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.305055,
+          "support": true,
+          "left": [
+            999.9046,
+            9.55652,
+            1005.66437
+          ],
+          "right": [
+            1000.20856,
+            9.500005,
+            1004.879
+          ]
+        },
+        {
+          "tick": 4,
+          "phase": 0.2,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.74145651,
+          "support": true,
+          "left": [
+            999.9926,
+            9.580013,
+            1005.65778
+          ],
+          "right": [
+            1000.20862,
+            9.500011,
+            1004.87244
+          ]
+        },
+        {
+          "tick": 5,
+          "phase": 0.3,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.79638815,
+          "support": true,
+          "left": [
+            1000.04376,
+            9.55658,
+            1005.68329
+          ],
+          "right": [
+            1000.20862,
+            9.499983,
+            1004.87128
+          ]
+        },
+        {
+          "tick": 6,
+          "phase": 0.4,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.79638815,
+          "support": true,
+          "left": [
+            1000.05823,
+            9.501814,
+            1005.70197
+          ],
+          "right": [
+            1000.20862,
+            9.500075,
+            1004.8714
+          ]
+        },
+        {
+          "tick": 7,
+          "phase": 0.5,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05841,
+            9.499993,
+            1005.70154
+          ],
+          "right": [
+            1000.38013,
+            9.526662,
+            1005.05884
+          ]
+        },
+        {
+          "tick": 8,
+          "phase": 0.6,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05853,
+            9.500003,
+            1005.70135
+          ],
+          "right": [
+            1000.33966,
+            9.593325,
+            1005.18854
+          ]
+        },
+        {
+          "tick": 9,
+          "phase": 0.700000048,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05859,
+            9.500003,
+            1005.70111
+          ],
+          "right": [
+            1000.2691,
+            9.679841,
+            1005.33185
+          ]
+        },
+        {
+          "tick": 10,
+          "phase": 0.8000001,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05865,
+            9.499996,
+            1005.70081
+          ],
+          "right": [
+            1000.19562,
+            9.766393,
+            1005.444
+          ]
+        },
+        {
+          "tick": 11,
+          "phase": 0.9000001,
+          "clips": "Lucian_CombatForward_TreeExit_Trial:1",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05878,
+            9.500002,
+            1005.70062
+          ],
+          "right": [
+            1000.15137,
+            9.832911,
+            1005.53284
+          ]
+        },
+        {
+          "tick": 12,
+          "phase": 0.558333337,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05872,
+            9.499942,
+            1005.70062
+          ],
+          "right": [
+            1000.13251,
+            9.859576,
+            1005.5675
+          ]
+        },
+        {
+          "tick": 13,
+          "phase": 0.578258932,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05389,
+            9.499919,
+            1005.67224
+          ],
+          "right": [
+            1000.13245,
+            9.85528,
+            1005.7049
+          ]
+        },
+        {
+          "tick": 14,
+          "phase": 0.5981845,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.05737,
+            9.499818,
+            1005.63666
+          ],
+          "right": [
+            1000.13092,
+            9.842723,
+            1005.83777
+          ]
+        },
+        {
+          "tick": 15,
+          "phase": 0.6181101,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06409,
+            9.517549,
+            1005.60419
+          ],
+          "right": [
+            1000.12964,
+            9.824638,
+            1005.96173
+          ]
+        },
+        {
+          "tick": 16,
+          "phase": 0.6380357,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06488,
+            9.555706,
+            1005.6062
+          ],
+          "right": [
+            1000.12976,
+            9.801668,
+            1006.07654
+          ]
+        },
+        {
+          "tick": 17,
+          "phase": 0.6579613,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06519,
+            9.597341,
+            1005.61688
+          ],
+          "right": [
+            1000.1322,
+            9.773977,
+            1006.18396
+          ]
+        },
+        {
+          "tick": 18,
+          "phase": 0.6778869,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06354,
+            9.638396,
+            1005.63568
+          ],
+          "right": [
+            1000.1297,
+            9.742549,
+            1006.28192
+          ]
+        },
+        {
+          "tick": 19,
+          "phase": 0.6978125,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06293,
+            9.680297,
+            1005.65826
+          ],
+          "right": [
+            1000.13452,
+            9.708476,
+            1006.388
+          ]
+        },
+        {
+          "tick": 20,
+          "phase": 0.7177381,
+          "clips": "Lucian_Strafe_Walk_F_Stride03:0.32125634|Lucian_Strafe_Run_F_Stride03:0.6787437",
+          "speed": 3.80554342,
+          "support": true,
+          "left": [
+            1000.06232,
+            9.721723,
+            1005.68512
+          ],
+          "right": [
+            1000.13928,
+            9.676007,
+            1006.49194
+          ]
+        }
+      ]
+    },
+    "contact_approximation": {
+      "plain_F": {
+        "right": {
+          "sample_ticks": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "maximum_displacement_cm": 1.40360000000328,
+          "maximum_absolute_height_cm": 0.0075000000000713385
+        },
+        "left": {
+          "sample_ticks": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "maximum_displacement_cm": 0.14023551618888633,
+          "maximum_absolute_height_cm": 0.18139999999995382
+        }
+      },
+      "torch_F": {
+        "right": {
+          "sample_ticks": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "maximum_displacement_cm": 3.935999999998785,
+          "maximum_absolute_height_cm": 0.0075000000000713385
+        },
+        "left": {
+          "sample_ticks": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "maximum_displacement_cm": 0.14577379737041501,
+          "maximum_absolute_height_cm": 0.18139999999995382
+        }
+      }
+    }
+  }
+}

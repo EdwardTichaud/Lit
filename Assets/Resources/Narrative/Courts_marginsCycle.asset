@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: Courts_marginsCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: district2.courts.margins
+  title: Les marges du plan
+  description: "Comparer les annotations de Alix aux lieux : une ouverture trouv\xE9e n'est pas toujours une ouverture am\xE9nag\xE9e."
+  category: 1
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: old
+    title: L'ouverture ancienne
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 6c5ee30f7df09304e94895870955ec76, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: made
+    title: "Les pierres d\xE9gag\xE9es"
+    description: 
+    kind: 0
+    sourceId: 
+    knowledge: {fileID: 11400000, guid: 82ac69a6cc798e74a8e86ad5918fbd06, type: 2}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: compare
+    title: Comparer le plan et les marques
+    description: 
+    kind: 1
+    sourceId: compare
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: old
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+      - kind: 0
+        stepId: made
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: 
+  dialogueSeconds: 4
+  dialogues:
+  - id: compare
+    durationSeconds: 0
+    condition:
+      requirements:
+        mode: 0
+        conditions:
+        - kind: 0
+          stepId: old
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+        - kind: 0
+          stepId: made
+          knowledge: {fileID: 0}
+          cycle: {fileID: 0}
+      allFlags: 0
+      anyFlags: 0
+      knowledge: []
+    line: "Lucian \u2014 Elle distinguait les chemins h\xE9rit\xE9s des ouvertures qu'elle avait d\xE9gag\xE9es. Ce plan est un regard sur le ch\xE2teau, pas sa carte compl\xE8te."
+    unavailableLine: "Deux annotations se r\xE9pondent de part et d'autre de la galerie."
+    repeatLine: 
+    openedFlags: 0
+    completedFlags: 0
+    rewardSkill: {fileID: 0}
+    rewardFlag: 0
+    disappearAfterCompletion: 0
+    disappearanceDelay: 3
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

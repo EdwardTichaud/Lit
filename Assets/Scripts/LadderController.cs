@@ -132,9 +132,13 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
 
     public Transform GetInteractionAnchor()
     {
-        if (TryResolveController(detectedCharacter, out SquadCharacterController controller) &&
-            CanStartPassage(detectedCharacter, controller, out int sourceEndpoint))
-            return GetEndpoint(sourceEndpoint);
+        // The detector asks for range/visibility before SetDetectedCharacter.
+        // Using the lower endpoint until selection makes the upper endpoint
+        // unreachable whenever the detection collider is only a trigger.
+        GameObject character = detectedCharacter != null ? detectedCharacter : LocalPlayerUtils.GetControlledCharacter();
+        if (character != null && HasValidEndpoints())
+            return GetEndpoint((character.transform.position - leafs1.position).sqrMagnitude <=
+                (character.transform.position - leafs2.position).sqrMagnitude ? 0 : 1);
         return leafs1 != null ? leafs1 : transform;
     }
 

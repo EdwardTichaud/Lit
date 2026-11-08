@@ -1,0 +1,29 @@
+{
+    "scope": "Direct original/copy comparison on Lucian, 480 intervals over two cycles. No controller, scripts or asset writes.",
+    "cases": [
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_R_Inplace.FBX",
+            "nativeFootIK": false,
+            "maximumStep": 15.166510581970215,
+            "maximumDifferenceFromSource": 0.0
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_R_Stride03.anim",
+            "nativeFootIK": false,
+            "maximumStep": 15.166510581970215,
+            "maximumDifferenceFromSource": 0.0
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_R_Inplace.FBX",
+            "nativeFootIK": true,
+            "maximumStep": 4.005627155303955,
+            "maximumDifferenceFromSource": 0.0
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_R_Stride03.anim",
+            "nativeFootIK": true,
+            "maximumStep": 4.10809326171875,
+            "maximumDifferenceFromSource": 0.35165873169898987
+        }
+    ]
+}

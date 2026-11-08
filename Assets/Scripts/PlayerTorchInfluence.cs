@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +8,32 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PlayerTorchInfluence : MonoBehaviour
 {
+    private static readonly HashSet<PlayerTorchInfluence> activeTorches = new();
+    private static bool registryInitialized;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRegistry()
+    {
+        activeTorches.Clear(); registryInitialized = false;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void InitializeRegistry()
+    {
+        if (registryInitialized) return;
+        foreach (var source in FindObjectsByType<PlayerTorchInfluence>(FindObjectsInactive.Exclude))
+            if (source.isActiveAndEnabled) activeTorches.Add(source);
+        registryInitialized = true;
+    }
+
+    public static void CopyActiveInfluenceTorches(List<PlayerTorchInfluence> destination)
+    {
+        if (Application.isPlaying) InitializeRegistry();
+        destination.Clear();
+        foreach (var source in activeTorches)
+            if (source != null && source.isActiveAndEnabled) destination.Add(source);
+    }
+
     [SerializeField, Tooltip("Lumiere de la torche. Si vide, cherche une Light sur cet objet.")]
     private Light torchLight;
     [SerializeField, Tooltip("Controleur du personnage portant la torche. Si vide, cherche dans les parents.")]
@@ -21,6 +48,7 @@ public sealed class PlayerTorchInfluence : MonoBehaviour
 
     private void OnEnable()
     {
+        activeTorches.Add(this);
         CacheReferences();
         UpdateInfluence(true);
     }
@@ -32,7 +60,17 @@ public sealed class PlayerTorchInfluence : MonoBehaviour
 
     private void OnDisable()
     {
+        activeTorches.Remove(this);
         litInfluence?.Clear(this, LitInfluenceSourceKind.Flame);
+    }
+
+    public bool ProvidesLitInfluenceTo(Collider targetCollider, Vector3 fallbackPoint)
+    {
+        CacheReferences();
+        if (!isActiveAndEnabled || owner == null || !owner.IsFlameEquipped ||
+            torchLight == null || !torchLight.isActiveAndEnabled) return false;
+        litInfluence.SetRadius(torchLight.range);
+        return litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
     }
 
     private void OnValidate()

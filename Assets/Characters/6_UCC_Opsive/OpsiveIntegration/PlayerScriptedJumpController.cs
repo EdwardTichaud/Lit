@@ -47,6 +47,13 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private float takeoffStallSeconds;
     private float groundedAfterImpulseSeconds;
     private CombatTimeDomain timeDomain;
+    private readonly JumpRequestWindow jumpRequest = new JumpRequestWindow();
+    private PlayerStateMotionController stateMotion;
+
+    // A landing may reserve an input but must never release a competing lock.
+    public bool CanBufferDuringLanding => stateMotion != null && stateMotion.IsLandingLocked &&
+        locomotionBridge != null && !locomotionBridge.HasCompetingStateMotionLock &&
+        !locomotionBridge.IsScriptedTraversalActive && !locomotionBridge.IsCinematicMotionSessionActive;
 
     public bool IsActive => jumpActive;
     public float TargetJumpHeight => jumpHeight;
@@ -75,40 +82,74 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         ResetPresentation();
     }
 
-    /// <summary>Starts the only supported player jump arc. Input is accepted
-    /// for contract symmetry with the bridge; planar inertia is left to UCC.</summary>
+    /// <summary>Accepts one jump request: starts now or buffers it briefly for
+    /// landing. Planar input/inertia remain owned by the bridge and UCC.</summary>
     public bool TryStartJump(Vector2 worldInput, bool hasWorldInput)
     {
         ResolveReferences();
-        if (!isActiveAndEnabled || jumpActive || locomotion == null || !locomotion.Grounded || locomotionBridge == null ||
-            !locomotionBridge.IsDriving || locomotionBridge.IsInputSuppressedByUcc ||
-            locomotionBridge.IsFlightActive || locomotionBridge.IsScriptedTraversalActive)
+        if (!CanAcceptJumpInput())
         {
             return false;
         }
+
+        // Sample contact on demand as well, so the first input after spawning
+        // does not depend on the relative order of Update callbacks.
+        if (locomotion.Grounded && !jumpActive)
+            jumpRequest.Tick(0f, true, true, false, 0f);
+        jumpRequest.Request(ModuleSettings.inputBufferSeconds);
+        if (TryConsumeJumpRequest()) return true;
+        if (ModuleSettings.inputBufferSeconds > 0f) return true;
+        jumpRequest.ClearRequest();
+        return false;
+    }
+
+    private bool CanAcceptJumpInput() => isActiveAndEnabled && locomotion != null && locomotionBridge != null &&
+        animator != null && animator.isActiveAndEnabled && locomotionBridge.IsDriving &&
+        (!locomotionBridge.IsInputSuppressedByUcc || CanBufferDuringLanding) &&
+        !locomotionBridge.IsFlightActive && !locomotionBridge.IsScriptedTraversalActive &&
+        !locomotionBridge.IsCinematicMotionSessionActive;
+
+    private bool TryConsumeJumpRequest()
+    {
+        if (jumpActive || !CanAcceptJumpInput() || locomotionBridge.IsInputSuppressedByUcc ||
+            !jumpRequest.CanConsume(locomotion.Grounded, ModuleSettings.coyoteSeconds)) return false;
+        bool offLedge = !locomotion.Grounded;
+        jumpRequest.Consume();
 
         jumpActive = true;
         enteredTakeoffState = false;
         takeoffProgress = float.NaN;
         takeoffStallSeconds = groundedAfterImpulseSeconds = 0f;
-        leftGround = false;
+        leftGround = offLedge;
         landingRequested = false;
         takeoffImpulseApplied = false;
         landingContactStartedAt = -1f;
         baseGravity = locomotion.GravityAmount;
         gravityOverridden = false;
         SetBool("JumpPresentationActive", true);
-        SetBool("IsAirborne", false);
+        SetBool("IsAirborne", offLedge);
         SetInteger("LandingType", 0);
         SetPhase(Phase.Takeoff);
         ResetTrigger("JumpStartTrigger");
         SetTrigger("JumpStartTrigger");
+
+        // A coyote jump is already airborne: waiting for the takeoff pose here
+        // would turn a short forgiveness window into a delayed mid-air jump.
+        if (offLedge) ApplyTakeoffImpulse();
 
         return true;
     }
 
     private void Update()
     {
+        if (locomotion == null) ResolveReferences();
+        bool acceptsInput = CanAcceptJumpInput();
+        if (!acceptsInput) jumpRequest.Reset();
+        if (LocalDeltaTime <= 0f) return;
+        jumpRequest.Tick(LocalDeltaTime, locomotion != null && locomotion.Grounded,
+            acceptsInput && !jumpActive, landingRequested || CanBufferDuringLanding,
+            landingHandoff.maximumSettleSeconds + .25f);
+        if (acceptsInput) TryConsumeJumpRequest();
         if (!jumpActive || locomotion == null) return;
 
         if (animator == null || !animator.isActiveAndEnabled)
@@ -174,6 +215,15 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
             return;
         }
 
+        // UCC may reacquire its ground contact during the takeoff preparation.
+        // This is still the launch surface, not the landing of this jump.
+        if (!takeoffImpulseApplied)
+        {
+            leftGround = false;
+            SetBool("IsAirborne", false);
+            return;
+        }
+
         RestoreGravity();
         if (landingRequested)
         {
@@ -187,7 +237,9 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
     private void OnLanded(float fallHeight)
     {
-        if (!jumpActive && !leftGround) return;
+        // A contact notification alone does not prove that this jump left the
+        // ground. Keep an anticipated landing eligible for its actual contact.
+        if (!jumpActive || !takeoffImpulseApplied || (!leftGround && !landingRequested)) return;
         RestoreGravity();
         if (!landingRequested) RequestLanding(fallHeight);
         else if (landingContactStartedAt < 0f) landingContactStartedAt = Time.unscaledTime;
@@ -245,6 +297,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
     private void ResetPresentation()
     {
+        jumpRequest.Reset();
         RestoreGravity();
         ResetTrigger("JumpStartTrigger");
         ResetTrigger("LandingTrigger");
@@ -353,6 +406,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         if (locomotionBridge == null) locomotionBridge = GetComponent<LitOpsiveLocomotionBridge>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (timeDomain == null) timeDomain = GetComponent<CombatTimeDomain>();
+        if (stateMotion == null) stateMotion = GetComponent<PlayerStateMotionController>();
     }
 
     private void SetPhase(Phase value)

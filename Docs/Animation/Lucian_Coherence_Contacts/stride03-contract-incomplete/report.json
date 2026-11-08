@@ -1,0 +1,145 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-contract-20261104-175943",
+    "status": "RECORDED WITH ERRORS",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261104_175947_631.csv",
+    "samples": 1500,
+    "jumpFreeAirborneSamples": 0,
+    "jumpTorchAirborneSamples": 56,
+    "nativeIKAirborneSamples": 0,
+    "rootSpaceGoalSamples": 865,
+    "wholeBodyPolicyEnabled": true,
+    "existingIKVariant": "Existing UCC IK unchanged",
+    "maximumObtainedSpeed": 8.745621681213379,
+    "trials": [
+        {
+            "name": "idle",
+            "frames": 60,
+            "movingFrames": 0,
+            "simulatedSeconds": 1.2132097482681274
+        },
+        {
+            "name": "walk",
+            "frames": 53,
+            "movingFrames": 50,
+            "simulatedSeconds": 1.208879828453064
+        },
+        {
+            "name": "run",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2078536748886108
+        },
+        {
+            "name": "stop",
+            "frames": 69,
+            "movingFrames": 11,
+            "simulatedSeconds": 1.2065354585647583
+        },
+        {
+            "name": "torch_equip",
+            "frames": 63,
+            "movingFrames": 0,
+            "simulatedSeconds": 1.2104181051254272
+        },
+        {
+            "name": "torch_walk",
+            "frames": 66,
+            "movingFrames": 63,
+            "simulatedSeconds": 1.2139256000518799
+        },
+        {
+            "name": "torch_run",
+            "frames": 69,
+            "movingFrames": 69,
+            "simulatedSeconds": 1.2046213150024414
+        },
+        {
+            "name": "torch_stop",
+            "frames": 70,
+            "movingFrames": 11,
+            "simulatedSeconds": 1.2080825567245483
+        },
+        {
+            "name": "combat_F",
+            "frames": 70,
+            "movingFrames": 68,
+            "simulatedSeconds": 1.2080048322677612
+        },
+        {
+            "name": "combat_FR",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2029463052749634
+        },
+        {
+            "name": "combat_R",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.20659601688385
+        },
+        {
+            "name": "combat_BR",
+            "frames": 71,
+            "movingFrames": 71,
+            "simulatedSeconds": 1.2138398885726929
+        },
+        {
+            "name": "combat_B",
+            "frames": 69,
+            "movingFrames": 69,
+            "simulatedSeconds": 1.201184630393982
+        },
+        {
+            "name": "combat_BL",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2075655460357666
+        },
+        {
+            "name": "combat_L",
+            "frames": 69,
+            "movingFrames": 69,
+            "simulatedSeconds": 1.2121068239212036
+        },
+        {
+            "name": "combat_FL",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.201194405555725
+        },
+        {
+            "name": "combat_stop",
+            "frames": 70,
+            "movingFrames": 3,
+            "simulatedSeconds": 1.2059025764465332
+        },
+        {
+            "name": "jump_free",
+            "frames": 107,
+            "movingFrames": 74,
+            "simulatedSeconds": 1.8159030675888062
+        },
+        {
+            "name": "landing_free",
+            "frames": 70,
+            "movingFrames": 70,
+            "simulatedSeconds": 1.2121528387069702
+        },
+        {
+            "name": "jump_torch",
+            "frames": 104,
+            "movingFrames": 79,
+            "simulatedSeconds": 1.8102563619613647
+        },
+        {
+            "name": "landing_torch",
+            "frames": 70,
+            "movingFrames": 69,
+            "simulatedSeconds": 1.2150212526321411
+        }
+    ],
+    "errors": [
+        "Requested jump was not exercised in both torch modes"
+    ]
+}

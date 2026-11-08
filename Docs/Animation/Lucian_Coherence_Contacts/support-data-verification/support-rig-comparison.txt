@@ -1,0 +1,6 @@
+Source=Player_Model_Lucian target=LucianCadence matches=True
+Scale (1.00000024, 1, 1.00000024) / (1.00000024, 1, 1.00000024)
+LeftLowerLeg position=0 quat=1,86627958E-09 scale=0 paths=root/pelvis/thigh_l/calf_l / root/pelvis/thigh_l/calf_l
+RightIndexDistal position=0 quat=5,20625154E-10 scale=0 paths=root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r/index_02_r/index_03_r / root/pelvis/spine_01/spine_02/spine_03/clavicle_r/upperarm_r/lowerarm_r/hand_r/index_01_r/index_02_r/index_03_r
+Foot renderers 1 / 1
+CC_Base_Body / CC_Base_Body mesh=True bones=63/63

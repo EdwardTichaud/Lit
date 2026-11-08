@@ -10182,7 +10182,6 @@ MonoBehaviour:
   ancientFlame: 1
   emissionFadeDuration: 1
   muninController: {fileID: 0}
-  muninTargetOffset: {x: 0, y: 0, z: 0}
   chargeCostToLight: 0
   torchPointCostToLight: 20
 --- !u!135 &5519159958752702840

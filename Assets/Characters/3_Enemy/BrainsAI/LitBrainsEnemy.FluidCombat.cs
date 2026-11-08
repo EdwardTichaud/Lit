@@ -129,18 +129,19 @@ public partial class LitBrainsEnemy
         HandleAttack();
         if (AttackPhase != LitBrainsAttackPhase.None) { StopFluidMovement(); return; }
         float distance = Vector3.ProjectOnPlane(fov.CurrentTarget.position - transform.position, Vector3.up).magnitude;
-        canChase = distance > combatProfile.approachStopDistance + .05f;
+        float stoppingDistance = ResolveVisibleApproachDistance(combatProfile.approachStopDistance);
+        canChase = distance > stoppingDistance + .05f;
         if (canChase)
         {
             agent.isStopped = false;
-            MoveTo(fov.CurrentTarget.position, runSpeed, combatProfile.approachStopDistance);
+            MoveTo(fov.CurrentTarget.position, runSpeed, stoppingDistance);
             if (!agent.pathPending && (agent.pathStatus != NavMeshPathStatus.PathComplete || agent.velocity.sqrMagnitude < .01f))
                 blockedSeconds += Time.deltaTime;
             else blockedSeconds = 0;
             if (blockedSeconds >= 1f)
             {
                 agent.ResetPath();
-                agent.SetDestination(fov.CurrentTarget.position);
+                MoveTo(fov.CurrentTarget.position, runSpeed, stoppingDistance);
                 blockedSeconds = 0;
             }
         }
@@ -209,6 +210,10 @@ public partial class LitBrainsEnemy
     private void MoveFluidAdvance(Vector3 direction, float distance)
     {
         if (distance <= 0) return;
+        Vector3 allowed = ConstrainEncounterStep(transform.position, direction * distance);
+        distance = allowed.magnitude;
+        if (distance <= .0001f) return;
+        direction = allowed.normalized;
         Vector3 destination = transform.position + direction * distance;
         Vector3 origin = transform.position + Vector3.up * agent.height * .5f;
         int mask = LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction");

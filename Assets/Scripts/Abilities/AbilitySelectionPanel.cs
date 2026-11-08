@@ -46,7 +46,7 @@ public sealed class AbilitySelectionPanel : MonoBehaviour
         menu = new GameObject("AbilitySelection", typeof(RectTransform), typeof(Image)); menu.transform.SetParent(canvasRoot.transform, false);
         menu.GetComponent<Image>().color = new Color(.035f, .045f, .055f, .98f);
         var rect = menu.GetComponent<RectTransform>(); rect.sizeDelta = new Vector2(760, 690);
-        var title = Text(menu.transform, "CAPACITÉ D’EXPLORATION", 30); Place(title.rectTransform, new Vector2(0, 292), new Vector2(690, 55));
+        var title = Text(menu.transform, "CAPACITÉS D’EXPLORATION", 30); Place(title.rectTransform, new Vector2(0, 292), new Vector2(690, 55));
         status = Text(menu.transform, "", 21); Place(status.rectTransform, new Vector2(0, 222), new Vector2(680, 90));
         var scrollRoot = new GameObject("Abilities", typeof(RectTransform), typeof(Image), typeof(ScrollRect), typeof(RectMask2D));
         scrollRoot.transform.SetParent(menu.transform, false); Place(scrollRoot.GetComponent<RectTransform>(), new Vector2(0, -20), new Vector2(690, 380));
@@ -90,15 +90,16 @@ public sealed class AbilitySelectionPanel : MonoBehaviour
     }
     private void RefreshStatus()
     {
-        var equipped = service.Equipped(service.LocalPlayerId);
         bool canEquip = service.IsInMaison();
-        status.text = "Une seule capacité équipée par joueur. Changement à la Maison uniquement.\nÉquipée : " + (equipped != null ? equipped.DisplayName : "Synchronisation…");
+        status.text = (service.IsSolo ? "Solo : plusieurs capacités cumulables." : "Coopération : capacités réparties entre les joueurs présents.") +
+            "\nChangement à la Maison uniquement. Équipées : " + string.Join(", ", System.Linq.Enumerable.Select(service.EquippedAbilities(service.LocalPlayerId), a => a.DisplayName));
         foreach (var row in content.GetComponentsInChildren<AbilityMenuRow>())
         {
             bool unlocked = service.IsUnlocked(row.ability);
-            row.GetComponent<Button>().interactable = canEquip && unlocked && row.ability != equipped;
+            bool equipped = service.IsEquipped(service.LocalPlayerId, row.ability);
+            row.GetComponent<Button>().interactable = canEquip && unlocked && (service.IsSolo || !equipped);
             row.GetComponentInChildren<TMP_Text>().text = row.ability.DisplayName +
-                (row.ability == equipped ? " — ÉQUIPÉE" : unlocked ? (canEquip ? " — Équiper" : " — À la Maison") : " — VERROUILLÉE") + "\n<size=75%>" + row.ability.description +
+                (equipped ? (service.IsSolo && canEquip ? " — ÉQUIPÉE / Retirer" : " — ÉQUIPÉE") : unlocked ? (canEquip ? " — Équiper" : " — À la Maison") : " — VERROUILLÉE") + "\n<size=75%>" + row.ability.description +
                 (!unlocked && row.ability.unlockCycle != null ? "\nDéblocage : " + row.ability.unlockCycle.title : "") + "</size>";
         }
     }

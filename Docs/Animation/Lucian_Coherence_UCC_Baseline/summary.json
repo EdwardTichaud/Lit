@@ -1,0 +1,172 @@
+[
+  {
+    "trial": "idle",
+    "settledSamples": 35,
+    "medianSpeed": 0.0,
+    "maxOverlayWeight": 0.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "walk",
+    "settledSamples": 32,
+    "medianSpeed": 5.29480171,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 32,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "run",
+    "settledSamples": 32,
+    "medianSpeed": 8.737186,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "stop",
+    "settledSamples": 32,
+    "medianSpeed": 1.5173461075e-33,
+    "maxOverlayWeight": 0.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "torch_equip",
+    "settledSamples": 22,
+    "medianSpeed": 0.0,
+    "maxOverlayWeight": 0.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "torch_walk",
+    "settledSamples": 32,
+    "medianSpeed": 5.29480171,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 32,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "torch_run",
+    "settledSamples": 32,
+    "medianSpeed": 8.740238,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "torch_stop",
+    "settledSamples": 32,
+    "medianSpeed": 1.2621536305e-32,
+    "maxOverlayWeight": 0.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "combat_F",
+    "settledSamples": 32,
+    "medianSpeed": 5.29785347,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "combat_FR",
+    "settledSamples": 32,
+    "medianSpeed": 3.17660618,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "combat_R",
+    "settledSamples": 32,
+    "medianSpeed": 3.00878394,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 1,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "combat_BR",
+    "settledSamples": 32,
+    "medianSpeed": 2.95283114,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "combat_B",
+    "settledSamples": 32,
+    "medianSpeed": 3.9276154,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 1,
+    "torchStates": [
+      "False"
+    ]
+  },
+  {
+    "trial": "combat_BL",
+    "settledSamples": 32,
+    "medianSpeed": 4.60170078,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "combat_L",
+    "settledSamples": 32,
+    "medianSpeed": 5.213047749999999,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "combat_FL",
+    "settledSamples": 32,
+    "medianSpeed": 5.1037038,
+    "maxOverlayWeight": 1.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  },
+  {
+    "trial": "combat_stop",
+    "settledSamples": 32,
+    "medianSpeed": 6.519134e-38,
+    "maxOverlayWeight": 0.0,
+    "dominantClipMismatchSamples": 0,
+    "torchStates": [
+      "True"
+    ]
+  }
+]

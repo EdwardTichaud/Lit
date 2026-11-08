@@ -1,0 +1,454 @@
+{
+  "stock": {
+    "run": "play-cadence-stop-support-stock-compare-handoffs-contacts-20261106-191409",
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "trials": {
+      "left": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 2.51709867,
+        "run_weight_on_transition": 0.614262462,
+        "phase_before_transition": 0.5395,
+        "distance_physical_cm": 53.919,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 17.476,
+        "peak_frame": 6,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 89.587,
+        "max_fixed_vertex_path_first_support_cm": 12.924,
+        "min_support_sole_height_cm": -0.08,
+        "max_support_sole_height_cm": 3.448,
+        "source_motion": [
+          "TwinSword_Common_Walk_Stop_Inplace:0.0265634656",
+          "TwinSword_Common_Walk_Stop_Inplace:0.187500954",
+          "TwinSword_Common_Walk_Stop_Inplace:0.348438442",
+          "TwinSword_Common_Walk_Stop_Inplace:0.50937593",
+          "TwinSword_Common_Walk_Stop_Inplace:0.6703134",
+          "TwinSword_Common_Walk_Stop_Inplace:0.8312509",
+          "TwinSword_Common_Walk_Stop_Inplace:0.992188454",
+          "TwinSword_Common_Walk_Stop_Inplace:1"
+        ]
+      },
+      "right": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 2.51161337,
+        "run_weight_on_transition": 0.611375451,
+        "phase_before_transition": 0.0487,
+        "distance_physical_cm": 54.834,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 21.684,
+        "peak_frame": 7,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 39.651,
+        "max_fixed_vertex_path_first_support_cm": 40.803,
+        "min_support_sole_height_cm": -0.06,
+        "max_support_sole_height_cm": 1.674,
+        "source_motion": [
+          "TwinSword_Common_Walk_Stop_Inplace:0.0265634656",
+          "TwinSword_Common_Walk_Stop_Inplace:0.187500954",
+          "TwinSword_Common_Walk_Stop_Inplace:0.348438442",
+          "TwinSword_Common_Walk_Stop_Inplace:0.50937593",
+          "TwinSword_Common_Walk_Stop_Inplace:0.6703134",
+          "TwinSword_Common_Walk_Stop_Inplace:0.8312509",
+          "TwinSword_Common_Walk_Stop_Inplace:0.992188454",
+          "TwinSword_Common_Walk_Stop_Inplace:1"
+        ]
+      }
+    }
+  },
+  "authored": {
+    "run": "play-cadence-stop-support-authored-compare-handoffs-contacts-20261106-191451",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "errors": [],
+    "trials": {
+      "left": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 2.51161337,
+        "run_weight_on_transition": 0.611375451,
+        "phase_before_transition": 0.538,
+        "distance_physical_cm": 54.834,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 14.678,
+        "peak_frame": 7,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 42.71,
+        "max_fixed_vertex_path_first_support_cm": 14.836,
+        "min_support_sole_height_cm": -0.252,
+        "max_support_sole_height_cm": 5.904,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_Pilot:1"
+        ]
+      },
+      "right": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 2.51709867,
+        "run_weight_on_transition": 0.614262462,
+        "phase_before_transition": 0.0502,
+        "distance_physical_cm": 53.919,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 15.968,
+        "peak_frame": 4,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 24.856,
+        "max_fixed_vertex_path_first_support_cm": 26.929,
+        "min_support_sole_height_cm": -0.276,
+        "max_support_sole_height_cm": 0.002,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_Pilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_Pilot:1"
+        ]
+      }
+    }
+  },
+  "holdrun": {
+    "run": "play-cadence-stop-support-holdrun-compare-handoffs-contacts-20261106-191901",
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "trials": {
+      "left": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.5373,
+        "distance_physical_cm": 53.919,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 8.772,
+        "peak_frame": 16,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 8.968,
+        "max_fixed_vertex_path_first_support_cm": 8.97,
+        "min_support_sole_height_cm": -0.003,
+        "max_support_sole_height_cm": 0.407,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_Pilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_Pilot:1"
+        ]
+      },
+      "right": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.0458,
+        "distance_physical_cm": 54.834,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 10.32,
+        "peak_frame": 14,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 6.991,
+        "max_fixed_vertex_path_first_support_cm": 7.001,
+        "min_support_sole_height_cm": -0.008,
+        "max_support_sole_height_cm": 0.069,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_Pilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_Pilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_Pilot:1"
+        ]
+      }
+    }
+  },
+  "lead": {
+    "run": "play-cadence-stop-support-lead-compare-handoffs-contacts-20261106-192306",
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "trials": {
+      "left": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.5373,
+        "distance_physical_cm": 53.919,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 8.775,
+        "peak_frame": 16,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 5.426,
+        "max_fixed_vertex_path_first_support_cm": 5.427,
+        "min_support_sole_height_cm": -0.003,
+        "max_support_sole_height_cm": 0.408,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_LeadPilot:1"
+        ]
+      },
+      "right": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.0458,
+        "distance_physical_cm": 54.834,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 10.388,
+        "peak_frame": 14,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 3.501,
+        "max_fixed_vertex_path_first_support_cm": 3.514,
+        "min_support_sole_height_cm": -0.007,
+        "max_support_sole_height_cm": 0.07,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_LeadPilot:1"
+        ]
+      }
+    }
+  },
+  "two-ticks": {
+    "run": "play-cadence-stop-support-two-ticks-compare-handoffs-contacts-20261106-192656",
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "trials": {
+      "left": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.5373,
+        "distance_physical_cm": 53.919,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 8.775,
+        "peak_frame": 16,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 2.787,
+        "max_fixed_vertex_path_first_support_cm": 2.788,
+        "min_support_sole_height_cm": -0.003,
+        "max_support_sole_height_cm": 0.408,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:1"
+        ]
+      },
+      "right": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.0458,
+        "distance_physical_cm": 54.834,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 10.402,
+        "peak_frame": 14,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 2.68,
+        "max_fixed_vertex_path_first_support_cm": 2.669,
+        "min_support_sole_height_cm": -0.009,
+        "max_support_sole_height_cm": 0.069,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:1"
+        ]
+      },
+      "left_nearby": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.4929,
+        "distance_physical_cm": 54.339,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 8.776,
+        "peak_frame": 16,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 17.338,
+        "max_fixed_vertex_path_first_support_cm": 17.339,
+        "min_support_sole_height_cm": -0.002,
+        "max_support_sole_height_cm": 0.002,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:1"
+        ]
+      },
+      "right_nearby": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.9822,
+        "distance_physical_cm": 54.349,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 11.113,
+        "peak_frame": 12,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 26.799,
+        "max_fixed_vertex_path_first_support_cm": 26.764,
+        "min_support_sole_height_cm": -0.004,
+        "max_support_sole_height_cm": 0.003,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:1"
+        ]
+      }
+    }
+  },
+  "offset": {
+    "run": "play-cadence-stop-support-offset-compare-handoffs-contacts-20261106-193120",
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "trials": {
+      "left": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.5373,
+        "distance_physical_cm": 53.919,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 8.775,
+        "peak_frame": 16,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 2.789,
+        "max_fixed_vertex_path_first_support_cm": 2.788,
+        "min_support_sole_height_cm": -0.003,
+        "max_support_sole_height_cm": 0.408,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:1"
+        ]
+      },
+      "right": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.0458,
+        "distance_physical_cm": 54.834,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 10.402,
+        "peak_frame": 14,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 2.754,
+        "max_fixed_vertex_path_first_support_cm": 2.738,
+        "min_support_sole_height_cm": -0.01,
+        "max_support_sole_height_cm": 0.068,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:1"
+        ]
+      },
+      "left_nearby": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.4929,
+        "distance_physical_cm": 54.339,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 8.776,
+        "peak_frame": 16,
+        "peak_foot": "right",
+        "lowest_point_path_first_support_cm": 2.022,
+        "max_fixed_vertex_path_first_support_cm": 2.02,
+        "min_support_sole_height_cm": -0.002,
+        "max_support_sole_height_cm": 0.002,
+        "source_motion": [
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_LeftSupport_TwoTickPilot:1"
+        ]
+      },
+      "right_nearby": {
+        "first_transition_frame": 5,
+        "visual_speed_on_transition": 3.25,
+        "run_weight_on_transition": 1.0,
+        "phase_before_transition": 0.9822,
+        "distance_physical_cm": 54.349,
+        "first_43_frames_support_qualified": 43,
+        "peak_relative_ankle_step_cm": 11.113,
+        "peak_frame": 12,
+        "peak_foot": "left",
+        "lowest_point_path_first_support_cm": 2.874,
+        "max_fixed_vertex_path_first_support_cm": 2.897,
+        "min_support_sole_height_cm": -0.004,
+        "max_support_sole_height_cm": 0.002,
+        "source_motion": [
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.0265634656",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.187500954",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.348438442",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.50937593",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.6703134",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.8312509",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:0.992188454",
+          "Lucian_Run_Stop_RightSupport_TwoTickPilot:1"
+        ]
+      }
+    }
+  }
+}

@@ -1,5 +1,21 @@
 # Combat
 
+## Rencontre de reference Moonrise (en cours)
+
+Le parcours court et ses preuves attendues sont dans `moonrise_combat_route.md`.
+Il reutilise le Juggernaut marker-owned de District_1_Enemies et ses regles
+production, sans charger Iluvilirae_Test. Le mode explicite
+`BootstrapDistrictPlayProbe.StartMoonriseCombatBatch` observe Flame payante,
+poursuite/impacts, Y de contre, Knocked Out et mort via X avant la continuite
+d'exploration. Ne pas deduire la validation d'un contre/victoire en campagne des
+seuls tests du laboratoire ou des anciennes recettes de fuite.
+
+Le HUD commun lit nom/PV via CombatTarget.Root et CharacterInfo ; EngagedEnemy
+reste le fallback legacy. Un acteur Brains ne doit pas apparaitre a 0/1 PV.
+La fiche Juggernaut equipe les quatre skills deja revues dans son profil
+(Frappe, Followup, Balayage, Assomoir). Le saut seul laissait un trou de portee
+au contact lorsque le repositionnement arriere etait impossible.
+
 ## Unification Player_Model — plan confirme, non applique
 
 Reference auteur : Assets/Characters/4_Animations/Player_Model.controller,
@@ -542,6 +558,21 @@ et l'introduction/mort du ScientifiqueFou restent sur leur implementation auteur
 aucune detection globale ne les active par defaut. La conversion Brains conserve
 les patterns/SkillSO source, les evenements physiques et le point de lock, sans
 remplacer un ennemi de production par une identite de laboratoire.
+
+### Gargouille angelique des Limbes (2026-10-27)
+
+LimbesAngelBoss derive du protocole BossEncounterBehaviour et utilise l'acteur
+LitBrainsEnemy existant, sans EnemyController parallele. Cinq cycles et la fin
+de son introduction autorisent la rencontre ; le deverrouillage est replique.
+Le pilote suspend les decisions/navigation Brains pendant son propre mouvement
+Rigidbody : neuf secondes de vol et tirs vises, puis neuf secondes de poursuite
+au sol et balayage annonce 1,1 seconde. Les degats passent par les services de
+sante usuels, exclusivement sous autorite ; la dormance Flame suspend le pilote
+et ses projectiles. Le boss libere sa suspension a la resolution/desactivation.
+Le marqueur SceneMarker standard porte son identite persistante dans la scene.
+La progression de zone derive acces/sortie des cycles, sans second store de save.
+Qualification de l'extension : voir systems/narrative.md et current_work.md ;
+ce raccord ne constitue pas une recette multijoueur ni un equilibrage manuel.
 
 Les paliers capturent l'auteur du coup franchissant le seuil et refusent une
 substitution par le joueur local. Perte du participant avant lancement : nettoyage
@@ -2866,3 +2897,32 @@ L'entree ChargedSkill utilise un fondu fixe avec temps de clip explicite zero,
 y compris lorsqu'il remplace une ancienne instance du meme etat Animator.
 Projection reseau refusee explicitement tant que sa commande serveur dediee
 n'est pas livree ; aucun client ne declare ses montants ou sa destination.
+
+### Autorite pendant les fondus de locomotion (Moonrise)
+
+Les demandes visuelles EnterCombatIdle/ExitCombatIdle du bridge UCC doivent
+respecter PlayerActionPresentationController et la destination de transition de
+l'Animator. La pose courante peut encore etre CombatIdle/CombatLocomotion alors
+qu'une attaque vient d'etre demandee : elle ne permet pas de reprendre la main
+sur ce fondu. Une regression utilise un vrai Animator pour verifier entree et
+sortie de l'attente sans remplacer une attaque entrante.
+
+### Contact lumineux des ennemis de production
+
+ProductionBrainsFlamePolicy evalue les colliders physiques non triggers. Les
+capteurs de perception et les triggers d'arme decrivent une portee et ne peuvent
+pas reveiller le corps a distance. La policy conserve les memes sources fixes,
+rayons, autorite serveur et pauses propres. Corps hors influence : dormance ;
+contact du corps : reveil ; depart du corps : retour en dormance. Regression
+ProductionBrainsLifecycleTests avec capteur de rayon 5 et corps eloigne.
+
+### Distance d'approche derriere un obstacle proche
+
+Les chemins Brains production et fluid conservent leur distance d'approche auteur
+quand la cible est visible. Quand la ligne de vue manque, ils demandent au NavMesh
+un rapprochement a .05 m au lieu de considerer une cible proche deja atteinte.
+Le chemin peut ainsi contourner le mur ; aucune translation forcee ni teleportation
+n'est ajoutee. Les controles de ligne de vue avant attaque et impact restent
+obligatoires. Regression physique : mur a mi-distance d'une cible a 1,5 m et
+distance de combat 2,4 m ; suppression du mur restaure la distance auteur. La
+validation du trajet natif en jeu reste distincte de ce test de choix de distance.

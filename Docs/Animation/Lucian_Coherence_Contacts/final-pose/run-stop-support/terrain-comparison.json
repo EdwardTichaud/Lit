@@ -1,0 +1,158 @@
+{
+  "ramp": {
+    "status": "RECORDED WITH ERRORS",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "samples": 545,
+    "trials": {
+      "idle": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 8.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 0.0,
+        "z_travel_m": 0.0,
+        "y_travel_m": -0.5826,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "uphill": {
+        "end_speed_m_s": 4.8248,
+        "end_ground_angle_deg": 8.0,
+        "end_obtained_m_s": 4.8248,
+        "end_lit_speed": 3.1644,
+        "max_speed_m_s": 4.8248,
+        "z_travel_m": 8.1799,
+        "y_travel_m": 1.1496,
+        "end_state": "-1269438207",
+        "end_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.0450707749|Lucian_Common_Run_Stride02:0.954929233",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "brake_uphill": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 8.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 4.8248,
+        "z_travel_m": 0.4952,
+        "y_travel_m": 0.0696,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "downhill": {
+        "end_speed_m_s": 6.0791,
+        "end_ground_angle_deg": 8.0,
+        "end_obtained_m_s": 6.0791,
+        "end_lit_speed": 3.25,
+        "max_speed_m_s": 6.0791,
+        "z_travel_m": -9.9197,
+        "y_travel_m": -1.3941,
+        "end_state": "-1269438207",
+        "end_clips": "Lucian_Common_Run_Stride02:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "brake_downhill": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 8.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 6.0791,
+        "z_travel_m": -0.6142,
+        "y_travel_m": -0.0863,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      }
+    }
+  },
+  "wall": {
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "errors": [],
+    "samples": 617,
+    "trials": {
+      "idle": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 0.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 0.0,
+        "z_travel_m": 0.0,
+        "y_travel_m": 0.0,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "approach_wall": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 0.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 5.2948,
+        "z_travel_m": 7.411,
+        "y_travel_m": 0.0,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "release_at_wall": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 0.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 0.1312,
+        "z_travel_m": 0.0026,
+        "y_travel_m": 0.0,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "away_from_wall": {
+        "end_speed_m_s": 5.2948,
+        "end_ground_angle_deg": 0.0,
+        "end_obtained_m_s": 5.2954,
+        "end_lit_speed": 3.25,
+        "max_speed_m_s": 5.2948,
+        "z_travel_m": -8.6371,
+        "y_travel_m": 0.0,
+        "end_state": "-1269438207",
+        "end_clips": "Lucian_Common_Run_Stride02:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      },
+      "brake_away": {
+        "end_speed_m_s": 0.0,
+        "end_ground_angle_deg": 0.0,
+        "end_obtained_m_s": 0.0,
+        "end_lit_speed": 0.0,
+        "max_speed_m_s": 5.2948,
+        "z_travel_m": -0.5434,
+        "y_travel_m": 0.0,
+        "end_state": "-1269438207",
+        "end_clips": "Common_Idle_Inplace:1",
+        "selected_stop_foot_ticks": 0,
+        "root_motion_ticks": 0,
+        "run_stop_ticks": 0
+      }
+    }
+  }
+}

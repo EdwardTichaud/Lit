@@ -363,16 +363,19 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
             ? manager.PlayerRoot.GetComponentInChildren<CharacterInfo>(true)
             : null;
         EnemyController enemy = manager.EngagedEnemy;
-        CharacterInfo enemyHealth = enemy != null ? enemy.Health : null;
+        ICombatTarget target = manager.CombatTarget;
+        CharacterInfo enemyHealth = ResolveHudEnemyHealth(target, enemy);
+        Transform enemyRoot = target != null ? target.Root : enemy != null ? enemy.transform : null;
+        string enemyName = ResolveEnemyName(enemyHealth, enemyRoot);
 
         int playerCurrent = player != null ? player.CurrentHp : playerHealth != null ? playerHealth.CurrentHp : 0;
         int playerMaximum = player != null ? player.MaxHp : playerHealth != null ? playerHealth.MaxHp : 1;
         int enemyCurrent = enemyHealth != null ? enemyHealth.CurrentHp : 0;
         int enemyMaximum = enemyHealth != null ? enemyHealth.MaxHp : 1;
 
-        SetText(titleText, enemy != null ? ResolveEnemyName(enemy) : "Combat");
+        SetText(titleText, enemyRoot != null ? enemyName : "Combat");
         SetText(playerHpText, "Lucian\n" + Mathf.Max(0, playerCurrent) + "/" + Mathf.Max(1, playerMaximum) + " PV");
-        SetText(enemyHpText, (enemy != null ? ResolveEnemyName(enemy) : "Ennemi") + "\n" + Mathf.Max(0, enemyCurrent) + "/" + Mathf.Max(1, enemyMaximum) + " PV");
+        SetText(enemyHpText, enemyName + "\n" + Mathf.Max(0, enemyCurrent) + "/" + Mathf.Max(1, enemyMaximum) + " PV");
         SetFill(playerHpFill, playerCurrent, playerMaximum);
         SetFill(enemyHpFill, enemyCurrent, enemyMaximum);
         OnClarityChanged(manager.Clarity, manager.ClarityRank);
@@ -473,9 +476,20 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour, IInputModeH
         InputModeCoordinator.Exit(this);
     }
 
-    private static string ResolveEnemyName(EnemyController enemy)
+    internal static CharacterInfo ResolveHudEnemyHealth(ICombatTarget target, EnemyController legacy)
     {
-        CharacterInfo info = enemy != null ? enemy.GetComponentInChildren<CharacterInfo>(true) : null;
+        // A Brains target uses the same CharacterInfo as damage/persistence.
+        // Its absence from the legacy EngagedEnemy slot must not display 0/1 HP.
+        var root = target?.Root;
+        return root != null ? root.GetComponentInChildren<CharacterInfo>(true) : legacy != null ? legacy.Health : null;
+    }
+
+    private static string ResolveEnemyName(EnemyController enemy) => ResolveEnemyName(
+        enemy != null ? enemy.GetComponentInChildren<CharacterInfo>(true) : null,
+        enemy != null ? enemy.transform : null);
+
+    private static string ResolveEnemyName(CharacterInfo info, Transform enemy)
+    {
         return info != null && info.CharacterData != null
             ? info.CharacterData.ResolveDisplayName()
             : enemy != null ? enemy.name : "Ennemi";

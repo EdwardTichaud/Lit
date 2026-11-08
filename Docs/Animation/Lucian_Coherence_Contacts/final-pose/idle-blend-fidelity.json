@@ -1,0 +1,67 @@
+{
+    "scope": "Same Lucian exploration tree, avatar, weights and phase with Unity Foot IK on and off. No UCC, trajectory, transitions or production writes.",
+    "blends": [
+        {
+            "walkWeight": 0.0,
+            "peakFootDisplacement": 0.18221637606620789,
+            "peakFootRotation": 11.647791862487793,
+            "peakSoleHeight": 0.0498727485537529,
+            "peakHipsDisplacement": 0.0,
+            "phaseAtPeakFootDisplacement": 0.0,
+            "lowestNativeSole": 0.006942524574697018,
+            "highestNativeLowerSole": 0.0069441040977835655
+        },
+        {
+            "walkWeight": 0.2199999988079071,
+            "peakFootDisplacement": 0.18526555597782135,
+            "peakFootRotation": 9.952052116394043,
+            "peakSoleHeight": 0.09199675917625427,
+            "peakHipsDisplacement": 0.0,
+            "phaseAtPeakFootDisplacement": 0.3089887499809265,
+            "lowestNativeSole": 0.025689566507935524,
+            "highestNativeLowerSole": 0.028796806931495667
+        },
+        {
+            "walkWeight": 0.5,
+            "peakFootDisplacement": 0.22742074728012085,
+            "peakFootRotation": 10.369787216186523,
+            "peakSoleHeight": 0.1636209636926651,
+            "peakHipsDisplacement": 0.0,
+            "phaseAtPeakFootDisplacement": 0.32222241163253784,
+            "lowestNativeSole": 0.042797692120075226,
+            "highestNativeLowerSole": 0.054003436118364334
+        },
+        {
+            "walkWeight": 0.7799999713897705,
+            "peakFootDisplacement": 0.2537243664264679,
+            "peakFootRotation": 15.452478408813477,
+            "peakSoleHeight": 0.20841000974178314,
+            "peakHipsDisplacement": 0.0,
+            "phaseAtPeakFootDisplacement": 0.33469951152801514,
+            "lowestNativeSole": 0.07382555305957794,
+            "highestNativeLowerSole": 0.08001628518104553
+        },
+        {
+            "walkWeight": 0.9800000190734863,
+            "peakFootDisplacement": 0.2715604901313782,
+            "peakFootRotation": 26.2554874420166,
+            "peakSoleHeight": 0.22937273979187012,
+            "peakHipsDisplacement": 0.0,
+            "phaseAtPeakFootDisplacement": 0.3431374132633209,
+            "lowestNativeSole": 0.09736748039722443,
+            "highestNativeLowerSole": 0.1026993915438652
+        },
+        {
+            "walkWeight": 1.0,
+            "peakFootDisplacement": 0.2737647294998169,
+            "peakFootRotation": 28.86244010925293,
+            "peakSoleHeight": 0.23093631863594055,
+            "peakHipsDisplacement": 0.0,
+            "phaseAtPeakFootDisplacement": 0.34166666865348816,
+            "lowestNativeSole": 0.09994654357433319,
+            "highestNativeLowerSole": 0.10530403256416321
+        }
+    ],
+    "scriptedFootDisplacementWithNativeFlag": 0.0000018749575474430458,
+    "scriptedFootRotationWithNativeFlag": 0.0
+}

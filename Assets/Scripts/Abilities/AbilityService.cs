@@ -18,6 +18,7 @@ public sealed class AbilityService : MonoBehaviour
     private bool registered, receivedState;
     private float nextRefresh, nextSyncRequest;
     private string lastPublished;
+    private string distributionSignature;
     public event Action Changed;
     public IReadOnlyList<AbilitySO> Catalog => catalog;
     public bool Authority => NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening || NetworkManager.Singleton.IsServer;
@@ -44,7 +45,11 @@ public sealed class AbilityService : MonoBehaviour
         }
         catalog.Sort((a, b) => string.CompareOrdinal(a.abilityId, b.abilityId));
         RefreshUnlocks();
-        if (Application.isPlaying) gameObject.AddComponent<AbilitySelectionPanel>();
+        if (Application.isPlaying)
+        {
+            gameObject.AddComponent<AbilitySelectionPanel>();
+            gameObject.AddComponent<Lit.Traversal.GrappleController>();
+        }
     }
     private void Update()
     {
@@ -58,6 +63,7 @@ public sealed class AbilityService : MonoBehaviour
             return;
         }
         RefreshUnlocks();
+        RefreshDistribution();
         PublishIfChanged();
     }
     public AbilitySO Resolve(string id) => catalog.Find(a => a.abilityId == id || a.legacySkillId == id);
@@ -67,8 +73,29 @@ public sealed class AbilityService : MonoBehaviour
         if (string.IsNullOrWhiteSpace(playerId) || !IsReady) return null;
         var equipped = Resolve(state.Equipped(playerId));
         if (IsUnlocked(equipped)) return equipped;
-        // A newly joined player starts with the first available starting ability, never a second slot.
-        return catalog.Find(a => a.availableAtStart && IsUnlocked(a));
+        return null;
+    }
+    public bool IsEquipped(string playerId, AbilitySO ability) => IsReady && ability != null && state.HasEquipped(playerId, ability.abilityId);
+    public bool IsSolo => NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening;
+    public IReadOnlyList<AbilitySO> EquippedAbilities(string playerId) => catalog.FindAll(a => IsEquipped(playerId, a));
+
+    private void RefreshDistribution()
+    {
+        if (!Authority || IsSolo) return;
+        var players = new List<string>();
+        var clients = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
+        clients.Sort();
+        foreach (ulong client in clients)
+        {
+            string id = PlayerIdForClient(client);
+            if (string.IsNullOrWhiteSpace(id)) return; // Wait for stable session identities.
+            if (!players.Contains(id)) players.Add(id);
+        }
+        string signature = string.Join("|", players) + ":" + string.Join("|", state.unlockedIds);
+        if (signature == distributionSignature) return;
+        distributionSignature = signature;
+        if (!state.IsCompleteDistribution(players)) state.Distribute(players);
+        NotifyChanged();
     }
     public string LocalPlayerId => PlayerIdForClient(NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening
         ? NetworkManager.Singleton.LocalClientId : 0);
@@ -97,7 +124,7 @@ public sealed class AbilityService : MonoBehaviour
             if (!control.IsPlayerControlled) return false;
             playerId = PlayerIdForClient(control.HasAssignedClientId ? control.AssignedClientId : control.OwnerClientId);
         }
-        return Equipped(playerId) == ability;
+        return IsEquipped(playerId, ability);
     }
     public bool IsInMaison()
     {
@@ -125,7 +152,21 @@ public sealed class AbilityService : MonoBehaviour
         var controller = character.GetComponent<SquadCharacterController>();
         var movement = character.GetComponent<LitOpsiveLocomotionBridge>();
         if (controller == null || controller.CurrentHp <= 0 || movement != null && (movement.IsCombatLockActive || movement.IsExternalLockActive)) return false;
-        if (!state.Equip(playerId, ability.abilityId)) return false;
+        if (IsSolo)
+        {
+            if (!state.Toggle(playerId, ability.abilityId)) return false;
+        }
+        else
+        {
+            RefreshDistribution();
+            if (state.HasEquipped(playerId, ability.abilityId)) return false;
+            var owner = state.slots.Find(s => s != null && s.playerId != SoloPlayerId && s.abilityId == ability.abilityId);
+            if (owner == null) return false;
+            // Exchange ownership at Maison without losing capabilities or creating duplicates.
+            var own = state.slots.Find(s => s != null && s.playerId == playerId);
+            if (own == null) { owner.playerId = playerId; }
+            else { string previous = own.abilityId; own.abilityId = owner.abilityId; owner.abilityId = previous; }
+        }
         NotifyChanged();
         return true;
     }
@@ -133,6 +174,7 @@ public sealed class AbilityService : MonoBehaviour
     public bool Unlock(AbilitySO ability, bool notify = true)
     {
         if (!Authority || ability == null || Resolve(ability.abilityId) != ability || !state.Unlock(ability.abilityId)) return false;
+        if (IsSolo) state.AddEquipped(SoloPlayerId, ability.abilityId);
         if (notify) SkillUnlockPanel.TryShow(ability);
         NotifyChanged();
         return true;
@@ -143,7 +185,11 @@ public sealed class AbilityService : MonoBehaviour
         foreach (var ability in catalog)
             if (!IsUnlocked(ability) && ability.CanUnlockFromProgression()) Unlock(ability, !ability.availableAtStart);
     }
-    public AbilitySaveData Capture() => JsonUtility.FromJson<AbilitySaveData>(JsonUtility.ToJson(state));
+    public AbilitySaveData Capture()
+    {
+        state.equipmentVersion = 2;
+        return JsonUtility.FromJson<AbilitySaveData>(JsonUtility.ToJson(state));
+    }
     public void Restore(AbilitySaveData data)
     {
         state = new AbilitySaveData();
@@ -152,9 +198,14 @@ public sealed class AbilityService : MonoBehaviour
             foreach (var id in data.unlockedIds ?? new List<string>())
             { var a = Resolve(id); if (a != null) state.Unlock(a.abilityId); }
             foreach (var slot in data.slots ?? new List<AbilitySlot>())
-                if (slot != null && !string.IsNullOrWhiteSpace(slot.playerId)) state.Equip(slot.playerId, slot.abilityId);
+                if (slot != null && !string.IsNullOrWhiteSpace(slot.playerId)) state.AddEquipped(slot.playerId, slot.abilityId);
         }
         if (Authority) RefreshUnlocks();
+        if (Authority && IsSolo && data != null && data.equipmentVersion < 2)
+            foreach (string id in state.unlockedIds) state.AddEquipped(SoloPlayerId, id);
+        state.equipmentVersion = 2;
+        distributionSignature = null;
+        RefreshDistribution();
         NotifyChanged();
     }
     public void RestoreCharacterSave(CharacterSaveData data)
@@ -162,7 +213,7 @@ public sealed class AbilityService : MonoBehaviour
         if (data == null) return;
         if (data.abilities != null) { Restore(data.abilities); return; }
         // v9 character lists were often innate defaults (including Sauf-Conduit).
-        // They cannot bypass the new progression gates or create extra equipment slots.
+        // Historical character defaults cannot bypass progression gates.
         var migration = new AbilitySaveData();
         foreach (var character in data.characters ?? new List<CharacterSaveEntry>())
             foreach (var oldId in character?.skillIds ?? new List<string>())

@@ -57,8 +57,7 @@ public sealed partial class LitGameplayCameraModeController
         Vector3 position = camera.transform.position, forward = camera.transform.forward;
         float playerDepth = Vector3.Dot(GetRenderedAnchor() - position, forward);
         float safeDepth = LitTacticalNearClip.NearestDepth(clipPlayerBody, player, position, forward);
-        var enemyController = RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.LockedEnemy : null;
-        var enemy = enemyController != null ? enemyController.transform : null;
+        var enemy = ResolveCombatVisibilityRoot();
         if (clipEnemy != enemy)
         {
             clipEnemy = enemy;

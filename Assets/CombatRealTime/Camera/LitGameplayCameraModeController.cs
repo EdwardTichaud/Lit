@@ -97,7 +97,7 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
         ucc.Character != null && LitMaisonVisibilityZone.ContainsPlayer(ucc.Character.transform.position);
     public bool MaskActive => ucc != null && ucc.enabled && ucc.Character != null &&
         (EffectiveObstacleMode == TacticalObstacleMode.VisibilityMask || ZoneMaskActive);
-    public bool MaisonMaskActive => ZoneMaskActive; // Compatibility for existing developer tooling.
+    public int MaskObstacleLayerCount => visibilityMask != null ? visibilityMask.LayerCount : 0;
     public bool IsBlending => !external && profile != null && Time.time - blendStarted < profile.transitionTime;
     public void ResetPoseTracking() { hasPreviousPosition = hasVisibleAnchor = false; blendStarted = -100; ClearTacticalInput(); RestoreOcclusion(); ResetNearClip(); }
     public struct TacticalInput { public Vector2 pan, orbit; public float zoom; }
@@ -243,7 +243,7 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
     {
         if (external || ucc == null || !ucc.enabled || ucc.Character == null) return;
         if (TacticalRequested && !Install() && !installationFailed) return;
-        bool locked = RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.LockedEnemy != null;
+        bool locked = ResolveLockedCombatRoot() != null;
         Type type = ResolveView(requestedMode, locked);
         if (type == typeof(CombatLockAdventureViewType) && ucc.GetViewType<CombatLockAdventureViewType>() == null) type = typeof(LitSmoothAdventureViewType);
         if (ucc.GetViewType<LitSmoothAdventureViewType>() == null && type == typeof(LitSmoothAdventureViewType)) return;
@@ -335,7 +335,7 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
                 var group = hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>();
                 // Only bypass groups covered by the current detection. Unknown
                 // hits (including a saturated non-alloc query) stay conservative.
-                if (group != null && group.CanBypassCameraCollision() && visibilityMask != null && visibilityMask.Covers(group)) continue;
+                if (group != null && group.CanBypassCameraCollision() && visibilityMask != null && visibilityMask.Covers(group, hits[i].point)) continue;
             }
             // A touching surface must not stop motion away from it or tangent to it.
             if (hits[i].distance <= .001f && Vector3.Dot(delta / length, hits[i].normal) >= -.001f) continue;
@@ -459,10 +459,26 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
             lastObstacleMode = EffectiveObstacleMode;
         }
         var layers = ucc.Character != null ? ucc.Character.GetComponent<CharacterLayerManager>() : null;
-        var enemy = RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.LockedEnemy : null;
-        visibilityMask?.Prepare(desired, playerAnchor, enemy != null ? enemy.transform : null, radius,
+        var enemy = ResolveCombatVisibilityRoot();
+        visibilityMask?.Prepare(desired, playerAnchor, enemy, radius,
             layers != null ? layers.IgnoreInvisibleCharacterWaterLayers : Physics.DefaultRaycastLayers, profile);
     }
+    private static Transform ResolveLockedCombatRoot()
+    {
+        var manager = RealTimeCombatManager.Instance;
+        return manager != null && manager.HasLockedCombatTarget ? ResolveProtectedCombatRoot(manager.LockedCombatTarget) : null;
+    }
+    // Visibility protection is independent of manual lock-on and camera framing.
+    private static Transform ResolveCombatVisibilityRoot()
+    {
+        var manager = RealTimeCombatManager.Instance;
+        return manager != null ? ResolveVisibilityTargetRoot(manager.LockedCombatTarget,
+            manager.CombatTarget, manager.IsCombatActive) : null;
+    }
+    private static Transform ResolveVisibilityTargetRoot(ICombatTarget locked, ICombatTarget engaged, bool combatActive) =>
+        ResolveProtectedCombatRoot(locked) ?? (combatActive ? ResolveProtectedCombatRoot(engaged) : null);
+    private static Transform ResolveProtectedCombatRoot(ICombatTarget target) =>
+        SkillTargetingContract.Alive(target) ? target.Root : null;
     public void RestoreOcclusion() => visibilityMask?.Clear();
     private void OnGUI()
     { if (inspection) GUI.Label(new Rect(20, Screen.height - 60, 520, 30), "Caméra libre — clic L3 : suivre le joueur ; maintien R3 : recentrer"); }

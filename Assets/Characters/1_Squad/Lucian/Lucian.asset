@@ -17,6 +17,7 @@ MonoBehaviour:
       damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
       presentationProfile: {fileID: 0}
+      preserveWholeBodyLocomotion: 0
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -222,6 +223,7 @@ MonoBehaviour:
       enforceControlledWeightsInLateUpdate: 1
     trajectories:
       library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
+      holdLandingThroughContactLoss: 1
     dash:
       dashOvershootDistance: 1.25
       dashImpulsePerMeter: 8
@@ -231,8 +233,10 @@ MonoBehaviour:
       stopDashDuration: 0.18
       stopDashDeceleration: 65
     jump:
+      coyoteSeconds: 0.1
+      inputBufferSeconds: 0.15
       jumpHeight: 100
-      jumpStartTakeoffNormalizedTime: 0.5
+      jumpStartTakeoffNormalizedTime: 0.13
       jumpStartPlanarSlowdown: 0
       apexGravityEntryVelocity: 25
       apexGravityMultiplier: 0.25
@@ -314,7 +318,7 @@ MonoBehaviour:
     PhysicsMinimumGroundNormal: 0.45
     PhysicsGroundMask:
       serializedVersion: 2
-      m_Bits: 4294967295
+      m_Bits: 8
     PhysicsLogStateChanges: 0
     PhysicsLogPoseAudit: 0
     PhysicsPoseJumpDiagnosticDistance: 0.5
@@ -351,7 +355,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 46567ab025a5d02478c6225a79ef60c1, type: 2}
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
-    quantity: 300
+    quantity: 1000
   - item: {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
     quantity: 300
   - item: {fileID: 11400000, guid: 1c025a0b39ccf564b8d5fe22b4ea5109, type: 2}
@@ -364,7 +368,7 @@ MonoBehaviour:
     stageDistance: 2
     stageGroundMask:
       serializedVersion: 2
-      m_Bits: 4294967291
+      m_Bits: 8
     stageBlockingMask:
       serializedVersion: 2
       m_Bits: 4294967291

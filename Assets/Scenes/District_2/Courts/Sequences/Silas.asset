@@ -1,0 +1,195 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
+  m_Name: Silas
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
+  sequenceId: district2.courts.silas
+  displayName: Des chemins pour les autres
+  description: 
+  playOnce: 1
+  waitForLocalPlayer: 1
+  localPlayerWaitTimeout: 0
+  lockPlayerControl: 1
+  stopActiveAbilitiesOnLock: 1
+  useUnscaledTime: 1
+  startFromBlack: 0
+  openingFadeDuration: 1
+  fadeToBlackBeforeGameplay: 0
+  closingFadeDuration: 0.5
+  fadeFromBlackAfterGameplayRestore: 0
+  gameplayFadeInDuration: 0.75
+  steps:
+  - label: Des chemins pour les autres
+    type: 2
+    skippable: 1
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
+    cameraPointId: Silas
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.8
+    cameraHoldDuration: 3
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 7
+    skippable: 1
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: gameplay
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: 
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: f27485e1da5cb584cbcf984a1e525ca7, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: 
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: 5d433f3337392e84e8de52089feb91af, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: 
+    speakerNameOverride: Lucian
+    voiceLine: {fileID: 11400000, guid: ae7e3bafe958d804db11f439a9ad73f5, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50

@@ -62,31 +62,18 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
     private void OnEnable()
     {
-        if (RealTimeCombatManager.Instance != null)
-        {
-            RealTimeCombatManager.Instance.LockChanged += OnLockChanged;
-            OnLockChanged(RealTimeCombatManager.Instance.LockedEnemy);
-        }
+        RefreshLockCamera();
     }
 
     private void OnDisable()
     {
-        if (RealTimeCombatManager.Instance != null)
-        {
-            RealTimeCombatManager.Instance.LockChanged -= OnLockChanged;
-        }
-
         SetCinematicOverride(false);
         RestoreGameplayCamera();
     }
 
     private void LateUpdate()
     {
-        if (RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.UsesExternalTarget)
-        {
-            if (RealTimeCombatManager.Instance.HasLockedCombatTarget && !RealTimeCombatManager.Instance.IsCinematicSequenceActive) ActivateLockCamera();
-            else RestoreGameplayCamera();
-        }
+        RefreshLockCamera();
         if (!active || cinematicFramingSuspended || uccCameraOverrideActive)
         {
             return;
@@ -137,9 +124,10 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             enemyLookHeight);
     }
 
-    private void OnLockChanged(EnemyController enemy)
+    private void RefreshLockCamera()
     {
-        if (enemy != null)
+        var manager = RealTimeCombatManager.Instance;
+        if (manager != null && manager.HasLockedCombatTarget && !manager.IsCinematicSequenceActive)
         {
             ActivateLockCamera();
         }

@@ -1,0 +1,22 @@
+{
+    "status": "PASS_OFFLINE",
+    "duration": 0.6666666865348816,
+    "rightStanceSolePath": 0.000020844550817855634,
+    "leftStanceSolePath": 0.00000826038740342483,
+    "minimumSole": -7.748603820800781e-7,
+    "maximumLowerSole": 7.152557373046875e-7,
+    "endpointFeet": 3.6010283110954333e-7,
+    "endpointHips": 4.656612873077393e-10,
+    "endpointHipsAngle": 0.0,
+    "rootDistance": 0.0,
+    "rootYaw": 0.0,
+    "maximumGoalError": 5.198348844714928e-7,
+    "maximumSwingLift": 0.111077681183815,
+    "reconstructedLift": true,
+    "previewAsset": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_CombatBrake_FL_WeightTransfer_Pilot.anim",
+    "persistedPoseDifference": 0.0,
+    "persistedRotationDifference": 0.0,
+    "peakSwingPelvisToSupport": 0.155500128865242,
+    "subframeMinimumSole": -0.00010498613119125366,
+    "subframeMaximumLowerSole": 0.0000014677643775939941
+}

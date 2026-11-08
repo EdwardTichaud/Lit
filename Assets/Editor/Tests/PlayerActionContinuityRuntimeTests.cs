@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
@@ -21,7 +22,7 @@ public sealed class PlayerActionContinuityRuntimeTests
         controller.AddLayer("Base Layer");
         clip = new AnimationClip { name = "InPlace combo fixture" };
         clip.SetCurve("", typeof(Transform), "m_LocalScale.x", AnimationCurve.Constant(0, clipSeconds, 1));
-        foreach (string name in new[] { "Locomotion", "First", "Second" })
+        foreach (string name in new[] { "Locomotion", "First", "Second", "CombatLocomotion", "CombatIdle" })
             controller.layers[0].stateMachine.AddState(name).motion = clip;
         var animator = root.AddComponent<Animator>();
         animator.runtimeAnimatorController = controller;
@@ -43,6 +44,40 @@ public sealed class PlayerActionContinuityRuntimeTests
             skill.presentation.allowMoveAfterRecovery = false;
         }
         return presentation;
+    }
+
+    [UnityTest]
+    public IEnumerator CombatVisualStopCannotReplaceAnEnteringAttack()
+    {
+        yield return new EnterPlayMode(false);
+        CreateComboFixture(2);
+        var animator = root.GetComponent<Animator>();
+        var holder = new GameObject("Inactive motion bridge fixture");
+        holder.SetActive(false);
+        holder.transform.SetParent(root.transform);
+        var bridge = holder.AddComponent<LitOpsiveLocomotionBridge>();
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(LitOpsiveLocomotionBridge).GetField("animator", flags).SetValue(bridge, animator);
+        var idleFlag = typeof(LitOpsiveLocomotionBridge).GetField("combatIdlePresentationActive", flags);
+        var enter = typeof(LitOpsiveLocomotionBridge).GetMethod("EnterCombatIdleFromLocomotion", flags);
+        var exit = typeof(LitOpsiveLocomotionBridge).GetMethod("ExitCombatIdleForMovement", flags);
+
+        animator.Play("CombatLocomotion", 0, 0); animator.Update(0);
+        enter.Invoke(bridge, null); animator.Update(.15f);
+        Assert.That(animator.GetCurrentAnimatorStateInfo(0).IsName("CombatIdle"), Is.True,
+            "Ordinary released movement must still enter the idle pose.");
+
+        foreach (bool leavingIdle in new[] { false, true })
+        {
+            idleFlag.SetValue(bridge, leavingIdle);
+            animator.Play(leavingIdle ? "CombatIdle" : "CombatLocomotion", 0, 0); animator.Update(0);
+            animator.CrossFadeInFixedTime("First", .08f, 0, 0); animator.Update(0);
+            Assert.That(animator.GetNextAnimatorStateInfo(0).IsName("First"), Is.True);
+            (leavingIdle ? exit : enter).Invoke(bridge, null);
+            animator.Update(.15f);
+            Assert.That(animator.GetCurrentAnimatorStateInfo(0).IsName("First"), Is.True,
+                "The outgoing ground pose cannot cancel the pending attack.");
+        }
     }
 
     [UnityTest]

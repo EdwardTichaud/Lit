@@ -1,0 +1,104 @@
+{
+  "passes": [
+    "RECORDED WITH ERRORS",
+    "RECORDED: review measured clips and renders; no acceptance claimed"
+  ],
+  "fade_frames": {
+    "plain_F:3": {
+      "left": {
+        "knee_steps_deg": [
+          {
+            "into_fade": 0.42,
+            "out_of_fade": 46.59
+          },
+          {
+            "into_fade": 0.01,
+            "out_of_fade": 22.75
+          }
+        ],
+        "vendor_goal_delta_m": 0.02202999999997246,
+        "vendor_weights": [
+          1.0,
+          1.0
+        ],
+        "ankle_pose_delta_m": 0.02202999999997246,
+        "lowest_sole_delta_m": 0.022039999999947213,
+        "lowest_sole_y_m": [
+          9.48941,
+          9.48941
+        ]
+      },
+      "right": {
+        "knee_steps_deg": [
+          {
+            "into_fade": 0.11,
+            "out_of_fade": 11.84
+          },
+          {
+            "into_fade": 0.0,
+            "out_of_fade": 10.07
+          }
+        ],
+        "vendor_goal_delta_m": 0.022056000000020504,
+        "vendor_weights": [
+          1.0,
+          1.0
+        ],
+        "ankle_pose_delta_m": 0.022056000000020504,
+        "lowest_sole_delta_m": 0.022055000022693623,
+        "lowest_sole_y_m": [
+          9.489458,
+          9.489457
+        ]
+      }
+    },
+    "plain_F:4": {
+      "left": {
+        "knee_steps_deg": [
+          {
+            "into_fade": 46.59,
+            "out_of_fade": 27.48
+          },
+          {
+            "into_fade": 22.75,
+            "out_of_fade": 29.68
+          }
+        ],
+        "vendor_goal_delta_m": 0.024960000000078253,
+        "vendor_weights": [
+          0.933333337,
+          0.933333337
+        ],
+        "ankle_pose_delta_m": 0.025030046524142948,
+        "lowest_sole_delta_m": 0.02271310141744817,
+        "lowest_sole_y_m": [
+          9.62476,
+          9.624436
+        ]
+      },
+      "right": {
+        "knee_steps_deg": [
+          {
+            "into_fade": 11.84,
+            "out_of_fade": 6.28
+          },
+          {
+            "into_fade": 10.07,
+            "out_of_fade": 5.58
+          }
+        ],
+        "vendor_goal_delta_m": 0.024962999999956992,
+        "vendor_weights": [
+          0.933333337,
+          0.933333337
+        ],
+        "ankle_pose_delta_m": 0.024949999999989814,
+        "lowest_sole_delta_m": 0.025719038590044253,
+        "lowest_sole_y_m": [
+          9.434991,
+          9.435152
+        ]
+      }
+    }
+  }
+}

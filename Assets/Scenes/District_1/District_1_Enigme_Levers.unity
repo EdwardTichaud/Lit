@@ -311,14 +311,33 @@ PrefabInstance:
       propertyPath: m_Name
       value: Lever_2
       objectReference: {fileID: 0}
+    - target: {fileID: 9154316756915664896, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      propertyPath: activeDuration
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154316756915664896, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      propertyPath: useSharedInteractionSelection
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7476577756283911577, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 150104869}
+    - targetCorrespondingSourceObject: {fileID: 7476577756283911577, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 150104868}
   m_SourcePrefab: {fileID: 100100000, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
 --- !u!4 &150104864 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3193415297997078368, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+  m_PrefabInstance: {fileID: 150104863}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &150104865 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7476577756283911577, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
   m_PrefabInstance: {fileID: 150104863}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &150104867 stripped
@@ -326,12 +345,42 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9154316756915664896, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
   m_PrefabInstance: {fileID: 150104863}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 150104865}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e199096d99cedcf48af5c3b0da76455f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lever
+--- !u!114 &150104868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 150104865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty:
+  outlined: 0
+--- !u!114 &150104869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 150104865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d428fa654ffa44389e98308ee2168319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldInteractionPrompt
+  target: {fileID: 150104867}
+  label: Actionner
+  worldOffset: {x: 0, y: 1.7, z: 0}
 --- !u!1 &583037013
 GameObject:
   m_ObjectHideFlags: 0
@@ -820,7 +869,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9154316756915664896, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
   m_PrefabInstance: {fileID: 8106982630063836492}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 8106982630063836493}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e199096d99cedcf48af5c3b0da76455f, type: 3}
@@ -906,11 +955,60 @@ PrefabInstance:
       propertyPath: m_Name
       value: Lever_1
       objectReference: {fileID: 0}
+    - target: {fileID: 9154316756915664896, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      propertyPath: activeDuration
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154316756915664896, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      propertyPath: useSharedInteractionSelection
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7476577756283911577, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8106982630063836495}
+    - targetCorrespondingSourceObject: {fileID: 7476577756283911577, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8106982630063836494}
   m_SourcePrefab: {fileID: 100100000, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+--- !u!1 &8106982630063836493 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7476577756283911577, guid: 6e6d8d2a7b4bdc443a46fc878d941044, type: 3}
+  m_PrefabInstance: {fileID: 8106982630063836492}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8106982630063836494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8106982630063836493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty:
+  outlined: 0
+--- !u!114 &8106982630063836495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8106982630063836493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d428fa654ffa44389e98308ee2168319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldInteractionPrompt
+  target: {fileID: 4009727736573915332}
+  label: Actionner
+  worldOffset: {x: 0, y: 1.7, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

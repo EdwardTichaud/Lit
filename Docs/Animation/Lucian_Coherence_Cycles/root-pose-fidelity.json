@@ -1,0 +1,22 @@
+{
+    "clips": [
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Common_Walk_Loop_Inplace.FBX",
+            "rootDistance": 2.0713746547698975,
+            "rootYRange": 0.0,
+            "maximumPelvisYDifference": 7.748603820800781e-7,
+            "maximumSoleDifferenceAfterHorizontalRemoval": 0.06360111385583878,
+            "rootMinimumSole": -0.10422824323177338,
+            "inplaceMinimumSole": -0.1042289286851883
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Common_Run_Loop_Inplace.FBX",
+            "rootDistance": 4.240350723266602,
+            "rootYRange": 0.0,
+            "maximumPelvisYDifference": 5.960464477539063e-7,
+            "maximumSoleDifferenceAfterHorizontalRemoval": 0.1919318437576294,
+            "rootMinimumSole": -0.09419429302215576,
+            "inplaceMinimumSole": -0.09419507533311844
+        }
+    ]
+}

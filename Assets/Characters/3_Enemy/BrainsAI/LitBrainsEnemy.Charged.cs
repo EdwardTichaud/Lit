@@ -117,7 +117,9 @@ public partial class LitBrainsEnemy : ICombatChargedTarget
             allowed = Mathf.Max(0, position.y - chargedConfirmedGroundY);
             collided = true;
         }
-        chargedBody.MovePosition(position + direction * allowed);
+        Vector3 bounded = ConstrainEncounterStep(position, direction * allowed);
+        if (bounded.sqrMagnitude + .000001f < allowed * allowed) collided = true;
+        chargedBody.MovePosition(position + bounded);
         if (collided && rising) chargedRiseRemaining = 0;
         if (collided && !rising) FinishChargedLanding();
     }

@@ -1,0 +1,10 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-20261102-202557",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261102_202601_193.csv",
+    "samples": 1217,
+    "wholeBodyPolicyEnabled": true,
+    "maximumObtainedSpeed": 8.746979713439941,
+    "errors": []
+}

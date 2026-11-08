@@ -1,0 +1,371 @@
+{
+  "baseline": "Library/LucianCoherence/play-baseline-20261102-195456",
+  "candidate": "Library/LucianCoherence/play-candidate-20261102-195854",
+  "trials": [
+    {
+      "idle": {
+        "speed": 0.0,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Common_Idle_Inplace:1"
+        ]
+      },
+      "walk": {
+        "speed": 5.29480171,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Start_Inplace:0.382516026",
+          "Twinblades_Common_Walk_Loop_Inplace:1"
+        ]
+      },
+      "run": {
+        "speed": 8.737186,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Common_Run_Loop_Inplace:1"
+        ]
+      },
+      "stop": {
+        "speed": 1.5173461075e-33,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Stop_Inplace:1",
+          "TwinSword_Common_Walk_Stop_Inplace:0.8755127"
+        ]
+      },
+      "torch_equip": {
+        "speed": 0.0,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Common_Idle_Inplace:1"
+        ]
+      },
+      "torch_walk": {
+        "speed": 5.29480171,
+        "overlay": 1.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Start_Inplace:0.07509053",
+          "Twinblades_Common_Walk_Loop_Inplace:1"
+        ]
+      },
+      "torch_run": {
+        "speed": 8.740238,
+        "overlay": 1.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Common_Run_Loop_Inplace:1"
+        ]
+      },
+      "torch_stop": {
+        "speed": 1.2621536305e-32,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Stop_Inplace:1",
+          "TwinSword_Common_Walk_Stop_Inplace:0.98178035"
+        ]
+      },
+      "combat_F": {
+        "speed": 5.29785347,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_F_Inplace:1"
+        ]
+      },
+      "combat_FR": {
+        "speed": 3.17660618,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_B_Inplace:0.9822138|Twinblades_Strafe_Walk_BL_Inplace:0.0176306982|Twinblades_Idle_Inplace:0.000155508518",
+          "Twinblades_Strafe_Walk_B_Inplace:0.98216784|Twinblades_Strafe_Walk_BL_Inplace:0.01767585|Twinblades_Idle_Inplace:0.000156283379"
+        ]
+      },
+      "combat_R": {
+        "speed": 3.00878394,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_B_Inplace:0.290966928|Twinblades_Strafe_Walk_BL_Inplace:0.546495259|Twinblades_Idle_Inplace:0.162537813",
+          "Twinblades_Strafe_Walk_B_Inplace:0.298462927|Twinblades_Strafe_Walk_BL_Inplace:0.5419487|Twinblades_Idle_Inplace:0.1595884"
+        ]
+      },
+      "combat_BR": {
+        "speed": 2.95283114,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_BL_Inplace:0.588173568|Twinblades_Strafe_Walk_L_Inplace:0.220561147|Twinblades_Idle_Inplace:0.191265285",
+          "Twinblades_Strafe_Walk_BL_Inplace:0.5974662|Twinblades_Strafe_Walk_L_Inplace:0.204427838|Twinblades_Idle_Inplace:0.198105991"
+        ]
+      },
+      "combat_B": {
+        "speed": 3.9276154,
+        "overlay": 1.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_BL_Inplace:0.346991181|Twinblades_Strafe_Walk_L_Inplace:0.590877235|Twinblades_Idle_Inplace:0.0621315837",
+          "Twinblades_Strafe_Walk_BL_Inplace:0.346991122|Twinblades_Strafe_Walk_L_Inplace:0.5908773|Twinblades_Idle_Inplace:0.0621315837"
+        ]
+      },
+      "combat_BL": {
+        "speed": 4.60170078,
+        "overlay": 1.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_BL_Inplace:0.149901256|Twinblades_Strafe_Walk_L_Inplace:0.8387997|Twinblades_Idle_Inplace:0.011299029",
+          "Twinblades_Strafe_Walk_BL_Inplace:0.149573818|Twinblades_Strafe_Walk_L_Inplace:0.8391768|Twinblades_Idle_Inplace:0.0112494081"
+        ]
+      },
+      "combat_L": {
+        "speed": 5.213047749999999,
+        "overlay": 1.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_FL_Inplace:0.088336885|Twinblades_Strafe_Walk_L_Inplace:0.9077538|Twinblades_Idle_Inplace:0.00390929",
+          "Twinblades_Strafe_Walk_FL_Inplace:0.07967463|Twinblades_Strafe_Walk_L_Inplace:0.9171463|Twinblades_Idle_Inplace:0.00317907333"
+        ]
+      },
+      "combat_FL": {
+        "speed": 5.1037038,
+        "overlay": 1.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_FL_Inplace:0.384217978|Twinblades_Strafe_Walk_L_Inplace:0.539024353|Twinblades_Idle_Inplace:0.07675767",
+          "Twinblades_Strafe_Walk_FL_Inplace:0.3770674|Twinblades_Strafe_Walk_L_Inplace:0.549118459|Twinblades_Idle_Inplace:0.07381415"
+        ]
+      },
+      "combat_stop": {
+        "speed": 6.519134e-38,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Idle_Inplace:1"
+        ]
+      }
+    },
+    {
+      "idle": {
+        "speed": 0.0,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Common_Idle_Inplace:1"
+        ]
+      },
+      "walk": {
+        "speed": 5.29480171,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Start_Inplace:0.2837751",
+          "TwinSword_Common_Walk_Start_Inplace:0.015699923"
+        ]
+      },
+      "run": {
+        "speed": 8.737186,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Common_Run_Loop_Inplace:1"
+        ]
+      },
+      "stop": {
+        "speed": 3.733211e-33,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Stop_Inplace:1",
+          "TwinSword_Common_Walk_Stop_Inplace:0.976121664"
+        ]
+      },
+      "torch_equip": {
+        "speed": 0.0,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Common_Idle_Inplace:1"
+        ]
+      },
+      "torch_walk": {
+        "speed": 5.29480171,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Start_Inplace:0.0671622753",
+          "Twinblades_Common_Walk_Loop_Inplace:1"
+        ]
+      },
+      "torch_run": {
+        "speed": 8.740238,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Common_Run_Loop_Inplace:1"
+        ]
+      },
+      "torch_stop": {
+        "speed": 2.33367881e-33,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "TwinSword_Common_Walk_Stop_Inplace:1",
+          "TwinSword_Common_Walk_Stop_Inplace:0.9772567"
+        ]
+      },
+      "combat_F": {
+        "speed": 5.29785347,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_F_Inplace:1"
+        ]
+      },
+      "combat_FR": {
+        "speed": 3.17433643,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_B_Inplace:0.8785109|Twinblades_Strafe_Walk_BL_Inplace:0.1148696|Twinblades_Idle_Inplace:0.006619513",
+          "Twinblades_Strafe_Walk_B_Inplace:0.878424048|Twinblades_Strafe_Walk_BL_Inplace:0.114947416|Twinblades_Idle_Inplace:0.00662851334"
+        ]
+      },
+      "combat_R": {
+        "speed": 2.985737,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_B_Inplace:0.22426641|Twinblades_Strafe_Walk_BL_Inplace:0.5860259|Twinblades_Idle_Inplace:0.1897077",
+          "Twinblades_Strafe_Walk_B_Inplace:0.231647313|Twinblades_Strafe_Walk_BL_Inplace:0.5817327|Twinblades_Idle_Inplace:0.18662"
+        ]
+      },
+      "combat_BR": {
+        "speed": 3.018955245,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_BL_Inplace:0.5681586|Twinblades_Strafe_Walk_L_Inplace:0.254760325|Twinblades_Idle_Inplace:0.177081048",
+          "Twinblades_Strafe_Walk_BL_Inplace:0.578225434|Twinblades_Strafe_Walk_L_Inplace:0.237651646|Twinblades_Idle_Inplace:0.18412292"
+        ]
+      },
+      "combat_B": {
+        "speed": 3.912356495,
+        "overlay": 0.0,
+        "torch": [
+          "False"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_BL_Inplace:0.3432622|Twinblades_Strafe_Walk_L_Inplace:0.595977366|Twinblades_Idle_Inplace:0.06076044",
+          "Twinblades_Strafe_Walk_BL_Inplace:0.343262136|Twinblades_Strafe_Walk_L_Inplace:0.595977545|Twinblades_Idle_Inplace:0.06076032"
+        ]
+      },
+      "combat_BL": {
+        "speed": 0.0,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Idle_Inplace:1"
+        ]
+      },
+      "combat_L": {
+        "speed": 4.937203,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_FL_Inplace:0.4844811|Twinblades_Strafe_Walk_L_Inplace:0.390320659|Twinblades_Idle_Inplace:0.125198245",
+          "Twinblades_Strafe_Walk_FL_Inplace:0.477489829|Twinblades_Strafe_Walk_L_Inplace:0.401147425|Twinblades_Idle_Inplace:0.121362746"
+        ]
+      },
+      "combat_FL": {
+        "speed": 4.23623848,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Strafe_Walk_FL_Inplace:0.6950021|Twinblades_Strafe_Walk_L_Inplace:0.0240056515|Twinblades_Idle_Inplace:0.28099227",
+          "Twinblades_Strafe_Walk_FL_Inplace:0.689972162|Twinblades_Strafe_Walk_L_Inplace:0.0338637829|Twinblades_Idle_Inplace:0.276164055"
+        ]
+      },
+      "combat_stop": {
+        "speed": 1.051766e-39,
+        "overlay": 0.0,
+        "torch": [
+          "True"
+        ],
+        "base": [
+          "Twinblades_Idle_Inplace:1"
+        ]
+      }
+    }
+  ]
+}

@@ -8,6 +8,39 @@ using Object = UnityEngine.Object;
 
 public sealed class CycleTests
 {
+    [TestCase(0f, true)]
+    [TestCase(5f, false)]
+    public void CompletionMarginWaitsAfterReadinessAndResetsWhenNotCompleted(float delay, bool immediate)
+    {
+        var root = new GameObject("Completion margin"); root.SetActive(false);
+        var definition = ScriptableObject.CreateInstance<CycleDefinition>();
+        var cycle = root.AddComponent<CycleController>(); cycle.definition = definition;
+        definition.completionUnloadDelay = delay;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var elapsed = typeof(CycleController).GetMethod("CompletionDelayElapsed", flags);
+        try
+        {
+            Assert.That(elapsed.Invoke(cycle, new object[] { 100d }), Is.EqualTo(immediate));
+            if (delay > 0)
+            {
+                Assert.That(elapsed.Invoke(cycle, new object[] { 104.99d }), Is.False);
+                Assert.That(elapsed.Invoke(cycle, new object[] { 105d }), Is.True);
+            }
+            typeof(CycleController).GetMethod("UpdateCompletedScene", flags).Invoke(cycle, null);
+            Assert.That((double)typeof(CycleController).GetField("completionMarginStartedAt", flags).GetValue(cycle), Is.EqualTo(-1));
+            Assert.That(elapsed.Invoke(cycle, new object[] { 200d }), Is.EqualTo(immediate));
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(definition); }
+    }
+
+    [Test]
+    public void LucSceneHasFiveSecondUnloadMargin()
+    {
+        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Scenes/Cycles/Cycle_Luc/LucCycle.asset");
+        Assert.That(definition.cycleSceneName, Is.EqualTo("District_1_Cycle_Luc"));
+        Assert.That(definition.completionUnloadDelay, Is.EqualTo(5));
+    }
+
     [TestCase(0, 0, false)]
     [TestCase(8, 7, false)]
     [TestCase(8, 8, true)]

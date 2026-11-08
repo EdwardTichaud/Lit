@@ -1,0 +1,316 @@
+{
+  "run": "Library/LucianCoherence/play-cadence-mixed-gaits-stop-support-contacts-20261105-175825",
+  "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+  "scope": "Qualified goals with both IK passes stamped on the same frame. Uniform-scale Animator-local bone errors. No sole, transition or visual verdict.",
+  "matched_frames": 2092,
+  "missing_frames": 0,
+  "wrong_pass_frames": 0,
+  "state_handoffs": [
+    {
+      "trial": "explore_035",
+      "frame": "186",
+      "from_clips": "Lucian_Common_Walk_Loop_Stride03:0.06367868",
+      "to_clips": "TwinSword_Common_Walk_Start_Inplace:1",
+      "from_phase": 1.57388592,
+      "to_phase": 0.10758929,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.013339999999999463,
+      "world_displacement_m": {
+        "root": 0.019770000025284916,
+        "left": 0.03745675770803101,
+        "right": 0.020202647771988352
+      }
+    },
+    {
+      "trial": "explore_035",
+      "frame": "218",
+      "from_clips": "TwinSword_Common_Walk_Start_Inplace:0.0943419337",
+      "to_clips": "Lucian_Common_Walk_Loop_Stride03:1",
+      "from_phase": 0.7724526,
+      "to_phase": 0.0602334365,
+      "qualified_before": false,
+      "qualified_after": true,
+      "dt": 0.01638679999999937,
+      "world_displacement_m": {
+        "root": 0.024419999999963693,
+        "left": 0.09936226658547005,
+        "right": 0.03593193042397498
+      }
+    },
+    {
+      "trial": "combat_035",
+      "frame": "907",
+      "from_clips": "Lucian_Common_Walk_Loop_Stride03:0.151231229|Lucian_Common_Run_Stride02:0.012528657",
+      "to_clips": "Twinblades_Idle_Inplace:1",
+      "from_phase": 12.6090689,
+      "to_phase": 0.0418730527,
+      "qualified_before": false,
+      "qualified_after": false,
+      "dt": 0.016849499999999296,
+      "world_displacement_m": {
+        "root": 0.02514999999993961,
+        "left": 0.11566438200672946,
+        "right": 0.06413852651880032
+      }
+    },
+    {
+      "trial": "combat_035",
+      "frame": "910",
+      "from_clips": "Twinblades_Idle_Inplace:0.447829962",
+      "to_clips": "Lucian_Strafe_Walk_F_Stride03:0.791718245|Lucian_Strafe_Run_F_Stride03:0.2082818",
+      "from_phase": 0.05848535,
+      "to_phase": 0.0234216042,
+      "qualified_before": false,
+      "qualified_after": true,
+      "dt": 0.016525399999999024,
+      "world_displacement_m": {
+        "root": 0.024539999999888096,
+        "left": 0.1424730290441217,
+        "right": 0.1393060262193338
+      }
+    },
+    {
+      "trial": "stop",
+      "frame": "1972",
+      "from_clips": "Lucian_Strafe_Walk_F_Stride03:0.03608788|Lucian_Strafe_Walk_FL_Stride03:0.130810857",
+      "to_clips": "Common_Idle_Inplace:0.782464266|Lucian_Common_Walk_Loop_Stride03:0.217535764",
+      "from_phase": 19.1450844,
+      "to_phase": 0.04961204,
+      "qualified_before": true,
+      "qualified_after": true,
+      "dt": 0.01670000000000016,
+      "world_displacement_m": {
+        "root": 0.009525360937993263,
+        "left": 0.3067193173833044,
+        "right": 0.09596797426223042
+      }
+    },
+    {
+      "trial": "stop",
+      "frame": "1981",
+      "from_clips": "Common_Idle_Inplace:0.006750047",
+      "to_clips": "TwinSword_Common_Walk_Stop_Inplace:1",
+      "from_phase": 0.1174512,
+      "to_phase": 0.20228821,
+      "qualified_before": true,
+      "qualified_after": true,
+      "dt": 0.011740000000003192,
+      "world_displacement_m": {
+        "root": 0.0,
+        "left": 0.025429292642180773,
+        "right": 0.018305433218540022
+      }
+    },
+    {
+      "trial": "stop",
+      "frame": "2015",
+      "from_clips": "TwinSword_Common_Walk_Stop_Inplace:0.027536273",
+      "to_clips": "Common_Idle_Inplace:1",
+      "from_phase": 1.05559409,
+      "to_phase": 0.05873146,
+      "qualified_before": true,
+      "qualified_after": true,
+      "dt": 0.016753900000011868,
+      "world_displacement_m": {
+        "root": 0.0,
+        "left": 0.007050522250218328,
+        "right": 0.0037840730700865726
+      }
+    }
+  ],
+  "trials": {
+    "idle": {
+      "native": {
+        "feet": 340,
+        "min_y_mm": -0.026300000000700763,
+        "median_y_mm": -0.0007040000001706792,
+        "max_y_mm": 0.024620999999835913,
+        "max_horizontal_mm": 0.05828223876104187
+      },
+      "final": {
+        "feet": 340,
+        "min_y_mm": -10.0265290000007,
+        "median_y_mm": -10.000930500000171,
+        "max_y_mm": -9.975608000000163,
+        "max_horizontal_mm": 0.05828223876104187
+      }
+    },
+    "explore_035": {
+      "native": {
+        "feet": 286,
+        "min_y_mm": -0.031100000000061634,
+        "median_y_mm": 0.000541000000534031,
+        "max_y_mm": 0.030477000001027932,
+        "max_horizontal_mm": 0.09144892368335825
+      },
+      "final": {
+        "feet": 286,
+        "min_y_mm": -10.031334000000058,
+        "median_y_mm": -9.999687999999466,
+        "max_y_mm": -9.969751999998971,
+        "max_horizontal_mm": 0.09144892368335825
+      }
+    },
+    "explore_05": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -0.030018999999992246,
+        "median_y_mm": -0.00040099999903953076,
+        "max_y_mm": 0.038219999999922205,
+        "max_horizontal_mm": 0.07630136866817697
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.030247999999991,
+        "median_y_mm": -10.000632999999038,
+        "max_y_mm": -9.962000000000081,
+        "max_horizontal_mm": 0.07630136866817697
+      }
+    },
+    "explore_065": {
+      "native": {
+        "feet": 360,
+        "min_y_mm": -0.028230000000628586,
+        "median_y_mm": -0.0011840000003204842,
+        "max_y_mm": 0.03599999999998049,
+        "max_horizontal_mm": 0.07487661922936205
+      },
+      "final": {
+        "feet": 360,
+        "min_y_mm": -10.0284590000006,
+        "median_y_mm": -10.00141100000032,
+        "max_y_mm": -9.96423299999999,
+        "max_horizontal_mm": 0.07487661922936205
+      }
+    },
+    "explore_08": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -0.06526100000053825,
+        "median_y_mm": 0.0010294999997911836,
+        "max_y_mm": 0.06446999999937253,
+        "max_horizontal_mm": 0.12332005268378418
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.06550000000056,
+        "median_y_mm": -9.999206000000205,
+        "max_y_mm": -9.935759000000655,
+        "max_horizontal_mm": 0.12332005268378418
+      }
+    },
+    "combat_035": {
+      "native": {
+        "feet": 344,
+        "min_y_mm": -0.05761099999909702,
+        "median_y_mm": -0.003435999999509831,
+        "max_y_mm": 0.0624199999999242,
+        "max_horizontal_mm": 0.12729236773876124
+      },
+      "final": {
+        "feet": 344,
+        "min_y_mm": -10.057839999999096,
+        "median_y_mm": -10.003664999999524,
+        "max_y_mm": -9.937809000000076,
+        "max_horizontal_mm": 0.12729236773876124
+      }
+    },
+    "combat_05": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -0.05664199999988462,
+        "median_y_mm": -0.00019049999951115115,
+        "max_y_mm": 0.05229999999983859,
+        "max_horizontal_mm": 0.14654768744701688
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.056870999999912,
+        "median_y_mm": -10.000412499999527,
+        "max_y_mm": -9.947920000000165,
+        "max_horizontal_mm": 0.14654768744701688
+      }
+    },
+    "combat_065": {
+      "native": {
+        "feet": 360,
+        "min_y_mm": -0.05746000000084184,
+        "median_y_mm": 0.0010894999992322463,
+        "max_y_mm": 0.06100899999975096,
+        "max_horizontal_mm": 0.13320513837522968
+      },
+      "final": {
+        "feet": 360,
+        "min_y_mm": -10.057700000000835,
+        "median_y_mm": -9.999142500000765,
+        "max_y_mm": -9.939219000000277,
+        "max_horizontal_mm": 0.13320513837522968
+      }
+    },
+    "combat_08": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -0.07323400000058822,
+        "median_y_mm": -0.0006714999999657412,
+        "max_y_mm": 0.05146700000036031,
+        "max_horizontal_mm": 0.13581196701777234
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.073463000000615,
+        "median_y_mm": -10.000902999999978,
+        "max_y_mm": -9.948761999999611,
+        "max_horizontal_mm": 0.13581196701777234
+      }
+    },
+    "combat_FR_05": {
+      "native": {
+        "feet": 362,
+        "min_y_mm": -0.06158899999877954,
+        "median_y_mm": 0.00016000000065130582,
+        "max_y_mm": 0.053556000000620774,
+        "max_horizontal_mm": 0.1251203677071786
+      },
+      "final": {
+        "feet": 362,
+        "min_y_mm": -10.061817999998778,
+        "median_y_mm": -10.000070499999346,
+        "max_y_mm": -9.946672999999379,
+        "max_horizontal_mm": 0.1251203677071786
+      }
+    },
+    "combat_FL_05": {
+      "native": {
+        "feet": 324,
+        "min_y_mm": -0.046032999998890656,
+        "median_y_mm": 1.2000000257361698e-05,
+        "max_y_mm": 0.04861700000080571,
+        "max_horizontal_mm": 0.1253124344186389
+      },
+      "final": {
+        "feet": 324,
+        "min_y_mm": -10.04626199999889,
+        "median_y_mm": -10.000216999999727,
+        "max_y_mm": -9.951610999999193,
+        "max_horizontal_mm": 0.1253124344186389
+      }
+    },
+    "stop": {
+      "native": {
+        "feet": 360,
+        "min_y_mm": -0.04473300000101821,
+        "median_y_mm": -0.0005800000002775807,
+        "max_y_mm": 0.054453000000065366,
+        "max_horizontal_mm": 0.13096867764727296
+      },
+      "final": {
+        "feet": 360,
+        "min_y_mm": -10.044961000001019,
+        "median_y_mm": -10.000809000000277,
+        "max_y_mm": -9.945775999999935,
+        "max_horizontal_mm": 0.13096867764727296
+      }
+    }
+  }
+}

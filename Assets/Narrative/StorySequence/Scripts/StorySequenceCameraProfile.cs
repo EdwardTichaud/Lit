@@ -18,6 +18,10 @@ namespace Lit.Story
         public float followSharpness = 12f;
         [Tooltip("Cadre le milieu entre locuteur et interlocuteur.")]
         public bool frameSpeakerAndListener;
+        [Tooltip("Oriente l'offset horizontal vers l'interlocuteur plutot que selon la rotation du personnage.")]
+        public bool useConversationAxis;
+        [Tooltip("Place l'origine camera au milieu des deux personnages. Utile pour les plans larges et a deux.")]
+        public bool centerCameraBetweenSubjects;
         [Range(0f, 1f)] public float speakerToListenerLookWeight = 0.35f;
     }
 }

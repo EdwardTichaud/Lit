@@ -1,0 +1,7 @@
+[LucianCounter] timeline=CombatLab_CounterSkill_2 controller=
+[CombatCinematic Camera] PlayableDirector.played | rig='CombatLab_CounterRig (Runtime)' | timeline='CombatLab_CounterSkill_2' | brain='CombatLab_GameplayCamera' | gameplayCamera='CombatLab_GameplayCamera' | active='CounterSkill_VirtualCamera(Clone)' | player='LucianCadence(Clone)' | enemyLockPoint='ChargedEnemy_Lab(Clone)' | token=1.
+[LucianCounter] launch contract=True root=True manager=True target=LucianCadence(Clone) sameActor=True
+[CombatCinematic Camera] Restitution camera: Fin Timeline: Completed | rig='CombatLab_CounterRig (Runtime)' | timeline='CombatLab_CounterSkill_2' | brain='CombatLab_GameplayCamera' | gameplayCamera='CombatLab_GameplayCamera' | active='CounterSkill_VirtualCamera(Clone)' | player='LucianCadence(Clone)' | enemyLockPoint='ChargedEnemy_Lab(Clone)' | token=1.
+[LucianCounter] motion token observed=True
+[LucianCounter] controller restored, gameplay Inplace
+[CounterCameraHandoffValidation] FAIL System.InvalidOperationException: Expected four runtime hit bursts, observed 0

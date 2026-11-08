@@ -1,0 +1,83 @@
+{
+  "reference": {
+    "median_speed_mps": 1.48907584,
+    "root_motion_samples": 0,
+    "max_step_cm": 13.846723715740294,
+    "pairs": [
+      {
+        "frame": 215,
+        "time_step_ms": 16.245839999999845,
+        "left_step_cm": 11.835313779107071,
+        "right_step_cm": 12.048186328659776,
+        "capsule_step_cm": 2.417000000002645,
+        "handoff": false
+      },
+      {
+        "frame": 216,
+        "time_step_ms": 16.927480000000106,
+        "left_step_cm": 13.479997264460719,
+        "right_step_cm": 12.63384364158951,
+        "capsule_step_cm": 2.52100000000155,
+        "handoff": false
+      },
+      {
+        "frame": 217,
+        "time_step_ms": 16.688349999999907,
+        "left_step_cm": 13.846723715740294,
+        "right_step_cm": 12.288928350348417,
+        "capsule_step_cm": 2.4840000000040163,
+        "handoff": false
+      },
+      {
+        "frame": 218,
+        "time_step_ms": 16.300199999999876,
+        "left_step_cm": 7.2431073359388645,
+        "right_step_cm": 5.70084835791618,
+        "capsule_step_cm": 2.428999999995085,
+        "handoff": true
+      }
+    ]
+  },
+  "phase_adjusted": {
+    "median_speed_mps": 1.48950535,
+    "root_motion_samples": 0,
+    "max_step_cm": 4.556087849247745,
+    "pairs": [
+      {
+        "frame": 217,
+        "time_step_ms": 17.14199999999977,
+        "left_step_cm": 4.556087849247745,
+        "right_step_cm": 1.815104856473048,
+        "capsule_step_cm": 2.555999999992764,
+        "handoff": false
+      },
+      {
+        "frame": 218,
+        "time_step_ms": 16.436000000000117,
+        "left_step_cm": 4.192515240281767,
+        "right_step_cm": 1.4158249362054791,
+        "capsule_step_cm": 2.4490000000014334,
+        "handoff": false
+      },
+      {
+        "frame": 219,
+        "time_step_ms": 16.845750000000326,
+        "left_step_cm": 3.7925755747293093,
+        "right_step_cm": 1.1352330157277732,
+        "capsule_step_cm": 2.5080000000002656,
+        "handoff": false
+      },
+      {
+        "frame": 220,
+        "time_step_ms": 16.554249999999993,
+        "left_step_cm": 2.8151360606529265,
+        "right_step_cm": 2.1471292485617126,
+        "capsule_step_cm": 2.4660000000039872,
+        "handoff": true
+      }
+    ]
+  },
+  "editor_errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ]
+}

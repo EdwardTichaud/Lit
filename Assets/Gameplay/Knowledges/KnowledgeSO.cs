@@ -45,6 +45,8 @@ public class KnowledgeSO : ScriptableObject
     public List<string> tags = new List<string>();
 
     [Header("Narrative Links")]
+    [Tooltip("Cycles auxquels rattacher cette connaissance dans le journal. Les etapes et recompenses existantes sont aussi reconnues automatiquement.")]
+    public List<CycleDefinition> cycles = new List<CycleDefinition>();
     /// <summary>District ID linked to this knowledge, if any.</summary>
     public string districtId;
     /// <summary>Room or chamber ID linked to this knowledge, if any.</summary>

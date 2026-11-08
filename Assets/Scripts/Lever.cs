@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 // Levier interactif avec suivi de portee, mode d'activation et dispatch vers des cibles.
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
-public class Lever : NetworkBehaviour
+public partial class Lever : NetworkBehaviour
 {
     public enum LeverActivationMode
     {
@@ -148,7 +148,7 @@ public class Lever : NetworkBehaviour
 
     private void OnEnable()
     {
-        if (useInteractInput)
+        if (useInteractInput && !useSharedInteractionSelection)
         {
             LocalInputRouter.EnsureInitialized();
             LocalInputRouter.Interact += OnInteractPerformed;
@@ -167,6 +167,7 @@ public class Lever : NetworkBehaviour
         StopDeactivateTimer();
         StopTargetDispatches();
         ResetInteractionTracking();
+        ClearSharedInteractionSelection();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -272,7 +273,9 @@ public class Lever : NetworkBehaviour
         leverAnimator.SetBool(leverBoolParam, value);
     }
 
-    private void OnInteractPerformed(InputAction.CallbackContext context)
+    private void OnInteractPerformed(InputAction.CallbackContext context) => ProcessLocalInteraction();
+
+    private void ProcessLocalInteraction()
     {
         if (!useInteractInput)
         {

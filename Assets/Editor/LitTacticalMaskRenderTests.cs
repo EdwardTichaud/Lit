@@ -29,7 +29,8 @@ public sealed class LitTacticalMaskRenderTests
                 objects.Add(root); root.transform.position = position; root.transform.localScale = scale;
                 var renderer = root.GetComponent<Renderer>();
                 var mat = new Material(shader); materials.Add(mat); mat.SetColor("_Color", color);
-                mat.SetFloat("_ZTest", (float)(SystemInfo.usesReversedZBuffer ? CompareFunction.GreaterEqual : CompareFunction.LessEqual));
+                // ShaderLab translates LEqual for reversed-Z platforms itself.
+                mat.SetFloat("_ZTest", (float)CompareFunction.LessEqual);
                 renderer.sharedMaterial = mat; draw.Add(renderer); return renderer;
             }
             LitCameraOcclusionGroup Group(Renderer renderer, bool floor = false)
@@ -61,7 +62,7 @@ public sealed class LitTacticalMaskRenderTests
                 {
                     cmd.SetRenderTarget(rt);
                     cmd.SetViewport(new Rect(0, 0, 128, 128)); cmd.DisableScissorRect();
-                    cmd.ClearRenderTarget(true, true, Color.black, SystemInfo.usesReversedZBuffer ? 0 : 1);
+                    cmd.ClearRenderTarget(true, true, Color.black, 1);
                     cmd.SetGlobalMatrix("_TestVP", GL.GetGPUProjectionMatrix(camera.projectionMatrix, true) * camera.worldToCameraMatrix);
                     cmd.SetGlobalVector("_TestCameraPosition", cameraRoot.transform.position);
                     cmd.SetGlobalVector("_TestCameraForward", cameraRoot.transform.forward);
@@ -81,6 +82,7 @@ public sealed class LitTacticalMaskRenderTests
                 finally { cmd.Release(); }
             }
             Render(); Assert.That(pixels.GetPixel(64, 64).r, Is.GreaterThan(.8f), "Control: a wall must initially hide the player.");
+            Assert.That(pixels.GetPixel(64, 64).g, Is.LessThan(.2f), "Control must show a wall, not a floor or the player.");
             nearest.ApplyMask(this, data); Render();
             Assert.That(pixels.GetPixel(64, 64).r, Is.GreaterThan(.8f), "Cutting only the first layer must still leave an occluder.");
             nearest.RestoreMask(this);
@@ -98,12 +100,12 @@ public sealed class LitTacticalMaskRenderTests
             Assert.That(center.r, Is.LessThan(.2f));
             Assert.That(pixels.GetPixel(8, 64).r, Is.GreaterThan(.8f), "Walls outside the circular opening remain visible.");
             Vector3 floorPixel = camera.WorldToViewportPoint(new Vector3(0, 0, -4));
-            int fy = Mathf.RoundToInt((1 - floorPixel.y) * 128);
+            int fy = Mathf.RoundToInt(floorPixel.y * 128);
             Color ground = pixels.GetPixel(64, fy);
             Assert.That(ground.r, Is.GreaterThan(.8f), "Supporting ground remains yellow, not a hole.");
             Assert.That(ground.g, Is.GreaterThan(.8f));
             Vector3 backPixel = camera.WorldToViewportPoint(new Vector3(1.8f, 1, 2));
-            Color back = pixels.GetPixel(Mathf.RoundToInt(backPixel.x * 128), Mathf.RoundToInt((1 - backPixel.y) * 128));
+            Color back = pixels.GetPixel(Mathf.RoundToInt(backPixel.x * 128), Mathf.RoundToInt(backPixel.y * 128));
             Assert.That(back.b, Is.GreaterThan(.8f), "Geometry behind the player remains blue.");
             foreach (var group in groups) group.RestoreMask(this);
             background.RestoreMask(this); support.RestoreMask(this);

@@ -276,7 +276,7 @@ public static partial class ActorFacingCalibration
         finally {foreach(var input in inputs)if(input.candidate!=null && !AssetDatabase.Contains(input.candidate))Object.DestroyImmediate(input.candidate);}
     }
 
-    static GameObject VisualCopy(Animator source)
+    internal static GameObject VisualCopy(Animator source)
     {
         var map=new Dictionary<Transform,Transform>();var root=Clone(source.transform,map).gameObject;root.SetActive(true);
         root.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);root.transform.localScale=source.transform.lossyScale;

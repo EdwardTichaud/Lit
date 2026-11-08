@@ -1,0 +1,4 @@
+PASS: repeated approved calibration changed no asset bytes or timestamps.
+Assets/Characters/AnimationPresentation/LucianCoherencePreview/Cadence01/LocomotionMeasurements.asset
+Assets/Characters/AnimationPresentation/LucianCoherencePreview/Cadence01/LucianFootSupports.asset
+Assets/Characters/AnimationPresentation/LucianCoherencePreview/Cadence01/LucianCadence.controller

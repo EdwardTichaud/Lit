@@ -1,0 +1,564 @@
+{
+  "tier": {
+    "trials": {
+      "start_run": {
+        "start_frames": 29,
+        "walk_start_frames": 7,
+        "full_start_maximum_foot_step_cm": 23.623,
+        "outgoing_locomotion_peak_cm": 23.623,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 183,
+            "foot_cm": 2.226,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.826328039"
+          },
+          {
+            "frame": 184,
+            "foot_cm": 23.623,
+            "before_clips": "Common_Idle_Inplace:0.826328039",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.6021614"
+          },
+          {
+            "frame": 185,
+            "foot_cm": 7.355,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.6021614",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.292113423"
+          },
+          {
+            "frame": 186,
+            "foot_cm": 7.827,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.292113423",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.00455334038|Lucian_Common_Run_Stride02:0.0005627645"
+          },
+          {
+            "frame": 187,
+            "foot_cm": 0.66,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.00455334038|Lucian_Common_Run_Stride02:0.0005627645",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 5.2947685,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 5.944,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 5.944,
+            "lowest_sole_cm": 15.372,
+            "delta_ms": 16.7
+          },
+          {
+            "step_cm": 5.914,
+            "lowest_sole_cm": 12.414,
+            "delta_ms": 16.83
+          },
+          {
+            "step_cm": 5.301,
+            "lowest_sole_cm": 11.118,
+            "delta_ms": 16.27
+          }
+        ]
+      },
+      "start_sprint": {
+        "start_frames": 28,
+        "walk_start_frames": 8,
+        "full_start_maximum_foot_step_cm": 14.166,
+        "outgoing_locomotion_peak_cm": 12.661,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 543,
+            "foot_cm": 12.661,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.7743067"
+          },
+          {
+            "frame": 544,
+            "foot_cm": 5.285,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.7743067",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.5332494"
+          },
+          {
+            "frame": 545,
+            "foot_cm": 6.072,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.5332494",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.288459|Lucian_Common_Run_Stride02:0.03460378"
+          },
+          {
+            "frame": 546,
+            "foot_cm": 5.82,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.288459|Lucian_Common_Run_Stride02:0.03460378",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.09833807|Lucian_Common_Run_Stride02:0.0117967147"
+          },
+          {
+            "frame": 547,
+            "foot_cm": 3.873,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.09833807|Lucian_Common_Run_Stride02:0.0117967147",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 8.739998,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 11.515,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 9.404,
+            "lowest_sole_cm": 13.228,
+            "delta_ms": 16.37
+          },
+          {
+            "step_cm": 11.515,
+            "lowest_sole_cm": 8.737,
+            "delta_ms": 16.81
+          },
+          {
+            "step_cm": 11.352,
+            "lowest_sole_cm": 5.0,
+            "delta_ms": 16.38
+          }
+        ]
+      },
+      "start_run_torch": {
+        "start_frames": 29,
+        "walk_start_frames": 8,
+        "full_start_maximum_foot_step_cm": 14.075,
+        "outgoing_locomotion_peak_cm": 14.075,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 885,
+            "foot_cm": 14.075,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.8007374"
+          },
+          {
+            "frame": 886,
+            "foot_cm": 6.592,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.8007374",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.554309368"
+          },
+          {
+            "frame": 887,
+            "foot_cm": 5.583,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.554309368",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.332029343"
+          },
+          {
+            "frame": 888,
+            "foot_cm": 6.79,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.332029343",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.097183764|Lucian_Common_Run_Stride02:0.0100403409"
+          },
+          {
+            "frame": 889,
+            "foot_cm": 3.496,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.097183764|Lucian_Common_Run_Stride02:0.0100403409",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 5.298255,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 6.013,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 6.013,
+            "lowest_sole_cm": 15.365,
+            "delta_ms": 16.88
+          },
+          {
+            "step_cm": 5.876,
+            "lowest_sole_cm": 12.429,
+            "delta_ms": 16.68
+          },
+          {
+            "step_cm": 5.567,
+            "lowest_sole_cm": 11.035,
+            "delta_ms": 16.95
+          }
+        ]
+      },
+      "start_sprint_torch": {
+        "start_frames": 29,
+        "walk_start_frames": 7,
+        "full_start_maximum_foot_step_cm": 13.649,
+        "outgoing_locomotion_peak_cm": 10.351,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 1246,
+            "foot_cm": 2.881,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.775750637"
+          },
+          {
+            "frame": 1247,
+            "foot_cm": 10.351,
+            "before_clips": "Common_Idle_Inplace:0.775750637",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.560413361"
+          },
+          {
+            "frame": 1248,
+            "foot_cm": 6.671,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.560413361",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.312082022|Lucian_Common_Run_Stride02:0.02934202"
+          },
+          {
+            "frame": 1249,
+            "foot_cm": 7.133,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.312082022|Lucian_Common_Run_Stride02:0.02934202",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.0796436146|Lucian_Common_Run_Stride02:0.03662037"
+          },
+          {
+            "frame": 1250,
+            "foot_cm": 4.268,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.0796436146|Lucian_Common_Run_Stride02:0.03662037",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 8.7402585,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 11.993,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 9.402,
+            "lowest_sole_cm": 12.914,
+            "delta_ms": 16.06
+          },
+          {
+            "step_cm": 11.993,
+            "lowest_sole_cm": 8.333,
+            "delta_ms": 17.28
+          },
+          {
+            "step_cm": 11.043,
+            "lowest_sole_cm": 4.618,
+            "delta_ms": 16.45
+          }
+        ]
+      },
+      "start_slow": {
+        "start_frames": 0,
+        "walk_start_frames": 32,
+        "full_start_maximum_foot_step_cm": 12.639,
+        "outgoing_locomotion_peak_cm": 12.639,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 1607,
+            "foot_cm": 12.639,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.7770773"
+          },
+          {
+            "frame": 1608,
+            "foot_cm": 5.133,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.7770773",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.5524374"
+          },
+          {
+            "frame": 1609,
+            "foot_cm": 5.356,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.5524374",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.334288"
+          },
+          {
+            "frame": 1610,
+            "foot_cm": 6.349,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.334288",
+            "after_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.111913383"
+          },
+          {
+            "frame": 1611,
+            "foot_cm": 3.494,
+            "before_clips": "Lucian_Common_Walk_Loop_ReleasePilot:0.111913383",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 1.4891417599999999,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": null,
+        "phase_switch_pairs": []
+      }
+    },
+    "editor_errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ]
+  },
+  "outgoing": {
+    "trials": {
+      "start_run": {
+        "start_frames": 28,
+        "walk_start_frames": 10,
+        "full_start_maximum_foot_step_cm": 14.566,
+        "outgoing_locomotion_peak_cm": 3.494,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 183,
+            "foot_cm": 2.226,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.8264386"
+          },
+          {
+            "frame": 184,
+            "foot_cm": 3.467,
+            "before_clips": "Common_Idle_Inplace:0.8264386",
+            "after_clips": "Common_Idle_Inplace:0.556899965"
+          },
+          {
+            "frame": 185,
+            "foot_cm": 2.137,
+            "before_clips": "Common_Idle_Inplace:0.556899965",
+            "after_clips": "Common_Idle_Inplace:0.3879146"
+          },
+          {
+            "frame": 186,
+            "foot_cm": 3.494,
+            "before_clips": "Common_Idle_Inplace:0.3879146",
+            "after_clips": "Common_Idle_Inplace:0.1100533"
+          },
+          {
+            "frame": 187,
+            "foot_cm": 1.401,
+            "before_clips": "Common_Idle_Inplace:0.1100533",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 5.294896619999999,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 5.953,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 5.823,
+            "lowest_sole_cm": 15.387,
+            "delta_ms": 16.38
+          },
+          {
+            "step_cm": 5.953,
+            "lowest_sole_cm": 12.41,
+            "delta_ms": 16.92
+          },
+          {
+            "step_cm": 5.531,
+            "lowest_sole_cm": 11.033,
+            "delta_ms": 16.82
+          }
+        ]
+      },
+      "start_sprint": {
+        "start_frames": 29,
+        "walk_start_frames": 7,
+        "full_start_maximum_foot_step_cm": 13.807,
+        "outgoing_locomotion_peak_cm": 2.892,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 544,
+            "foot_cm": 2.837,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.7787894"
+          },
+          {
+            "frame": 545,
+            "foot_cm": 2.826,
+            "before_clips": "Common_Idle_Inplace:0.7787894",
+            "after_clips": "Common_Idle_Inplace:0.558808"
+          },
+          {
+            "frame": 546,
+            "foot_cm": 2.892,
+            "before_clips": "Common_Idle_Inplace:0.558808",
+            "after_clips": "Common_Idle_Inplace:0.330976"
+          },
+          {
+            "frame": 547,
+            "foot_cm": 2.79,
+            "before_clips": "Common_Idle_Inplace:0.330976",
+            "after_clips": "Common_Idle_Inplace:0.108024"
+          },
+          {
+            "frame": 548,
+            "foot_cm": 1.385,
+            "before_clips": "Common_Idle_Inplace:0.108024",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 8.740789,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 11.708,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 9.84,
+            "lowest_sole_cm": 12.801,
+            "delta_ms": 16.83
+          },
+          {
+            "step_cm": 11.708,
+            "lowest_sole_cm": 8.341,
+            "delta_ms": 16.84
+          },
+          {
+            "step_cm": 11.166,
+            "lowest_sole_cm": 4.576,
+            "delta_ms": 16.68
+          }
+        ]
+      },
+      "start_run_torch": {
+        "start_frames": 28,
+        "walk_start_frames": 9,
+        "full_start_maximum_foot_step_cm": 13.914,
+        "outgoing_locomotion_peak_cm": 2.867,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 887,
+            "foot_cm": 2.867,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.776822746"
+          },
+          {
+            "frame": 888,
+            "foot_cm": 2.825,
+            "before_clips": "Common_Idle_Inplace:0.776822746",
+            "after_clips": "Common_Idle_Inplace:0.556701362"
+          },
+          {
+            "frame": 889,
+            "foot_cm": 2.848,
+            "before_clips": "Common_Idle_Inplace:0.556701362",
+            "after_clips": "Common_Idle_Inplace:0.333044052"
+          },
+          {
+            "frame": 890,
+            "foot_cm": 2.704,
+            "before_clips": "Common_Idle_Inplace:0.333044052",
+            "after_clips": "Common_Idle_Inplace:0.116297364"
+          },
+          {
+            "frame": 891,
+            "foot_cm": 1.481,
+            "before_clips": "Common_Idle_Inplace:0.116297364",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 5.2974792,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 5.928,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 5.928,
+            "lowest_sole_cm": 15.355,
+            "delta_ms": 16.66
+          },
+          {
+            "step_cm": 5.781,
+            "lowest_sole_cm": 12.465,
+            "delta_ms": 16.43
+          },
+          {
+            "step_cm": 5.458,
+            "lowest_sole_cm": 11.098,
+            "delta_ms": 16.69
+          }
+        ]
+      },
+      "start_sprint_torch": {
+        "start_frames": 29,
+        "walk_start_frames": 7,
+        "full_start_maximum_foot_step_cm": 13.494,
+        "outgoing_locomotion_peak_cm": 2.919,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 1248,
+            "foot_cm": 2.919,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.772657335"
+          },
+          {
+            "frame": 1249,
+            "foot_cm": 2.852,
+            "before_clips": "Common_Idle_Inplace:0.772657335",
+            "after_clips": "Common_Idle_Inplace:0.550048"
+          },
+          {
+            "frame": 1250,
+            "foot_cm": 2.784,
+            "before_clips": "Common_Idle_Inplace:0.550048",
+            "after_clips": "Common_Idle_Inplace:0.3307653"
+          },
+          {
+            "frame": 1251,
+            "foot_cm": 2.776,
+            "before_clips": "Common_Idle_Inplace:0.3307653",
+            "after_clips": "Common_Idle_Inplace:0.110086679"
+          },
+          {
+            "frame": 1252,
+            "foot_cm": 1.395,
+            "before_clips": "Common_Idle_Inplace:0.110086679",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 8.740359000000002,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": 11.399,
+        "phase_switch_pairs": [
+          {
+            "step_cm": 10.029,
+            "lowest_sole_cm": 12.62,
+            "delta_ms": 17.03
+          },
+          {
+            "step_cm": 11.122,
+            "lowest_sole_cm": 8.403,
+            "delta_ms": 15.98
+          },
+          {
+            "step_cm": 11.399,
+            "lowest_sole_cm": 4.551,
+            "delta_ms": 16.98
+          }
+        ]
+      },
+      "start_slow": {
+        "start_frames": 0,
+        "walk_start_frames": 32,
+        "full_start_maximum_foot_step_cm": 4.956,
+        "outgoing_locomotion_peak_cm": 2.992,
+        "outgoing_locomotion_pairs": [
+          {
+            "frame": 1610,
+            "foot_cm": 2.779,
+            "before_clips": "Common_Idle_Inplace:1",
+            "after_clips": "Common_Idle_Inplace:0.783255935"
+          },
+          {
+            "frame": 1611,
+            "foot_cm": 2.992,
+            "before_clips": "Common_Idle_Inplace:0.783255935",
+            "after_clips": "Common_Idle_Inplace:0.550453365"
+          },
+          {
+            "frame": 1612,
+            "foot_cm": 2.758,
+            "before_clips": "Common_Idle_Inplace:0.550453365",
+            "after_clips": "Common_Idle_Inplace:0.332978725"
+          },
+          {
+            "frame": 1613,
+            "foot_cm": 2.815,
+            "before_clips": "Common_Idle_Inplace:0.332978725",
+            "after_clips": "Common_Idle_Inplace:0.1090734"
+          },
+          {
+            "frame": 1614,
+            "foot_cm": 1.377,
+            "before_clips": "Common_Idle_Inplace:0.1090734",
+            "after_clips": "TwinSword_Common_Walk_Start_Inplace:1"
+          }
+        ],
+        "median_loop_speed_mps": 1.488883075,
+        "root_motion_frames": 0,
+        "maximum_foot_step_cm": null,
+        "phase_switch_pairs": []
+      }
+    },
+    "editor_errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ]
+  }
+}

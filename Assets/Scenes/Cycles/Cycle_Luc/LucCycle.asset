@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Retrouver les traces de Jon pour apaiser Luc.
   category: 1
   completionPresentationTimeout: 15
+  completionUnloadDelay: 5
   prerequisites:
     mode: 0
     conditions: []

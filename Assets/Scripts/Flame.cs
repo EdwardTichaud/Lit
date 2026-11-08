@@ -137,8 +137,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Munin")]
     [SerializeField, FormerlySerializedAs("muninTransform"), Tooltip("Controleur de Munin. Laisse vide pour utiliser celui du personnage detecte.")]
     private MuninController muninController;
-    [SerializeField, Tooltip("Offset local depuis l'ancre de la flamme pour la destination de Munin.")]
-    private Vector3 muninTargetOffset = Vector3.zero;
     [SerializeField, Min(0), Tooltip("Charges Munin consommees uniquement pour allumer cette flamme. L'extinction ne rend jamais de charge.")]
     private int chargeCostToLight = 1;
     [SerializeField, Min(0), Tooltip("Points de torche consommes pour allumer. Zero conserve le cout par defaut : 10 Flame, 20 Ancient Flame.")]
@@ -155,7 +153,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private Coroutine interactionRoutine;
     private bool interactionInProgress;
     private bool externalSuppression;
-    private MuninController activeMuninController;
     private GameObject influenceSphereVisual;
     private MeshRenderer influenceSphereRenderer;
     private Material runtimeInfluenceSphereMaterial;
@@ -254,6 +251,15 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     {
         EnsureLitInfluence();
         return litInfluence.AcceptsCollider(collider) && ProvidesLitInfluenceTo(collider, collider.transform.position);
+    }
+
+    public bool TryGetEnemyMovementSphere(Collider collider, out Vector3 center, out float radius)
+    {
+        EnsureLitInfluence();
+        center = litInfluence.GetWorldCenter(transform);
+        radius = litInfluence.Radius;
+        return isActiveAndEnabled && IsEffectivelyLit && litInfluence.Enabled && radius > 0 &&
+            litInfluence.AcceptsCollider(collider);
     }
 
     /// <summary>Applies the authoring values stored on a SceneMarker during an editor bake.</summary>
@@ -1238,17 +1244,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         return distance;
     }
 
-    private Vector3 ResolveMuninTargetPosition()
-    {
-        Transform anchor = GetInteractionAnchor();
-        if (anchor == null)
-        {
-            return transform.position + transform.rotation * muninTargetOffset;
-        }
-
-        return anchor.position + anchor.rotation * muninTargetOffset;
-    }
-
     private void StopInteractionRoutine()
     {
         if (interactionRoutine != null)
@@ -1258,11 +1253,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         interactionInProgress = false;
-        if (activeMuninController != null)
-        {
-            activeMuninController.CancelManualMotion();
-            activeMuninController = null;
-        }
     }
 
     private void EnsureInteractionTrigger()

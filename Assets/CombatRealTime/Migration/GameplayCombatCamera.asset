@@ -31,7 +31,6 @@ MonoBehaviour:
   zoomTime: 0.12
   recenterTime: 0.25
   transitionTime: 0.3
-  renderedAimSharpness: 28
   panSpeed: 10
   mouseOrbitSensitivity: 0.12
   dragSensitivity: 0.015
@@ -51,7 +50,7 @@ MonoBehaviour:
   collisionReturnTime: 0.15
   collisionClearHoldTime: 0.08
   obstacleMode: 2
-  maskRadius: 0.16
+  maskRadius: 0.26
   maskFeather: 0.025
   maskFadeTime: 0.12
   occlusionInterval: 0.05

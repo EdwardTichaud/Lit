@@ -1,0 +1,11 @@
+{
+    "run": "Library/LucianCoherence/play-cadence-ik-20261102-203952",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261102_203958_485.csv",
+    "samples": 1207,
+    "wholeBodyPolicyEnabled": true,
+    "existingIKVariant": "Existing UCC IK, preweighted feet (test only, no jumping in this probe)",
+    "maximumObtainedSpeed": 8.74740982055664,
+    "errors": []
+}

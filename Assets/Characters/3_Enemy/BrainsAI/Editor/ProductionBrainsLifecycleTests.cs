@@ -41,6 +41,31 @@ public sealed class ProductionBrainsLifecycleTests
     }
 
     [Test]
+    public void PerceptionTriggerCannotWakeAnEnemyWhoseBodyIsOutsideTheFlame()
+    {
+        var policy = Policy();
+        policy.transform.position = Vector3.right * 8;
+        var sensor = Root("Wide perception sensor");
+        sensor.transform.SetParent(policy.transform, false);
+        var detection = sensor.AddComponent<SphereCollider>();
+        detection.isTrigger = true;
+        detection.radius = 5;
+        sensor.SetActive(true);
+        policy.gameObject.SetActive(true);
+        var flame = Flame();
+        Physics.SyncTransforms(); policy.Refresh();
+        Assert.IsTrue(flame.ProvidesEnemyActivationTo(detection), "The sensor overlaps the light and reproduces the old false activation.");
+        Assert.IsTrue(policy.IsFlameDormant, "Only the physical body may wake the enemy.");
+
+        policy.transform.position = Vector3.right * 4.8f;
+        Physics.SyncTransforms(); policy.Refresh();
+        Assert.IsFalse(policy.IsFlameDormant, "Actual body contact with the Flame must still wake the enemy.");
+        policy.transform.position = Vector3.right * 8;
+        Physics.SyncTransforms(); policy.Refresh();
+        Assert.IsTrue(policy.IsFlameDormant, "Leaving body contact must restore dormancy even while the sensor overlaps.");
+    }
+
+    [Test]
     public void FixedFlameLossPausesClockWithoutMutatingHealthAndDeathReleasesPause()
     {
         var policy = Policy();
@@ -84,6 +109,53 @@ public sealed class ProductionBrainsLifecycleTests
         Assert.Zero(clock.Scale, "Releasing the flame owner must not release another owner's pause.");
         clock.SetIntrinsicPause(other, false);
         Assert.AreEqual(1f, clock.Scale);
+    }
+
+    [Test]
+    public void MovementStopsInsideLitBoundaryAndCanMoveBackInwardWithoutDormancy()
+    {
+        var policy = Policy(); policy.gameObject.SetActive(true); MovementFlame();
+        Vector3 allowed = policy.ConstrainStep(Vector3.zero, Vector3.right * 20);
+        Assert.That(allowed.x, Is.EqualTo(4.92f).Within(.001f));
+        policy.transform.position = allowed;
+        Physics.SyncTransforms(); policy.Refresh();
+        Assert.IsFalse(policy.IsFlameDormant);
+        Assert.That(policy.ConstrainStep(allowed, Vector3.right).magnitude, Is.LessThan(.001f));
+        Assert.That(policy.ConstrainStep(allowed, Vector3.left), Is.EqualTo(Vector3.left));
+        Assert.AreEqual(1, policy.GetComponent<CombatTimeDomain>().Scale);
+    }
+
+    [Test]
+    public void MovementUsesConnectedLitUnionButCannotDashAcrossDarkGap()
+    {
+        var policy = Policy(); policy.gameObject.SetActive(true); MovementFlame();
+        var second = MovementFlame(); second.transform.position = Vector3.right * 8;
+        Assert.That(policy.ConstrainStep(Vector3.zero, Vector3.right * 12).x, Is.EqualTo(12).Within(.001f));
+        second.transform.position = Vector3.right * 12;
+        Assert.That(policy.ConstrainStep(Vector3.zero, Vector3.right * 12).x, Is.EqualTo(4.92f).Within(.001f));
+        second.gameObject.SetActive(false);
+        Assert.That(policy.ConstrainStep(Vector3.zero, Vector3.right * 12).x, Is.EqualTo(4.92f).Within(.001f));
+    }
+
+    [Test]
+    public void MovementAlsoBoundsVerticalLaunchAndHonoursFlameExemption()
+    {
+        var policy = Policy(); policy.gameObject.SetActive(true); var flame = MovementFlame();
+        Vector3 position = Vector3.right * 4;
+        Vector3 bounded = policy.ConstrainStep(position, Vector3.up * 10);
+        Assert.That((position + bounded).magnitude, Is.EqualTo(4.92f).Within(.001f));
+        Assert.That(bounded.y, Is.GreaterThan(0));
+        flame.gameObject.SetActive(false);
+        Assert.That(policy.ConstrainStep(Vector3.zero, Vector3.right), Is.EqualTo(Vector3.zero));
+        policy.requiresFlameInfluence = false;
+        Assert.That(policy.ConstrainStep(Vector3.zero, Vector3.right * 20), Is.EqualTo(Vector3.right * 20));
+    }
+
+    private Flame MovementFlame()
+    {
+        var flame = Flame();
+        flame.ConfigureFromSceneMarker("test.movement.flame", false, true, 2, 5, 10);
+        return flame;
     }
 
     [Test]

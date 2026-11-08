@@ -76,6 +76,8 @@ public sealed class CycleDefinition : ScriptableObject
     public int completionFlags;
     [Tooltip("Nom exact de la scene additive reservee a ce cycle. Elle est dechargee apres les effets de fin et ignoree aux prochains chargements. Vide desactive le dechargement.")]
     public string cycleSceneName;
+    [Min(0), Tooltip("Marge en secondes reelles apres la fin des presentations et confirmations reseau, avant de decharger la scene additive.")]
+    public float completionUnloadDelay;
     public bool IsCompleted(int state) => completionFlags != 0 && (state & completionFlags) == completionFlags;
 
     [Min(1), Tooltip("Duree par defaut des dialogues en secondes reelles, hors fondus.")] public float dialogueSeconds = 4f;

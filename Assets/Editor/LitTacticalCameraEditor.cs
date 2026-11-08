@@ -14,6 +14,7 @@ public sealed class LitTacticalCameraEditor : Editor
         EditorGUILayout.LabelField("Obstacles — requested", controller.RequestedObstacleMode.ToString());
         EditorGUILayout.LabelField("Obstacles — effective", controller.EffectiveObstacleMode.ToString());
         EditorGUILayout.LabelField("Zone visibility mask", controller.ZoneMaskActive ? "Active (camera distance preserved)" : "Inactive");
+        EditorGUILayout.LabelField("Mask obstacle groups", controller.MaskObstacleLayerCount.ToString());
         EditorGUILayout.LabelField("Near clip — initial (m)", controller.InitialNearClip.ToString("F3"));
         EditorGUILayout.LabelField("Near clip — effective (m)", controller.EffectiveNearClip.ToString("F3"));
         EditorGUILayout.LabelField("Adaptive near clip", controller.AdaptiveNearClipActive ? "Follow only" : "Inactive");
@@ -49,6 +50,6 @@ public sealed class LitMaisonVisibilityZoneEditor : Editor
         var zone = (LitMaisonVisibilityZone)target;
         EditorGUILayout.LabelField("Prepared architecture renderers", zone.PreparedRendererCount.ToString());
         EditorGUILayout.LabelField("Incompatible renderers", zone.UnsupportedRendererCount.ToString());
-        EditorGUILayout.HelpBox(zone.IsDistrictOne ? "All District_1 scenes, including cycles and standalone loads. Shared materials and physics unchanged. Floors and animated objects excluded; unknown environment meshes included. Follow only; L3 and Timelines restore the effect." : "Maison Near 1–4. Shared materials and physics unchanged. Floors and animated objects excluded. Follow only; L3 and Timelines restore the effect.", MessageType.Info);
+        EditorGUILayout.HelpBox(zone.IsDistrictOne ? "All District_1 scenes. Shared assets and physics unchanged. Supporting ground is preserved; upper floors can open above the character. Animated objects excluded. Follow only; L3 and Timelines restore the effect." : "Maison Near 1–4. Shared assets and physics unchanged. Supporting ground is preserved; upper floors can open above the character. Animated objects excluded. Follow only; L3 and Timelines restore the effect.", MessageType.Info);
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Service reseau pour router les interactions serveur (triggers non-networked).
-public class WorldInteractionService : NetworkBehaviour
+public partial class WorldInteractionService : NetworkBehaviour
 {
     public static WorldInteractionService Instance { get; private set; }
 
@@ -399,13 +399,30 @@ public class WorldInteractionService : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestSecretNoteReadServerRpc(string noteId, RpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(noteId) || noteId.Length > 128) return;
+        var note = ItemRegistry.Resolve(noteId);
+        if (note != null) SecretPassageNotes.ServerRecordRead(note, ResolvePlayerCharacter(rpcParams));
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void RequestNarrowPassageServerRpc(uint passageId, bool travel, RpcParams rpcParams = default)
     {
-        if (!NetcodeTriggerRegistry.TryGetNarrowPassage(passageId, out var passage) ||
-            !passage.ServerTryPassage(ResolvePlayerCharacter(rpcParams), travel)) return;
+        if (!NetcodeTriggerRegistry.TryGetNarrowPassage(passageId, out var passage)) return;
+        var character = ResolvePlayerCharacter(rpcParams);
+        bool permitted = passage.ServerTryPassage(character, travel);
+        var discovery = passage.GetComponent<KnowledgePassageDiscovery>();
+        if (!travel && discovery != null && discovery.HasSpentAttempt(character, out string characterId))
+            NarrowPassageAttemptAcknowledgedClientRpc(passageId, characterId, BuildClientRpcParams(rpcParams));
+        if (!permitted) return;
         if (travel) NarrowPassageTravelClientRpc(passageId, BuildClientRpcParams(rpcParams));
         else NarrowPassageDetectedClientRpc(passageId);
     }
+
+    [ClientRpc]
+    private void NarrowPassageAttemptAcknowledgedClientRpc(uint id, string characterId, ClientRpcParams rpcParams = default)
+    { if (NetcodeTriggerRegistry.TryGetNarrowPassage(id, out var passage)) passage.GetComponent<KnowledgePassageDiscovery>()?.AcknowledgeAttempt(characterId); }
 
     [ClientRpc]
     private void NarrowPassageDetectedClientRpc(uint id)

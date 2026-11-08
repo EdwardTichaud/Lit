@@ -28,6 +28,8 @@ public sealed class PlayerCombatPresentationSettings
 [System.Serializable]
 public sealed class PlayerJumpSettings
 {
+    [Min(0f), Tooltip("Tolerance en secondes apres avoir quitte un rebord. 0 desactive cette aide.")] public float coyoteSeconds = 0.1f;
+    [Min(0f), Tooltip("Memorisation d un appui juste avant le contact sol. Ne cree pas de saut automatique au maintien.")] public float inputBufferSeconds = 0.15f;
     [Tooltip("Hauteur maximale du saut en metres. Determine l impulsion verticale.")] public float jumpHeight = 5f;
     [Tooltip("Instant du decollage dans Jump_Start, de 0 a 1.")] public float jumpStartTakeoffNormalizedTime = 0.13f;
     [Tooltip("Part de vitesse horizontale retiree au decollage : 0 conserve l inertie, 1 la supprime.")] public float jumpStartPlanarSlowdown = 0f;
@@ -119,6 +121,8 @@ public sealed class PlayerFaceSettings
 public sealed class PlayerTrajectorySettings
 {
 [Tooltip("Bibliotheque partagee des trajectoires animees; vide desactive ces trajectoires.")] public PlayerStateMotionLibrary library;
+    [Tooltip("Conserve le verrou de reception apres le premier contact, meme si le contact UCC est temporairement perdu.")]
+    public bool holdLandingThroughContactLoss;
 }
 
 [System.Serializable]
@@ -126,6 +130,8 @@ public sealed class PlayerLocomotionSettings
 {
     [Tooltip("Optional measured presentation profile. Does not change UCC physics.")]
     public LocomotionPresentationProfile presentationProfile;
+    [Tooltip("Keep the base layer's complete pelvis/leg pose during locomotion and its transitions. The separate leg overlay remains available for mobile upper-body actions.")]
+    public bool preserveWholeBodyLocomotion;
     [Tooltip("Journaliser le franchissement pour diagnostiquer ses interruptions.")] public bool logScriptedTraversalDiagnostics;
     [Min(1), Tooltip("Nombre de ticks entre deux traces de franchissement.")] public int scriptedTraversalDiagnosticTickInterval = 8;
     [Min(0f), Tooltip("Deplacement externe en metres a partir duquel signaler une correction pendant le franchissement.")] public float scriptedTraversalExternalCorrectionDistance = 0.02f;

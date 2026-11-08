@@ -133,6 +133,7 @@ public partial class LitBrainsEnemy
                 productionRush = false;
             }
         }
+        step = ConstrainEncounterStep(position, step);
         productionBody.MovePosition(position + step);
         if (dead && !productionAirborne)
         {

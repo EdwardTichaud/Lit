@@ -1,0 +1,14 @@
+{
+    "run": "Library/LucianCoherence/play-baseline-contract-20261102-215925",
+    "status": "RECORDED: review measured clips and renders; no acceptance claimed",
+    "scope": "Real prefab, native UCC and simulated gamepad on a temporary flat platform. Initial placement only; no corrective position writes during trials. Not action, slope, collision, cinematic or network acceptance.",
+    "poseTrace": "Library/ActorAnimationValidation/Lucian_FractureGraybox_play_20261102_215927_083.csv",
+    "samples": 1584,
+    "jumpFreeAirborneSamples": 28,
+    "jumpTorchAirborneSamples": 51,
+    "nativeIKAirborneSamples": 0,
+    "wholeBodyPolicyEnabled": false,
+    "existingIKVariant": "Existing UCC IK unchanged",
+    "maximumObtainedSpeed": 8.748143196105957,
+    "errors": []
+}

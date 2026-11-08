@@ -1,0 +1,16 @@
+{
+    "status": "REVIEW",
+    "duration": 0.6666666865348816,
+    "stanceAnklePath": 0.027308683842420578,
+    "stanceSolePath": 0.04091759771108627,
+    "minimumSole": -9.387731552124023e-7,
+    "maximumLowerSole": 6.332993507385254e-7,
+    "endpointFeet": 3.6010283110954333e-7,
+    "endpointHips": 4.656612873077393e-10,
+    "endpointHipsAngle": 0.0,
+    "rootDistance": 0.0,
+    "rootYaw": 0.0,
+    "maximumGoalError": 5.445044166663138e-7,
+    "maximumSwingLift": 0.111077681183815,
+    "reconstructedLift": true
+}

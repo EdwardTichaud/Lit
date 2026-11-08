@@ -1,0 +1,112 @@
+{
+    "clips": [
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_F_Stride03.anim",
+            "maximumFootPositionError": 0.00094136520056054,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_B_Stride03.anim",
+            "maximumFootPositionError": 0.0004230437916703522,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_FL_Stride03.anim",
+            "maximumFootPositionError": 0.000782778428401798,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_FR_Stride03.anim",
+            "maximumFootPositionError": 0.0012791280169039965,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_BL_Stride03.anim",
+            "maximumFootPositionError": 0.0005608159117400646,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_BR_Stride03.anim",
+            "maximumFootPositionError": 0.00031527108512818813,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_L_Stride03.anim",
+            "maximumFootPositionError": 0.00038792163832113147,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_R_Stride03.anim",
+            "maximumFootPositionError": 0.0002625214110594243,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_F_Stride03.anim",
+            "maximumFootPositionError": 0.0010425952496007085,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_B_Stride03.anim",
+            "maximumFootPositionError": 0.0009467077325098217,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_FL_Stride03.anim",
+            "maximumFootPositionError": 0.000780823640525341,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_FR_Stride03.anim",
+            "maximumFootPositionError": 0.0015279252547770739,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_BL_Stride03.anim",
+            "maximumFootPositionError": 0.000768807833082974,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_BR_Stride03.anim",
+            "maximumFootPositionError": 0.00041939079528674483,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_L_Stride03.anim",
+            "maximumFootPositionError": 0.001199914957396686,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Run_R_Stride03.anim",
+            "maximumFootPositionError": 0.0026557790115475655,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Walk_Loop_Stride03.anim",
+            "maximumFootPositionError": 0.00033691379940137267,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        },
+        {
+            "clip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Run_Stride02.anim",
+            "maximumFootPositionError": 0.0022130031138658524,
+            "maximumFootAngleError": 0.0,
+            "callbackSamples": 480
+        }
+    ]
+}

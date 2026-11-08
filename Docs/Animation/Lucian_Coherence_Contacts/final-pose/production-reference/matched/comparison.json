@@ -1,0 +1,44 @@
+{
+  "walk_off": {
+    "frames_reference": 43,
+    "frames_mask": 20,
+    "paired": 13,
+    "paired_clips": [
+      "TwinSword_Common_Walk_Start_Inplace"
+    ],
+    "left_sole_delta_median_cm": -1.564,
+    "left_sole_delta_max_abs_cm": 4.099,
+    "left_sole_below_floor_2cm_reference": 3,
+    "left_sole_below_floor_2cm_mask": 7,
+    "left_sole_valid_pairs": 13,
+    "right_sole_delta_median_cm": -0.0,
+    "right_sole_delta_max_abs_cm": 0.001,
+    "right_sole_below_floor_2cm_reference": 0,
+    "right_sole_below_floor_2cm_mask": 0,
+    "right_sole_valid_pairs": 13,
+    "reference_travel_m": 0.974,
+    "mask_travel_m": 0.383
+  },
+  "walk_on": {
+    "frames_reference": 44,
+    "frames_mask": 50,
+    "paired": 37,
+    "paired_clips": [
+      "Common_Idle_Inplace",
+      "TwinSword_Common_Walk_Start_Inplace",
+      "Twinblades_Common_Walk_Loop_Inplace"
+    ],
+    "left_sole_delta_median_cm": -0.663,
+    "left_sole_delta_max_abs_cm": 7.56,
+    "left_sole_below_floor_2cm_reference": 2,
+    "left_sole_below_floor_2cm_mask": 17,
+    "left_sole_valid_pairs": 37,
+    "right_sole_delta_median_cm": 1.426,
+    "right_sole_delta_max_abs_cm": 11.541,
+    "right_sole_below_floor_2cm_reference": 19,
+    "right_sole_below_floor_2cm_mask": 5,
+    "right_sole_valid_pairs": 37,
+    "reference_travel_m": 0.994,
+    "mask_travel_m": 1.144
+  }
+}

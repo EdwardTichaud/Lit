@@ -1,0 +1,111 @@
+{
+  "reference": {
+    "explore_035": {
+      "samples": 139,
+      "median_speed_mps": 1.489229,
+      "blends_with_run": 0,
+      "root_frames": 0,
+      "left_vertex_windows": [
+        {
+          "frames": 10,
+          "clip_phase_span": 0.1283,
+          "sampled_path_cm": 8.89
+        },
+        {
+          "frames": 10,
+          "clip_phase_span": 0.1238,
+          "sampled_path_cm": 8.64
+        }
+      ]
+    },
+    "explore_05": {
+      "samples": 181,
+      "median_speed_mps": 2.481104,
+      "blends_with_run": 179,
+      "root_frames": 0,
+      "left_mix_min_cm": -0.003,
+      "left_mix_under_2cm": 0,
+      "right_mix_min_cm": -0.013,
+      "right_mix_under_2cm": 0,
+      "left_vertex_windows": []
+    },
+    "explore_065": {
+      "samples": 179,
+      "median_speed_mps": 3.47599,
+      "blends_with_run": 179,
+      "root_frames": 0,
+      "left_mix_min_cm": -0.005,
+      "left_mix_under_2cm": 0,
+      "right_mix_min_cm": -0.056,
+      "right_mix_under_2cm": 0,
+      "left_vertex_windows": []
+    },
+    "explore_08": {
+      "samples": 180,
+      "median_speed_mps": 4.467594354999999,
+      "blends_with_run": 180,
+      "root_frames": 0,
+      "left_mix_min_cm": -0.018,
+      "left_mix_under_2cm": 0,
+      "right_mix_min_cm": -0.061,
+      "right_mix_under_2cm": 0,
+      "left_vertex_windows": []
+    }
+  },
+  "pilot": {
+    "explore_035": {
+      "samples": 145,
+      "median_speed_mps": 1.48917639,
+      "blends_with_run": 0,
+      "root_frames": 0,
+      "left_vertex_windows": [
+        {
+          "frames": 10,
+          "clip_phase_span": 0.1246,
+          "sampled_path_cm": 0.35
+        },
+        {
+          "frames": 10,
+          "clip_phase_span": 0.1239,
+          "sampled_path_cm": 0.44
+        }
+      ]
+    },
+    "explore_05": {
+      "samples": 181,
+      "median_speed_mps": 2.48093081,
+      "blends_with_run": 178,
+      "root_frames": 0,
+      "left_mix_min_cm": -0.003,
+      "left_mix_under_2cm": 0,
+      "right_mix_min_cm": -0.022,
+      "right_mix_under_2cm": 0,
+      "left_vertex_windows": []
+    },
+    "explore_065": {
+      "samples": 180,
+      "median_speed_mps": 3.4758840949999996,
+      "blends_with_run": 180,
+      "root_frames": 0,
+      "left_mix_min_cm": -0.005,
+      "left_mix_under_2cm": 0,
+      "right_mix_min_cm": -0.014,
+      "right_mix_under_2cm": 0,
+      "left_vertex_windows": []
+    },
+    "explore_08": {
+      "samples": 181,
+      "median_speed_mps": 4.46729136,
+      "blends_with_run": 181,
+      "root_frames": 0,
+      "left_mix_min_cm": -0.016,
+      "left_mix_under_2cm": 0,
+      "right_mix_min_cm": -0.078,
+      "right_mix_under_2cm": 0,
+      "left_vertex_windows": []
+    }
+  },
+  "pilot_editor_errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ]
+}

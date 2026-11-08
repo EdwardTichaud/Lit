@@ -1,0 +1,150 @@
+{
+  "run": "play-cadence-stop-support-phase-sweep-handoffs-contacts-20261106-190238",
+  "near_floor_tolerance_cm": 2,
+  "trials": [
+    {
+      "target_phase": 0.08,
+      "phase_on_release": 0.1186,
+      "phase_at_transition": 0.2023,
+      "torch_equipped": false,
+      "release_speed_m_s": 5.292,
+      "first_transition_frame": 5,
+      "transition_elapsed_s": 0.0688,
+      "feet_near_floor_on_release": "right",
+      "feet_near_floor_at_transition": "neither",
+      "sole_height_before_transition_cm": {
+        "left": 35.17,
+        "right": 6.71
+      },
+      "foot_to_settled_pose_horizontal_before_transition_cm": {
+        "left": 32.02,
+        "right": 50.96
+      },
+      "capsule_remaining_travel_at_transition_cm": 28.66,
+      "max_relative_ankle_step_cm": 27.31,
+      "peak_frame": 5,
+      "peak_side": "left",
+      "qualified_support_frames_first_27": 27
+    },
+    {
+      "target_phase": 0.25,
+      "phase_on_release": 0.2749,
+      "phase_at_transition": 0.3596,
+      "torch_equipped": true,
+      "release_speed_m_s": 5.292,
+      "first_transition_frame": 5,
+      "transition_elapsed_s": 0.0669,
+      "feet_near_floor_on_release": "neither",
+      "feet_near_floor_at_transition": "neither",
+      "sole_height_before_transition_cm": {
+        "left": 3.79,
+        "right": 37.73
+      },
+      "foot_to_settled_pose_horizontal_before_transition_cm": {
+        "left": 6.55,
+        "right": 55.49
+      },
+      "capsule_remaining_travel_at_transition_cm": 28.7,
+      "max_relative_ankle_step_cm": 14.07,
+      "peak_frame": 6,
+      "peak_side": "right",
+      "qualified_support_frames_first_27": 27
+    },
+    {
+      "target_phase": 0.42,
+      "phase_on_release": 0.4525,
+      "phase_at_transition": 0.5357,
+      "torch_equipped": false,
+      "release_speed_m_s": 5.295,
+      "first_transition_frame": 5,
+      "transition_elapsed_s": 0.0665,
+      "feet_near_floor_on_release": "left",
+      "feet_near_floor_at_transition": "left",
+      "sole_height_before_transition_cm": {
+        "left": -0.11,
+        "right": 48.69
+      },
+      "foot_to_settled_pose_horizontal_before_transition_cm": {
+        "left": 48.66,
+        "right": 22.64
+      },
+      "capsule_remaining_travel_at_transition_cm": 29.65,
+      "max_relative_ankle_step_cm": 22.62,
+      "peak_frame": 7,
+      "peak_side": "right",
+      "qualified_support_frames_first_27": 27
+    },
+    {
+      "target_phase": 0.58,
+      "phase_on_release": 0.6085,
+      "phase_at_transition": 0.6917,
+      "torch_equipped": true,
+      "release_speed_m_s": 5.295,
+      "first_transition_frame": 5,
+      "transition_elapsed_s": 0.0659,
+      "feet_near_floor_on_release": "neither",
+      "feet_near_floor_at_transition": "neither",
+      "sole_height_before_transition_cm": {
+        "left": 9.92,
+        "right": 27.59
+      },
+      "foot_to_settled_pose_horizontal_before_transition_cm": {
+        "left": 89.17,
+        "right": 18.97
+      },
+      "capsule_remaining_travel_at_transition_cm": 28.98,
+      "max_relative_ankle_step_cm": 20.86,
+      "peak_frame": 11,
+      "peak_side": "left",
+      "qualified_support_frames_first_27": 27
+    },
+    {
+      "target_phase": 0.75,
+      "phase_on_release": 0.7862,
+      "phase_at_transition": 0.8694,
+      "torch_equipped": false,
+      "release_speed_m_s": 5.295,
+      "first_transition_frame": 5,
+      "transition_elapsed_s": 0.0663,
+      "feet_near_floor_on_release": "neither",
+      "feet_near_floor_at_transition": "neither",
+      "sole_height_before_transition_cm": {
+        "left": 42.95,
+        "right": 3.05
+      },
+      "foot_to_settled_pose_horizontal_before_transition_cm": {
+        "left": 100.16,
+        "right": 47.04
+      },
+      "capsule_remaining_travel_at_transition_cm": 28.98,
+      "max_relative_ankle_step_cm": 17.34,
+      "peak_frame": 11,
+      "peak_side": "left",
+      "qualified_support_frames_first_27": 27
+    },
+    {
+      "target_phase": 0.92,
+      "phase_on_release": 0.9639,
+      "phase_at_transition": 0.0472,
+      "torch_equipped": true,
+      "release_speed_m_s": 5.295,
+      "first_transition_frame": 5,
+      "transition_elapsed_s": 0.0639,
+      "feet_near_floor_on_release": "right",
+      "feet_near_floor_at_transition": "right",
+      "sole_height_before_transition_cm": {
+        "left": 55.33,
+        "right": -0.0
+      },
+      "foot_to_settled_pose_horizontal_before_transition_cm": {
+        "left": 64.2,
+        "right": 13.64
+      },
+      "capsule_remaining_travel_at_transition_cm": 29.66,
+      "max_relative_ankle_step_cm": 22.45,
+      "peak_frame": 7,
+      "peak_side": "left",
+      "qualified_support_frames_first_27": 27
+    }
+  ]
+}

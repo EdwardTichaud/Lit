@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Courts_familyCycle_curiosity
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 366571bf7b5f2f845b565c321f7ec4dd
+  knowledgeId: district2.courts.family.curiosity
+  title: Le carnet de Alix
+  description: "J'aime avoir un coin \xE0 moi. Derri\xE8re les caisses, j'ai retrouv\xE9 une vieille ouverture. Plus haut, j'en ai d\xE9gag\xE9 une autre. Je note ce que je trouve et ce que j'am\xE9nage : ce n'est pas la m\xEAme chose. Ma liste ne sera jamais compl\xE8te. \u2014 Alix"
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  cycles:
+  - {fileID: 11400000, guid: eeb48817c6e7998408c369f247c4e20b, type: 2}
+  districtId: district2.courts
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: c7044ab25b516694eaa249c44d9826e3, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

@@ -1,0 +1,189 @@
+{
+  "idle": {
+    "samples": 35,
+    "medianUccSpeed": 0.0,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 1.0,
+    "minimumLowerSoleToFloor": -0.010614000000000345,
+    "maximumLowerSoleToFloor": -0.010578000000000642,
+    "torch": [
+      "False"
+    ]
+  },
+  "walk": {
+    "samples": 33,
+    "medianUccSpeed": 5.29480171,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.1710615200000003,
+    "maximumLowerSoleToFloor": 0.07252699999999912,
+    "torch": [
+      "False"
+    ]
+  },
+  "run": {
+    "samples": 32,
+    "medianUccSpeed": 8.737186,
+    "medianPlaybackRate": 1.6483891,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.1694969999999998,
+    "maximumLowerSoleToFloor": 0.06694599999999973,
+    "torch": [
+      "False"
+    ]
+  },
+  "stop": {
+    "samples": 33,
+    "medianUccSpeed": 2.26086612e-33,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 1.0,
+    "minimumLowerSoleToFloor": -0.010614999999999597,
+    "maximumLowerSoleToFloor": -0.010576999999999614,
+    "torch": [
+      "False"
+    ]
+  },
+  "torch_equip": {
+    "samples": 33,
+    "medianUccSpeed": 0.0,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 1.0,
+    "minimumLowerSoleToFloor": -0.010604999999999976,
+    "maximumLowerSoleToFloor": -0.010583999999999705,
+    "torch": [
+      "True"
+    ]
+  },
+  "torch_walk": {
+    "samples": 33,
+    "medianUccSpeed": 5.29480171,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.1777519999999999,
+    "maximumLowerSoleToFloor": -0.009980000000000544,
+    "torch": [
+      "True"
+    ]
+  },
+  "torch_run": {
+    "samples": 33,
+    "medianUccSpeed": 8.740238,
+    "medianPlaybackRate": 1.64896488,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.1918419999999994,
+    "maximumLowerSoleToFloor": -0.009978000000000264,
+    "torch": [
+      "True"
+    ]
+  },
+  "torch_stop": {
+    "samples": 33,
+    "medianUccSpeed": 2.114952e-33,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 1.0,
+    "minimumLowerSoleToFloor": -0.010616000000000625,
+    "maximumLowerSoleToFloor": -0.010576000000000363,
+    "torch": [
+      "True"
+    ]
+  },
+  "combat_F": {
+    "samples": 32,
+    "medianUccSpeed": 5.29785347,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.1297840000000008,
+    "maximumLowerSoleToFloor": 0.09320899999999988,
+    "torch": [
+      "False"
+    ]
+  },
+  "combat_FR": {
+    "samples": 33,
+    "medianUccSpeed": 3.17660427,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.1916600000000006,
+    "maximumLowerSoleToFloor": -0.06324099999999966,
+    "torch": [
+      "False"
+    ]
+  },
+  "combat_R": {
+    "samples": 33,
+    "medianUccSpeed": 2.994871,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.22753100000000082,
+    "maximumLowerSoleToFloor": -0.01563900000000018,
+    "torch": [
+      "False"
+    ]
+  },
+  "combat_BR": {
+    "samples": 33,
+    "medianUccSpeed": 2.98197913,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.20036200000000015,
+    "maximumLowerSoleToFloor": -0.010450000000000514,
+    "torch": [
+      "False"
+    ]
+  },
+  "combat_B": {
+    "samples": 32,
+    "medianUccSpeed": 3.952029705,
+    "medianPlaybackRate": 1.1334571850000001,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.18274100000000004,
+    "maximumLowerSoleToFloor": -0.029730999999999952,
+    "torch": [
+      "False"
+    ]
+  },
+  "combat_BL": {
+    "samples": 33,
+    "medianUccSpeed": 4.638779,
+    "medianPlaybackRate": 1.32166493,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.17003399999999935,
+    "maximumLowerSoleToFloor": -0.010080999999999563,
+    "torch": [
+      "True"
+    ]
+  },
+  "combat_L": {
+    "samples": 32,
+    "medianUccSpeed": 5.22742367,
+    "medianPlaybackRate": 1.47559106,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.15849099999999972,
+    "maximumLowerSoleToFloor": -0.010229999999999961,
+    "torch": [
+      "True"
+    ]
+  },
+  "combat_FL": {
+    "samples": 33,
+    "medianUccSpeed": 5.10719,
+    "medianPlaybackRate": 1.40167308,
+    "maximumIdleWeight": 0,
+    "minimumLowerSoleToFloor": -0.17057400000000023,
+    "maximumLowerSoleToFloor": -0.010414000000000811,
+    "torch": [
+      "True"
+    ]
+  },
+  "combat_stop": {
+    "samples": 33,
+    "medianUccSpeed": 6.52099453e-38,
+    "medianPlaybackRate": 1.0,
+    "maximumIdleWeight": 1.0,
+    "minimumLowerSoleToFloor": -0.010602999999999696,
+    "maximumLowerSoleToFloor": -0.010585000000000733,
+    "torch": [
+      "True"
+    ]
+  }
+}

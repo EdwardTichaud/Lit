@@ -1,0 +1,146 @@
+[
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "guid": "2007bdb87ed7c0449bcbb2820fa9a926",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.0,
+    "correlation": 1.0000000000000002,
+    "timeScale": 1.0
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_B_Inplace.FBX",
+    "guid": "adfcac5d6a9403b42995ade614113e5a",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.6416666666666667,
+    "correlation": 0.938475828106839,
+    "timeScale": 0.9999997896307304
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_FL_Inplace.FBX",
+    "guid": "34f583b0b7f7e8a4183236d270cf0497",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.8333333333333334,
+    "correlation": 0.7537910675336038,
+    "timeScale": 1.0000012622156176
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_FR_Inplace.FBX",
+    "guid": "fb0609415af62e947902c5647f369583",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.7833333333333333,
+    "correlation": 0.9731748695332968,
+    "timeScale": 1.0000012622156176
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BL_Inplace.FBX",
+    "guid": "f79c8e3f95341d540a9f8b89b8ff4cc0",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.6083333333333333,
+    "correlation": 0.9402321925793099,
+    "timeScale": 1.0
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+    "guid": "122ab03e6d900254f902c272de630ba6",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.5416666666666666,
+    "correlation": 0.7375257642034765,
+    "timeScale": 1.0000004207385391
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_L_Inplace.FBX",
+    "guid": "c737a3ee2dd3b31429e7b0902faffcbb",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.625,
+    "correlation": 0.8208874935492452,
+    "timeScale": 0.9999997896307304
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_R_Inplace.FBX",
+    "guid": "c53c7eb0c2cfd354bbe958e794540455",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+    "offset": 0.7583333333333333,
+    "correlation": 0.8919045501093883,
+    "timeScale": 0.9999997896307304
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "guid": "fe242bac2a3e9b74081d0c054f0d7462",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.0,
+    "correlation": 0.9999999999999999,
+    "timeScale": 1.0
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_B_Inplace.FBX",
+    "guid": "21656923078c18d4a84967ec69abe8ef",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.9166666666666666,
+    "correlation": 0.956620930464804,
+    "timeScale": 0.9999999254942118
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FL_Inplace.FBX",
+    "guid": "a8843c66b0aadb14aad95db9e53aff50",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.95,
+    "correlation": 0.9902320366044107,
+    "timeScale": 1.0000011920926113
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_FR_Inplace.FBX",
+    "guid": "3a647127f47df7b488b6cdb0be61fd59",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.95,
+    "correlation": 0.9867704709711279,
+    "timeScale": 1.0000011920926113
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_BL_Inplace.FBX",
+    "guid": "5c6916d6e668a254285cdaaa2ca9c4bf",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.008333333333333333,
+    "correlation": 0.9016683895253608,
+    "timeScale": 1.0
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_BR_Inplace.FBX",
+    "guid": "1771e3044d7efef41ada27d92b653058",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.45,
+    "correlation": 0.9706161186908836,
+    "timeScale": 1.0000005960463056
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_L_Inplace.FBX",
+    "guid": "25932e4603a0c384d9da8bd78805cb9a",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.041666666666666664,
+    "correlation": 0.9576734716874766,
+    "timeScale": 1.0000011920926113
+  },
+  {
+    "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_R_Inplace.FBX",
+    "guid": "a25d9654763cbbc49bfef36bf5b4f5a9",
+    "fileId": 7400002,
+    "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Run_F_Inplace.FBX",
+    "offset": 0.6416666666666667,
+    "correlation": 0.9719313489414294,
+    "timeScale": 1.0000011920926113
+  }
+]

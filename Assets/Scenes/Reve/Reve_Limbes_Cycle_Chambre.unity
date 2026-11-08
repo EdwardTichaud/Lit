@@ -269,6 +269,14 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 3762898581
       objectReference: {fileID: 0}
+    - target: {fileID: 8631770506742400185, guid: d72311b58d77ba54faf3f73f84fbde7b, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8631770506742400185, guid: d72311b58d77ba54faf3f73f84fbde7b, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2436123580
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -348,7 +356,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1

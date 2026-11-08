@@ -1,0 +1,231 @@
+{
+  "previous": {
+    "early_unassisted": {
+      "deg": 46.59,
+      "trial": "plain_F",
+      "side": "left",
+      "tick": 4
+    },
+    "plain_F_left_ticks": {
+      "2": [
+        0.39,
+        [
+          false,
+          false
+        ]
+      ],
+      "3": [
+        0.42,
+        [
+          false,
+          false
+        ]
+      ],
+      "4": [
+        46.59,
+        [
+          false,
+          false
+        ]
+      ],
+      "5": [
+        27.48,
+        [
+          false,
+          true
+        ]
+      ],
+      "6": [
+        4.59,
+        [
+          true,
+          true
+        ]
+      ],
+      "7": [
+        6.25,
+        [
+          true,
+          true
+        ]
+      ],
+      "8": [
+        8.1,
+        [
+          true,
+          true
+        ]
+      ],
+      "9": [
+        8.44,
+        [
+          true,
+          true
+        ]
+      ],
+      "10": [
+        6.74,
+        [
+          true,
+          true
+        ]
+      ],
+      "11": [
+        2.86,
+        [
+          true,
+          true
+        ]
+      ],
+      "12": [
+        0.81,
+        [
+          true,
+          true
+        ]
+      ]
+    },
+    "early_entry": {
+      "deg": 27.48,
+      "trial": "plain_F",
+      "side": "left",
+      "tick": 5
+    },
+    "early_guided": {
+      "deg": 32.48,
+      "trial": "torch_L",
+      "side": "right",
+      "tick": 16
+    },
+    "stable_guided": {
+      "deg": 17.54,
+      "trial": "plain_B",
+      "side": "right",
+      "tick": 70
+    }
+  },
+  "candidate": {
+    "early_unassisted": {
+      "deg": 0.39,
+      "trial": "plain_F",
+      "side": "left",
+      "tick": 2
+    },
+    "plain_F_left_ticks": {
+      "2": [
+        0.39,
+        [
+          false,
+          false
+        ]
+      ],
+      "3": [
+        0.01,
+        [
+          false,
+          true
+        ]
+      ],
+      "4": [
+        22.75,
+        [
+          true,
+          true
+        ]
+      ],
+      "5": [
+        29.68,
+        [
+          true,
+          true
+        ]
+      ],
+      "6": [
+        9.06,
+        [
+          true,
+          true
+        ]
+      ],
+      "7": [
+        15.52,
+        [
+          true,
+          true
+        ]
+      ],
+      "8": [
+        19.14,
+        [
+          true,
+          true
+        ]
+      ],
+      "9": [
+        18.75,
+        [
+          true,
+          true
+        ]
+      ],
+      "10": [
+        14.37,
+        [
+          true,
+          true
+        ]
+      ],
+      "11": [
+        5.81,
+        [
+          true,
+          true
+        ]
+      ],
+      "12": [
+        0.81,
+        [
+          true,
+          true
+        ]
+      ]
+    },
+    "early_entry": {
+      "deg": 0.01,
+      "trial": "plain_F",
+      "side": "left",
+      "tick": 3
+    },
+    "early_guided": {
+      "deg": 36.51,
+      "trial": "torch_L",
+      "side": "right",
+      "tick": 16
+    },
+    "stable_guided": {
+      "deg": 17.92,
+      "trial": "torch_B",
+      "side": "right",
+      "tick": 47
+    }
+  },
+  "matched_goal_positions": {
+    "phase_tolerance_cycles": 0.001,
+    "counts": [
+      67,
+      96
+    ],
+    "peak_drift_m": [
+      [
+        0.00599837715958468,
+        "plain_FL",
+        "4"
+      ],
+      [
+        0.0007478176723667396,
+        "plain_FL",
+        "52"
+      ]
+    ]
+  }
+}

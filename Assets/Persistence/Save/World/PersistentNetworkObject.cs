@@ -188,6 +188,9 @@ public class PersistentNetworkObject : NetworkBehaviour
         transform.rotation = snapshot.Transform.Rotation;
         transform.localScale = snapshot.Transform.Scale;
         gameObject.SetActive(snapshot.Transform.ActiveSelf);
+        // Applying inactive state can invoke OnDisable before the remaining restore phases.
+        // Snapshot objects (also children of an inactive parent) must remain resolvable.
+        TryRegisterWithRegistry();
     }
 
     public bool ApplyProviderStates(PersistentObjectSnapshot snapshot, PersistentApplyPhase phase, PersistentStateContext context)

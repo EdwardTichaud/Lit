@@ -1,5 +1,368 @@
 # Narration et connaissances
 
+## Direction : labyrinthes de fracture (2026-11-01)
+
+Audit de realisation : Docs/Design/Premier_Labyrinthe_Audit.md. Scene de test
+independante choisie, pas de raccord campagne. FractureAttempt modele les faits
+de tentative hors services persistants. Graybox solo creee et importee,
+13 tests natifs de modele/raccords passes ; parcours physique UCC et interactions
+au gamepad simule passes. Preview capturee/inspectee, controle humain restant.
+Scene, controles provisoires et limites : systems/fracture_labyrinth.md.
+Cela ne qualifie pas le jeu complet ni NGO. Le RPC actuel de revelation n'annonce pas le revelateur au HUD :
+cette partie du contrat doit etre raccordee, pas supposee livree.
+
+Plan de prototype : Docs/Design/Premier_Labyrinthe_Plan.md. Il sépare les
+contraintes actées du contenu proposé, décrit Savoir/préparatifs/parcours
+solo-multi et les jalons d'acceptation. Ce plan n'est pas une livraison runtime.
+
+Lore.md et GameDesign.md définissent des anomalies rejouables issues de la
+fracture existante : la manifestation du lieu/gardien peut se reformer sans
+annuler les résolutions narratives ni les Savoirs persistants. Époque commune
+à toute l'équipe, aucun retour arrière global de campagne. Boss : puissance
+latente accumulée sans lumière, mais activation toujours conditionnée à une
+influence de Flame. La lumière arrête la croissance sans effacer automatiquement
+l'acquis ; préparatifs facultatifs contre coût de temps. Cela ne modifie pas
+le rôle des Ancient Flames. Découverte initiale puis reprises chronométrées,
+temps labyrinthe+boss, contenu essentiel solo, score collectif et victoire
+toujours récompensée. Économie XP/loot et paramètres de croissance à arbitrer.
+Direction documentaire uniquement : aucun système runtime d'expédition, de
+reformation, de chronométrage ou de croissance du boss n'est livré ici.
+
+## Marge avant dechargement de Luc
+
+`LucCycle.completionUnloadDelay` vaut5 secondes et se regle dans son Inspector,
+rubrique Fin et dechargement. Le compteur en secondes reelles commence apres
+dialogue, dissolution et confirmations des clients ; il se reinitialise si la
+presentation redevient bloquante ou si le cycle n'est plus termine. Les autres
+definitions gardent0 par defaut. Le dechargement utilise toujours GameFlowService
+et ses controles de scene additive/autorite/capture de l'etat, sans detruire le
+joueur ni les services de session. Le timeout de presentation reste distinct.
+Validation native `c4739d26a4f6404694f04303e55ffcd3` :33 controles,zero erreur,
+restauration terminee ; scene presente a la fin du dialogue puis dechargee apres
+presentation et marge, controles/collier/recompense conserves. Cela ne qualifie
+pas encore un nouveau parcours complet avec sauvegarde/reprise.
+Tests cibles62/62 passes (`Logs/LucCompletionMarginTargetedTests.xml`). L'echec
+Clairmont de la premiere suite elargie est corrige le30 octobre : l'ancien test
+ne creait pas identite, variables persistantes et manager de savoirs necessaires
+au passage migre. Le montage isole utilise maintenant le vrai adaptateur et une
+reussite de jet deja enregistree pour tester livraison du savoir puis permissions
+aux deux extremites ; jet frais/echec/non-repetition gardent leurs tests dedies.
+Aucun asset ni comportement runtime modifie. Tests passages35/35 puis suite
+elargie143/143 (`Logs/ClairmontCycleBroadRegressionTests.xml`).
+
+## District_2 — Stillhaven, continuite de Moonrise (2026-10-28)
+
+Stillhaven est le nom public du deuxieme district, avec le cycle Mirage.
+Les scenes District_2_Courts* et leurs IDs restent inchanges. Entree libre
+depuis District_1_SecretNotes, retour vers Moonrise et sortie vers les Limbes
+conditionnee par la conclusion locale ; ni Clairmont ni les vingt notes ne
+bloquent l'entree. Les sauvegardes affichent District 1 — Moonrise et
+District 2 — Stillhaven ; arrivee et chargement identifient aussi Stillhaven.
+
+Le manifeste District_2 est maintenant dans zoneManifests du GameFlowService
+de Bootstrap : sans cet enregistrement, un voyage par portail pouvait marcher
+alors qu'une reprise de sauvegarde ne resolvait pas le groupe de scenes.
+L'outil auteur enregistre egalement ce manifeste lors d'une nouvelle creation.
+La verification native controle l'unicite de l'inscription et les Build Settings.
+La recette DistrictConnection inclut sauvegarde production dans District_2,
+retour au menu, StartOrLoadGame sans destination imposee et verification des
+cycles, passages, faits Read et souvenirs apres rechargement depuis disque.
+Validation native : 90 controles auteur ; Play
+1bdb8179ca59482785e018130819f4ee passe/restaure avec 223 assertions et aucune
+nouvelle erreur runtime. Reprise du groupe complet et progression preservee.
+Approches/dialogues/degats sont pilotes ; ne valide ni parcours manuel, ni
+reseau, ni redemarrage du processus. Les prefabs D1 manquants preexistants
+restent signales separement (66 messages). Rapports : Library/District2Integration.
+Regression native : 53/53 tests passes, aucun echec/ignore.
+
+## Passages auteurs et cycle des notes (2026-10-27)
+
+SecretPassageCatalog sous Resources/Narrative relie vingt identites de notes au
+cycle transversal SecretNotesCycle. Dix reservations futures n'ont ni definition
+physique ni contenu invente. Dix passages sont installes : deux D1, six Cours et
+deux Limbes. Un seul D1 etait ancien ; l'utilisateur a valide la creation du
+second, de l'entree du quartier au couloir ouest, avec note dans les Limbes.
+
+SecretPassageNotes recoit uniquement l'ouverture reussie d'un livre/parchemin
+du catalogue. Le chemin serveur verifie lecteur vivant et possession ou note
+active a portee, puis soumet un Read au CycleProgressionService de session.
+Le RPC ne prend aucun acteur/compteur client. Les faits Read existants sont
+idempotents, sauvegardes et repliques comme les autres cycles. Observateur ne
+passe jamais par ce chemin. Le titre du groupe de connaissances montre x/20
+notes lues, sans assimiler le nombre de connaissances au nombre de lectures.
+Lire une note deja connue par Observateur peut donc encore avancer le cycle.
+
+RestoreDetectedState signale a KnowledgePassageDiscovery l'ancien etat connu.
+Son import autoritaire accorde uniquement le savoir du passage, sans jet ni
+fait Read. Les identifiants et hierarchies anciens ne changent pas. Les nouveaux
+passages utilisent deux extremites et une seule definition ; les grilles de
+presentation ne portent pas de collision solide bloquant le moteur.
+Leurs dialogues playOnce sont propres a chaque passage, sans voyage camera.
+
+Scenes District_2_Courts_Secrets, Reve_Limbes_Secrets et District_1_SecretNotes
+ajoutees aux manifestes. Notes placees hors de leur propre passage. Un recoin
+facultatif accessible par Sauf-Conduit porte un episode familial supplementaire.
+Sources auteur explicites : SecretPassagesAuthoring, jamais appelees au Play.
+Regression native finale : 44/44 tests passes, aucun echec/ignore ; audit des
+neuf passages : 77 controles. Recette Play auteur
+fcf774f6b1a7493887585fbcc850a9d0 passee/restauree, 174 assertions, zero erreur
+ou warning : huit lectures de notes, huit nouveaux passages en aller-retour UCC,
+portail reel Cours -> Limbes, maintien des faits et du playOnce, episode facultatif.
+Les resultats Observateur etaient des fixtures persistees ; le vrai d6 est teste
+par la suite unitaire. Approches et dialogues pilotes, pas de partie manuelle.
+L'import legacy attend la fin du chargement/transition pour ne pas etre efface
+par la restauration ulterieure des savoirs. Prefabs D1 manquants preexistants,
+recette reseau et save froide toujours ouverts.
+
+Acces D1 -> Cours valide libre des sa decouverte : PortalController permanent
+dans District_1_SecretNotes, sans CycleController, condition Clairmont, competence
+ou nombre de notes. Quatre destinations Cours explicites. Le retour Cours -> D1
+et la sortie Cours -> Limbes sont preserves ; cette derniere attend la conclusion
+locale comme auparavant. CompleteDistrictConnection est un outil auteur unique,
+jamais automatique. Emplacements verifies sur les collisions du District complet,
+sans remplacer ses prefabs manquants. Audit actualise : 87 controles. Circuit
+Play d9b24819aa944d898a704580f5deb0aa passe/restaure, 210 assertions : acces libre
+avec Clairmont incomplet, dix lectures et dix passages en aller-retour UCC,
+retours de campagne conserves. Les 66 erreurs d'assets D1 connues restent dans
+preexistingDistrictAssetErrors ; aucune erreur nouvelle/inattendue, mais pas de
+certification D1 globale. Le retour repete a aussi necessite la correction du
+registre des acteurs conserves inactifs (voir persistence.md), regression 45/45.
+
+## Cours interieures — contenu local approuve (2026-10-27)
+
+Famille Mirage : Alix, sa mere Agathe et son pere Abel (noms valides le
+2026-10-28 ; Abel remplace le role de grand-pere). Repartition 2 D1 + 6 Cours + 2 Limbes + 10
+futurs valides. Scenes natives sous Scenes/District_2/Courts, sans remplacement
+du prototype WhiteCastle. Cinq CycleDefinitions independantes dans Resources :
+family, visits, reserve, margins, finale. Pas de CycleCompleted entre definitions.
+Les objets de scene et preuves restent dans le Core apres completion des cycles.
+Neuf documents donnent leur savoir uniquement via la lecture existante ; aucun
+deblocage au ramassage. Six StorySequenceRunners playOnce utilisent les outils
+existants. Leur contenu ne revele pas les secrets reserves aux Limbes.
+
+CourtsProgression projette les etats persistants sur les deux obstacles et la
+sortie finale. L'acces principal n'exige ni Observateur, ni Sauf-Conduit, ni cycle
+des vingt notes. CourtsGargoyleGate retient les decisions/degats jusqu'a l'intro ;
+le seul cerveau est Brains et la condition Flame reste standard. SceneMarker
+conserve l'acteur et sa defaite. Le declencheur de souvenir reutilise
+LimbesMemorySequence.primarySceneName ; defaut Reve_Limbes preserve.
+Authoring explicite uniquement via CourtsAuthoring ; aucune generation au Play.
+Verification auteur native : 57 controles passes. Recette Play locale
+96bc5b9f00714d93aec44e0af735a0f1 passee/restauree, zero erreur : neuf vraies
+ouvertures de documents, souvenirs, actions, cinq cycles, defaite Brains,
+conclusion et retention apres rechargement. Approches/avance de texte/degats
+sont des fixtures, pas une partie manuelle ni une preuve d'equilibrage.
+Passages et notes transversales ont maintenant leur recette dediee ci-dessus.
+Les raccords complets D1 et le multijoueur ne sont pas encore qualifies.
+Le rendu initial sans Volume HDRP etait surexpose. InstallLighting reutilise
+uniquement le Volume local et la lumiere diffuse des Limbes, dans l'Environment
+des Cours, sans copier leurs effets/decors. Seconde recette
+fc7429f15af74b898a9eadb49aba4bcc passee/restauree : 105 assertions, zero erreur
+ou warning runtime, capture de la vraie camera examinee. Finition artistique
+et parcours continus restent ouverts : il s'agit d'un blockout fonctionnel.
+
+## Journal classe par cycles — chantier zone 2 (2026-10-27)
+
+KnowledgeCycleGrouping projette uniquement les connaissances debloquees en
+groupes de cycles. Les etapes de connaissance, recompenses Knowledge, prerequis
+et conditions de dialogue fournissent les liens existants. KnowledgeSO.cycles
+permet un lien explicite supplementaire, notamment pour les futures notes des
+passages. Une meme connaissance peut apparaitre sous plusieurs cycles, toujours
+avec la meme reference ; aucun savoir ni jalon n'est accorde par ce classement.
+Les connaissances non liees restent dans Autres connaissances, en fin de liste.
+Seuls les groupes non vides sont affiches, titres/entrees tries alphabetiquement.
+
+KnowledgePanelController reutilise les slots et ajoute des titres TMP non
+interactifs, pools et abonnes aux changements du manager et du service de cycles
+pendant son activation. Aucun etat UI supplementaire dans les sauvegardes ; aucun
+ID existant change. Compilation runtime/Editor et 9 tests natifs passes, dont
+un test du panneau reel en Play (classes, descriptions, refresh, reouverture,
+retrait). Pas de validation visuelle du vrai menu Bootstrap par cette fixture.
+
+SecretPassageAttemptLedger porte la regle d6 2+ sans interface ni ecriture de
+connaissance. L'appelant autoritaire devra verifier proximite, capacite equipee
+et identite stable du personnage. Chaque couple passage/personnage conserve le
+seul resultat succes/echec dans WorldRulesStateManager, donc le snapshot monde
+habituel. Aucun ID client ou objet Unity transitoire ne doit servir d'identite.
+Connaissance deja acquise : aucun jet. Succes deja tire : livraison du savoir
+reessayable sans nouveau jet. Seize tests natifs couvrent seuils, repetitions,
+restauration, independance, absence de capacite et identites non ambigues.
+Rapport commun : Library/Zone2FoundationTests.xml, 25 passes, zero echec/ignore.
+KnowledgePassageDiscovery raccorde ce registre aux instances de TrouEtroit qui
+portent ce composant. SecretPassageDefinition lie identite stable, connaissance
+et note ; HasReadLinkedNote verifie lecture sans attribution au seul ramassage.
+Le serveur derive le personnage depuis son acteur controle, jamais un ID client
+declare. WorldInteractionService garde ses controles de proximite et de capacite.
+Un accuse cible memorise localement la tentative pour supprimer les requetes
+repetitives ; lire la note reste possible apres un echec. Les savoirs passent par
+KnowledgeReveal/KnowledgeSynchronizationService, pas un nouvel inventaire.
+
+Les nouvelles instances reconnaissent aussi un personnage deja present dans le
+volume, aux deux extremites ; outline limite a sa proximite. La presentation
+locale utilise un StorySequenceRunner playOnce auteur, sans texte de secours.
+Sortie du volume/desactivation annule la lecture possedee ; seules ses fins
+reussies passent dans le store existant. Sauf-Conduit demeure une condition
+individuelle de traversee. Les instances sans cet adaptateur gardent le contrat
+historique jusqu'a une migration explicitement choisie.
+
+Essai Play ff6068aeabc44800995baf13b2a4bacc reussi/restaure avec vrai Lucian/UCC,
+echec conserve, savoir via fixture KnowledgeReveal, reconnaissance automatique,
+replique unique, refus puis traversee apres equipement individuel, et retour menu.
+Trente-sept tests cibles passes, aucun echec/ignore ; outline de proximite et
+accuse propre a chaque personnage inclus. Rapport :
+Library/Zone2DiscoveryVerifiedTests.xml. La regression de scenes Clairmont signale des prefabs manquants
+dans les scenes Nef/AbilityShortcuts non modifiees. Aucun feu vert global D1.
+Pas de recette client/cooperation, de vingt notes auteur, de save froide ni de
+zone 2 complete : histoire familiale et repartition validees, construction en cours.
+
+## Extension narrative des Limbes (2026-10-27)
+
+Reve_Limbes_Progression porte trois branches 3D permanentes, les presentations,
+le pont d'arene, la Gargouille angelique et le portail de victoire. Creation,
+Captivite et Invocation ont chacune une scene additive de cycle, trois preuves
+recuperables et un souvenir au sommet. Les cinq cycles d'exploration, Seuil et
+Chambre inclus, sont requis pour le pont final. L'ancien detour Chambre compte
+donc maintenant pour la fin de cette zone. Aucun cycle n'a de prerequis sur un
+autre : LimbesZoneProgression derive l'acces depuis CycleProgressionService.
+
+LimbesMemorySequence utilise StorySequenceRunner et son store playOnce existant.
+Le jalon NamedFact est rapporte uniquement par le CycleController autoritaire
+apres une presentation reussie ; une annulation ne le valide pas. Le sixieme
+cycle Ange attend l'introduction, la sante morte de l'acteur Brains puis la
+sequence de conclusion. Les objets de parcours sont permanents quand les
+scenes de cycles terminees se dechargent. Les neuf items sont ajoutes aux
+catalogues de GameplaySessionRoot pour la resolution apres dechargement.
+
+LimbesAngelBoss derive du shell BossEncounterBehaviour, accepte l'acteur
+IEnemyEncounterActor/Brains existant et fournit une politique de rencontre.
+Pas de second EnemyController. Sante/degats/Flame/presentation reutilisent les
+services existants ; le comportement dedie possede le mouvement du boss.
+Phases de vol/projectiles puis descente/melee. Les tirs sont simules par
+l'autorite, les clients n'appliquent pas leurs collisions. La sortie finale
+lit la completion du cycle ; les portails de retraite sont conserves.
+
+Revelations autorisees : Azazel, ames captives, statue et rite. Le secret
+Lucian-Munin et son sacrifice ne sont pas devoiles. Installation native explicite
+par LimbesExpansionAuthoring, jamais en Play ni au chargement de l'editeur.
+LimbesExpansionVerification controle references/sols/NavMesh ; ne pas assimiler
+ces controles au parcours UCC, au rendu, a la sauvegarde froide ou au reseau.
+Qualification native : 43 controles auteur passes. Parcours automatise complet
+0b3f9181064946948db4c514563d0564 reussi : treize preuves, trois montees UCC,
+six cycles/sequences, boss, sortie et conservation apres rechargement de zone.
+Controle cible e83f82523fb84de88e49bf0bba7b7f69 reussi, terrasse et boss examines
+dans les captures. Les deux essais restaurent l'editeur sans erreur runtime
+observee. Approches, avance des dialogues et survie au boss sont des fixtures ;
+pas une recette manuelle continue, une sauvegarde froide ni un test reseau.
+Direction et limites dans Docs/Design/Reve_Limbes.md.
+
+## Audit du contenu sauvegarde des Limbes (2026-10-27)
+
+Menu Tools/Lit/Limbes/Audit saved zone completion : LimbesCompletionAudit ouvre
+les scenes du manifeste en preview, les ferme sans sauvegarder et rapporte les
+cycles lies, StorySequenceRunner, bindings Timeline, IEnemyEncounterActor et scripts
+manquants. Controle aussi les scenes activees dans Build Settings et les seuils
+de cinq cycles/six sequences. Sortie Library/ReveLimbesCompletion/audit.json.
+Il compte les liaisons auteur, pas leur accessibilite ou leur declenchement reel.
+Un acteur genere uniquement au runtime n'est pas compte. Le vol, les attaques, la
+fin de zone et la persistance demandent toujours une verification Play Mode.
+
+## Premiere arrivee dans les Limbes (2026-10-27)
+
+Reve_Limbes contient un rig Limbes_First_Arrival avec le StorySequenceRunner
+existant, trois StorySequenceCameraPoint et leurs cibles. Aucun nouvel objet
+Camera ni personnage n'est cree. Les points/cibles enfants sont editables dans
+la hierarchie ; ils surplombent le parcours a 34-42 m, avec trois angles distincts.
+Sequence : StorySequence/LimbesArrival/Limbes_First_Arrival.asset, identifiant
+stable limbes.first_arrival, playOnce actif, 3 x 3,5 s de panorama (transitions
+incluses), puis evenement limbes.camera.gameplay, attente de 0,35 s et deux
+dialogues de Lucian. Les textes demandes sont conserves exactement dans deux
+VoiceLineData, sans doublage ajoute et avec avance manuelle par Interagir.
+
+L'evenement de scene lie explicitement StorySequenceCameraDriver.EndCinematic
+avec snapBackToGameplay=true. Les deux dialogues ont focusCameraOnSpeaker=false :
+ils ne reprennent donc pas une camera cinematographique apres le retour a la
+vue normale. Le verrou d'entree est conserve pendant le dialogue puis restitue
+par le runner standard. Aucun fondu noir ou changement de musique ajoute.
+
+StorySequenceOnZoneArrival attend l'environnement et l'eclairage des Limbes,
+le Core actif, la fin de la transition/loading, Lucian local et l'exploration
+libre. Il ne charge aucune scene et ne teleporte personne. Les completions du
+store existant empechent le rejeu apres fin reussie ; elles suivent la sauvegarde.
+Desactivation/changement de zone annule sa presentation et restitue le controle.
+Une sequence interrompue n'est pas artificiellement terminee. Le demarrage
+direct fonctionne lorsque le groupement est charge ; Core seul ne lance pas
+un panorama dans le vide. Presentation locale, aucune nouvelle synchro Netcode.
+
+Compilation runtime/Editor et tests compiles avec le compilateur Unity, references
+locales YAML controlees (aucun doublon ni lien local manquant). Tests natifs
+auteur demandes dans Library/LimbesArrival, pas encore executes sur cette revision.
+Rendu Play et retour reel UCC a verifier ; la compilation et les controles de
+references ne prouvent pas l'absence d'obstacle visuel.
+
+## Retrouvailles des compagnons dans Maison (2026-10-26)
+
+Maison_Core contient Maison_Companions_Reunion : son composant
+MaisonCompanionReunion instancie Vesta, Soren et Aurell aux MaisonWaitingPoint
+2, 3 et 4. Les references et la distance d'approche (3 m) sont editables sur
+ce groupe. Les presentations sont des prefabs visuels dedies dans
+StorySequence/MaisonReunion/Presentations : meshes, squelette et Animator sans
+root motion, sans controleur joueur/UCC, reseau, collisions ou persistance.
+Leur presence narrative ne recrute personne et ne modifie pas la squad solo.
+Elles appartiennent au Core, sont recreees lors de son rechargement et ne sont
+pas des objets persistants ; EnsurePresentations est idempotent.
+
+Lucian declenche une conversation de groupe en approchant un des trois acteurs,
+seulement dans le Core actif, apres loading, transitions, menus et sequences
+existantes (notamment la rencontre Munin). La difference de hauteur maximale
+est 1,5 m. Tous les interlocuteurs doivent etre presents. Le binding Lucian
+utilise explicitement l'acteur local ; les trois autres sont lies directement,
+sans dependance a un scan global ou a l'ordre de la squad.
+
+Maison_Companions_Reunion.asset porte 17 repliques texte, avancees avec Interagir,
+les portraits CharacterData et les plans/dialogue/restauration de controle du
+StorySequenceRunner existant. Les textes sont des VoiceLineData separes dans
+MaisonReunion/Dialogues. Pas de doublage ajoute. [Munin] reutilise le nom choisi.
+Le dialogue montre l'amitie ancienne et les rencontres recentes avec les anges
+gardiens ; leur attirance pour leurs hotes reste une question, pas une explication.
+
+Mise en scene : 17 dialogues conserves et trois etapes CameraShot ajoutees
+(ouverture, retour au groupe avant la reassurance d'Aurell, conclusion).
+Neuf profils dedies dans MaisonReunion/CameraProfiles : groupe, duo de
+taquinerie, portraits moyens de Vesta/Soren, portraits rapproches des trois
+compagnons et de Lucian, et contrechamp de Lucian. Les repliques 1, 3 et 16
+conservent le plan precedent, notamment pour la reaction a une replique hors
+champ. Transitions de 0,75 a 1,15 s ; la conclusion laisse 0,8 s apres le
+recentrage avant de rendre le controle. Aucun fade noir supplementaire.
+
+Les profils peuvent activer useConversationAxis (orientation du plan selon
+les positions reelles locuteur/interlocuteur) et centerCameraBetweenSubjects
+(origine du cadrage au milieu des acteurs). Ces options sont desactivees par
+defaut : les autres sequences conservent leur TransformPoint auteur, echelle
+comprise. Le contrechamp Lucian inverse le decalage lateral pour conserver
+le cote de l'axe d'un duo. Au declenchement, seuls les trois PNJ visuels se
+tournent horizontalement vers Lucian ; ni son moteur UCC ni sa pose ne sont
+modifies. Le driver existant assure transitions douces et restitution gameplay.
+Pas de correction d'obstacles ajoutee : les cadrages restent a verifier avec
+les murs/meubles reels et plusieurs positions d'approche.
+
+sequenceId stable : maison.companions.first_reunion, playOnce actif. Seule une
+fin reussie marque la completion via StorySequenceCompletionStore existant.
+Abandon, annulation et recharge suivent la sauvegarde, pas un PlayerPrefs global.
+Un retour au hub conserve les compagnons mais ne rejoue pas la conversation
+deja terminee. Presentation locale, pas de nouvelle logique de recrutement ou
+de dialogue synchronise ajoutee pour le multijoueur.
+
+Installation native executee dans le projet existant via demande explicite,
+sans copie de projet ; l'installateur refuse un Core ouvert dirty ou du contenu
+deja installe. Compilation runtime/Editor (avec nouveaux tests) reussie par le
+compilateur Unity, y compris la revision des cadrages et leurs tests (compatibilite
+legacy, axe/contrechamp, centrage et rythme auteur). Tests cibles natifs et rendu
+Play encore a qualifier sur cette revision ; compilation seule ne vaut pas
+validation visuelle. Aucune copie de projet creee.
+Le controle existant StorySequence/VideoPanel a passe 34/35 : seul le test video
+VideoLeaseRestoresOnlyUiModulesItDisabledAndHidesTheQuestion echoue sur une scene
+temporaire sans nom non sauvegardee, avant ses assertions. Aucun code video modifie.
+
 ## Audits auteur de zone
 
 Etienne conserve ses trois Flames identifiees dans la scene du cycle, pas dans

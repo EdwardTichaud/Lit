@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_Creation_2
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: 8cff094d6b9f2474cad73e15ec03c8a0
+  knowledgeId: reve.limbes.creation.proof.2
+  title: "Une cr\xE9ation imparfaite"
+  description: "Le R\xEAve est un monde qui existe, avec ses propres \xEAtres. Son imperfection ne rend pas les vies qui s'y d\xE9roulent moins r\xE9elles."
+  category: 0
+  sourceType: 0
+  importance: 1
+  tags: []
+  districtId: reve.limbes
+  roomId: 
+  personId: 
+  lineageId: 
+  objectId: 
+  readableItem: {fileID: 11400000, guid: b1fb587e4a69e504bbd5d4fe8fb91fd5, type: 2}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    clarityBonus: 0
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

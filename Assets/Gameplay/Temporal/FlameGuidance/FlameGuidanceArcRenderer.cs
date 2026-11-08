@@ -338,9 +338,15 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
             return;
         }
 
-        lineMaterial = CreateLineMaterial();
-        ancientArc = CreateLineRenderer("AncientFlameArc");
-        commonArc = CreateLineRenderer("CommonFlameArc");
+        if (ancientArc == null) ancientArc = transform.Find("AncientFlameArc")?.GetComponent<LineRenderer>();
+        if (commonArc == null) commonArc = transform.Find("CommonFlameArc")?.GetComponent<LineRenderer>();
+        Material fallback = ancientArc != null ? ancientArc.sharedMaterial : null;
+        if (fallback == null && commonArc != null) fallback = commonArc.sharedMaterial;
+        if (fallback == null) fallback = lineMaterial = CreateLineMaterial();
+        if (ancientArc == null) ancientArc = CreateLineRenderer("AncientFlameArc");
+        if (commonArc == null) commonArc = CreateLineRenderer("CommonFlameArc");
+        if (ancientArc.sharedMaterial == null) ancientArc.sharedMaterial = fallback;
+        if (commonArc.sharedMaterial == null) commonArc.sharedMaterial = fallback;
         HideArcs();
     }
 

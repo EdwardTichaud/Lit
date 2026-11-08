@@ -1,0 +1,224 @@
+{
+  "native_only": {
+    "run": "play-cadence-noik-20261102-213737",
+    "samples": 1219,
+    "matched_frames": 1219,
+    "ik_enabled_samples": 0,
+    "acceptance": false,
+    "trials": {
+      "idle": {
+        "samples": 36,
+        "minimum_lower_sole_m": -0.09307199999999938,
+        "median_lower_sole_m": -0.0930560000000007,
+        "median_ucc_speed": 0.0
+      },
+      "walk": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.018808999999999187,
+        "median_lower_sole_m": 0.019018000000000868,
+        "median_ucc_speed": 5.29480171
+      },
+      "run": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.0007570000000001187,
+        "median_lower_sole_m": 9.000000000369823e-06,
+        "median_ucc_speed": 8.737186
+      },
+      "stop": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.12228799999999929,
+        "median_lower_sole_m": -0.0930610000000005,
+        "median_ucc_speed": 2.36349927e-33
+      },
+      "torch_equip": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.09307699999999919,
+        "median_lower_sole_m": -0.09305900000000022,
+        "median_ucc_speed": 0.0
+      },
+      "torch_walk": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.0004170000000005558,
+        "median_lower_sole_m": 0.01923400000000086,
+        "median_ucc_speed": 5.29480171
+      },
+      "torch_run": {
+        "samples": 33,
+        "minimum_lower_sole_m": -9.400000000070463e-05,
+        "median_lower_sole_m": 8.00000000005241e-05,
+        "median_ucc_speed": 8.740238
+      },
+      "torch_stop": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.1222840000000005,
+        "median_lower_sole_m": -0.0930730000000004,
+        "median_ucc_speed": 2.47182511e-33
+      },
+      "combat_F": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.1762940000000004,
+        "median_lower_sole_m": -0.07869499999999974,
+        "median_ucc_speed": 5.29785347
+      },
+      "combat_FR": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.18308599999999942,
+        "median_lower_sole_m": -0.15036899999999953,
+        "median_ucc_speed": 3.17433619
+      },
+      "combat_R": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.2188800000000004,
+        "median_lower_sole_m": -0.1834699999999998,
+        "median_ucc_speed": 2.9826932
+      },
+      "combat_BR": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.2337579999999999,
+        "median_lower_sole_m": -0.16717599999999955,
+        "median_ucc_speed": 3.00375557
+      },
+      "combat_B": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.20206499999999927,
+        "median_lower_sole_m": -0.17084400000000066,
+        "median_ucc_speed": 3.9550817
+      },
+      "combat_BL": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.18707200000000057,
+        "median_lower_sole_m": -0.16983300000000057,
+        "median_ucc_speed": 4.608323
+      },
+      "combat_L": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.20755800000000058,
+        "median_lower_sole_m": -0.15085299999999968,
+        "median_ucc_speed": 5.21456242
+      },
+      "combat_FL": {
+        "samples": 32,
+        "minimum_lower_sole_m": -0.22182699999999933,
+        "median_lower_sole_m": -0.16640500000000014,
+        "median_ucc_speed": 5.1212588
+      },
+      "combat_stop": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.12940599999999947,
+        "median_lower_sole_m": -0.12444200000000016,
+        "median_ucc_speed": 6.50922531e-38
+      }
+    }
+  },
+  "ucc_weight1": {
+    "run": "play-cadence-ik-20261102-213846",
+    "samples": 1221,
+    "matched_frames": 1221,
+    "ik_enabled_samples": 1221,
+    "acceptance": false,
+    "trials": {
+      "idle": {
+        "samples": 36,
+        "minimum_lower_sole_m": -0.010611000000000814,
+        "median_lower_sole_m": -0.010593000000000075,
+        "median_ucc_speed": 0.0
+      },
+      "walk": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.025508000000000308,
+        "median_lower_sole_m": 0.007720000000000837,
+        "median_ucc_speed": 5.29480171
+      },
+      "run": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.010607999999999507,
+        "median_lower_sole_m": -0.009992000000000445,
+        "median_ucc_speed": 8.737186
+      },
+      "stop": {
+        "samples": 32,
+        "minimum_lower_sole_m": -0.010616000000000625,
+        "median_lower_sole_m": -0.0105985000000004,
+        "median_ucc_speed": 2.52320358e-33
+      },
+      "torch_equip": {
+        "samples": 32,
+        "minimum_lower_sole_m": -0.010614000000000345,
+        "median_lower_sole_m": -0.0105934999999997,
+        "median_ucc_speed": 0.0
+      },
+      "torch_walk": {
+        "samples": 32,
+        "minimum_lower_sole_m": -0.014839000000000269,
+        "median_lower_sole_m": 0.006707999999999714,
+        "median_ucc_speed": 5.29480171
+      },
+      "torch_run": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.010604000000000724,
+        "median_lower_sole_m": -0.009999000000000535,
+        "median_ucc_speed": 8.740238
+      },
+      "torch_stop": {
+        "samples": 32,
+        "minimum_lower_sole_m": -0.010628999999999778,
+        "median_lower_sole_m": -0.010593999999999326,
+        "median_ucc_speed": 8.964594500000001e-33
+      },
+      "combat_F": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.13279900000000033,
+        "median_lower_sole_m": -0.010510999999999271,
+        "median_ucc_speed": 5.29785347
+      },
+      "combat_FR": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.10075950999999961,
+        "median_lower_sole_m": -0.04780200000000079,
+        "median_ucc_speed": 3.16344881
+      },
+      "combat_R": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.1442010000000007,
+        "median_lower_sole_m": -0.014720999999999762,
+        "median_ucc_speed": 2.93355918
+      },
+      "combat_BR": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.11864600000000003,
+        "median_lower_sole_m": -0.014050479999999865,
+        "median_ucc_speed": 3.127399
+      },
+      "combat_B": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.1147639999999992,
+        "median_lower_sole_m": -0.02587100000000042,
+        "median_ucc_speed": 4.003909
+      },
+      "combat_BL": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.12464800000000054,
+        "median_lower_sole_m": -0.03771099999999983,
+        "median_ucc_speed": 4.63215637
+      },
+      "combat_L": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.12327600000000061,
+        "median_lower_sole_m": -0.052542000000000755,
+        "median_ucc_speed": 5.21833754
+      },
+      "combat_FL": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.12179199999999923,
+        "median_lower_sole_m": -0.030737000000000236,
+        "median_ucc_speed": 5.11975
+      },
+      "combat_stop": {
+        "samples": 33,
+        "minimum_lower_sole_m": -0.010623000000000715,
+        "median_lower_sole_m": -0.010592000000000823,
+        "median_ucc_speed": 6.511752e-38
+      }
+    }
+  }
+}

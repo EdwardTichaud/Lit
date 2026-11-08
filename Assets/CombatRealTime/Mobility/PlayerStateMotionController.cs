@@ -28,7 +28,12 @@ public sealed class PlayerStateMotionController : MonoBehaviour
 
     public bool RefreshLandingLock()
     {
-        bool landing = isActiveAndEnabled && bridge != null && bridge.IsDriving && bridge.Grounded &&
+        // A grounded tick is required to acquire the lock. Once acquired, brief
+        // changes in ground contact must not restore input during the same pose.
+        bool holdThroughContactLoss = ownsLandingLock && bridge != null &&
+            bridge.HasOnlyScriptedMotionLock(this) && ModuleSettings.holdLandingThroughContactLoss;
+        bool landing = isActiveAndEnabled && bridge != null && bridge.IsDriving &&
+            (bridge.Grounded || holdThroughContactLoss) &&
             !bridge.IsScriptedTraversalActive && !bridge.IsCinematicMotionSessionActive && animator != null &&
             (IsLandingState(animator.GetCurrentAnimatorStateInfo(0)) ||
              animator.IsInTransition(0) && IsLandingState(animator.GetNextAnimatorStateInfo(0)));

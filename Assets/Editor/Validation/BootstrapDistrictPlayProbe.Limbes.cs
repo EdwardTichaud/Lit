@@ -8,6 +8,7 @@ public static partial class BootstrapDistrictPlayProbe
     {
         if(!ZoneReady("Assets/Scenes/Reve/ZoneManifest_Reve_Limbes.asset") || !ControlReady(out var actor)) return;
         Check(true,"Six authored Limbes scenes loaded through actual Maison portal; actor grounded, navigation and exploration restored.");
+        if(report.limbesExpansion) {Advance(100);return;}
         if(report.limbesRoutes) {Advance(90);return;}
         if(report.limbesCycles) {CaptureLiveLimbes(); Advance(70); return;}
         Check(actor.TrySetUccExternalPositionAndRotation(new Vector3(600,120.05f,4.3f),Quaternion.identity,true),"UCC fixture positioned at first takeoff point.");
@@ -15,6 +16,7 @@ public static partial class BootstrapDistrictPlayProbe
     }
     private static void TickLimbes()
     {
+        if(report.limbesExpansion && report.stage >= 100) {TickLimbesExpansion();return;}
         if(EditorApplication.timeSinceStartup-report.stageStarted>45) throw new TimeoutException("Limbes gameplay probe timed out at stage "+report.stage);
         if(report.stage>=90) {TickLimbesRoutes();return;}
         if(report.stage>=70) {TickLimbesCycles();return;}

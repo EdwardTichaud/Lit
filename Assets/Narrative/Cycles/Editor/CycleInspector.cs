@@ -134,7 +134,7 @@ public sealed class CycleDefinitionInspector : Editor
         CycleInspectorLayout.Group(serializedObject, "Identite et journal", "Identite persistante et textes prepares pour le futur journal ; principale ou annexe ne change pas l'autorite.", "cycleId", "title", "description", "category");
         CycleInspectorLayout.Group(serializedObject, "Disponibilite et objectifs", "Prerequis du cycle, etapes paralleles ou ordonnees et objectifs terminaux requis pour sa fin.", "prerequisites", "steps");
         CycleInspectorLayout.Group(serializedObject, "Dialogues", "Textes, durees en secondes reelles et presentation des interlocuteurs.", "dialogueSeconds", "dialogues");
-        CycleInspectorLayout.Group(serializedObject, "Fin et dechargement", "Scene additive dediee et delai maximal de presentation avant nettoyage partage.", "cycleSceneName", "completionPresentationTimeout");
+        CycleInspectorLayout.Group(serializedObject, "Fin et dechargement", "Scene additive dediee, delai maximal des presentations et marge apres leur fin avant dechargement.", "cycleSceneName", "completionPresentationTimeout", "completionUnloadDelay");
         CycleInspectorLayout.Group(serializedObject, "Migration des sauvegardes", "Conversion unique des flags publies vers les etapes. Les nouveaux cycles ne configurent pas de flags.", "legacyMigrationVersion", "legacyMigrations");
         CycleInspectorLayout.Group(serializedObject, "Compatibilite cinematographique", "Champs historiques conserves pour les cycles non migres.", "completionFlags", "enemyDefeatedFlags", "knowledgeOnEnemyDefeat", "playCinematicAfterDefeat", "deathDelay", "cinematicCompletedFlags");
         serializedObject.ApplyModifiedProperties();

@@ -50,12 +50,20 @@ public sealed class LitTacticalCameraTests
         finally { Object.DestroyImmediate(root); }
     }
 
-    [Test] public void TacticalMotorPreservesLocalAxesAndDoesNotCompeteForFacing()
+    [Test] public void TacticalMotorWithoutBridgeIntentPreservesLocalAxesAndFacing()
     {
-        var type = new LitTacticalMovementType();
-        Vector2 input = new Vector2(-.3f, -.4f);
-        Assert.That(type.GetInputVector(input), Is.EqualTo(input));
-        Assert.That(type.GetDeltaYawRotation(1, 1, 1, 1), Is.Zero);
+        var root = new GameObject("Initialized tactical movement fallback");
+        root.SetActive(false);
+        try
+        {
+            var motor = root.AddComponent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>();
+            var type = new LitTacticalMovementType();
+            type.Initialize(motor);
+            Vector2 input = new Vector2(-.3f, -.4f);
+            Assert.That(type.GetInputVector(input), Is.EqualTo(input));
+            Assert.That(type.GetDeltaYawRotation(1, 1, 1, 1), Is.Zero);
+        }
+        finally { Object.DestroyImmediate(root); }
     }
 
     [Test] public void CombatBarrierIsIgnoredOnlyByTacticalGameplayAndStaysSolid()
@@ -77,6 +85,7 @@ public sealed class LitTacticalCameraTests
             mode.SetValue(controller, GameplayCameraMode.ThirdPerson);
             Assert.That(controller.ShouldIgnoreTacticalCollider(collider), Is.False);
             mode.SetValue(controller, GameplayCameraMode.Tactical);
+            barrier.SetActive(true); // An inactive barrier cannot participate in camera collisions.
             Assert.That(controller.ShouldIgnoreTacticalCollider(collider), Is.True);
             Assert.That(controller.ShouldIgnoreTacticalCollider(wallCollider), Is.False);
             typeof(LitGameplayCameraModeController).GetField("external", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(controller, true);
@@ -217,7 +226,7 @@ public sealed class LitTacticalCameraTests
             Assert.That(input.asset.FindAction("Camera/ToggleFreeCamera", false), Is.Null);
             Assert.That(input.Camera.TacticalInspection.bindings[0].path, Is.EqualTo("<Gamepad>/leftStickPress"));
         }
-        finally { input.Dispose(); }
+        finally { Object.DestroyImmediate(input.asset); }
     }
 
     [Test] public void FreeCameraIsExplicitAndFollowIsRestored()
@@ -278,13 +287,13 @@ public sealed class LitTacticalCameraTests
         }
         finally { Object.DestroyImmediate(root); }
     }
-    [Test] public void BootstrapCameraRemainsSerializedAdventureAndBrainDisabled()
+    [Test] public void BootstrapCameraUsesAuthoredTacticalStartupWithAdventureSourceAndBrainDisabled()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
         var selector = prefab.GetComponentInChildren<LitGameplayCameraModeController>(true);
         Assert.That(selector, Is.Not.Null);
         var data = new SerializedObject(selector);
-        Assert.That(data.FindProperty("initialMode").enumValueIndex, Is.Zero);
+        Assert.That(data.FindProperty("initialMode").enumValueIndex, Is.EqualTo((int)GameplayCameraMode.Tactical));
         Assert.That(data.FindProperty("profile").objectReferenceValue, Is.Not.Null);
         Assert.That(selector.GetComponent<CinemachineBrain>().enabled, Is.False);
         var ucc = new SerializedObject(selector.GetComponent<Opsive.UltimateCharacterController.Camera.CameraController>());

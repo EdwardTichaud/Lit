@@ -1,0 +1,50 @@
+{
+    "scope": "Isolated Humanoid clips sampled on Lucian. Match minimizes the larger horizontal foot displacement; no changes to clip timing, poses or physics.",
+    "stopClip": "Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Common_Walk_Stop_Inplace.FBX",
+    "combatIdleClip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Idle_Inplace.FBX",
+    "explorationIdleClip": "Assets/Characters/1_Squad/Lucian/Animation/Common_Idle_Inplace.FBX",
+    "approachClip": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Strafe_Walk_FL_Stride03.anim",
+    "stopLength": 0.6666666865348816,
+    "leftFootTravel": 0.2690635919570923,
+    "rightFootTravel": 0.09623747318983078,
+    "leftSoleExcursion": 0.11657172441482544,
+    "rightSoleExcursion": 0.012830546125769615,
+    "matches": [
+        {
+            "pair": "Approach to CombatIdle",
+            "sourcePhase": 0.8958333134651184,
+            "targetPhase": 0.3083333373069763,
+            "leftDistance": 0.25022757053375244,
+            "rightDistance": 0.027308626100420952,
+            "pelvisDistance": 0.09468112885951996,
+            "pelvisAngle": 62.26679992675781
+        },
+        {
+            "pair": "Approach to Walk_Stop entry",
+            "sourcePhase": 0.8125,
+            "targetPhase": 0.0,
+            "leftDistance": 0.1309298276901245,
+            "rightDistance": 0.13758088648319244,
+            "pelvisDistance": 0.053197022527456284,
+            "pelvisAngle": 7.605640888214111
+        },
+        {
+            "pair": "Walk_Stop exit to CombatIdle",
+            "sourcePhase": 1.0,
+            "targetPhase": 0.42916667461395264,
+            "leftDistance": 0.1807892918586731,
+            "rightDistance": 0.18057017028331757,
+            "pelvisDistance": 0.04908657446503639,
+            "pelvisAngle": 18.105688095092773
+        },
+        {
+            "pair": "Walk_Stop exit to exploration idle",
+            "sourcePhase": 1.0,
+            "targetPhase": 0.3166666626930237,
+            "leftDistance": 0.2602698802947998,
+            "rightDistance": 0.13485349714756012,
+            "pelvisDistance": 0.07255178689956665,
+            "pelvisAngle": 11.881845474243164
+        }
+    ]
+}

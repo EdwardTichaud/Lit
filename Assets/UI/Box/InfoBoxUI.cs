@@ -327,6 +327,7 @@ public class InfoBoxUI : MonoBehaviour
 
     private IEnumerator ShowAndHideRoutine(float duration)
     {
+        yield return WaitForDialogueIfToast();
         float fadeIn = Mathf.Max(0f, fadeDuration);
         float hold = Mathf.Max(0f, duration);
         float fadeOut = Mathf.Max(0f, fadeDuration);
@@ -343,6 +344,7 @@ public class InfoBoxUI : MonoBehaviour
         float time = 0f;
         while (time < hold)
         {
+            yield return WaitForDialogueIfToast();
             time += Time.unscaledDeltaTime;
             yield return null;
         }
@@ -700,6 +702,7 @@ public class InfoBoxUI : MonoBehaviour
         float time = 0f;
         while (time < duration)
         {
+            yield return WaitForDialogueIfToast();
             time += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(time / duration);
             group.alpha = Mathf.Lerp(from, to, t);
@@ -709,5 +712,16 @@ public class InfoBoxUI : MonoBehaviour
         group.alpha = to;
         group.interactable = false;
         group.blocksRaycasts = false;
+    }
+
+    private IEnumerator WaitForDialogueIfToast()
+    {
+        if (holdsInputFocus || DialoguePanelUI.Instance == null || !DialoguePanelUI.Instance.IsShowing) yield break;
+        float previousAlpha = GetCanvasAlpha();
+        SetCanvasAlpha(0f);
+        // Both presentations use the authored bottom overlay. Give reading and
+        // dialogue priority without consuming a passive toast's remaining time.
+        while (!holdsInputFocus && DialoguePanelUI.Instance != null && DialoguePanelUI.Instance.IsShowing) yield return null;
+        if (isShowing) SetCanvasAlpha(previousAlpha);
     }
 }

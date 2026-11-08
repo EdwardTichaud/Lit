@@ -1,0 +1,240 @@
+{
+  "torch_F": {
+    "left": {
+      "ticks": [
+        67,
+        68
+      ],
+      "flexion_deg": [
+        50.84818,
+        53.4178276
+      ],
+      "pose_step_deg": 13.69,
+      "requested_hint_step_deg": 13.71,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.0
+      ]
+    },
+    "right": {
+      "ticks": [
+        80,
+        81
+      ],
+      "flexion_deg": [
+        68.42125,
+        62.97024
+      ],
+      "pose_step_deg": 8.88,
+      "requested_hint_step_deg": 8.88,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.0
+      ]
+    }
+  },
+  "plain_F": {
+    "left": {
+      "ticks": [
+        43,
+        44
+      ],
+      "flexion_deg": [
+        52.4177055,
+        56.7838249
+      ],
+      "pose_step_deg": 13.99,
+      "requested_hint_step_deg": 14.0,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.01
+      ]
+    },
+    "right": {
+      "ticks": [
+        55,
+        56
+      ],
+      "flexion_deg": [
+        69.73874,
+        64.49997
+      ],
+      "pose_step_deg": 9.24,
+      "requested_hint_step_deg": 9.25,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.0
+      ]
+    }
+  },
+  "plain_B": {
+    "left": {
+      "ticks": [
+        63,
+        64
+      ],
+      "flexion_deg": [
+        82.63441,
+        90.22697
+      ],
+      "pose_step_deg": 2.61,
+      "requested_hint_step_deg": 2.6,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.0
+      ]
+    },
+    "right": {
+      "ticks": [
+        69,
+        70
+      ],
+      "flexion_deg": [
+        49.35291,
+        42.8391838
+      ],
+      "pose_step_deg": 17.54,
+      "requested_hint_step_deg": 17.56,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.02
+      ]
+    }
+  },
+  "torch_BR": {
+    "left": {
+      "ticks": [
+        68,
+        69
+      ],
+      "flexion_deg": [
+        73.93,
+        70.41551
+      ],
+      "pose_step_deg": 17.02,
+      "requested_hint_step_deg": 17.01,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.0
+      ]
+    },
+    "right": {
+      "ticks": [
+        41,
+        42
+      ],
+      "flexion_deg": [
+        68.6549454,
+        72.1160049
+      ],
+      "pose_step_deg": 3.66,
+      "requested_hint_step_deg": 3.66,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "torch_R": {
+    "left": {
+      "ticks": [
+        39,
+        40
+      ],
+      "flexion_deg": [
+        74.60358,
+        76.83972
+      ],
+      "pose_step_deg": 5.51,
+      "requested_hint_step_deg": 5.51,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.0
+      ]
+    },
+    "right": {
+      "ticks": [
+        64,
+        65
+      ],
+      "flexion_deg": [
+        99.9371262,
+        96.62039
+      ],
+      "pose_step_deg": 6.25,
+      "requested_hint_step_deg": 6.26,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.01
+      ]
+    }
+  },
+  "torch_FL": {
+    "left": {
+      "ticks": [
+        50,
+        51
+      ],
+      "flexion_deg": [
+        101.037552,
+        101.127129
+      ],
+      "pose_step_deg": 3.9,
+      "requested_hint_step_deg": 3.91,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.01
+      ]
+    },
+    "right": {
+      "ticks": [
+        35,
+        36
+      ],
+      "flexion_deg": [
+        51.53845,
+        49.36507
+      ],
+      "pose_step_deg": 12.01,
+      "requested_hint_step_deg": 12.0,
+      "requested_vs_pose_deg": [
+        0.01,
+        0.0
+      ]
+    }
+  },
+  "torch_FR": {
+    "left": {
+      "ticks": [
+        56,
+        57
+      ],
+      "flexion_deg": [
+        109.61248,
+        112.681992
+      ],
+      "pose_step_deg": 2.1,
+      "requested_hint_step_deg": 2.1,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.0
+      ]
+    },
+    "right": {
+      "ticks": [
+        74,
+        75
+      ],
+      "flexion_deg": [
+        72.5131,
+        76.1096954
+      ],
+      "pose_step_deg": 9.25,
+      "requested_hint_step_deg": 9.24,
+      "requested_vs_pose_deg": [
+        0.0,
+        0.0
+      ]
+    }
+  }
+}

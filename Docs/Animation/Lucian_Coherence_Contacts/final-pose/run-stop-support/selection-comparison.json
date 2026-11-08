@@ -1,0 +1,104 @@
+{
+  "status": "RECORDED WITH ERRORS",
+  "errors": [
+    "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+  ],
+  "trials": [
+    {
+      "trial": "brake_0",
+      "phase_at_decision": 0.5373,
+      "height_left_cm": 0.001,
+      "height_right_cm": 59.7,
+      "selected_support": "left",
+      "clip": "Lucian_Run_Stop_LeftSupport_TwoTickPilot",
+      "torch": false,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.788,
+      "max_first_support_height_cm": 0.408
+    },
+    {
+      "trial": "brake_1",
+      "phase_at_decision": 0.0458,
+      "height_left_cm": 67.4,
+      "height_right_cm": 0.0,
+      "selected_support": "right",
+      "clip": "Lucian_Run_Stop_RightSupport_TwoTickPilot",
+      "torch": true,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.738,
+      "max_first_support_height_cm": 0.068
+    },
+    {
+      "trial": "brake_2",
+      "phase_at_decision": 0.4929,
+      "height_left_cm": 0.0,
+      "height_right_cm": 61.958,
+      "selected_support": "left",
+      "clip": "Lucian_Run_Stop_LeftSupport_TwoTickPilot",
+      "torch": false,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.02,
+      "max_first_support_height_cm": 0.002
+    },
+    {
+      "trial": "brake_3",
+      "phase_at_decision": 0.9822,
+      "height_left_cm": 69.879,
+      "height_right_cm": -0.0,
+      "selected_support": "right",
+      "clip": "Lucian_Run_Stop_RightSupport_TwoTickPilot",
+      "torch": true,
+      "transition_frame": 5,
+      "max_first_support_path_cm": 2.897,
+      "max_first_support_height_cm": 0.004
+    },
+    {
+      "trial": "brake_4",
+      "phase_at_decision": 0.1799,
+      "height_left_cm": 38.089,
+      "height_right_cm": 6.409,
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": false,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    },
+    {
+      "trial": "brake_5",
+      "phase_at_decision": 0.3356,
+      "height_left_cm": 5.198,
+      "height_right_cm": 45.129,
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": true,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    },
+    {
+      "trial": "brake_6",
+      "phase_at_decision": 0.6689,
+      "height_left_cm": 12.078,
+      "height_right_cm": 35.145,
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": false,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    },
+    {
+      "trial": "brake_7",
+      "phase_at_decision": 0.8466,
+      "height_left_cm": 53.611,
+      "height_right_cm": 4.199,
+      "selected_support": null,
+      "clip": "TwinSword_Common_Walk_Stop_Inplace",
+      "torch": true,
+      "transition_frame": 5,
+      "max_first_support_path_cm": null,
+      "max_first_support_height_cm": null
+    }
+  ]
+}

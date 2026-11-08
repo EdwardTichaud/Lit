@@ -1,5 +1,7 @@
 # Maison — visibilité tactique à travers le décor
 
+Mise à jour multi-couches : voir `LayeredVisibilityMask.md`. Les surfaces praticables sont maintenant préparées en mode protégé pour révéler le joueur à travers un étage supérieur ; le sol à ses pieds n'est pas découpé. Les anciennes mentions d'exclusion complète des sols ci-dessous décrivent le raccord initial.
+
 `Maison_Core` contient `Maison_TacticalVisibility` (`LitMaisonVisibilityZone`). Au chargement de `Maison_Environment_Near_1` à `_4`, ce composant prépare les murs, arches, colonnes, toits et rochers nommés comme tels. Il exclut les sols, chemins, escaliers praticables, objets animés et les autres scènes. Les LOD sont tous préparés, même lorsqu'ils ne sont pas actuellement affichés.
 
 En caméra tactique **IgnoreObstacles**, tant que le personnage est dans l'emprise du décor préparé, un masque circulaire révèle le joueur et la cible verrouillée. La caméra conserve son zoom et sa pose UCC. Le masque se désactive en L3, hors zone, en third-person et pendant les Timelines ; le clipping adaptatif reste désactivé.

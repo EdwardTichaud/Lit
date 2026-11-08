@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -67,9 +68,13 @@ public sealed class FlameInteractionReachTests
         itemRoot.SetActive(false);
         brazier.transform.position = new Vector3(10000, 10000, 10000);
         itemRoot.transform.position = brazier.transform.position + Vector3.right * 4;
+        Flame flame = null;
+        var registry = (ICollection<Flame>)Flame.ActiveInfluenceFlames;
         try
         {
-            var flame = brazier.AddComponent<Flame>();
+            flame = brazier.AddComponent<Flame>();
+            // Edit Mode does not run the source's runtime OnEnable registration.
+            registry.Add(flame);
             var item = itemRoot.AddComponent<InteractableItem>();
             typeof(InteractableItem).GetField("requireLitInfluenceForInteraction", Private).SetValue(item, true);
             typeof(InteractableItem).GetField("reactToFlameInfluence", Private).SetValue(item, true);
@@ -87,6 +92,7 @@ public sealed class FlameInteractionReachTests
         }
         finally
         {
+            if (flame != null) registry.Remove(flame);
             Object.DestroyImmediate(itemRoot);
             Object.DestroyImmediate(brazier);
         }

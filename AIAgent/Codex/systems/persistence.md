@@ -1,5 +1,22 @@
 # Persistance
 
+## Personnage de marker restaure inactif
+
+PersistentNetworkObject.ApplyTransformState reinscrit l'objet du snapshot apres
+l'etat actif : OnDisable ne doit pas rendre son identite introuvable pour les
+phases suivantes. Cela couvre aussi un enfant reste inactif via son parent.
+SceneMarker.ApplyPersistedState conserve egalement l'acteur inactif lorsque son
+PersistentId correspond au marker. SetActive(false) retirait sinon son identite.
+Le chemin de mort final ProductionBrainsDeathLifecycle la conservait deja ; la
+restauration doit avoir le meme contrat. Aucun nouvel ID, acteur, prefab ou
+format de sauvegarde. Le circuit D1 -> Cours -> Limbes -> Cours -> D1 -> Cours
+a revele ce defaut sur la Gargouille vaincue au second retour. Regression native
+45/45 passee, dont un test Play des deux phases successives sur un acteur reel
+desactive. Circuit cible d9b24819aa944d898a704580f5deb0aa passe/restaure : second
+retour aux Cours et conservation de la Gargouille vaincue verifies. Aucune
+nouvelle erreur de restauration ; les diagnostics d'assets D1 preexistants sont
+comptes separement, sans feu vert global sur ces assets ni recette reseau.
+
 ## Rôle
 
 Sauvegarder les personnages et le monde, reconstruire les objets runtime et

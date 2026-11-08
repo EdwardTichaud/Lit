@@ -1,0 +1,15 @@
+{
+    "source": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Common_Run_Loop_Inplace.FBX",
+    "candidate": "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Run_SupportIK.anim",
+    "status": "PASS offline native Foot IK. Runtime and visual qualification required.",
+    "requiresNativeFootIK": true,
+    "eventsPreserved": true,
+    "musclesPreserved": true,
+    "floor": 0.10000038146972656,
+    "minimumSole": -6.109476089477539e-7,
+    "subframeMinimumSole": -0.000746503472328186,
+    "maximumAnkleError": 8.002353411029617e-7,
+    "maximumUpperBodyError": 0.0,
+    "maximumFootRotationError": 0.0,
+    "maximumRootMotion": 0.0
+}

@@ -19,6 +19,11 @@ MonoBehaviour:
   - {fileID: 102900000, guid: 69039ad9eb680ab438a1fb397079fb8d, type: 3}
   - {fileID: 102900000, guid: 0432967484af93e4398cd5d7dbac41cb, type: 3}
   - {fileID: 102900000, guid: 894b73e0ec021ef4cb8149c069052b0b, type: 3}
+  - {fileID: 102900000, guid: 147bd4b0ef8ce4840ac15ecc34e9997d, type: 3}
+  - {fileID: 102900000, guid: 4b21f769725fe634e952550b90e0ebe2, type: 3}
+  - {fileID: 102900000, guid: e183a25cadd69554d9e1e80578202207, type: 3}
+  - {fileID: 102900000, guid: b4ddeeb5a1698a54fa07253a807cbbb2, type: 3}
+  - {fileID: 102900000, guid: 3dac53cc3a0398e48a227632b4a8e3fd, type: 3}
   postLoadingScenes: []
   primarySceneName: Reve_Limbes
   loadingMessage: Entrer dans les Limbes...
@@ -31,8 +36,13 @@ MonoBehaviour:
   - Reve_Limbes_Interactives
   - Reve_Limbes_Cycle_Seuil
   - Reve_Limbes_Cycle_Chambre
+  - Reve_Limbes_Progression
+  - Reve_Limbes_Cycle_Creation
+  - Reve_Limbes_Cycle_Captivite
+  - Reve_Limbes_Cycle_Invocation
+  - Reve_Limbes_Secrets
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
-  bakedNavMeshData: {fileID: 23800000, guid: b8787b2a36738be44977ec2d9f739b8b, type: 2}
-  bakedNavMeshVersion: 20261025181756
+  bakedNavMeshData: {fileID: 23800000, guid: 8efb3690b1425244a8435be88b9cdcdf, type: 2}
+  bakedNavMeshVersion: 20261027142923
   bakedNavMeshAgentTypeId: 0

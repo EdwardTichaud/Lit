@@ -1,5 +1,16 @@
 # Session runtime
 
+## Extension continue de la fracture dans District 1 (2026-11-02)
+
+District_1_Fracture_Environment est une additive du manifeste, avec raccord
+physique au belvedere. FractureGraybox en mode district ne cree, ne pilote et
+ne detruit ni acteur, ni camera, ni managers de session. Les inputs restent
+ceux de SquadManager/UCC. Etat des enigmes dans les variables monde existantes,
+actions reseau via WorldInteractionService, snapshot client apres JoinSync.
+Pas de nouvelle zone, teleportation, Ancient Flame ou epoque independante.
+Recette solo campagne c54d6cdc9d9042f09720c9f15d80dc42 passee ; limites et fichiers
+de preuve dans fracture_labyrinth.md. Host/client et recharge froide non qualifies.
+
 ## Synchronisation de pose UCC/Netcode
 
 Les joueurs utilisent ServerUccNetworkTransform, toujours serveur autoritaire.

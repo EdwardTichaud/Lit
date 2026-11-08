@@ -33,4 +33,35 @@ public sealed class FlamePrefabCentralizationTests
         Assert.That(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Interactive/Flame/Light_Flame_Fire_Ancient.prefab"), Is.Null);
         Assert.That(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Interactive/Flame/Interactive_Flame_Ancient.prefab"), Is.Null);
     }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ReceiverLifecycleRespectsProfileShadowOwnership(bool withProfile)
+    {
+        var root = new GameObject("Shadow ownership lifecycle");
+        root.SetActive(false);
+        var lightObject = new GameObject("Practical light");
+        lightObject.transform.SetParent(root.transform);
+        var light = lightObject.AddComponent<Light>();
+        var hd = lightObject.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();
+        if (withProfile) lightObject.AddComponent<LitContrastLight>();
+        var receiver = root.AddComponent<FlameLightReceiver>();
+        try
+        {
+            light.shadows = LightShadows.Hard;
+            light.shadowNearPlane = .3f;
+            hd.shadowDimmer = .62f;
+            hd.normalBias = .2f;
+            foreach (string callback in new[] { "Awake", "OnEnable", "OnValidate" })
+            {
+                typeof(FlameLightReceiver).GetMethod(callback, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(receiver, null);
+                Assert.That(receiver.ControlsShadowing, Is.EqualTo(!withProfile), callback);
+                Assert.That(hd.shadowDimmer, Is.EqualTo(withProfile ? .62f : 1f).Within(.001f), callback);
+                Assert.That(light.shadows, Is.EqualTo(withProfile ? LightShadows.Hard : LightShadows.Soft), callback);
+                Assert.That(light.shadowNearPlane, Is.EqualTo(withProfile ? .3f : .02f).Within(.001f), callback);
+                Assert.That(hd.normalBias, Is.EqualTo(withProfile ? .2f : .03f).Within(.001f), callback);
+            }
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
 }

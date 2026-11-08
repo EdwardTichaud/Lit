@@ -271,7 +271,8 @@ namespace Lit.Story
                 Vector3 localOffset = activeProfile != null
                     ? activeProfile.localCameraOffset
                     : fallbackLocalOffset;
-                position = actorRoot.TransformPoint(localOffset);
+                position = ResolveActorCameraPosition(actorRoot, activeListener != null ? activeListener.Root : null,
+                    activeProfile, localOffset);
 
                 Vector3 lookTarget = actorAnchor != null ? actorAnchor.position : actorRoot.position;
                 if (activeProfile != null)
@@ -311,6 +312,21 @@ namespace Lit.Story
             return direction.sqrMagnitude > 0.0001f
                 ? Quaternion.LookRotation(direction.normalized, Vector3.up)
                 : fallback;
+        }
+
+        public static Vector3 ResolveActorCameraPosition(Transform speaker, Transform listener,
+            StorySequenceCameraProfile profile, Vector3 offset)
+        {
+            // Existing profiles retain their authored transform/scale semantics.
+            if (profile == null || (!profile.useConversationAxis && !profile.centerCameraBetweenSubjects) || listener == null)
+                return speaker.TransformPoint(offset);
+            Vector3 origin = profile.centerCameraBetweenSubjects
+                ? (speaker.position + listener.position) * 0.5f : speaker.position;
+            Quaternion orientation = speaker.rotation;
+            Vector3 direction = Vector3.ProjectOnPlane(listener.position - speaker.position, Vector3.up);
+            if (profile.useConversationAxis && direction.sqrMagnitude > 0.0001f)
+                orientation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            return origin + orientation * offset;
         }
 
         private static float ResolveTransitionDuration(

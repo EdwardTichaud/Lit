@@ -1,0 +1,413 @@
+{
+  "walk_off": {
+    "reference": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0.709375,
+      "median_cadence": 1.0,
+      "sustained_clips": [
+        "Common_Idle_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "travel_m": 5.116,
+      "normalized_phase_span": 1.5990223266999999,
+      "left_near_surface_windows": [
+        {
+          "frames": 43,
+          "first_frame": 407,
+          "phase": 0.208,
+          "path_cm": 98.95,
+          "root_path_cm": 107.73,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.21
+        },
+        {
+          "frames": 43,
+          "first_frame": 466,
+          "phase": 0.784,
+          "path_cm": 97.83,
+          "root_path_cm": 107.73,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.29
+        },
+        {
+          "frames": 30,
+          "first_frame": 525,
+          "phase": 0.359,
+          "path_cm": 82.28,
+          "root_path_cm": 74.39,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.93
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 34,
+        "min_height_cm": -9.79
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 28,
+          "first_frame": 390,
+          "phase": 0.043,
+          "path_cm": 17.14,
+          "root_path_cm": 69.26,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.3
+        },
+        {
+          "frames": 37,
+          "first_frame": 440,
+          "phase": 0.53,
+          "path_cm": 54.83,
+          "root_path_cm": 92.34,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.36
+        },
+        {
+          "frames": 38,
+          "first_frame": 498,
+          "phase": 0.096,
+          "path_cm": 61.14,
+          "root_path_cm": 94.91,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.41
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 54,
+        "min_height_cm": -12.57
+      }
+    },
+    "candidate": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8566602,
+      "sustained_clips": [
+        "Lucian_Common_Walk_Loop_Stride03"
+      ],
+      "travel_m": 5.116,
+      "normalized_phase_span": 2.3415412958,
+      "left_near_surface_windows": [
+        {
+          "frames": 41,
+          "first_frame": 346,
+          "phase": 0.12,
+          "path_cm": 66.93,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 387,
+          "phase": 0.705,
+          "path_cm": 9.44,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.79
+        },
+        {
+          "frames": 41,
+          "first_frame": 416,
+          "phase": 0.119,
+          "path_cm": 67.21,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 457,
+          "phase": 0.704,
+          "path_cm": 9.35,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 21,
+          "first_frame": 486,
+          "phase": 0.119,
+          "path_cm": 56.44,
+          "root_path_cm": 51.3,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.96
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.01
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 16,
+          "first_frame": 342,
+          "phase": 0.063,
+          "path_cm": 6.15,
+          "root_path_cm": 38.48,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 30,
+          "first_frame": 387,
+          "phase": 0.705,
+          "path_cm": 13.22,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.9
+        },
+        {
+          "frames": 11,
+          "first_frame": 417,
+          "phase": 0.133,
+          "path_cm": 4.9,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.72
+        },
+        {
+          "frames": 30,
+          "first_frame": 457,
+          "phase": 0.704,
+          "path_cm": 13.35,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.86
+        },
+        {
+          "frames": 11,
+          "first_frame": 487,
+          "phase": 0.133,
+          "path_cm": 4.92,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.69
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.0
+      }
+    }
+  },
+  "walk_on": {
+    "reference": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0.709375,
+      "median_cadence": 1.0,
+      "sustained_clips": [
+        "Common_Idle_Inplace",
+        "Twinblades_Common_Walk_Loop_Inplace"
+      ],
+      "travel_m": 5.116,
+      "normalized_phase_span": 1.5990223266999999,
+      "left_near_surface_windows": [
+        {
+          "frames": 43,
+          "first_frame": 681,
+          "phase": 0.189,
+          "path_cm": 97.39,
+          "root_path_cm": 107.73,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.32
+        },
+        {
+          "frames": 43,
+          "first_frame": 740,
+          "phase": 0.764,
+          "path_cm": 95.71,
+          "root_path_cm": 107.73,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.76
+        },
+        {
+          "frames": 32,
+          "first_frame": 799,
+          "phase": 0.339,
+          "path_cm": 84.01,
+          "root_path_cm": 79.52,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.07
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 33,
+        "min_height_cm": -9.88
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 26,
+          "first_frame": 666,
+          "phase": 0.043,
+          "path_cm": 14.61,
+          "root_path_cm": 64.13,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.38
+        },
+        {
+          "frames": 38,
+          "first_frame": 713,
+          "phase": 0.501,
+          "path_cm": 60.56,
+          "root_path_cm": 94.91,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.44
+        },
+        {
+          "frames": 37,
+          "first_frame": 772,
+          "phase": 0.076,
+          "path_cm": 58.64,
+          "root_path_cm": 92.34,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.21
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 57,
+        "min_height_cm": -12.78
+      }
+    },
+    "candidate": {
+      "sustained_walk_frames": 165,
+      "median_speed_m_s": 1.53900135,
+      "median_idle_weight": 0,
+      "median_cadence": 0.8566602,
+      "sustained_clips": [
+        "Lucian_Common_Walk_Loop_Stride03"
+      ],
+      "travel_m": 5.116,
+      "normalized_phase_span": 2.3415412958,
+      "left_near_surface_windows": [
+        {
+          "frames": 41,
+          "first_frame": 622,
+          "phase": 0.12,
+          "path_cm": 66.93,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 663,
+          "phase": 0.705,
+          "path_cm": 9.43,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.79
+        },
+        {
+          "frames": 41,
+          "first_frame": 692,
+          "phase": 0.119,
+          "path_cm": 67.2,
+          "root_path_cm": 102.6,
+          "cut_by_window": false,
+          "max_abs_height_cm": 1.96
+        },
+        {
+          "frames": 9,
+          "first_frame": 733,
+          "phase": 0.704,
+          "path_cm": 9.35,
+          "root_path_cm": 20.52,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.75
+        },
+        {
+          "frames": 21,
+          "first_frame": 762,
+          "phase": 0.119,
+          "path_cm": 56.44,
+          "root_path_cm": 51.3,
+          "cut_by_window": true,
+          "max_abs_height_cm": 1.96
+        }
+      ],
+      "left_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.01
+      },
+      "right_near_surface_windows": [
+        {
+          "frames": 11,
+          "first_frame": 618,
+          "phase": 0.063,
+          "path_cm": 3.4,
+          "root_path_cm": 25.65,
+          "cut_by_window": true,
+          "max_abs_height_cm": 2.74
+        },
+        {
+          "frames": 8,
+          "first_frame": 629,
+          "phase": 0.22,
+          "path_cm": 3.42,
+          "root_path_cm": 17.96,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.37
+        },
+        {
+          "frames": 30,
+          "first_frame": 663,
+          "phase": 0.705,
+          "path_cm": 13.22,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.9
+        },
+        {
+          "frames": 11,
+          "first_frame": 693,
+          "phase": 0.133,
+          "path_cm": 4.9,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.72
+        },
+        {
+          "frames": 30,
+          "first_frame": 733,
+          "phase": 0.704,
+          "path_cm": 13.35,
+          "root_path_cm": 74.39,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.86
+        },
+        {
+          "frames": 11,
+          "first_frame": 763,
+          "phase": 0.133,
+          "path_cm": 4.92,
+          "root_path_cm": 25.65,
+          "cut_by_window": false,
+          "max_abs_height_cm": 2.69
+        }
+      ],
+      "right_surface_stats": {
+        "frames": 165,
+        "floor_span_cm": 0.0,
+        "below_floor_2cm_frames": 0,
+        "min_height_cm": -0.0
+      }
+    }
+  }
+}

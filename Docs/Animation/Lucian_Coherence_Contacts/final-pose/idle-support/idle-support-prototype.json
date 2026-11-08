@@ -1,0 +1,77 @@
+{
+    "idleClip": "Assets/Characters/1_Squad/Lucian/Animation/Common_Idle_Inplace.FBX",
+    "status": "PASS_OFFLINE",
+    "scope": "Lucian exploration tree and target avatar, in memory. No UCC, movement, transitions between states or runtime activation.",
+    "blends": [
+        {
+            "walkWeight": 0.0,
+            "maxSoleError": 5.289912223815918e-7,
+            "maxIdleFootHorizontalError": 0.000027095573386759497,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.09999985247850418,
+            "maxLowerSole": 0.10000056028366089,
+            "samples": 121
+        },
+        {
+            "walkWeight": 0.019999999552965164,
+            "maxSoleError": 6.034970283508301e-7,
+            "maxIdleFootHorizontalError": 0.0,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.09999977797269821,
+            "maxLowerSole": 0.10011953860521317,
+            "samples": 121
+        },
+        {
+            "walkWeight": 0.2199999988079071,
+            "maxSoleError": 0.0004692375659942627,
+            "maxIdleFootHorizontalError": 0.0,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.09971801936626434,
+            "maxLowerSole": 0.1009654700756073,
+            "samples": 121
+        },
+        {
+            "walkWeight": 0.5,
+            "maxSoleError": 0.00197775661945343,
+            "maxIdleFootHorizontalError": 0.0,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.09916386753320694,
+            "maxLowerSole": 0.10199050605297089,
+            "samples": 121
+        },
+        {
+            "walkWeight": 0.7799999713897705,
+            "maxSoleError": 0.002214878797531128,
+            "maxIdleFootHorizontalError": 0.0,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.0990767702460289,
+            "maxLowerSole": 0.10320083051919937,
+            "samples": 121
+        },
+        {
+            "walkWeight": 0.9800000190734863,
+            "maxSoleError": 0.0003360658884048462,
+            "maxIdleFootHorizontalError": 0.0,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.09985833615064621,
+            "maxLowerSole": 0.1057160422205925,
+            "samples": 121
+        },
+        {
+            "walkWeight": 1.0,
+            "maxSoleError": 0.00008454173803329468,
+            "maxIdleFootHorizontalError": 0.0,
+            "maxIdleFootRotation": 0.0,
+            "maxHipsError": 0.0,
+            "minLowerSole": 0.09994125366210938,
+            "maxLowerSole": 0.10534337908029556,
+            "samples": 121
+        }
+    ]
+}

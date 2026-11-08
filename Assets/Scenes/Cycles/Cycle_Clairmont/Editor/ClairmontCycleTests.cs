@@ -88,6 +88,7 @@ public sealed class ClairmontCycleTests
     {
         Assert.That(Application.isPlaying, Is.False, "This isolated contract test must not touch a live session.");
         Assert.That(AbilityService.Instance == null, Is.True, "Do not replace an existing player ability session.");
+        Assert.That(KnowledgeManager.Instance == null, Is.True, "Do not replace an existing knowledge session.");
         var previous = SceneManager.GetActiveScene(); var oldPlayer = LocalPlayerContext.LocalCharacterRoot;
         var scene = SceneManager.GetSceneByPath(path); bool opened = !scene.IsValid() || !scene.isLoaded;
         if (opened) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
@@ -97,16 +98,29 @@ public sealed class ClairmontCycleTests
         var home = SceneManager.GetSceneByPath(homePath); bool openedHome = !home.IsValid() || !home.isLoaded;
         if (openedHome) home = EditorSceneManager.OpenScene(homePath, OpenSceneMode.Additive);
         var actor = new GameObject("Ability traversal test actor"); actor.SetActive(false);
-        actor.AddComponent<Rigidbody>(); actor.AddComponent<CapsuleCollider>(); actor.AddComponent<SquadCharacterController>();
+        actor.AddComponent<Rigidbody>(); actor.AddComponent<CapsuleCollider>();
+        var controller = actor.AddComponent<SquadCharacterController>();
+        var character = ScriptableObject.CreateInstance<CharacterData>(); character.characterId = "test.clairmont.traversal";
+        typeof(SquadCharacterController).GetField("characterData", Private).SetValue(controller, character);
+        var knowledgeObject = new GameObject("Isolated passage knowledge"); knowledgeObject.SetActive(false);
+        var knowledge = knowledgeObject.AddComponent<KnowledgeManager>();
+        typeof(KnowledgeManager).GetField("dontDestroyOnLoad", Private).SetValue(knowledge, false);
+        typeof(KnowledgeManager).GetField("playUnlockEffects", Private).SetValue(knowledge, false);
+        var rulesObject = new GameObject("Isolated passage attempts"); rulesObject.SetActive(false);
+        var rules = rulesObject.AddComponent<WorldRulesStateManager>();
         var serviceObject = new GameObject("Isolated ability service"); serviceObject.SetActive(false);
         var service = serviceObject.AddComponent<AbilityService>();
         TrouEtroit passage = null; bool oldDetected = false;
+        KnowledgePassageDiscovery discovery = null; WorldRulesStateManager previousRules = null;
         try
         {
+            typeof(KnowledgeManager).GetMethod("Awake", Private).Invoke(knowledge, null);
             typeof(AbilityService).GetMethod("Awake", Private).Invoke(service, null);
             LocalPlayerContext.SetLocalCharacter(actor.transform, "isolated ability test");
             passage = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<TrouEtroit>(true)).Single();
             oldDetected = passage.IsDetected; passage.RestoreDetectedState(false);
+            discovery = passage.GetComponent<KnowledgePassageDiscovery>();
+            if (discovery != null) { previousRules = discovery.worldRules; discovery.worldRules = rules; }
             actor.transform.position = passage.teleportPointA.position; Physics.SyncTransforms();
             Assert.That(service.HasEquipped(actor, passage.observateurAbility), Is.True);
             Assert.That(service.IsUnlocked(passage.saufConduitAbility), Is.False);
@@ -116,7 +130,18 @@ public sealed class ClairmontCycleTests
             Assert.That(service.RequestEquip(passage.saufConduitAbility), Is.True);
             Assert.That(passage.ServerTryPassage(actor, true), Is.False, "Sauf-Conduit cannot bypass discovery.");
             Assert.That(service.RequestEquip(passage.observateurAbility), Is.True);
+            if (discovery != null)
+            {
+                Assert.That(discovery.IsKnown, Is.False);
+                Assert.That(discovery.IsConfigured, Is.True);
+                // This test exercises successful discovery delivery and traversal permissions.
+                // The ledger's fresh d6 success/failure paths are tested separately.
+                Assert.That(SecretPassageAttemptLedger.Observe(rules, discovery.definition.passageId,
+                    character.characterId, true, false, () => 6), Is.EqualTo(SecretPassageAttemptLedger.Result.Succeeded));
+            }
             Assert.That(passage.ServerTryPassage(actor, false), Is.True, "Observer discovers the shared passage.");
+            if (discovery != null)
+                Assert.That(knowledge.HasKnowledge(discovery.definition.knowledge), Is.True, "The real discovery adapter must grant the shared passage knowledge before traversal.");
             Assert.That(passage.ServerTryPassage(actor, true), Is.False, "Observer does not also grant Sauf-Conduit.");
             Assert.That(service.RequestEquip(passage.saufConduitAbility), Is.True);
             SceneManager.SetActiveScene(scene);
@@ -129,10 +154,13 @@ public sealed class ClairmontCycleTests
         }
         finally
         {
+            if (discovery != null) discovery.worldRules = previousRules;
             LocalPlayerContext.ClearIfMatch(actor.transform, "isolated ability test cleanup");
             if (oldPlayer != null) LocalPlayerContext.SetLocalCharacter(oldPlayer, "restored editor context");
             typeof(AbilityService).GetMethod("OnDestroy", Private).Invoke(service, null);
             Object.DestroyImmediate(serviceObject); Object.DestroyImmediate(actor);
+            knowledge.PrepareForRuntimeReset("Clairmont passage test cleanup");
+            Object.DestroyImmediate(knowledgeObject); Object.DestroyImmediate(rulesObject); Object.DestroyImmediate(character);
             if (!opened && passage != null) passage.RestoreDetectedState(oldDetected);
             if (openedHome) EditorSceneManager.CloseScene(home, true);
             if (opened) EditorSceneManager.CloseScene(scene, true);

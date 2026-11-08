@@ -4472,10 +4472,6 @@ PrefabInstance:
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[2].m_Value.z
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 8100414059305065397, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8902066288891202985, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.data[0].m_Value.y
       value: 307.122

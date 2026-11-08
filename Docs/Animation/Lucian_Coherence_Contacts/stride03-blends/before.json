@@ -1,0 +1,341 @@
+{
+    "scope": "Static root, actual avatar and complete controller. No UCC/terrain/action acceptance.",
+    "cases": [
+        {
+            "gait": "walk",
+            "angle": 0.0,
+            "minSole": -0.001296602189540863,
+            "maxLowerSole": 0.00007145851850509644,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 22.5,
+            "minSole": -0.010922558605670929,
+            "maxLowerSole": 0.04705846309661865,
+            "bothAirFraction": 0.17427386343479156,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03",
+                "Lucian_Strafe_Walk_FR_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 45.0,
+            "minSole": -0.00009694695472717285,
+            "maxLowerSole": 0.0067710354924201965,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 67.5,
+            "minSole": -0.0008187666535377502,
+            "maxLowerSole": 0.004220485687255859,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_FR_Stride03",
+                "Lucian_Strafe_Walk_R_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 90.0,
+            "minSole": -0.00002263486385345459,
+            "maxLowerSole": 0.0010891333222389221,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_R_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 112.5,
+            "minSole": -0.0016267448663711548,
+            "maxLowerSole": 0.04503844678401947,
+            "bothAirFraction": 0.08298755437135696,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03",
+                "Lucian_Strafe_Walk_R_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 135.0,
+            "minSole": -0.00006201118230819702,
+            "maxLowerSole": 0.0075203776359558105,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_BR_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 157.5,
+            "minSole": -0.0014010220766067505,
+            "maxLowerSole": 0.007714614272117615,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03",
+                "Lucian_Strafe_Walk_BR_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 180.0,
+            "minSole": -0.000011578202247619629,
+            "maxLowerSole": 0.008033856749534607,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 202.5,
+            "minSole": -0.0037355050444602966,
+            "maxLowerSole": 0.007859885692596436,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_B_Stride03",
+                "Lucian_Strafe_Walk_BL_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 225.0,
+            "minSole": -0.00003956258296966553,
+            "maxLowerSole": 0.009961314499378204,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 247.5,
+            "minSole": -0.00017280131578445435,
+            "maxLowerSole": 0.013985984027385712,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_BL_Stride03",
+                "Lucian_Strafe_Walk_L_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 270.0,
+            "minSole": -0.00004260241985321045,
+            "maxLowerSole": 0.0053207650780677795,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_L_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 292.5,
+            "minSole": -0.0016651749610900879,
+            "maxLowerSole": 0.022085122764110565,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03",
+                "Lucian_Strafe_Walk_L_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 315.0,
+            "minSole": -0.000015817582607269287,
+            "maxLowerSole": 0.012108132243156433,
+            "bothAirFraction": 0.0,
+            "clips": [
+                "Lucian_Strafe_Walk_FL_Stride03"
+            ]
+        },
+        {
+            "gait": "walk",
+            "angle": 337.5,
+            "minSole": -0.0014068707823753357,
+            "maxLowerSole": 0.0401456356048584,
+            "bothAirFraction": 0.0912863090634346,
+            "clips": [
+                "Lucian_Strafe_Walk_F_Stride03",
+                "Lucian_Strafe_Walk_FL_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 0.0,
+            "minSole": -0.00037994980812072754,
+            "maxLowerSole": 0.2782137393951416,
+            "bothAirFraction": 0.5477178692817688,
+            "clips": [
+                "Lucian_Strafe_Run_F_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 22.5,
+            "minSole": -0.0015118420124053955,
+            "maxLowerSole": 0.20128262042999268,
+            "bothAirFraction": 0.44813278317451477,
+            "clips": [
+                "Lucian_Strafe_Run_F_Stride03",
+                "Lucian_Strafe_Run_FR_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 45.0,
+            "minSole": -0.002172216773033142,
+            "maxLowerSole": 0.09983880817890167,
+            "bothAirFraction": 0.3900415003299713,
+            "clips": [
+                "Lucian_Strafe_Run_FR_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 67.5,
+            "minSole": 0.028659075498580933,
+            "maxLowerSole": 0.23796844482421875,
+            "bothAirFraction": 0.9502074718475342,
+            "clips": [
+                "Lucian_Strafe_Run_FR_Stride03",
+                "Lucian_Strafe_Run_R_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 90.0,
+            "minSole": -0.00025419145822525024,
+            "maxLowerSole": 0.1572493612766266,
+            "bothAirFraction": 0.42323651909828186,
+            "clips": [
+                "Lucian_Strafe_Run_R_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 112.5,
+            "minSole": 0.010653696954250336,
+            "maxLowerSole": 0.13464049994945526,
+            "bothAirFraction": 0.8215767741203308,
+            "clips": [
+                "Lucian_Strafe_Run_BR_Stride03",
+                "Lucian_Strafe_Run_R_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 135.0,
+            "minSole": -0.00038652122020721436,
+            "maxLowerSole": 0.09609958529472351,
+            "bothAirFraction": 0.2074688822031021,
+            "clips": [
+                "Lucian_Strafe_Run_BR_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 157.5,
+            "minSole": 0.01632162183523178,
+            "maxLowerSole": 0.1161055713891983,
+            "bothAirFraction": 0.908713698387146,
+            "clips": [
+                "Lucian_Strafe_Run_B_Stride03",
+                "Lucian_Strafe_Run_BR_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 180.0,
+            "minSole": -0.00036381930112838745,
+            "maxLowerSole": 0.1373538374900818,
+            "bothAirFraction": 0.2738589346408844,
+            "clips": [
+                "Lucian_Strafe_Run_B_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 202.5,
+            "minSole": -0.001854434609413147,
+            "maxLowerSole": 0.08795447647571564,
+            "bothAirFraction": 0.34854772686958313,
+            "clips": [
+                "Lucian_Strafe_Run_B_Stride03",
+                "Lucian_Strafe_Run_BL_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 225.0,
+            "minSole": -0.0002167820930480957,
+            "maxLowerSole": 0.031190216541290283,
+            "bothAirFraction": 0.033195022493600845,
+            "clips": [
+                "Lucian_Strafe_Run_BL_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 247.5,
+            "minSole": -0.0009688660502433777,
+            "maxLowerSole": 0.04614518582820892,
+            "bothAirFraction": 0.1825726181268692,
+            "clips": [
+                "Lucian_Strafe_Run_BL_Stride03",
+                "Lucian_Strafe_Run_L_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 270.0,
+            "minSole": -0.00016675889492034912,
+            "maxLowerSole": 0.04447658360004425,
+            "bothAirFraction": 0.16597510874271393,
+            "clips": [
+                "Lucian_Strafe_Run_L_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 292.5,
+            "minSole": -0.009995736181735992,
+            "maxLowerSole": 0.11164131760597229,
+            "bothAirFraction": 0.44813278317451477,
+            "clips": [
+                "Lucian_Strafe_Run_FL_Stride03",
+                "Lucian_Strafe_Run_L_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 315.0,
+            "minSole": -0.0006010010838508606,
+            "maxLowerSole": 0.1239163875579834,
+            "bothAirFraction": 0.42323651909828186,
+            "clips": [
+                "Lucian_Strafe_Run_FL_Stride03"
+            ]
+        },
+        {
+            "gait": "run",
+            "angle": 337.5,
+            "minSole": -0.004512801766395569,
+            "maxLowerSole": 0.20980948209762573,
+            "bothAirFraction": 0.46473029255867004,
+            "clips": [
+                "Lucian_Strafe_Run_F_Stride03",
+                "Lucian_Strafe_Run_FL_Stride03"
+            ]
+        }
+    ]
+}

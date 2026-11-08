@@ -1,0 +1,11 @@
+{
+  "same": 229,
+  "changed": [
+    "Assets\\Characters\\6_UCC_Opsive\\OpsiveIntegration\\LitOpsiveLocomotionBridge.Presentation.cs",
+    "Assets\\Characters\\6_UCC_Opsive\\OpsiveIntegration\\LitOpsiveLocomotionBridge.cs",
+    "Assets\\Characters\\6_UCC_Opsive\\OpsiveIntegration\\PlayerScriptedJumpController.cs",
+    "Assets\\Characters\\AnimationPresentation\\MovingLegs\\PlayerMovingLegsOverlay.cs",
+    "Assets\\Characters\\PlayerModules\\PlayerSettings.cs"
+  ],
+  "missing": []
+}

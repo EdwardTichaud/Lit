@@ -65,6 +65,7 @@ public sealed partial class CycleController : NetworkBehaviour
     private readonly HashSet<ulong> completionReadyClients = new HashSet<ulong>();
     private bool completionReadySent, unloadStarted;
     private double completionStartedAt = -1;
+    private double completionMarginStartedAt = -1;
     private bool completionCancelled;
     private readonly HashSet<ulong> viewers = new HashSet<ulong>();
     private readonly List<EnemyController> suspendedEnemies = new List<EnemyController>();
@@ -504,6 +505,7 @@ public sealed partial class CycleController : NetworkBehaviour
         {
             completionReadyClients.Clear(); completionReadySent = false;
             completionStartedAt = -1; completionCancelled = false;
+            completionMarginStartedAt = -1;
             return;
         }
         if (completionStartedAt < 0) completionStartedAt = Time.realtimeSinceStartupAsDouble;
@@ -517,6 +519,7 @@ public sealed partial class CycleController : NetworkBehaviour
         if (Online) foreach (ulong client in NetworkManager.ConnectedClientsIds)
             if (client != NetworkManager.LocalClientId && !completionReadyClients.Contains(client)) ready = false;
         bool timedOut = Time.realtimeSinceStartupAsDouble - completionStartedAt >= Math.Max(1f, definition.completionPresentationTimeout);
+        if (!ready) completionMarginStartedAt = -1;
         if (!ready && !timedOut) return;
         if (!ready && !completionCancelled)
         {
@@ -526,8 +529,14 @@ public sealed partial class CycleController : NetworkBehaviour
             CancelOwnedPresentation();
             return; // Send cancellation before the scene unload request.
         }
+        if (!CompletionDelayElapsed(Time.realtimeSinceStartupAsDouble)) return;
         if (GameFlowService.Instance != null)
             unloadStarted = GameFlowService.Instance.TryUnloadCompletedCycleScene(definition, gameObject.scene);
+    }
+    private bool CompletionDelayElapsed(double now)
+    {
+        if (completionMarginStartedAt < 0) completionMarginStartedAt = now;
+        return now - completionMarginStartedAt >= Mathf.Max(0, definition.completionUnloadDelay);
     }
     private void CancelOwnedPresentation()
     {
@@ -998,6 +1007,7 @@ public sealed partial class CycleController : NetworkBehaviour
         completionReadyClients.Clear();
         completionReadySent = unloadStarted = false;
         completionStartedAt = -1;
+        completionMarginStartedAt = -1;
         completionCancelled = false;
         attemptedSequences.Clear();
         if (progression != null) { progression.Changed -= OnProgressionChanged; progression.Unregister(this); }

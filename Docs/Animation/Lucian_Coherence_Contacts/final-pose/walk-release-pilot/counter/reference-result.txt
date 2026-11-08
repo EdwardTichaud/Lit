@@ -1,0 +1,2 @@
+FAIL System.InvalidOperationException: Real cinematic counter refused
+  at CounterCameraHandoffValidation.Tick () [0x00235] in C:\Users\pierr\AppData\Local\Temp\LucianProductionValidation-20261105-184857\Assets\Characters\3_Enemy\Iluvilirae\Editor\CounterCameraHandoffValidation.cs:90 

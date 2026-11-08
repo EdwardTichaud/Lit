@@ -1,0 +1,372 @@
+{
+  "run": "Library/LucianCoherence/play-cadence-response-contacts-20261104-201758",
+  "scope": "Read-only actual UCC telemetry. Sole extrema include intended flight; no artistic/stance acceptance inferred. Rotations filtered to grounded qualified cycles without state transitions; trial-boundary changes remain included.",
+  "samples": 3017,
+  "matched_frames": 3017,
+  "support_samples": 2090,
+  "root_motion_enabled_samples": 0,
+  "lowest_sole_by_trial": {
+    "walk": {
+      "count": 141,
+      "min": -0.010403000000000162,
+      "median": 0.0017890000000004846,
+      "max": 0.20658599999999971
+    },
+    "run": {
+      "count": 180,
+      "min": -0.010735509999999948,
+      "median": 0.006362000000000201,
+      "max": 0.22185799999999922
+    },
+    "stop": {
+      "count": 4,
+      "min": -0.009999000000000535,
+      "median": -0.00997849999999989,
+      "max": 0.013744000000000867
+    },
+    "torch_walk": {
+      "count": 142,
+      "min": -0.010109999999999175,
+      "median": 0.006606500000000182,
+      "max": 0.21921999999999997
+    },
+    "torch_run": {
+      "count": 180,
+      "min": -0.01063251000000065,
+      "median": 0.008387500000000436,
+      "max": 0.21809599999999918
+    },
+    "torch_stop": {
+      "count": 4,
+      "min": -0.010018000000000526,
+      "median": -0.009623500000000007,
+      "max": 0.01997500000000052
+    },
+    "combat_F": {
+      "count": 172,
+      "min": -0.010291000000000494,
+      "median": 0.03339550000000013,
+      "max": 0.2751000000000001
+    },
+    "combat_FR": {
+      "count": 181,
+      "min": -0.010156999999999528,
+      "median": -0.008117999999999626,
+      "max": 0.09355700000000056
+    },
+    "combat_R": {
+      "count": 181,
+      "min": -0.010196000000000538,
+      "median": 0.005530000000000257,
+      "max": 0.14162199999999991
+    },
+    "combat_BR": {
+      "count": 180,
+      "min": -0.011983999999999995,
+      "median": -0.004977499999999857,
+      "max": 0.08042499999999997
+    },
+    "combat_B": {
+      "count": 181,
+      "min": -0.010158999999999807,
+      "median": -0.009983000000000075,
+      "max": 0.1273269999999993
+    },
+    "combat_BL": {
+      "count": 180,
+      "min": -0.014817000000000746,
+      "median": -0.009457999999999522,
+      "max": 0.10008099999999942
+    },
+    "combat_L": {
+      "count": 180,
+      "min": -0.010476999999999848,
+      "median": -0.008881000000000583,
+      "max": 0.03159100000000059
+    },
+    "combat_FL": {
+      "count": 180,
+      "min": -0.010320000000000107,
+      "median": -0.008796499999999874,
+      "max": 0.11078900000000047
+    },
+    "combat_stop": {
+      "count": 4,
+      "min": 0.031968000000000885,
+      "median": 0.045269000000000226,
+      "max": 0.06172300000000064
+    }
+  },
+  "rotation_steps": {
+    "all_qualified": {
+      "world_angle": {
+        "count": 2087,
+        "min": 0.49064489522870475,
+        "median": 7.572512359656369,
+        "max": 53.220424276667806
+      },
+      "local_angle": {
+        "count": 2087,
+        "min": 0.49064489522870475,
+        "median": 7.572512359656369,
+        "max": 53.220424276667806
+      },
+      "actor_angle": {
+        "count": 2087,
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      },
+      "support_angle": {
+        "count": 2087,
+        "min": 0.49063960540252044,
+        "median": 7.572516519401878,
+        "max": 32.18616383139234
+      },
+      "final_angle": {
+        "count": 2087,
+        "min": 0.4906348209813063,
+        "median": 7.572526871858644,
+        "max": 53.22042455187942
+      }
+    },
+    "same_trial": {
+      "world_angle": {
+        "count": 2075,
+        "min": 0.49064489522870475,
+        "median": 7.5708085830526395,
+        "max": 53.220424276667806
+      },
+      "local_angle": {
+        "count": 2075,
+        "min": 0.49064489522870475,
+        "median": 7.5708085830526395,
+        "max": 53.220424276667806
+      },
+      "actor_angle": {
+        "count": 2075,
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      },
+      "support_angle": {
+        "count": 2075,
+        "min": 0.49063960540252044,
+        "median": 7.570820350931933,
+        "max": 32.18616383139234
+      },
+      "final_angle": {
+        "count": 2075,
+        "min": 0.4906348209813063,
+        "median": 7.570814870823914,
+        "max": 53.22042455187942
+      }
+    }
+  },
+  "largest_rotation_events": [
+    {
+      "trial": "combat_BL",
+      "same_trial": true,
+      "time": 76.03933,
+      "dt": 0.01675000000000182,
+      "world_angle": 53.220424276667806,
+      "local_angle": 53.220424276667806,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Strafe_Run_B_Stride03:0.210847646|Lucian_Strafe_Run_BL_Stride03:0.7891523",
+      "after_clips": "Lucian_Strafe_Run_B_Stride03:0.0725222155|Lucian_Strafe_Run_BL_Stride03:0.9274778",
+      "support_angle": 14.009620460263154,
+      "final_angle": 53.22042455187942,
+      "ground_weights": [
+        0.863182068,
+        0.0
+      ]
+    },
+    {
+      "trial": "run",
+      "same_trial": true,
+      "time": 41.6788139,
+      "dt": 0.01679990000000231,
+      "world_angle": 32.18615746058869,
+      "local_angle": 32.18615746058869,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 32.18616383139234,
+      "final_angle": 32.186174332572975,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "torch_run",
+      "same_trial": true,
+      "time": 56.6264725,
+      "dt": 0.01663589999999715,
+      "world_angle": 32.122548215586164,
+      "local_angle": 32.122548215586164,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 32.12252764299807,
+      "final_angle": 32.12252858833502,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "run",
+      "same_trial": true,
+      "time": 43.0423431,
+      "dt": 0.01632309999999393,
+      "world_angle": 31.630641486723796,
+      "local_angle": 31.630641486723796,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 31.630679828911546,
+      "final_angle": 31.63068214819356,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "run",
+      "same_trial": true,
+      "time": 42.5949631,
+      "dt": 0.018417400000004136,
+      "world_angle": 31.273866260874435,
+      "local_angle": 31.273866260874435,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 31.273852160901757,
+      "final_angle": 31.27385081259942,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "run",
+      "same_trial": true,
+      "time": 43.49263,
+      "dt": 0.01671599999999529,
+      "world_angle": 30.913406615298264,
+      "local_angle": 30.913406615298264,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 30.913402924768704,
+      "final_angle": 30.91339880586311,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "torch_run",
+      "same_trial": true,
+      "time": 57.0768242,
+      "dt": 0.016424199999995892,
+      "world_angle": 30.90350345547336,
+      "local_angle": 30.90350345547336,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 30.903532298762396,
+      "final_angle": 30.90353228505006,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "combat_R",
+      "same_trial": true,
+      "time": 69.21009,
+      "dt": 0.02057579999998893,
+      "world_angle": 30.616925640333765,
+      "local_angle": 30.616925640333765,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Strafe_Run_BR_Stride03:0.158681691|Lucian_Strafe_Run_R_Stride03:0.841318369",
+      "after_clips": "Lucian_Strafe_Run_BR_Stride03:0.158681691|Lucian_Strafe_Run_R_Stride03:0.841318369",
+      "support_angle": 30.61695512380108,
+      "final_angle": 30.61694560604048,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "run",
+      "same_trial": true,
+      "time": 41.2278557,
+      "dt": 0.016918199999999217,
+      "world_angle": 30.06797075788398,
+      "local_angle": 30.06797075788398,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 30.067973793034135,
+      "final_angle": 30.06798393021415,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "torch_run",
+      "same_trial": true,
+      "time": 55.25728,
+      "dt": 0.016175900000000354,
+      "world_angle": 29.898062901540705,
+      "local_angle": 29.898062901540705,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 29.898073045631733,
+      "final_angle": 29.898076741787477,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "torch_run",
+      "same_trial": true,
+      "time": 56.1766357,
+      "dt": 0.01681899999999814,
+      "world_angle": 29.558239757880045,
+      "local_angle": 29.558239757880045,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 29.55826864934546,
+      "final_angle": 29.558275517518343,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "trial": "run",
+      "same_trial": true,
+      "time": 42.12747,
+      "dt": 0.015684100000001422,
+      "world_angle": 28.82524166920983,
+      "local_angle": 28.82524166920983,
+      "actor_angle": 0.0,
+      "before_clips": "Lucian_Common_Run_Stride02:1",
+      "after_clips": "Lucian_Common_Run_Stride02:1",
+      "support_angle": 28.825273233358942,
+      "final_angle": 28.825268347709343,
+      "ground_weights": [
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

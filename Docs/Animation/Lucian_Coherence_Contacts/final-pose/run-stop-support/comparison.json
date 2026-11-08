@@ -1,0 +1,178 @@
+{
+  "current_preview": {
+    "run": "play-cadence-reference-runstop-check-handoffs-contacts-20261106-185709",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "status": "RECORDED WITH ERRORS",
+    "samples": 1000,
+    "trials": {
+      "stop": {
+        "capsule_travel_cm": 54.834,
+        "frames_with_support": 4,
+        "first_transition_frame": 5,
+        "largest_reported_patch_path_cm": null,
+        "extrema": {
+          "left": {
+            "max_relative_step_cm": 30.812,
+            "trial_frame": 5,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "True",
+            "support": "False",
+            "capsule_step_cm": 7.135
+          },
+          "right": {
+            "max_relative_step_cm": 19.466,
+            "trial_frame": 6,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "False",
+            "support": "False",
+            "capsule_step_cm": 6.225
+          }
+        }
+      },
+      "torch_stop": {
+        "capsule_travel_cm": 53.491,
+        "frames_with_support": 4,
+        "first_transition_frame": 5,
+        "largest_reported_patch_path_cm": null,
+        "extrema": {
+          "left": {
+            "max_relative_step_cm": 30.879,
+            "trial_frame": 5,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "True",
+            "support": "False",
+            "capsule_step_cm": 6.768
+          },
+          "right": {
+            "max_relative_step_cm": 19.216,
+            "trial_frame": 6,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "False",
+            "support": "False",
+            "capsule_step_cm": 6.043
+          }
+        }
+      },
+      "torch_sprint_stop": {
+        "capsule_travel_cm": 65.064,
+        "frames_with_support": 4,
+        "first_transition_frame": 5,
+        "largest_reported_patch_path_cm": null,
+        "extrema": {
+          "left": {
+            "max_relative_step_cm": 41.113,
+            "trial_frame": 5,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "True",
+            "support": "False",
+            "capsule_step_cm": 7.221
+          },
+          "right": {
+            "max_relative_step_cm": 21.429,
+            "trial_frame": 6,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "False",
+            "support": "False",
+            "capsule_step_cm": 6.237
+          }
+        }
+      }
+    }
+  },
+  "with_stop_support": {
+    "run": "play-cadence-stop-support-runstop-check-handoffs-contacts-20261106-185915",
+    "errors": [
+      "ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.\r\nParameter name: index"
+    ],
+    "status": "RECORDED WITH ERRORS",
+    "samples": 1000,
+    "trials": {
+      "stop": {
+        "capsule_travel_cm": 54.834,
+        "frames_with_support": 27,
+        "first_transition_frame": 5,
+        "largest_reported_patch_path_cm": null,
+        "extrema": {
+          "left": {
+            "max_relative_step_cm": 22.097,
+            "trial_frame": 7,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "True",
+            "support": "True",
+            "capsule_step_cm": 4.863
+          },
+          "right": {
+            "max_relative_step_cm": 10.211,
+            "trial_frame": 4,
+            "state": "-1269438207",
+            "next": "0",
+            "before_support": "True",
+            "support": "True",
+            "capsule_step_cm": 7.855
+          }
+        }
+      },
+      "torch_stop": {
+        "capsule_travel_cm": 53.491,
+        "frames_with_support": 27,
+        "first_transition_frame": 5,
+        "largest_reported_patch_path_cm": null,
+        "extrema": {
+          "left": {
+            "max_relative_step_cm": 18.484,
+            "trial_frame": 6,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "True",
+            "support": "True",
+            "capsule_step_cm": 6.043
+          },
+          "right": {
+            "max_relative_step_cm": 10.151,
+            "trial_frame": 4,
+            "state": "-1269438207",
+            "next": "0",
+            "before_support": "True",
+            "support": "True",
+            "capsule_step_cm": 7.496
+          }
+        }
+      },
+      "torch_sprint_stop": {
+        "capsule_travel_cm": 65.064,
+        "frames_with_support": 27,
+        "first_transition_frame": 5,
+        "largest_reported_patch_path_cm": null,
+        "extrema": {
+          "left": {
+            "max_relative_step_cm": 21.775,
+            "trial_frame": 7,
+            "state": "-1269438207",
+            "next": "-1112163239",
+            "before_support": "True",
+            "support": "True",
+            "capsule_step_cm": 4.871
+          },
+          "right": {
+            "max_relative_step_cm": 13.123,
+            "trial_frame": 2,
+            "state": "-1269438207",
+            "next": "0",
+            "before_support": "True",
+            "support": "True",
+            "capsule_step_cm": 14.563
+          }
+        }
+      }
+    }
+  }
+}

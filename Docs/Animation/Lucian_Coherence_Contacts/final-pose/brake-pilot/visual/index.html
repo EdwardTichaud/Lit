@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucian · Arrêt diagonal de combat</title>
+<style>body{font:1rem system-ui,sans-serif;max-width:92rem;margin:2rem auto;padding:0 1rem;background:#171717;color:#eee}p{max-width:76ch}figure{margin:0}img{display:block;width:100%;height:auto}figcaption{margin:.4rem 0;color:#ccc}.pair{display:grid;gap:.8rem;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:42rem){.pair{grid-template-columns:1fr}}</style>
+<h1>Lucian · Arrêt diagonal de combat</h1>
+<p>Même modèle, même cadrage, mêmes poses de départ et d’arrivée et même durée de 0,667 s. À gauche, un témoin interpolé déplace les deux pieds au sol. À droite, le clip pilote sépare le pas gauche du replacement droit.</p>
+<p>La scène d’inspection rend les maillages figés à la pose mesurée, sans la cape ni l’équipement. Les vues isolent le raccord d’animation. Le comportement avec UCC, les interruptions et le rendu en jeu demandent une validation séparée.</p>
+<section><h2>0.000 s · Départ</h2><div class="pair"><figure><img src="direct-000.png" alt="Interpolation directe, Départ"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-000.png" alt="Clip pilote, Départ"><figcaption>Clip pilote</figcaption></figure></div></section>
+<section><h2>0.133 s · Levée du pied gauche</h2><div class="pair"><figure><img src="direct-024.png" alt="Interpolation directe, Levée du pied gauche"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-024.png" alt="Clip pilote, Levée du pied gauche"><figcaption>Clip pilote</figcaption></figure></div></section>
+<section><h2>0.267 s · Milieu du pas gauche</h2><div class="pair"><figure><img src="direct-048.png" alt="Interpolation directe, Milieu du pas gauche"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-048.png" alt="Clip pilote, Milieu du pas gauche"><figcaption>Clip pilote</figcaption></figure></div></section>
+<section><h2>0.400 s · Descente du pied gauche</h2><div class="pair"><figure><img src="direct-072.png" alt="Interpolation directe, Descente du pied gauche"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-072.png" alt="Clip pilote, Descente du pied gauche"><figcaption>Clip pilote</figcaption></figure></div></section>
+<section><h2>0.511 s · Repose gauche</h2><div class="pair"><figure><img src="direct-092.png" alt="Interpolation directe, Repose gauche"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-092.png" alt="Clip pilote, Repose gauche"><figcaption>Clip pilote</figcaption></figure></div></section>
+<section><h2>0.589 s · Replacement droit</h2><div class="pair"><figure><img src="direct-106.png" alt="Interpolation directe, Replacement droit"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-106.png" alt="Clip pilote, Replacement droit"><figcaption>Clip pilote</figcaption></figure></div></section>
+<section><h2>0.667 s · Pose finale</h2><div class="pair"><figure><img src="direct-120.png" alt="Interpolation directe, Pose finale"><figcaption>Interpolation directe</figcaption></figure><figure><img src="pilot-120.png" alt="Clip pilote, Pose finale"><figcaption>Clip pilote</figcaption></figure></div></section>

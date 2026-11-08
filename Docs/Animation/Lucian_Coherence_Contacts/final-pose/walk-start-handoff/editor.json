@@ -1,0 +1,47 @@
+{
+    "startClip": "TwinSword_Common_Walk_Start_Inplace",
+    "walkClip": "Lucian_Common_Walk_Loop_ReleasePilot",
+    "exitTime": 0.699999988079071,
+    "transitionDuration": 0.07999999821186066,
+    "authoredOffset": 0.0,
+    "fittedOffset": 0.7749999761581421,
+    "nominalSpeed": 1.4889999628067017,
+    "trials": [
+        {
+            "label": "authored",
+            "maxFootStep": 0.13661399483680725,
+            "maxFootTurn": 23.543073654174805,
+            "minLowerSole": 0.02471909113228321,
+            "maxHipsDifference": 0.0,
+            "handoffStep": 0.13661399483680725,
+            "handoffTime": 0.16326531767845154
+        },
+        {
+            "label": "phase-only",
+            "maxFootStep": 0.04283919930458069,
+            "maxFootTurn": 6.616744518280029,
+            "minLowerSole": 0.023273123428225517,
+            "maxHipsDifference": 0.056881990283727646,
+            "handoffStep": 0.03398343548178673,
+            "handoffTime": 0.16326531767845154
+        },
+        {
+            "label": "goals-only",
+            "maxFootStep": 0.14021456241607666,
+            "maxFootTurn": 24.028779983520508,
+            "minLowerSole": 0.02428627200424671,
+            "maxHipsDifference": 0.0,
+            "handoffStep": 0.14021456241607666,
+            "handoffTime": 0.16326531767845154
+        },
+        {
+            "label": "phase-and-goals",
+            "maxFootStep": 0.042623281478881836,
+            "maxFootTurn": 6.617454528808594,
+            "minLowerSole": 0.022463686764240265,
+            "maxHipsDifference": 0.056881990283727646,
+            "handoffStep": 0.034401316195726395,
+            "handoffTime": 0.16326531767845154
+        }
+    ]
+}

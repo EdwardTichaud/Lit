@@ -285,6 +285,17 @@ Les Gargouilles ennemies ne s'activent que lorsqu'elles se trouvent dans une zon
 d'influence de Flame. Cette influence est une condition nécessaire à leur
 activation ; elle ne signifie pas que toute Gargouille devient hostile.
 
+Dans les labyrinthes de fracture, certains boss accumulent une puissance
+latente tant qu'ils restent privés de lumière. Accumuler cette puissance ne
+signifie pas être actif : l'influence d'une Flame reste nécessaire pour les
+rendre actifs et affrontables. Plus les Explorateurs tardent à leur apporter
+la lumière, plus la puissance disponible à leur éveil est importante.
+La lumière interrompt cette accumulation ; elle n'efface pas automatiquement
+la puissance déjà accumulée. Les préparatifs propres au lieu peuvent affaiblir
+le gardien ou limiter les moyens dont il dispose.
+Cette propriété concerne les boss de ces anomalies, pas automatiquement toutes
+les Gargouilles du château.
+
 Leur origine, la raison de leur hostilité ou de leur alliance et les règles
 d'activation des Gargouilles alliées restent à définir. Le comportement d'une
 Gargouille ennemie lorsque l'influence de Flame cesse reste également ouvert.
@@ -397,6 +408,26 @@ les explorent plusieurs siècles après le siège : ils ne voyagent pas dans la
 chronologie historique du château. Les effets observés d'une strate à l'autre
 font partie du mystère de la fracture ; leur mécanisme n'est pas défini par le
 canon.
+
+### Les labyrinthes de fracture
+
+Certains lieux du château forment des anomalies de l'espace-temps : des
+labyrinthes issus de la fracture du rituel interrompu. Des salles, passages et
+mécanismes y composent un espace instable, dont les liens ne suivent pas
+toujours l'architecture ordinaire. Ces lieux appartiennent au même château ;
+ils ne constituent pas une histoire ni un univers indépendants.
+
+Vaincre leur gardien résorbe la manifestation traversée, sans nécessairement
+réparer la fracture qui la produit. Celle-ci peut reformer une manifestation
+du labyrinthe et de son gardien, permettant une nouvelle expédition. Ce retour
+n'annule ni l'apaisement d'un fantôme ni les événements narratifs déjà résolus :
+il ne fait pas revivre arbitrairement les habitants historiques du château.
+Les Explorateurs conservent les Savoirs acquis et leur compréhension des lieux.
+
+L'anomalie ne permet pas aux membres d'une même équipe d'occuper des époques
+différentes. Ils partagent une seule strate temporelle, même lorsqu'ils se
+séparent dans le labyrinthe. La reformation d'une manifestation n'est pas un
+retour de la campagne à une époque antérieure.
 
 ## Les Explorateurs
 

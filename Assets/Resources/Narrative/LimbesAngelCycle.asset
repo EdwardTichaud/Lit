@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17da8dfe3cb61cc49b8baa5fdf03f2ba, type: 3}
+  m_Name: LimbesAngelCycle
+  m_EditorClassIdentifier: Assembly-CSharp::CycleDefinition
+  cycleId: reve.limbes.ange
+  title: Le dernier passage
+  description: 
+  category: 0
+  prerequisites:
+    mode: 0
+    conditions: []
+  steps:
+  - id: introduced
+    title: Atteindre la Gargouille
+    description: 
+    kind: 8
+    sourceId: introduction
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions: []
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: defeated
+    title: Vaincre la Gargouille des Limbes
+    description: 
+    kind: 8
+    sourceId: angel_defeat
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: introduced
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 0
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  - id: departed
+    title: "Comprendre ce que le ch\xE2teau a conserv\xE9"
+    description: 
+    kind: 8
+    sourceId: departure
+    knowledge: {fileID: 0}
+    prerequisites:
+      mode: 0
+      conditions:
+      - kind: 0
+        stepId: defeated
+        knowledge: {fileID: 0}
+        cycle: {fileID: 0}
+    terminal: 1
+    rewardSkill: {fileID: 0}
+    rewards: []
+    legacyAnyFlags: 0
+    legacyWriteFlags: 0
+  completionPresentationTimeout: 15
+  legacyMigrationVersion: 0
+  legacyMigrations: []
+  completionFlags: 0
+  cycleSceneName: 
+  dialogueSeconds: 4
+  dialogues: []
+  enemyDefeatedFlags: 1
+  knowledgeOnEnemyDefeat: []
+  playCinematicAfterDefeat: 0
+  deathDelay: 3
+  cinematicCompletedFlags: 2

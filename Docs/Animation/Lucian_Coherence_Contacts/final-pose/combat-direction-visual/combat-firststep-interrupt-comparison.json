@@ -1,0 +1,86 @@
+{
+  "plain_F": {
+    "right": {
+      "vertex": "0:5401",
+      "ticks": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "fixed_drift_cm": 1.40360000000328,
+      "lowest_point_drift_cm": 1.40360000000328,
+      "abs_height_cm": 0.0075000000000713385,
+      "root_travel_cm": 22.955000000001746
+    },
+    "left": {
+      "vertex": "0:4592",
+      "ticks": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "fixed_drift_cm": 0.14023551618888633,
+      "lowest_point_drift_cm": 0.14023551618888633,
+      "abs_height_cm": 0.18139999999995382,
+      "root_travel_cm": 31.713999999999487
+    }
+  },
+  "torch_F": {
+    "right": {
+      "vertex": "0:5401",
+      "ticks": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "fixed_drift_cm": 3.935999999998785,
+      "lowest_point_drift_cm": 3.935999999998785,
+      "abs_height_cm": 0.0075000000000713385,
+      "root_travel_cm": 20.421999999996387
+    },
+    "left": {
+      "vertex": "0:4592",
+      "ticks": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "fixed_drift_cm": 0.14577379737041501,
+      "lowest_point_drift_cm": 0.14577379737041501,
+      "abs_height_cm": 0.18139999999995382,
+      "root_travel_cm": 31.70700000000579
+    }
+  },
+  "interrupt_jump": {
+    "event_tick": 4,
+    "interrupted_phase": 0.2,
+    "first_action_tick": null,
+    "first_air_tick": 11,
+    "first_outside_start": 8,
+    "remaining_support_ticks": [],
+    "returned_to_start": false,
+    "root_motion": false,
+    "peak_actor_y": 12.129631
+  },
+  "interrupt_attack": {
+    "event_tick": 4,
+    "interrupted_phase": 0.2,
+    "first_action_tick": 5,
+    "first_air_tick": null,
+    "first_outside_start": 8,
+    "remaining_support_ticks": [],
+    "returned_to_start": false,
+    "root_motion": false,
+    "peak_actor_y": 9.4
+  }
+}
