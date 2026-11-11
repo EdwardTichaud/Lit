@@ -34581,7 +34581,6 @@ MonoBehaviour:
   m_Script: {fileID: 2110904229}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PersistentKnowledgeState
-  knowledgeManager: {fileID: 0}
 --- !u!114 &1498458581
 MonoBehaviour:
   m_ObjectHideFlags: 0

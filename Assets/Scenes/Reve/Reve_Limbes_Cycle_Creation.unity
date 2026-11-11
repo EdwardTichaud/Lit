@@ -131,7 +131,6 @@ GameObject:
   - component: {fileID: 185661309}
   - component: {fileID: 185661308}
   - component: {fileID: 185661311}
-  - component: {fileID: 185661310}
   m_Layer: 0
   m_Name: Preuve_Creation_0
   m_TagString: Untagged
@@ -147,14 +146,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 185661306}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -29.075012, y: 5.7432327, z: 25.075}
+  m_LocalRotation: {x: -0.014803106, y: -0.057552937, z: -0.24866042, w: 0.966766}
+  m_LocalPosition: {x: -29.465, y: 5.035, z: 26.125}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 412689592}
   m_Father: {fileID: 1666107173}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -3.282, y: -5.975, z: -28.677}
 --- !u!114 &185661308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,7 +173,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -195,27 +194,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 0.8, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &185661310
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 185661306}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
-  opacityChannel: 0
-  opacityTextureProperty: 
-  outlined: 0
 --- !u!114 &185661311
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,6 +275,7 @@ GameObject:
   - component: {fileID: 412689592}
   - component: {fileID: 412689594}
   - component: {fileID: 412689593}
+  - component: {fileID: 412689595}
   m_Layer: 0
   m_Name: Pierre_inscrite
   m_TagString: Untagged
@@ -306,13 +291,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 412689591}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.021981128, y: -0.09063686, z: -0.23465951, w: 0.9675933}
-  m_LocalPosition: {x: -0.231, y: -0.78499603, z: 1.051}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.9, y: 0.4, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 185661307}
-  m_LocalEulerAnglesHint: {x: 0, y: -10.703, z: -27.264}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &412689593
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -370,6 +355,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 412689591}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &412689595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 412689591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
+  outlined: 0
 --- !u!1 &594502777
 GameObject:
   m_ObjectHideFlags: 0
@@ -381,6 +381,7 @@ GameObject:
   - component: {fileID: 594502778}
   - component: {fileID: 594502780}
   - component: {fileID: 594502779}
+  - component: {fileID: 594502781}
   m_Layer: 0
   m_Name: Pierre_inscrite
   m_TagString: Untagged
@@ -396,13 +397,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 594502777}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.6459203, z: -0, w: 0.7634049}
-  m_LocalPosition: {x: -3.18, y: 0, z: -2.1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.9, y: 0.4, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1887654727}
-  m_LocalEulerAnglesHint: {x: 0, y: 80.469, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &594502779
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -460,6 +461,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 594502777}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &594502781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594502777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
+  outlined: 0
 --- !u!1 &1424314871
 GameObject:
   m_ObjectHideFlags: 0
@@ -472,7 +488,6 @@ GameObject:
   - component: {fileID: 1424314874}
   - component: {fileID: 1424314873}
   - component: {fileID: 1424314876}
-  - component: {fileID: 1424314875}
   m_Layer: 0
   m_Name: Preuve_Creation_2
   m_TagString: Untagged
@@ -489,7 +504,7 @@ Transform:
   m_GameObject: {fileID: 1424314871}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -43, y: 10.350006, z: 36}
+  m_LocalPosition: {x: -40.77, y: 10.86, z: 40.68}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -515,7 +530,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -542,21 +557,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.8, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1424314875
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1424314871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
-  opacityChannel: 0
-  opacityTextureProperty: 
-  outlined: 0
 --- !u!114 &1424314876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,6 +632,7 @@ GameObject:
   - component: {fileID: 1488586686}
   - component: {fileID: 1488586688}
   - component: {fileID: 1488586687}
+  - component: {fileID: 1488586689}
   m_Layer: 0
   m_Name: Pierre_inscrite
   m_TagString: Untagged
@@ -647,13 +648,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1488586685}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.24159685, z: -0, w: 0.97037673}
-  m_LocalPosition: {x: -1, y: 0.66000366, z: 2.54}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.9, y: 0.4, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1424314872}
-  m_LocalEulerAnglesHint: {x: 0, y: -27.962, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1488586687
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -711,6 +712,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1488586685}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1488586689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488586685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  opacityChannel: 0
+  opacityTextureProperty: 
+  outlined: 0
 --- !u!1 &1666107171
 GameObject:
   m_ObjectHideFlags: 0
@@ -748,7 +764,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -814,7 +830,6 @@ GameObject:
   - component: {fileID: 1887654729}
   - component: {fileID: 1887654728}
   - component: {fileID: 1887654731}
-  - component: {fileID: 1887654730}
   m_Layer: 0
   m_Name: Preuve_Creation_1
   m_TagString: Untagged
@@ -830,14 +845,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1887654726}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -35.5, y: 6.8499985, z: 23.5}
+  m_LocalRotation: {x: -0, y: 0.5108652, z: -0, w: 0.85966086}
+  m_LocalPosition: {x: -38.59, y: 6.8499985, z: 21.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 594502778}
   m_Father: {fileID: 1666107173}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 61.443, z: 0}
 --- !u!114 &1887654728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -857,7 +872,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -884,21 +899,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.8, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1887654730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1887654726}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
-  opacityChannel: 0
-  opacityTextureProperty: 
-  outlined: 0
 --- !u!114 &1887654731
 MonoBehaviour:
   m_ObjectHideFlags: 0
