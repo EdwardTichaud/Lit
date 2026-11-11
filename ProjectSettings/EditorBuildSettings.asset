@@ -132,7 +132,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Reve/Reve_Limbes_Interactives.unity
     guid: 69039ad9eb680ab438a1fb397079fb8d
   - enabled: 1
-    path: Assets/Scenes/Reve/Reve_Limbes_Lighting.unity
+    path: Assets/Scenes/Reve/Reve_Limbes_Core.unity
     guid: a23b80a0c98ddd248aec4f43de5ebbc3
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_AccesReve.unity

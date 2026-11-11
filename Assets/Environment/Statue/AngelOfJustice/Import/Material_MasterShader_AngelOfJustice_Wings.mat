@@ -226,6 +226,8 @@ Material:
     - _IridescenceMask: 1
     - _IridescenceThickness: 1
     - _LinkDetailsWithBase: 1
+    - _LitMaskEnabled: 0
+    - _LitMaskVersion: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0
@@ -314,6 +316,11 @@ Material:
     - _EmissiveColorLDR: {r: 0, g: 0, b: 0, a: 1}
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
     - _IridescenceThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
+    - _LitMaskCameraForward: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskCameraPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskSettings: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget0: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget1: {r: 0, g: 0, b: 0, a: 0}
     - _OldColor: {r: 1, g: 1, b: 1, a: 1}
     - _SnowColor: {r: 5.512785, g: 5.752471, b: 5.992157, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}

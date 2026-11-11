@@ -143,6 +143,8 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _LitMaskEnabled: 0
+    - _LitMaskVersion: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0
@@ -210,6 +212,11 @@ Material:
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _Emissive: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskCameraForward: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskCameraPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskSettings: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget0: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget1: {r: 0, g: 0, b: 0, a: 0}
     - _OldColor: {r: 1, g: 1, b: 1, a: 1}
     - _SnowColor: {r: 5.512785, g: 5.752471, b: 5.992157, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

@@ -5109,7 +5109,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &6406237107413020322
 Transform:
   m_ObjectHideFlags: 0
@@ -5168,7 +5168,7 @@ Transform:
   m_GameObject: {fileID: 3847889839652941872}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0010838761, y: 0, z: -0.0010418075}
+  m_LocalPosition: {x: 0.00924983, y: 0, z: -0.011296098}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5181,12 +5181,12 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3847889839652941872}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 0.38, b: 0.12, a: 1}
   m_Intensity: 159.15494
-  m_Range: 5
+  m_Range: 12
   m_SpotAngle: 55
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -5197,7 +5197,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.049999997
+    m_NearPlane: 0.1
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -5398,7 +5398,7 @@ MonoBehaviour:
   lightColor: {r: 1, g: 0.38, b: 0.12, a: 1}
   intensityUnit: 0
   intensity: 2000
-  range: 5
+  range: 12
   spotAngle: 55
   castSoftShadows: 1
   shadowDimmer: 0.75
@@ -5420,7 +5420,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 4984404590862424500}
   searchInChildren: 0
-  previewInEditMode: 0
+  previewInEditMode: 1
   movementAmplitude: 0.015
   movementSpeed: 1.6
 --- !u!1 &3860641841006496626
@@ -5602,8 +5602,8 @@ ParticleSystem:
     startSize:
       serializedVersion: 3
       minMaxState: 3
-      scalar: 0.38880002
-      minScalar: 0.1728
+      scalar: 0.075600006
+      minScalar: 0.0336
       maxCurve:
         serializedVersion: 2
         m_Curve: []
@@ -5618,7 +5618,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeY:
       serializedVersion: 3
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -5635,7 +5635,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeZ:
       serializedVersion: 3
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -7736,7 +7736,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5928795053186943948
 Transform:
   m_ObjectHideFlags: 0
@@ -7746,7 +7746,7 @@ Transform:
   m_GameObject: {fileID: 4697132361706693262}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 3.92, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -10141,12 +10141,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flame
   ShowTopMostFoldoutHeaderGroup: 1
-  isLit: 0
-  flameId: scene-flame:Model_Flame_Brazier:6237B2EC
+  isLit: 1
+  flameId: flame-b4b9e5a2a205481baca5e26bc36b3cd6
   flameObject: {fileID: 0}
   flameLight: {fileID: 4984404590862424500}
-  overridePrimaryLightRange: 0
-  primaryLightRange: 6
+  overridePrimaryLightRange: 1
+  primaryLightRange: 12
   activateWhenLitTargets: []
   configureRevealSource: 1
   flameLightReceiver: {fileID: 8245632623973644095}
@@ -10157,12 +10157,12 @@ MonoBehaviour:
   unlitStateMessage: La flamme est eteinte.
   interactMaxDistance: 1
   interactionPriority: 80
-  interactionRadius: 2
+  interactionRadius: 10
   interactionCenter: {x: 0, y: 0, z: 0}
   interactionTrigger: {fileID: 5519159958752702840}
   litInfluence:
     enabled: 1
-    radius: 5
+    radius: 12
     transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:
@@ -10179,11 +10179,11 @@ MonoBehaviour:
   ancientInfluenceSphereColor: {r: 0.35, g: 0.72, b: 1, a: 1}
   influenceSphereMaterialOverride: {fileID: 0}
   commonLightActivationOrder: []
-  ancientFlame: 1
+  ancientFlame: 0
   emissionFadeDuration: 1
   muninController: {fileID: 0}
   chargeCostToLight: 0
-  torchPointCostToLight: 20
+  torchPointCostToLight: 10
 --- !u!135 &5519159958752702840
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -10203,7 +10203,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 2
+  m_Radius: 10
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5739525385426964407
 GameObject:
@@ -12694,8 +12694,8 @@ ParticleSystem:
     startSize:
       serializedVersion: 3
       minMaxState: 3
-      scalar: 0.126
-      minScalar: 0.044999998
+      scalar: 0.0245
+      minScalar: 0.00875
       maxCurve:
         serializedVersion: 2
         m_Curve: []
@@ -12710,7 +12710,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeY:
       serializedVersion: 3
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -12727,7 +12727,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeZ:
       serializedVersion: 3
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -17075,7 +17075,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: fdb282f3b939d9c4991f7be67a041357, type: 2}
+  - {fileID: 2100000, guid: 5ebe2a6e484ef8f41bb68d86dc0e2278, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -17170,12 +17170,12 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7951317566171242213}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 13
   m_Type: 0
   m_Color: {r: 0.22, g: 0.72, b: 1, a: 1}
   m_Intensity: 254.0649
-  m_Range: 5
+  m_Range: 12
   m_SpotAngle: 65
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -17387,7 +17387,7 @@ MonoBehaviour:
   lightColor: {r: 0.22, g: 0.72, b: 1, a: 1}
   intensityUnit: 0
   intensity: 250
-  range: 5
+  range: 12
   spotAngle: 65
   castSoftShadows: 0
   shadowDimmer: 0
@@ -17422,7 +17422,7 @@ Transform:
   m_GameObject: {fileID: 8708780792437853273}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.78, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -17475,10 +17475,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6713b4830f0d43ac98f0a77b48ed2ec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitAtmosphereParticles
-  profile: 2
+  profile: 1
   density: 2.5
-  castleDustVolume: {x: 58, y: 15, z: 58}
-  particleSize: 1.8
+  castleDustVolume: {x: 0.1, y: 0.1, z: 0.1}
+  particleSize: 0.35
   opacity: 0.42
   alphaClipThreshold: 0.01
   previewInEditMode: 0
