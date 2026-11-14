@@ -80182,8 +80182,8 @@ MonoBehaviour:
   frequency: 0.1
   phaseOffset: 0
   useUnscaledTime: 1
-  positionAmplitude: {x: 0.01, y: 0.015, z: 0.01}
-  rotationAmplitude: {x: 0.1, y: 0.04, z: 0.06}
+  positionAmplitude: {x: 0.02, y: 0.03, z: 0.02}
+  rotationAmplitude: {x: 0.12, y: 0.08, z: 0.12}
   resetOffsetOnDisable: 1
 --- !u!1 &2012531070
 GameObject:
@@ -93125,8 +93125,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2784444758590152138}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.04619833, y: -0.6609877, z: 0.043741312, w: 0.747695}
-  m_LocalPosition: {x: 0.42268002, y: -0.11908004, z: 0.037209988}
+  m_LocalRotation: {x: -0, y: -0.43176064, z: -0, w: 0.90198827}
+  m_LocalPosition: {x: 0.438, y: -0.11908004, z: -1.14}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -93141,7 +93141,7 @@ Transform:
   - {fileID: 2307505761555840559}
   - {fileID: 3080640603273793502}
   m_Father: {fileID: 23841361}
-  m_LocalEulerAnglesHint: {x: 7.291, y: -82.94, z: 0.251}
+  m_LocalEulerAnglesHint: {x: 0, y: -51.159, z: 0}
 --- !u!1 &2235933580347406608
 GameObject:
   m_ObjectHideFlags: 0
