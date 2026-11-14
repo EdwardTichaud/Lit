@@ -8720,6 +8720,28 @@ Cloth:
   - {x: 0.6666667, y: 0.16666667, z: 0.16666667}
   - {x: 0.5, y: 0.5, z: 0}
   m_VirtualParticleIndices: 
+--- !u!114 &7416052298043510912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4393845508060884624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e013e28ba6ae4e3e8b93546e4f288024, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LucianCapeCollision
+  character: {fileID: 2233782780378164146}
+  pelvis: {fileID: 8102385120484499302}
+  chest: {fileID: 3749325135360377337}
+  leftThigh: {fileID: 5049976916126729133}
+  rightThigh: {fileID: 6148764882613137992}
+  leftCalf: {fileID: 824565578787532084}
+  rightCalf: {fileID: 6650189202620170171}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 134219913
 --- !u!1 &4402416958265966700
 GameObject:
   m_ObjectHideFlags: 0
@@ -11401,25 +11423,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3618271444681434395, guid: fcdcae5282448594986973d94fa41218, type: 3}
   m_PrefabInstance: {fileID: 7255431395609358504}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7416052298043510912
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4393845508060884624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e013e28ba6ae4e3e8b93546e4f288024, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::LucianCapeCollision
-  character: {fileID: 2233782780378164146}
-  pelvis: {fileID: 8102385120484499302}
-  chest: {fileID: 3749325135360377337}
-  leftThigh: {fileID: 5049976916126729133}
-  rightThigh: {fileID: 6148764882613137992}
-  leftCalf: {fileID: 824565578787532084}
-  rightCalf: {fileID: 6650189202620170171}
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 134219913

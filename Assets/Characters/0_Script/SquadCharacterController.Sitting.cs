@@ -6,6 +6,7 @@ public partial class SquadCharacterController
     private static readonly int SittingIdleStateHash = Animator.StringToHash("Sitting_Idle");
     private static readonly int SittingIdleFullPathHash = Animator.StringToHash("Base Layer.Sitting_Idle");
     private static readonly int StandUpStateHash = Animator.StringToHash("Stand_Up");
+    private static readonly int StandUpFullPathHash = Animator.StringToHash("Base Layer.Stand_Up");
 
     [Header("Idle Sitting")]
     [SerializeField, Tooltip("Assied automatiquement le personnage local apres une periode sans input.")]
@@ -21,6 +22,7 @@ public partial class SquadCharacterController
     private bool sittingMovementSuppressionActive;
     private bool waitingForStandUpCompletion;
     private bool observedStandUpState;
+    private bool standUpQueued;
     private float standUpRequestedAt;
     private float sittingIdleTrackingStartedAt;
     private uint sittingMovementActivityVersion;
@@ -59,6 +61,7 @@ public partial class SquadCharacterController
             sittingRequested = true;
             waitingForStandUpCompletion = false;
             observedStandUpState = false;
+            standUpQueued = false;
             sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
             SetAnimatorBoolIfValid(sittingParam, true);
             return true;
@@ -69,20 +72,33 @@ public partial class SquadCharacterController
             return true;
         }
 
+        if (waitingForStandUpCompletion)
+        {
+            return true;
+        }
+
         sittingRequested = false;
         sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
-        SetAnimatorBoolIfValid(sittingParam, false);
-
         if (!sittingMovementSuppressionActive ||
             !HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool))
         {
+            SetAnimatorBoolIfValid(sittingParam, false);
             ReleaseSittingMovementSuppression();
             return true;
         }
 
+        // Keep the sitting transition running until its blend into the seated pose is complete.
+        standUpQueued = animator.HasState(0, SittingIdleFullPathHash) &&
+            animator.HasState(0, StandUpFullPathHash) &&
+            (animator.IsInTransition(0) || !animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Sitting_Idle"));
+        if (!standUpQueued)
+        {
+            SetAnimatorBoolIfValid(sittingParam, false);
+        }
+
         waitingForStandUpCompletion = true;
         observedStandUpState = false;
-        standUpRequestedAt = Time.unscaledTime;
+        standUpRequestedAt = Time.time;
         return true;
     }
 
@@ -114,6 +130,7 @@ public partial class SquadCharacterController
         sittingRequested = true;
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
+        standUpQueued = false;
         sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
         SetAnimatorBoolIfValid(sittingParam, true);
         animator.Play(SittingIdleFullPathHash, 0, Mathf.Repeat(normalizedTime, 1f));
@@ -126,6 +143,7 @@ public partial class SquadCharacterController
         sittingRequested = false;
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
+        standUpQueued = false;
         sittingIdleTrackingStartedAt = Time.unscaledTime;
         sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
         SetAnimatorBoolIfValid(sittingParam, false);
@@ -243,17 +261,36 @@ public partial class SquadCharacterController
             return;
         }
 
+        bool transitioning = animator.IsInTransition(0);
         AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
-        AnimatorStateInfo next = animator.IsInTransition(0)
+        AnimatorStateInfo next = transitioning
             ? animator.GetNextAnimatorStateInfo(0)
             : default;
 
-        observedStandUpState |= IsState(current, StandUpStateHash) || IsState(next, StandUpStateHash);
-
         bool currentIsSitting = IsSittingState(current);
-        bool nextIsSitting = animator.IsInTransition(0) && IsSittingState(next);
+        bool nextIsSitting = transitioning && IsSittingState(next);
+        if (standUpQueued)
+        {
+            bool seated = !transitioning && current.fullPathHash == SittingIdleFullPathHash;
+            bool failedToEnter = !currentIsSitting && !nextIsSitting &&
+                Time.time - standUpRequestedAt >= standUpMovementUnlockFallback;
+            if (seated || failedToEnter)
+            {
+                standUpQueued = false;
+                SetAnimatorBoolIfValid(sittingParam, false);
+                if (failedToEnter)
+                {
+                    ReleaseSittingMovementSuppression();
+                    return;
+                }
+                standUpRequestedAt = Time.time;
+            }
+            return;
+        }
+
+        observedStandUpState |= IsState(current, StandUpStateHash) || IsState(next, StandUpStateHash);
         if (observedStandUpState &&
-            !animator.IsInTransition(0) &&
+            !transitioning &&
             !currentIsSitting &&
             !nextIsSitting)
         {
@@ -261,7 +298,7 @@ public partial class SquadCharacterController
             return;
         }
 
-        if (Time.unscaledTime - standUpRequestedAt >= standUpMovementUnlockFallback)
+        if (!observedStandUpState && Time.time - standUpRequestedAt >= standUpMovementUnlockFallback)
         {
             ReleaseSittingMovementSuppression();
         }
@@ -283,6 +320,7 @@ public partial class SquadCharacterController
     {
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
+        standUpQueued = false;
         if (sittingMovementSuppressionActive)
         {
             sittingMovementSuppressionActive = false;
