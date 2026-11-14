@@ -6,6 +6,48 @@ using NUnit.Framework;
 
 public sealed class MainMenuSessionTests
 {
+    [Test] public void CursorFlameResolvesAConcaveMeshWithoutClosestPoint()
+    {
+        var owner = new UnityEngine.GameObject("Cursor test");
+        var obstacle = new UnityEngine.GameObject("Concave mesh test");
+        var mesh = new UnityEngine.Mesh();
+        owner.SetActive(false);
+        try
+        {
+            var cursor = owner.AddComponent<MainMenuPointerCursor>();
+            var center = new UnityEngine.Vector3(6000, 100, 6000);
+            obstacle.transform.position = center;
+            mesh.vertices = new[] { new UnityEngine.Vector3(-2, -2, 0), new UnityEngine.Vector3(2, -2, 0),
+                new UnityEngine.Vector3(-2, 2, 0) };
+            mesh.triangles = new[] { 0, 1, 2 };
+            obstacle.AddComponent<UnityEngine.MeshCollider>().sharedMesh = mesh;
+            UnityEngine.Physics.SyncTransforms();
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(MainMenuPointerCursor).GetField("flameCollisionRadius", flags).SetValue(cursor, .2f);
+            typeof(MainMenuPointerCursor).GetField("flameCollisionLayers", flags).SetValue(cursor, (UnityEngine.LayerMask)~0);
+            var method = typeof(MainMenuPointerCursor).GetMethod("ResolveFlameOverlaps", flags);
+            var point = center + new UnityEngine.Vector3(-.5f, -.5f, .1f);
+            var result = (UnityEngine.Vector3)method.Invoke(cursor, new object[] { point, UnityEngine.Vector3.forward });
+            Assert.That(result.z - center.z, Is.GreaterThanOrEqualTo(.199f));
+            var field = typeof(MainMenuPointerCursor).GetField("flamePenetrationProbe", flags);
+            var probe = field.GetValue(cursor);
+            Assert.That(probe, Is.Not.Null);
+            method.Invoke(cursor, new object[] { point, UnityEngine.Vector3.forward });
+            Assert.That(field.GetValue(cursor), Is.SameAs(probe));
+        }
+        finally
+        {
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var cursor = owner.GetComponent<MainMenuPointerCursor>();
+            var probe = (UnityEngine.SphereCollider)typeof(MainMenuPointerCursor)
+                .GetField("flamePenetrationProbe", flags).GetValue(cursor);
+            if (probe != null) UnityEngine.Object.DestroyImmediate(probe.gameObject);
+            UnityEngine.Object.DestroyImmediate(owner);
+            UnityEngine.Object.DestroyImmediate(obstacle);
+            UnityEngine.Object.DestroyImmediate(mesh);
+        }
+    }
+
     [Test] public void BuildScenePathsAreUniqueForNativeNetworkSynchronization()
     {
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

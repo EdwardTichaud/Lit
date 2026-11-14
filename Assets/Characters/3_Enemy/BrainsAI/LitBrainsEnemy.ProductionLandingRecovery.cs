@@ -3,7 +3,7 @@ using UnityEngine.AI;
 
 public partial class LitBrainsEnemy
 {
-    private bool productionLandingRecovery, productionCapsuleSupported;
+    private bool productionLandingRecovery, productionCapsuleSupported, productionLandingBlocked;
     private Vector3 productionLandingOrigin, productionLandingDestination;
     private float productionLandingElapsed, productionLandingDuration;
     private int productionLandingGeneration;
@@ -12,6 +12,8 @@ public partial class LitBrainsEnemy
     {
         productionLandingRecovery = false;
         productionCapsuleSupported = false;
+        productionLandingBlocked = false;
+        productionLandingDestination = default;
         productionLandingElapsed = productionLandingDuration = 0;
     }
 
@@ -19,27 +21,36 @@ public partial class LitBrainsEnemy
     {
         var settings = RuntimeCharacterData.enemySettings;
         float radius = settings.LocomotionClearanceSearchRadius;
+        ProductionCapsuleEndpoints(position, out _, out _, out float capsuleRadius);
+        float maximumEgressDrop = Mathf.Max(settings.PhysicsMaximumGroundSnapDistance, 2f * capsuleRadius + settings.PhysicsGroundSkin);
         var filter = new NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
         var world = NavMeshWorldService.Instance;
         if (world != null && !world.IsReady) return false;
         float bestDistance = float.PositiveInfinity;
         Vector3 best = default;
         int count = Mathf.Clamp(settings.LocomotionClearanceSearchSamples, 4, 24);
+        var path = new NavMeshPath();
         for (int ring = 1; ring <= 2; ring++)
         for (int index = 0; index < count; index++)
         {
             float angle = index * Mathf.PI * 2 / count;
-            Vector3 expected = position + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius * ring * .5f);
+            // A prop may hold the capsule higher than the NavMesh sampling radius.
+            // Search on the departure floor; the return itself still uses swept gravity.
+            Vector3 expected = new Vector3(position.x, productionLandingOrigin.y, position.z) +
+                new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius * ring * .5f);
             if (!NavMesh.SamplePosition(expected, out var nav, settings.PhysicsMaximumGroundSnapDistance, filter) ||
                 Vector3.ProjectOnPlane(nav.position - position, Vector3.up).magnitude > radius ||
                 Mathf.Abs(nav.position.y - productionLandingOrigin.y) > settings.PhysicsMaximumGroundSnapDistance ||
-                position.y - nav.position.y > settings.PhysicsMaximumGroundSnapDistance || nav.position.y > position.y + .15f ||
+                nav.position.y > position.y + .15f || position.y - nav.position.y > maximumEgressDrop ||
                 world != null && !world.TryValidatePosition(nav.position, agent.areaMask, out _) ||
                 !TryProductionGround(nav.position, out var ground)) continue;
             Vector3 feet = ground.point + Vector3.up * settings.PhysicsGroundSkin;
             if (Mathf.Abs(feet.y - nav.position.y) > .15f || !ProductionLandingCapsuleClear(feet)) continue;
-            var path = new NavMeshPath();
             if (!NavMesh.CalculatePath(productionLandingOrigin, nav.position, filter, path) || path.status != NavMeshPathStatus.PathComplete) continue;
+            Vector3 lateralStep = Vector3.ProjectOnPlane(feet - position, Vector3.up);
+            if ((ClampProductionMotion(position, lateralStep, productionMotionSkill.EnemyActionMotion, previewEgress: true) -
+                 lateralStep).sqrMagnitude > .0025f)
+                continue;
             float distance = Vector3.Distance(position, feet);
             if (distance >= bestDistance) continue;
             bestDistance = distance;
@@ -49,7 +60,10 @@ public partial class LitBrainsEnemy
         productionLandingDestination = best;
         productionLandingGeneration = ActionSequenceId;
         productionLandingElapsed = 0;
-        productionLandingDuration = bestDistance / Mathf.Max(.1f, walkSpeed) + settings.RecoveryExtraRecoverySeconds;
+        Vector3 delta = best - position;
+        float horizontalTime = Vector3.ProjectOnPlane(delta, Vector3.up).magnitude / Mathf.Max(.1f, walkSpeed);
+        productionLandingDuration = horizontalTime + productionMotionSkill.EnemyActionMotion.maximumAirborneSeconds +
+            settings.RecoveryExtraRecoverySeconds;
         productionLandingRecovery = true;
         productionVerticalSpeed = 0;
         productionAdvance = productionRush = false;
@@ -132,15 +146,18 @@ public partial class LitBrainsEnemy
 
     private void FailProductionLandingRecovery(string reason)
     {
+        Vector3 attemptedDestination = productionLandingDestination;
         ResetProductionLandingRecovery();
+        productionLandingBlocked = true;
         productionMotionActive = productionAirborne = false;
         productionMotionSkill = null;
         productionPattern = null;
+        SuspendNavigation();
         CancelFluidAttack();
         if (!dead && !cinematicSuspended && HasCombatState(CombatLocomotionState))
             anim.CrossFadeInFixedTime(CombatLocomotionState, .08f, 0);
         Debug.LogWarning("[LitBrainsLanding] " + name + " | " + reason + " | position=" + transform.position +
-            " destination=" + productionLandingDestination + " | " + DescribeProductionLandingContacts() +
+            " destination=" + attemptedDestination + " | " + DescribeProductionLandingContacts() +
             ". Navigation remains disabled; no warp or fallback impact.", this);
     }
 
@@ -155,7 +172,8 @@ public partial class LitBrainsEnemy
             bool overlap = Physics.ComputePenetration(productionCapsule, transform.position, transform.rotation,
                 collider, collider.transform.position, collider.transform.rotation, out var separation, out float depth);
             report += " contact=" + collider.name + "/" + collider.GetType().Name +
-                " bounds=" + collider.bounds + " overlap=" + overlap + " depth=" + depth + " separation=" + separation;
+                " bounds=" + collider.bounds + " overlap=" + overlap;
+            if (overlap) report += " depth=" + depth + " separation=" + separation;
         }
         return report;
     }

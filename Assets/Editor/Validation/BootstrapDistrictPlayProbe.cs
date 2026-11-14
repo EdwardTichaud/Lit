@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
-using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -23,6 +22,7 @@ public static partial class BootstrapDistrictPlayProbe
     private static Report report;
     private static double nextReport;
     private static int settledFrames;
+    private static readonly HashSet<Scene> stabilizationScannedScenes = new();
 
     [Serializable] private sealed class SceneEntry { public string path; public bool loaded, active; }
     [Serializable] private sealed class FileEntry { public string path, hash; }
@@ -35,6 +35,7 @@ public static partial class BootstrapDistrictPlayProbe
         public double started, stageStarted;
         public bool oldOptionsEnabled, passed, restored, recovery, limbes, limbesCycles, limbesRoutes, limbesExpansion, passageDiscovery, courts, secretContent, districtConnection, moonriseCombat, fracture;
         public bool enola;
+        public bool stabilization;
         public bool fullProductionReadiness = false;
         public string scope = "Real editor Bootstrap/menu solo creation, authored portal, all District_1 manifest scenes and return to menu. Public menu handlers and a UCC portal approach fixture; not manual input, cycle completion, multiplayer or visual quality proof. Saves isolated under this run directory.";
         public List<SceneEntry> scenes = new();
@@ -63,7 +64,7 @@ public static partial class BootstrapDistrictPlayProbe
     public static void RunLimbesRoutes() => Begin(false, true, true, true);
     public static void RunLimbesExpansion() => Begin(false, true, true, false, true);
 
-    private static void Begin(bool recovery, bool limbes = false, bool limbesCycles = false, bool limbesRoutes = false, bool limbesExpansion = false, bool passageDiscovery = false, bool courts = false, bool secretContent = false, bool districtConnection = false, bool moonriseCombat = false, bool fracture = false, bool enola = false)
+    private static void Begin(bool recovery, bool limbes = false, bool limbesCycles = false, bool limbesRoutes = false, bool limbesExpansion = false, bool passageDiscovery = false, bool courts = false, bool secretContent = false, bool districtConnection = false, bool moonriseCombat = false, bool fracture = false, bool enola = false, bool preserveDomainSettings = false, bool stabilization = false)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling ||
             EditorApplication.isUpdating || !string.IsNullOrEmpty(SessionState.GetString(Key, ""))) return;
@@ -81,12 +82,13 @@ public static partial class BootstrapDistrictPlayProbe
             File.WriteAllText(Root + "/PlayProbe.result", "NOT RUN: save scenes voluntarily first:\n" + string.Join("\n", unsafeScenes));
             return;
         }
+        stabilizationScannedScenes.Clear();
         string id = Guid.NewGuid().ToString("N");
         report = new Report
         {
             run = Path.GetFullPath(Root + "/PlayRuns/" + id), clone = "Assets/__StartupDistrictValidation/" + id + "/Bootstrap.unity",
             recovery = recovery, limbes = limbes, limbesCycles = limbesCycles, limbesRoutes = limbesRoutes, limbesExpansion = limbesExpansion, passageDiscovery = passageDiscovery, courts = courts, secretContent = secretContent, districtConnection = districtConnection, moonriseCombat = moonriseCombat, fixtureId = "scene:validation:departure:" + id,
-            fracture = fracture, enola = enola, utc = DateTime.UtcNow.ToString("O"), status = "Preparing", started = EditorApplication.timeSinceStartup,
+            fracture = fracture, enola = enola, stabilization = stabilization, utc = DateTime.UtcNow.ToString("O"), status = "Preparing", started = EditorApplication.timeSinceStartup,
             oldOptions = (int)EditorSettings.enterPlayModeOptions, oldOptionsEnabled = EditorSettings.enterPlayModeOptionsEnabled,
             oldPlayScene = AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene),
             scenes = setup.Select(scene => new SceneEntry { path = scene.path, loaded = scene.isLoaded, active = scene.isActive }).ToList()
@@ -132,7 +134,7 @@ public static partial class BootstrapDistrictPlayProbe
             // entry on teardown, preserving all other build-setting entries.
             EditorBuildSettings.scenes = EditorBuildSettings.scenes.Concat(new[] { new EditorBuildSettingsScene(report.clone, true) }).ToArray();
             EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(report.clone);
-            EditorSettings.enterPlayModeOptionsEnabled = false;
+            if (!preserveDomainSettings) EditorSettings.enterPlayModeOptionsEnabled = false;
             Advance(0);
             var gameView = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView");
             if (gameView == null) throw new InvalidOperationException("Native GameView unavailable.");
@@ -209,7 +211,12 @@ public static partial class BootstrapDistrictPlayProbe
                         Write();
                     }
                 }
-                else if (mode == "run") Run();
+                else if (mode == "run" || mode == "stabilization" || mode == "stabilization-fast")
+                {
+                    Begin(false, preserveDomainSettings: mode == "stabilization-fast", stabilization: mode != "run");
+                }
+                else if (mode == "stabilization-combat")
+                    Begin(false, moonriseCombat: true, preserveDomainSettings: true, stabilization: true);
                 else if (mode == "fracture") Begin(false, fracture: true);
                 else if (mode == "enola") Begin(false, enola: true);
                 else File.WriteAllText(Root + "/PlayProbe.result", "NOT RUN: unknown probe mode.");
@@ -256,6 +263,19 @@ public static partial class BootstrapDistrictPlayProbe
         if (!string.Equals(Path.GetFullPath(saves.GetSavesRoot()), Path.Combine(report.run, "Saves"), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Unexpected save root: aborting before any menu action.");
         var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuController>();
+        if (report.stabilization)
+        {
+            var listeners = UnityEngine.Object.FindObjectsByType<AudioListener>().Count(listener => listener.isActiveAndEnabled);
+            if (listeners != 1) throw new InvalidOperationException("Expected one audio listener; found " + listeners + ".");
+            foreach (var scene in Enumerable.Range(0, SceneManager.sceneCount).Select(SceneManager.GetSceneAt))
+            {
+                if (!scene.isLoaded || !stabilizationScannedScenes.Add(scene)) continue;
+                foreach (var root in scene.GetRootGameObjects())
+                foreach (var node in root.GetComponentsInChildren<Transform>(true))
+                    if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(node.gameObject) > 0)
+                        report.errors.Add("Missing script in runtime scene " + scene.name + " on " + node.name);
+            }
+        }
         if (report.stage >= 660 && report.scope.StartsWith("Saut de lumière:", StringComparison.Ordinal)) { TickLightJump(); return; }
         if (report.moonriseCombat && report.stage >= 260) { TickMoonriseCombat(); return; }
         if (report.fracture && report.stage >= 400) { TickFracture(); return; }
@@ -277,7 +297,7 @@ public static partial class BootstrapDistrictPlayProbe
                     Check(GameFlowService.StartOrLoadGame(), "Load the copied validation snapshot through the production session service, without a destination or pose override.");
                     Advance(285); return;
                 }
-                if (report.limbesCycles || report.moonriseCombat || report.fracture || report.enola)
+                if (report.limbesCycles || (report.moonriseCombat && !report.stabilization) || report.fracture || report.enola)
                 {
                     Check(saves.TryCreateNewGame("Validation Limbes cycles",SaveSessionType.Solo,"Validation",out var slot,out string error),"Created isolated cycle-test slot through production save service: "+error);
                     saves.SetActiveSave(slot.sessionId,slot.saveId);
@@ -288,14 +308,19 @@ public static partial class BootstrapDistrictPlayProbe
             case 1:
                 if (menu == null || (string)typeof(MainMenuController).GetField("currentMenu", Private)?.GetValue(menu)?.ToString() != "SoloOptions") return;
                 Check(true, "Solo options selected through the production menu handler.");
-                menu.UI_NewGame(); Advance(2); return;
-            case 2:
-                if (menu == null) return;
-                var input = (TMP_InputField)typeof(MainMenuController).GetField("newGameNameInput", Private)?.GetValue(menu);
-                if (input == null || !input.gameObject.activeInHierarchy) return;
-                input.text = "Validation District_1 " + DateTime.UtcNow.ToString("HHmmss");
-                menu.UI_ConfirmNewGame(); Advance(3); return;
+                menu.UI_NewGame(); Advance(3); return;
             case 3:
+                if (saves.HasActiveSave)
+                {
+                    foreach (var runner in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceRunner>())
+                        if (runner.IsPlaying) typeof(Lit.Story.StorySequenceRunner).GetField("advanceRequested", Private).SetValue(runner, true);
+                    foreach (var prompt in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceNamePrompt>())
+                        if (prompt.IsOpen)
+                        {
+                            typeof(Lit.Story.StorySequenceNamePrompt).GetField("draft", Private).SetValue(prompt, "Validation");
+                            typeof(Lit.Story.StorySequenceNamePrompt).GetField("submitted", Private).SetValue(prompt, true);
+                        }
+                }
                 if (!ZoneReady("Assets/Scenes/Maison/ZoneManifest_Maison.asset") || !ControlReady(out var actor)) return;
                 Check(saves.HasActiveSave && saves.CurrentSessionType == SaveSessionType.Solo, "Actual menu created an isolated solo session and spawned the controlled avatar.");
                 Check(Camera.allCameras.Any(camera => camera.isActiveAndEnabled && camera.targetTexture == null), "A screen camera is enabled after Maison loading.");
@@ -489,7 +514,7 @@ public static partial class BootstrapDistrictPlayProbe
                 if (!File.Exists(file.path) || Hash(file.path) != file.hash) throw new IOException("Saved source scene changed during probe: " + file.path);
             report.restored = true;
             RemoveOwnedBuildEntry(report.clone);
-            AssetDatabase.DeleteAsset(report.clone);
+            AssetDatabase.DeleteAsset(Path.GetDirectoryName(report.clone).Replace('\\', '/'));
             report.status = report.passed ? "Passed" : "Failed";
         }
         catch (Exception error) { report.passed = false; report.status = "Needs inspection"; report.errors.Add(error.ToString()); }

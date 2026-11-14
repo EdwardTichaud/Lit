@@ -7,6 +7,30 @@ using Unity.Cinemachine;
 
 public sealed class LitTacticalCameraTests
 {
+    [Test] public void TacticalLateRotationKeepsCameraPoseAfterTargetIsDestroyed()
+    {
+        var camera = new GameObject("Camera without target");
+        var actor = new GameObject("Departing actor");
+        try
+        {
+            camera.transform.rotation = Quaternion.Euler(25f, 50f, 0f);
+            var view = new LitTacticalUccViewType();
+            for (var type = view.GetType(); type != null; type = type.BaseType)
+            {
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                type.GetField("m_Transform", flags)?.SetValue(view, camera.transform);
+                type.GetField("m_CharacterTransform", flags)?.SetValue(view, actor.transform);
+            }
+            Object.DestroyImmediate(actor);
+            Assert.That(Quaternion.Angle(view.LateRotate(false), camera.transform.rotation), Is.LessThan(.01f));
+        }
+        finally
+        {
+            if (actor != null) Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(camera);
+        }
+    }
+
     [Test] public void IgnoreObstaclesBypassesBoomAndPanByDefault()
     {
         var root = new GameObject("Developer camera");

@@ -2926,3 +2926,11 @@ n'est ajoutee. Les controles de ligne de vue avant attaque et impact restent
 obligatoires. Regression physique : mur a mi-distance d'une cible a 1,5 m et
 distance de combat 2,4 m ; suppression du mur restaure la distance auteur. La
 validation du trajet natif en jeu reste distincte de ce test de choix de distance.
+
+## Recuperation au sol apres un saut
+
+La recuperation au sol des Brains cherche une sortie dans le plan du sol
+d'origine, avec trajet NavMesh connecte et balayage lateral libre. La descente
+reste physique et bornee par la taille de capsule. Si aucune sortie n'est
+sure, l'agent et les decisions restent bloques sans impact ni teleportation.
+La tolerance d'admission sur le NavMesh n'est pas elargie.

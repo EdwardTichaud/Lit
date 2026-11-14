@@ -123,7 +123,35 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
     private void OnLocalCharacterChanged(Transform characterRoot)
     {
+        if (characterRoot == null)
+        {
+            DetachCharacter();
+            return;
+        }
         QueueBind(characterRoot);
+    }
+
+    public void DetachCharacter()
+    {
+        if (bindRoutine != null)
+        {
+            StopCoroutine(bindRoutine);
+            bindRoutine = null;
+        }
+
+        ResolveCameraController();
+        boundCharacter = null;
+        waitingForInitialCharacter = true;
+        if (cameraController == null) return;
+        if (cameraController.Character != null) cameraController.Character = null;
+        cameraController.enabled = false;
+    }
+
+    public void DetachCharacterFromScene(UnityEngine.SceneManagement.Scene scene)
+    {
+        ResolveCameraController();
+        var character = cameraController != null ? cameraController.Character : null;
+        if (character != null && character.scene == scene) DetachCharacter();
     }
 
     private void OnCameraRecenter()

@@ -110,6 +110,13 @@ public static partial class BootstrapDistrictPlayProbe
         if (elapsed > 45)
             throw new TimeoutException("Continuous approach failed; " + MoonriseDiagnostic(actor, RealTimeCombatManager.Instance) +
                 " goal=" + moonriseWalkGoal + " selected=" + (RuntimeOutlineSelectionManager.ActiveInteractable as Component)?.name);
+        if (report.stabilization && InputModeCoordinator.CurrentMode == InputMode.Dialogue)
+        {
+            var submit = new GamepadState();
+            if (elapsed % .7f < .12f) submit = submit.WithButton(GamepadButton.East);
+            InputSystem.QueueStateEvent(moonrisePad, submit);
+            return;
+        }
         if (report.stage == 275 && moonriseWalkingFlame == moonriseCorridorFlame && !moonriseWalkingFlame.IsEffectivelyLit &&
             RealTimeCombatManager.Instance.IsCombatActive && moonriseEnemy.IsEngagedWith(actor.transform))
         {

@@ -83,20 +83,31 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
     {
         ResolveMaskShaders();
         int failed = 0;
+        var incompatible = new List<string>();
         foreach (var root in scene.GetRootGameObjects())
         foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
         {
             bool overhead = IsOverheadSurface(renderer.transform);
             if (!(overhead || (districtOne ? IsDistrictArchitecture(renderer.transform, scene.name) : IsArchitecture(renderer.name))) ||
                 renderer.GetComponentInParent<Animator>() != null ||
+                renderer.GetComponent<TMPro.TMP_Text>() != null ||
+                renderer.GetComponent<TextMesh>() != null ||
                 renderer.GetComponent<LitCameraOcclusionGroup>() != null) continue;
             var originals = renderer.sharedMaterials;
             bool compatible = originals.Length > 0;
             foreach (var material in originals) compatible &= material != null &&
-                (LitTacticalMaskProperties.Supports(material) ||
+                material.shader != null && (LitTacticalMaskProperties.Supports(material) ||
                 (material.shader.name == "HDRP/Lit" && nativeLitMaskShader != null && nativeLitMaskShader.isSupported) ||
                 (districtOne && IsAutodesk(material.shader) && autodeskMaskShader != null && autodeskMaskShader.isSupported));
-            if (!compatible) { failed++; continue; }
+            if (!compatible)
+            {
+                failed++;
+                var shaders = Array.ConvertAll(originals, material =>
+                    material == null ? "(missing material)" :
+                        material.name + " / " + (material.shader != null ? material.shader.name : "(missing shader)"));
+                incompatible.Add(renderer.name + " : " + string.Join(", ", shaders));
+                continue;
+            }
             var assigned = new Material[originals.Length];
             for (int i = 0; i < originals.Length; i++)
             {
@@ -112,7 +123,8 @@ public sealed class LitMaisonVisibilityZone : MonoBehaviour
         unsupported += failed;
         RebuildCoverage();
         if (failed > 0) Debug.LogWarning("[VisibilityMask] " + scene.name + ": " + failed +
-            " éléments architecturaux ont des matériaux incompatibles ; ils restent inchangés. Voir le diagnostic de zone.", this);
+            " éléments architecturaux ont des matériaux incompatibles ; ils restent inchangés.\n" +
+            string.Join("\n", incompatible), this);
     }
 
     public bool AcceptsScene(string path, string name) => districtOne

@@ -55,7 +55,7 @@ public sealed class LitFlameLightingTests
     public void FlameAtmospherePrefabs_HaveExplicitValidParticleSystems(string path, LitAtmosphereParticles.Profile expectedProfile)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-        LitAtmosphereParticles atmosphere = prefab.GetComponent<LitAtmosphereParticles>();
+        LitAtmosphereParticles atmosphere = prefab.GetComponentInChildren<LitAtmosphereParticles>(true);
         Assert.That(atmosphere, Is.Not.Null, path);
         Assert.That(atmosphere.CurrentProfile, Is.EqualTo(expectedProfile));
         Assert.That(atmosphere.ValidateConfiguration(out string reason), Is.True, $"{path}: {reason}");

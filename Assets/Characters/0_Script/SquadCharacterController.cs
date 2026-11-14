@@ -418,7 +418,8 @@ public partial class SquadCharacterController : MonoBehaviour
         AudioListener cameraListener = gameplayCamera != null
             ? gameplayCamera.GetComponent<AudioListener>()
             : null;
-        if (cameraListener != null && cameraListener != audioListener && cameraListener.enabled)
+        if ((GameFlowService.Instance != null && GameFlowService.Instance.OwnsSceneAudio) ||
+            (cameraListener != null && cameraListener != audioListener && cameraListener.enabled))
         {
             shouldBeActive = false;
         }

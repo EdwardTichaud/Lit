@@ -159,7 +159,7 @@ public partial class LitBrainsEnemy
         return found;
     }
 
-    private Vector3 ClampProductionMotion(Vector3 position, Vector3 step, EnemyActionMotionProfile motion)
+    private Vector3 ClampProductionMotion(Vector3 position, Vector3 step, EnemyActionMotionProfile motion, bool previewEgress = false)
     {
         if (step.sqrMagnitude <= .0000001f) return step;
         ProductionCapsuleEndpoints(position, out var top, out var bottom, out float radius);
@@ -171,14 +171,14 @@ public partial class LitBrainsEnemy
             if (hit.collider.transform.IsChildOf(transform) || hit.normal.y >= RuntimeCharacterData.enemySettings.PhysicsMinimumGroundNormal) continue;
             allowed = Mathf.Min(allowed, Mathf.Max(0, hit.distance - motion.rushCollisionSkin));
         }
-        if (!productionAirborne && !productionLandingRecovery)
+        if (!previewEgress && !productionAirborne && !productionLandingRecovery)
         {
             var filter = new NavMeshQueryFilter { agentTypeID = agent.agentTypeID, areaMask = agent.areaMask };
             if (!NavMesh.SamplePosition(position, out var start, navMeshAttachmentTolerance, filter)) return Vector3.zero;
             if (NavMesh.Raycast(start.position, start.position + step, out var wall, filter))
                 allowed = Mathf.Min(allowed, Mathf.Max(0, wall.distance - motion.rushCollisionSkin));
         }
-        if (allowed < distance) { productionAdvance = productionRush = false; }
+        if (!previewEgress && allowed < distance) { productionAdvance = productionRush = false; }
         return step.normalized * allowed;
     }
 

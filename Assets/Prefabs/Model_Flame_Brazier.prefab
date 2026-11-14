@@ -17475,7 +17475,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6713b4830f0d43ac98f0a77b48ed2ec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitAtmosphereParticles
-  profile: 1
+  profile: 2
   density: 2.5
   castleDustVolume: {x: 0.1, y: 0.1, z: 0.1}
   particleSize: 0.35

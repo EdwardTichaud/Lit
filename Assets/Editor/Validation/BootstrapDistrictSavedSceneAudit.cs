@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -43,8 +44,37 @@ public static class BootstrapDistrictSavedSceneAudit
     {
         if (running || EditorApplication.isCompiling || EditorApplication.isUpdating ||
             EditorApplication.isPlayingOrWillChangePlaymode || !File.Exists(Request)) return;
+        string command = File.ReadAllText(Request).Trim();
         File.Delete(Request);
-        Run();
+        if (command == "integrity") SceneIntegrityAudit.Run();
+        else if (command == "stabilization-tests")
+        {
+            var runner = ScriptableObject.CreateInstance<TestRunnerApi>();
+            runner.RegisterCallbacks(new StabilizationTestResults(runner));
+            runner.Execute(new ExecutionSettings(new Filter
+            {
+                testMode = TestMode.EditMode,
+                groupNames = new[] { "^LitTacticalCameraTests", "^ProductionLandingRecoveryTests",
+                    "^MainMenuSessionTests", "^BootstrapVideoPanelTests", "^LitFlameLightingTests",
+                    "^FlamePrefabCentralizationTests", "^LitDistrictVisibilityTests" }
+            }) { runSynchronously = true });
+        }
+        else Run();
+    }
+
+    private sealed class StabilizationTestResults : ICallbacks
+    {
+        private readonly TestRunnerApi runner;
+        public StabilizationTestResults(TestRunnerApi runner) => this.runner = runner;
+        public void RunStarted(ITestAdaptor tests) { }
+        public void TestStarted(ITestAdaptor test) { }
+        public void TestFinished(ITestResultAdaptor result) { }
+        public void RunFinished(ITestResultAdaptor result)
+        {
+            TestRunnerApi.SaveResultToFile(result, "Library/StartupDistrictValidation/StabilizationTests.xml");
+            runner.UnregisterCallbacks(this);
+            UnityEngine.Object.DestroyImmediate(runner);
+        }
     }
 
     [MenuItem("Lit/Validation/Audit Saved Bootstrap MainMenu District_1")]

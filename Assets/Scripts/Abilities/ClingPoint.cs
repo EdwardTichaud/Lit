@@ -28,6 +28,7 @@ namespace Lit.Traversal
         private WorldRulesStateManager Rules => rules != null ? rules : rules = FindAnyObjectByType<WorldRulesStateManager>();
         public bool Revealed => Rules != null && Rules.TryGetBool(DiscoveryKey, out bool value) && value;
         public Vector3 GripPosition => grip != null ? grip.position : transform.position;
+        internal Collider SupportSurface => supportSurface;
 
         private void OnEnable() => Active.Add(this);
         private void OnDisable()
@@ -189,6 +190,9 @@ namespace Lit.Traversal
             if (abilities == null || !abilities.HasEquipped(actor.gameObject, abilities.Resolve("grimpeur")) ||
                 bridge == null || bridge.IsInputSuppressedByUcc || bridge.IsCombatLockActive ||
                 bridge.IsCinematicMotionSessionActive || requireLocalDriver && !bridge.IsDriving) return false;
+            // The Seuil beam is moved by Transform each frame; the ray and swept capsule
+            // must see the same current collider pose.
+            Physics.SyncTransforms();
             return TryGetHoldPose(actor, out pose) &&
                 (actor.transform.position - pose.position).sqrMagnitude <= contactRadius * contactRadius &&
                 IsClear(actor.transform.position, pose, actor);
@@ -202,7 +206,7 @@ namespace Lit.Traversal
         }
 
         // The small contact correction and moving grips both keep world collision.
-        internal static bool IsClear(Vector3 from, Pose to, SquadCharacterController actor)
+        internal static bool IsClear(Vector3 from, Pose to, SquadCharacterController actor, Collider carriedBy = null)
         {
             GetBody(actor, out Vector3 offset, out float capsuleRadius, out float height);
             Vector3 axis = Vector3.up * Mathf.Max(0f, height * .5f - capsuleRadius);
@@ -217,7 +221,7 @@ namespace Lit.Traversal
             if (delta.sqrMagnitude < .000001f) return true;
             foreach (RaycastHit hit in Physics.CapsuleCastAll(startCenter - axis, startCenter + axis, radius,
                          delta.normalized, delta.magnitude, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
-                if (!hit.transform.IsChildOf(actor.transform)) return false;
+                if (hit.collider != carriedBy && !hit.transform.IsChildOf(actor.transform)) return false;
             return true;
         }
 

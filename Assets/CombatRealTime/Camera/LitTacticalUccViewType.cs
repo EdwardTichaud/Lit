@@ -32,6 +32,15 @@ public sealed class LitTacticalUccViewType : Adventure
         distanceRecovery.Resolve(current, zoom * actionRatio, 0, false, 0, profile != null ? profile.collisionReturnTime : .15f);
     }
     public override bool UseSmoothOffset => false; // Never rotate the world orbit with combatant yaw.
+
+    public override void AttachCharacter(GameObject character)
+    {
+        base.AttachCharacter(character);
+        initialized = false;
+        aimHistory.Reset();
+        clock.Reset();
+    }
+
     private Vector3 GetFollowAnchor(bool rendered = false)
     {
         Vector3 position = rendered ? m_CharacterTransform.position : CharacterPosition;
@@ -213,6 +222,7 @@ public sealed class LitTacticalUccViewType : Adventure
 
     public override Quaternion Rotate(float horizontalMovement, float verticalMovement, bool immediateUpdate)
     {
+        if (m_CharacterTransform == null || m_CharacterLocomotion == null) return m_Transform.rotation;
         if (!immediateUpdate) ConsumePendingInput();
         Quaternion rotation = Quaternion.Euler(GetOrbitPitch(), yaw, 0);
         m_Pitch = pitch;
@@ -228,6 +238,7 @@ public sealed class LitTacticalUccViewType : Adventure
     }
     public override Quaternion LateRotate(bool immediateUpdate)
     {
+        if (m_CharacterTransform == null || m_CharacterLocomotion == null) return m_Transform.rotation;
         if (!following || owner == null || owner.IsBlending)
             return m_CharacterLocomotion != null && m_CharacterLocomotion.Interpolate ? m_Transform.rotation :
                 owner != null ? owner.BlendRotation(Quaternion.Euler(GetOrbitPitch(), yaw, 0)) : Quaternion.Euler(pitch, yaw, 0);

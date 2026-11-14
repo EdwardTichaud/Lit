@@ -549,3 +549,15 @@ cette revision).
 A qualifier en Play : Start puis South, South maintenu/simultane, Start pour
 continuer, souris/sticks/autres boutons sans effet, passage avant/apres 19 s,
 fin naturelle, seconde lecture et interruption du panneau.
+
+## Relais Audio Et Ombres En Transition
+
+GameFlowService conserve un ecouteur de secours sur la racine persistante
+de Bootstrap. Le menu et la camera de gameplay ont leur ecouteur auteur
+desactive jusqu'au transfert ; les personnages ne prennent pas le relais
+tant que GameFlow possede un ecouteur actif. Les labs sans GameFlow conservent
+leur logique locale.
+
+Pendant les chargements additifs, GameFlow arbitre les ombres directionnelles
+aux changements de scene, avec priorite a la scene active. Les autres lumieres
+restent allumees ; leur mode d'ombre original est conserve pour le relais.

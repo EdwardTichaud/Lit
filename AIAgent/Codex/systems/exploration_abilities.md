@@ -38,6 +38,14 @@ Les conditions de déblocage d'origine de Grimpeur sont conservées. L'ancien id
 `accrocheur` est reconnu à la lecture des sauvegardes et converti en
 `grimpeur` pour les déblocages et les équipements.
 
+La poutre du Seuil est dans `Reve_Limbes_Secrets`. Les repères
+`Pose_suspendue` et `Prise` visent le flanc plat du socle du pilier couché,
+avec un rayon d'accrochage de 0,75 m autour de la pose. Le scanner de
+session suffit : aucun scanner local ni Observateur ne sont requis.
+L'appui mobile est synchronisé avant le contrôle physique. Une fois tenu,
+le balayage ignore le déplacement propre du support, mais la capsule
+finale reste contrôlée contre celui-ci et contre le décor.
+
 Le grappin et sa compétence Bondisseur ont été retirés. Les anciennes
 entrées de Bondisseur sont ignorées à la restauration. L'accès à la statue
 dans les Limbes utilise le portail existant après les cinq cycles, sans

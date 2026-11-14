@@ -1537,7 +1537,7 @@ MonoBehaviour:
   skillWheelCanvasGroup: {fileID: 0}
   basicComboResetDelaySeconds: 0.85
   maximumBufferedBasicSkills: 1
-  logInputDiagnostics: 1
+  logInputDiagnostics: 0
 --- !u!114 &810000000000000007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3143,7 +3143,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6208594910752237019}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!114 &3156449220114887422
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -3029,7 +3029,6 @@ public class SquadManager : MonoBehaviour
 
     private void HandleInteractInput()
     {
-        Debug.Log("Utilise Interact");
         if (IsInputLocked())
         {
             return;

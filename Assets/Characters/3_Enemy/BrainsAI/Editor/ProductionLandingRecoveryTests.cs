@@ -93,6 +93,19 @@ public sealed class ProductionLandingRecoveryTests
         Assert.IsFalse(Begin()); Assert.AreEqual(before, body.position); Assert.IsFalse(agent.enabled);
     }
 
+    [Test] public void HighPropCanSearchItsOriginalFloorWithoutIncreasingNavMeshTolerance()
+    {
+        Create();
+        enemy.GetComponent<CapsuleCollider>().radius = .57f;
+        support.GetComponent<BoxCollider>().size = new Vector3(.8f, 1.1f, .8f);
+        support.transform.position = origin + Vector3.up * .55f;
+        body.position = origin + Vector3.up * 1.12f;
+        Physics.SyncTransforms();
+        Assert.IsFalse(NavMesh.SamplePosition(body.position, out _, .15f, NavMesh.AllAreas));
+        Assert.IsTrue(Begin(), "A safe nearby exit should be sampled on the original floor.");
+        Assert.IsFalse(agent.enabled);
+    }
+
     [TestCase(.45f, false)]
     [TestCase(.55f, false)]
     [TestCase(.45f, true)]
@@ -123,15 +136,18 @@ public sealed class ProductionLandingRecoveryTests
         Assert.IsFalse(agent.enabled);
     }
 
-    [Test] public void WallBlocksPhysicalEgressAndBoundedFailureDoesNotWarpOrEnableAgent()
+    [Test] public void WallRejectsUnsafeEgressBeforeMovementAndKeepsNavigationBlocked()
     {
         Create(); Box("Blocking wall", origin + new Vector3(.7f, 1.5f, 0), new Vector3(.1f, 3, 8)); Physics.SyncTransforms();
-        Assert.IsTrue(Begin());
-        LogAssert.Expect(LogType.Warning, new Regex("\\[LitBrainsLanding\\].*bounded physical egress timed out"));
-        for (int index = 0; index < 180 && Get<bool>("productionMotionActive"); index++)
-        { Tick(); Physics.Simulate(Time.fixedDeltaTime); Physics.SyncTransforms(); }
+        Assert.IsFalse(Begin());
+        Vector3 before = body.position;
+        LogAssert.Expect(LogType.Warning, new Regex("\\[LitBrainsLanding\\].*no nearby clear connected landing surface"));
+        typeof(LitBrainsEnemy).GetMethod("FailProductionLandingRecovery", Fields)
+            .Invoke(enemy, new object[] { "no nearby clear connected landing surface" });
+        Assert.IsTrue(Get<bool>("productionLandingBlocked"));
+        Assert.IsFalse((bool)typeof(LitBrainsEnemy).GetMethod("TryPrepareNavigation", Fields).Invoke(enemy, null));
         Assert.IsFalse(Get<bool>("productionMotionActive")); Assert.IsFalse(Get<bool>("productionLandingRecovery"));
-        Assert.Less(body.position.x - origin.x, .4f); Assert.IsFalse(agent.enabled);
+        Assert.AreEqual(before, body.position); Assert.IsFalse(agent.enabled);
     }
 
     [Test] public void StaleGenerationCannotContinueThePreviousRecovery()

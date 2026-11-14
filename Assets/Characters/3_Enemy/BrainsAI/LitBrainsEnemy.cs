@@ -92,6 +92,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
             return;
         }
         if (chargedAirborne) { PlayChargedFloatHit(); return; }
+        if (productionLandingBlocked) return;
         if (UsesProductionPatterns && ProductionMotionActive) { TickFluidCombat(); return; }
         if (!TryPrepareNavigation()) return;
         if (ThresholdStageSuspendsActions) { StopFluidMovement(); UpdateAnimator(); return; }
@@ -386,7 +387,8 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
     private bool TryPrepareNavigation()
     {
         BindNavigationWorld();
-        if (!HasSimulationAuthority || dead || cinematicSuspended || chargedAirborne || ProductionMotionActive || !EncounterAllowsDecisions) return false;
+        if (!HasSimulationAuthority || dead || cinematicSuspended || chargedAirborne || ProductionMotionActive ||
+            productionLandingBlocked || !EncounterAllowsDecisions) return false;
         if (cinematicReattachPending && !HasChargedLandingGround()) { SuspendNavigation(); return false; }
         var world = NavMeshWorldService.Instance;
         if (world != null && !world.IsReady)

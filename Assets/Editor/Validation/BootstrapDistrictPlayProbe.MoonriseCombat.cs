@@ -171,6 +171,18 @@ public static partial class BootstrapDistrictPlayProbe
                     "The actual Knocked Out animation owns the victim, rather than the ordinary Hurt state.");
                 Check(!moonriseEnemy.IsCinematicSuspended && !actor.GetComponent<LitOpsiveLocomotionBridge>().IsInputSuppressedByUcc,
                     "Counter released actor/target locks and suspension.");
+                if (report.stabilization)
+                {
+                    InputSystem.QueueStateEvent(moonrisePad, new GamepadState());
+                    var returnPosition = actor.transform.position - actor.transform.forward * 12f;
+                    if (!NavMesh.SamplePosition(returnPosition, out var retreat, 4f, NavMesh.AllAreas) ||
+                        Vector3.Distance(retreat.position, moonriseEnemy.Root.position) <= moonriseEnemy.RuntimeCharacterData.enemySettings.LocomotionClearanceSearchRadius)
+                        throw new InvalidOperationException("No retreat fixture on the authored NavMesh.");
+                    Check(actor.TrySetUccExternalPositionAndRotation(retreat.position, actor.transform.rotation, true),
+                        "Moved the player to a retreat fixture outside the close encounter.");
+                    Advance(2900);
+                    return;
+                }
                 ScreenCapture.CaptureScreenshot(Path.Combine(report.run, "Moonrise_GameView_KnockedOut.png"));
                 WriteMoonriseVisibilityDiagnostic(actor, "counter-return");
                 moonriseKnockoutInitialRemaining = (float)typeof(LitBrainsEnemy).GetField("hurtRemaining", Private).GetValue(moonriseEnemy);
@@ -210,6 +222,19 @@ public static partial class BootstrapDistrictPlayProbe
                 Check(moonriseDeathSeen, "Death state played before the marker-owned corpse dissolved and deactivated.");
                 moonriseTorchStarted = Time.realtimeSinceStartup;
                 Advance(274);
+                return;
+            case 2900:
+                if (manager.IsCombatActive) return;
+                Check(true, "The production session returned to exploration after retreat.");
+                Advance(2901);
+                return;
+            case 2901:
+                DriveMoonriseUnarmedApproach(actor);
+                if (!manager.IsCombatActive || !moonriseEnemy.IsEngagedWith(actor.transform)) return;
+                Check(true, "The real encounter acquired Lucian again after retreat.");
+                Check(GameFlowService.OpenMainMenu(), "Production return to menu accepted after re-engagement.");
+                report.moonriseCombat = false;
+                Advance(5);
                 return;
         }
     }

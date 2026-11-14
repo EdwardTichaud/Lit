@@ -49,12 +49,16 @@ namespace Lit.Traversal
                 // Submit alongside other scripted traversals: after UCC's fixed
                 // tick, before its render interpolation and Animator IK.
                 yield return fixedStep;
-                if (!CanContinue() || !bridge.IsScriptedTraversalActive ||
-                    point == null || !point.TryGetHoldPose(actor, out Pose pose))
+                if (!CanContinue() || !bridge.IsScriptedTraversalActive || point == null)
+                    break;
+                Physics.SyncTransforms();
+                if (!point.TryGetHoldPose(actor, out Pose pose))
                     break;
                 bool gripMoved = PoseChanged(lastPosition, lastRotation, pose);
                 bool actorMoved = PoseChanged(transform.position, transform.rotation, pose);
-                if ((gripMoved || actorMoved) && !ClingPoint.IsClear(transform.position, pose, actor))
+                // The support already moved to its next pose. Still check the final capsule
+                // against it; sweep against other obstacles rather than against its motion.
+                if ((gripMoved || actorMoved) && !ClingPoint.IsClear(transform.position, pose, actor, point.SupportSurface))
                     break;
                 if (gripMoved || actorMoved) ApplyPose(pose);
             }

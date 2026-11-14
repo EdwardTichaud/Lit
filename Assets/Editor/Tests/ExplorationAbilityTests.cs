@@ -8,6 +8,57 @@ using UnityEngine.SceneManagement;
 
 public sealed class ExplorationAbilityTests
 {
+    [Test]
+    public void AuthoredSeuilBeamHasAReachableHorizontalGrabPose()
+    {
+        const string path = "Assets/Scenes/Reve/Reve_Limbes_Secrets.unity";
+        var scene = SceneManager.GetSceneByPath(path);
+        bool opened = !scene.isLoaded;
+        const string environmentPath = "Assets/Scenes/Reve/Reve_Limbes_Environment.unity";
+        var environment = SceneManager.GetSceneByPath(environmentPath);
+        bool openedEnvironment = !environment.isLoaded;
+        if (openedEnvironment) environment = EditorSceneManager.OpenScene(environmentPath, OpenSceneMode.Additive);
+        if (opened) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+        try
+        {
+            var point = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Lit.Traversal.ClingPoint>(true))
+                .Single(p => p.PointId == "limbes.seuil.poutre");
+            var data = new SerializedObject(point);
+            var anchor = (Transform)data.FindProperty("holdPose").objectReferenceValue;
+            var surface = (Collider)data.FindProperty("supportSurface").objectReferenceValue;
+            Assert.That(surface, Is.Not.Null);
+            Assert.That(Mathf.Abs(anchor.forward.y), Is.LessThan(.15f));
+            Physics.SyncTransforms();
+            var fit = typeof(Lit.Traversal.ClingPoint).GetMethod("TryFitSurface",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            object[] args = { surface, anchor.position, anchor.forward, point.GripPosition.y,
+                Vector3.up, .4f, 1.8f, null };
+            Assert.That(fit.Invoke(null, args), Is.True, "Anchor " + anchor.position + "; grip " + point.GripPosition +
+                "; collider " + surface.bounds + "; mesh " + (surface as MeshCollider)?.sharedMesh?.bounds);
+            var pose = (Pose)args[7];
+            Assert.That(Vector3.Distance(pose.position, anchor.position),
+                Is.LessThan(data.FindProperty("contactRadius").floatValue));
+            const float sweepRadius = .385f;
+            var forward = pose.rotation * Vector3.forward;
+            var c = pose.position + Vector3.up;
+            var from = c - forward * .50f;
+            var hits = Physics.OverlapCapsule(c - Vector3.up * .5f, c + Vector3.up * .5f,
+                    sweepRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                .Select(x => "overlap " + x.name)
+                .Concat(Physics.CapsuleCastAll(from - Vector3.up * .5f, from + Vector3.up * .5f, sweepRadius,
+                    forward, .50f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                    .Select(h => h.collider.name + " at " + h.distance + ": " + h.normal))
+                .ToArray();
+            Assert.That(hits, Is.Empty, "Authored grab pose " + pose.position + " heading " + forward);
+        }
+        finally
+        {
+            if (opened) EditorSceneManager.CloseScene(scene, true);
+            if (openedEnvironment) EditorSceneManager.CloseScene(environment, true);
+        }
+    }
+
     [TestCase(.0001f, 0f, false)]
     [TestCase(.002f, 0f, true)]
     [TestCase(0f, 1f, true)]

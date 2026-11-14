@@ -87,6 +87,7 @@ public class MainMenuPointerCursor : MonoBehaviour
     [SerializeField] private bool hideSystemCursor = true;
 
     private readonly Collider[] flameOverlapBuffer = new Collider[16];
+    private SphereCollider flamePenetrationProbe;
     private readonly List<Bounds> flameActiveRendererBounds = new List<Bounds>();
     private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
     private PointerEventData pointerEventData;
@@ -193,6 +194,11 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private void OnDisable()
     {
+        if (flamePenetrationProbe != null)
+        {
+            Destroy(flamePenetrationProbe.gameObject);
+            flamePenetrationProbe = null;
+        }
         ClearSyntheticUiHover();
         SetWorldHover(null);
         RestoreSystemCursor();
@@ -1164,6 +1170,28 @@ public class MainMenuPointerCursor : MonoBehaviour
                 Collider hitCollider = flameOverlapBuffer[i];
                 if (hitCollider == null || IsFlameCollider(hitCollider))
                 {
+                    continue;
+                }
+
+                if (!(hitCollider is BoxCollider || hitCollider is SphereCollider || hitCollider is CapsuleCollider ||
+                      hitCollider is MeshCollider mesh && mesh.convex))
+                {
+                    if (flamePenetrationProbe == null)
+                    {
+                        var probe = new GameObject("Cursor penetration probe") { hideFlags = HideFlags.HideAndDontSave };
+                        probe.transform.position = Vector3.down * 10000f;
+                        flamePenetrationProbe = probe.AddComponent<SphereCollider>();
+                        flamePenetrationProbe.isTrigger = true;
+                    }
+
+                    flamePenetrationProbe.radius = clearance;
+                    if (Physics.ComputePenetration(flamePenetrationProbe, resolvedPosition, Quaternion.identity,
+                            hitCollider, hitCollider.transform.position, hitCollider.transform.rotation,
+                            out Vector3 direction, out float depth) && depth > 0f)
+                    {
+                        resolvedPosition += direction * (depth + 0.001f);
+                        adjusted = true;
+                    }
                     continue;
                 }
 

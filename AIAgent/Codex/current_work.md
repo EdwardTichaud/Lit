@@ -1,3 +1,32 @@
+## Stabilisation Bootstrap / Maison / District 1 (2026-11-14)
+
+Camera UCC detachee avant la destruction ou le dechargement de sa cible ;
+pose conservee sans cible, historique reinitialise au rattachement. Audio :
+un seul proprietaire de Bootstrap au menu et au gameplay ; une seule
+directionnelle projette des cascades pendant un chevauchement de zones.
+Curseur-flamme : penetration de sphere reutilisable pour les meshes concaves.
+Brasero : profil Ancien avec les deux particules deja assignees. Les douze
+objets signales par le masque District sont des textes, pas de l'architecture.
+Intro H.264 Baseline a 25 fps, 693 images, audio identique ; repere conserve a 19 s.
+
+Parcours solo avec rechargement de domaine passe du menu a District 1
+et retour menu, zero exception, ecouteur unique verifie
+(PlayRuns/a0f1b794067344d69075975fd8344f63). Le warning de script manquant
+apparait au rechargement du backup temporaire de l'editeur ; aucun composant
+manquant trouve dans les 67 scenes et 231 prefabs audites ni dans les scenes
+de jeu chargees au passage de la recette. Aucun script supprime a l'aveugle.
+
+Le prototype Träd (zero instance) a ete retire du TerrainData Old Barn.
+Nouveau passage avec Domain Reload desactive : intro et arrivee District 1
+sans les alertes de masque, particules ou arbre ; recette Moonrise arretee par
+un dialogue avant le combat (PlayRuns/ec374a4a01a14f28ad1c2c2749ac52b9).
+L'avertissement HDRP de double inscription n'a pas ete reproduit dans ces
+passages ; package et reglages de demarrage rapide inchanges.
+Suite Unity : 134/140 passes (StabilizationTests.xml), dont les 10 cas de
+recuperation, le curseur concave et la cible camera detruite. Six echecs
+restants sur des contrats de prefab/overrides d'eclairage et un ancien chemin
+de shader. Le contre et la reprise de combat au brasero ne sont pas qualifies.
+
 ## Coffre de la Maison (2026-11-13)
 
 Sélection rétablie sans lumière, volume de détection et contour rattachés au
@@ -20,6 +49,12 @@ La capture montre encore une occlusion partielle du geste par le bord de table.
 Voir `systems/enola_knife_game.md`.
 
 ## Compétences d'exploration (2026-11-14)
+
+Poutre du Seuil : repères réorientés vers la face d'appui du pilier couché
+dans les Secrets, déclenchement automatique à 0,75 m avec Grimpeur équipé.
+24 tests ciblés ; recette solo sans appui : absence de prise sans Grimpeur,
+accrochage et suivi de la poutre mobile avec la compétence équipée
+(`PlayRuns/e6035b21ee63436280fba4163879d6e6`).
 
 Les anciennes échelles sont des points de Saut de lumière : compétence
 disponible dès le départ, requise dans l'équipement du voyageur.

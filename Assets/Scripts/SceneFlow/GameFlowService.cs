@@ -19,8 +19,12 @@ public sealed class GameFlowService : MonoBehaviour
     private const string BootstrapSceneName = "Bootstrap";
     private const string DefaultMenuSceneName = "MainMenu";
     private const string DefaultHubSceneName = "Maison";
+    private AudioListener bootstrapListener;
+    private AudioListener activeAudioListener;
+    private readonly Dictionary<Light, LightShadows> suppressedDirectionalShadows = new();
 
     public static GameFlowService Instance { get; private set; }
+    public bool OwnsSceneAudio => activeAudioListener != null && activeAudioListener.isActiveAndEnabled;
     /// <summary>Vrai entre la creation de GameplaySessionRoot et le chargement de la scene de jeu.</summary>
     public static bool IsPreparingGameplayScene { get; private set; }
 
@@ -177,6 +181,8 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         Instance = this;
+        bootstrapListener = gameObject.AddComponent<AudioListener>();
+        activeAudioListener = bootstrapListener;
         // Lorsque le composant est configure dans Bootstrap, ApplicationRoot
         // rend deja toute sa hierarchie persistante. Ne pas detachacher ce
         // service de sa racine, sinon la hierarchie devient trompeuse.
@@ -185,6 +191,7 @@ public sealed class GameFlowService : MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
         SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
         SceneManager.activeSceneChanged += OnActiveSceneChanged;
     }
 
@@ -215,7 +222,11 @@ public sealed class GameFlowService : MonoBehaviour
     {
         CancelHubIntroMusic();
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
         SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+        foreach (var pair in suppressedDirectionalShadows)
+            if (pair.Key != null) pair.Key.shadows = pair.Value;
+        suppressedDirectionalShadows.Clear();
         ReleaseZonePresentation();
         if (Instance == this)
         {
@@ -227,12 +238,47 @@ public sealed class GameFlowService : MonoBehaviour
     {
         EnsureSynchronizedClientSession(scene.name);
         EnforceSingleAudioListener();
+        UpdateDirectionalShadowOwner();
         TryOpenMenuFromBootstrap(scene);
     }
 
     private void OnActiveSceneChanged(Scene previous, Scene next)
     {
         EnsureSynchronizedClientSession(next.name);
+        UpdateDirectionalShadowOwner();
+    }
+
+    private void OnSceneUnloaded(Scene scene) => UpdateDirectionalShadowOwner();
+
+    private void UpdateDirectionalShadowOwner()
+    {
+        var activeScene = SceneManager.GetActiveScene();
+        var lights = FindObjectsByType<Light>();
+        Light keeper = null;
+        foreach (var light in lights)
+        {
+            if (!light.isActiveAndEnabled || light.type != LightType.Directional ||
+                (light.shadows == LightShadows.None && !suppressedDirectionalShadows.ContainsKey(light))) continue;
+            if (keeper == null || (light.gameObject.scene == activeScene && keeper.gameObject.scene != activeScene) ||
+                (light.gameObject.scene == keeper.gameObject.scene && light.intensity > keeper.intensity)) keeper = light;
+        }
+
+        foreach (var light in lights)
+        {
+            if (light == keeper || !light.isActiveAndEnabled || light.type != LightType.Directional ||
+                light.shadows == LightShadows.None) continue;
+            suppressedDirectionalShadows.TryAdd(light, light.shadows);
+            light.shadows = LightShadows.None;
+        }
+
+        if (keeper != null && suppressedDirectionalShadows.Remove(keeper, out var shadows))
+            keeper.shadows = shadows;
+
+        // Scene transitions are infrequent; forget destroyed lights without a per-frame scan.
+        var retired = new List<Light>();
+        foreach (var pair in suppressedDirectionalShadows)
+            if (pair.Key == null) retired.Add(pair.Key);
+        foreach (var light in retired) suppressedDirectionalShadows.Remove(light);
     }
 
     // Native NGO scene synchronization owns all scene loading and actor spawning.
@@ -842,6 +888,10 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator PrepareUccCharactersForShutdownRoutine()
     {
+        if (gameplaySessionRoot != null)
+            foreach (var binder in gameplaySessionRoot.GetComponentsInChildren<LitUccCameraCharacterBinder>(true))
+                binder.DetachCharacter();
+
         CharacterLocomotion[] characters = FindObjectsByType<CharacterLocomotion>(FindObjectsInactive.Include);
         for (int i = 0; i < characters.Length; i++)
         {
@@ -1038,6 +1088,9 @@ public sealed class GameFlowService : MonoBehaviour
         yield return LoadingScreenService.ShowAndWaitForPresentation(loadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
+        SetAudioListener(bootstrapListener);
+        foreach (var binder in FindObjectsByType<LitUccCameraCharacterBinder>())
+            binder.DetachCharacter();
         AsyncOperation operation;
         using (SceneTransitionProfiler.SceneLoadRequest.Auto())
         {
@@ -1227,6 +1280,9 @@ public sealed class GameFlowService : MonoBehaviour
             yield break;
         }
 
+        foreach (var binder in FindObjectsByType<LitUccCameraCharacterBinder>())
+            binder.DetachCharacterFromScene(scene);
+
         AsyncOperation operation;
         using (SceneTransitionProfiler.SceneUnloadRequest.Auto())
         {
@@ -1271,6 +1327,7 @@ public sealed class GameFlowService : MonoBehaviour
         if (gameplaySessionRoot != null)
         {
             CharacterStateStore.Instance?.SuppressNextAutomaticSave("game_flow_return_to_menu");
+            SetAudioListener(bootstrapListener);
             Destroy(gameplaySessionRoot.gameObject);
             gameplaySessionRoot = null;
         }
@@ -1596,46 +1653,27 @@ public sealed class GameFlowService : MonoBehaviour
         }
     }
 
-    private static void EnforceSingleAudioListener()
+    private void EnforceSingleAudioListener()
     {
-        AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Exclude);
-        if (listeners == null || listeners.Length <= 1)
-        {
-            return;
-        }
-
+        var menu = SceneManager.GetSceneByName(menuSceneName);
         AudioListener keeper = null;
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null)
+        foreach (var listener in FindObjectsByType<AudioListener>())
         {
-            keeper = mainCamera.GetComponent<AudioListener>();
+            if (!listener.TryGetComponent<Camera>(out var camera) || !camera.isActiveAndEnabled ||
+                !camera.CompareTag("MainCamera")) continue;
+            if (menu.isLoaded ? listener.gameObject.scene == menu :
+                gameplaySessionRoot != null && listener.transform.IsChildOf(gameplaySessionRoot.transform))
+                keeper = listener;
         }
+        SetAudioListener(keeper != null ? keeper : bootstrapListener);
+    }
 
-        if (keeper == null || !keeper.isActiveAndEnabled)
-        {
-            for (int i = 0; i < listeners.Length; i++)
-            {
-                if (listeners[i] != null && listeners[i].isActiveAndEnabled)
-                {
-                    keeper = listeners[i];
-                    break;
-                }
-            }
-        }
-
-        if (keeper == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < listeners.Length; i++)
-        {
-            AudioListener listener = listeners[i];
-            if (listener != null && listener != keeper && listener.enabled)
-            {
-                listener.enabled = false;
-            }
-        }
+    private void SetAudioListener(AudioListener listener)
+    {
+        if (activeAudioListener != null && activeAudioListener != listener)
+            activeAudioListener.enabled = false;
+        activeAudioListener = listener;
+        if (listener != null) listener.enabled = true;
     }
 
     private IEnumerator LoadManifestLoadingScenes(ZoneManifest manifest, string loadingMessage)
