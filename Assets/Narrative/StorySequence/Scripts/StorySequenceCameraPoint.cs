@@ -16,6 +16,8 @@ namespace Lit.Story
         public Vector3 LookAtOffset => lookAtOffset;
         public float FieldOfView => fieldOfView;
 
+        public void SetFieldOfView(float value) => fieldOfView = Mathf.Clamp(value, 15f, 100f);
+
         public bool Matches(string id)
         {
             return !string.IsNullOrWhiteSpace(id) &&

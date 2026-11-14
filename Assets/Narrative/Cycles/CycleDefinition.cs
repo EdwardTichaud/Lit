@@ -23,6 +23,8 @@ public sealed class CycleCondition
 [Serializable]
 public sealed class CycleDialogue
 {
+    [Tooltip("CharacterData du locuteur, si ce dialogue doit afficher un portrait.")]
+    public CharacterData speakerCharacterData;
     [Tooltip("Identifiant stable du dialogue, identique a la source des etapes associees.")] public string id;
     [Min(0), Tooltip("Duree d'affichage en secondes reelles, hors fondus. Zero utilise la duree du cycle. La recompense attend la fermeture naturelle du dialogue.")]
     public float durationSeconds;

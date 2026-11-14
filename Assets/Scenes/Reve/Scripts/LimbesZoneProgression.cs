@@ -7,6 +7,8 @@ public sealed class LimbesZoneProgression : MonoBehaviour
     public CycleDefinition[] explorationCycles = Array.Empty<CycleDefinition>();
     public CycleDefinition conclusionCycle;
     public GameObject arenaAccess;
+    [Tooltip("Volume jouable de l’arène, sous le seuil du vide des îles.")]
+    public BoxCollider arenaFallVolume;
     public GameObject victoryExit;
     public LimbesAngelBoss boss;
     private CycleController conclusionController;

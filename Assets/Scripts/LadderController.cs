@@ -10,6 +10,8 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler
 {
+    public const string RequiredAbilityId = "saut_de_lumiere";
+    private const string MissingAbilityText = "Saut de lumière requis";
     [Header("Extremites")]
     [Tooltip("Resolue automatiquement parmi les enfants nommes Leafs_1.")]
     public Transform leafs1;
@@ -65,6 +67,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     private Collider resolvedInteractionCollider;
     private GameObject interactionBoxInstance;
     private Canvas interactionCanvas;
+    private string visibleInteractionText;
 
     private sealed class PassageRuntime
     {
@@ -121,7 +124,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
         return controller != null && !awaitingServerResponse && !activePassages.ContainsKey(controller.transform) &&
-               CanStartPassage(controller.gameObject, controller, out _);
+               CanApproachPassage(controller, out _);
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -159,12 +162,17 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         if (!isActiveAndEnabled || detectedCharacter == null || awaitingServerResponse) return false;
         if (InputFocusStack.HasAnyFocus() || (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked())) return true;
         if (!TryResolveController(detectedCharacter, out SquadCharacterController controller) ||
-            !CanStartPassage(detectedCharacter, controller, out int sourceEndpoint))
+            !CanApproachPassage(controller, out int sourceEndpoint))
         {
             SetDetectedCharacter(null);
             return true;
         }
 
+        if (!HasLightJump(controller))
+        {
+            InfoBoxUI.TryShowToast(MissingAbilityText);
+            return true;
+        }
         RequestPassage(detectedCharacter, sourceEndpoint);
         return true;
     }
@@ -188,8 +196,9 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     {
         destination = Vector3.zero;
         rotation = Quaternion.identity;
-        if (!TryResolveController(character, out SquadCharacterController controller) ||
-            !CanStartPassage(character, controller, out int resolvedEndpoint) || resolvedEndpoint != sourceEndpoint) return false;
+        if (!TryResolveController(character, out SquadCharacterController controller) || !HasLightJump(controller) ||
+            !CanApproachPassage(controller, out int resolvedEndpoint, requireLocalDriver: false) ||
+            resolvedEndpoint != sourceEndpoint) return false;
 
         Transform destinationEndpoint = GetEndpoint(1 - sourceEndpoint);
         if (destinationEndpoint == null) return false;
@@ -204,12 +213,15 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         awaitingServerResponse = false;
         if (!success) return;
         GameObject character = LocalPlayerUtils.GetControlledCharacter();
-        if (character != null) BeginLocalPassage(character, sourceEndpoint, destination, rotation);
+        if (TryResolveController(character, out SquadCharacterController controller) &&
+            CanApproachPassage(controller, out int currentEndpoint) && currentEndpoint == sourceEndpoint)
+            BeginLocalPassage(character, sourceEndpoint, destination, rotation);
     }
 
     private void BeginLocalPassage(GameObject character, int sourceEndpoint, Vector3 destination, Quaternion rotation)
     {
-        if (!TryResolveController(character, out SquadCharacterController controller) || activePassages.ContainsKey(controller.transform)) return;
+        if (!TryResolveController(character, out SquadCharacterController controller) || !HasLightJump(controller) ||
+            activePassages.ContainsKey(controller.transform)) return;
         LitOpsiveLocomotionBridge bridge = controller.GetComponent<LitOpsiveLocomotionBridge>();
         if (bridge == null || !bridge.TryAcquireExternalLock(this, out var externalLock, disableGameplayInput: true, stopActiveAbilities: true)) return;
 
@@ -257,14 +269,24 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         EndPassage(controller != null ? controller.transform : null, runtime);
     }
 
-    private bool CanStartPassage(GameObject character, SquadCharacterController controller, out int sourceEndpoint)
+    private static bool HasLightJump(SquadCharacterController controller)
+    {
+        var abilities = AbilityService.Instance;
+        return controller != null && abilities != null &&
+            abilities.HasEquipped(controller.gameObject, abilities.Resolve(RequiredAbilityId));
+    }
+
+    private bool CanApproachPassage(SquadCharacterController controller, out int sourceEndpoint, bool requireLocalDriver = true)
     {
         sourceEndpoint = -1;
-        if (character == null || controller == null || !isActiveAndEnabled || !HasValidEndpoints() ||
+        if (controller == null || !isActiveAndEnabled || !HasValidEndpoints() ||
             controller.CurrentHp <= 0 || controller.IsMovementInputSuppressed || controller.IsFlightActive) return false;
 
         LitOpsiveLocomotionBridge bridge = controller.GetComponent<LitOpsiveLocomotionBridge>();
-        if (bridge == null || !bridge.IsDriving || bridge.IsInputSuppressedByUcc || !bridge.Grounded) return false;
+        // Remote actors have no local UCC input driver on the authority peer.
+        bool local = requireLocalDriver || !IsNetworked() || LocalPlayerUtils.GetControlledCharacter() == controller.gameObject;
+        if (bridge == null || bridge.IsInputSuppressedByUcc ||
+            (local ? !bridge.IsDriving || !bridge.Grounded : !bridge.CanDriveScriptedTraversal)) return false;
         PlayerScriptedJumpController jump = controller.GetComponent<PlayerScriptedJumpController>();
         if (jump != null && jump.IsActive) return false;
         RealTimeCombatManager combat = RealTimeCombatManager.Instance;
@@ -374,6 +396,8 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         }
 
         string label = ResolveInteractionText();
+        if (label == visibleInteractionText) return;
+        visibleInteractionText = label;
         TMP_Text tmp = interactionBoxInstance.GetComponentInChildren<TMP_Text>(true);
         if (tmp != null)
         {
@@ -391,12 +415,14 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
     private string ResolveInteractionText()
     {
         if (TryResolveController(detectedCharacter, out SquadCharacterController controller) &&
-            CanStartPassage(detectedCharacter, controller, out int sourceEndpoint))
+            CanApproachPassage(controller, out int sourceEndpoint))
         {
-            return sourceEndpoint == 0 ? climbInteractionText : descendInteractionText;
+            if (!HasLightJump(controller)) return MissingAbilityText;
+            string direction = sourceEndpoint == 0 ? climbInteractionText : descendInteractionText;
+            return string.IsNullOrWhiteSpace(direction) ? "Saut de lumière" : "Saut de lumière — " + direction;
         }
 
-        return climbInteractionText;
+        return "Saut de lumière";
     }
 
     private void UpdateInteractionUiPosition()
@@ -407,6 +433,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
         }
 
         Camera camera = Camera.main;
+        ApplyInteractionText();
         Transform anchor = GetInteractionAnchor();
         if (camera == null || anchor == null)
         {
@@ -455,6 +482,7 @@ public sealed class LadderController : MonoBehaviour, ICharacterDetectedInteract
             Destroy(interactionBoxInstance);
             interactionBoxInstance = null;
             interactionCanvas = null;
+            visibleInteractionText = null;
         }
     }
 

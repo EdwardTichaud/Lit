@@ -34,6 +34,8 @@ namespace Lit.Story
         public string actorId;
         public string listenerId;
         public string speakerNameOverride;
+        [Tooltip("Locuteur explicite si l'acteur de mise en scene est different. Sinon utilise le CharacterData de l'acteur.")]
+        public CharacterData speakerCharacterData;
         public VoiceLineData voiceLine;
         [HideInInspector]
         public bool waitForInteractAfterLine;

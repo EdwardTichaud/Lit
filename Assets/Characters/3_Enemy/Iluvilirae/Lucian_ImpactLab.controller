@@ -1212,7 +1212,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: f1915ee431f680a4e8c905120d6dc86c, type: 3}
+  m_Motion: {fileID: 7400000, guid: e5cb9c41bd9a2404381e86a0057890f7, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3753,7 +3753,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: f1915ee431f680a4e8c905120d6dc86c, type: 3}
+  m_Motion: {fileID: 7400000, guid: e5cb9c41bd9a2404381e86a0057890f7, type: 2}
   m_Tag: Sitting
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -3780,7 +3780,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: f1915ee431f680a4e8c905120d6dc86c, type: 3}
+  m_Motion: {fileID: 7400000, guid: e5cb9c41bd9a2404381e86a0057890f7, type: 2}
   m_Tag: Sitting
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -4490,6 +4490,32 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
+--- !u!1102 &3642722265994656284
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Cling_Hold
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 7400000, guid: 9b691429494293446a806504a6499414, type: 2}
+  m_Tag: RealTimeCombatInPlace
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!206 &3681804036414863726
 BlendTree:
   m_ObjectHideFlags: 1
@@ -5034,6 +5060,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 3
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!1102 &5215146424100881102
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Mixamo_ClimbingUpWall
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 7400000, guid: 9b691429494293446a806504a6499414, type: 2}
+  m_Tag: 
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!1102 &5387383440359845724
 AnimatorState:
   serializedVersion: 6
@@ -5210,6 +5262,9 @@ AnimatorStateMachine:
   m_Name: Base Layer
   m_ChildStates:
   - serializedVersion: 1
+    m_State: {fileID: 3642722265994656284}
+    m_Position: {x: 790, y: 420, z: 0}
+  - serializedVersion: 1
     m_State: {fileID: -234594715202117747}
     m_Position: {x: 600, y: -190, z: 0}
   - serializedVersion: 1
@@ -5377,6 +5432,9 @@ AnimatorStateMachine:
   - serializedVersion: 1
     m_State: {fileID: 7177773009578064311}
     m_Position: {x: 1545.8835, y: 1526.9108, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: 5215146424100881102}
+    m_Position: {x: 1040, y: 1490, z: 0}
   m_ChildStateMachines:
   - serializedVersion: 1
     m_StateMachine: {fileID: -8744604001195188168}
@@ -5398,7 +5456,7 @@ AnimatorStateMachine:
   m_EntryPosition: {x: 640, y: 90, z: 0}
   m_ExitPosition: {x: 630, y: 160, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
-  m_DefaultState: {fileID: -234594715202117747}
+  m_DefaultState: {fileID: -2061941383646552936}
 --- !u!1102 &6270937370992333551
 AnimatorState:
   serializedVersion: 6

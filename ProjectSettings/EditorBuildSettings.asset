@@ -167,6 +167,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/District_1/District_1_Fracture_Environment.unity
     guid: 187190b8a62ea6649a3abf5777543a19
+  - enabled: 1
+    path: Assets/Scenes/Fracture_Cycle_Enola.unity
+    guid: 58d87b9ca04e8b1438ad5aaed4b13543
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

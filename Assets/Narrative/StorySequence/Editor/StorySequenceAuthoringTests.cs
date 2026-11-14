@@ -150,14 +150,48 @@ public sealed class StorySequenceAuthoringTests
         }
     }
 
-    [Test] public void DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker()
+    [Test] public void PlayerDialoguePortraitFollowsLocalCharacterEvenWithoutASequenceActor()
+    {
+        const System.Reflection.BindingFlags fields = System.Reflection.BindingFlags.NonPublic;
+        var rootField = typeof(LocalPlayerContext).GetField("localCharacterRoot", fields | System.Reflection.BindingFlags.Static);
+        var previous = rootField.GetValue(null);
+        var owner = new GameObject("Dialogue portrait test");
+        owner.SetActive(false);
+        var first = ScriptableObject.CreateInstance<CharacterData>();
+        var second = ScriptableObject.CreateInstance<CharacterData>();
+        try
+        {
+            var bindings = owner.AddComponent<StorySequenceSceneBindings>();
+            var step = new StorySequenceStep { actorId = "player", speakerNameOverride = "Lucian" };
+            var dataField = typeof(SquadCharacterController).GetField("characterData", fields | System.Reflection.BindingFlags.Instance);
+            foreach (var data in new[] { first, second })
+            {
+                var avatar = new GameObject("Controlled avatar");
+                avatar.transform.SetParent(owner.transform);
+                dataField.SetValue(avatar.AddComponent<SquadCharacterController>(), data);
+                rootField.SetValue(null, avatar.transform);
+                Assert.That(bindings.ResolveDialogueSpeaker(step, null), Is.SameAs(data));
+            }
+        }
+        finally
+        {
+            rootField.SetValue(null, previous);
+            UnityEngine.Object.DestroyImmediate(owner);
+            UnityEngine.Object.DestroyImmediate(first);
+            UnityEngine.Object.DestroyImmediate(second);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker(bool useRawImage)
     {
         const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance |
             System.Reflection.BindingFlags.NonPublic;
         var root = new GameObject("DialoguePanel", typeof(RectTransform), typeof(CanvasGroup));
         root.SetActive(false);
-        var texture = new Texture2D(2, 2);
-        var portrait = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * .5f);
+        var texture = new Texture2D(4, 4);
+        var portrait = Sprite.Create(texture, new Rect(1, 1, 2, 2), Vector2.one * .5f);
         try
         {
             var ui = root.AddComponent<DialoguePanelUI>();
@@ -165,17 +199,24 @@ public sealed class StorySequenceAuthoringTests
             var text = new GameObject("DialogueBox_Text", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
             text.transform.SetParent(root.transform, false);
             ui.dialogueText = text.GetComponent<TMPro.TMP_Text>();
-            var image = new GameObject("DialoguePortrait_Image", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            var image = new GameObject("DialoguePortrait_Image", typeof(RectTransform),
+                useRawImage ? typeof(UnityEngine.UI.RawImage) : typeof(UnityEngine.UI.Image));
             image.transform.SetParent(root.transform, false);
             typeof(DialoguePanelUI).GetMethod("ResolveReferences", flags).Invoke(ui, null);
-            Assert.That(ui.portraitImage, Is.SameAs(image.GetComponent<UnityEngine.UI.Image>()));
             var setPortrait = typeof(DialoguePanelUI).GetMethod("SetPortrait", flags);
             setPortrait.Invoke(ui, new object[] { portrait });
-            Assert.That(ui.portraitImage.sprite, Is.SameAs(portrait));
-            Assert.That(ui.portraitImage.enabled, Is.True);
+            var graphic = image.GetComponent<UnityEngine.UI.Graphic>();
+            Assert.That(graphic.enabled, Is.True);
+            if (graphic is UnityEngine.UI.RawImage raw)
+            {
+                Assert.That(raw.texture, Is.SameAs(texture));
+                Assert.That(raw.uvRect, Is.EqualTo(new Rect(.25f, .25f, .5f, .5f)));
+            }
+            else Assert.That(ui.portraitImage.sprite, Is.SameAs(portrait));
             setPortrait.Invoke(ui, new object[] { null });
-            Assert.That(ui.portraitImage.sprite, Is.Null);
-            Assert.That(ui.portraitImage.enabled, Is.False);
+            Assert.That(graphic.enabled, Is.False);
+            if (graphic is UnityEngine.UI.RawImage cleared) Assert.That(cleared.texture, Is.Null);
+            else Assert.That(ui.portraitImage.sprite, Is.Null);
         }
         finally
         {
@@ -249,6 +290,16 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(runner.Sequence.steps[2].type, Is.EqualTo(StorySequenceStepType.Dialogue));
         StringAssert.Contains("[Munin]", runner.Sequence.steps[2].voiceLine.voiceLineText);
         Assert.That(runner.Sequence.steps[3].type, Is.EqualTo(StorySequenceStepType.Dialogue));
+        var lucian = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset");
+        Assert.That(lucian.portrait, Is.Not.Null);
+        Assert.That(AssetDatabase.GetAssetPath(lucian.portrait),
+            Is.EqualTo("Assets/Characters/1_Squad/Lucian/Lucian_Portrait.png"));
+        foreach (var step in runner.Sequence.steps)
+        {
+            if (step.type != StorySequenceStepType.Dialogue) continue;
+            Assert.That(step.actorId, Is.EqualTo("player"));
+            Assert.That(step.speakerCharacterData, Is.Null, "The portrait must follow the controlled character.");
+        }
         // The keyboard is a persistent Bootstrap panel, deliberately absent
         // from this isolated prefab authoring fixture.
         Assert.That(runner.GetComponent<StorySequenceNamePrompt>(), Is.Not.Null);
@@ -277,7 +328,7 @@ public sealed class StorySequenceAuthoringTestRunner : ICallbacks
         api = ScriptableObject.CreateInstance<TestRunnerApi>();
         api.RegisterCallbacks(new StorySequenceAuthoringTestRunner());
         api.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode,
-            groupNames = new[] { "^StorySequenceAuthoringTests", "^BootstrapVideoPanelTests" } }) { runSynchronously = true });
+            groupNames = new[] { "^StorySequenceAuthoringTests", "^BootstrapVideoPanelTests", "^MainMenuLoadBrowserTests" } }) { runSynchronously = true });
     }
     public void RunStarted(ITestAdaptor test) { }
     public void TestStarted(ITestAdaptor test) { }

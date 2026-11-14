@@ -1,9 +1,19 @@
 # Interactions et inventaire
 
+Le coffre permanent de la Maison reste sélectionnable sans Flame ni torche.
+Sa racine porte le conteneur et le volume de détection ; le modèle enfant
+fournit le contour, pas une seconde interaction de stockage. L'ouverture
+utilise le panneau de stockage existant ; les autres objets conservent leur
+filtre de lumière.
+
+`WorldActionInteractable` raccorde un objet auteur à une action locale
+configurable (sélection/outline/prompt communs, validation avant événement).
+Premier usage : le jeu du couteau d'Enola, voir `enola_knife_game.md`.
+
 Les capacites d'exploration sont cumulables en solo et reparties entre les
 joueurs presents en multi. Les appels HasEquipped existants restent la porte
-d'entree. Le grappin a distance utilise le prompt commun et la confirmation
-prioritaire seulement lorsqu'un depart valide est cible ; details : grapple.md.
+d'entree. Grimpeur autorise l'accrochage aux prises au contact ; Observateur
+reste charge de leur reperage. Details : exploration_abilities.md.
 
 Nettoyage Flame : le calcul de destination et le controleur temporaire du
 deplacement de Munin, sans appel ni affectation, sont retires. Les anciens points

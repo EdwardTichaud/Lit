@@ -98,7 +98,7 @@ public sealed partial class CycleController
             if (!LocalAutoDialogueIsCurrent(generation) || Time.realtimeSinceStartupAsDouble >= timeout) yield break;
             double acknowledgeNotBefore = Time.realtimeSinceStartupAsDouble + Math.Max(.1d, binding.durationSeconds);
             bool shown = DialoguePanelUI.TryShowTimedConversation(binding.line, binding.durationSeconds,
-                completed => { natural = completed; finished = true; }, autoDialogueOwner);
+                completed => { natural = completed; finished = true; }, autoDialogueOwner, binding.speakerCharacterData);
             if (!shown) yield break;
             while (LocalAutoDialogueIsCurrent(generation) && !finished && Time.realtimeSinceStartupAsDouble < timeout) yield return null;
             // A player may pass the line immediately. Keep the host's minimum-time

@@ -5,7 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.Video;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using TMPro;
 
 // Shared cinematic video surface authored in Bootstrap/UI_Overlay/VideoPanel.
 // A caller owns the panel through playback and the handoff to its next screen.
@@ -17,13 +16,14 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
     [SerializeField] private RawImage picture;
     [SerializeField] private AspectRatioFitter aspect;
     [SerializeField] private UiPanel panel;
+    [SerializeField] private CanvasGroup cinematicCut;
+    [SerializeField] private CanvasGroupBlink cinematicCutBlink;
     [SerializeField, Min(1f)] private float timeoutSeconds = 20f;
     private readonly Dictionary<AudioSource, bool> mutedSources = new Dictionary<AudioSource, bool>();
     private readonly List<BaseInputModule> blockedUiModules = new List<BaseInputModule>();
     private readonly VideoSkipConfirmation skip = new VideoSkipConfirmation();
     private InputAction skipStart;
     private InputAction skipConfirm;
-    private TextMeshProUGUI skipPrompt;
     private bool acceptingSkip;
     private bool cursorWasVisible;
     private CursorLockMode previousCursorLock;
@@ -43,6 +43,8 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         if (player != null) player.playOnAwake = false;
         if (picture != null) { picture.texture = null; picture.color = Color.clear; }
         panel?.Hide(true);
+        ResolveSkipPrompt();
+        ShowSkipPrompt(false);
     }
 
     public IEnumerator PlayResource(string resourcePath, object requester,
@@ -144,7 +146,7 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         skipConfirm = actions?.FindAction("Interact", false)?.Clone();
         skipStart?.Enable();
         skipConfirm?.Enable();
-        acceptingSkip = true;
+        acceptingSkip = cinematicCut != null;
         player.Play();
         long previousFrame = -1;
         deadline = Time.realtimeSinceStartup + timeoutSeconds;
@@ -180,7 +182,7 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         skipStart?.Dispose(); skipStart = null;
         skipConfirm?.Dispose(); skipConfirm = null;
         skip.Reset();
-        if (skipPrompt != null) skipPrompt.transform.parent.gameObject.SetActive(false);
+        ShowSkipPrompt(false);
         if (picture != null) { picture.texture = null; picture.color = Color.clear; }
         if (player == null) return;
         player.loopPointReached -= OnEnded;
@@ -251,30 +253,28 @@ public sealed class BootstrapVideoPanel : MonoBehaviour
         if (wasVisible != skip.IsVisible) ShowSkipPrompt(skip.IsVisible);
     }
 
+    private void ResolveSkipPrompt()
+    {
+        if (cinematicCut == null && transform.parent != null)
+        {
+            Transform root = transform.parent.Find("CinematicCut");
+            if (root != null) cinematicCut = root.GetComponent<CanvasGroup>();
+        }
+        if (cinematicCutBlink == null && cinematicCut != null)
+        {
+            Transform frame = cinematicCut.transform.Find("Frame");
+            if (frame != null) cinematicCutBlink = frame.GetComponent<CanvasGroupBlink>();
+        }
+    }
+
     private void ShowSkipPrompt(bool show)
     {
-        if (show && skipPrompt == null)
-        {
-            var root = new GameObject("VideoSkipConfirmation", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            root.transform.SetParent(transform, false);
-            var rect = (RectTransform)root.transform;
-            rect.anchorMin = new Vector2(.15f, .05f);
-            rect.anchorMax = new Vector2(.85f, .2f);
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            root.GetComponent<Image>().color = new Color(0, 0, 0, .85f);
-            var label = new GameObject("Message", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            label.transform.SetParent(root.transform, false);
-            var textRect = (RectTransform)label.transform;
-            textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(16, 8); textRect.offsetMax = new Vector2(-16, -8);
-            skipPrompt = label.GetComponent<TextMeshProUGUI>();
-            skipPrompt.text = "Passer la cin\u00e9matique ?\nSouthButton : confirmer     Start : continuer";
-            skipPrompt.fontSize = 28;
-            skipPrompt.alignment = TextAlignmentOptions.Center;
-            skipPrompt.color = Color.white;
-            skipPrompt.raycastTarget = false;
-        }
-        if (skipPrompt != null) skipPrompt.transform.parent.gameObject.SetActive(show);
+        if (cinematicCut == null) return;
+        if (show) cinematicCut.transform.SetAsLastSibling();
+        cinematicCut.alpha = show ? 1f : 0f;
+        cinematicCut.interactable = false;
+        cinematicCut.blocksRaycasts = false;
+        if (cinematicCutBlink != null) cinematicCutBlink.enabled = show;
     }
 
     private void OnDisable() { if (owner != null) Release(); }

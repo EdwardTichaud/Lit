@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 // Objet interactif en monde: contenu, verrouillage, pieges et UI d'interaction.
 [RequireComponent(typeof(NetworkObject))]
-public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver
+public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver, IInteractionLightPolicy
 {
     public enum InteractableCategory
     {
@@ -229,6 +229,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         InitializeActionBox();
     }
+
+    // Only the permanent home storage opts out of the common darkness gate.
+    bool IInteractionLightPolicy.RequiresFlame => requireLitInfluenceForInteraction || representedItem == null || !representedItem.isHomeChest;
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
@@ -461,7 +464,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
-        if (suppressLootSubmitUntilInteractReleased)
+        if (LocalInputRouter.IsInteractConsumed || suppressLootSubmitUntilInteractReleased)
         {
             return;
         }
@@ -1132,10 +1135,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         InventoryPanelController inventory = GetInventoryPanelController();
+        GameObject reader = currentCharacter;
         System.Action onTake = CanTakeWorldReadableAfterReading()
-            ? TakeWorldReadableAfterReading
+            ? () => TakeWorldReadableAfterReading(reader)
             : null;
-        if (inventory == null || !inventory.TryOpenReadableItemFromWorld(representedItem, currentCharacter, onTake))
+        if (inventory == null || !inventory.TryOpenReadableItemFromWorld(representedItem, reader, onTake))
         {
             ShowActionFeedback("Lecture indisponible.");
         }
@@ -1154,24 +1158,43 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private bool CanTakeWorldReadableAfterReading()
     {
-        return IsWorldReadableDocument() &&
-               allowTake &&
-               CanTakeRepresentedItemDirect(out _);
+        if (!IsWorldReadableDocument() || !allowTake ||
+            interactableCategory != InteractableCategory.RecoverableItem ||
+            !representedItem.CanTakeFromContainer(this))
+        {
+            return false;
+        }
+
+        // World notes can store their own item explicitly. Don't let the
+        // reader's Take action also empty an unrelated container.
+        if (storedItems != null)
+        {
+            foreach (LootItemEntry entry in storedItems)
+            {
+                if (entry != null && entry.item != null && entry.quantity > 0 && entry.item != representedItem)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
-    private void TakeWorldReadableAfterReading()
+    private void TakeWorldReadableAfterReading(GameObject reader)
     {
-        if (this == null || !isActiveAndEnabled || !CanTakeWorldReadableAfterReading())
+        if (this == null || !isActiveAndEnabled || reader == null ||
+            !CanTakeWorldReadableAfterReading() || !CanInteractInCurrentInfluence())
         {
             return;
         }
 
-        UpdateCurrentCharacter();
-        if (currentCharacter == null)
+        if (LocalPlayerUtils.GetControlledCharacter() != reader || !IsCharacterInRange(reader.transform))
         {
             return;
         }
 
+        // La lecture peut retirer la cible de la detection, mais le choix A
+        // porte sur la note et le personnage qui ont ouvert cette session.
+        currentCharacter = reader;
         // La prise passe par le chemin existant, donc reste autoritaire serveur
         // en reseau. Le savoir a deja ete revele au moment de la lecture.
         TakeAllItems();
@@ -4323,6 +4346,12 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))
+        {
+            return;
+        }
+
+        if (IsWorldReadableDocument() && interactableCategory == InteractableCategory.RecoverableItem &&
+            (!CanTakeWorldReadableAfterReading() || !CanInteractInCurrentInfluence()))
         {
             return;
         }

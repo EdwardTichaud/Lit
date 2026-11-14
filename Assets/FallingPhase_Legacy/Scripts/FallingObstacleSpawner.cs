@@ -13,10 +13,6 @@ public sealed class FallingObstacleSpawner : MonoBehaviour
     [SerializeField] private Vector2 horizontalRange = new Vector2(-12f, 12f);
     [SerializeField] private Vector2 verticalRange = new Vector2(-7f, 7f);
 
-    [Header("Grapple Obstacles")]
-    [SerializeField, Range(0f, 1f)] private float grappleObstacleChance = 0.1f;
-    [SerializeField] private Material grappleMaterial;
-
     private readonly List<GameObject> activeObstacles = new List<GameObject>();
     private float nextSpawnZ;
 
@@ -68,41 +64,7 @@ public sealed class FallingObstacleSpawner : MonoBehaviour
             Random.Range(verticalRange.x, verticalRange.y),
             zPosition);
         GameObject instance = Instantiate(prefab, position, Random.rotation, transform);
-        if (Random.value <= grappleObstacleChance)
-        {
-            ConfigureAsGrapple(instance);
-        }
-
         activeObstacles.Add(instance);
     }
 
-    private void ConfigureAsGrapple(GameObject obstacle)
-    {
-        if (obstacle == null)
-        {
-            return;
-        }
-
-        Renderer[] renderers = obstacle.GetComponentsInChildren<Renderer>(true);
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            renderers[i].sharedMaterial = grappleMaterial;
-        }
-
-        Light glow = obstacle.GetComponent<Light>();
-        if (glow == null)
-        {
-            glow = obstacle.AddComponent<Light>();
-        }
-
-        glow.type = LightType.Point;
-        glow.color = new Color(0.38f, 0.9f, 1f);
-        glow.range = 5f;
-        glow.intensity = 0f;
-
-        if (obstacle.GetComponent<FallingGrapplePoint>() == null)
-        {
-            obstacle.AddComponent<FallingGrapplePoint>();
-        }
-    }
 }

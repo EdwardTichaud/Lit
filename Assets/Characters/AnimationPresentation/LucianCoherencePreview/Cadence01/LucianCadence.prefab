@@ -1061,8 +1061,8 @@ MonoBehaviour:
   faceRenderer: {fileID: 695470392084518047}
   jawRoot: {fileID: 7892304529550524420}
   neutralJawLocalPosition: {x: 0.024634244, y: 0.013118182, z: 0.000011867353}
-  neutralJawLocalRotation: {x: 0.0000033841322, y: -0.0000681144, z: 1, w: -0.000017177159}
-  neutralJawPoseCaptured: 0
+  neutralJawLocalRotation: {x: 0.0000010049124, y: -0.00006819101, z: 0.99939024, w: -0.034916665}
+  neutralJawPoseCaptured: 1
   verboseLogging: 0
 --- !u!114 &4744500239154773290
 MonoBehaviour:
@@ -5690,7 +5690,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1509887699037604648}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0000033841322, y: -0.0000681144, z: 1, w: -0.000017177159}
+  m_LocalRotation: {x: 0.0000010049124, y: -0.00006819101, z: 0.99939024, w: -0.034916665}
   m_LocalPosition: {x: 0.024634244, y: 0.013118182, z: 0.000011867353}
   m_LocalScale: {x: 1.0000002, y: 1.0000001, z: 1.0000001}
   m_ConstrainProportionsScale: 0

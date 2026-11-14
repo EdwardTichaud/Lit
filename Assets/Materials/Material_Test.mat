@@ -235,6 +235,8 @@ Material:
     - _IridescenceMask: 1
     - _IridescenceThickness: 1
     - _LinkDetailsWithBase: 1
+    - _LitMaskEnabled: 0
+    - _LitMaskVersion: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 1
@@ -279,6 +281,7 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SubsurfaceMask: 1
     - _SupportDecals: 1
+    - _SurfaceState: 1
     - _SurfaceType: 0
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
@@ -329,6 +332,11 @@ Material:
     - _IceDeepColor: {r: 0.72, g: 0.92, b: 1, a: 1}
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
     - _IridescenceThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
+    - _LitMaskCameraForward: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskCameraPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskSettings: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget0: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget1: {r: 0, g: 0, b: 0, a: 0}
     - _NoiseOffset: {r: 0, g: 1, b: 0, a: 0}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}

@@ -503,7 +503,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
-        if (!HasInputFocus())
+        if (LocalInputRouter.IsInteractConsumed || !HasInputFocus())
         {
             return;
         }
@@ -1847,7 +1847,7 @@ public class InventoryPanelController : MonoBehaviour
     /// </summary>
     public bool TryOpenReadableItemFromWorld(Item item, GameObject revealer, System.Action onTake = null)
     {
-        if (item == null || !item.IsReadable())
+        if (readablePanelOpen || item == null || !item.IsReadable())
         {
             return false;
         }
@@ -2157,13 +2157,20 @@ public class InventoryPanelController : MonoBehaviour
             return true;
         }
 
-        readableActionInputs = GameObject.Find("ReadableActionInputs");
+        // A previous reader/session can have hidden the authored controls.
+        // GameObject.Find skips inactive objects.
+        var inputs = parchoPanelCanvasGroup != null
+            ? parchoPanelCanvasGroup.transform.Find("ReadableActionInputs") : null;
+        if (inputs == null && bookPanelCanvasGroup != null)
+            inputs = bookPanelCanvasGroup.transform.Find("ReadableActionInputs");
+        readableActionInputs = inputs != null ? inputs.gameObject : GameObject.Find("ReadableActionInputs");
         if (readableActionInputs == null)
         {
             return false;
         }
 
-        readableActionInputsInitialParent = readableActionInputs.transform.parent;
+        readableActionInputsInitialParent = parchoPanelCanvasGroup != null
+            ? parchoPanelCanvasGroup.transform : readableActionInputs.transform.parent;
         return true;
     }
 

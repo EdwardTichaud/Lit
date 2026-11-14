@@ -32,6 +32,24 @@ public sealed class MaisonChestTests
     }
 
     [Test]
+    public void HomeStorageIsSelectedThroughEitherColliderWithoutFlame()
+    {
+        var chest = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+        try
+        {
+            var container = chest.GetComponent<InteractableItem>();
+            Assert.That(CharacterInteractionDetection.IsInActiveFlameInfluence(container), Is.True);
+            foreach (var collider in chest.GetComponentsInChildren<Collider>())
+                Assert.That(CharacterInteractionDetection.ResolveTarget(collider), Is.SameAs(container));
+            var outlines = new List<RuntimeOutlineTarget>();
+            RuntimeOutlineUtility.CollectOutlineTargets(container, outlines);
+            Assert.That(outlines, Has.Count.EqualTo(1));
+            Assert.That(outlines[0].GetComponent<Renderer>(), Is.Not.Null);
+        }
+        finally { Object.DestroyImmediate(chest); }
+    }
+
+    [Test]
     public void WorldInformationDoesNotHijackTheStorageInteraction()
     {
         var info = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath).GetComponent<BuildingInfoInteractable>();

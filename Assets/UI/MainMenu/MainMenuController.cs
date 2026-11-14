@@ -85,6 +85,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private AspectRatioFitter previewAspect;
     [SerializeField] private string screenshotFileName = "screenshot.png";
     [SerializeField] private Texture2D previewMissingTexture;
+    [SerializeField] private MenuViewFactory.Skin menuSkin;
+    internal MenuViewFactory.Skin MenuSkin => menuSkin;
     [SerializeField] private TMP_Text previewMissingLabel;
     [SerializeField] private string previewMissingLabelText = "Aucun aperçu disponible";
     [SerializeField] private Color previewMissingLabelColor = new Color(1f, 1f, 1f, 0.7f);
@@ -110,6 +112,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string deleteSessionConfirmFormat = "Supprimer la session '{0}' ?";
 
     [Header("Confirm Load")]
+    [SerializeField] private ConfirmationManager menuConfirmation;
     [SerializeField] private CanvasGroup loadConfirmGroup;
     [SerializeField] private TMP_Text loadConfirmText;
     [SerializeField] private MenuCursorAction loadConfirmYesAction;
@@ -3014,7 +3017,11 @@ public class MainMenuController : MonoBehaviour
             previewMissingLabel.color = previewMissingLabelColor;
             previewMissingLabel.text = previewMissingLabelText;
             previewMissingLabel.raycastTarget = false;
-            if (previewMissingLabel.font == null && TMP_Settings.defaultFontAsset != null)
+            if (menuSkin?.font != null)
+            {
+                previewMissingLabel.font = menuSkin.font;
+            }
+            else if (previewMissingLabel.font == null && TMP_Settings.defaultFontAsset != null)
             {
                 previewMissingLabel.font = TMP_Settings.defaultFontAsset;
             }
@@ -4018,7 +4025,7 @@ public class MainMenuController : MonoBehaviour
 
         string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
         string message = string.Format(loadConfirmMessageFormat, label);
-        bool shown = ConfirmationManager.TryShow(
+        bool shown = menuConfirmation != null && menuConfirmation.TryShowConfigured(
             new ConfirmationRequest(this, message, ConfirmLoad, CancelLoadConfirm)
             {
                 Title = "Chargement",
@@ -4033,6 +4040,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         loadConfirmOpen = false;
+        pendingLoad = null;
         SetActiveMenuInteractable(true);
         SetSharedCursorInputEnabled(true);
         SetStatus("Confirmation indisponible.");
@@ -4125,7 +4133,7 @@ public class MainMenuController : MonoBehaviour
         SetActiveMenuInteractable(false);
         SetSharedCursorInputEnabled(false);
 
-        bool shown = ConfirmationManager.TryShow(
+        bool shown = menuConfirmation != null && menuConfirmation.TryShowConfigured(
             new ConfirmationRequest(this, message, ConfirmDelete, CancelDelete)
             {
                 Title = "Suppression",

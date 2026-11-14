@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7827916923327252424
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa486462e6be1764e89c788ba30e61f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEditor.Rendering.HighDefinition.MaterialExternalReferences
+  m_DiffusionProfileReferences:
+  - {fileID: 0}
+  m_MaterialReferences: []
 --- !u!114 &-4081099085761013197
 MonoBehaviour:
   m_ObjectHideFlags: 11
@@ -32,6 +47,7 @@ Material:
   - _MASKMAP
   - _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
   - _MATERIAL_FEATURE_TRANSMISSION
+  - _NORMALMAP
   - _NORMALMAP_TANGENT_SPACE
   m_InvalidKeywords:
   - BOOLEAN_ISCORNEA_ON
@@ -112,7 +128,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 75bf5fea82a5eb148a5e339cb4dc762b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMapOS:
@@ -171,7 +187,7 @@ Material:
     m_Floats:
     - BOOLEAN_ISCORNEA: 1
     - _AORemapMax: 1
-    - _AORemapMin: 0
+    - _AORemapMin: 0.5763547
     - _AOStrength: 0.25
     - _ATDistance: 1
     - _AddPrecomputedVelocity: 0
@@ -200,7 +216,7 @@ Material:
     - _DetailNormalScale: 1
     - _DetailSmoothnessScale: 1
     - _DiffusionProfile: 0
-    - _DiffusionProfileHash: 3.3750906
+    - _DiffusionProfileHash: 2.1489146
     - _DisplacementLockObjectScale: 1
     - _DisplacementLockTilingScale: 1
     - _DisplacementMode: 0
@@ -281,7 +297,7 @@ Material:
     - _ShadowRadius: 0.57
     - _Smoothness: 0.5
     - _SmoothnessRemapMax: 1
-    - _SmoothnessRemapMin: 0
+    - _SmoothnessRemapMin: 0.19704433
     - _SpecularAAScreenSpaceVariance: 0.1
     - _SpecularAAThreshold: 0.2
     - _SpecularOcclusionMode: 1
@@ -325,7 +341,7 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CornerShadowColor: {r: 0.7530592, g: 0.71966153, b: 0.68692935, a: 1}
-    - _DiffusionProfileAsset: {r: -2.1948957e-10, g: -1.1787802e+22, b: 526403400, a: 5.395903e-11}
+    - _DiffusionProfileAsset: {r: 3.1749385e+26, g: 2.9147697e-17, b: 3.475444e-35, a: 3.3457219e-31}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 0}

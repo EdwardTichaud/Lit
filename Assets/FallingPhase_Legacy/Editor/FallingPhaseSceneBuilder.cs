@@ -14,7 +14,6 @@ public static class FallingPhaseSceneBuilder
     private const string PlayerControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
     private const string LucianPrefabPath = "Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab";
     private const string InputActionsPath = "Assets/PlayerInputs.inputactions";
-    private const string GrappleMaterialPath = "Assets/Environment/3_VFX/VFX_GlitteringStars/Material_Grapple.mat";
 
     [MenuItem("Lit/Legacy/Falling/Build FallingPhase")]
     public static void Build()
@@ -84,7 +83,6 @@ public static class FallingPhaseSceneBuilder
         animator.applyRootMotion = false;
 
         FallingPlayerController player = root.AddComponent<FallingPlayerController>();
-        root.AddComponent<FallingGrappleController>();
         SerializedObject playerData = new SerializedObject(player);
         playerData.FindProperty("inputActions").objectReferenceValue = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
         playerData.FindProperty("animator").objectReferenceValue = animator;
@@ -147,7 +145,6 @@ public static class FallingPhaseSceneBuilder
         FallingObstacleSpawner spawner = spawnerObject.AddComponent<FallingObstacleSpawner>();
         SerializedObject data = new SerializedObject(spawner);
         data.FindProperty("player").objectReferenceValue = player;
-        data.FindProperty("grappleMaterial").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Material>(GrappleMaterialPath);
         SerializedProperty prefabs = data.FindProperty("obstaclePrefabs");
         prefabs.arraySize = 2;
         prefabs.GetArrayElementAtIndex(0).objectReferenceValue = staticObstacle;
@@ -242,19 +239,16 @@ public static class FallingPhaseSceneBuilder
         EnsureParameter(controller, "FallingBoost", AnimatorControllerParameterType.Bool);
         EnsureParameter(controller, "BoostCharge", AnimatorControllerParameterType.Bool);
         EnsureParameter(controller, "FallingImpact", AnimatorControllerParameterType.Trigger);
-        EnsureParameter(controller, "FallingGrapple", AnimatorControllerParameterType.Trigger);
 
         AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
         AnimatorState falling = FindOrCreateState(stateMachine, "Falling_Loop");
         AnimatorState charge = FindOrCreateState(stateMachine, "BoostCharge");
         AnimatorState boost = FindOrCreateState(stateMachine, "Falling_Boost");
         AnimatorState impact = FindOrCreateState(stateMachine, "Falling_Impact");
-        AnimatorState grapple = FindOrCreateState(stateMachine, "Falling_Grapple");
         falling.motion = LoadClip("Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Flying.fbx");
         charge.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Moving_Backward.fbx");
         boost.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Strike_Fly.fbx");
         impact.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Get_Hit_Hard.fbx");
-        grapple.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Strike_Fly.fbx");
         stateMachine.defaultState = falling;
 
         if (falling.transitions.Length == 0)
@@ -283,8 +277,6 @@ public static class FallingPhaseSceneBuilder
 
         EnsureBoolTransition(falling, charge, "BoostCharge", true, 0.06f);
         EnsureBoolTransition(charge, falling, "BoostCharge", false, 0.06f);
-        EnsureTriggerTransition(stateMachine, grapple, "FallingGrapple", 0.04f);
-        EnsureExitTransition(grapple, falling, 0.8f, 0.08f);
 
         EditorUtility.SetDirty(controller);
         return controller;

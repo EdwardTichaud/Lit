@@ -875,7 +875,7 @@ public sealed partial class CycleController : NetworkBehaviour
                 if (IsSpawned) CompleteDialogueServerRpc(id, token, completed);
             }
             else CompleteDialogue(0, id, token, completed, LocalPlayerUtils.GetControlledCharacter());
-        }, this);
+        }, this, dialogue.speakerCharacterData);
         if (!shown) { localDialogue = false; return false; }
         BeginDialogue(0, id, token, LocalPlayerUtils.GetControlledCharacter());
         return true;
@@ -966,7 +966,7 @@ public sealed partial class CycleController : NetworkBehaviour
         {
             localDialogue = false;
             if (this != null && isActiveAndEnabled && IsSpawned) CompleteDialogueServerRpc(id, token, completed);
-        }, this);
+        }, this, dialogue.speakerCharacterData);
         if (!shown)
         {
             localDialogue = false;

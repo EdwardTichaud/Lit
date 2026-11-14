@@ -14,11 +14,15 @@ public sealed class LitTacticalVisibilityMask
     private float nextQuery, nextRenderQuery;
     private int physicsRevision = -1, renderRevision = -1, lastFrame = -1, obstacleLayers;
     private bool active, rendering, hasEnemy;
+    private bool boundShape;
+    private Texture previousShape;
+    private Vector4 previousShapeMotion;
     private Vector3 player, enemy;
     private float playerGround, enemyGround;
     private Transform previousEnemy, enemyTransform;
     private LitTacticalCameraProfile profile;
     public int LayerCount => stack.Layers.Count;
+    private float FlameIntensity => profile.maskFlameSpeed > 0 ? Mathf.Clamp(profile.maskFlameIntensity, 0, .1f) : 0;
     public bool Covers(LitCameraOcclusionGroup group) => active && stack.Contains(group);
     public bool Covers(LitCameraOcclusionGroup group, Vector3 contact) => Covers(group) &&
         (!group.OverheadSurface || contact.y > playerGround);
@@ -70,7 +74,10 @@ public sealed class LitTacticalVisibilityMask
         if (camera != null)
         {
             // Include ALL configured groups, not only the automatic zone's entries.
-            LitCameraOcclusionGroup.Collect(camera, target, profile.maskRadius + profile.maskFeather,
+            float radius = profile.maskShape != null
+                ? profile.maskRadius * (LitTacticalMaskProperties.ShapeBoundsScale + FlameIntensity)
+                : profile.maskRadius + profile.maskFeather;
+            LitCameraOcclusionGroup.Collect(camera, target, radius,
                 isEnemy ? enemyGround : playerGround, visualHits);
             foreach (var group in visualHits) Mark(group, isEnemy);
         }
@@ -115,12 +122,25 @@ public sealed class LitTacticalVisibilityMask
                 profile.occlusionRestoreDelay, hasEnemy);
         }
         rendering = true;
+        Texture2D shape = profile.maskShape;
+        if (shape != null && stack.Layers.Count > 0)
+        {
+            // All affected slots share this texture for this camera render only.
+            // The per-slot mode still gates sampling, so other materials are untouched.
+            previousShape = Shader.GetGlobalTexture(LitTacticalMaskProperties.ShapeTexture);
+            previousShapeMotion = Shader.GetGlobalVector(LitTacticalMaskProperties.ShapeMotion);
+            Shader.SetGlobalTexture(LitTacticalMaskProperties.ShapeTexture, shape);
+            // One phase for this camera, shared by all targets, renderers and passes.
+            float phase = (float)((Time.unscaledTimeAsDouble * Mathf.Clamp(profile.maskFlameSpeed, 0, 2)) % 1.0);
+            Shader.SetGlobalVector(LitTacticalMaskProperties.ShapeMotion, new Vector4(FlameIntensity, phase, 0, 0));
+            boundShape = true;
+        }
         Vector4 position = camera.transform.position, forward = camera.transform.forward;
         position.w = playerGround; forward.w = enemyGround;
         var data = new LitTacticalMaskProperties.Data
         {
             settings = new Vector4(profile.maskRadius, profile.maskFeather, camera.aspect, .05f),
-            cameraPosition = position, cameraForward = forward
+            cameraPosition = position, cameraForward = forward, useShape = boundShape
         };
         foreach (var pair in stack.Layers)
         {
@@ -136,6 +156,13 @@ public sealed class LitTacticalVisibilityMask
     {
         if (!rendering) return;
         foreach (var pair in stack.Layers) if (pair.Key != null) pair.Key.RestoreMask(this);
+        if (boundShape)
+        {
+            Shader.SetGlobalTexture(LitTacticalMaskProperties.ShapeTexture, previousShape);
+            Shader.SetGlobalVector(LitTacticalMaskProperties.ShapeMotion, previousShapeMotion);
+            previousShape = null;
+            boundShape = false;
+        }
         rendering = false;
     }
     public void Clear()

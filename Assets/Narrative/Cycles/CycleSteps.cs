@@ -121,6 +121,8 @@ public sealed class CycleFlameBinding
 [Serializable]
 public sealed class CycleAutoDialogueBinding
 {
+    [Tooltip("CharacterData du locuteur, si ce dialogue doit afficher un portrait.")]
+    public CharacterData speakerCharacterData;
     [Tooltip("ID de l'etape DialogueCompleted correspondante.")] public string id;
     public CycleCondition condition = new CycleCondition();
     [TextArea] public string line;

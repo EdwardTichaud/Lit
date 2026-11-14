@@ -173,7 +173,7 @@ public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCi
             else CompleteIntroduction(token, 0, completed);
         }
         if (!DialoguePanelUI.TryShowTimedConversation(EncounterOptions.introductionLine,
-            Mathf.Max(0.5f, EncounterOptions.introductionSeconds), Closed, this)) Closed(false);
+            Mathf.Max(0.5f, EncounterOptions.introductionSeconds), Closed, this, Health.CharacterData)) Closed(false);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -226,7 +226,7 @@ public sealed partial class EnemyController : IGhostInteractionHandler, ICycleCi
                 deathVoiceSource = AudioManager.Instance?.PlayUiOneShotClip(DeathOptions.voiceLine);
             }
             bool closed = false;
-            bool shown = DialoguePanelUI.TryShowTimedConversation(DeathOptions.dialogueLine, duration, _ => closed = true, this);
+            bool shown = DialoguePanelUI.TryShowTimedConversation(DeathOptions.dialogueLine, duration, _ => closed = true, this, Health.CharacterData);
             if (shown)
             {
                 while (this != null && isActiveAndEnabled && !closed) yield return null;

@@ -44,16 +44,6 @@ public sealed class FallingPlayerController : MonoBehaviour
         new Keyframe(0.55f, 0.82f, -0.4f, -0.8f),
         new Keyframe(1f, 0f, -1.2f, 0f));
 
-    [Header("Grapple Impulse")]
-    [SerializeField, Min(1f)] private float grapplePeakForwardSpeed = 82f;
-    [SerializeField, Min(0.1f)] private float grappleDurationSeconds = 1.05f;
-    [SerializeField, Min(0f)] private float grappleCooldownSeconds = 0.5f;
-    [SerializeField] private AnimationCurve grappleStrengthCurve = new AnimationCurve(
-        new Keyframe(0f, 0f, 0f, 14f),
-        new Keyframe(0.08f, 1f, 0f, 0f),
-        new Keyframe(0.68f, 0.86f, -0.35f, -1.1f),
-        new Keyframe(1f, 0f, -1.4f, 0f));
-
     [Header("Impact")]
     [SerializeField, Min(1f)] private float hardImpactSpeed = 34f;
     [SerializeField, Range(0.1f, 0.95f)] private float strongestSlowMultiplier = 0.28f;
@@ -74,13 +64,7 @@ public sealed class FallingPlayerController : MonoBehaviour
         ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((Time.time - boostChargeStartedAt) / ChargeDurationSeconds))
         : 0f;
     public float ForwardAcceleration01 => forwardAcceleration01;
-    public bool IsGrappleImpulsing => GetGrappleStrength() > 0f;
-    public float GrappleDurationSeconds => grappleDurationSeconds;
 
-    public string GetGrappleBindingDisplayString()
-    {
-        return grappleAction != null ? grappleAction.GetBindingDisplayString() : "Grapple";
-    }
     public Vector2 SteeringVelocity => steeringVelocity;
     public Vector2 Steering01 => new Vector2(
         lateralSpeed > 0f ? Mathf.Clamp(steeringVelocity.x / lateralSpeed, -1f, 1f) : 0f,
@@ -90,14 +74,11 @@ public sealed class FallingPlayerController : MonoBehaviour
     public float ImpactPenalty { get; private set; }
     public event Action<float> Impacted;
     public event Action BoostTriggered;
-    public event Action GrappleRequested;
-    public event Action GrappleTriggered;
 
     private Rigidbody body;
     private InputActionMap actionMap;
     private InputAction moveAction;
     private InputAction accelerateAction;
-    private InputAction grappleAction;
     private Vector3 startPosition;
     private float currentForwardSpeed;
     private float speedVelocity;
@@ -107,7 +88,6 @@ public sealed class FallingPlayerController : MonoBehaviour
     private Quaternion visualBaseLocalRotation;
     private Vector3 visualBaseLocalPosition;
     private bool hasBoostChargeParameter;
-    private bool hasGrappleParameter;
     private Vector2 currentVisualTilt;
     private Vector2 visualTiltVelocity;
     private float slowMultiplier = 1f;
@@ -122,8 +102,6 @@ public sealed class FallingPlayerController : MonoBehaviour
     private float boostIntensity = 1f;
     private float boostChargeStartedAt;
     private bool isBoostCharging;
-    private float grappleStartedAt = float.NegativeInfinity;
-    private float nextGrappleAvailableAt;
 
     private float ChargeDurationSeconds => Mathf.Clamp(boostChargeDurationSeconds, 0.05f, MaximumBoostChargeDurationSeconds);
 
@@ -158,7 +136,6 @@ public sealed class FallingPlayerController : MonoBehaviour
         }
 
         hasBoostChargeParameter = HasAnimatorParameter("BoostCharge", AnimatorControllerParameterType.Bool);
-        hasGrappleParameter = HasAnimatorParameter("FallingGrapple", AnimatorControllerParameterType.Trigger);
     }
 
     private void OnEnable()
@@ -172,16 +149,10 @@ public sealed class FallingPlayerController : MonoBehaviour
         actionMap = inputActions.FindActionMap(actionMapName, throwIfNotFound: false);
         moveAction = actionMap != null ? actionMap.FindAction("Move", throwIfNotFound: false) : null;
         accelerateAction = actionMap != null ? actionMap.FindAction("Accelerate", throwIfNotFound: false) : null;
-        grappleAction = actionMap != null ? actionMap.FindAction("Grapple", throwIfNotFound: false) : null;
         if (accelerateAction != null)
         {
             accelerateAction.started += OnAccelerateStarted;
             accelerateAction.canceled += OnAccelerateCanceled;
-        }
-
-        if (grappleAction != null)
-        {
-            grappleAction.performed += OnGrapplePerformed;
         }
 
         EnableActionMapExclusively();
@@ -193,11 +164,6 @@ public sealed class FallingPlayerController : MonoBehaviour
         {
             accelerateAction.started -= OnAccelerateStarted;
             accelerateAction.canceled -= OnAccelerateCanceled;
-        }
-
-        if (grappleAction != null)
-        {
-            grappleAction.performed -= OnGrapplePerformed;
         }
 
         isBoostCharging = false;
@@ -234,12 +200,9 @@ public sealed class FallingPlayerController : MonoBehaviour
 
         Vector2 move = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
         float boostStrength = GetBoostStrength();
-        float grappleStrength = GetGrappleStrength();
         float targetSpeed = isBoostCharging
             ? baseForwardSpeed * Mathf.Lerp(1f, fullyChargedSpeedMultiplier, BoostCharge01)
-            : grappleStrength > 0f
-                ? Mathf.Lerp(baseForwardSpeed, grapplePeakForwardSpeed, grappleStrength)
-                : Mathf.Lerp(baseForwardSpeed, boostPeakForwardSpeed, boostStrength);
+            : Mathf.Lerp(baseForwardSpeed, boostPeakForwardSpeed, boostStrength);
         if (Time.time < slowEndsAt)
         {
             targetSpeed *= slowMultiplier;
@@ -300,7 +263,7 @@ public sealed class FallingPlayerController : MonoBehaviour
 
     public bool BeginBoostCharge()
     {
-        if (IsGrappleImpulsing || Time.time < nextBoostAvailableAt || Time.time < slowEndsAt)
+        if (Time.time < nextBoostAvailableAt || Time.time < slowEndsAt)
         {
             return false;
         }
@@ -320,26 +283,6 @@ public sealed class FallingPlayerController : MonoBehaviour
         float intensity = Mathf.Lerp(minimumReleasedBoostStrength, 1f, BoostCharge01);
         isBoostCharging = false;
         return StartBoost(intensity);
-    }
-
-    public bool TriggerGrappleImpulse()
-    {
-        if (Time.time < nextGrappleAvailableAt || Time.time < slowEndsAt)
-        {
-            return false;
-        }
-
-        isBoostCharging = false;
-        boostStartedAt = float.NegativeInfinity;
-        grappleStartedAt = Time.time;
-        nextGrappleAvailableAt = Time.time + grappleDurationSeconds + grappleCooldownSeconds;
-        if (animator != null && hasGrappleParameter)
-        {
-            animator.SetTrigger("FallingGrapple");
-        }
-
-        GrappleTriggered?.Invoke();
-        return true;
     }
 
     private void LateUpdate()
@@ -488,11 +431,6 @@ public sealed class FallingPlayerController : MonoBehaviour
         ReleaseBoostCharge();
     }
 
-    private void OnGrapplePerformed(InputAction.CallbackContext _)
-    {
-        GrappleRequested?.Invoke();
-    }
-
     private float GetBoostStrength()
     {
         float elapsed = Time.time - boostStartedAt;
@@ -502,17 +440,6 @@ public sealed class FallingPlayerController : MonoBehaviour
         }
 
         return Mathf.Clamp01(boostStrengthCurve.Evaluate(elapsed / boostDurationSeconds)) * boostIntensity;
-    }
-
-    private float GetGrappleStrength()
-    {
-        float elapsed = Time.time - grappleStartedAt;
-        if (elapsed < 0f || elapsed >= grappleDurationSeconds)
-        {
-            return 0f;
-        }
-
-        return Mathf.Clamp01(grappleStrengthCurve.Evaluate(elapsed / grappleDurationSeconds));
     }
 
     private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType parameterType)

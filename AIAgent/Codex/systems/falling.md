@@ -30,14 +30,6 @@ through a high-speed falling corridor, avoids geometry and accumulates a rank.
   reduction; impacts do not end the run. A valid collision keeps the hitbox
   active for 0.5 seconds to sell the impact, then disables it for 0.5 seconds
   so an obstacle cannot block the run.
-- `FallingGrapplePoint` marks reusable traversal anchors. `FallingGrappleController`
-  selects the valid point closest to the screen centre, only between its minimum
-  and maximum distance, then shows its world-space input prompt and glow. The
-  `Grapple` action uses gamepad North Button or keyboard `E`, shows a short
-  `LineRenderer` tether, and launches Lucian strictly along the falling axis.
-  Grapple impulse, cooldown, camera movement, SFX and voice all have dedicated
-  serialized settings. `FallingObstacleSpawner` converts 10% of its spawned
-  obstacles into grapple points and applies `Material_Grapple` to them.
 - `FallingRunScore`: combines distance, sustained acceleration and impact
   penalties into ranks `F` through `SSS`.
 - `FallingCameraRig`: makes speed readable through progressive FOV, pull-back,
@@ -59,8 +51,6 @@ is copied from `Player_Model` and adds `Falling_Loop` (`Mixamo_Flying`),
 `Falling_Boost` (`Anim_SF_Strike_Fly`) and `Falling_Impact`
 (`Anim_SF_Get_Hit_Hard`) from the Raise Creation pack. `BoostCharge` initially
 uses `Anim_SF_Moving_Backward` as a replaceable fallback.
-Use `Lit/Legacy/Falling/Refresh Falling Animator` after importing the scripts to add the
-replaceable `Falling_Grapple` state and its `FallingGrapple` trigger.
 
 ## Notes
 

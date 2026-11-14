@@ -117,16 +117,21 @@ public static partial class BootstrapDistrictPlayProbe
             }
             Check(flow != null && flow.explorationCycles.All(service.IsCompleted), "All five exploration cycles completed by actual evidence and dialogue.");
             if (!flow.arenaAccess.activeSelf) return;
-            Check(flow.arenaAccess.activeInHierarchy, "Five cycles opened the actual arena bridge.");
-            actor.TrySetUccExternalPositionAndRotation(new Vector3(574, 142.1f, 85), Quaternion.identity, true);
+            Check(flow.arenaAccess.activeInHierarchy, "Five cycles opened access to the arena portal.");
+            var portal = flow.arenaAccess.GetComponentsInChildren<PortalController>().Single(p => p.name == "Portail_vers_la_Gargouille");
+            var approach = portal.GetInteractionAnchor().position + Vector3.back;
+            Check(Physics.Raycast(approach + Vector3.up * 1.4f, Vector3.down, out var floor, 3f, ~0, QueryTriggerInteraction.Ignore),
+                "The authored arena portal has a physical approach.");
+            Check(actor.TrySetUccExternalPositionAndRotation(floor.point + Vector3.up * .025f, Quaternion.identity, true),
+                "UCC approach fixture at the arena portal.");
             Advance(121); return;
         }
         if (report.stage == 121)
         {
-            if (EditorApplication.timeSinceStartup - report.stageStarted < 1) return;
-            if (report.grapple) { Advance(500); return; }
+            if (EditorApplication.timeSinceStartup - report.stageStarted < 1 || !ControlReady(out _)) return;
             CaptureLiveLimbes();
-            actor.TrySetUccExternalPositionAndRotation(new Vector3(604, 129.1f, 114), Quaternion.identity, true);
+            var portal = flow.arenaAccess.GetComponentsInChildren<PortalController>().Single(p => p.name == "Portail_vers_la_Gargouille");
+            Check(portal.ServerTryUse(actor.gameObject, out _, out _), "Actual arena portal accepts passage without a traversal ability.");
             Advance(130); return;
         }
         if (report.stage == 130)
@@ -162,18 +167,11 @@ public static partial class BootstrapDistrictPlayProbe
         if (report.stage == 132)
         {
             if (!service.IsCompleted(flow.conclusionCycle) || !flow.victoryExit.activeInHierarchy) return;
-            if (report.grapple && !GrappleReturnComplete)
-            {
-                var anchor = Lit.Traversal.GrappleAnchor.Find("limbes.statue.retour");
-                Check(actor.TrySetUccExternalPositionAndRotation(anchor.launch.position, Quaternion.identity, true), "Post-victory approach fixture for the grapple return; combat gating respected.");
-                Advance(503); return;
-            }
             Check(true, "Boss defeat and successful departure sequence complete the zone and reveal the victory exit.");
             foreach (var runner in UnityEngine.Object.FindObjectsByType<StorySequenceRunner>().Where(r => r.gameObject.scene.name.StartsWith("Reve_Limbes") &&
                 r.Sequence != null && r.Sequence.sequenceId.StartsWith("limbes.", StringComparison.Ordinal)))
                 Check(StorySequenceCompletionStore.IsCompleted(runner.Sequence), "Sequence completion persisted " + runner.Sequence.sequenceId);
-            if (report.grapple) Check(GameFlowService.ReturnToHub(), "Production ReturnToHub saves the post-victory grapple state and leaves the zone.");
-            else UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_Maison.asset"));
+            UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_Maison.asset"));
             Advance(133); return;
         }
         if (report.stage == 133)

@@ -5,6 +5,11 @@ public static class LitTacticalMaskProperties
 {
     public static readonly int Version = Shader.PropertyToID("_LitMaskVersion");
     public static readonly int Enabled = Shader.PropertyToID("_LitMaskEnabled");
+    public static readonly int ShapeTexture = Shader.PropertyToID("_LitTacticalMaskShape");
+    public static readonly int ShapeMotion = Shader.PropertyToID("_LitTacticalMaskShapeMotion");
+    // Keep in sync with the UV scale in LitTacticalVisibilityMask.hlsl. The
+    // circumscribed radius covers the whole texture, including irregular tips.
+    public const float ShapeBoundsScale = .707107f / .35f;
     public static readonly int[] Vectors = {
         Shader.PropertyToID("_LitMaskTarget0"), Shader.PropertyToID("_LitMaskTarget1"),
         Shader.PropertyToID("_LitMaskSettings"), Shader.PropertyToID("_LitMaskCameraPosition"),
@@ -12,10 +17,10 @@ public static class LitTacticalMaskProperties
     public struct Data
     {
         public Vector4 target0, target1, settings, cameraPosition, cameraForward;
-        public bool overheadSurface;
+        public bool overheadSurface, useShape;
         public void Write(MaterialPropertyBlock block)
         {
-            block.SetFloat(Enabled, overheadSurface ? 2 : 1);
+            block.SetFloat(Enabled, (overheadSurface ? 2 : 1) + (useShape ? 2 : 0));
             block.SetVector(Vectors[0], target0); block.SetVector(Vectors[1], target1);
             block.SetVector(Vectors[2], settings); block.SetVector(Vectors[3], cameraPosition);
             block.SetVector(Vectors[4], cameraForward);

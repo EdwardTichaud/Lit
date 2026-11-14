@@ -746,15 +746,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
-                },
-                {
-                    "name": "Grapple",
-                    "type": "Button",
-                    "id": "2968fa6a-e4b6-4460-95a9-e85c3096127b",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -843,17 +834,6 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Accelerate",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "46f8d04d-615e-49b5-ba9f-07a2262fdd9a",
-                    "path": "<Gamepad>/buttonNorth",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Grapple",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

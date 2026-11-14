@@ -17,6 +17,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     public TMP_Text dialogueText;
     [Tooltip("Image du portrait du personnage qui parle.")]
     public Image portraitImage;
+    [SerializeField] private RawImage portraitRawImage;
 
     [Header("Behavior")]
     [Tooltip("Duree par defaut si le panel ne demande pas Interact pour fermer.")]
@@ -45,10 +46,12 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     /// <summary>Reports elapsed playback or intentional dismissal as completion;
     /// replacement, owner cancellation and teardown remain interruptions.</summary>
-    public static bool TryShowTimedConversation(string message, float duration, Action<bool> finished, object owner = null)
+    public static bool TryShowTimedConversation(string message, float duration, Action<bool> finished,
+        object owner = null, CharacterData speaker = null)
     {
         var ui = GetOrCreate();
-        bool shown = ui.ShowMessageInternal(message, duration, () => finished?.Invoke(ui.timedConversationCompleted), true, true);
+        bool shown = ui.ShowMessageInternal(message, duration, () => finished?.Invoke(ui.timedConversationCompleted),
+            true, true, speaker != null ? speaker.portrait : null);
         if (shown) ui.timedConversationOwner = owner;
         return shown;
     }
@@ -165,7 +168,8 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         return ShowMessageInternal(message, duration, onHidden, blocksGameplayInput: true);
     }
 
-    private bool ShowMessageInternal(string message, float duration, Action onHidden, bool blocksGameplayInput, bool forceTimed = false)
+    private bool ShowMessageInternal(string message, float duration, Action onHidden, bool blocksGameplayInput,
+        bool forceTimed = false, Sprite portrait = null)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -194,7 +198,7 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         timedConversationCompleted = false;
         timedConversation = forceTimed;
         onHiddenCallback = onHidden;
-        SetPortrait(null);
+        SetPortrait(portrait);
         dialogueText.text = Lit.Story.StorySequenceNames.Resolve(message);
         SetVisible(true);
 
@@ -467,13 +471,14 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         EnsureRuntimeFallback();
 
-        if (portraitImage == null && dialoguePanelRoot != null)
+        if (portraitImage == null && portraitRawImage == null && dialoguePanelRoot != null)
         {
-            foreach (Image image in dialoguePanelRoot.GetComponentsInChildren<Image>(true))
+            foreach (Graphic graphic in dialoguePanelRoot.GetComponentsInChildren<Graphic>(true))
             {
-                if (image.name != "DialoguePortrait_Image") continue;
-                portraitImage = image;
-                break;
+                if (graphic.name != "DialoguePortrait_Image") continue;
+                portraitImage = graphic as Image;
+                portraitRawImage = graphic as RawImage;
+                if (portraitImage != null || portraitRawImage != null) break;
             }
         }
 
@@ -482,9 +487,19 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
     private void SetPortrait(Sprite portrait)
     {
-        if (portraitImage == null) return;
-        portraitImage.sprite = portrait;
-        portraitImage.enabled = portrait != null;
+        if (portraitImage != null)
+        {
+            portraitImage.overrideSprite = null;
+            portraitImage.sprite = portrait;
+            portraitImage.enabled = portrait != null;
+        }
+        if (portraitRawImage != null)
+        {
+            portraitRawImage.texture = portrait != null ? portrait.texture : null;
+            Vector4 uv = portrait != null ? UnityEngine.Sprites.DataUtility.GetOuterUV(portrait) : new Vector4(0f, 0f, 1f, 1f);
+            portraitRawImage.uvRect = Rect.MinMaxRect(uv.x, uv.y, uv.z, uv.w);
+            portraitRawImage.enabled = portrait != null;
+        }
     }
 
     private void EnsureRuntimeFallback()

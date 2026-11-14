@@ -227,6 +227,11 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
 
     private void DrawTransitionProperties(MaterialEditor editor, MaterialProperty[] properties)
     {
+        DrawProperty(editor, properties, "_SurfaceState", "Surface State",
+            "Follow Flame suit l’influence des Flames. Force Normal et Force Frozen imposent l’apparence sur toute la surface.");
+        MaterialProperty surfaceState = FindProperty("_SurfaceState", properties, false);
+        using var influenceScope = new EditorGUI.DisabledScope(
+            surfaceState != null && !surfaceState.hasMixedValue && surfaceState.floatValue >= 0.5f);
         DrawProperty(editor, properties, "_FlameCenter", "Flame Center",
             "Centre monde de l’influence active, normalement piloté par LitInfluenceSource.");
         DrawProperty(editor, properties, "_FlameInfluenceRadius", "Flame Influence Radius",

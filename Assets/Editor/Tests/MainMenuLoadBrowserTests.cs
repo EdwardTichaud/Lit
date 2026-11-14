@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using TMPro;
@@ -114,9 +115,39 @@ public sealed class MainMenuLoadBrowserTests
             }
 
             Assert.That(confirmationManager, Is.Not.Null);
+            Assert.That(serialized.FindProperty("menuConfirmation").objectReferenceValue, Is.SameAs(confirmationManager));
             var confirmation = new SerializedObject(confirmationManager);
+            Assert.That(confirmation.FindProperty("sceneLocal").boolValue, Is.True);
             Assert.That(confirmation.FindProperty("confirmationBox").objectReferenceValue, Is.Not.Null);
             Assert.That(confirmation.FindProperty("createRuntimeFallback").boolValue, Is.False);
+        }
+        finally { EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+    [Test]
+    public void MenuUsesClassicRpgUiArtAndFontsIncludingItsNestedPrefabs()
+    {
+        const string pack = "Assets/0 - UnityPackages/Fab/ClassicRPGUI2/";
+        var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/MainMenu/MainMenu.unity");
+        try
+        {
+            var controller = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MainMenuController>(true)).Single();
+            var serialized = new SerializedObject(controller);
+            var skin = serialized.FindProperty("menuSkin");
+            foreach (string property in new[] { "panel", "button", "font" })
+                Assert.That(AssetDatabase.GetAssetPath(skin.FindPropertyRelative(property).objectReferenceValue), Does.StartWith(pack));
+
+            var roots = new[] { controller.gameObject,
+                (serialized.FindProperty("sessionEntryPrefab").objectReferenceValue as Component)?.gameObject,
+                (serialized.FindProperty("saveEntryPrefab").objectReferenceValue as Component)?.gameObject };
+            foreach (var root in roots)
+            {
+                Assert.That(root, Is.Not.Null);
+                foreach (var image in root.GetComponentsInChildren<Image>(true))
+                    if (image.sprite != null) Assert.That(AssetDatabase.GetAssetPath(image.sprite), Does.StartWith(pack), image.name);
+                foreach (var label in root.GetComponentsInChildren<TMP_Text>(true))
+                    if (label.font != null) Assert.That(AssetDatabase.GetAssetPath(label.font), Does.StartWith(pack), label.name);
+            }
         }
         finally { EditorSceneManager.ClosePreviewScene(scene); }
     }

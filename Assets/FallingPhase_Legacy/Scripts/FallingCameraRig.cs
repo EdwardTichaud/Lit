@@ -33,10 +33,6 @@ public sealed class FallingCameraRig : MonoBehaviour
     [SerializeField, Min(0.1f)] private float speedBreathingFrequency = 8f;
     [SerializeField, Range(0f, 1f)] private float impactShakeDistance = 0.24f;
     [SerializeField, Min(0.05f)] private float impactShakeDuration = 0.22f;
-    [Header("Grapple Presentation")]
-    [SerializeField] private Vector3 grappleCameraOffset = new Vector3(0f, 0.25f, -1.8f);
-    [SerializeField, Range(0f, 20f)] private float grappleFieldOfViewIncrease = 8f;
-    [SerializeField, Min(0.05f)] private float grapplePresentationDuration = 0.55f;
     [SerializeField] private FallingPlayerController player;
 
     private Camera controlledCamera;
@@ -45,7 +41,6 @@ public sealed class FallingCameraRig : MonoBehaviour
     private float chargePresentationBlend;
     private float chargePresentationBlendVelocity;
     private float fieldOfViewVelocity;
-    private float grapplePresentationEndsAt;
 
     private void Awake()
     {
@@ -61,7 +56,6 @@ public sealed class FallingCameraRig : MonoBehaviour
         if (player != null)
         {
             player.Impacted += PlayImpactShake;
-            player.GrappleTriggered += PlayGrapplePresentation;
         }
     }
 
@@ -70,7 +64,6 @@ public sealed class FallingCameraRig : MonoBehaviour
         if (player != null)
         {
             player.Impacted -= PlayImpactShake;
-            player.GrappleTriggered -= PlayGrapplePresentation;
         }
     }
 
@@ -85,7 +78,6 @@ public sealed class FallingCameraRig : MonoBehaviour
         bool isBoostCharging = player != null && player.IsBoostCharging;
         float boostResponse = Mathf.SmoothStep(0f, 1f, speed01);
         float chargeElapsedSeconds = player != null ? player.BoostChargeElapsedSeconds : 0f;
-        float grappleResponse = GetGrapplePresentationResponse();
         float chargeTransitionSeconds = Mathf.Lerp(0.01f, 1.25f, chargeApproachLerp);
         chargePresentationBlend = Mathf.SmoothDamp(
             chargePresentationBlend,
@@ -101,7 +93,7 @@ public sealed class FallingCameraRig : MonoBehaviour
             0f);
         float breathingWeight = (1f - boostResponse) * (1f - chargePresentationBlend);
         float breathing = Mathf.Sin(Time.unscaledTime * speedBreathingFrequency) * speedBreathingAmplitude * speed01 * breathingWeight;
-        Vector3 followOffset = localOffset + speedOffset + oppositeMovementOffset + Vector3.up * breathing + grappleCameraOffset * grappleResponse;
+        Vector3 followOffset = localOffset + speedOffset + oppositeMovementOffset + Vector3.up * breathing;
         Vector3 chargeOffset = leftShoulderOffset + boostChargeCameraMoveSpeed * chargeElapsedSeconds;
         Vector3 targetPosition = target.TransformPoint(Vector3.Lerp(followOffset, chargeOffset, chargePresentationBlend));
         targetPosition += GetImpactShakeOffset();
@@ -117,7 +109,7 @@ public sealed class FallingCameraRig : MonoBehaviour
             float boostFieldOfView = accelerationFieldOfView * boostFieldOfViewMultiplier * boostResponse;
             float chargeFieldOfView = chargeFieldOfViewReduction * chargeFieldOfViewMultiplier * chargePresentationBlend;
             float targetFieldOfView = Mathf.Clamp(
-                baseFieldOfView + boostFieldOfView - chargeFieldOfView + grappleFieldOfViewIncrease * grappleResponse,
+                baseFieldOfView + boostFieldOfView - chargeFieldOfView,
                 40f,
                 100f);
             controlledCamera.fieldOfView = Mathf.SmoothDamp(
@@ -132,22 +124,6 @@ public sealed class FallingCameraRig : MonoBehaviour
     {
         impactShakeStrength = Mathf.Clamp01(strength);
         impactShakeEndsAt = Time.unscaledTime + impactShakeDuration;
-    }
-
-    private void PlayGrapplePresentation()
-    {
-        grapplePresentationEndsAt = Time.unscaledTime + grapplePresentationDuration;
-    }
-
-    private float GetGrapplePresentationResponse()
-    {
-        if (Time.unscaledTime >= grapplePresentationEndsAt)
-        {
-            return 0f;
-        }
-
-        float elapsed01 = 1f - Mathf.Clamp01((grapplePresentationEndsAt - Time.unscaledTime) / grapplePresentationDuration);
-        return Mathf.Sin(elapsed01 * Mathf.PI);
     }
 
     private Vector3 GetImpactShakeOffset()

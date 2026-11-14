@@ -113,6 +113,18 @@ namespace Lit.Story
             return null;
         }
 
+        public CharacterData ResolveDialogueSpeaker(StorySequenceStep step, StorySequenceActor actor)
+        {
+            if (step.speakerCharacterData != null) return step.speakerCharacterData;
+            if (!string.IsNullOrWhiteSpace(step.actorId) && IsLocalPlayerAlias(step.actorId.Trim()))
+            {
+                GameObject player = LocalPlayerUtils.GetControlledCharacter();
+                if (player != null && player.TryGetComponent(out SquadCharacterController controller))
+                    return controller.CharacterData;
+            }
+            return actor != null ? actor.CharacterData : null;
+        }
+
         public StorySequenceCameraPoint ResolveCameraPoint(string pointId)
         {
             if (string.IsNullOrWhiteSpace(pointId))

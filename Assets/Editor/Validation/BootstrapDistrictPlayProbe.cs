@@ -34,7 +34,7 @@ public static partial class BootstrapDistrictPlayProbe
         public float limbesBossPeak;
         public double started, stageStarted;
         public bool oldOptionsEnabled, passed, restored, recovery, limbes, limbesCycles, limbesRoutes, limbesExpansion, passageDiscovery, courts, secretContent, districtConnection, moonriseCombat, fracture;
-        public bool grapple;
+        public bool enola;
         public bool fullProductionReadiness = false;
         public string scope = "Real editor Bootstrap/menu solo creation, authored portal, all District_1 manifest scenes and return to menu. Public menu handlers and a UCC portal approach fixture; not manual input, cycle completion, multiplayer or visual quality proof. Saves isolated under this run directory.";
         public List<SceneEntry> scenes = new();
@@ -63,7 +63,7 @@ public static partial class BootstrapDistrictPlayProbe
     public static void RunLimbesRoutes() => Begin(false, true, true, true);
     public static void RunLimbesExpansion() => Begin(false, true, true, false, true);
 
-    private static void Begin(bool recovery, bool limbes = false, bool limbesCycles = false, bool limbesRoutes = false, bool limbesExpansion = false, bool passageDiscovery = false, bool courts = false, bool secretContent = false, bool districtConnection = false, bool moonriseCombat = false, bool fracture = false, bool grapple = false)
+    private static void Begin(bool recovery, bool limbes = false, bool limbesCycles = false, bool limbesRoutes = false, bool limbesExpansion = false, bool passageDiscovery = false, bool courts = false, bool secretContent = false, bool districtConnection = false, bool moonriseCombat = false, bool fracture = false, bool enola = false)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling ||
             EditorApplication.isUpdating || !string.IsNullOrEmpty(SessionState.GetString(Key, ""))) return;
@@ -86,7 +86,7 @@ public static partial class BootstrapDistrictPlayProbe
         {
             run = Path.GetFullPath(Root + "/PlayRuns/" + id), clone = "Assets/__StartupDistrictValidation/" + id + "/Bootstrap.unity",
             recovery = recovery, limbes = limbes, limbesCycles = limbesCycles, limbesRoutes = limbesRoutes, limbesExpansion = limbesExpansion, passageDiscovery = passageDiscovery, courts = courts, secretContent = secretContent, districtConnection = districtConnection, moonriseCombat = moonriseCombat, fixtureId = "scene:validation:departure:" + id,
-            fracture = fracture, grapple = grapple, utc = DateTime.UtcNow.ToString("O"), status = "Preparing", started = EditorApplication.timeSinceStartup,
+            fracture = fracture, enola = enola, utc = DateTime.UtcNow.ToString("O"), status = "Preparing", started = EditorApplication.timeSinceStartup,
             oldOptions = (int)EditorSettings.enterPlayModeOptions, oldOptionsEnabled = EditorSettings.enterPlayModeOptionsEnabled,
             oldPlayScene = AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene),
             scenes = setup.Select(scene => new SceneEntry { path = scene.path, loaded = scene.isLoaded, active = scene.isActive }).ToList()
@@ -188,11 +188,30 @@ public static partial class BootstrapDistrictPlayProbe
                 string mode = File.ReadAllText(Request).Trim(); File.Delete(Request);
                 if (mode == "recovery") RunRecovery();
                 else if (mode == "limbes") RunLimbes();
+                else if (mode == "ladder-light-jump")
+                {
+                    Begin(false, limbesCycles: true);
+                    if (report != null) { report.scope = "Saut de lumière: isolated solo with two real ladder endpoints."; Write(); }
+                }
+                else if (mode == "limbes-cling")
+                {
+                    Begin(false, limbes: true, limbesCycles: true);
+                    if (report != null) { report.scope = "Grimpeur: isolated solo, actual grip and jump."; Write(); }
+                }
                 else if (mode == "limbes-cycles") RunLimbesCycles();
                 else if (mode == "limbes-routes") RunLimbesRoutes();
+                else if (mode == "limbes-arena-portal")
+                {
+                    RunLimbesExpansion();
+                    if (report != null)
+                    {
+                        report.scope = "Focused presentation / arena portal: actual five cycles and portal; older branch walking fixture omitted.";
+                        Write();
+                    }
+                }
                 else if (mode == "run") Run();
                 else if (mode == "fracture") Begin(false, fracture: true);
-                else if (mode == "grapple") Begin(false, limbes: true, limbesCycles: true, limbesExpansion: true, grapple: true);
+                else if (mode == "enola") Begin(false, enola: true);
                 else File.WriteAllText(Root + "/PlayProbe.result", "NOT RUN: unknown probe mode.");
             }
             return;
@@ -237,9 +256,11 @@ public static partial class BootstrapDistrictPlayProbe
         if (!string.Equals(Path.GetFullPath(saves.GetSavesRoot()), Path.Combine(report.run, "Saves"), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Unexpected save root: aborting before any menu action.");
         var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuController>();
+        if (report.stage >= 660 && report.scope.StartsWith("Saut de lumière:", StringComparison.Ordinal)) { TickLightJump(); return; }
         if (report.moonriseCombat && report.stage >= 260) { TickMoonriseCombat(); return; }
         if (report.fracture && report.stage >= 400) { TickFracture(); return; }
-        if (report.grapple && report.stage >= 500) { TickGrapple(); return; }
+        if (report.enola && report.stage >= 600) { TickEnola(); return; }
+        if (report.limbes && report.stage >= 650) { TickCling(); return; }
         if (report.districtConnection && report.stage >= 230) { TickDistrictConnection(); return; }
         if (report.courts && report.stage >= 160) { TickCourts(); return; }
         if (report.passageDiscovery && report.stage >= 140) { TickSecretPassageDiscovery(); return; }
@@ -256,7 +277,7 @@ public static partial class BootstrapDistrictPlayProbe
                     Check(GameFlowService.StartOrLoadGame(), "Load the copied validation snapshot through the production session service, without a destination or pose override.");
                     Advance(285); return;
                 }
-                if (report.limbesCycles || report.moonriseCombat || report.fracture)
+                if (report.limbesCycles || report.moonriseCombat || report.fracture || report.enola)
                 {
                     Check(saves.TryCreateNewGame("Validation Limbes cycles",SaveSessionType.Solo,"Validation",out var slot,out string error),"Created isolated cycle-test slot through production save service: "+error);
                     saves.SetActiveSave(slot.sessionId,slot.saveId);
@@ -278,6 +299,7 @@ public static partial class BootstrapDistrictPlayProbe
                 if (!ZoneReady("Assets/Scenes/Maison/ZoneManifest_Maison.asset") || !ControlReady(out var actor)) return;
                 Check(saves.HasActiveSave && saves.CurrentSessionType == SaveSessionType.Solo, "Actual menu created an isolated solo session and spawned the controlled avatar.");
                 Check(Camera.allCameras.Any(camera => camera.isActiveAndEnabled && camera.targetTexture == null), "A screen camera is enabled after Maison loading.");
+                  if (report.enola) { Advance(600); return; }
                 if (report.fracture)
                 {
                     UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset"));
@@ -313,6 +335,7 @@ public static partial class BootstrapDistrictPlayProbe
                 if (!ZoneReady("Assets/Scenes/Maison/ZoneManifest_District_1.asset") || !ControlReady(out _)) return;
                 Check(true, "All District_1 manifest scenes loaded, navigation ready, avatar grounded and exploration input restored.");
                 Check(Camera.allCameras.Any(camera => camera.isActiveAndEnabled && camera.targetTexture == null), "A screen camera is enabled after District_1 loading.");
+                if (report.scope.StartsWith("Saut de lumière:", StringComparison.Ordinal)) { Advance(660); return; }
                 if (report.recovery)
                 {
                     ControlReady(out var districtActor); InjectCaptureFailure(districtActor); Advance(40);

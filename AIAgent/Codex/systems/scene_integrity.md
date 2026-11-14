@@ -13,7 +13,7 @@ reference a un ancien mesh de demonstration disparu est retiree. Le chemin
 MeshSetup.SetupRenderer fournit le vrai MeshFilter ou SkinnedMeshRenderer ; les
 cinq graphes sont testes dans les deux modes. Aucun mesh d'acteur n'est remplace.
 
-LightBall, Grapple et Trail utilisent une texture de lueur radiale douce deja
+LightBall et Trail utilisent une texture de lueur radiale douce deja
 presente (SrRubfish FX_TX_GlowADD_01). La propriete Sprite Texture / _MainTex est
 connectee a Alpha via son canal rouge. Controle GPU : bords noirs, centre lumineux,
 transition progressive ; bruit, teinte, UV et intensite sont conserves.

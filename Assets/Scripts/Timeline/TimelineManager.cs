@@ -22,6 +22,7 @@ namespace Lit.Timeline
             public bool ownsWrapMode;
             public int observedEndFrame = -1;
             public readonly List<ITimelinePlaybackParticipant> participants = new List<ITimelinePlaybackParticipant>();
+            public readonly HashSet<PlayerAnimationController> players = new HashSet<PlayerAnimationController>();
         }
 
         private readonly Dictionary<string, UnityEngine.Object> registeredTargets =
@@ -352,6 +353,18 @@ namespace Lit.Timeline
                 }
             }
 
+            // Camera-only sequences can lock the local player without binding its Animator.
+            var localPlayer = LocalPlayerContext.LocalCharacterRoot;
+            if (localPlayer != null && localPlayer.TryGetComponent(out LitOpsiveLocomotionBridge bridge) &&
+                bridge.IsInputSuppressedByUcc && localPlayer.TryGetComponent(out PlayerAnimationController player))
+            {
+                playback.players.Add(player);
+            }
+            foreach (var boundPlayer in playback.players)
+            {
+                if (boundPlayer != null) boundPlayer.PrepareCinematicIdle();
+            }
+
             playback.director.stopped += OnDirectorStopped;
             // None resets director.time before emitting stopped. Hold preserves
             // the graph's actual end time so completion cannot be confused with
@@ -401,6 +414,17 @@ namespace Lit.Timeline
             if (owner == null)
             {
                 return;
+            }
+
+            if (target is Animator boundAnimator)
+            {
+                var animatorOwner = owner.GetComponentInParent<PlayerAnimationController>();
+                if (animatorOwner != null && animatorOwner.Animator == boundAnimator) playback.players.Add(animatorOwner);
+            }
+            else if ((target is Transform || target is GameObject) &&
+                owner.TryGetComponent(out PlayerAnimationController player))
+            {
+                playback.players.Add(player);
             }
 
             MonoBehaviour[] behaviours = owner.GetComponents<MonoBehaviour>();

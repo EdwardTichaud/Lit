@@ -297,9 +297,12 @@ void LitIceFrostedEdgesV3_float(
     float textureEdgeCoverage = saturate(textureEdgeEmission);
     iceBaseColor = lerp(iceBaseColor, saturate(FrostColor.rgb), textureEdgeCoverage * 0.92);
     iceEmission += FrostColor.rgb * textureEdgeEmission * max(0.0, EmissionIntensity);
-    float flameMask = LitIceCombinedFlameMask(
-        PositionWS, FlameCenter, FlameInfluenceRadius,
-        TransitionSoftness, TransitionProgress);
+    float heatMask = 0.0;
+    if (_SurfaceState < 0.5)
+        heatMask = LitIceCombinedFlameMask(
+            PositionWS, FlameCenter, FlameInfluenceRadius,
+            TransitionSoftness, TransitionProgress);
+    float normalMask = (_SurfaceState >= 0.5 && _SurfaceState < 1.5) ? 1.0 : heatMask;
 
     // This is deliberately applied after the ice/normal blend: a narrative
     // dissolve therefore removes the same material in either visual state.
@@ -362,13 +365,13 @@ void LitIceFrostedEdgesV3_float(
     // wood without replacing its base texture, normal map, roughness map or
     // metallic/occlusion behaviour.
     float3 warmWetTint = float3(1.045, 0.955, 0.84);
-    revealedBaseColor *= lerp(float3(1.0, 1.0, 1.0), warmWetTint, flameMask * 0.42);
-    float meltBoundary = LitIceMeltBoundaryMask(flameMask, PositionWS, IceScale);
+    revealedBaseColor *= lerp(float3(1.0, 1.0, 1.0), warmWetTint, heatMask * 0.42);
+    float meltBoundary = LitIceMeltBoundaryMask(heatMask, PositionWS, IceScale);
     float dropletNoise = LitIceFBM(
         PositionWS * max(1.0, IceScale * 3.8)
         + float3(0.0, -_Time.y * 0.33, _Time.y * 0.11));
     float droplets = meltBoundary * smoothstep(0.58, 0.82, dropletNoise);
-    float wetness = saturate(flameMask * 0.16 + meltBoundary * 0.18 + droplets * 0.12);
+    float wetness = saturate(heatMask * 0.16 + meltBoundary * 0.18 + droplets * 0.12);
 
     // A detailed normal map scatters an IBL/reflection probe. This is
     // physically correct, but it makes a strongly relieved ice wall lose its
@@ -385,7 +388,7 @@ void LitIceFrostedEdgesV3_float(
     float3 frostNormalForReflection = normalize(lerp(
         iceNormalWithRelief, calmIceNormalTS, mirrorLayer));
 
-    OutBaseColor = lerp(iceBaseColor, revealedBaseColor, flameMask);
+    OutBaseColor = lerp(iceBaseColor, revealedBaseColor, normalMask);
     // The boundary is visible even with emission disabled: tiny warm droplets
     // break the cold/normal line and make a static heat radius feel alive.
     OutBaseColor = lerp(
@@ -393,35 +396,35 @@ void LitIceFrostedEdgesV3_float(
         OutBaseColor * float3(1.09, 0.91, 0.72),
         meltBoundary * (0.24 + droplets * 0.18));
     // ShaderGraph_MasterShader is opaque when its dissolve is inactive.
-    OutAlpha = lerp(iceAlpha, 1.0, flameMask);
+    OutAlpha = lerp(iceAlpha, 1.0, normalMask);
     OutNormalTS = normalize(lerp(
-        frostNormalForReflection, baseNormalTS, flameMask));
+        frostNormalForReflection, baseNormalTS, normalMask));
     // Emission is a material-wide V3 choice. The ice state keeps its procedural
     // frost/crack emission, while the revealed state emits its textured base
-    // color. Interpolating with the same flame mask preserves a continuous
+    // color. Interpolating with the surface blend preserves a continuous
     // result throughout the transition. OFF is guaranteed black in both states.
     float emissionEnabled = step(0.5, EnableEmission);
     float3 revealedEmission = revealedBaseColor * max(0.0, EmissionIntensity);
     float3 meltEmission = float3(1.0, 0.16, 0.025)
         * meltBoundary * (0.10 + droplets * 0.08)
         * max(0.0, EmissionIntensity);
-    OutEmission = (lerp(iceEmission, revealedEmission, flameMask) + meltEmission)
+    OutEmission = (lerp(iceEmission, revealedEmission, normalMask) + meltEmission)
         * emissionEnabled;
     float stateSmoothness = lerp(
-        iceSmoothnessWithRelief, revealedSmoothness, flameMask);
+        iceSmoothnessWithRelief, revealedSmoothness, normalMask);
     // HDRP Reflection Probes are sampled by the Lit specular response. The
     // optical layer above calms the Frost normal; this value additionally
     // sharpens the probe itself into a stronger mirror reflection.
-    float coldEdgeReflection = coldEdgeMask * (1.0 - flameMask);
+    float coldEdgeReflection = coldEdgeMask * (1.0 - normalMask);
     float iceSmoothness = lerp(
         saturate(stateSmoothness), 0.995,
-        saturate(ReflectionStrength) * (1.0 - flameMask));
+        saturate(ReflectionStrength) * (1.0 - normalMask));
     iceSmoothness = lerp(
         iceSmoothness, 0.985,
         coldEdgeReflection * (0.72 + saturate(ReflectionStrength) * 0.28));
     OutSmoothness = saturate(iceSmoothness + wetness);
-    OutMetallic = lerp(IceMetallic, revealedMetallic, flameMask);
-    OutOcclusion = lerp(1.0, revealedOcclusion, flameMask);
+    OutMetallic = lerp(IceMetallic, revealedMetallic, normalMask);
+    OutOcclusion = lerp(1.0, revealedOcclusion, normalMask);
 }
 
 void LitIceFrostedEdgesV3_half(

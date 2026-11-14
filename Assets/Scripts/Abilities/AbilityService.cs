@@ -48,7 +48,7 @@ public sealed class AbilityService : MonoBehaviour
         if (Application.isPlaying)
         {
             gameObject.AddComponent<AbilitySelectionPanel>();
-            gameObject.AddComponent<Lit.Traversal.GrappleController>();
+            gameObject.AddComponent<Lit.Traversal.ClingController>();
         }
     }
     private void Update()
@@ -198,7 +198,11 @@ public sealed class AbilityService : MonoBehaviour
             foreach (var id in data.unlockedIds ?? new List<string>())
             { var a = Resolve(id); if (a != null) state.Unlock(a.abilityId); }
             foreach (var slot in data.slots ?? new List<AbilitySlot>())
-                if (slot != null && !string.IsNullOrWhiteSpace(slot.playerId)) state.AddEquipped(slot.playerId, slot.abilityId);
+            {
+                if (slot == null || string.IsNullOrWhiteSpace(slot.playerId)) continue;
+                var ability = Resolve(slot.abilityId);
+                if (ability != null) state.AddEquipped(slot.playerId, ability.abilityId);
+            }
         }
         if (Authority) RefreshUnlocks();
         if (Authority && IsSolo && data != null && data.equipmentVersion < 2)

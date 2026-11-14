@@ -17,7 +17,6 @@ public sealed class PrivateSessionPanel : MonoBehaviour
     private void Start()
     {
         session = GetComponent<PrivateSessionService>();
-        Build();
         session.Changed += Refresh;
         Refresh();
     }
@@ -26,7 +25,7 @@ public sealed class PrivateSessionPanel : MonoBehaviour
         if (session != null) session.Changed -= Refresh;
         if (canvasObject != null) Destroy(canvasObject);
     }
-    private void Build()
+    private void Build(MenuViewFactory.Skin skin)
     {
         canvasObject = new GameObject("PrivateSessionCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         canvasObject.transform.SetParent(transform, false);
@@ -37,33 +36,41 @@ public sealed class PrivateSessionPanel : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = .5f;
         GameObject root = MenuViewFactory.Column(canvasObject.transform, "PrivateSessionPanel");
-        root.AddComponent<Image>().color = new Color(.035f, .045f, .055f, .98f);
+        Image background = root.AddComponent<Image>();
+        if (skin != null) skin.ApplyPanel(background);
+        else background.color = new Color(.035f, .045f, .055f, .98f);
         root.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(32, 32, 24, 24);
         RectTransform rect = (RectTransform)root.transform;
         rect.anchorMin = new Vector2(.5f, .5f); rect.anchorMax = rect.anchorMin;
         rect.sizeDelta = new Vector2(860, 920);
         panel = root.AddComponent<UiPanel>();
-        title = MenuViewFactory.Label(root.transform, "Salon coopératif privé", 48);
-        details = MenuViewFactory.Label(root.transform, "", 76);
+        title = MenuViewFactory.Label(root.transform, "Salon coopératif privé", 48, skin);
+        details = MenuViewFactory.Label(root.transform, "", 76, skin);
         copy = MenuViewFactory.Button(root.transform, "Copier le code d’invitation", () =>
-        { GUIUtility.systemCopyBuffer = session.JoinCode; hint.text = "Code copié."; });
-        for (int i = 0; i < 4; i++) rows[i] = MenuViewFactory.Label(root.transform, "Place libre", 36);
+        { GUIUtility.systemCopyBuffer = session.JoinCode; hint.text = "Code copié."; }, skin);
+        for (int i = 0; i < 4; i++) rows[i] = MenuViewFactory.Label(root.transform, "Place libre", 36, skin);
         for (int i = 0; i < 4; i++)
         {
             int slot = i;
             choices[i] = MenuViewFactory.Button(root.transform, "Personnage", () =>
-            { if (slot < session.Lobby.characterIds.Length) session.Reserve(session.Lobby.characterIds[slot]); });
+            { if (slot < session.Lobby.characterIds.Length) session.Reserve(session.Lobby.characterIds[slot]); }, skin);
         }
-        ready = MenuViewFactory.Button(root.transform, "Je suis prêt", () => session.ToggleReady());
-        launch = MenuViewFactory.Button(root.transform, "Lancer la partie", () => session.Launch());
-        leave = MenuViewFactory.Button(root.transform, "Quitter le salon", () => session.Leave());
-        hint = MenuViewFactory.Label(root.transform, "", 60);
+        ready = MenuViewFactory.Button(root.transform, "Je suis prêt", () => session.ToggleReady(), skin);
+        launch = MenuViewFactory.Button(root.transform, "Lancer la partie", () => session.Launch(), skin);
+        leave = MenuViewFactory.Button(root.transform, "Quitter le salon", () => session.Leave(), skin);
+        hint = MenuViewFactory.Label(root.transform, "", 60, skin);
         MenuViewFactory.MakeScrollable(root);
         panel.Hide(true);
     }
     private void Refresh()
     {
         bool show = session.IsBusy || session.Phase == PrivateSessionPhase.Lobby;
+        if (panel == null)
+        {
+            if (!show) return;
+            var menu = FindAnyObjectByType<MainMenuController>();
+            Build(menu != null ? menu.MenuSkin : null);
+        }
         if (show != visible)
         {
             visible = show;

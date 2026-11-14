@@ -329,6 +329,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
             AudioManager.PlayClipAtPoint(skill.StartSfx, combatManager.PlayerRoot.position);
         }
 
+        combatManager.PlayerRoot.GetComponent<PlayerAnimationController>()?.PrepareCinematicIdle();
         director.time = 0d;
         director.Evaluate();
         director.Play();

@@ -119,38 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &251551141
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 251551142}
-  m_Layer: 0
-  m_Name: Setup&Lights
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &251551142
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 251551141}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -41.053146, y: 2072.7625, z: -47.092518}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6448815792650624095}
-  m_Father: {fileID: 1380975604}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &439671009
 GameObject:
   m_ObjectHideFlags: 0
@@ -180,70 +148,10 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1380975604}
   - {fileID: 8930317617797304983}
   - {fileID: 4909665410617668989}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1380975603
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1380975604}
-  - component: {fileID: 1380975605}
-  m_Layer: 0
-  m_Name: GlobalVolume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1380975604
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1380975603}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 91.2, y: -74, z: 42}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 251551142}
-  m_Father: {fileID: 439671010}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1380975605
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1380975603}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e7e112ef71352e4e9e8354f6e061e55, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Zone
-  flameConsumes: 1
-  zoneAudioProfile: {fileID: 0}
-  playZoneMusic: 0
-  zoneMusic: {fileID: 0}
-  isMaison: 0
-  maisonArrivalDistance: 0.1
-  maisonUseNavMeshDirection: 1
-  maisonAutoAddNavMeshFollower: 1
-  maisonNavMeshAgentSampleDistance: 1.5
-  maisonMaxInput: 1
-  maisonPollCharacters: 1
-  maisonPollInterval: 0.2
-  maisonIncludeTriggerColliders: 1
-  logConfigurationWarnings: 0
 --- !u!1 &2073398225
 GameObject:
   m_ObjectHideFlags: 0
@@ -442,7 +350,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.02
+    m_NearPlane: 0.1
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -498,34 +406,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
   targetLight: {fileID: 2073398228}
   searchInChildren: 1
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncFlameReceiverColor: 1
-  deferShadowingToFlameReceiver: 1
-  baseIntensity: 7.957747
-  baseRange: 20
-  emberColor: {r: 1, g: 0.71682245, b: 0.18039215, a: 1}
-  flameColor: {r: 1, g: 0.71682256, b: 0.1803925, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 3
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 1
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 0
+  previewInEditMode: 0
+  movementAmplitude: 0.015
+  movementSpeed: 1.6
 --- !u!215 &780016066026198001
 ReflectionProbe:
   m_ObjectHideFlags: 0
@@ -606,21 +489,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6448815792650624095
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8960786488133448094}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.002538009, y: 0.37708762, z: -0.006233525, w: 0.9261532}
-  m_LocalPosition: {x: -31.45, y: 5.099286, z: -59.45}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 251551142}
-  m_LocalEulerAnglesHint: {x: 0, y: 44.308, z: -0.771}
 --- !u!1 &6777198861059952944
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,23 +507,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &7401707820377803743
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8960786488133448094}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 5
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 033ede440f4a6944e91efbd246efb805, type: 2}
 --- !u!1 &7833028827636553021
 GameObject:
   m_ObjectHideFlags: 0
@@ -1097,23 +948,6 @@ Transform:
   - {fileID: 2073398226}
   m_Father: {fileID: 439671010}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &8960786488133448094
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6448815792650624095}
-  - component: {fileID: 7401707820377803743}
-  m_Layer: 0
-  m_Name: Sky and Fog Local Volume Forest DAY
-  m_TagString: Untagged
-  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

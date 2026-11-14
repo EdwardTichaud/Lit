@@ -860,16 +860,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": true,
                     ""priority"": 0
-                },
-                {
-                    ""name"": ""Grapple"",
-                    ""type"": ""Button"",
-                    ""id"": ""2968fa6a-e4b6-4460-95a9-e85c3096127b"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false,
-                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -958,17 +948,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Accelerate"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""46f8d04d-615e-49b5-ba9f-07a2262fdd9a"",
-                    ""path"": ""<Gamepad>/buttonNorth"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Grapple"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1946,7 +1925,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Falling = asset.FindActionMap("Falling", throwIfNotFound: true);
         m_Falling_Move = m_Falling.FindAction("Move", throwIfNotFound: true);
         m_Falling_Accelerate = m_Falling.FindAction("Accelerate", throwIfNotFound: true);
-        m_Falling_Grapple = m_Falling.FindAction("Grapple", throwIfNotFound: true);
         // RealTimeCombat
         m_RealTimeCombat = asset.FindActionMap("RealTimeCombat", throwIfNotFound: true);
         m_RealTimeCombat_Counter = m_RealTimeCombat.FindAction("Counter", throwIfNotFound: true);
@@ -2548,7 +2526,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private List<IFallingActions> m_FallingActionsCallbackInterfaces = new List<IFallingActions>();
     private readonly InputAction m_Falling_Move;
     private readonly InputAction m_Falling_Accelerate;
-    private readonly InputAction m_Falling_Grapple;
     /// <summary>
     /// Provides access to input actions defined in input action map "Falling".
     /// </summary>
@@ -2568,10 +2545,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Falling/Accelerate".
         /// </summary>
         public InputAction @Accelerate => m_Wrapper.m_Falling_Accelerate;
-        /// <summary>
-        /// Provides access to the underlying input action "Falling/Grapple".
-        /// </summary>
-        public InputAction @Grapple => m_Wrapper.m_Falling_Grapple;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2604,9 +2577,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Accelerate.started += instance.OnAccelerate;
             @Accelerate.performed += instance.OnAccelerate;
             @Accelerate.canceled += instance.OnAccelerate;
-            @Grapple.started += instance.OnGrapple;
-            @Grapple.performed += instance.OnGrapple;
-            @Grapple.canceled += instance.OnGrapple;
         }
 
         /// <summary>
@@ -2624,9 +2594,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Accelerate.started -= instance.OnAccelerate;
             @Accelerate.performed -= instance.OnAccelerate;
             @Accelerate.canceled -= instance.OnAccelerate;
-            @Grapple.started -= instance.OnGrapple;
-            @Grapple.performed -= instance.OnGrapple;
-            @Grapple.canceled -= instance.OnGrapple;
         }
 
         /// <summary>
@@ -4031,13 +3998,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAccelerate(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Grapple" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnGrapple(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "RealTimeCombat" which allows adding and removing callbacks.

@@ -18,6 +18,7 @@ public class ConfirmationManager : MonoBehaviour
     [SerializeField] private CanvasGroup rootCanvasGroup;
     [SerializeField] private ConfirmationBox confirmationBox;
     [SerializeField] private bool createRuntimeFallback = true;
+    [SerializeField] private bool sceneLocal;
     [SerializeField] private int fallbackSortingOrder = 250;
 
     private ConfirmationRequest activeRequest;
@@ -25,15 +26,22 @@ public class ConfirmationManager : MonoBehaviour
     private bool inputLocked;
 
     private static ConfirmationManager instance;
+    private static ConfirmationManager activePresenter;
 
-    public static GameObject CurrentSelection => IsVisible && instance.confirmationBox != null &&
-        instance.confirmationBox.CursorController != null && instance.confirmationBox.CursorController.CurrentItem != null
-        ? instance.confirmationBox.CursorController.CurrentItem.gameObject : null;
+    public static GameObject CurrentSelection => IsVisible && activePresenter.confirmationBox != null &&
+        activePresenter.confirmationBox.CursorController != null && activePresenter.confirmationBox.CursorController.CurrentItem != null
+        ? activePresenter.confirmationBox.CursorController.CurrentItem.gameObject : null;
 
-    public static bool IsVisible => instance != null && instance.activeRequest != null;
+    public static bool IsVisible => activePresenter != null && activePresenter.activeRequest != null;
 
     private void Awake()
     {
+        if (sceneLocal)
+        {
+            HideImmediate();
+            return;
+        }
+
         if (instance != null && instance != this)
         {
             Destroy(gameObject);
@@ -64,6 +72,7 @@ public class ConfirmationManager : MonoBehaviour
         HideImmediate();
         activeRequest = null;
         shownFrame = -1;
+        if (activePresenter == this) activePresenter = null;
 
         if (instance == this)
         {
@@ -74,6 +83,12 @@ public class ConfirmationManager : MonoBehaviour
     public static bool TryShow(ConfirmationRequest request)
     {
         return EnsureInstance().TryShowInternal(request);
+    }
+
+    public bool TryShowConfigured(ConfirmationRequest request)
+    {
+        return isActiveAndEnabled && rootCanvasGroup != null && confirmationBox != null &&
+            confirmationBox.ResolveReferences() && TryShowInternal(request);
     }
 
     public static bool TryShow(
@@ -99,17 +114,17 @@ public class ConfirmationManager : MonoBehaviour
 
     public static void Dismiss(object owner, bool invokeCancel = false)
     {
-        if (instance == null)
+        if (activePresenter == null)
         {
             return;
         }
 
-        instance.DismissInternal(owner, invokeCancel);
+        activePresenter.DismissInternal(owner, invokeCancel);
     }
 
     public static bool IsShowingFor(object owner)
     {
-        return instance != null && MatchesOwner(instance.activeRequest != null ? instance.activeRequest.Owner : null, owner);
+        return IsVisible && MatchesOwner(activePresenter.activeRequest.Owner, owner);
     }
 
     private static ConfirmationManager EnsureInstance()
@@ -119,11 +134,12 @@ public class ConfirmationManager : MonoBehaviour
             return instance;
         }
 
-#if UNITY_2023_1_OR_NEWER
-        instance = FindAnyObjectByType<ConfirmationManager>(FindObjectsInactive.Include);
-#else
-        instance = FindAnyObjectByType<ConfirmationManager>();
-#endif
+        foreach (ConfirmationManager candidate in FindObjectsByType<ConfirmationManager>())
+        {
+            if (candidate.sceneLocal || !candidate.isActiveAndEnabled) continue;
+            instance = candidate;
+            break;
+        }
         if (instance != null)
         {
             return instance;
@@ -142,6 +158,8 @@ public class ConfirmationManager : MonoBehaviour
             return false;
         }
 
+        if (IsVisible && activePresenter != this) return false;
+
         if (!EnsureUiReferences())
         {
             Debug.LogWarning($"[Confirmation] request ignored because UI is unavailable. owner='{GetOwnerLabel(request.Owner)}' context='{request.DebugContext}'", this);
@@ -157,6 +175,7 @@ public class ConfirmationManager : MonoBehaviour
         }
 
         activeRequest = request;
+        activePresenter = this;
         shownFrame = Time.frameCount;
 
         SetRootVisible(true);
@@ -313,6 +332,7 @@ public class ConfirmationManager : MonoBehaviour
         ReleaseInputLock();
         activeRequest = null;
         shownFrame = -1;
+        if (activePresenter == this) activePresenter = null;
     }
 
     private void HideImmediate()

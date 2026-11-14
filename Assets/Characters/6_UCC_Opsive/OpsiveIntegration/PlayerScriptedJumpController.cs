@@ -56,6 +56,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         !locomotionBridge.IsScriptedTraversalActive && !locomotionBridge.IsCinematicMotionSessionActive;
 
     public bool IsActive => jumpActive;
+    internal void EndPresentationForCling() => ResetPresentation();
     public float TargetJumpHeight => jumpHeight;
 
     public void SetTargetJumpHeight(float value)

@@ -1,10 +1,12 @@
 # Visibilité du joueur à travers plusieurs couches
 
-Le masque traite tous les groupes compatibles qui occupent son disque écran devant le joueur ou la cible, sans s'arrêter à la première paroi. Les groupes configurés manuellement sont inclus, même sans collider ou hors des préparations automatiques Maison/District_1. Les requêtes physiques complémentaires agrandissent leurs tampons lorsqu'ils sont pleins ; les capacités initiales 128/64 ne tronquent plus les résultats.
+Le masque traite tous les groupes compatibles qui recouvrent l'ouverture à l'écran devant le joueur ou la cible, sans s'arrêter à la première paroi. Les groupes configurés manuellement sont inclus, même sans collider ou hors des préparations automatiques Maison/District_1. Les requêtes physiques complémentaires agrandissent leurs tampons lorsqu'ils sont pleins ; les capacités initiales 128/64 ne tronquent plus les résultats.
+
+Le champ `Mask Shape` du profil tactique utilise l'alpha de `CameraMask_FireBall_White` par défaut : la couleur de l'image n'est pas rendue. `Mask Radius` règle la taille à l'écran et le bord suit l'alpha de la texture. Si le champ est vide, l'ouverture revient au cercle avec `Mask Feather`.
 
 ## Ouverture commune
 
-`LitTacticalMaskStack` maintient un fondu commun par personnage protégé. Toutes les couches vues dans le même disque reçoivent la même ouverture. Un nouvel obstacle ou LOD entrant derrière une paroi déjà découpée hérite immédiatement de cette ouverture, au lieu de cacher à nouveau le personnage pendant un second fondu. Le joueur et l'ennemi gardent deux états indépendants ; changer de cible réinitialise uniquement celui de l'ennemi.
+`LitTacticalMaskStack` maintient un fondu commun par personnage protégé. Toutes les couches vues dans la même zone reçoivent la même ouverture. Un nouvel obstacle ou LOD entrant derrière une paroi déjà découpée hérite immédiatement de cette ouverture, au lieu de cacher à nouveau le personnage pendant un second fondu. Le joueur et l'ennemi gardent deux états indépendants ; changer de cible réinitialise uniquement celui de l'ennemi.
 
 La détection est également actualisée depuis la pose réellement affichée avant le rendu. L'arrivée/le retrait d'un groupe force une nouvelle recherche. Les délais de détection, de restitution et de fondu restent ceux du profil.
 
@@ -12,7 +14,7 @@ La détection est également actualisée depuis la pose réellement affichée av
 
 Les sols, marches et surfaces praticables des zones automatiques sont désormais préparés avec `Overhead Surface`. Ils ne sont sélectionnés que s'ils dépassent la hauteur protégée ; le shader ne découpe que leurs fragments au-dessus des pieds du personnage, plus `Mask Ground Clearance` (0,25 m par défaut). Ainsi, un étage supérieur peut s'ouvrir pour révéler le joueur, sans ouvrir de trou dans son sol d'appui. La protection est calculée séparément pour le joueur et l'ennemi.
 
-Sur un groupe manuel de planchers, cocher `Overhead Surface`. Séparer les surfaces praticables des parois ordinaires dans les groupes authorés. Le protocole shader garde les mêmes propriétés : `_LitMaskEnabled = 1` pour les parois, `2` pour les surfaces protégées ; les composantes `w` des vecteurs caméra portent les deux hauteurs de protection, leurs `xyz` restant inchangés.
+Sur un groupe manuel de planchers, cocher `Overhead Surface`. Séparer les surfaces praticables des parois ordinaires dans les groupes configurés. `_LitMaskEnabled` vaut `1/2` pour les parois/sols avec un cercle, et `3/4` avec une texture. Les composantes `w` des vecteurs caméra portent les deux hauteurs de protection, leurs `xyz` restant inchangés.
 
 ## Restitution
 

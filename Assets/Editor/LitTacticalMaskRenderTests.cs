@@ -6,17 +6,23 @@ using UnityEngine.Rendering;
 
 public sealed class LitTacticalMaskRenderTests
 {
-    [Test] public void PixelsRevealPlayerThroughEveryLayerAndKeepGroundAndBackground()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void PixelsRevealPlayerThroughEveryLayerAndKeepGroundAndBackground(bool fireBall)
     {
         string pipeline = Shader.globalRenderPipeline; Shader.globalRenderPipeline = "";
         var objects = new List<GameObject>(); var materials = new List<Material>();
         var rt = new RenderTexture(128, 128, 24, RenderTextureFormat.ARGB32);
         var pixels = new Texture2D(128, 128, TextureFormat.RGBA32, false, true);
         var previous = RenderTexture.active;
+        var previousShape = Shader.GetGlobalTexture(LitTacticalMaskProperties.ShapeTexture);
+        var previousMotion = Shader.GetGlobalVector(LitTacticalMaskProperties.ShapeMotion);
         try
         {
             var shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Editor/LitMaskStackRenderTest.shader");
             Assert.That(shader, Is.Not.Null);
+            var shape = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Camera/Masks/CameraMask_FireBall_White.png");
+            if (fireBall) Assert.That(shape, Is.Not.Null);
             var cameraRoot = new GameObject("Raster stack camera"); objects.Add(cameraRoot);
             var camera = cameraRoot.AddComponent<Camera>(); camera.enabled = false; camera.aspect = 1;
             camera.nearClipPlane = .1f; camera.farClipPlane = 30; camera.cullingMask = 1 << 30;
@@ -51,11 +57,12 @@ public sealed class LitTacticalMaskRenderTests
             {
                 cameraPosition = position, cameraForward = forward,
                 target0 = new Vector4(projected.x, projected.y, projected.z, 1),
-                settings = new Vector4(.32f, .01f, 1, .05f)
+                settings = new Vector4(.32f, .01f, 1, .05f),
+                useShape = fireBall
             };
             rt.Create();
             int renderNumber = 0;
-            void Render()
+            void Render(float flameIntensity = 0, float flamePhase = 0)
             {
                 var cmd = new CommandBuffer();
                 try
@@ -68,6 +75,8 @@ public sealed class LitTacticalMaskRenderTests
                     cmd.SetGlobalVector("_TestCameraForward", cameraRoot.transform.forward);
                     cmd.SetGlobalVector("_ProjectionParams", new Vector4(-1, camera.nearClipPlane, camera.farClipPlane, 1 / camera.farClipPlane));
                     cmd.SetGlobalVector("_ScreenParams", new Vector4(128, 128, 1 + 1f / 128, 1 + 1f / 128));
+                    if (fireBall) cmd.SetGlobalTexture(LitTacticalMaskProperties.ShapeTexture, shape);
+                    cmd.SetGlobalVector(LitTacticalMaskProperties.ShapeMotion, new Vector4(flameIntensity, flamePhase, 0, 0));
                     foreach (var renderer in draw)
                     {
                         var block = new MaterialPropertyBlock(); renderer.GetPropertyBlock(block, 0);
@@ -76,7 +85,7 @@ public sealed class LitTacticalMaskRenderTests
                     }
                     Graphics.ExecuteCommandBuffer(cmd);
                     RenderTexture.active = rt; pixels.ReadPixels(new Rect(0, 0, 128, 128), 0, 0); pixels.Apply();
-                    string capture = System.IO.Path.Combine(Application.temporaryCachePath, "mask-stack-" + renderNumber++ + ".png");
+                    string capture = System.IO.Path.Combine(Application.temporaryCachePath, $"mask-stack-{fireBall}-{renderNumber++}.png");
                     System.IO.File.WriteAllBytes(capture, pixels.EncodeToPNG()); TestContext.WriteLine(capture + " center=" + pixels.GetPixel(64, 64));
                 }
                 finally { cmd.Release(); }
@@ -98,7 +107,46 @@ public sealed class LitTacticalMaskRenderTests
             Color center = pixels.GetPixel(64, 64);
             Assert.That(center.g, Is.GreaterThan(.8f), "The player must be visible through all three walls AND the upper floor.");
             Assert.That(center.r, Is.LessThan(.2f));
-            Assert.That(pixels.GetPixel(8, 64).r, Is.GreaterThan(.8f), "Walls outside the circular opening remain visible.");
+            Assert.That(pixels.GetPixel(8, 64).r, Is.GreaterThan(.8f), "Walls outside the opening remain visible.");
+            if (fireBall)
+            {
+                var textured = pixels.GetPixels32();
+                void ApplyShape(bool enabled)
+                {
+                    data.useShape = enabled;
+                    foreach (var layer in stack.Layers)
+                    {
+                        layer.Key.RestoreMask(this);
+                        layer.Key.ApplyMask(this, data);
+                    }
+                }
+                ApplyShape(false);
+                Render();
+                var circle = pixels.GetPixels32();
+                int changed = 0;
+                for (int i = 0; i < circle.Length; i++)
+                    if (!circle[i].Equals(textured[i])) changed++;
+                Assert.That(changed, Is.GreaterThan(30), "The FireBall alpha must change the outline, not render the original circle.");
+                ApplyShape(true);
+                Render(0, .5f);
+                CollectionAssert.AreEqual(textured, pixels.GetPixels32(), "Zero intensity must keep the texture still.");
+                Render(.025f, 0);
+                var firstPhase = pixels.GetPixels32();
+                Render(.025f, .5f);
+                var secondPhase = pixels.GetPixels32();
+                int animatedPixels = 0;
+                for (int i = 0; i < firstPhase.Length; i++)
+                    if (!firstPhase[i].Equals(secondPhase[i])) animatedPixels++;
+                Assert.That(animatedPixels, Is.GreaterThan(0), "The edge should visibly change with phase.");
+                for (int y = 60; y <= 68; y++)
+                    for (int x = 60; x <= 68; x++)
+                    {
+                        int i = y * 128 + x;
+                        Assert.That(firstPhase[i], Is.EqualTo(textured[i]));
+                        Assert.That(secondPhase[i], Is.EqualTo(textured[i]), "The opening over the player must remain unchanged.");
+                    }
+                Render();
+            }
             Vector3 floorPixel = camera.WorldToViewportPoint(new Vector3(0, 0, -4));
             int fy = Mathf.RoundToInt(floorPixel.y * 128);
             Color ground = pixels.GetPixel(64, fy);
@@ -114,6 +162,8 @@ public sealed class LitTacticalMaskRenderTests
         finally
         {
             RenderTexture.active = previous; Shader.globalRenderPipeline = pipeline;
+            Shader.SetGlobalTexture(LitTacticalMaskProperties.ShapeTexture, previousShape);
+            Shader.SetGlobalVector(LitTacticalMaskProperties.ShapeMotion, previousMotion);
             foreach (var root in objects) if (root != null) Object.DestroyImmediate(root);
             foreach (var mat in materials) Object.DestroyImmediate(mat);
             rt.Release(); Object.DestroyImmediate(rt); Object.DestroyImmediate(pixels);

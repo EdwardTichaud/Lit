@@ -26,6 +26,7 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
     private Vector3 blendStartPosition, previousPosition;
     private Vector3 lastVisibleAnchor;
     private Quaternion blendStartRotation;
+    private float blendStartFieldOfView;
     private float savedThirdPersonPitch;
     private bool cursorOwned, hasPreviousPosition, hasVisibleAnchor;
     private readonly RaycastHit[] hits = new RaycastHit[64];
@@ -254,6 +255,8 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
         if (type == typeof(LitTacticalUccViewType)) savedThirdPersonPitch = Mathf.DeltaAngle(0, rotation.eulerAngles.x);
         if (type == typeof(LitTacticalUccViewType)) tactical.Enter(rotation.eulerAngles.y);
         blendStartPosition = previousPosition = pose; blendStartRotation = rotation;
+        var camera = GetComponent<Camera>();
+        blendStartFieldOfView = camera != null ? camera.fieldOfView : profile.fieldOfView;
         hasPreviousPosition = true;
         blendStarted = blend ? Time.time : -100;
         effectiveMode = requestedMode; initializedMode = true;
@@ -265,11 +268,14 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
     }
     private float BlendFraction => Mathf.SmoothStep(0, 1, Mathf.Clamp01((Time.time - blendStarted) / Mathf.Max(.001f, profile.transitionTime)));
     public Quaternion BlendRotation(Quaternion target) => Quaternion.Slerp(blendStartRotation, target, BlendFraction);
+    public float BlendTacticalFieldOfView(float target) => Mathf.Lerp(blendStartFieldOfView, target, BlendFraction);
     public Vector3 BlendPosition(Vector3 target, Vector3 anchor, float radius, float deltaTime = -1, bool immediateUpdate = false)
     {
         Vector3 position = Vector3.Lerp(blendStartPosition, target, BlendFraction);
         Vector3 playerAnchor = ucc.Anchor != null ? ucc.Anchor.position + ucc.AnchorOffset : anchor;
         if (inspection) position = LitTacticalCameraMath.ClampCameraDistance(position, playerAnchor, profile.maximumFreeCameraDistance);
+        if (effectiveMode == GameplayCameraMode.Tactical && !external)
+            position = ConstrainOrbitHeight(anchor, position, radius);
         position = ConstrainPose(anchor, position, radius);
         // Continuous sweep is required in tactical mode; third-person keeps native UCC collision outside transitions.
         if (!immediateUpdate && hasPreviousPosition && (effectiveMode == GameplayCameraMode.Tactical || BlendFraction < 1))
@@ -299,7 +305,23 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
         return position;
     }
     public Vector3 ConstrainPose(Vector3 anchor, Vector3 desired, float radius) => Sweep(anchor, desired, radius);
-    public Vector3 ConstrainPan(Vector3 start, Vector3 desired, float radius) => Slide(start, desired, radius);
+    public Vector3 ConstrainPan(Vector3 start, Vector3 desired, float radius) => IgnoringObstacles ? desired : Slide(start, desired, radius);
+
+    private RaycastHit[] orbitFloorHits = new RaycastHit[16];
+    private RaycastHit[] orbitSweepHits = new RaycastHit[16];
+
+    public Vector3 ConstrainOrbitHeight(Vector3 pivot, Vector3 desired, float radius)
+    {
+        if (ucc == null || ucc.Character == null || profile == null) return desired;
+        return LitTacticalCameraMath.KeepOrbitAboveGround(pivot, desired, radius, profile.orbitGroundClearance, TacticalObstacleLayers(),
+            ShouldIgnoreTacticalCollider, ref orbitFloorHits);
+    }
+
+    private int TacticalObstacleLayers()
+    {
+        var layers = ucc.Character.GetComponent<CharacterLayerManager>();
+        return layers != null ? layers.IgnoreInvisibleCharacterWaterLayers : Physics.DefaultRaycastLayers;
+    }
     private Vector3 Slide(Vector3 start, Vector3 target, float radius)
     {
         for (int attempt = 0; attempt < 3; attempt++)
@@ -319,30 +341,35 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
     private Vector3 Sweep(Vector3 start, Vector3 end, float radius, out Vector3 normal)
     {
         normal = Vector3.zero;
-        if (IgnoringObstacles) return end;
+        bool floorOnly = IgnoringObstacles;
         Vector3 delta = end - start;
         float length = delta.magnitude;
-        if (length < .0001f || ucc.Character == null) return end;
-        var layers = ucc.Character.GetComponent<CharacterLayerManager>();
-        int mask = layers != null ? layers.IgnoreInvisibleCharacterWaterLayers : Physics.DefaultRaycastLayers;
-        int count = Physics.SphereCastNonAlloc(start, Mathf.Max(.01f, radius), delta / length, hits, length, mask, QueryTriggerInteraction.Ignore);
+        if (length < .0001f || ucc == null || ucc.Character == null) return end;
+        int mask = TacticalObstacleLayers();
+        int count = floorOnly
+            ? LitTacticalMaskQueries.SphereCast(ref orbitSweepHits, start, Mathf.Max(.01f, radius), delta / length, length, mask)
+            : Physics.SphereCastNonAlloc(start, Mathf.Max(.01f, radius), delta / length, hits, length, mask, QueryTriggerInteraction.Ignore);
+        var sweepHits = floorOnly ? orbitSweepHits : hits;
         float distance = length;
         for (int i = 0; i < count; i++)
         {
-            if (ShouldIgnoreTacticalCollider(hits[i].collider)) continue;
-            if (MaskActive)
+            RaycastHit hit = sweepHits[i];
+            if (ShouldIgnoreTacticalCollider(hit.collider)) continue;
+            bool walkable = LitTacticalCameraMath.IsOrbitFloor(hit.normal);
+            if (floorOnly && !walkable) continue;
+            if (MaskActive && !walkable)
             {
-                var group = hits[i].collider.GetComponentInParent<LitCameraOcclusionGroup>();
+                var group = hit.collider.GetComponentInParent<LitCameraOcclusionGroup>();
                 // Only bypass groups covered by the current detection. Unknown
                 // hits (including a saturated non-alloc query) stay conservative.
-                if (group != null && group.CanBypassCameraCollision() && visibilityMask != null && visibilityMask.Covers(group, hits[i].point)) continue;
+                if (group != null && group.CanBypassCameraCollision() && visibilityMask != null && visibilityMask.Covers(group, hit.point)) continue;
             }
             // A touching surface must not stop motion away from it or tangent to it.
-            if (hits[i].distance <= .001f && Vector3.Dot(delta / length, hits[i].normal) >= -.001f) continue;
-            float candidate = Mathf.Max(0, hits[i].distance - .02f);
-            if (candidate < distance) { distance = candidate; normal = hits[i].normal; }
+            if (hit.distance <= .001f && Vector3.Dot(delta / length, hit.normal) >= -.001f) continue;
+            float candidate = Mathf.Max(0, hit.distance - .02f);
+            if (candidate < distance) { distance = candidate; normal = hit.normal; }
         }
-        if (count == hits.Length) distance = 0;
+        if (count == hits.Length && !floorOnly) distance = 0;
         return start + delta / length * distance;
     }
     private void Update()

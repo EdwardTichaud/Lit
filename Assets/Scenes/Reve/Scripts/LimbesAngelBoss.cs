@@ -40,11 +40,17 @@ public sealed class LimbesAngelBoss : BossEncounterBehaviour, ILitBrainsEncounte
     private Vector3 desiredPosition;
     private bool motorOwned;
     private int previousHp = -1;
+    private Quaternion visualRestRotation;
     public bool IsFlying { get; private set; }
     public int BoltsFired { get; private set; }
     public int SweepsPerformed { get; private set; }
 
-    protected override void Awake() { base.Awake(); body = GetComponent<Rigidbody>(); }
+    protected override void Awake()
+    {
+        base.Awake();
+        body = GetComponent<Rigidbody>();
+        if (visual != null) visualRestRotation = visual.localRotation;
+    }
     protected override void Update()
     {
         base.Update();
@@ -147,7 +153,8 @@ public sealed class LimbesAngelBoss : BossEncounterBehaviour, ILitBrainsEncounte
     private void ApplyTelegraph(bool active)
     {
         // Fixed stone body leans before the sweep; no animation event grants damage.
-        if (visual != null) visual.localRotation = active ? Quaternion.Euler(-18, 0, 0) : Quaternion.identity;
+        if (visual != null)
+            visual.localRotation = active ? Quaternion.Euler(-18, 0, 0) * visualRestRotation : visualRestRotation;
     }
     public override bool FilterIncomingDamage(int incomingDamage, SquadCharacterController source, out int permittedDamage)
     {
@@ -157,6 +164,7 @@ public sealed class LimbesAngelBoss : BossEncounterBehaviour, ILitBrainsEncounte
     protected override void OnBossResolvedAuthoritatively()
     {
         windingUp = false;
+        Telegraph(false);
         if (motorOwned && Actor != null) Actor.SetSuspended(false);
         motorOwned = false;
         foreach (var bolt in FindObjectsByType<LimbesAngelBolt>()) if (bolt.Owner == this) Destroy(bolt.gameObject);
@@ -165,6 +173,7 @@ public sealed class LimbesAngelBoss : BossEncounterBehaviour, ILitBrainsEncounte
     protected override void OnDisable()
     {
         windingUp = false;
+        ApplyTelegraph(false);
         if (motorOwned && Actor != null) Actor.SetSuspended(false);
         motorOwned = false;
         base.OnDisable();

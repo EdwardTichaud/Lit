@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5d7cf48e67ebcc4e8fa9d89898399b7, type: 3}
+  m_Name: Ability_Grimpeur
+  m_EditorClassIdentifier: Assembly-CSharp::AbilitySO
+  abilityId: grimpeur
+  displayName: Grimpeur
+  description: "S\u2019accroche automatiquement au contact d\u2019une prise. Appuie sur Saut pour te d\xE9crocher et te propulser. Observateur peut rep\xE9rer les prises."
+  icon: {fileID: 0}
+  availableAtStart: 0
+  unlockCycle: {fileID: 11400000, guid: f9d9323485725c749a62275b5e03c7a1, type: 2}
+  unlockStepId: entered
+  unlockKnowledge: {fileID: 0}
+  legacySkillId: accrocheur

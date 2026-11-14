@@ -2510,7 +2510,7 @@ public partial class SquadCharacterController : MonoBehaviour
         facialExpressionController = GetComponentInParent<FacialExpressionController>();
     }
 
-    private bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
+    internal bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
     {
         CapsuleCollider capsule = locomotionCapsule;
         if (capsule == null)
@@ -2964,6 +2964,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private float ResolveFlameAnimationLayerWeightTarget()
     {
+        if (PlayerAnimationController.IsClingAnimation(animator))
+        {
+            return 0f;
+        }
+
         if (pendingFlameVisualTransition != FlameVisualTransition.None)
         {
             return 1f;

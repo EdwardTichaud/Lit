@@ -22,6 +22,7 @@ public sealed class LimbesFallRecovery : NetworkBehaviour
     private readonly Dictionary<ulong, float> nextRecovery = new();
     private readonly HashSet<ulong> participants = new();
     private float nextObserve;
+    private LimbesZoneProgression zoneProgression;
     private bool Online => NetworkManager != null && NetworkManager.IsListening;
 
     private void Update()
@@ -44,14 +45,21 @@ public sealed class LimbesFallRecovery : NetworkBehaviour
         if (actor == null || actor.CurrentHp <= 0 || !Finite(root.position)) return;
         // A late joiner still being prepared in Maison is not a falling
         // participant of this zone merely because their altitude is lower.
+        bool inLowerArena = false;
+        if (root.position.y < voidHeight)
+        {
+            if (zoneProgression == null) zoneProgression = FindAnyObjectByType<LimbesZoneProgression>();
+            inLowerArena = zoneProgression != null && Contains(zoneProgression.arenaFallVolume, root.position);
+        }
         if (!participants.Contains(client))
         {
-            if (!Contains(participationVolume, root.position)) return;
+            if (!inLowerArena && !Contains(participationVolume, root.position)) return;
             participants.Add(client);
         }
         for (int i = 0; i < landings.Length; i++)
             if (Contains(landings[i]?.volume, root.position + Vector3.up * .4f) && HasFloor(root.position)) visited[client] = i;
-        if (root.position.y >= voidHeight || nextRecovery.TryGetValue(client, out float next) && Time.unscaledTime < next) return;
+        if (inLowerArena || root.position.y >= voidHeight ||
+            nextRecovery.TryGetValue(client, out float next) && Time.unscaledTime < next) return;
         nextRecovery[client] = Time.unscaledTime + recoveryCooldown;
         int index = visited.TryGetValue(client, out int saved) ? saved : 0;
         int slot = Online && SquadManager.Instance != null ? SquadManager.Instance.GetPlayerSpawnIndex(actor.gameObject) : -1;

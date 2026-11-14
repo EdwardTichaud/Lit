@@ -32,7 +32,7 @@ MonoBehaviour:
   presentationAudioFadeDuration: 1
   loadingSceneNames:
   - Reve_Limbes_Environment
-  - Reve_Limbes_Lighting
+  - Reve_Limbes_Core
   - Reve_Limbes_Interactives
   - Reve_Limbes_Cycle_Seuil
   - Reve_Limbes_Cycle_Chambre
@@ -44,5 +44,5 @@ MonoBehaviour:
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
   bakedNavMeshData: {fileID: 23800000, guid: 8efb3690b1425244a8435be88b9cdcdf, type: 2}
-  bakedNavMeshVersion: 20261027142923
+  bakedNavMeshVersion: 20261112213810
   bakedNavMeshAgentTypeId: 0

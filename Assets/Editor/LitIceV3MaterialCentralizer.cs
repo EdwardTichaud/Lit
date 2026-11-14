@@ -7,7 +7,7 @@ using UnityEngine;
 internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
 {
     private const string ShaderPath =
-        "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v3.shadergraph";
+        "Assets/Materials/IceShader/ShaderGraph_MasterShader_LitIceFrostedEdges_v3.shadergraph";
     private const string CanonicalMaterialPath =
         "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v3.mat";
     private const string GeneratedLibraryRoot = "Assets/Environment/Prefabs_Ice/";
@@ -94,6 +94,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
 
     private static readonly PropertySpec[] TransitionProperties =
     {
+        Float("_SurfaceState"),
         Float("_TransitionSoftness"),
         Float("_TransitionProgress")
     };
@@ -248,7 +249,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
             if (!IsV3Material(m_MasterMaterial))
             {
                 EditorGUILayout.HelpBox(
-                    "The selected material does not use ShaderGraph_LitIceFrostedEdges_v3.",
+                    "The selected material does not use ShaderGraph_MasterShader_LitIceFrostedEdges_v3.",
                     MessageType.Error);
                 return;
             }
@@ -315,6 +316,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
                 MessageType.None);
             EditorGUILayout.HelpBox(
                 "FlameCenter and FlameInfluenceRadius remain excluded because flames write them at runtime. "
+                + "Select Surface State to copy Follow Flame, Force Normal or Force Frozen from the master. "
                 + "TransitionProgress can be synchronized manually, but an active flame may overwrite it.",
                 MessageType.None);
             if (IsPropertySelected("_EnableEmission")

@@ -44,6 +44,7 @@ public sealed class MainMenuGameOptionsHoverVfx : MonoBehaviour
 
     private void Awake()
     {
+        if (!enabled) return;
         instance = this;
         ResolveSceneReferences();
         HideEffect();

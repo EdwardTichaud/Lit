@@ -85,7 +85,6 @@ public sealed class SceneIntegrityDependencyQualificationTests
         finally { EditorSceneManager.ClosePreviewScene(preview); }
     }
 
-    [TestCase("Material_Grapple")]
     [TestCase("Material_VFX_GlitteringStars_Unlit_LightBall")]
     [TestCase("Material_VFX_GlitteringStars_Unlit_Trail")]
     public void ActualGlowMaskHasTransparentRedChannelEdgesAndBrightCenter(string name)

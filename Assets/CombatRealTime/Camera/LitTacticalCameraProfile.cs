@@ -6,10 +6,14 @@ public enum TacticalObstacleMode { Sliding, VisibilityMask, IgnoreObstacles }
 public sealed class LitTacticalCameraProfile : ScriptableObject
 {
     [Header("Framing")]
-    [Range(20, 100)] public float fieldOfView = 60;
+    [Range(20, 60), Tooltip("Vertical FOV at maximum tactical zoom-out.")]
+    public float fieldOfView = 60;
+    [Range(20, 60), Tooltip("Vertical FOV at minimum tactical distance. Keep it wide enough to read close-range action.")]
+    public float closeFieldOfView = 42;
     public Vector2 distanceLimits = new Vector2(1, 20);
     public float initialDistance = 10;
-    public Vector2 pitchLimits = new Vector2(25, 75);
+    [Tooltip("Orbit pitch in degrees. Negative values allow low angles; the camera still stays above the floor.")]
+    public Vector2 pitchLimits = new Vector2(-55, 75);
     public float initialPitch = 50;
     [Header("Action framing (opt-in)")]
     public LitTacticalActionFraming actionFraming = new LitTacticalActionFraming();
@@ -29,6 +33,8 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     public bool edgeScrolling;
     [Min(1)] public float edgePixels = 20;
     [Header("Safety")]
+    [Min(.1f), Tooltip("Minimum tactical camera height above a walkable surface, in metres.")]
+    public float orbitGroundClearance = .5f;
     [Min(1)] public float maximumPanRadius = 20;
     [Min(1), Tooltip("Maximum actual camera distance from the player in free inspection, including zoom.")]
     public float maximumFreeCameraDistance = 20;
@@ -47,6 +53,12 @@ public sealed class LitTacticalCameraProfile : ScriptableObject
     public TacticalObstacleMode obstacleMode = TacticalObstacleMode.IgnoreObstacles;
     [Range(.01f, .5f), Tooltip("Circle radius as a fraction of screen height, corrected for aspect ratio.")]
     public float maskRadius = .16f;
+    [Tooltip("Uses the texture alpha for the opening. Leave empty for a circular mask.")]
+    public Texture2D maskShape;
+    [Range(0f, .1f), Tooltip("Maximum flame-edge movement as a fraction of the mask radius. Zero keeps the texture still.")]
+    public float maskFlameIntensity = .025f;
+    [Range(0f, 2f), Tooltip("Flame animation speed in cycles per second. Zero keeps the texture still.")]
+    public float maskFlameSpeed = .45f;
     [Range(.001f, .1f), Tooltip("Dithered soft edge width as a fraction of screen height.")]
     public float maskFeather = .025f;
     [Min(.01f)] public float maskFadeTime = .12f;

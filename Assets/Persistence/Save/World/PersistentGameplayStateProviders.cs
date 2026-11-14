@@ -1221,8 +1221,10 @@ internal static class PersistentGameplayLookup
             return resolved;
         }
 
-        BuildKnowledgeLookup();
-        return knowledgeById.TryGetValue(knowledgeId, out resolved) ? resolved : null;
+        // Optional zone rewards may not be referenced by any loaded scene on a cold resume.
+        // Only explicitly authored Resources/Knowledges entries opt into this fallback.
+        var resource = Resources.Load<KnowledgeSO>("Knowledges/" + knowledgeId);
+        return resource != null && GetKnowledgeId(resource) == knowledgeId ? resource : null;
     }
 
     public static List<string> CollectCraftIds(Item building, int level)

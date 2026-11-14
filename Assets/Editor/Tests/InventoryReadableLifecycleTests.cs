@@ -6,6 +6,57 @@ using Object = UnityEngine.Object;
 public sealed class InventoryReadableLifecycleTests
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void WorldNoteCanBeTakenWhetherItStoresItselfOrNot(bool stored)
+    {
+        var root = new GameObject("World note");
+        root.SetActive(false);
+        var note = ScriptableObject.CreateInstance<Item>();
+        var unrelated = ScriptableObject.CreateInstance<Item>();
+        try
+        {
+            note.readableKind = Item.ReadableKind.Parchment;
+            note.allowTakeFromContainers = true;
+            var interactable = root.AddComponent<InteractableItem>();
+            interactable.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
+            interactable.representedItem = note;
+            if (stored)
+                interactable.storedItems.Add(new InteractableItem.LootItemEntry { item = note });
+            var canTake = typeof(InteractableItem).GetMethod("CanTakeWorldReadableAfterReading", Private);
+            bool CanTake() => (bool)canTake.Invoke(interactable, null);
+            Assert.That(CanTake(), Is.True);
+            interactable.allowTake = false;
+            Assert.That(CanTake(), Is.False);
+            interactable.allowTake = true;
+            interactable.interactableCategory = InteractableItem.InteractableCategory.ReadableItem;
+            Assert.That(CanTake(), Is.False, "Fixed documents must stay in the world.");
+            interactable.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
+            interactable.storedItems.Add(new InteractableItem.LootItemEntry { item = unrelated });
+            Assert.That(CanTake(), Is.False, "Reading must not collect unrelated loot.");
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(note); Object.DestroyImmediate(unrelated); }
+    }
+
+    [TestCase("CloseReadablePanel", 0)]
+    [TestCase("TakeReadableWorldItemAndClose", 1)]
+    public void CloseLeavesNoteAndTakeInvokesPickupOnlyOnce(string method, int expected)
+    {
+        var root = new GameObject("Reading fixture");
+        root.SetActive(false);
+        try
+        {
+            var controller = root.AddComponent<InventoryPanelController>();
+            var type = typeof(InventoryPanelController);
+            int pickups = 0;
+            type.GetField("readablePanelTakeCallback", Private).SetValue(controller, (System.Action)(() => pickups++));
+            type.GetMethod(method, Private).Invoke(controller, null);
+            type.GetMethod(method, Private).Invoke(controller, null);
+            Assert.That(pickups, Is.EqualTo(expected));
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
     [Test] public void ClosingWithoutCachedInputsDoesNotDiscoverAnotherPanel()
     {
         var root = new GameObject("Disabled inventory fixture");

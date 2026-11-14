@@ -56,8 +56,8 @@ public sealed class LitTacticalUccViewType : Adventure
         profile = settings;
         CollisionRadius = source.CollisionRadius;
         CollisionAnchorOffset = source.CollisionAnchorOffset;
-        FieldOfView = profile.fieldOfView;
         zoom = targetZoom = Mathf.Clamp(profile.initialDistance, profile.distanceLimits.x, profile.distanceLimits.y);
+        m_FieldOfView = ResolveFieldOfView(zoom);
         actionRatio = 1; actionRatioVelocity = 0; manualZoomUntil = 0;
         framingParticipant = null;
         pitch = profile.initialPitch;
@@ -93,6 +93,7 @@ public sealed class LitTacticalUccViewType : Adventure
         var input = owner.ConsumeTacticalInput();
         yaw += input.orbit.x;
         pitch = Mathf.Clamp(pitch - input.orbit.y, profile.pitchLimits.x, profile.pitchLimits.y);
+        if (input.orbit.y != 0) pitch = GetOrbitPitch();
         targetZoom = Mathf.Clamp(targetZoom - input.zoom, profile.distanceLimits.x, profile.distanceLimits.y);
         if (Mathf.Abs(input.zoom) > .0001f)
             manualZoomUntil = Time.realtimeSinceStartupAsDouble + (profile.actionFraming?.manualZoomGraceSeconds ?? 0);
@@ -182,23 +183,54 @@ public sealed class LitTacticalUccViewType : Adventure
         float height = capsule != null ? capsule.height * capsule.transform.lossyScale.y : 2.4f;
         var bottom = inverse * (root.position + Vector3.up * .05f - pivot);
         var top = inverse * (root.position + Vector3.up * Mathf.Max(2.1f, height) - pivot);
-        return Mathf.Clamp01(Mathf.Max(LitTacticalActionFraming.RequiredDistance(bottom, profile.fieldOfView, aspect),
-            LitTacticalActionFraming.RequiredDistance(top, profile.fieldOfView, aspect)) / Mathf.Max(.01f, zoom));
+        // Find the closest distance at which both points fit with that distance's lens.
+        float min = Mathf.Min(profile.distanceLimits.x, zoom), max = zoom;
+        for (int i = 0; i < 8; i++)
+        {
+            float trial = (min + max) * .5f;
+            float fov = ResolveFieldOfView(trial);
+            if (Mathf.Max(LitTacticalActionFraming.RequiredDistance(bottom, fov, aspect),
+                LitTacticalActionFraming.RequiredDistance(top, fov, aspect)) > trial)
+                min = trial;
+            else max = trial;
+        }
+        return Mathf.Clamp01(max / Mathf.Max(.01f, zoom));
+    }
+
+    private float ResolveFieldOfView(float distance) => LitTacticalCameraMath.ResolveOrbitFieldOfView(distance,
+        profile.distanceLimits, profile.closeFieldOfView, profile.fieldOfView);
+
+    public override void UpdateFieldOfView(bool immediateUpdate)
+    {
+        if (profile == null) return;
+        // Lens follows the already damped zoom, not collision retraction (which
+        // would narrow the view exactly when an obstacle pushes us forward).
+        FieldOfViewDamping = 0;
+        float target = ResolveFieldOfView(Mathf.Max(profile.distanceLimits.x, zoom * actionRatio));
+        m_FieldOfView = owner != null ? Mathf.Min(60f, owner.BlendTacticalFieldOfView(target)) : target;
+        base.UpdateFieldOfView(immediateUpdate);
     }
 
     public override Quaternion Rotate(float horizontalMovement, float verticalMovement, bool immediateUpdate)
     {
         if (!immediateUpdate) ConsumePendingInput();
-        Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
+        Quaternion rotation = Quaternion.Euler(GetOrbitPitch(), yaw, 0);
         m_Pitch = pitch;
         m_Yaw = Mathf.DeltaAngle(0, yaw - m_BaseRotation.eulerAngles.y);
         return owner != null ? owner.BlendRotation(rotation) : rotation;
+    }
+    private float GetOrbitPitch()
+    {
+        if (profile == null || m_CharacterTransform == null || pitch >= 0) return pitch;
+        return LitTacticalCameraMath.LimitLowOrbitPitch(pitch,
+            Mathf.Max(profile.distanceLimits.x, zoom * actionRatio),
+            GetFollowAnchor().y - CharacterPosition.y, profile.orbitGroundClearance);
     }
     public override Quaternion LateRotate(bool immediateUpdate)
     {
         if (!following || owner == null || owner.IsBlending)
             return m_CharacterLocomotion != null && m_CharacterLocomotion.Interpolate ? m_Transform.rotation :
-                owner != null ? owner.BlendRotation(Quaternion.Euler(pitch, yaw, 0)) : Quaternion.Euler(pitch, yaw, 0);
+                owner != null ? owner.BlendRotation(Quaternion.Euler(GetOrbitPitch(), yaw, 0)) : Quaternion.Euler(pitch, yaw, 0);
         // Capture once in Move after collision, then interpolate with the same
         // fraction as SimulationManager.SmoothMove. Never feed a rendered pose
         // back into a second aim filter or snap at an arbitrary angle threshold.
@@ -219,12 +251,14 @@ public sealed class LitTacticalUccViewType : Adventure
         float dt = immediateUpdate ? 0 : Mathf.Min(Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime, .1f);
         if (!immediateUpdate) ConsumePendingInput();
         Tick(dt, immediateUpdate);
+        UpdateFieldOfView(immediateUpdate);
         // A teleport reset inside Tick may have cleared the stamp. Seal this step again.
         if (advance) clock.TryAdvance(Time.inFixedTimeStep, Time.fixedTimeAsDouble, Time.frameCount);
-        Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
+        Quaternion rotation = Quaternion.Euler(GetOrbitPitch(), yaw, 0);
         Vector3 direction = rotation * Vector3.back;
         Vector3 desired = pivot + direction * Mathf.Max(profile.distanceLimits.x, zoom * actionRatio);
         if (!following) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetFollowAnchor(), profile.maximumFreeCameraDistance);
+        desired = owner.ConstrainOrbitHeight(pivot, desired, CollisionRadius);
         Vector3 requested = desired;
         owner.PrepareVisibilityMask(desired, GetFollowAnchor(), CollisionRadius);
         desired = owner.ConstrainPose(pivot, desired, CollisionRadius);

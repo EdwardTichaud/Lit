@@ -1,4 +1,6 @@
 using UnityEngine;
+using Unity.Netcode;
+using Unity.Collections;
 
 
 
@@ -12,6 +14,88 @@ public sealed class PlayerAnimationController : CharacterAnimationController
     private PlayerRootMotionRelay rootMotionRelay;
     private CombatTimeDomain timeDomain;
     private int cinematicSessionToken = -1;
+    private static readonly int ClingHoldState = UnityEngine.Animator.StringToHash("Base Layer.Cling_Hold");
+    private static readonly int LocomotionState = UnityEngine.Animator.StringToHash("Base Layer.Locomotion");
+    private static readonly int IdleState = UnityEngine.Animator.StringToHash("Base Layer.Idle");
+    private static readonly int CombatIdleState = UnityEngine.Animator.StringToHash("Base Layer.CombatIdle");
+    private readonly NetworkVariable<FixedString128Bytes> clingSupport = new(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private bool showingClingPose;
+    private Lit.Traversal.ClingPoint localClingPoint;
+    private readonly Lit.Traversal.ClingPoint.AnimatedContacts clingContacts = new();
+    private Opsive.UltimateCharacterController.Character.CharacterIK suspendedClingIk;
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        clingSupport.OnValueChanged += OnClingSupportChanged;
+        if (clingSupport.Value.Length > 0) ApplyClingPose(true);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        clingSupport.OnValueChanged -= OnClingSupportChanged;
+        localClingPoint = null;
+        ApplyClingPose(false);
+        base.OnNetworkDespawn();
+    }
+
+    internal void SetClingPose(bool value, Lit.Traversal.ClingPoint support = null)
+    {
+        localClingPoint = value ? support : null;
+        ApplyClingPose(value);
+        if (IsSpawned && IsOwner)
+            clingSupport.Value = localClingPoint != null ? new FixedString128Bytes(localClingPoint.PointId) : default;
+    }
+
+    private void OnClingSupportChanged(FixedString128Bytes previous, FixedString128Bytes current)
+    {
+        if (!IsOwner)
+        {
+            localClingPoint = null;
+            clingContacts.point = null;
+        }
+        ApplyClingPose(current.Length > 0);
+    }
+
+    private void OnAnimatorIK(int layerIndex)
+    {
+        if (layerIndex != 0 || !showingClingPose || animator == null ||
+            !animator.isHuman || animator.IsInTransition(0) ||
+            animator.GetCurrentAnimatorStateInfo(0).fullPathHash != ClingHoldState) return;
+        if (localClingPoint == null && IsSpawned && !IsOwner && clingSupport.Value.Length > 0)
+            localClingPoint = Lit.Traversal.ClingPoint.Find(clingSupport.Value.ToString());
+        if (localClingPoint != null && TryGetComponent(out SquadCharacterController actor))
+            localClingPoint.FitAnimatedContacts(actor, animator, clingContacts);
+    }
+
+    internal static bool IsClingAnimation(Animator target)
+    {
+        return target != null && (target.GetCurrentAnimatorStateInfo(0).fullPathHash == ClingHoldState ||
+            target.IsInTransition(0) && target.GetNextAnimatorStateInfo(0).fullPathHash == ClingHoldState);
+    }
+
+    private void ApplyClingPose(bool value)
+    {
+        if (showingClingPose == value || animator == null || !animator.HasState(0, ClingHoldState)) return;
+        showingClingPose = value;
+        clingContacts.point = null;
+        if (value)
+        {
+            // UCC's ground solver competes for the same base-layer feet and pelvis.
+            if (animator.TryGetComponent(out Opsive.UltimateCharacterController.Character.CharacterIK groundIk) && groundIk.enabled)
+            {
+                suspendedClingIk = groundIk;
+                groundIk.enabled = false;
+            }
+            if (animator.isActiveAndEnabled) animator.CrossFadeInFixedTime(ClingHoldState, .1f, 0);
+            return;
+        }
+        RestoreClingIk();
+        var actor = GetComponent<SquadCharacterController>();
+        if (IsCinematicMotionActive || (actor != null && actor.CurrentHp <= 0)) return;
+        if (animator.isActiveAndEnabled && animator.HasState(0, LocomotionState) && IsClingAnimation(animator))
+            animator.CrossFadeInFixedTime(LocomotionState, .12f, 0);
+    }
 
     public override Transform ActorRoot => transform;
     public override Transform AnimationRoot => animationRoot;
@@ -25,8 +109,18 @@ public sealed class PlayerAnimationController : CharacterAnimationController
     public override bool IsCinematicMotionActive => cinematicSessionToken >= 0;
     public override bool ShouldConsumeAnimatorRootMotion => IsCinematicMotionActive;
 
+    private void RestoreClingIk()
+    {
+        if (suspendedClingIk != null) suspendedClingIk.enabled = true;
+        suspendedClingIk = null;
+    }
+
     private void OnDisable()
     {
+        clingContacts.point = null;
+        RestoreClingIk();
+        showingClingPose = false;
+        localClingPoint = null;
         cinematicSessionToken = -1;
         GetComponent<LitOpsiveLocomotionBridge>()?.EnforceGameplayMotionAuthority();
     }
@@ -164,6 +258,49 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         {
             rootMotionRelay.enabled = true;
         }
+    }
+
+    internal void PrepareCinematicIdle()
+    {
+        if (animator == null || !animator.isActiveAndEnabled || animator.runtimeAnimatorController == null ||
+            GetComponent<PlayerActionPresentationController>()?.IsDeathAnimationLocked == true ||
+            (TryGetComponent(out SquadCharacterController actor) && actor.CurrentHp <= 0))
+        {
+            return;
+        }
+
+        bool combatLocked = GetComponent<LitOpsiveLocomotionBridge>()?.IsCombatLockActive == true;
+        int state = combatLocked && animator.HasState(0, CombatIdleState) ? CombatIdleState :
+            animator.HasState(0, IdleState) ? IdleState : LocomotionState;
+        if (!animator.HasState(0, state))
+        {
+            return;
+        }
+
+        foreach (var parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Float &&
+                parameter.name is "Speed" or "LitSpeed" or "LocomotionTier" or "HorizontalMovement" or "ForwardMovement" or
+                    "CombatMoveMagnitude" or "Turn" or "MovingLegsX" or "MovingLegsZ" or "MovingLegsSpeed" or
+                    "MovingLegsMagnitude" or "MovingLegsTier")
+            {
+                animator.SetFloat(parameter.nameHash, 0f);
+            }
+            else if (parameter.type == AnimatorControllerParameterType.Bool && parameter.name is "Moving" or "IsMoving")
+            {
+                animator.SetBool(parameter.nameHash, false);
+            }
+        }
+
+        int movingLegsLayer = animator.GetLayerIndex(PlayerMovingLegsOverlay.LayerName);
+        if (movingLegsLayer > 0)
+        {
+            animator.SetLayerWeight(movingLegsLayer, 0f);
+        }
+
+        // Sample the idle pose before the Timeline creates or evaluates its animation graph.
+        animator.Play(state, 0, 0f);
+        animator.Update(0f);
     }
 
     /// <summary>

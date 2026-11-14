@@ -53,6 +53,16 @@ public sealed class LadderEndpointSelectionTests
         Assert.That(ladder.GetInteractionAnchor(), Is.SameAs(ladder.leafs1));
     }
 
+    [Test]
+    public void LightJumpIsInTheSharedCatalogueAndStartsUnlocked()
+    {
+        var ability = Resources.Load<AbilitySO>("Abilities/Ability_SautDeLumiere");
+        Assert.That(ability, Is.Not.Null);
+        Assert.That(ability.abilityId, Is.EqualTo(LadderController.RequiredAbilityId));
+        Assert.That(ability.DisplayName, Is.EqualTo("Saut de lumière"));
+        Assert.That(ability.CanUnlockFromProgression(), Is.True);
+    }
+
     [TearDown]
     public void TearDown()
     {

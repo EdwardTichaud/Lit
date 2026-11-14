@@ -112,6 +112,8 @@ Material:
     - _IceReliefNormalStrength: 0.75
     - _IceReliefRoughnessInfluence: 0.4
     - _IceScale: 1.06
+    - _LitMaskEnabled: 0
+    - _LitMaskVersion: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0.8
@@ -139,6 +141,7 @@ Material:
     - _StencilWriteMaskGBuffer: 15
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
+    - _SurfaceState: 1
     - _SurfaceType: 0
     - _TextureEdgeNormalInfluence: 1
     - _TextureEdgeRoughnessInfluence: 0.5
@@ -175,6 +178,11 @@ Material:
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
     - _FrostColor: {r: 0.18, g: 0.62, b: 1.35, a: 1}
     - _IceDeepColor: {r: 0.012, g: 0.048, b: 0.13, a: 1}
+    - _LitMaskCameraForward: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskCameraPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskSettings: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget0: {r: 0, g: 0, b: 0, a: 0}
+    - _LitMaskTarget1: {r: 0, g: 0, b: 0, a: 0}
     - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

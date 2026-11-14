@@ -49,7 +49,8 @@ public static class CharacterInteractionDetection
     /// </summary>
     public static bool IsInActiveFlameInfluence(ICharacterDetectedInteractable target)
     {
-        if (target == null || target is Flame || target is BrokenAnchorTorch || target is PortalController)
+        if (target == null || target is Flame || target is BrokenAnchorTorch || target is PortalController ||
+            target is IInteractionLightPolicy lightPolicy && !lightPolicy.RequiresFlame)
         {
             return true;
         }

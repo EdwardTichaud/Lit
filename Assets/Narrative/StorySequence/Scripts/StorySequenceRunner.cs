@@ -427,8 +427,10 @@ namespace Lit.Story
                     step.cameraTransitionDuration);
             }
 
+            CharacterData speaker = bindings.ResolveDialogueSpeaker(step, actor);
             string speakerName = !string.IsNullOrWhiteSpace(step.speakerNameOverride)
                 ? step.speakerNameOverride
+                : step.speakerCharacterData != null ? speaker.ResolveDisplayName()
                 : actor != null ? actor.DisplayName : step.actorId;
             Transform audioAnchor = actor != null ? actor.FaceAnchor : null;
             yield return dialoguePresenter.Present(
@@ -438,7 +440,7 @@ namespace Lit.Story
                 step.dialogueMaxDisplayDuration,
                 useUnscaledTime,
                 ConsumeAdvanceRequest,
-                actor != null ? actor.CharacterData : null);
+                speaker);
         }
 
         private IEnumerator ExecuteCameraShot(StorySequenceStep step, bool useUnscaledTime)
@@ -742,6 +744,10 @@ namespace Lit.Story
             playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(this, out playerLock, 
                 disableGameplayInput: true,
                 stopActiveAbilities: activeSequence.stopActiveAbilitiesOnLock);
+            if (playerLockHeld)
+            {
+                lockedPlayerController.GetComponent<PlayerAnimationController>()?.PrepareCinematicIdle();
+            }
         }
 
         private static bool HasProgressivePlayerStop(StorySequenceAsset sequence)

@@ -1,19 +1,48 @@
-## Grappin et capacites d'exploration (2026-11-07)
+## Coffre de la Maison (2026-11-13)
 
-Cumul solo, repartition multijoueur autoritaire et migration de l'equipement
-ajoutes sans modifier les kits de combat. Ancrages Observateur/Bondisseur
-aller-retour poses aux Limbes sous les cinq cycles de l'acces final.
-Bondisseur reste verrouille tant qu'un evenement narratif explicite ne le donne ;
-le profil natif de validation l'accorde seulement dans sa sauvegarde isolee.
-Pont a pied conserve : aucun blocage de campagne avant ce deblocage narratif.
-Compilation runtime/editeur et 15/15 tests passent. Recette native solo passee :
-114 controles, scan et arcs UCC aller/retour, boss, verrous, capture/restauration
-du cumul, ReturnToHub/re-entree ; zero erreur runtime, editeur restaure.
-Preuve : PlayRuns/795613cf0b754adca78db9d8f7ac258e/result.json sous
-Library/StartupDistrictValidation. Fixtures de deblocage, camera, approche,
-dialogue et degats declarees ; aucune qualification manuelle/reseau, save froide,
-Domain Reload desactive ou parite visuelle exacte Expedition 33 revendiquee.
-Details : systems/grapple.md.
+Sélection rétablie sans lumière, volume de détection et contour rattachés au
+conteneur principal. Position, contenu auteur et panneau de stockage conservés.
+Recette Unity solo isolée : contour, ouverture A et fermeture B validés
+(PlayRuns/0acdc0017de1477596edcfec92d85ebd). Les trois tests de sélection/configuration passent ;
+le test Edit Mode de sauvegarde ne dispose pas du registre d'objets runtime.
+
+## Fracture d'Enola — jeu du couteau (2026-11-13)
+
+Défi solo facultatif : borne près du spawn de la Maison, tabouret sélectionné
+avec outline, dialogue, fondu, pose UCC sur StoolPoint et cadrage fixe sur
+les mains. Huit temps avec zone de validation variable, retour à la Maison
+et Savoir unique. Contrôleur d'animation local
+au défi, restauré à la sortie ; pas de changement du graphe de combat.
+Recette native solo réussie : cadrage des deux poignets, huit zones HUD
+comparées au score, 8/8 appuis, abandon B et Savoir rechargé depuis la Maison,
+sans erreur runtime (PlayRuns/734a6a9699584934833d55828ab07b27).
+La capture montre encore une occlusion partielle du geste par le bord de table.
+Voir `systems/enola_knife_game.md`.
+
+## Compétences d'exploration (2026-11-14)
+
+Les anciennes échelles sont des points de Saut de lumière : compétence
+disponible dès le départ, requise dans l'équipement du voyageur.
+Compilation et 20 tests ciblés réussis. Recette solo District 1 :
+refus sans équipement, prompt actualisé, déplacement et restitution du
+contrôle après équipement (`PlayRuns/6d32addd25aa447a91592927980b39fd`).
+
+Grappin retiré des Limbes et du prototype de chute. Le portail existant après
+les cinq cycles garde l'accès à la Gargouille sans capacité d'exploration.
+Grimpeur remplace Accrocheur sans perte de déblocage ni d'équipement ;
+Observateur continue de repérer les prises. Voir `systems/exploration_abilities.md`.
+Grimpeur utilise désormais `Mixamo_ClimbingIdle`, une face d'appui réelle
+et une couverture minimale de quatre repères corporels sur cinq. La prise
+du Seuil a été élargie verticalement sans changer le trajet.
+Recette Grimpeur : 16 tests, quatre extrémités proches de l'appui en jeu,
+rotation et translation suivies, puis saut de dégagement validé en solo
+(`PlayRuns/73d84d2c45f2488bb926621beccd8f17`).
+Compilation Unity réussie ; 14 tests de migration, d'équipement et de scène
+réussis (`Library/TraversalRemovalTests.xml`).
+En jeu, une partie isolée a terminé les cinq cycles, franchi le portail
+sans capacité de traversée et déclenché l'introduction du boss
+(`PlayRuns/a11586016abc43238b10936f71e944e5`). Le combat lui-même n'est pas
+qualifié par ce contrôle ciblé.
 
 ## Lucian : coherence animation, objectif actif (2026-11-04)
 

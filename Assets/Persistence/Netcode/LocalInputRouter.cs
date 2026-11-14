@@ -403,7 +403,7 @@ public static class LocalInputRouter
             return;
         }
 
-        Jump?.Invoke(context);
+        if (!Lit.Traversal.ClingTraversal.TryJumpForLocalPlayer()) Jump?.Invoke(context);
     }
 
     public static void PushInteractionAndJumpSuppression(object owner)

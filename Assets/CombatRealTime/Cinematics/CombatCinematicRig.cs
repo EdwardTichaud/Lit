@@ -659,6 +659,12 @@ public sealed partial class CombatCinematicRig : MonoBehaviour
             TraceCamera("Camera cinematique absente : lecture maintenue sur la camera gameplay", false);
         }
 
+        context.PlayerRoot.GetComponent<PlayerAnimationController>()?.PrepareCinematicIdle();
+        if (context.TargetRoot != context.PlayerRoot)
+        {
+            context.TargetRoot.GetComponent<PlayerAnimationController>()?.PrepareCinematicIdle();
+        }
+
         // The rig is the single owner of all Timeline bindings and graph setup.
         // The bridge only hands the gameplay camera to Cinemachine.
         director.RebuildGraph();

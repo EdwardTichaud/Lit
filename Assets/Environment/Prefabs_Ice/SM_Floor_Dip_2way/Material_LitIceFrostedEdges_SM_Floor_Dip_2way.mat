@@ -158,6 +158,7 @@ Material:
     - _StencilWriteMaskGBuffer: 15
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
+    - _SurfaceState: 1
     - _SurfaceType: 0
     - _TextureEdgeNormalInfluence: 1.48
     - _TextureEdgeRoughnessInfluence: 0

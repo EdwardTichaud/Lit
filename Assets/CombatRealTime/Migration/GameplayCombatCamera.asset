@@ -15,7 +15,7 @@ MonoBehaviour:
   fieldOfView: 60
   distanceLimits: {x: 1, y: 20}
   initialDistance: 10
-  pitchLimits: {x: 25, y: 75}
+  pitchLimits: {x: -55, y: 75}
   initialPitch: 50
   actionFraming:
     enabled: 1
@@ -51,6 +51,9 @@ MonoBehaviour:
   collisionClearHoldTime: 0.08
   obstacleMode: 2
   maskRadius: 0.26
+  maskShape: {fileID: 2800000, guid: 9bca69235fdaf0946a34bf9e7b595513, type: 3}
+  maskFlameIntensity: 0.025
+  maskFlameSpeed: 0.45
   maskFeather: 0.025
   maskFadeTime: 0.12
   occlusionInterval: 0.05

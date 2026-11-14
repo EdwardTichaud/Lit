@@ -8,6 +8,7 @@ public static partial class BootstrapDistrictPlayProbe
     {
         if(!ZoneReady("Assets/Scenes/Reve/ZoneManifest_Reve_Limbes.asset") || !ControlReady(out var actor)) return;
         Check(true,"Six authored Limbes scenes loaded through actual Maison portal; actor grounded, navigation and exploration restored.");
+        if (report.scope.StartsWith("Grimpeur:", StringComparison.Ordinal)) { Advance(650); return; }
         if(report.limbesExpansion) {Advance(100);return;}
         if(report.limbesRoutes) {Advance(90);return;}
         if(report.limbesCycles) {CaptureLiveLimbes(); Advance(70); return;}

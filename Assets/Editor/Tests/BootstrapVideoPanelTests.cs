@@ -66,10 +66,7 @@ public sealed class BootstrapVideoPanelTests
 
     [Test] public void VideoLeaseRestoresOnlyUiModulesItDisabledAndHidesTheQuestion()
     {
-        var previousScene = SceneManager.GetActiveScene();
-        var inputScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         var root = new GameObject("Video input lease test");
-        SceneManager.MoveGameObjectToScene(root, inputScene);
         var visible = Cursor.visible;
         var locked = Cursor.lockState;
         try
@@ -83,28 +80,77 @@ public sealed class BootstrapVideoPanelTests
             disabledModule.enabled = false;
             const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
             var type = typeof(BootstrapVideoPanel);
+            var prompt = new GameObject("CinematicCut", typeof(RectTransform), typeof(CanvasGroup));
+            prompt.transform.SetParent(root.transform, false);
+            var group = prompt.GetComponent<CanvasGroup>();
+            type.GetField("cinematicCut", flags).SetValue(video, group);
             var owner = new object();
             type.GetField("owner", flags).SetValue(video, owner);
             type.GetMethod("BlockUiModules", flags).Invoke(video, null);
             Assert.That(module.enabled, Is.False);
             type.GetMethod("ShowSkipPrompt", flags).Invoke(video, new object[] { true });
-            Assert.That(root.transform.Find("VideoSkipConfirmation").gameObject.activeSelf, Is.True);
+            Assert.That(group.alpha, Is.EqualTo(1f));
+            Assert.That(group.interactable || group.blocksRaycasts, Is.False);
             video.StopAndHide(new object());
             Assert.That(module.enabled, Is.False, "Only the lease owner may unlock input.");
             video.StopAndHide(owner);
             Assert.That(module.enabled, Is.True);
             Assert.That(disabledModule.enabled, Is.False);
-            Assert.That(root.transform.Find("VideoSkipConfirmation").gameObject.activeSelf, Is.False);
+            Assert.That(group.alpha, Is.Zero);
+            Assert.That(prompt.activeSelf, Is.True);
             Assert.That(video.IsBusy, Is.False);
         }
         finally
         {
             Object.DestroyImmediate(root);
-            SceneManager.SetActiveScene(previousScene);
-            EditorSceneManager.CloseScene(inputScene, true);
             Cursor.lockState = locked;
             Cursor.visible = visible;
         }
+    }
+
+    [Test] public void CinematicCutUsesSeparateAuthoredVisibilityAndBlinkGroups()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var type = typeof(BootstrapVideoPanel);
+        type.GetMethod("ResolveSkipPrompt", flags).Invoke(panel, null);
+        type.GetMethod("ShowSkipPrompt", flags).Invoke(panel, new object[] { false });
+        var serialized = new SerializedObject(panel);
+        var root = serialized.FindProperty("cinematicCut").objectReferenceValue as CanvasGroup;
+        var blink = serialized.FindProperty("cinematicCutBlink").objectReferenceValue as CanvasGroupBlink;
+        Assert.That(root, Is.Not.Null);
+        Assert.That(root.name, Is.EqualTo("CinematicCut"));
+        Assert.That(root.alpha, Is.Zero);
+        Assert.That(root.interactable || root.blocksRaycasts, Is.False);
+        Assert.That(blink, Is.Not.Null);
+        Assert.That(blink.name, Is.EqualTo("Frame"));
+        Assert.That(blink.transform.parent, Is.SameAs(root.transform));
+        Assert.That(blink.GetComponent<CanvasGroup>(), Is.Not.Null);
+        Assert.That(blink.enabled, Is.False);
+    }
+
+    [Test] public void BlinkChangesOnlyItsOwnAlphaAndRestoresTheInitialValue()
+    {
+        var root = new GameObject("Blink test root", typeof(CanvasGroup));
+        var frame = new GameObject("Blink test frame", typeof(CanvasGroup), typeof(CanvasGroupBlink));
+        frame.transform.SetParent(root.transform);
+        try
+        {
+            var parent = root.GetComponent<CanvasGroup>();
+            var group = frame.GetComponent<CanvasGroup>();
+            var blink = frame.GetComponent<CanvasGroupBlink>();
+            parent.alpha = 0f;
+            group.alpha = 0.8f;
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var type = typeof(CanvasGroupBlink);
+            type.GetMethod("OnEnable", flags).Invoke(blink, null);
+            type.GetField("startedAt", flags).SetValue(blink, Time.unscaledTime - 1.5f);
+            type.GetMethod("Update", flags).Invoke(blink, null);
+            Assert.That(group.alpha, Is.EqualTo(0.28f).Within(0.01f));
+            Assert.That(parent.alpha, Is.Zero);
+            type.GetMethod("OnDisable", flags).Invoke(blink, null);
+            Assert.That(group.alpha, Is.EqualTo(0.8f));
+        }
+        finally { Object.DestroyImmediate(root); }
     }
 
     [Test] public void HouseMusicCueUsesTheVideoClockAndFiresOnlyOnce()

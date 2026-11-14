@@ -18,6 +18,7 @@ namespace Lit.Story.Editor
                     yield return "actorId";
                     yield return "listenerId";
                     yield return "speakerNameOverride";
+                    yield return "speakerCharacterData";
                     yield return "voiceLine";
                     yield return "dialogueMaxDisplayDuration";
                     yield return "focusCameraOnSpeaker";

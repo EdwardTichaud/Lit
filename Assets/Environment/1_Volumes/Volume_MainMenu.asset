@@ -143,7 +143,7 @@ MonoBehaviour:
   horizonZenithShift:
     m_OverrideState: 0
     m_Value: 0
---- !u!114 &-4151792930034644520
+--- !u!114 &-4235752104546974143
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -153,8 +153,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 953beb541740ddc499d005ee80c9ff29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name: Fog
+  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.Fog
   active: 1
   quality:
     m_OverrideState: 0
@@ -163,17 +163,17 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 1
   colorMode:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   color:
-    m_OverrideState: 1
-    m_Value: {r: 0.12, g: 0.13, b: 0.15, a: 1}
+    m_OverrideState: 0
+    m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   tint:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   maxFogDistance:
     m_OverrideState: 1
-    m_Value: 250
+    m_Value: 5000
   mipFogMaxMip:
     m_OverrideState: 0
     m_Value: 0.5
@@ -182,25 +182,25 @@ MonoBehaviour:
     m_Value: 0
   mipFogFar:
     m_OverrideState: 1
-    m_Value: 250
+    m_Value: 1000
   baseHeight:
     m_OverrideState: 1
-    m_Value: -5
+    m_Value: 0
   maximumHeight:
     m_OverrideState: 1
-    m_Value: 80
+    m_Value: 50
   meanFreePath:
     m_OverrideState: 1
-    m_Value: 60
+    m_Value: 400
   enableVolumetricFog:
     m_OverrideState: 1
     m_Value: 1
   albedo:
-    m_OverrideState: 1
-    m_Value: {r: 0.6, g: 0.6, b: 0.65, a: 1}
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
   globalLightProbeDimmer:
-    m_OverrideState: 1
-    m_Value: 0.4
+    m_OverrideState: 0
+    m_Value: 1
   depthExtent:
     m_OverrideState: 0
     m_Value: 64
@@ -208,8 +208,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 2
   anisotropy:
-    m_OverrideState: 1
-    m_Value: 0.7
+    m_OverrideState: 0
+    m_Value: 0
   sliceDistributionUniformity:
     m_OverrideState: 0
     m_Value: 0.75
@@ -280,12 +280,12 @@ MonoBehaviour:
   components:
   - {fileID: 1142777632297148762}
   - {fileID: -7724654706381055090}
-  - {fileID: -4151792930034644520}
   - {fileID: 7642060734654139733}
   - {fileID: -2485119560262601788}
   - {fileID: 1880163708194025631}
   - {fileID: 8761387877531654226}
   - {fileID: 2971271699305928673}
+  - {fileID: -4235752104546974143}
 --- !u!114 &1142777632297148762
 MonoBehaviour:
   m_ObjectHideFlags: 3
