@@ -2727,6 +2727,7 @@ GameObject:
   - component: {fileID: 4635031082180286097}
   - component: {fileID: 1037418769759406195}
   - component: {fileID: 3553770975128321018}
+  - component: {fileID: 7416052298043510912}
   m_Layer: 30
   m_Name: cape
   m_TagString: Untagged
@@ -8793,8 +8794,8 @@ Transform:
   m_GameObject: {fileID: 6401472820831536795}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: -0.5760049, y: 5.0438247, z: -0.710251}
-  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_LocalPosition: {x: -0.4610751, y: 5.3158913, z: -0.58570766}
+  m_LocalScale: {x: 80, y: 80, z: 80}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4480826866950703977}
@@ -11400,3 +11401,25 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8981835432554846973, guid: fcdcae5282448594986973d94fa41218, type: 3}
   m_PrefabInstance: {fileID: 1908108639145023334}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7416052298043510912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1419958668675534743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e013e28ba6ae4e3e8b93546e4f288024, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LucianCapeCollision
+  character: {fileID: 4641023323552581871}
+  pelvis: {fileID: 2759651146735456075}
+  chest: {fileID: 1334251019556523244}
+  leftThigh: {fileID: 7047110795495952358}
+  rightThigh: {fileID: 8521368563584684631}
+  leftCalf: {fileID: 4709708929356561635}
+  rightCalf: {fileID: 9076736979379609138}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 134219913
