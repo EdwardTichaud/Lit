@@ -5,6 +5,15 @@ using UnityEngine;
 // Utilitaires partages pour configurer un pickup simple dans le monde.
 public static class WorldPickupUtility
 {
+    /// <summary>Bind definition and world role without touching instance settings or stored state.</summary>
+    public static void ApplyWorldBinding(InteractableItem interaction, Item definition,
+        InteractableItem.InteractableCategory category)
+    {
+        if (interaction == null) return;
+        interaction.representedItem = definition;
+        interaction.interactableCategory = category;
+    }
+
     public static InteractableItem EnsurePickupInfrastructure(GameObject root)
     {
         if (root == null)
@@ -88,8 +97,8 @@ public static class WorldPickupUtility
         {
             new InteractableItem.LootItemEntry { item = item, quantity = clampedQuantity }
         };
-        container.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
-        container.representedItem = displayItem != null ? displayItem : item;
+        ApplyWorldBinding(container, displayItem != null ? displayItem : item,
+            InteractableItem.InteractableCategory.RecoverableItem);
         container.destroyWhenStorageEmpty = destroyWhenEmpty;
         container.allowTake = collectable;
 

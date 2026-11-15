@@ -1,3 +1,17 @@
+## Rencontre avec Munin (2026-11-15)
+
+L'instance `1_Munin_Meeting` dans `Maison_Core` porte le reglage d'assise pres
+du foyer. GameFlow la choisit apres placement de l'escouade lors de Nouvelle
+partie. La pose est maintenue jusqu'au lever de fin de sequence.
+Voir `systems/narrative.md`.
+
+## Placement des objets monde (2026-11-15)
+
+Bake Item avec usage explicite et lien conservé ; mise à jour sans
+reconstruction, audit en lecture seule et raccord assisté sur sélection.
+Les IDs historiques et les placements existants ne sont pas migrés en lot.
+Voir `systems/interactions_inventory.md`.
+
 ## Stabilisation Bootstrap / Maison / District 1 (2026-11-14)
 
 Camera UCC detachee avant la destruction ou le dechargement de sa cible ;
@@ -49,6 +63,31 @@ La capture montre encore une occlusion partielle du geste par le bord de table.
 Voir `systems/enola_knife_game.md`.
 
 ## Compétences d'exploration (2026-11-14)
+
+Caméra sur prise mobile : la pose continue passe par le mouvement UCC au
+lieu de repositionner le personnage comme une téléportation à chaque pas.
+
+Prise libre sur la poutre du Seuil : le balayage de la capsule remplace
+le filtre de paroi plane. Un contact ne déclenche la pose qu'après
+validation de quatre appuis atteignables. Les cibles d'animation suivent
+le support et les contrôles de collision sont conservés.
+Le magnétisme de flanc a une portée locale élargie ; depuis le dessus,
+Grimpeur peut pivoter et prendre appui à quatre pattes.
+
+Test solo Unity : cases par défaut modifiables en édition sur
+`GameplaySessionRoot/AbilitiesManager`, puis commandes temporaires en Play.
+Les déblocages de test ne sont pas sauvegardés ; le menu d'équipement en
+jeu reste réservé à la Maison.
+
+Menu d'équipement : Pause → Capacités est grisé et inaccessible hors
+Maison. Le panneau affiche l'état et l'action de chaque capacité ;
+équipement solo cumulable et échanges réseau inchangés.
+
+Correction du 15 : la poutre du Seuil accepte aussi la prise au contact d'un
+autre flanc, en utilisant la capsule UCC de Lucian. Recette solo isolée :
+aucune prise sans Grimpeur, prise sans appui au-delà de l'ancien rayon,
+animation et suivi du même flanc en mouvement
+(`PlayRuns/6e8cad7c2d8147868ee75b7c8d78a28f`).
 
 Poutre du Seuil : repères réorientés vers la face d'appui du pilier couché
 dans les Secrets, déclenchement automatique à 0,75 m avec Grimpeur équipé.

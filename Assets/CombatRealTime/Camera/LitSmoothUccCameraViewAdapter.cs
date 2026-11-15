@@ -69,6 +69,8 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     {
         var mode = GetComponent<LitGameplayCameraModeController>();
         if (mode != null && mode.isActiveAndEnabled && mode.HandleSnap(reason)) return true;
+        ResolveReferences();
+        if (cameraController == null || !cameraController.isActiveAndEnabled) return false;
         if (!InstallSmoothGameplayView() || cameraController == null)
         {
             return false;
@@ -158,7 +160,7 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (cameraController == null || cameraController.Character == null)
+        if (cameraController == null || !cameraController.isActiveAndEnabled || cameraController.Character == null)
         {
             return;
         }

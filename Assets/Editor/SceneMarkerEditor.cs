@@ -41,6 +41,7 @@ public sealed class SceneMarkerEditor : Editor
         if (assetType == SceneMarker.MarkerAssetType.Item)
         {
             EditorGUILayout.PropertyField(itemProperty, new GUIContent("Item"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("itemPlacement"), new GUIContent("Usage monde"));
         }
         else if (assetType == SceneMarker.MarkerAssetType.Ghost)
         {
@@ -71,11 +72,16 @@ public sealed class SceneMarkerEditor : Editor
 
         if (marker.UsesItem)
         {
-            EditorGUILayout.HelpBox(marker.Item == null
-                ? "Assigne un Item avant de baker le marker."
-                : "Bake in Scene instancie le World Prefab et configure l'objet interactif directement dans la scene.",
-                marker.Item == null ? MessageType.Info : MessageType.None);
-            DrawBakeButton(marker);
+            bool compatible = WorldItemAuthoring.TryCategory(marker.Item, marker.Placement, out _, out string reason);
+            EditorGUILayout.HelpBox(compatible
+                ? "Le bake conserve le marker et le lien vers l’instance. Une mise à jour ne recrée pas le prefab."
+                : reason, compatible ? MessageType.Info : MessageType.Warning);
+            if (marker.HasBakedItemLink)
+                using (new EditorGUI.DisabledScope(true))
+                    EditorGUILayout.ObjectField("Instance liée", marker.BakedItemInteraction, typeof(InteractableItem), true);
+            using (new EditorGUI.DisabledScope(!compatible || EditorApplication.isPlayingOrWillChangePlaymode))
+                if (GUILayout.Button(marker.HasBakedItemLink ? "Actualiser l’instance" : "Bake in Scene"))
+                    BakeItemMarker(marker);
         }
         else if (marker.UsesGhost)
         {
@@ -127,6 +133,7 @@ public sealed class SceneMarkerEditor : Editor
     {
         GameObject markerObject = new GameObject("ItemSceneMarker");
         GameObjectUtility.SetParentAndAlign(markerObject, command.context as GameObject);
+        WorldItemAuthoring.NameNewMarker(markerObject);
         Undo.RegisterCreatedObjectUndo(markerObject, "Create Item Scene Marker");
         SceneMarker marker = Undo.AddComponent<SceneMarker>(markerObject);
         marker.SetItem(null);
@@ -147,7 +154,8 @@ public sealed class SceneMarkerEditor : Editor
         GameObject root = legacy.gameObject;
         var data = new SerializedObject(legacy);
         int legacyType = data.FindProperty("assetType").enumValueIndex;
-        SceneMarker marker = root.GetComponent<SceneMarker>() ?? Undo.AddComponent<SceneMarker>(root);
+        if (root.GetComponent<SceneMarker>() != null) return;
+        SceneMarker marker = Undo.AddComponent<SceneMarker>(root);
         Undo.RecordObject(marker, "Migrate Scene Marker");
         if (legacyType == 2)
         {
@@ -162,7 +170,7 @@ public sealed class SceneMarkerEditor : Editor
             marker.SetItem(data.FindProperty("item").objectReferenceValue as Item);
         }
 
-        Undo.DestroyObjectImmediate(legacy);
+        // The historical component may still be referenced or contain unused authoring data.
         EditorUtility.SetDirty(marker);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
@@ -171,7 +179,9 @@ public sealed class SceneMarkerEditor : Editor
     [MenuItem("Lit/Scene Marker/Migrate Selected Legacy Item Marker", true)]
     private static bool CanMigrateSelectedLegacyItemMarker()
     {
-        return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent("ItemSceneMarker") != null;
+        return !EditorApplication.isPlayingOrWillChangePlaymode && Selection.activeGameObject != null &&
+            Selection.activeGameObject.GetComponent("ItemSceneMarker") != null &&
+            Selection.activeGameObject.GetComponent<SceneMarker>() == null;
     }
 
     private static void DrawBakeButton(SceneMarker marker)
@@ -289,42 +299,14 @@ public sealed class SceneMarkerEditor : Editor
 
     private static void BakeItemMarker(SceneMarker marker)
     {
-        GameObject prefab = marker.Item.ResolveWorldPrefab();
-        GameObject root = marker.gameObject;
-        GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;
-        if (instance == null)
+        bool firstBake = !marker.HasBakedItemLink;
+        if (!WorldItemAuthoring.TryBake(marker, out string reason))
         {
+            EditorUtility.DisplayDialog("Bake non appliqué", reason, "Fermer");
             return;
         }
-
-        Undo.RegisterCreatedObjectUndo(instance, "Bake Item Scene Marker");
-        instance.transform.SetParent(root.transform, false);
-        instance.transform.localPosition = Vector3.zero;
-        instance.transform.localRotation = prefab.transform.localRotation;
-        instance.transform.localScale = prefab.transform.localScale;
-        root.name = string.IsNullOrWhiteSpace(marker.Item.itemName) ? marker.Item.name : marker.Item.itemName;
-
-        NetworkObject networkObject = root.GetComponent<NetworkObject>();
-        if (networkObject == null)
-        {
-            networkObject = Undo.AddComponent<NetworkObject>(root);
-        }
-
-        InteractableItem interactable = root.GetComponent<InteractableItem>();
-        if (interactable == null)
-        {
-            interactable = Undo.AddComponent<InteractableItem>(root);
-        }
-
-        Undo.RecordObject(interactable, "Bake Item Scene Marker");
-        interactable.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
-        interactable.representedItem = marker.Item;
-        interactable.allowTake = true;
-        EditorUtility.SetDirty(interactable);
-        PromptToAddOutlineTargetIfMissing(root);
-        Undo.DestroyObjectImmediate(marker);
-        EditorSceneManager.MarkSceneDirty(root.scene);
-        Selection.activeGameObject = root;
+        if (firstBake) PromptToAddOutlineTargetIfMissing(marker.gameObject);
+        Selection.activeGameObject = marker.gameObject;
     }
 
     private static void BakeGhostMarker(SceneMarker marker)

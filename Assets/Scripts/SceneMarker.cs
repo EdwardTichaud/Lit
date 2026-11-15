@@ -27,9 +27,21 @@ public sealed class SceneMarker : MonoBehaviour
         AncientFlame = 4
     }
 
+    public enum ItemPlacement
+    {
+        Unspecified = 0,
+        Recoverable = 1,
+        Container = 2,
+        FixedDocument = 3
+    }
+
     [SerializeField] private MarkerAssetType assetType = MarkerAssetType.Character;
     [SerializeField] private CharacterData characterData;
     [SerializeField] private Item item;
+    [SerializeField] private ItemPlacement itemPlacement;
+    [SerializeField, HideInInspector] private InteractableItem bakedItemInteraction;
+    [SerializeField, HideInInspector] private GameObject bakedItemSourcePrefab;
+    [SerializeField, HideInInspector] private bool hasBakedItemLink;
     [SerializeField] private GhostData ghost;
     [Header("Flame")]
     [SerializeField] private GameObject flamePrefab;
@@ -51,6 +63,10 @@ public sealed class SceneMarker : MonoBehaviour
     private Coroutine navigationValidationRoutine;
     public CharacterData CharacterData => characterData;
     public Item Item => item;
+    public ItemPlacement Placement => itemPlacement;
+    public InteractableItem BakedItemInteraction => bakedItemInteraction;
+    public GameObject BakedItemSourcePrefab => bakedItemSourcePrefab;
+    public bool HasBakedItemLink => hasBakedItemLink;
     public GhostData Ghost => ghost;
     public GameObject FlamePrefab => flamePrefab;
     public MarkerAssetType AssetType => assetType;
@@ -122,6 +138,16 @@ public sealed class SceneMarker : MonoBehaviour
         assetType = MarkerAssetType.Item;
         item = value;
     }
+
+#if UNITY_EDITOR
+    public void SetBakedItemLink(InteractableItem interaction, GameObject sourcePrefab, ItemPlacement placement)
+    {
+        bakedItemInteraction = interaction;
+        bakedItemSourcePrefab = sourcePrefab;
+        itemPlacement = placement;
+        hasBakedItemLink = true;
+    }
+#endif
 
     public void SetGhost(GhostData value)
     {

@@ -23,6 +23,8 @@ public sealed class PlayerAnimationController : CharacterAnimationController
     private Lit.Traversal.ClingPoint localClingPoint;
     private readonly Lit.Traversal.ClingPoint.AnimatedContacts clingContacts = new();
     private Opsive.UltimateCharacterController.Character.CharacterIK suspendedClingIk;
+    internal bool CanPresentCling => animator != null && animator.isActiveAndEnabled &&
+        animator.isHuman && animator.HasState(0, ClingHoldState);
 
     public override void OnNetworkSpawn()
     {
@@ -57,7 +59,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         ApplyClingPose(current.Length > 0);
     }
 
-    private void OnAnimatorIK(int layerIndex)
+    internal void ApplyClingIK(int layerIndex)
     {
         if (layerIndex != 0 || !showingClingPose || animator == null ||
             !animator.isHuman || animator.IsInTransition(0) ||
@@ -81,6 +83,10 @@ public sealed class PlayerAnimationController : CharacterAnimationController
         clingContacts.point = null;
         if (value)
         {
+            // The Animator lives on the model; callback messages do not reach the player root.
+            if (!animator.TryGetComponent(out Lit.Traversal.ClingIkRelay clingRelay))
+                clingRelay = animator.gameObject.AddComponent<Lit.Traversal.ClingIkRelay>();
+            clingRelay.Owner = this;
             // UCC's ground solver competes for the same base-layer feet and pelvis.
             if (animator.TryGetComponent(out Opsive.UltimateCharacterController.Character.CharacterIK groundIk) && groundIk.enabled)
             {

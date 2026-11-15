@@ -1,5 +1,20 @@
 # Interactions et inventaire
 
+## Placement d’un Item dans le monde
+
+`Item` décrit l’objet ; `InteractableItem` conserve les réglages et l’état
+de son instance ; `SceneMarker` exprime l’usage du placement. Choisir
+`Recoverable`, `Container` ou `FixedDocument` avant un premier bake. Un
+livre ou parchemin peut être fixe ou lu puis emporté ; une stèle est fixe.
+Le bake crée un lien explicite et n’est jamais un spawn runtime. Relancer le
+bake n’écrase pas le contenu, les serrures, les pièges ni le modèle existant.
+
+`Lit → Objets monde → Auditer les assets et les scènes` écrit un rapport
+dans `Library/WorldItemAudit`. `Raccorder la sélection…` ajoute uniquement
+un lien après aperçu, sans rebake ni modification de l’identité. Les IDs
+historiques ambigus et les anciens composants sont conservés ; un nouveau
+placement demande un ID explicite et unique.
+
 Le coffre permanent de la Maison reste sélectionnable sans Flame ni torche.
 Sa racine porte le conteneur et le volume de détection ; le modèle enfant
 fournit le contour, pas une seconde interaction de stockage. L'ouverture

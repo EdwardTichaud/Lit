@@ -195,6 +195,11 @@ public static partial class BootstrapDistrictPlayProbe
                     Begin(false, limbesCycles: true);
                     if (report != null) { report.scope = "Saut de lumière: isolated solo with two real ladder endpoints."; Write(); }
                 }
+                else if (mode == "abilities-menu")
+                {
+                    Begin(false, limbesCycles: true);
+                    if (report != null) { report.scope = "Capacités: solo, in Maison and District_1."; Write(); }
+                }
                 else if (mode == "limbes-cling")
                 {
                     Begin(false, limbes: true, limbesCycles: true);
@@ -208,6 +213,15 @@ public static partial class BootstrapDistrictPlayProbe
                     if (report != null)
                     {
                         report.scope = "Focused presentation / arena portal: actual five cycles and portal; older branch walking fixture omitted.";
+                        Write();
+                    }
+                }
+                else if (mode == "munin-seated")
+                {
+                    Begin(false, preserveDomainSettings: true);
+                    if (report != null && !report.restored)
+                    {
+                        report.scope = "Munin seated opening";
                         Write();
                     }
                 }
@@ -285,6 +299,8 @@ public static partial class BootstrapDistrictPlayProbe
         if (report.courts && report.stage >= 160) { TickCourts(); return; }
         if (report.passageDiscovery && report.stage >= 140) { TickSecretPassageDiscovery(); return; }
         if (report.limbes && report.stage >= 60) { TickLimbes(); return; }
+        bool checkAbilitiesMenu = report.scope.StartsWith("Capacités:", StringComparison.Ordinal);
+        if (checkAbilitiesMenu && report.stage >= 670) { TickAbilitiesMenu(); return; }
         switch (report.stage)
         {
             case 0:
@@ -310,10 +326,27 @@ public static partial class BootstrapDistrictPlayProbe
                 Check(true, "Solo options selected through the production menu handler.");
                 menu.UI_NewGame(); Advance(3); return;
             case 3:
+                bool checkMuninSeat = report.scope == "Munin seated opening";
                 if (saves.HasActiveSave)
                 {
                     foreach (var runner in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceRunner>())
-                        if (runner.IsPlaying) typeof(Lit.Story.StorySequenceRunner).GetField("advanceRequested", Private).SetValue(runner, true);
+                    {
+                        if (!runner.IsPlaying) continue;
+                        if (checkMuninSeat && runner.Sequence.sequenceId == "1_Munin_Meeting" &&
+                            !report.checks.Contains("Lucian is seated during Munin's first dialogue."))
+                        {
+                            if (DialoguePanelUI.Instance?.dialogueText?.text?.Contains("Qui es-tu") != true ||
+                                !DialoguePanelUI.Instance.IsShowing) continue;
+                            var player = LocalPlayerContext.LocalCharacterRoot.GetComponent<SquadCharacterController>();
+                            var animator = player.GetComponent<CharacterAnimationController>()?.Animator;
+                            Check(player.IsSittingRequested && animator != null &&
+                                animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Sitting_Idle"),
+                                "Lucian is seated during Munin's first dialogue.");
+                            Check(runner.gameObject.scene.name == "Maison_Core",
+                                "Munin's opening runs from the authored Maison scene instance.");
+                        }
+                        typeof(Lit.Story.StorySequenceRunner).GetField("advanceRequested", Private).SetValue(runner, true);
+                    }
                     foreach (var prompt in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceNamePrompt>())
                         if (prompt.IsOpen)
                         {
@@ -322,9 +355,19 @@ public static partial class BootstrapDistrictPlayProbe
                         }
                 }
                 if (!ZoneReady("Assets/Scenes/Maison/ZoneManifest_Maison.asset") || !ControlReady(out var actor)) return;
+                if (checkMuninSeat)
+                {
+                    if (Lit.Story.StorySequenceRunner.IsAnySequencePlaying || actor.IsInSittingCycle) return;
+                    Check(report.checks.Contains("Lucian is seated during Munin's first dialogue."),
+                        "The real opening ran before exploration was restored.");
+                    Check(!actor.IsMovementInputSuppressed, "The stand-up releases movement after the opening.");
+                    Finish(true, "Munin's opening starts seated and restores exploration after the stand-up.");
+                    return;
+                }
                 Check(saves.HasActiveSave && saves.CurrentSessionType == SaveSessionType.Solo, "Actual menu created an isolated solo session and spawned the controlled avatar.");
                 Check(Camera.allCameras.Any(camera => camera.isActiveAndEnabled && camera.targetTexture == null), "A screen camera is enabled after Maison loading.");
-                  if (report.enola) { Advance(600); return; }
+                if (checkAbilitiesMenu) { Advance(670); return; }
+                if (report.enola) { Advance(600); return; }
                 if (report.fracture)
                 {
                     UsePortal(actor, AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset"));
@@ -360,6 +403,36 @@ public static partial class BootstrapDistrictPlayProbe
                 if (!ZoneReady("Assets/Scenes/Maison/ZoneManifest_District_1.asset") || !ControlReady(out _)) return;
                 Check(true, "All District_1 manifest scenes loaded, navigation ready, avatar grounded and exploration input restored.");
                 Check(Camera.allCameras.Any(camera => camera.isActiveAndEnabled && camera.targetTexture == null), "A screen camera is enabled after District_1 loading.");
+                if (checkAbilitiesMenu)
+                {
+                    var pause = PausePanelController.Instance;
+                    pause.OpenPanel();
+                    var entry = pause.pausePanel.GetComponentsInChildren<PauseCursorAction>(true).Single(a => a.name == "AbilitiesButton");
+                    Check(!AbilityService.Instance.IsInMaison() && !entry.IsAvailable && entry.GetComponent<CanvasGroup>().alpha < 1f &&
+                        !pause.cursorController.TrySetCurrentItem((RectTransform)entry.transform), "District: grayed entry cannot receive cursor selection.");
+                    pause.UI_OpenAbilitiesPanel();
+                    Check(!AbilityService.Instance.GetComponent<AbilitySelectionPanel>().IsOpen,
+                        "District: direct open is rejected.");
+                    var abilities = AbilityService.Instance;
+                    Check(abilities.transform.name == "AbilitiesManager" &&
+                        abilities.transform.parent.GetComponent<GameplaySessionRoot>() != null,
+                        "The active ability service lives on GameplaySessionRoot/AbilitiesManager.");
+                    var passage = abilities.Resolve("sauf_conduit");
+                    var controlled = LocalPlayerUtils.GetControlledCharacter();
+                    Check(!abilities.IsUnlocked(passage) && abilities.SetEditorTestAbility(passage, true) &&
+                        abilities.IsUnlocked(passage) && abilities.HasEquipped(controlled, passage),
+                        "A locked ability is unlocked and equipped for testing outside Maison.");
+                    var savedAbilities = abilities.Capture();
+                    Check(!savedAbilities.IsUnlocked(passage.abilityId) &&
+                        !savedAbilities.HasEquipped(AbilityService.SoloPlayerId, passage.abilityId),
+                        "The test override is not captured in the ability save state.");
+                    abilities.Restore(savedAbilities);
+                    Check(abilities.HasEquipped(controlled, passage) && abilities.SetEditorTestAbility(passage, false) &&
+                        !abilities.IsUnlocked(passage) && !abilities.HasEquipped(controlled, passage),
+                        "Restoring persistent state does not clear the test; stopping the test removes the override.");
+                    pause.ClosePanel();
+                    Finish(true, "Verified the abilities menu in Maison and District_1 with an isolated save."); return;
+                }
                 if (report.scope.StartsWith("Saut de lumière:", StringComparison.Ordinal)) { Advance(660); return; }
                 if (report.recovery)
                 {

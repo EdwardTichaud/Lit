@@ -41,6 +41,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Represented Item")]
     [Tooltip("Item represente par cet objet interactif pour le nom, l'icone, la description et le pickup monde.")]
     public Item representedItem;
+    public bool IsFixedWorldDocument => interactableCategory == InteractableCategory.ReadableItem;
 
     [Header("Stored Content")]
     [Tooltip("Contenu interne si cet objet interactif sert de container.")]
@@ -1126,7 +1127,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         OpenLoot();
     }
 
-    private void OpenReadableWorldItem()
+    private void OpenReadableWorldItem() => OpenReadableWorldItem(currentCharacter);
+
+    private void OpenReadableWorldItem(GameObject reader)
     {
         if (representedItem == null || !representedItem.IsReadable())
         {
@@ -1135,7 +1138,6 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         InventoryPanelController inventory = GetInventoryPanelController();
-        GameObject reader = currentCharacter;
         System.Action onTake = CanTakeWorldReadableAfterReading()
             ? () => TakeWorldReadableAfterReading(reader)
             : null;
@@ -2849,6 +2851,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void TakeAllItems()
     {
+        if (IsFixedWorldDocument) return;
         if (IsLockedForInteraction())
         {
             ShowActionFeedback(GetMissingKeyFeedback());
@@ -3048,7 +3051,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         NetworkInventory inventory,
         RpcParams rpcParams)
     {
-        if (controller == null || inventory == null)
+        if (IsFixedWorldDocument || controller == null || inventory == null)
         {
             return false;
         }
@@ -4178,11 +4181,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
                     return;
                 }
 
-                if (!TryTakeAllItemsForCharacterServer(playerRoot, controller, inventory, rpcParams)
-                    && interactableCategory == InteractableCategory.Container)
-                {
-                    OpenLootClientRpc(BuildClientRpcParams(rpcParams));
-                }
+                CompleteUnlockedInteractionServer(playerRoot, controller, inventory, rpcParams);
                 return;
             }
 
@@ -4246,11 +4245,29 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        if (!TryTakeAllItemsForCharacterServer(playerRoot, controller, inventory, rpcParams)
-            && interactableCategory == InteractableCategory.Container)
+        CompleteUnlockedInteractionServer(playerRoot, controller, inventory, rpcParams);
+    }
+
+    private void CompleteUnlockedInteractionServer(Transform playerRoot, SquadCharacterController controller,
+        NetworkInventory inventory, RpcParams rpcParams)
+    {
+        if (IsFixedWorldDocument || IsWorldReadableDocument())
+        {
+            if (CanInteractInCurrentInfluence()) OpenUnlockedReadableClientRpc(BuildClientRpcParams(rpcParams));
+            return;
+        }
+        if (!TryTakeAllItemsForCharacterServer(playerRoot, controller, inventory, rpcParams) &&
+            interactableCategory == InteractableCategory.Container)
         {
             OpenLootClientRpc(BuildClientRpcParams(rpcParams));
         }
+    }
+
+    [ClientRpc]
+    private void OpenUnlockedReadableClientRpc(ClientRpcParams rpcParams = default)
+    {
+        GameObject reader = LocalPlayerUtils.GetControlledCharacter();
+        if (reader != null) OpenReadableWorldItem(reader);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -4480,7 +4497,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestBreakServerRpc(string itemId, RpcParams rpcParams = default)
     {
-        if (string.IsNullOrWhiteSpace(itemId))
+        if (IsFixedWorldDocument || string.IsNullOrWhiteSpace(itemId))
         {
             return;
         }

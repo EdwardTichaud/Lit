@@ -169,7 +169,7 @@ public class BuilderController : NetworkBehaviour
     private bool useSelfTriggerEvents;
     private LocalVoiceLineController voiceLineController;
     private float nextVoiceLineTime;
-    private Maison cachedMaison;
+    private MaisonChest cachedMaison;
     private readonly Dictionary<string, string> lastRequirementAnalysisLogs = new Dictionary<string, string>();
     private bool isNotifyingBuildingsChanged;
     private bool pendingBuildingsChangedNotification;
@@ -2995,7 +2995,7 @@ public class BuilderController : NetworkBehaviour
 
     private List<InteractableItem> ResolveHomeContainers()
     {
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison == null)
         {
             return null;
@@ -3119,23 +3119,23 @@ public class BuilderController : NetworkBehaviour
         return string.Join(",", entries);
     }
 
-    private Maison GetMaison()
+    private MaisonChest GetMaison()
     {
         if (cachedMaison != null)
         {
             return cachedMaison;
         }
 
-        cachedMaison = Maison.Instance;
+        cachedMaison = MaisonChest.Instance;
         if (cachedMaison != null)
         {
             return cachedMaison;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindAnyObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<MaisonChest>();
 #else
-        cachedMaison = FindAnyObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<MaisonChest>();
 #endif
 
         return cachedMaison;
@@ -3166,7 +3166,7 @@ public class BuilderController : NetworkBehaviour
 
     private string GetMaisonChestTag()
     {
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison != null && !string.IsNullOrWhiteSpace(maison.maisonChestTag))
         {
             return maison.maisonChestTag;
@@ -3182,7 +3182,7 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison != null)
         {
             maison.EnsureHomeChestDefaults(container);

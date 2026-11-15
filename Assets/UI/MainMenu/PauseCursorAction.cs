@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -24,6 +25,31 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
 
     private RectTransform rectTransform;
     private int lastExecutionFrame = -1;
+    private CanvasGroup availabilityGroup;
+    private TMP_Text availabilityText;
+    private string availableLabel;
+    private string disabledReason;
+    public bool IsAvailable { get; private set; } = true;
+
+    internal bool SetAvailability(bool available, string reason)
+    {
+        if (availabilityGroup == null)
+        {
+            if (!TryGetComponent(out availabilityGroup)) availabilityGroup = gameObject.AddComponent<CanvasGroup>();
+            availabilityText = GetComponentInChildren<TMP_Text>(true);
+            availableLabel = availabilityText != null ? availabilityText.text : null;
+        }
+        else if (IsAvailable == available && (available || disabledReason == reason)) return false;
+
+        IsAvailable = available;
+        disabledReason = reason;
+        availabilityGroup.alpha = available ? 1f : .5f;
+        availabilityGroup.interactable = available;
+        availabilityGroup.blocksRaycasts = available;
+        if (availabilityText != null)
+            availabilityText.text = available ? availableLabel : availableLabel + " — " + reason;
+        return true;
+    }
 
     private void Awake()
     {
@@ -76,7 +102,7 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
 
     private void Execute()
     {
-        if (!isActiveAndEnabled || lastExecutionFrame == Time.frameCount)
+        if (!IsAvailable || !isActiveAndEnabled || lastExecutionFrame == Time.frameCount)
         {
             return;
         }
@@ -132,6 +158,7 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
 
     private void SyncSharedCursor()
     {
+        if (!IsAvailable) return;
         CursorController sharedCursor = cursorLink != null ? cursorLink.Cursor : controller != null ? controller.cursorController : null;
         if (sharedCursor == null || rectTransform == null)
         {

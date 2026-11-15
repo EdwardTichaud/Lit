@@ -38,6 +38,7 @@ namespace Lit.Story
         private bool previousUccHandlerEnabled;
         private bool previousUccBinderEnabled;
         private bool[] previousAdditionalEnabled;
+        private LitGameplayCameraModeController suspendedGameplayMode;
 
         public bool IsCinematicActive => cinematicActive;
         public float RemainingTransitionTime => transitioning
@@ -60,6 +61,11 @@ namespace Lit.Story
             previousUccControllerEnabled = uccCameraController != null && uccCameraController.enabled;
             previousUccHandlerEnabled = uccCameraHandler != null && uccCameraHandler.enabled;
             previousUccBinderEnabled = uccCameraBinder != null && uccCameraBinder.enabled;
+            if (previousUccControllerEnabled)
+            {
+                suspendedGameplayMode = uccCameraController.GetComponent<LitGameplayCameraModeController>();
+                suspendedGameplayMode?.BeginExternalControl();
+            }
 
             if (additionalGameplayCameraBehaviours != null)
             {
@@ -158,6 +164,9 @@ namespace Lit.Story
             {
                 uccCameraController.enabled = previousUccControllerEnabled;
             }
+
+            suspendedGameplayMode?.EndExternalControl();
+            suspendedGameplayMode = null;
 
             if (uccCameraHandler != null)
             {

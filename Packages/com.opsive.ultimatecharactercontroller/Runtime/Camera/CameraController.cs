@@ -920,6 +920,11 @@ namespace Opsive.UltimateCharacterController.Camera
         /// <param name="snapAnimator">Should the animator be snapped?</param>
         private void OnImmediateTransformChange(bool snapAnimator)
         {
+            // The event subscription survives OnDisable. An external camera
+            // owner may be driving the output while the character is repositioned.
+            if (!isActiveAndEnabled || m_SimulationIndex < 0) {
+                return;
+            }
             PositionImmediately(snapAnimator);
         }
 

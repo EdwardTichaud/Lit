@@ -330,11 +330,11 @@ public sealed class CycleProgressionService : MonoBehaviour
     }
     private void DepositMailbox()
     {
-        if (Maison.Instance == null) return;
+        if (MaisonChest.Instance == null) return;
         var mailbox = ReadMailbox();
         if (mailbox.rewardKeys.Count == 0) return;
-        var containers = Maison.Instance.ResolveMaisonLootContainers(null);
-        Maison.Instance.EnsureHomeContainers(containers);
+        var containers = MaisonChest.Instance.ResolveMaisonLootContainers(null);
+        MaisonChest.Instance.EnsureHomeContainers(containers);
         bool changed = false;
         for (int i = mailbox.rewardKeys.Count - 1; i >= 0; i--)
         {

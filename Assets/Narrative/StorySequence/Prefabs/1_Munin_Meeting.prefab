@@ -130,6 +130,7 @@ MonoBehaviour:
   sequence: {fileID: 11400000, guid: a455ec891c2e47fe990773f795b9a1d9, type: 2}
   playOnStart: 0
   startDelay: 0
+  startWithLocalPlayerSeated: 0
   bindings: {fileID: 0}
   cameraDriver: {fileID: 0}
   dialoguePresenter: {fileID: 0}

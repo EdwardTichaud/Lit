@@ -222,13 +222,13 @@ public sealed class CycleProgressionTests
         var item = ScriptableObject.CreateInstance<Item>();
         var homeRoot = new GameObject("Isolated cycle reward chest");
         homeRoot.SetActive(false);
-        var instance = typeof(Maison).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
-        var previousHome = Maison.Instance;
+        var instance = typeof(MaisonChest).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        var previousHome = MaisonChest.Instance;
         try
         {
             var chest = homeRoot.AddComponent<InteractableItem>();
             chest.maxStoredQuantity = 2;
-            var home = homeRoot.AddComponent<Maison>();
+            var home = homeRoot.AddComponent<MaisonChest>();
             home.maisonChestTag = string.Empty;
             home.maisonLootContainer = chest;
             instance.SetValue(null, home);

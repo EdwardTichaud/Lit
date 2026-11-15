@@ -795,6 +795,52 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return TryBeginScriptedTraversal(out _);
     }
 
+    private Lit.Traversal.ClingCarryAbility clingCarryAbility;
+    internal bool IsCarriedByCling => IsScriptedTraversalActive && clingCarryAbility != null && clingCarryAbility.IsActive;
+
+    internal bool TryBeginClingCarry(Pose initialPose, Lit.Traversal.ClingCarryAbility.PoseSource source)
+    {
+        if (!TryBeginScriptedTraversal(out _)) return false;
+        if (clingCarryAbility == null)
+        {
+            // Install after the traversal lock has disabled regular gameplay abilities.
+            clingCarryAbility = new Lit.Traversal.ClingCarryAbility();
+            var abilities = locomotion.Abilities ?? System.Array.Empty<Ability>();
+            var expanded = new Ability[abilities.Length + 1];
+            System.Array.Copy(abilities, expanded, abilities.Length);
+            expanded[abilities.Length] = clingCarryAbility;
+            locomotion.Abilities = expanded;
+        }
+        clingCarryAbility.Enabled = true;
+        clingCarryAbility.Source = source;
+        if (!locomotion.TryStartAbility(clingCarryAbility))
+        {
+            EndClingCarry();
+            return false;
+        }
+        ApplyScriptedTraversalPose(initialPose.position, initialPose.rotation);
+        // A continuous traversal must not reapply the initial snap on release.
+        scriptedTraversalPoseActive = false;
+        return true;
+    }
+
+    internal void EndClingCarry()
+    {
+        StopClingCarryMotion();
+        scriptedTraversalPoseActive = false;
+        EndScriptedTraversal();
+    }
+
+    private void StopClingCarryMotion()
+    {
+        if (clingCarryAbility != null)
+        {
+            clingCarryAbility.Source = null;
+            if (locomotion != null && clingCarryAbility.IsActive) locomotion.TryStopAbility(clingCarryAbility, true);
+            clingCarryAbility.Enabled = false;
+        }
+    }
+
     /// <summary>
     /// Starts a traversal lock while exposing why UCC rejected it.
     /// </summary>
@@ -904,6 +950,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     /// </summary>
     public void ClearTransientLocksForSceneTransition()
     {
+        StopClingCarryMotion();
         ReleaseTargetCollisionBypasses();
         ResolveReferences();
 
@@ -1380,6 +1427,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        StopClingCarryMotion();
         measuredCombatResponse.Reset();
         RestoreActionTakeoff();
         ReleaseTargetCollisionBypasses();

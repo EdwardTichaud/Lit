@@ -7,6 +7,51 @@ public sealed class AbilitySystemTests
     public void AuthoringPersistenceAndSingleSlotContract() => Assert.DoesNotThrow(() => AbilitySystemValidation.Validate());
 
     [Test]
+    public void SessionPrefabAuthorsOneAbilityServiceOnAbilitiesManager()
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(
+            "Assets/Core/System/GameplaySessionRoot.prefab");
+        Assert.That(prefab, Is.Not.Null);
+        var manager = prefab.transform.Find("AbilitiesManager");
+        Assert.That(manager, Is.Not.Null);
+        var services = prefab.GetComponentsInChildren<AbilityService>(true);
+        Assert.That(services.Length, Is.EqualTo(1));
+        Assert.That(services[0].transform, Is.EqualTo(manager));
+        Assert.That(manager.gameObject.activeSelf && services[0].enabled, Is.True);
+    }
+
+    [Test]
+    public void AuthoredTestDefaultsInitializeSeparatelyFromSavedAbilities()
+    {
+        Assert.That(AbilityService.Instance, Is.Null);
+        var root = new UnityEngine.GameObject("Ability defaults fixture");
+        root.SetActive(false);
+        try
+        {
+            var service = root.AddComponent<AbilityService>();
+            var climber = UnityEditor.AssetDatabase.LoadAssetAtPath<AbilitySO>("Assets/Resources/Abilities/Ability_Grimpeur.asset");
+            Assert.That(climber, Is.Not.Null);
+            var properties = new UnityEditor.SerializedObject(service);
+            var defaults = properties.FindProperty("editorTestDefaults");
+            defaults.arraySize = 1;
+            defaults.GetArrayElementAtIndex(0).objectReferenceValue = climber;
+            properties.ApplyModifiedPropertiesWithoutUndo();
+
+            const System.Reflection.BindingFlags member = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(AbilityService).GetMethod("Initialize", member).Invoke(service, null);
+            var active = (System.Collections.Generic.HashSet<AbilitySO>)typeof(AbilityService)
+                .GetField("editorTestAbilities", member).GetValue(service);
+            Assert.That(active, Does.Contain(climber));
+            Assert.That(service.CanEditTestAbilities, Is.False, "Edit-time configuration is not live equipment.");
+            Assert.That(service.Capture().IsUnlocked(climber.abilityId), Is.False);
+            active.Clear();
+            properties.Update();
+            Assert.That(defaults.GetArrayElementAtIndex(0).objectReferenceValue, Is.EqualTo(climber));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    [Test]
     public void RejectedEquipDoesNotReplaceCurrentAbility()
     {
         var model = new AbilitySaveData(); model.Unlock("observateur"); model.Equip("alice", "observateur");

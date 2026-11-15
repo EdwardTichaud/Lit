@@ -21,6 +21,9 @@ public static partial class BootstrapDistrictPlayProbe
     private static void EquipSecretAbility(bool traversal)
     {
         var abilities = AbilityService.Ensure();
+        // The saved fixture must define the full loadout, even when the
+        // editor prefab grants test capabilities independently of saves.
+        foreach (var entry in abilities.Catalog) abilities.SetEditorTestAbility(entry, false);
         var ability = AssetDatabase.LoadAssetAtPath<AbilitySO>("Assets/Resources/Abilities/Ability_" + (traversal ? "SaufConduit" : "Observateur") + ".asset");
         var state = abilities.Capture(); state.Unlock(ability.abilityId); state.Equip(AbilityService.SoloPlayerId, ability.abilityId); abilities.Restore(state);
     }

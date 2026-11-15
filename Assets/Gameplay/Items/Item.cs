@@ -1182,7 +1182,7 @@ public class Item : ScriptableObject
     /// </summary>
     public bool CanDepositToContainer(InteractableItem container, out string reason)
     {
-        if (!allowDepositToContainers)
+        if (!allowDepositToContainers || container != null && container.IsFixedWorldDocument)
         {
             reason = ResolveMessage(cannotDepositMessage, DefaultCannotDepositMessage);
             return false;
@@ -1205,7 +1205,7 @@ public class Item : ScriptableObject
     /// </summary>
     public bool CanTakeFromContainer(InteractableItem container, out string reason)
     {
-        if (!allowTakeFromContainers)
+        if (!allowTakeFromContainers || container != null && container.IsFixedWorldDocument)
         {
             string fallback = DefaultCannotTakeMessage;
             string custom = !string.IsNullOrWhiteSpace(cannotTakeMessage) ? cannotTakeMessage : cannotPickupMessage;

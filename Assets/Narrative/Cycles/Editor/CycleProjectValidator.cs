@@ -50,8 +50,8 @@ public sealed class CycleProjectValidator : IPreprocessBuildWithReport
         // Inspect serialized component references, not every prefab's imported
         // hierarchy. Loading the entire asset library here also loads its meshes,
         // materials and editor callbacks, unrelated to this authoring gate.
-        string maisonScriptGuid = AssetDatabase.FindAssets("Maison t:MonoScript")
-            .FirstOrDefault(guid => AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(guid))?.GetClass() == typeof(Maison));
+        string maisonScriptGuid = AssetDatabase.FindAssets("MaisonChest t:MonoScript")
+            .FirstOrDefault(guid => AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(guid))?.GetClass() == typeof(MaisonChest));
         bool HasMaisonScript(string guid)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -61,7 +61,7 @@ public sealed class CycleProjectValidator : IPreprocessBuildWithReport
         bool hasMaison = AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }).Any(HasMaisonScript) ||
             AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" }).Any(HasMaisonScript);
         if (!hasMaison)
-            issues.Add("Aucun composant Maison trouve pour le coffre de recompenses.");
+            issues.Add("Aucun composant MaisonChest trouve pour le coffre de recompenses.");
         return issues;
     }
 }

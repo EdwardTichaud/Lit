@@ -13,8 +13,14 @@ namespace Lit.Traversal
         private bool holding;
         private bool launching;
         private float grabAllowedAt;
-        private Vector3 lastPosition;
-        private Quaternion lastRotation;
+        private bool carryBlocked;
+        private Vector3 supportLocalPosition;
+        private Vector3 supportLocalForward;
+        private Vector3 supportLocalNormal;
+        internal Collider HeldSurface { get; private set; }
+        internal ClingGripTargets Targets { get; private set; }
+        internal Vector3 HeldNormal => HeldSurface != null ?
+            HeldSurface.transform.TransformDirection(supportLocalNormal).normalized : -transform.forward;
         private Coroutine holdRoutine;
         internal bool CanStart => !holding && !launching && Time.unscaledTime >= grabAllowedAt;
 
@@ -27,14 +33,30 @@ namespace Lit.Traversal
         internal bool Begin(ClingPoint target)
         {
             actor = GetComponent<SquadCharacterController>();
-            if (!CanStart || target == null || !ClingController.CanPlay || !target.CanGrab(actor, true, out Pose pose)) return false;
+            if (!CanStart || target == null || !ClingController.CanPlay ||
+                !target.TryResolveGrab(actor, true, out Pose pose, out Collider surface, out Vector3 normal,
+                    out ClingGripTargets targets)) return false;
             bridge = GetComponent<LitOpsiveLocomotionBridge>();
-            GetComponent<PlayerScriptedJumpController>()?.EndPresentationForCling();
-            if (bridge == null || !bridge.TryBeginScriptedTraversal(out _)) return false;
+            if (TryGetComponent(out PlayerScriptedJumpController jump)) jump.EndPresentationForCling();
+            if (bridge == null) return false;
             animationController = GetComponent<PlayerAnimationController>();
             point = target;
+            HeldSurface = surface;
+            Targets = targets;
+            var support = surface.transform;
+            supportLocalPosition = support.InverseTransformPoint(pose.position);
+            supportLocalForward = support.InverseTransformDirection(pose.rotation * Vector3.forward);
+            supportLocalNormal = support.InverseTransformDirection(normal);
             holding = true;
-            ApplyPose(pose);
+            carryBlocked = false;
+            if (!bridge.TryBeginClingCarry(pose, TryResolveCarryPose))
+            {
+                holding = false;
+                point = null;
+                HeldSurface = null;
+                Targets = default;
+                return false;
+            }
             actor.HideLocalInteractionPresentation();
             animationController?.SetClingPose(true, point);
             holdRoutine = StartCoroutine(MaintainHold());
@@ -46,35 +68,39 @@ namespace Lit.Traversal
             var fixedStep = new WaitForFixedUpdate();
             while (holding)
             {
-                // Submit alongside other scripted traversals: after UCC's fixed
-                // tick, before its render interpolation and Animator IK.
                 yield return fixedStep;
-                if (!CanContinue() || !bridge.IsScriptedTraversalActive || point == null)
-                    break;
-                Physics.SyncTransforms();
-                if (!point.TryGetHoldPose(actor, out Pose pose))
-                    break;
-                bool gripMoved = PoseChanged(lastPosition, lastRotation, pose);
-                bool actorMoved = PoseChanged(transform.position, transform.rotation, pose);
-                // The support already moved to its next pose. Still check the final capsule
-                // against it; sweep against other obstacles rather than against its motion.
-                if ((gripMoved || actorMoved) && !ClingPoint.IsClear(transform.position, pose, actor, point.SupportSurface))
-                    break;
-                if (gripMoved || actorMoved) ApplyPose(pose);
+                // Release only outside the UCC ability iteration.
+                if (carryBlocked || !CanContinue() || !bridge.IsCarriedByCling) break;
             }
             holdRoutine = null;
             Release();
         }
 
+        private bool TryResolveCarryPose(Vector3 position, Quaternion rotation, out Pose pose)
+        {
+            pose = default;
+            if (carryBlocked || !CanContinue() || point == null || !point.isActiveAndEnabled ||
+                HeldSurface == null || !HeldSurface.enabled || !HeldSurface.gameObject.activeInHierarchy)
+            {
+                carryBlocked = true;
+                return false;
+            }
+            Physics.SyncTransforms();
+            if (point.GrabAlongSurface)
+            {
+                var support = HeldSurface.transform;
+                Vector3 facing = Vector3.ProjectOnPlane(support.TransformDirection(supportLocalForward), Vector3.up);
+                if (facing.sqrMagnitude < .1f) { carryBlocked = true; return false; }
+                pose = new Pose(support.TransformPoint(supportLocalPosition), Quaternion.LookRotation(facing, Vector3.up));
+            }
+            else if (!point.TryGetHoldPose(actor, out pose)) { carryBlocked = true; return false; }
+            // Keep the existing final overlap and sweep before submitting motion to UCC.
+            carryBlocked = PoseChanged(position, rotation, pose) && !ClingPoint.IsClear(position, pose, actor, HeldSurface);
+            return !carryBlocked;
+        }
+
         internal static bool PoseChanged(Vector3 position, Quaternion rotation, Pose pose) =>
             (position - pose.position).sqrMagnitude > .000001f || Quaternion.Angle(rotation, pose.rotation) > .1f;
-
-        private void ApplyPose(Pose pose)
-        {
-            lastPosition = pose.position;
-            lastRotation = pose.rotation;
-            bridge.ApplyScriptedTraversalPose(pose.position, pose.rotation);
-        }
 
         private bool CanContinue()
         {
@@ -89,10 +115,13 @@ namespace Lit.Traversal
         {
             if (launching) return true;
             if (!holding || !ClingController.CanPlay || !CanContinue() || point == null) return false;
-            Vector3 velocity = point.JumpVelocity(actor.GetWorldSpaceInput(LocalInputRouter.MoveValue), -transform.forward);
+            Vector3 normal = HeldNormal;
+            Vector3 velocity = point.JumpVelocity(actor.GetWorldSpaceInput(LocalInputRouter.MoveValue), normal);
+            if (normal.y < -.3f)
+                velocity += normal * Mathf.Max(0f, 1.5f - Vector3.Dot(velocity, normal));
             Vector3 direction = Vector3.ProjectOnPlane(velocity, Vector3.up);
             if (direction.sqrMagnitude > .001f)
-                ApplyPose(new Pose(transform.position, Quaternion.LookRotation(direction)));
+                bridge.ApplyScriptedTraversalPose(transform.position, Quaternion.LookRotation(direction));
             Release();
             launching = true;
             StartCoroutine(JumpAfterRelease(velocity));
@@ -116,8 +145,10 @@ namespace Lit.Traversal
             if (holdRoutine != null) StopCoroutine(holdRoutine);
             holdRoutine = null;
             point = null;
+            HeldSurface = null;
+            Targets = default;
             grabAllowedAt = Time.unscaledTime + .45f;
-            if (bridge != null && bridge.isActiveAndEnabled) bridge.EndScriptedTraversal();
+            if (bridge != null && bridge.isActiveAndEnabled) bridge.EndClingCarry();
             animationController?.SetClingPose(false);
         }
 

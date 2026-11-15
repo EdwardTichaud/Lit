@@ -454,8 +454,9 @@ public static class NetcodePrefabRegistry
 
     private static GameObject CreateItemInstance(ItemSpawnInfo info, bool withLootContainer, Vector3 position, Quaternion rotation, Transform parent)
     {
+        if (info == null) return null;
         GameObject instance = null;
-        if (info != null && info.sourcePrefab != null)
+        if (info.sourcePrefab != null)
         {
             instance = parent != null
                 ? Object.Instantiate(info.sourcePrefab, position, rotation, parent)
@@ -477,6 +478,7 @@ public static class NetcodePrefabRegistry
         if (withLootContainer)
         {
             InteractableItem container = WorldPickupUtility.EnsurePickupInfrastructure(instance);
+            WorldPickupUtility.ApplyWorldBinding(container, info.item, InteractableItem.InteractableCategory.RecoverableItem);
             // The remote prefab handler must expose the same snapshot provider
             // as the server, before the late-join snapshot can be applied.
             NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(container.gameObject);

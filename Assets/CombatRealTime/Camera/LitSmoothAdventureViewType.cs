@@ -69,7 +69,15 @@ public class LitSmoothAdventureViewType : Adventure
         public CameraSnapReason Reason;
     }
 
-    private bool IsAirborne => m_CharacterLocomotion != null && !m_CharacterLocomotion.Grounded;
+    private LitOpsiveLocomotionBridge characterBridge;
+    private bool IsAirborne => m_CharacterLocomotion != null && !m_CharacterLocomotion.Grounded &&
+        (characterBridge == null || !characterBridge.IsCarriedByCling);
+
+    public override void AttachCharacter(GameObject character)
+    {
+        characterBridge = character != null ? character.GetComponent<LitOpsiveLocomotionBridge>() : null;
+        base.AttachCharacter(character);
+    }
 
     /// <summary>Copies only UCC gameplay-view presentation, never follow damping.</summary>
     public void CopyGameplaySettingsFrom(ThirdPerson source)

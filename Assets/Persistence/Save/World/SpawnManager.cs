@@ -592,15 +592,6 @@ public class SpawnManager : MonoBehaviour
             }
 
             GameObject created = NetcodePrefabRegistry.SpawnItemInstance(item, true, snapshot.Transform.Position, snapshot.Transform.Rotation);
-            InteractableItem lootContainer = created != null
-                ? (created.GetComponent<InteractableItem>() ?? created.GetComponentInChildren<InteractableItem>(true))
-                : null;
-            if (lootContainer != null)
-            {
-                lootContainer.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
-                lootContainer.representedItem = item;
-            }
-
             instance = created != null ? NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(created) : null;
             PersistentWorldDebug.Log(
                 $"spawn missing runtime objects instantiated dropped-loot persistentId='{snapshot.PersistentId}' prefab='{runtimePrefabId}'",

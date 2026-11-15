@@ -58,7 +58,7 @@ public class SquadManager : MonoBehaviour
     [Tooltip("Nom du spawn point Maison.")]
     public string maisonSpawnPointName = "Maison_SpawnPoint";
     [Tooltip("Reference au composant Maison (auto-resolve si null).")]
-    public Maison maison;
+    public MaisonChest maison;
 
     [Header("Runtime Clones")]
     [SerializeField, Tooltip("Clone les CharacterData a l'execution pour ne pas modifier les assets.")]
@@ -239,9 +239,9 @@ public class SquadManager : MonoBehaviour
         ApplyPendingRoster();
         EnsureRuntimeSquad();
         KeepOnlyControlledSoloCharacterForDirectSceneStart();
-        // Maison initializes its containers in Awake; district-only sessions
+        // The home chest registers on enable; district-only sessions
         // do not require home storage merely to initialize the squad.
-        Maison maisonComponent = GetMaison(false);
+        MaisonChest maisonComponent = GetMaison(false);
         if (maisonComponent != null)
         {
             maisonComponent.EnsureHomeContainers(maisonComponent.ResolveMaisonLootContainers(null));
@@ -988,9 +988,7 @@ public class SquadManager : MonoBehaviour
             return scene.name == flow.HubSceneName;
         }
 
-        Maison maisonComponent = Maison.Instance;
-        return maisonComponent != null
-            && scene == maisonComponent.gameObject.scene;
+        return scene.IsValid() && (scene.name == "Maison_Core" || scene.name == "Maison");
     }
 
     private static bool TryTeleportCharacterForSceneTransition(GameObject instance, Vector3 position, Quaternion rotation)
@@ -2546,7 +2544,7 @@ public class SquadManager : MonoBehaviour
 
         if (removedData != null)
         {
-            Maison maisonComponent = GetMaison();
+            MaisonChest maisonComponent = GetMaison();
             if (maisonComponent != null)
             {
                 List<InteractableItem> homeContainers = maisonComponent.ResolveMaisonLootContainers(homeLootContainer);
@@ -2633,7 +2631,7 @@ public class SquadManager : MonoBehaviour
 
         if (oldInstance != null)
         {
-            Maison maisonComponent = GetMaison();
+            MaisonChest maisonComponent = GetMaison();
             if (maisonComponent != null)
             {
                 List<InteractableItem> homeContainers = maisonComponent.ResolveMaisonLootContainers(null);
@@ -2675,7 +2673,7 @@ public class SquadManager : MonoBehaviour
 
         if (oldInstance != null)
         {
-            Maison maisonComponent = GetMaison();
+            MaisonChest maisonComponent = GetMaison();
             if (maisonComponent != null)
             {
                 maisonComponent.TransferNonFlameItemsToHome(oldInstance, maisonComponent.ResolveMaisonLootContainers(null));
@@ -3332,20 +3330,20 @@ public class SquadManager : MonoBehaviour
         return ui;
     }
 
-    private Maison GetMaison(bool required = true)
+    private MaisonChest GetMaison(bool required = true)
     {
         if (maison != null)
         {
             return maison;
         }
 
-        maison = Maison.Instance;
+        maison = MaisonChest.Instance;
         if (maison == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            maison = FindAnyObjectByType<Maison>();
+            maison = FindAnyObjectByType<MaisonChest>();
 #else
-            maison = FindAnyObjectByType<Maison>();
+            maison = FindAnyObjectByType<MaisonChest>();
 #endif
         }
 

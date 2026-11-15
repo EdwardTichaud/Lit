@@ -15,6 +15,7 @@ namespace Lit.Story
             public string actorId;
             public StorySequenceActor presentationPrefab;
             public Transform waitingPoint;
+            [Min(0)] public int waitingPointIndex;
             [NonSerialized] public StorySequenceActor instance;
         }
 
@@ -25,6 +26,7 @@ namespace Lit.Story
         [SerializeField, Min(0.1f)] private float maximumHeightDifference = 1.5f;
         private bool ready;
         private float nextCheck;
+        private string HubSceneName => GameFlowService.Instance != null ? GameFlowService.Instance.HubSceneName : "Maison_Core";
 
         public Companion[] Companions => companions;
 
@@ -32,6 +34,7 @@ namespace Lit.Story
         {
             EnsurePresentations();
             yield return LoadingScreenService.WaitUntilHidden();
+            EnsurePresentations();
             ready = true;
         }
 
@@ -40,12 +43,16 @@ namespace Lit.Story
             if (bindings == null) return;
             foreach (var companion in companions)
             {
-                if (companion == null || companion.presentationPrefab == null || companion.waitingPoint == null)
+                if (companion == null || companion.presentationPrefab == null)
                     continue;
                 if (companion.instance == null)
                 {
+                    Transform point = companion.waitingPoint;
+                    if (point == null && companion.waitingPointIndex > 0 &&
+                        !MaisonWaitingPoint.TryGetPoint(companion.waitingPointIndex, out point)) continue;
+                    if (point == null) continue;
                     companion.instance = Instantiate(companion.presentationPrefab,
-                        companion.waitingPoint.position, companion.waitingPoint.rotation, transform);
+                        point.position, point.rotation, transform);
                     companion.instance.name = companion.actorId + "_Maison";
                 }
                 bindings.BindRuntimeActor(companion.actorId, companion.instance);
@@ -60,7 +67,7 @@ namespace Lit.Story
                 StorySequenceRunner.IsAnySequencePlaying || LoadingScreenService.IsLoading ||
                 InputModeCoordinator.IsGameplayBlocked ||
                 (GameFlowService.Instance != null && GameFlowService.Instance.IsTransitioning) ||
-                SceneManager.GetActiveScene() != gameObject.scene ||
+                SceneManager.GetActiveScene().name != HubSceneName ||
                 StorySequenceCompletionStore.IsCompleted(runner.Sequence)) return;
 
             Transform player = LocalPlayerContext.LocalCharacterRoot;

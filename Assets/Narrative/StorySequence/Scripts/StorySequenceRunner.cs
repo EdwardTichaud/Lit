@@ -17,6 +17,8 @@ namespace Lit.Story
         [SerializeField] private StorySequenceAsset sequence;
         [SerializeField] private bool playOnStart = true;
         [SerializeField, Min(0f)] private float startDelay;
+        [SerializeField, Tooltip("Place le personnage local en pose assise avant le fondu d'ouverture et le fait se lever au retour au jeu.")]
+        private bool startWithLocalPlayerSeated;
 
         [Header("References")]
         [SerializeField] private StorySequenceSceneBindings bindings;
@@ -34,6 +36,7 @@ namespace Lit.Story
         private Coroutine playbackRoutine;
         private Coroutine deferredPlaybackRoutine;
         private SquadCharacterController lockedPlayerController;
+        private SquadCharacterController seatedOpeningPlayer;
         private bool playerLockHeld;
         private LitOpsiveLocomotionBridge.ExternalLockHandle playerLock;
         private bool advanceRequested;
@@ -208,10 +211,32 @@ namespace Lit.Story
             {
                 AcquirePlayerLock(activeSequence);
             }
-            cameraDriver?.BeginCinematic();
+            // Dialogue without an authored shot (for example Munin in Maison)
+            // keeps the gameplay camera. The first actual shot acquires it.
 
+            if (startWithLocalPlayerSeated)
+            {
+                double deadline = Time.realtimeSinceStartupAsDouble + 2;
+                while (Time.realtimeSinceStartupAsDouble < deadline)
+                {
+                    var root = LocalPlayerContext.LocalCharacterRoot;
+                    var player = root != null ? root.GetComponent<SquadCharacterController>() : null;
+                    if (player != null && player.TrySetSittingImmediate(holdUntilStandUp: true))
+                    {
+                        seatedOpeningPlayer = player;
+                        break;
+                    }
+
+                    yield return null;
+                }
+                if (seatedOpeningPlayer == null)
+                    Debug.LogWarning($"StorySequenceRunner: pose assise indisponible pour '{activeSequence.name}'.", this);
+            }
+
+            int openingShotIndex = -1;
             if (activeSequence.startFromBlack)
             {
+                openingShotIndex = PrepareOpeningShot(activeSequence);
                 yield return fadeController.FadeTo(
                     0f,
                     activeSequence.openingFadeDuration,
@@ -231,7 +256,7 @@ namespace Lit.Story
                     currentStepSkippable = step.skippable;
                     currentStepStartedFrame = Time.frameCount;
                     advanceRequested = false;
-                    yield return ExecuteStep(step, activeSequence.useUnscaledTime);
+                    yield return ExecuteStep(step, activeSequence.useUnscaledTime, cameraPrepared: i == openingShotIndex);
                     if (stepFailed) { FinishPlayback(completed: false); yield break; }
                     if (deferPlayerLock &&
                         step.type == StorySequenceStepType.ProgressivePlayerStop &&
@@ -275,7 +300,37 @@ namespace Lit.Story
             FinishPlayback(completed: true);
         }
 
-        private IEnumerator ExecuteStep(StorySequenceStep step, bool useUnscaledTime)
+        // Only pre-stage the first nonempty step. Do not jump over authored
+        // waits, Timelines or events to reach a later camera instruction.
+        private int PrepareOpeningShot(StorySequenceAsset activeSequence)
+        {
+            if (cameraDriver == null || activeSequence.steps == null) return -1;
+            for (int i = 0; i < activeSequence.steps.Count; i++)
+            {
+                var step = activeSequence.steps[i];
+                if (step == null) continue;
+                if (step.type == StorySequenceStepType.CameraShot)
+                {
+                    var point = bindings.ResolveCameraPoint(step.cameraPointId);
+                    if (point != null)
+                    {
+                        cameraDriver.SetCameraPoint(point, 0f);
+                        return cameraDriver.IsCinematicActive ? i : -1;
+                    }
+                }
+                else if (step.type != StorySequenceStepType.Dialogue || !step.focusCameraOnSpeaker) return -1;
+
+                var actor = bindings.ResolveActor(step.actorId);
+                if (actor == null) return -1;
+                var profile = step.type == StorySequenceStepType.Dialogue && step.dialogueCameraProfile != null
+                    ? step.dialogueCameraProfile : step.cameraProfile;
+                cameraDriver.SetActorShot(actor, bindings.ResolveActor(step.listenerId), profile, 0f);
+                return cameraDriver.IsCinematicActive ? i : -1;
+            }
+            return -1;
+        }
+
+        private IEnumerator ExecuteStep(StorySequenceStep step, bool useUnscaledTime, bool cameraPrepared = false)
         {
             PlayStepOneShots(step);
 
@@ -290,11 +345,11 @@ namespace Lit.Story
                     break;
 
                 case StorySequenceStepType.Dialogue:
-                    yield return ExecuteDialogue(step, useUnscaledTime);
+                    yield return ExecuteDialogue(step, useUnscaledTime, cameraPrepared);
                     break;
 
                 case StorySequenceStepType.CameraShot:
-                    yield return ExecuteCameraShot(step, useUnscaledTime);
+                    yield return ExecuteCameraShot(step, useUnscaledTime, cameraPrepared);
                     break;
 
                 case StorySequenceStepType.Wait:
@@ -404,7 +459,7 @@ namespace Lit.Story
             }
         }
 
-        private IEnumerator ExecuteDialogue(StorySequenceStep step, bool useUnscaledTime)
+        private IEnumerator ExecuteDialogue(StorySequenceStep step, bool useUnscaledTime, bool cameraPrepared)
         {
             StorySequenceActor actor = bindings.ResolveActor(step.actorId);
             StorySequenceActor listener = bindings.ResolveActor(step.listenerId);
@@ -415,7 +470,7 @@ namespace Lit.Story
                     this);
             }
 
-            if (step.focusCameraOnSpeaker && actor != null)
+            if (!cameraPrepared && step.focusCameraOnSpeaker && actor != null)
             {
                 StorySequenceCameraProfile profile = step.dialogueCameraProfile != null
                     ? step.dialogueCameraProfile
@@ -443,8 +498,13 @@ namespace Lit.Story
                 speaker);
         }
 
-        private IEnumerator ExecuteCameraShot(StorySequenceStep step, bool useUnscaledTime)
+        private IEnumerator ExecuteCameraShot(StorySequenceStep step, bool useUnscaledTime, bool cameraPrepared)
         {
+            if (cameraPrepared)
+            {
+                yield return WaitSkippable(step.cameraHoldDuration > 0f ? step.cameraHoldDuration : step.cameraTransitionDuration, useUnscaledTime);
+                yield break;
+            }
             StorySequenceCameraPoint point = bindings.ResolveCameraPoint(step.cameraPointId);
             if (point != null)
             {
@@ -785,6 +845,10 @@ namespace Lit.Story
 
         private void ReleasePlayerControl()
         {
+            if (seatedOpeningPlayer != null)
+                seatedOpeningPlayer.TrySetSitting(false);
+            seatedOpeningPlayer = null;
+
             if (playerLockHeld && lockedPlayerController != null)
             {
                 playerLock?.Dispose();

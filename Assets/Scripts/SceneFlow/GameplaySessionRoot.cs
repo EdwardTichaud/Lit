@@ -10,6 +10,6 @@ public sealed class GameplaySessionRoot : MonoBehaviour
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
-        AbilityService.Ensure();
+        AbilityService.EnsureForSession(transform);
     }
 }

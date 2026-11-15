@@ -97,7 +97,7 @@ public class CraftingConstructionPanel : MonoBehaviour
     private bool pendingRebuildSlots;
 
     private readonly List<GameObject> requirementSlots = new List<GameObject>();
-    private Maison cachedMaison;
+    private MaisonChest cachedMaison;
 
     public bool IsOpen => panelOpen;
 
@@ -1061,7 +1061,7 @@ public class CraftingConstructionPanel : MonoBehaviour
             return null;
         }
 
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison == null)
         {
             return null;
@@ -1073,7 +1073,7 @@ public class CraftingConstructionPanel : MonoBehaviour
 
     private List<InteractableItem> ResolveHomeContainersForOutput()
     {
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison == null)
         {
             return null;
@@ -1091,7 +1091,7 @@ public class CraftingConstructionPanel : MonoBehaviour
             return false;
         }
 
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison != null)
         {
             maison.EnsureHomeContainers(containers);
@@ -1209,23 +1209,23 @@ public class CraftingConstructionPanel : MonoBehaviour
         return quantity - remaining;
     }
 
-    private Maison GetMaison()
+    private MaisonChest GetMaison()
     {
         if (cachedMaison != null)
         {
             return cachedMaison;
         }
 
-        cachedMaison = Maison.Instance;
+        cachedMaison = MaisonChest.Instance;
         if (cachedMaison != null)
         {
             return cachedMaison;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindAnyObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<MaisonChest>();
 #else
-        cachedMaison = FindAnyObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<MaisonChest>();
 #endif
 
         return cachedMaison;

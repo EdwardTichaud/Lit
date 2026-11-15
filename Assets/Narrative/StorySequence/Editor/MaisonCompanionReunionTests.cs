@@ -140,6 +140,7 @@ public sealed class MaisonCompanionReunionTests
     [Test] public void MaisonHasOneExplicitlyConfiguredGroupWithThreeDistinctWaitingPoints()
     {
         var scene = EditorSceneManager.OpenPreviewScene(MaisonCompanionReunionAuthoring.ScenePath);
+        var core = EditorSceneManager.OpenPreviewScene("Assets/Scenes/Maison/Maison_Core.unity");
         var previousMark = StorySequenceCompletionStore.MarkCompletedOverride;
         bool marked = false;
         StorySequenceCompletionStore.MarkCompletedOverride = _ => marked = true;
@@ -149,8 +150,12 @@ public sealed class MaisonCompanionReunionTests
             Assert.That(groups.Length, Is.EqualTo(1));
             var reunion = groups[0];
             Assert.That(reunion.Companions.Length, Is.EqualTo(3));
-            Assert.That(reunion.Companions.All(c => c.presentationPrefab != null && c.waitingPoint != null), Is.True);
-            Assert.That(reunion.Companions.Select(c => c.waitingPoint).Distinct().Count(), Is.EqualTo(3));
+            Assert.That(reunion.Companions.All(c => c.presentationPrefab != null), Is.True);
+            CollectionAssert.AreEquivalent(new[] { 2, 3, 4 }, reunion.Companions.Select(c => c.waitingPointIndex).ToArray());
+            var points = core.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<MaisonWaitingPoint>(true)).ToArray();
+            // Preview scenes do not initialise the runtime waiting-point registry.
+            foreach (var companion in reunion.Companions)
+                companion.waitingPoint = points.Single(p => p.waitingIndex == companion.waitingPointIndex).transform;
             Assert.That(new SerializedObject(reunion.GetComponent<StorySequenceRunner>()).FindProperty("playOnStart").boolValue, Is.False);
             reunion.EnsurePresentations();
             var initial = reunion.Companions.Select(c => c.instance).ToArray();
@@ -166,6 +171,7 @@ public sealed class MaisonCompanionReunionTests
         finally
         {
             StorySequenceCompletionStore.MarkCompletedOverride = previousMark;
+            EditorSceneManager.ClosePreviewScene(core);
             EditorSceneManager.ClosePreviewScene(scene);
         }
     }

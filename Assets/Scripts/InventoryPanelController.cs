@@ -197,7 +197,7 @@ public class InventoryPanelController : MonoBehaviour
     private bool restoreActionBoxOnNextOpen;
     private int restoreActionBoxIndex = -1;
     private Coroutine placementFeedbackRoutine;
-    private Maison cachedMaison;
+    private MaisonChest cachedMaison;
     private CursorController disabledCursorController;
     private bool disabledCursorControllerWasEnabled;
     private bool disabledCursorControllerAllowInput;
@@ -4016,7 +4016,7 @@ public class InventoryPanelController : MonoBehaviour
             return null;
         }
 
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison == null)
         {
             return null;
@@ -4071,23 +4071,23 @@ public class InventoryPanelController : MonoBehaviour
         return quantity - remaining;
     }
 
-    private Maison GetMaison()
+    private MaisonChest GetMaison()
     {
         if (cachedMaison != null)
         {
             return cachedMaison;
         }
 
-        cachedMaison = Maison.Instance;
+        cachedMaison = MaisonChest.Instance;
         if (cachedMaison != null)
         {
             return cachedMaison;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindAnyObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<MaisonChest>();
 #else
-        cachedMaison = FindAnyObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<MaisonChest>();
 #endif
 
         return cachedMaison;
@@ -4374,7 +4374,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private string GetMaisonChestTag()
     {
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison != null && !string.IsNullOrWhiteSpace(maison.maisonChestTag))
         {
             return maison.maisonChestTag;
@@ -4390,7 +4390,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Maison maison = GetMaison();
+        MaisonChest maison = GetMaison();
         if (maison != null)
         {
             maison.EnsureHomeChestDefaults(container);

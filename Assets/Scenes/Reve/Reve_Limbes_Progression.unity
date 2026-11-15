@@ -923,118 +923,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1169471706205790329, guid: 4df4ccf053027c24ca7a66dbe1210e36, type: 3}
   m_PrefabInstance: {fileID: 324977493}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &336324678
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 336324679}
-  - component: {fileID: 336324682}
-  - component: {fileID: 336324681}
-  - component: {fileID: 336324680}
-  m_Layer: 0
-  m_Name: Terrasse_du_souvenir_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &336324679
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 336324678}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.24641648, z: -0, w: 0.969164}
-  m_LocalPosition: {x: -106.02, y: 19.79, z: 72.63}
-  m_LocalScale: {x: 12, y: 0.8, z: 12}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1779997360}
-  m_LocalEulerAnglesHint: {x: 0, y: -28.531, z: 0}
---- !u!23 &336324680
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 336324678}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: eb805dc75b120f143a9ce7f19ac2f43e, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &336324681
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 336324678}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &336324682
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 336324678}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &352161620
 GameObject:
   m_ObjectHideFlags: 0
@@ -2924,6 +2812,10 @@ MonoBehaviour:
   assetType: 3
   characterData: {fileID: 0}
   item: {fileID: 0}
+  itemPlacement: 0
+  bakedItemInteraction: {fileID: 0}
+  bakedItemSourcePrefab: {fileID: 0}
+  hasBakedItemLink: 0
   ghost: {fileID: 0}
   flamePrefab: {fileID: 5560443018987116452, guid: 749962eb3d59df241a8ffe95d4bff10b, type: 3}
   flameStartsLit: 0
@@ -3470,6 +3362,10 @@ MonoBehaviour:
   assetType: 0
   characterData: {fileID: 11400000, guid: 231dc3906034d1740ab9438b2459489f, type: 2}
   item: {fileID: 0}
+  itemPlacement: 0
+  bakedItemInteraction: {fileID: 0}
+  bakedItemSourcePrefab: {fileID: 0}
+  hasBakedItemLink: 0
   ghost: {fileID: 0}
   flamePrefab: {fileID: 0}
   flameStartsLit: 0
@@ -4693,7 +4589,6 @@ Transform:
   m_Children:
   - {fileID: 1494649629}
   - {fileID: 174959829}
-  - {fileID: 336324679}
   - {fileID: 586166515}
   - {fileID: 1517205053}
   - {fileID: 43649623}

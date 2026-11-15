@@ -593,10 +593,16 @@ Luc suit le meme socle que Nina, sans flags historiques car son ancien flux n'en
 
 ## Rencontre Munin apres la video de nouvelle partie
 
+Dans `Maison_Core`, l'instance `1_Munin_Meeting` active l'option
+`Start With Local Player Seated`. Lucian utilise le point de depart pres
+du foyer et entre dans `Sitting_Idle` sous le fondu d'ouverture. Il se leve
+apres les repliques et le choix du nom, puis recupere le mouvement.
+
 Asset : Narrative/StorySequence/Sequences/1_Munin_Meeting.asset, rig homonyme
-sous Prefabs reference par MainMenu. Nouvelle partie queue ce rig ; GameFlow
+sous Prefabs reference par MainMenu. Nouvelle partie queue la rencontre ; GameFlow
 consomme une fois la demande, prepare Maison/navigation/personnages et place
-l'escouade avant de l'instancier sous GameplaySessionRoot. PlayAfterLoading
+l'escouade avant de lancer le rig correspondant dans la scene chargee.
+L'instanciation sous GameplaySessionRoot reste le secours sans rig local. PlayAfterLoading
 attend la disparition du loading. Annulation/retour menu nettoient l'attente et
 la demande ; Charger et les portails n'en creent pas. Presentation locale au
 createur seulement ; pas de nouveau protocole reseau narratif.

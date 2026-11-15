@@ -16,6 +16,7 @@ public sealed class MaisonChestTests
         Assert.That(prefab, Is.Not.Null);
         var container = prefab.GetComponent<InteractableItem>();
         Assert.That(container, Is.Not.Null);
+        Assert.That(prefab.GetComponent<MaisonChest>().maisonLootContainer, Is.SameAs(container));
         Assert.That(container.interactableCategory, Is.EqualTo(InteractableItem.InteractableCategory.Container));
         Assert.That(container.allowTake, Is.True);
         Assert.That(container.destroyWhenStorageEmpty || container.isLocked || container.isTrapped, Is.False);
@@ -29,6 +30,28 @@ public sealed class MaisonChestTests
         Assert.That(item, Is.Not.Null);
         Assert.That(item.isHomeChest && item.isContainer, Is.True);
         Assert.That(item.isBuilding || item.canPlace || item.canBreak, Is.False);
+    }
+
+    [Test]
+    public void HomeStorageAdapterDoesNotOverrideContainerSettings()
+    {
+        var root = new GameObject("Custom home container");
+        root.SetActive(false);
+        try
+        {
+            var container = root.AddComponent<InteractableItem>();
+            container.maxStoredQuantity = 0;
+            container.allowTake = true;
+            var chest = root.AddComponent<MaisonChest>();
+            chest.maisonLootContainer = container;
+            chest.maisonChestTag = string.Empty;
+            var available = chest.ResolveMaisonLootContainers(container);
+            CollectionAssert.AreEqual(new[] { container }, available);
+            chest.EnsureHomeContainers(available);
+            Assert.That(container.maxStoredQuantity, Is.Zero, "Zero is a valid unlimited Container capacity.");
+            Assert.That(container.allowTake, Is.True);
+        }
+        finally { Object.DestroyImmediate(root); }
     }
 
     [Test]

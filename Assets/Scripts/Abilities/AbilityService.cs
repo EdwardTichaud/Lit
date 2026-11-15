@@ -14,6 +14,11 @@ public sealed class AbilityService : MonoBehaviour
     public static AbilityService Instance { get; private set; }
     private AbilitySaveData state = new AbilitySaveData();
     private readonly List<AbilitySO> catalog = new List<AbilitySO>();
+#if UNITY_EDITOR
+    [SerializeField] private List<AbilitySO> editorTestDefaults = new List<AbilitySO>();
+    private readonly HashSet<AbilitySO> editorTestAbilities = new HashSet<AbilitySO>();
+    public bool CanEditTestAbilities => Application.isPlaying && Instance == this && IsSolo && Authority;
+#endif
     private NetworkManager network;
     private bool registered, receivedState;
     private float nextRefresh, nextSyncRequest;
@@ -32,11 +37,35 @@ public sealed class AbilityService : MonoBehaviour
         if (Instance != null) return Instance;
         return new GameObject("AbilityService").AddComponent<AbilityService>();
     }
-    private void Awake()
+    internal static AbilityService EnsureForSession(Transform sessionRoot)
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Transform manager = sessionRoot.Find("AbilitiesManager");
+        if (manager == null)
+        {
+            manager = new GameObject("AbilitiesManager").transform;
+            manager.SetParent(sessionRoot, false);
+        }
+        if (Instance == null)
+        {
+            if (!manager.TryGetComponent(out AbilityService authored))
+                return manager.gameObject.AddComponent<AbilityService>();
+            // The root can awaken before its authored child.
+            authored.Initialize();
+            return authored;
+        }
+        // A legacy caller may have initialized a standalone service first. Keep its state.
+        if (Instance.transform.parent == null)
+            Instance.transform.SetParent(manager, false);
+        return Instance;
+    }
+    private void Awake() => Initialize();
+
+    private void Initialize()
+    {
+        if (Instance == this) return;
+        if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
-        if (Application.isPlaying) DontDestroyOnLoad(gameObject);
+        if (Application.isPlaying && transform.parent == null) DontDestroyOnLoad(gameObject);
         foreach (var ability in Resources.LoadAll<AbilitySO>("Abilities"))
         {
             if (ability == null || string.IsNullOrWhiteSpace(ability.abilityId)) continue;
@@ -44,6 +73,11 @@ public sealed class AbilityService : MonoBehaviour
             catalog.Add(ability);
         }
         catalog.Sort((a, b) => string.CompareOrdinal(a.abilityId, b.abilityId));
+#if UNITY_EDITOR
+        editorTestAbilities.Clear();
+        foreach (var ability in editorTestDefaults)
+            if (ability != null && catalog.Contains(ability)) editorTestAbilities.Add(ability);
+#endif
         RefreshUnlocks();
         if (Application.isPlaying)
         {
@@ -67,17 +101,43 @@ public sealed class AbilityService : MonoBehaviour
         PublishIfChanged();
     }
     public AbilitySO Resolve(string id) => catalog.Find(a => a.abilityId == id || a.legacySkillId == id);
-    public bool IsUnlocked(AbilitySO ability) => ability != null && state.IsUnlocked(ability.abilityId);
+    public bool IsUnlocked(AbilitySO ability) => ability != null && (state.IsUnlocked(ability.abilityId) || IsTestAbilityActive(ability));
     public AbilitySO Equipped(string playerId)
     {
         if (string.IsNullOrWhiteSpace(playerId) || !IsReady) return null;
         var equipped = Resolve(state.Equipped(playerId));
         if (IsUnlocked(equipped)) return equipped;
+#if UNITY_EDITOR
+        if (playerId == SoloPlayerId && CanEditTestAbilities) return catalog.Find(IsTestAbilityActive);
+#endif
         return null;
     }
-    public bool IsEquipped(string playerId, AbilitySO ability) => IsReady && ability != null && state.HasEquipped(playerId, ability.abilityId);
+    public bool IsEquipped(string playerId, AbilitySO ability) => IsReady && ability != null &&
+        (state.HasEquipped(playerId, ability.abilityId) || playerId == SoloPlayerId && IsTestAbilityActive(ability));
     public bool IsSolo => NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening;
     public IReadOnlyList<AbilitySO> EquippedAbilities(string playerId) => catalog.FindAll(a => IsEquipped(playerId, a));
+
+    internal bool IsTestAbilityActive(AbilitySO ability)
+    {
+#if UNITY_EDITOR
+        return CanEditTestAbilities && editorTestAbilities.Contains(ability);
+#else
+        return false;
+#endif
+    }
+
+#if UNITY_EDITOR
+    // The editor override is deliberately not part of AbilitySaveData or wire messages.
+    public bool SetEditorTestAbility(AbilitySO ability, bool active)
+    {
+        if (!CanEditTestAbilities || ability == null || !catalog.Contains(ability)) return false;
+        bool changed = active ? editorTestAbilities.Add(ability) : editorTestAbilities.Remove(ability);
+        if (changed) Changed?.Invoke();
+        return changed;
+    }
+
+    public bool HasEditorTestAbility(AbilitySO ability) => IsTestAbilityActive(ability);
+#endif
 
     private void RefreshDistribution()
     {
@@ -135,9 +195,12 @@ public sealed class AbilityService : MonoBehaviour
         string home = flow != null ? flow.HubSceneName : "Maison_Core";
         return scene == home || scene == "Maison" || scene == "Maison_Core";
     }
+    public bool CanOpenEquipmentMenu => IsReady && IsInMaison() && LocalPlayerUtils.GetControlledCharacter() != null;
+
     public bool RequestEquip(AbilitySO ability)
     {
-        if (ability == null || !IsReady || !IsInMaison()) return false;
+        if (ability == null || !CanOpenEquipmentMenu || !IsUnlocked(ability) || IsTestAbilityActive(ability) ||
+            string.IsNullOrWhiteSpace(LocalPlayerId)) return false;
         if (!Authority)
         {
             if (!registered) return false;
@@ -183,7 +246,7 @@ public sealed class AbilityService : MonoBehaviour
     {
         if (!Authority) return;
         foreach (var ability in catalog)
-            if (!IsUnlocked(ability) && ability.CanUnlockFromProgression()) Unlock(ability, !ability.availableAtStart);
+            if (!state.IsUnlocked(ability.abilityId) && ability.CanUnlockFromProgression()) Unlock(ability, !ability.availableAtStart);
     }
     public AbilitySaveData Capture()
     {

@@ -107,7 +107,7 @@ piliers et débris flottants entourent un cœur lumineux. Les modules restent de
 instances de `ModularDungeonCollection`, sans modification de leurs sources.
 Sept Flames communes éclairent les postes d'interaction.
 
-L'accès est créé dans `Assets/Scenes/Maison/Maison_AccesReve.unity`, près de
+L'accès se trouve dans `Assets/Scenes/Maison/Maison_Interactives.unity`, près de
 l'arrivée Maison, à environ `(3.03, -0.55, 5.99)`. La recherche native a vérifié
 un sol physique et un volume libre ; aucune navigation Maison préconstruite
 n'étant assignée au manifeste, elle n'a pas prouvé le chemin d'approche complet.

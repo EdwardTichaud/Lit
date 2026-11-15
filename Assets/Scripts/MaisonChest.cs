@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Gere le stockage maison (coffres, capacite, transfert d'items).
+// Relie le Container de Maison aux transferts et aux recompenses de cycle.
 [DisallowMultipleComponent]
-public class Maison : MonoBehaviour
+[RequireComponent(typeof(InteractableItem))]
+public sealed class MaisonChest : MonoBehaviour
 {
-    public static Maison Instance { get; private set; }
+    private static readonly List<MaisonChest> active = new();
+    public static MaisonChest Instance { get; private set; }
 
     [Header("Maison - Stockage")]
     [Tooltip("Coffre maison principal.")]
@@ -14,18 +16,17 @@ public class Maison : MonoBehaviour
     public string maisonChestTag = "MaisonChest";
     [Tooltip("Capacite max par coffre maison.")]
     public int maisonChestCapacity = 100;
-    [Tooltip("Force les coffres maison en non-collectables.")]
-    public bool forceMaisonChestNonCollectable = true;
-
-    private void Awake()
+    private void OnEnable()
     {
-        if (Instance != null && Instance != this)
-        {
-            return;
-        }
+        if (maisonLootContainer == null) maisonLootContainer = GetComponent<InteractableItem>();
+        active.Add(this);
+        if (Instance == null) Instance = this;
+    }
 
-        Instance = this;
-        EnsureHomeContainers(ResolveMaisonLootContainers(null));
+    private void OnDisable()
+    {
+        active.Remove(this);
+        if (Instance == this) Instance = active.Count > 0 ? active[0] : null;
     }
 
     public List<InteractableItem> ResolveMaisonLootContainers(InteractableItem preferred)
@@ -77,15 +78,11 @@ public class Maison : MonoBehaviour
             return;
         }
 
-        if (container.maxStoredQuantity <= 0 && maisonChestCapacity > 0)
+        if (container != maisonLootContainer && container.maxStoredQuantity <= 0 && maisonChestCapacity > 0)
         {
             container.maxStoredQuantity = maisonChestCapacity;
         }
 
-        if (forceMaisonChestNonCollectable)
-        {
-            container.allowTake = false;
-        }
     }
 
     public bool TransferNonFlameItemsToHome(GameObject character, List<InteractableItem> homeLootContainers)

@@ -510,6 +510,11 @@ public class CursorController : MonoBehaviour
             return false;
         }
 
+        if (rect.TryGetComponent(out PauseCursorAction pauseAction) && !pauseAction.IsAvailable)
+        {
+            return false;
+        }
+
         return PassesItemFilter(rect);
     }
 

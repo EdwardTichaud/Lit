@@ -91,6 +91,7 @@ public class PausePanelController : MonoBehaviour
     private bool audioOptionsOpen;
     private bool knowledgePanelOpen;
     private AbilitySelectionPanel activeAbilityPanel;
+    private PauseCursorAction abilitiesAction;
     private RectTransform pauseCursorItemsParent;
     private LayoutGroup pauseCursorLayoutGroup;
     private CursorController.ItemFilter pauseCursorItemFilter;
@@ -182,6 +183,8 @@ public class PausePanelController : MonoBehaviour
         {
             return;
         }
+
+        if (isOpen) RefreshAbilitiesAccess();
 
         if (panelState == PanelState.Opening && panelCanvasGroup.alpha >= 0.999f)
         {
@@ -367,7 +370,7 @@ public class PausePanelController : MonoBehaviour
         return menuScene.IsValid() && menuScene.isLoaded;
     }
 
-    private bool HasPauseInputFocus()
+    internal bool HasPauseInputFocus()
     {
         if (!InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
         {
@@ -397,6 +400,7 @@ public class PausePanelController : MonoBehaviour
         ApplyCursorSizing(true);
 
         pausePanel.SetActive(true);
+        RefreshAbilitiesAccess();
         ResolveStaticAudioOptions();
         SetKnowledgePanelVisible(false, true);
         SetAudioOptionsOpen(false, false);
@@ -576,9 +580,10 @@ public class PausePanelController : MonoBehaviour
 
     public void UI_OpenAbilitiesPanel()
     {
-        if (!isOpen || knowledgePanelOpen || activeAbilityPanel != null || !HasPauseInputFocus()) return;
+        if (!isOpen || audioOptionsOpen || knowledgePanelOpen || activeAbilityPanel != null || !HasPauseInputFocus()) return;
         AbilityService service = AbilityService.Instance;
-        AbilitySelectionPanel panel = service != null ? service.GetComponent<AbilitySelectionPanel>() : null;
+        if (service == null || !service.CanOpenEquipmentMenu) return;
+        AbilitySelectionPanel panel = service.GetComponent<AbilitySelectionPanel>();
         if (panel == null || !panel.OpenFromPause(this)) return;
         activeAbilityPanel = panel;
         panel.Closed += OnAbilitiesPanelClosed;
@@ -781,6 +786,16 @@ public class PausePanelController : MonoBehaviour
         ConfigurePauseAction("QuitButton", PauseCursorAction.PauseAction.Quit);
     }
 
+    private void RefreshAbilitiesAccess()
+    {
+        if (abilitiesAction == null) return;
+        var service = AbilityService.Instance;
+        bool inMaison = service != null && service.IsInMaison();
+        if (abilitiesAction.SetAvailability(service != null && service.CanOpenEquipmentMenu,
+                inMaison ? "Chargement…" : "À la Maison uniquement"))
+            cursorController?.Refresh();
+    }
+
     private void ConfigurePauseAction(string objectName, PauseCursorAction.PauseAction action)
     {
         Transform target = FindInHierarchy(pausePanel != null ? pausePanel.transform : null, objectName);
@@ -796,6 +811,7 @@ public class PausePanelController : MonoBehaviour
         }
 
         cursorAction.Configure(this, action);
+        if (action == PauseCursorAction.PauseAction.Abilities) abilitiesAction = cursorAction;
     }
 
     private void EnsureRuntimeAudioOptions()

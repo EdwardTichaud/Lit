@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 public static class MaisonCompanionReunionAuthoring
 {
     public const string Folder = "Assets/Narrative/StorySequence/MaisonReunion";
-    public const string ScenePath = "Assets/Scenes/Maison/Maison_Core.unity";
+    public const string ScenePath = "Assets/Scenes/Maison/Maison_Sequences.unity";
     public const string SequencePath = Folder + "/Maison_Companions_Reunion.asset";
     private const string Request = "Library/MaisonCompanionReunion/Install.request";
     static MaisonCompanionReunionAuthoring() => EditorApplication.update += Poll;
@@ -27,7 +27,7 @@ public static class MaisonCompanionReunionAuthoring
         try
         {
             Install();
-            File.WriteAllText("Library/MaisonCompanionReunion/Install.result", "PASS: content installed in Maison_Core.");
+            File.WriteAllText("Library/MaisonCompanionReunion/Install.result", "PASS: content installed in Maison_Sequences.");
         }
         catch (Exception exception)
         {
@@ -40,7 +40,7 @@ public static class MaisonCompanionReunionAuthoring
     {
         Scene scene = SceneManager.GetSceneByPath(ScenePath);
         bool opened = !scene.IsValid() || !scene.isLoaded;
-        if (!opened && scene.isDirty) throw new InvalidOperationException("Maison_Core is dirty; save it before installation.");
+        if (!opened && scene.isDirty) throw new InvalidOperationException("Maison_Sequences is dirty; save it before installation.");
         if (opened) scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
         try
         {
@@ -72,19 +72,16 @@ public static class MaisonCompanionReunionAuthoring
             properties.FindProperty("bindings").objectReferenceValue = bindings;
             var entries = properties.FindProperty("companions");
             entries.arraySize = names.Length;
-            var points = scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<MaisonWaitingPoint>(true)).ToArray();
             for (int i = 0; i < names.Length; i++)
             {
-                var point = points.SingleOrDefault(candidate => candidate.waitingIndex == i + 2);
-                if (point == null) throw new InvalidOperationException("Maison waiting point missing: " + (i + 2));
                 var entry = entries.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("actorId").stringValue = names[i];
                 entry.FindPropertyRelative("presentationPrefab").objectReferenceValue = prefabs[i];
-                entry.FindPropertyRelative("waitingPoint").objectReferenceValue = point.transform;
+                entry.FindPropertyRelative("waitingPointIndex").intValue = i + 2;
             }
             properties.ApplyModifiedPropertiesWithoutUndo();
             EditorSceneManager.MarkSceneDirty(scene);
-            if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save Maison_Core.");
+            if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save Maison_Sequences.");
         }
         finally { if (opened) EditorSceneManager.CloseScene(scene, true); }
     }

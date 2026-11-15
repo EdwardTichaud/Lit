@@ -63,14 +63,8 @@ EditorBuildSettings:
     path: Assets/Scenes/Maison/Maison_Core.unity
     guid: 4af4dc28b6ff9a84cba661cd63e3fbbc
   - enabled: 1
-    path: Assets/Scenes/Maison/Maison_Global_Lights.unity
+    path: Assets/Scenes/Maison/Maison_Lights.unity
     guid: a5931133102dc2341b7e17e1f5ff36db
-  - enabled: 1
-    path: Assets/Scenes/Maison/Maison_Flammes.unity
-    guid: 6844225ba72ae7e4da0127eff6e5a7c3
-  - enabled: 1
-    path: Assets/Scenes/Maison/Maison_Enigme_Vigil.unity
-    guid: 8cb05e24131d93b48808617210121868
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_Interactives.unity
     guid: 40f2412674e008345b1737bf7218be04
@@ -89,6 +83,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_Environment_Far.unity
     guid: 7a30aa2a39c80674a82941e3c44b214f
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_Sequences.unity
+    guid: 099b5ad8e7b868945b3e0ecf2a0acf99
   - enabled: 1
     path: Assets/Scenes/Cycles/Cycle_Nina/District_1_Cycle_Nina.unity
     guid: 1c11bf5e6f504b84389bce7e16f35603
@@ -134,9 +131,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Reve/Reve_Limbes_Core.unity
     guid: a23b80a0c98ddd248aec4f43de5ebbc3
-  - enabled: 1
-    path: Assets/Scenes/Maison/Maison_AccesReve.unity
-    guid: 3e2f45b23169c6d4d9ca4fd7f8acacef
   - enabled: 1
     path: Assets/Scenes/Reve/Reve_Limbes_Progression.unity
     guid: 147bd4b0ef8ce4840ac15ecc34e9997d

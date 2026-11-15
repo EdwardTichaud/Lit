@@ -1,5 +1,13 @@
 # Input, UCC et caméra
 
+## Suivi d'un support pendant une prise Grimpeur
+
+La prise initiale aligne Lucian une fois. Ensuite le support fournit une
+pose cible au pas natif d'UCC : le moteur conserve ses collisions et
+interpole ensemble le personnage et la caméra, sans notification de
+téléportation à chaque pas. Le cadrage de saut ne s'active pas pendant
+le transport ; il reprend après le lâcher, comme le contrôle habituel.
+
 ## Caméra du prototype de fracture (2026-11-01)
 
 Fracture_01_Graybox copie la caméra de GameplaySessionRoot dans sa scène de

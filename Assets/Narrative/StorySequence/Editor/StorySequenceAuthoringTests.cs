@@ -12,6 +12,48 @@ public sealed class StorySequenceAuthoringTests
     [SetUp] public void SetUp() => sequence = ScriptableObject.CreateInstance<StorySequenceAsset>();
     [TearDown] public void TearDown() => UnityEngine.Object.DestroyImmediate(sequence);
 
+    [Test]
+    public void UccIgnoresActorSnapsWhileTheStoryOwnsTheCamera()
+    {
+        var camera = new GameObject("Suspended cinematic camera");
+        camera.SetActive(false);
+        try
+        {
+            var ucc = camera.AddComponent<Opsive.UltimateCharacterController.Camera.CameraController>();
+            ucc.enabled = false;
+            var callback = typeof(Opsive.UltimateCharacterController.Camera.CameraController)
+                .GetMethod("OnImmediateTransformChange", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(callback, Is.Not.Null);
+            Assert.DoesNotThrow(() => callback.Invoke(ucc, new object[] { true }));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(camera); }
+    }
+
+    [Test]
+    public void MaisonOpeningDialogueDoesNotRequestAnAutomaticShot()
+    {
+        var intro = AssetDatabase.LoadAssetAtPath<StorySequenceAsset>(
+            "Assets/Narrative/StorySequence/Sequences/1_Munin_Meeting.asset");
+        Assert.That(intro, Is.Not.Null);
+        Assert.That(intro.startFromBlack, Is.True);
+        Assert.That(intro.steps[0].type, Is.EqualTo(StorySequenceStepType.Dialogue));
+        Assert.That(intro.steps[0].focusCameraOnSpeaker, Is.False);
+        var root = new GameObject("Passive Maison intro");
+        root.SetActive(false);
+        try
+        {
+            var driver = root.AddComponent<StorySequenceCameraDriver>();
+            var runner = root.AddComponent<StorySequenceRunner>();
+            const System.Reflection.BindingFlags fields = System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic;
+            typeof(StorySequenceRunner).GetField("cameraDriver", fields).SetValue(runner, driver);
+            var prepare = typeof(StorySequenceRunner).GetMethod("PrepareOpeningShot", fields);
+            Assert.That(prepare.Invoke(runner, new object[] { intro }), Is.EqualTo(-1));
+            Assert.That(driver.IsCinematicActive, Is.False);
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
     [Test] public void EmptyDraftCannotBePlayedOrSilentlyCompleted()
     {
         Assert.That(sequence.TryValidate(out string issue), Is.False);
@@ -281,6 +323,7 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(prefab, Is.Not.Null);
         var runner = prefab.GetComponent<StorySequenceRunner>();
         Assert.That(runner.Sequence.name, Is.EqualTo("1_Munin_Meeting"));
+        Assert.That(runner.Sequence.startFromBlack, Is.True);
         Assert.That(runner.Sequence.playOnce, Is.True);
         Assert.That(runner.Sequence.TryValidate(out string issue), Is.True, issue);
         Assert.That(runner.Sequence.steps.Count, Is.EqualTo(4));
@@ -310,6 +353,23 @@ public sealed class StorySequenceAuthoringTests
         string menu = File.ReadAllText("Assets/Scenes/MainMenu/MainMenu.unity");
         StringAssert.Contains("newGameOpeningSequencePrefab: {fileID: 2171863246060046666, guid: " +
             AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(prefab)), menu);
+
+        const string sequencesPath = "Assets/Scenes/Maison/Maison_Sequences.unity";
+        var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_Maison.asset");
+        CollectionAssert.Contains(manifest.LoadingSceneNames, "Maison_Sequences");
+        Assert.That(System.Array.Exists(EditorBuildSettings.scenes, s => s.enabled && s.path == sequencesPath), Is.True);
+        var maison = UnityEditor.SceneManagement.EditorSceneManager.OpenPreviewScene(sequencesPath);
+        try
+        {
+            var resolver = typeof(GameFlowService).GetMethod("FindSceneOpeningSequence",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            var sceneRunner = (StorySequenceRunner)resolver.Invoke(null, new object[] { maison, runner.Sequence });
+            Assert.That(sceneRunner, Is.Not.Null);
+            var settings = new SerializedObject(sceneRunner);
+            Assert.That(settings.FindProperty("startWithLocalPlayerSeated").boolValue, Is.True);
+            Assert.That(settings.FindProperty("playOnStart").boolValue, Is.False);
+        }
+        finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(maison); }
     }
 }
 

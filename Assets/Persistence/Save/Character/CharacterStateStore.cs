@@ -14,7 +14,7 @@ public class CharacterStateStore : MonoBehaviour
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
     [Tooltip("Reference au composant Maison (auto-resolve si null).")]
-    public Maison maison;
+    public MaisonChest maison;
     [Tooltip("Liste d'assets CharacterData disponibles.")]
     public List<CharacterData> allCharacters = new List<CharacterData>();
     [Tooltip("Liste d'assets Item disponibles.")]
@@ -1905,7 +1905,7 @@ public class CharacterStateStore : MonoBehaviour
     {
         List<InteractableItem> results = new List<InteractableItem>();
         AddUnique(results, maisonLootContainer);
-        Maison resolvedMaison = GetMaison();
+        MaisonChest resolvedMaison = GetMaison();
         if (resolvedMaison != null)
         {
             AddUnique(results, resolvedMaison.maisonLootContainer);
@@ -1938,7 +1938,7 @@ public class CharacterStateStore : MonoBehaviour
 
     private int GetHomeChestCapacity()
     {
-        Maison resolvedMaison = GetMaison();
+        MaisonChest resolvedMaison = GetMaison();
         if (resolvedMaison != null && resolvedMaison.maisonChestCapacity > 0)
         {
             return resolvedMaison.maisonChestCapacity;
@@ -1954,17 +1954,14 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
+        var home = GetMaison();
+        if (home != null && home.maisonLootContainer == container) return;
         int capacity = GetHomeChestCapacity();
         if (capacity > 0 && container.maxStoredQuantity <= 0)
         {
             container.maxStoredQuantity = capacity;
         }
 
-        Maison resolvedMaison = GetMaison();
-        if (resolvedMaison != null && resolvedMaison.forceMaisonChestNonCollectable)
-        {
-            container.allowTake = false;
-        }
     }
 
     private void AddUnique(List<InteractableItem> list, InteractableItem container)
@@ -1982,20 +1979,20 @@ public class CharacterStateStore : MonoBehaviour
         list.Add(container);
     }
 
-    private Maison GetMaison()
+    private MaisonChest GetMaison()
     {
         if (maison != null)
         {
             return maison;
         }
 
-        maison = Maison.Instance;
+        maison = MaisonChest.Instance;
         if (maison == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            maison = FindAnyObjectByType<Maison>();
+            maison = FindAnyObjectByType<MaisonChest>();
 #else
-            maison = FindAnyObjectByType<Maison>();
+            maison = FindAnyObjectByType<MaisonChest>();
 #endif
         }
 
@@ -2009,7 +2006,7 @@ public class CharacterStateStore : MonoBehaviour
             return maisonChestTag;
         }
 
-        Maison resolvedMaison = GetMaison();
+        MaisonChest resolvedMaison = GetMaison();
         if (resolvedMaison != null && !string.IsNullOrWhiteSpace(resolvedMaison.maisonChestTag))
         {
             return resolvedMaison.maisonChestTag;

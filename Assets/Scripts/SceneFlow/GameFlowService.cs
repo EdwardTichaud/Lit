@@ -565,13 +565,48 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Mark("Escouade placee");
         if (openingSequence != null && gameplaySessionRoot != null)
         {
-            var runner = Instantiate(openingSequence, gameplaySessionRoot.transform);
+            var runner = FindZoneOpeningSequence(sceneName, manifest, openingSequence.Sequence);
+            if (runner == null)
+                runner = Instantiate(openingSequence, gameplaySessionRoot.transform);
             runner.PlayAfterLoading();
         }
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
         StartPostLoading(manifest);
+    }
+
+    private static Lit.Story.StorySequenceRunner FindZoneOpeningSequence(
+        string primarySceneName, ZoneManifest manifest, Lit.Story.StorySequenceAsset sequence)
+    {
+        var runner = FindSceneOpeningSequence(SceneManager.GetSceneByName(primarySceneName), sequence);
+        if (runner != null || manifest == null) return runner;
+
+        // Story content can live in a required additive scene. Do not search
+        // unrelated loaded zones or replace their scene-authored configuration.
+        foreach (string sceneName in manifest.LoadingSceneNames)
+        {
+            if (sceneName == primarySceneName) continue;
+            runner = FindSceneOpeningSequence(SceneManager.GetSceneByName(sceneName), sequence);
+            if (runner != null) return runner;
+        }
+
+        return null;
+    }
+
+    private static Lit.Story.StorySequenceRunner FindSceneOpeningSequence(Scene scene, Lit.Story.StorySequenceAsset sequence)
+    {
+        if (!scene.IsValid() || !scene.isLoaded || sequence == null)
+            return null;
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root.TryGetComponent(out Lit.Story.StorySequenceRunner runner) &&
+                runner.isActiveAndEnabled && runner.Sequence == sequence)
+                return runner;
+        }
+
+        return null;
     }
 
     private IEnumerator TravelToZoneRoutine(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)

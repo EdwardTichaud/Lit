@@ -14,28 +14,34 @@ namespace Lit.Traversal
             GameFlowService.Instance != null && GameFlowService.Instance.HasGameplaySession &&
             !GameFlowService.Instance.IsTransitioning;
 
-        private void Update()
+        private void Update() => Scan(true);
+
+        private void FixedUpdate() => Scan(false);
+
+        private void Scan(bool allowObservation)
         {
             if (ClingPoint.Active.Count == 0) return;
             var abilities = AbilityService.Instance;
             var root = LocalPlayerUtils.GetControlledCharacter();
             var actor = root != null ? root.GetComponent<SquadCharacterController>() : null;
             bool ready = CanPlay && abilities != null && abilities.IsReady && actor != null && actor.CurrentHp > 0;
-            bool observe = ready && abilities.HasEquipped(root, abilities.Resolve("observateur"));
+            bool observe = allowObservation && ready && abilities.HasEquipped(root, abilities.Resolve("observateur"));
             bool canGrab = ready && abilities.HasEquipped(root, abilities.Resolve("grimpeur"));
             if (canGrab && root.TryGetComponent(out ClingTraversal traversal) && !traversal.CanStart)
                 canGrab = false;
             var service = WorldInteractionService.Instance;
             bool online = abilities != null && !abilities.IsSolo;
             float now = Time.unscaledTime;
-            if (ready && online && service != null && service.IsSpawned && now >= nextSync)
+            if (allowObservation && ready && online && service != null && service.IsSpawned && now >= nextSync)
             {
                 nextSync = now + 3f;
                 service.RequestClingDiscoveriesServerRpc();
             }
 
-            bool scan = now >= nextObservation;
+            bool scan = allowObservation && now >= nextObservation;
             if (scan) nextObservation = now + .2f;
+            canGrab &= now >= nextRequest;
+            if (!scan && !canGrab) return;
             ClingPoint closest = null;
             float distance = float.PositiveInfinity;
             foreach (ClingPoint point in ClingPoint.Active)
@@ -71,7 +77,7 @@ namespace Lit.Traversal
             if (point == null || !CanPlay) return;
             var root = LocalPlayerUtils.GetControlledCharacter();
             if (root == null) return;
-            var traversal = root.GetComponent<ClingTraversal>() ?? root.AddComponent<ClingTraversal>();
+            if (!root.TryGetComponent(out ClingTraversal traversal)) traversal = root.AddComponent<ClingTraversal>();
             traversal.Begin(point);
         }
 
