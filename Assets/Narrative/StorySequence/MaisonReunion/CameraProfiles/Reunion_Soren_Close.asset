@@ -15,8 +15,10 @@ MonoBehaviour:
   localCameraOffset: {x: 0.75, y: 1.65, z: 2.35}
   lookAtOffset: {x: 0, y: 0.02, z: 0}
   fieldOfView: 40
-  transitionDuration: 0.85
+  transitionDuration: 0
   followSharpness: 4
+  shotTravelLocalOffset: {x: 0.14, y: 0.01, z: 0.14}
+  shotTravelDuration: 4.5
   frameSpeakerAndListener: 0
   useConversationAxis: 1
   centerCameraBetweenSubjects: 0

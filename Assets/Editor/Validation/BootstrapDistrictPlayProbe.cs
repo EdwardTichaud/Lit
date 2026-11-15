@@ -313,6 +313,18 @@ public static partial class BootstrapDistrictPlayProbe
                     Check(GameFlowService.StartOrLoadGame(), "Load the copied validation snapshot through the production session service, without a destination or pose override.");
                     Advance(285); return;
                 }
+                if (report.scope == "Munin seated opening")
+                {
+                    Check(saves.TryCreateNewGame("Validation Munin", SaveSessionType.Solo, "Validation",
+                        out var slot, out string error), "Created an isolated opening slot: " + error);
+                    saves.SetActiveSave(slot.sessionId, slot.saveId);
+                    var opening = AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/Narrative/StorySequence/Prefabs/1_Munin_Meeting.prefab").GetComponent<Lit.Story.StorySequenceRunner>();
+                    flow.QueueNewGameOpeningSequence(opening);
+                    Check(GameFlowService.StartOrLoadGame(flow.HubSceneName),
+                        "Queued the real opening through GameFlow; skipped only the intro video.");
+                    Advance(3); return;
+                }
                 if (report.limbesCycles || (report.moonriseCombat && !report.stabilization) || report.fracture || report.enola)
                 {
                     Check(saves.TryCreateNewGame("Validation Limbes cycles",SaveSessionType.Solo,"Validation",out var slot,out string error),"Created isolated cycle-test slot through production save service: "+error);
@@ -332,18 +344,37 @@ public static partial class BootstrapDistrictPlayProbe
                     foreach (var runner in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceRunner>())
                     {
                         if (!runner.IsPlaying) continue;
-                        if (checkMuninSeat && runner.Sequence.sequenceId == "1_Munin_Meeting" &&
-                            !report.checks.Contains("Lucian is seated during Munin's first dialogue."))
+                        bool meeting = checkMuninSeat && runner.Sequence.sequenceId == "1_Munin_Meeting";
+                        if (checkMuninSeat && !meeting) continue;
+                        if (meeting &&
+                            !report.checks.Contains("The live opening camera looks directly at Munin's temporary orb."))
                         {
                             if (DialoguePanelUI.Instance?.dialogueText?.text?.Contains("Qui es-tu") != true ||
                                 !DialoguePanelUI.Instance.IsShowing) continue;
-                            var player = LocalPlayerContext.LocalCharacterRoot.GetComponent<SquadCharacterController>();
-                            var animator = player.GetComponent<CharacterAnimationController>()?.Animator;
-                            Check(player.IsSittingRequested && animator != null &&
-                                animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Sitting_Idle"),
-                                "Lucian is seated during Munin's first dialogue.");
-                            Check(runner.gameObject.scene.name == "Maison_Core",
+                            Check(runner.gameObject.scene.name == "Maison_Sequences",
                                 "Munin's opening runs from the authored Maison scene instance.");
+                            var view = runner.GetComponent<Lit.Story.StorySequenceConversationView>();
+                            var driver = runner.GetComponent<Lit.Story.StorySequenceCameraDriver>();
+                            var camera = Camera.main;
+                            var orb = view != null && view.transform.Find("Munin_v4(Clone)") is Transform visual ? visual : null;
+                            Check(driver.IsCinematicActive && camera != null && orb != null &&
+                                  Vector3.Dot(camera.transform.forward, (orb.position - camera.transform.position).normalized) > .999f,
+                                "The live opening camera looks directly at Munin's temporary orb.");
+                            ScreenCapture.CaptureScreenshot(Path.Combine(report.run, "MuninFaceToFace.png"));
+                        }
+                        if (meeting &&
+                            DialoguePanelUI.Instance?.dialogueText?.text?.Contains("il est temps") == true &&
+                            !report.checks.Contains("The departure line dips the camera without moving its position."))
+                        {
+                            var driver = runner.GetComponent<Lit.Story.StorySequenceCameraDriver>();
+                            var point = runner.GetComponentInChildren<Lit.Story.StorySequenceCameraPoint>();
+                            var camera = Camera.main;
+                            if (driver.IsNodding && camera != null &&
+                                Vector3.Dot(camera.transform.forward, point.transform.up) < -.025f)
+                            {
+                                Check(Vector3.Distance(camera.transform.position, point.transform.position) < .01f,
+                                    "The departure line dips the camera without moving its position.");
+                            }
                         }
                         typeof(Lit.Story.StorySequenceRunner).GetField("advanceRequested", Private).SetValue(runner, true);
                     }
@@ -358,10 +389,15 @@ public static partial class BootstrapDistrictPlayProbe
                 if (checkMuninSeat)
                 {
                     if (Lit.Story.StorySequenceRunner.IsAnySequencePlaying || actor.IsInSittingCycle) return;
-                    Check(report.checks.Contains("Lucian is seated during Munin's first dialogue."),
-                        "The real opening ran before exploration was restored.");
-                    Check(!actor.IsMovementInputSuppressed, "The stand-up releases movement after the opening.");
-                    Finish(true, "Munin's opening starts seated and restores exploration after the stand-up.");
+                    if (!report.checks.Contains("The live opening camera looks directly at Munin's temporary orb.")) return;
+                    Check(!actor.IsMovementInputSuppressed, "Movement is released after the opening.");
+                    Check(report.checks.Contains("The departure line dips the camera without moving its position."),
+                        "The nod was observed on the authored line before resuming gameplay.");
+                    var views = UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceConversationView>();
+                    Check(views.Length == 1 && views.All(view => view.transform.Find("Munin_v4(Clone)") == null &&
+                              !view.GetComponent<Lit.Story.StorySequenceCameraDriver>().IsCinematicActive),
+                        "The orb and cinematic camera are cleaned up after the meeting.");
+                    Finish(true, "Munin's opening faces the orb, nods on the departure line, and restores exploration.");
                     return;
                 }
                 Check(saves.HasActiveSave && saves.CurrentSessionType == SaveSessionType.Solo, "Actual menu created an isolated solo session and spawned the controlled avatar.");

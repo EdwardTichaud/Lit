@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Nous n'avons pas la r\xE9ponse, Lucian. Eux non plus. Ce n'est pas parce qu'ils nous ont trouv\xE9s qu'ils comprennent ce qui les a conduits jusqu'\xE0 nous."
+  voiceLineText: "Et moi qui pensais que vous sauriez m'expliquer le mien."
   voiceLineCues: []

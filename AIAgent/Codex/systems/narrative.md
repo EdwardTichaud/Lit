@@ -322,8 +322,9 @@ Maison_Companions_Reunion.asset porte 17 repliques texte, avancees avec Interagi
 les portraits CharacterData et les plans/dialogue/restauration de controle du
 StorySequenceRunner existant. Les textes sont des VoiceLineData separes dans
 MaisonReunion/Dialogues. Pas de doublage ajoute. [Munin] reutilise le nom choisi.
-Le dialogue montre l'amitie ancienne et les rencontres recentes avec les anges
-gardiens ; leur attirance pour leurs hotes reste une question, pas une explication.
+Le dialogue montre l'amitie ancienne par les taquineries. Les personnages
+parlent du depart et de l'absence d'attribution sans se rappeler la regle ;
+le joueur deduit l'usage. L'attirance des anges reste inexpliquee.
 
 Mise en scene : 17 dialogues conserves et trois etapes CameraShot ajoutees
 (ouverture, retour au groupe avant la reassurance d'Aurell, conclusion).
@@ -331,8 +332,16 @@ Neuf profils dedies dans MaisonReunion/CameraProfiles : groupe, duo de
 taquinerie, portraits moyens de Vesta/Soren, portraits rapproches des trois
 compagnons et de Lucian, et contrechamp de Lucian. Les repliques 1, 3 et 16
 conservent le plan precedent, notamment pour la reaction a une replique hors
-champ. Transitions de 0,75 a 1,15 s ; la conclusion laisse 0,8 s apres le
-recentrage avant de rendre le controle. Aucun fade noir supplementaire.
+champ. Les changements de plan sont des coupes franches ; les trois plans
+larges respirent 0,35 s, 0,25 s et 0,8 s. Aucun fade noir supplementaire.
+
+Un profil acteur peut definir shotTravelLocalOffset (droite, haut, avant dans
+le repere camera) et shotTravelDuration. Le driver repart de zero a chaque
+nouveau plan, avance en temps non scale apres la coupe ou le raccord, recadre
+la cible et maintient la position finale sans boucle si la replique reste a
+l'ecran. Les repliques sans nouveau cadrage gardent le mouvement du plan en
+cours. Les profils Maison utilisent environ 0,19 a 0,30 m sur 4,5 a 5,5 s.
+Sans duree de travelling, le comportement des autres profils est inchange.
 
 Les profils peuvent activer useConversationAxis (orientation du plan selon
 les positions reelles locuteur/interlocuteur) et centerCameraBetweenSubjects
@@ -341,7 +350,7 @@ defaut : les autres sequences conservent leur TransformPoint auteur, echelle
 comprise. Le contrechamp Lucian inverse le decalage lateral pour conserver
 le cote de l'axe d'un duo. Au declenchement, seuls les trois PNJ visuels se
 tournent horizontalement vers Lucian ; ni son moteur UCC ni sa pose ne sont
-modifies. Le driver existant assure transitions douces et restitution gameplay.
+modifies. Le driver existant restitue la camera de gameplay en fin de sequence.
 Pas de correction d'obstacles ajoutee : les cadrages restent a verifier avec
 les murs/meubles reels et plusieurs positions d'approche.
 
@@ -593,7 +602,7 @@ Luc suit le meme socle que Nina, sans flags historiques car son ancien flux n'en
 
 ## Rencontre Munin apres la video de nouvelle partie
 
-Dans `Maison_Core`, l'instance `1_Munin_Meeting` active l'option
+Dans `Maison_Sequences`, l'instance `1_Munin_Meeting` active l'option
 `Start With Local Player Seated`. Lucian utilise le point de depart pres
 du foyer et entre dans `Sitting_Idle` sous le fondu d'ouverture. Il se leve
 apres les repliques et le choix du nom, puis recupere le mouvement.
@@ -610,8 +619,14 @@ createur seulement ; pas de nouveau protocole reseau narratif.
 Quatre etapes : question de Lucian -> ChooseMuninName -> presentation avec le
 nom choisi -> invitation au depart. Les trois VoiceLineData dans
 VoiceLines/1_Munin_Meeting sont textuelles, sans voix ajoutee. Les dialogues
-attendent Interact et leur fermeture precede l'etape suivante ; pas de camera
-ou d'acteur Munin invente. La camera de jeu actuelle est conservee.
+attendent Interact. Apres la demande de pose assise et avant le fondu d'ouverture,
+StorySequenceConversationView cadre depuis les yeux de Lucian et place
+`Munin_v4` en face. L'orbe reutilise le prefab visuel, sans controleur de
+gameplay ni acteur reseau. Le plan est conserve pendant le choix du nom.
+La derniere replique declenche un hochement unique de 4 degres sur 0,56 s ;
+une validation rapide ne l'interrompt pas. Fin ou annulation nettoie l'orbe
+et rend la camera au gameplay. Les autres sequences gardent leur cadrage
+et n'ont pas de hochement par defaut.
 
 ChooseMuninName est ajoute a la fin de l'enum (10) sans renumeroter les anciens
 types. Le composant StorySequenceNamePrompt du rig reference explicitement

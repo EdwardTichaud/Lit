@@ -16,6 +16,10 @@ namespace Lit.Story
         [Min(0f)] public float transitionDuration = 0.6f;
         [Min(0f), Tooltip("Vitesse de suivi du locuteur apres la transition.")]
         public float followSharpness = 12f;
+        [Tooltip("Deplacement jusqu'a la fin du plan, dans le repere camera (droite, haut, avant).")]
+        public Vector3 shotTravelLocalOffset;
+        [Min(0f), Tooltip("Duree du travelling apres le changement de plan. Zero le desactive.")]
+        public float shotTravelDuration;
         [Tooltip("Cadre le milieu entre locuteur et interlocuteur.")]
         public bool frameSpeakerAndListener;
         [Tooltip("Oriente l'offset horizontal vers l'interlocuteur plutot que selon la rotation du personnage.")]

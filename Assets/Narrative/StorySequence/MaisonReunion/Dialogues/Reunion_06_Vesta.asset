@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Alors on est quatre. La mienne m'a trouv\xE9e il y a trois jours. Je n'avais jamais rien vu de pareil."
+  voiceLineText: "Attends, toi aussi ? La mienne est venue me voir il y a trois jours."
   voiceLineCues: []

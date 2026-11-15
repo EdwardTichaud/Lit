@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Le mien dit la m\xEAme chose. Une attirance vers son h\xF4te\u2026 moi, en l'occurrence. Pourquoi moi ? Il n'en sait rien. Moi non plus."
+  voiceLineText: "Le mien m'a sorti : \xAB C'\xE9tait toi. \xBB Merci, \xE7a m'aide."
   voiceLineCues: []

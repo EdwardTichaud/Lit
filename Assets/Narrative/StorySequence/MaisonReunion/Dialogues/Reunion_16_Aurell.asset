@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "On cherchera ensemble. Comme toujours. Pour l'instant, tu es rentr\xE9, et on est tous l\xE0."
+  voiceLineText: "Allez, assieds-toi. On va en parler."
   voiceLineCues: []

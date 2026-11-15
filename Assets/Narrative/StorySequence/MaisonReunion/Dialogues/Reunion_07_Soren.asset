@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Le mien est arriv\xE9 hier. J'ai d'abord cru que je manquais de sommeil. Pour une fois, ce n'\xE9tait pas \xE7a."
+  voiceLineText: "Le mien, hier. J'ai cru qu'on avait avanc\xE9 le d\xE9part."
   voiceLineCues: []

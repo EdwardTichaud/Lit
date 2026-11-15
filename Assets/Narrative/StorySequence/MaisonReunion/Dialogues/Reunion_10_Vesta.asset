@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Non. Elle est venue vers moi. Comme si quelque chose l'attirait, sans qu'elle sache elle-m\xEAme pourquoi."
+  voiceLineText: "Non. Elle dit que quelque chose l'attirait vers moi. Elle sait pas quoi."
   voiceLineCues: []

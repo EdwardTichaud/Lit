@@ -448,6 +448,11 @@ Dans la campagne solo, le joueur contrôle Lucian. Lucian fait pleinement partie
 de cette organisation et connaît déjà les autres Explorateurs. Le joueur, lui,
 découvre progressivement leur passé commun.
 
+Au début de chaque mission, un ange gardien est normalement attribué à chaque
+Explorateur. L'équipe a l'habitude de travailler avec ces anges. Ce qui les
+surprend à la Maison, c'est que leurs anges les ont trouvés d'eux-mêmes,
+sans cette attribution habituelle.
+
 Pour se battre, chaque Explorateur doit fusionner avec son ange gardien.
 Lucian fusionne avec Munin automatiquement a l'entree du combat, puis leur
 fusion cesse a sa sortie : ce n'est pas une capacite a activer manuellement.

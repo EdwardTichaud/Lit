@@ -42,8 +42,8 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
-    cameraTransitionDuration: 1.15
-    cameraHoldDuration: 1.5
+    cameraTransitionDuration: 0
+    cameraHoldDuration: 0.35
     fadeAlpha: 0
     fadeDuration: 0.5
     duration: 1
@@ -75,7 +75,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 1.15
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -108,7 +108,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.8
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -141,7 +141,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.8
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -174,7 +174,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 1.05
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -207,7 +207,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.95
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -240,7 +240,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.85
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -273,7 +273,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.75
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -306,7 +306,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 1.05
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -339,7 +339,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.85
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -372,7 +372,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.95
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -405,7 +405,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.85
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -438,7 +438,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 1.05
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -471,7 +471,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.95
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -504,7 +504,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.8
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -537,7 +537,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.85
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -570,8 +570,8 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
-    cameraTransitionDuration: 1.15
-    cameraHoldDuration: 1.4
+    cameraTransitionDuration: 0
+    cameraHoldDuration: 0.25
     fadeAlpha: 0
     fadeDuration: 0.5
     duration: 1
@@ -603,7 +603,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 1.15
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -636,7 +636,7 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.95
+    cameraTransitionDuration: 0
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
@@ -669,8 +669,8 @@ MonoBehaviour:
     oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 11400000, guid: e63ab7560b654343b42b3f9b7f2b0001, type: 2}
-    cameraTransitionDuration: 1.15
-    cameraHoldDuration: 1.95
+    cameraTransitionDuration: 0
+    cameraHoldDuration: 0.8
     fadeAlpha: 0
     fadeDuration: 0.5
     duration: 1

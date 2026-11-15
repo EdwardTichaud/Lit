@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Tu n'as jamais eu besoin de tout comprendre pour venir nous parler. \xC7a ne va pas changer maintenant."
+  voiceLineText: "La prochaine fois, viens nous voir, d'accord ?"
   voiceLineCues: []

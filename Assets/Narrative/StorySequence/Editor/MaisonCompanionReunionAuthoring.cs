@@ -169,22 +169,22 @@ public static class MaisonCompanionReunionAuthoring
         var lines = new (string speaker, string text)[]
         {
             ("Vesta", "Te voilà enfin ! J'ai gardé ta place. Soren voulait déjà s'y étaler."),
-            ("Soren", "Depuis qu'on est gamins, il arrive le dernier et on lui garde la meilleure place. Je trouve ça suspect."),
-            ("Lucian", "Et depuis qu'on est gamins, tu râles… mais tu la gardes quand même."),
-            ("Aurell", "Laisse-le souffler. Tu as cette tête que tu fais quand quelque chose te dépasse, Lucian. Qu'est-ce qui t'est arrivé ?"),
-            ("Lucian", "J'ai rencontré… un ange gardien. Je l'appelle [Munin]. Je ne sais même pas comment vous raconter ça."),
-            ("Vesta", "Alors on est quatre. La mienne m'a trouvée il y a trois jours. Je n'avais jamais rien vu de pareil."),
-            ("Soren", "Le mien est arrivé hier. J'ai d'abord cru que je manquais de sommeil. Pour une fois, ce n'était pas ça."),
-            ("Aurell", "Le mien, il y a deux nuits. J'allais vous en parler. Puis je me suis demandé par où commencer… exactement comme toi."),
-            ("Lucian", "Tous les trois, si récemment… Vous les connaissiez avant ? Vous les avez appelés ?"),
-            ("Vesta", "Non. Elle est venue vers moi. Comme si quelque chose l'attirait, sans qu'elle sache elle-même pourquoi."),
-            ("Soren", "Le mien dit la même chose. Une attirance vers son hôte… moi, en l'occurrence. Pourquoi moi ? Il n'en sait rien. Moi non plus."),
-            ("Aurell", "Nous n'avons pas la réponse, Lucian. Eux non plus. Ce n'est pas parce qu'ils nous ont trouvés qu'ils comprennent ce qui les a conduits jusqu'à nous."),
+            ("Soren", "La meilleure place pour le dernier arrivé. Comme d'habitude."),
+            ("Lucian", "Tu me l'as quand même gardée."),
+            ("Aurell", "Laisse-le souffler, Soren. Lucian ? Ça va ?"),
+            ("Lucian", "J'ai rencontré mon ange gardien. [Munin]. Enfin… c'est lui qui m'a trouvé."),
+            ("Vesta", "Attends, toi aussi ? La mienne est venue me voir il y a trois jours."),
+            ("Soren", "Le mien, hier. J'ai cru qu'on avait avancé le départ."),
+            ("Aurell", "Le mien m'a trouvé il y a deux nuits. J'allais vous en parler."),
+            ("Lucian", "Et personne ne vous les a attribués ?"),
+            ("Vesta", "Non. Elle dit que quelque chose l'attirait vers moi. Elle sait pas quoi."),
+            ("Soren", "Le mien m'a sorti : « C'était toi. » Merci, ça m'aide."),
+            ("Aurell", "Et moi qui pensais que vous sauriez m'expliquer le mien."),
             ("Lucian", "J'avais peur que vous me preniez pour un fou."),
-            ("Soren", "Pour un fou ? Après toutes ces années ? Il nous en faudrait un peu plus. Pour un retardataire, en revanche…"),
-            ("Vesta", "Tu n'as jamais eu besoin de tout comprendre pour venir nous parler. Ça ne va pas changer maintenant."),
-            ("Aurell", "On cherchera ensemble. Comme toujours. Pour l'instant, tu es rentré, et on est tous là."),
-            ("Lucian", "Oui… Ensemble. Ça, au moins, je sais ce que ça veut dire.")
+            ("Soren", "Pour un fou, non. Pour un retardataire, le dossier est solide."),
+            ("Vesta", "La prochaine fois, viens nous voir, d'accord ?"),
+            ("Aurell", "Allez, assieds-toi. On va en parler."),
+            ("Lucian", "Ça fait du bien de vous revoir."),
         };
         for (int i = 0; i < lines.Length; i++)
         {

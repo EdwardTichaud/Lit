@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Depuis qu'on est gamins, il arrive le dernier et on lui garde la meilleure place. Je trouve \xE7a suspect."
+  voiceLineText: "La meilleure place pour le dernier arriv\xE9. Comme d'habitude."
   voiceLineCues: []

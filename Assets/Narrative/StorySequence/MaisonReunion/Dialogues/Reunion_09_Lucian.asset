@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Tous les trois, si r\xE9cemment\u2026 Vous les connaissiez avant ? Vous les avez appel\xE9s ?"
+  voiceLineText: "Et personne ne vous les a attribu\xE9s ?"
   voiceLineCues: []

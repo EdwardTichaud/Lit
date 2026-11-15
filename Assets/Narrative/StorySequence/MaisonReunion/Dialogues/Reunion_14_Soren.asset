@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Pour un fou ? Apr\xE8s toutes ces ann\xE9es ? Il nous en faudrait un peu plus. Pour un retardataire, en revanche\u2026"
+  voiceLineText: "Pour un fou, non. Pour un retardataire, le dossier est solide."
   voiceLineCues: []

@@ -44,6 +44,9 @@ namespace Lit.Story
         [Tooltip("Change automatiquement le plan camera vers le locuteur.")]
         public bool focusCameraOnSpeaker = true;
         public StorySequenceCameraProfile dialogueCameraProfile;
+        [Range(0f, 15f), Tooltip("Hochement vers le bas de la camera cinematographique active. Zero = aucun.")]
+        public float dialogueNodDegrees;
+        [Min(0f)] public float dialogueNodDuration;
 
         [Header("Step One-Shots")]
         [Tooltip("Tous les AudioClipSO de cette liste sont joues simultanement au debut de l'etape, sans modifier musique ni ambiance.")]

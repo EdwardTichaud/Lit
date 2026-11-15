@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Le mien, il y a deux nuits. J'allais vous en parler. Puis je me suis demand\xE9 par o\xF9 commencer\u2026 exactement comme toi."
+  voiceLineText: "Le mien m'a trouv\xE9 il y a deux nuits. J'allais vous en parler."
   voiceLineCues: []

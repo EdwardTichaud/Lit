@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "J'ai rencontr\xE9\u2026 un ange gardien. Je l'appelle [Munin]. Je ne sais m\xEAme pas comment vous raconter \xE7a."
+  voiceLineText: "J'ai rencontr\xE9 mon ange gardien. [Munin]. Enfin\u2026 c'est lui qui m'a trouv\xE9."
   voiceLineCues: []

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Lit.Story;
 using NUnit.Framework;
 using UnityEditor;
@@ -71,11 +72,11 @@ public sealed class MaisonCompanionReunionTests
         Assert.That(dialogues.All(s => s.voiceLine != null && s.skippable && s.dialogueMaxDisplayDuration == 0), Is.True);
         string text = string.Join(" ", dialogues.Select(s => s.voiceLine.voiceLineText));
         StringAssert.Contains("[Munin]", text);
-        StringAssert.Contains("gamins", text);
+        StringAssert.Contains("Comme d'habitude", text);
         StringAssert.Contains("trois jours", text);
         StringAssert.Contains("hier", text);
         StringAssert.Contains("deux nuits", text);
-        StringAssert.Contains("pourquoi", text);
+        StringAssert.Contains("attribués", text);
     }
 
     [Test] public void CinematographyHasDeliberateWideBeatsAndHeldReactionShots()
@@ -91,7 +92,66 @@ public sealed class MaisonCompanionReunionTests
         Assert.That(dialogues.Where(s => s.focusCameraOnSpeaker).All(s => s.dialogueCameraProfile != null), Is.True);
         Assert.That(dialogues.Count(s => !s.focusCameraOnSpeaker), Is.EqualTo(3));
         Assert.That(dialogues.Select(s => s.dialogueCameraProfile).Distinct().Count(), Is.GreaterThanOrEqualTo(6));
-        Assert.That(dialogues.All(s => s.cameraTransitionDuration >= .7f && s.cameraTransitionDuration <= 1.2f), Is.True);
+        Assert.That(sequence.steps.All(s => s.cameraTransitionDuration == 0f), Is.True);
+        var profiles = wides.Select(s => s.cameraProfile)
+            .Concat(dialogues.Where(s => s.focusCameraOnSpeaker).Select(s => s.dialogueCameraProfile));
+        Assert.That(profiles.All(p => p.transitionDuration == 0f && p.shotTravelDuration > 0f &&
+            p.shotTravelLocalOffset.sqrMagnitude > 0f), Is.True);
+    }
+
+    [Test] public void ActorShotCutsThenTravelsOnceAndResetsOnNextCut()
+    {
+        var rig = new GameObject("Moving shot test");
+        var first = new GameObject("First speaker");
+        var second = new GameObject("Second speaker");
+        var profile = ScriptableObject.CreateInstance<StorySequenceCameraProfile>();
+        try
+        {
+            var camera = rig.AddComponent<Camera>();
+            var driver = rig.AddComponent<StorySequenceCameraDriver>();
+            var settings = new SerializedObject(driver);
+            settings.FindProperty("controlledCamera").objectReferenceValue = camera;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            var tick = typeof(StorySequenceCameraDriver).GetMethod("UpdateCamera", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(tick, Is.Not.Null);
+            var a = first.AddComponent<StorySequenceActor>();
+            var b = second.AddComponent<StorySequenceActor>();
+            first.transform.position = Vector3.left * 3f;
+            second.transform.position = Vector3.right * 3f;
+            profile.transitionDuration = 0f;
+            profile.followSharpness = 0f;
+            profile.shotTravelDuration = 4f;
+            profile.shotTravelLocalOffset = new Vector3(.2f, 0f, .15f);
+
+            driver.SetActorShot(a, b, profile);
+            Assert.That(driver.RemainingTransitionTime, Is.Zero);
+            Vector3 start = first.transform.TransformPoint(profile.localCameraOffset);
+            Assert.That(Vector3.Distance(camera.transform.position, start), Is.LessThan(.0001f));
+            Vector3 travel = camera.transform.rotation * profile.shotTravelLocalOffset;
+            tick.Invoke(driver, new object[] { 2f });
+            Assert.That(Vector3.Distance(camera.transform.position, start + travel * .5f), Is.LessThan(.0001f));
+            Vector3 lookTarget = a.CameraAnchor.position + a.Root.TransformVector(profile.lookAtOffset);
+            Assert.That(Vector3.Dot(camera.transform.forward, (lookTarget - camera.transform.position).normalized),
+                Is.GreaterThan(.9999f), "The moving shot should keep looking at the speaker.");
+            tick.Invoke(driver, new object[] { 8f });
+            Assert.That(Vector3.Distance(camera.transform.position, start + travel), Is.LessThan(.0001f));
+            tick.Invoke(driver, new object[] { 8f });
+            Assert.That(Vector3.Distance(camera.transform.position, start + travel), Is.LessThan(.0001f));
+
+            driver.SetActorShot(b, a, profile);
+            Assert.That(driver.RemainingTransitionTime, Is.Zero);
+            Assert.That(Vector3.Distance(camera.transform.position, second.transform.TransformPoint(profile.localCameraOffset)),
+                Is.LessThan(.0001f), "The second cut must not inherit the first shot's travel.");
+            driver.EndCinematic();
+            Assert.That(driver.IsCinematicActive, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(rig);
+            Object.DestroyImmediate(first);
+            Object.DestroyImmediate(second);
+            Object.DestroyImmediate(profile);
+        }
     }
 
     [Test] public void LegacyCameraProfilesRetainTheirAuthoredRotationAndScale()

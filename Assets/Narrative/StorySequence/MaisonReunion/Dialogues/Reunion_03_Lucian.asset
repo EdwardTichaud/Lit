@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Et depuis qu'on est gamins, tu r\xE2les\u2026 mais tu la gardes quand m\xEAme."
+  voiceLineText: "Tu me l'as quand m\xEAme gard\xE9e."
   voiceLineCues: []

@@ -1,8 +1,13 @@
 ## Rencontre avec Munin (2026-11-15)
 
-L'instance `1_Munin_Meeting` dans `Maison_Core` porte le reglage d'assise pres
-du foyer. GameFlow la choisit apres placement de l'escouade lors de Nouvelle
-partie. La pose est maintenue jusqu'au lever de fin de sequence.
+GameFlow choisit l'instance `1_Munin_Meeting` de `Maison_Sequences` apres
+placement de l'escouade lors de Nouvelle partie. La sequence demande l'assise
+et cadre depuis les yeux de Lucian face a l'orbe de Munin. Hochement sur la
+derniere replique, puis restitution de la camera de jeu et du controle.
+Validation : 55 tests EditMode passes. Parcours isole Maison sans la video :
+orbe visible en face, hochement observe sur la bonne replique, nettoyage
+et exploration restitues. La pose assise etait indisponible dans cet essai ;
+le cadrage a fonctionne depuis la hauteur effective de Lucian.
 Voir `systems/narrative.md`.
 
 ## Placement des objets monde (2026-11-15)
@@ -1012,21 +1017,20 @@ sans doublon ; conversation commune a 3 m de Lucian, apres loading/intro et
 uniquement en exploration. Trois acteurs requis, garde d'etage 1,5 m et
 binding explicite du Lucian local. Sequence playOnce sauvegardee par le store
 existant ; 17 VoiceLineData modifiables sous StorySequence/MaisonReunion.
-Amitie ancienne, trois anges rencontres recemment, attirance inexpliquee,
+Complicite ancienne montree par les taquineries ; l'attribution habituelle des
+anges en debut de mission se deduit de la conversation. Attirance inexpliquee,
 nom [Munin] personnalise conserve. Avance avec Interagir, sans audio ajoute.
-Mise en scene ajoutee : neuf profils dedies, trois plans larges CameraShot,
-portraits/duos/contrechamp distribues selon le dialogue et trois repliques
-gardant le plan precedent. Transitions 0,75-1,15 s, respiration finale 0,8 s.
+Mise en scene : coupes franches sur les trois plans larges et les portraits,
+duos et contrechamps ; leger travelling propre a chaque profil pendant le
+plan. Trois repliques gardent le plan precedent ; respiration finale 0,8 s.
 Nouvelles options opt-in du profil : axe reel locuteur/interlocuteur et origine
 centree entre sujets ; profils existants inchanges. Les PNJ visuels regardent
 Lucian au depart, sans tourner/teleporter le joueur. Aucun evitement d'obstacle
 automatique ajoute : visibilite des visages/murs/meubles a verifier en jeu.
-Compilation runtime/Editor avec nouveaux tests reussie ; import/installation
-native passes. Tests cibles demandes dans Library/MaisonCompanionReunion,
-encore en attente de refresh/import du dernier fichier de tests dans Unity.
-Suite existante StorySequence/VideoPanel 34/35 : echec video sans lien avec
-la reunion (OpenScene additif refuse sur scene temporaire sans nom).
-Rendu/poses/camera/proximite, annulation et non-rejeu en Play restent a qualifier.
+Compilation Unity reussie ; 53/53 tests EditMode ciblés
+(Library/MaisonCompanionReunion/Tests.xml), dont coupe immediate, travelling,
+maintien du cadrage et remise a zero au plan suivant. Rendu dans la Maison,
+visibilite et rythme des coupes restent a verifier en Play.
 Aucun nouveau projet cree, autres changements de camera/masque preserves.
 Details : systems/narrative.md.
 

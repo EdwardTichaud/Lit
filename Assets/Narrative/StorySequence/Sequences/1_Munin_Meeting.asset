@@ -55,3 +55,5 @@ MonoBehaviour:
     voiceLine: {fileID: 11400000, guid: 547a7bc8f9e44baea871401f83df53cf, type: 2}
     dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 0
+    dialogueNodDegrees: 4
+    dialogueNodDuration: 0.56

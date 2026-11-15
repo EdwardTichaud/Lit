@@ -25,6 +25,7 @@ namespace Lit.Story
         [SerializeField] private StorySequenceCameraDriver cameraDriver;
         [SerializeField] private StorySequenceDialoguePresenter dialoguePresenter;
         [SerializeField] private StorySequenceFadeController fadeController;
+        [SerializeField] private StorySequenceConversationView conversationView;
 
         [Header("Events")]
         [SerializeField] private UnityEvent onSequenceStarted;
@@ -234,6 +235,8 @@ namespace Lit.Story
             }
 
             int openingShotIndex = -1;
+            if (conversationView != null)
+                conversationView.Prepare(bindings.ResolveActor("player"), cameraDriver);
             if (activeSequence.startFromBlack)
             {
                 openingShotIndex = PrepareOpeningShot(activeSequence);
@@ -488,14 +491,18 @@ namespace Lit.Story
                 : step.speakerCharacterData != null ? speaker.ResolveDisplayName()
                 : actor != null ? actor.DisplayName : step.actorId;
             Transform audioAnchor = actor != null ? actor.FaceAnchor : null;
+            bool nodStarted = cameraDriver.PlayNod(step.dialogueNodDegrees, step.dialogueNodDuration);
             yield return dialoguePresenter.Present(
                 step.voiceLine,
                 speakerName,
                 audioAnchor,
                 step.dialogueMaxDisplayDuration,
                 useUnscaledTime,
-                ConsumeAdvanceRequest,
+                () => (!nodStarted || !cameraDriver.IsNodding) && ConsumeAdvanceRequest(),
                 speaker);
+            // A timed line can finish on its own; still let the gesture settle before cutting.
+            while (nodStarted && cameraDriver.IsNodding)
+                yield return null;
         }
 
         private IEnumerator ExecuteCameraShot(StorySequenceStep step, bool useUnscaledTime, bool cameraPrepared)
@@ -841,6 +848,7 @@ namespace Lit.Story
         {
             dialoguePresenter?.HideImmediate();
             cameraDriver?.EndCinematic(snapBackToGameplay: true);
+            conversationView?.Clear();
         }
 
         private void ReleasePlayerControl()

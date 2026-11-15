@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6290769040439864417}
   - component: {fileID: 2171863246060046666}
   - component: {fileID: 2171863246060046670}
+  - component: {fileID: 2171863246060046671}
   m_Layer: 0
   m_Name: 1_Munin_Meeting
   m_TagString: Untagged
@@ -34,7 +35,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2171863246060046673}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6529608997548153902
@@ -130,11 +132,12 @@ MonoBehaviour:
   sequence: {fileID: 11400000, guid: a455ec891c2e47fe990773f795b9a1d9, type: 2}
   playOnStart: 0
   startDelay: 0
-  startWithLocalPlayerSeated: 0
+  startWithLocalPlayerSeated: 1
   bindings: {fileID: 0}
   cameraDriver: {fileID: 0}
   dialoguePresenter: {fileID: 0}
   fadeController: {fileID: 0}
+  conversationView: {fileID: 2171863246060046671}
   onSequenceStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -144,6 +147,71 @@ MonoBehaviour:
   onSequenceAborted:
     m_PersistentCalls:
       m_Calls: []
+
+--- !u!114 &2171863246060046671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7089027619959188696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bfbdd29f7ed462397a92d1dbdf2577e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceConversationView
+  cameraPoint: {fileID: 2171863246060046674}
+  interlocutorVisual: {fileID: 414199898864774836, guid: 53e72f7426d557a4f96c6ab9bdbcc518, type: 3}
+  eyeOffset: {x: 0, y: 0.04, z: 0.24}
+  interlocutorOffset: {x: 0, y: 0.02, z: 1.65}
+--- !u!1 &2171863246060046672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2171863246060046673}
+  - component: {fileID: 2171863246060046674}
+  m_Layer: 0
+  m_Name: Lucian - Regard vers Munin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2171863246060046673
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2171863246060046672}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8746472771961014972}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2171863246060046674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2171863246060046672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
+  pointId: munin.meeting.lucian.pov
+  lookTarget: {fileID: 0}
+  lookAtOffset: {x: 0, y: 0, z: 0}
+  fieldOfView: 48
 
 --- !u!114 &2171863246060046670
 MonoBehaviour:

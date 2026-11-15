@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Oui\u2026 Ensemble. \xC7a, au moins, je sais ce que \xE7a veut dire."
+  voiceLineText: "\xC7a fait du bien de vous revoir."
   voiceLineCues: []

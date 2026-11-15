@@ -31,8 +31,13 @@ namespace Lit.Story
         private float transitionStartFov;
         private float transitionDuration;
         private float transitionElapsed;
+        private float shotTravelElapsed;
         private bool transitioning;
         private bool cinematicActive;
+        private float nodDegrees;
+        private float nodDuration;
+        private float nodElapsed;
+        private Quaternion appliedNod = Quaternion.identity;
 
         private bool previousUccControllerEnabled;
         private bool previousUccHandlerEnabled;
@@ -41,6 +46,7 @@ namespace Lit.Story
         private LitGameplayCameraModeController suspendedGameplayMode;
 
         public bool IsCinematicActive => cinematicActive;
+        public bool IsNodding => cinematicActive && controlledCamera != null && nodElapsed < nodDuration;
         public float RemainingTransitionTime => transitioning
             ? Mathf.Max(0f, transitionDuration - transitionElapsed)
             : 0f;
@@ -134,6 +140,17 @@ namespace Lit.Story
             StartTransition(Mathf.Max(0f, duration));
         }
 
+        public bool PlayNod(float degrees, float duration)
+        {
+            if (!cinematicActive || controlledCamera == null || degrees <= 0f || duration <= 0f)
+                return false;
+
+            nodDegrees = Mathf.Min(degrees, 15f);
+            nodDuration = duration;
+            nodElapsed = 0f;
+            return true;
+        }
+
         public void EndCinematic(bool snapBackToGameplay = true)
         {
             if (!cinematicActive)
@@ -142,6 +159,9 @@ namespace Lit.Story
             }
 
             cinematicActive = false;
+            if (controlledCamera != null && appliedNod != Quaternion.identity)
+                controlledCamera.transform.rotation *= Quaternion.Inverse(appliedNod);
+            ResetNod();
             transitioning = false;
             activeActor = null;
             activeListener = null;
@@ -196,23 +216,32 @@ namespace Lit.Story
             }
         }
 
-        private void LateUpdate()
+        private void LateUpdate() => UpdateCamera(Time.unscaledDeltaTime);
+
+        private void UpdateCamera(float deltaTime)
         {
             if (!cinematicActive || controlledCamera == null)
             {
                 return;
             }
 
+            if (!transitioning && activeProfile != null && activeProfile.shotTravelDuration > 0f)
+            {
+                shotTravelElapsed = Mathf.Min(shotTravelElapsed + deltaTime, activeProfile.shotTravelDuration);
+            }
+
             ResolveDesiredPose(out Vector3 targetPosition, out Quaternion targetRotation, out float targetFov);
+            Quaternion previousNod = appliedNod;
+            appliedNod = AdvanceNod(deltaTime);
             if (transitioning)
             {
-                transitionElapsed += Time.unscaledDeltaTime;
+                transitionElapsed += deltaTime;
                 float t = transitionDuration <= 0f
                     ? 1f
                     : Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(transitionElapsed / transitionDuration));
                 controlledCamera.transform.SetPositionAndRotation(
                     Vector3.Lerp(transitionStartPosition, targetPosition, t),
-                    Quaternion.Slerp(transitionStartRotation, targetRotation, t));
+                    Quaternion.Slerp(transitionStartRotation, targetRotation, t) * appliedNod);
                 controlledCamera.fieldOfView = Mathf.Lerp(transitionStartFov, targetFov, t);
                 if (t >= 1f)
                 {
@@ -227,10 +256,11 @@ namespace Lit.Story
                 : fallbackFollowSharpness;
             float followT = sharpness <= 0f
                 ? 1f
-                : 1f - Mathf.Exp(-sharpness * Time.unscaledDeltaTime);
+                : 1f - Mathf.Exp(-sharpness * deltaTime);
             controlledCamera.transform.SetPositionAndRotation(
                 Vector3.Lerp(controlledCamera.transform.position, targetPosition, followT),
-                Quaternion.Slerp(controlledCamera.transform.rotation, targetRotation, followT));
+                Quaternion.Slerp(controlledCamera.transform.rotation * Quaternion.Inverse(previousNod), targetRotation, followT) *
+                appliedNod);
             controlledCamera.fieldOfView = Mathf.Lerp(controlledCamera.fieldOfView, targetFov, followT);
         }
 
@@ -246,6 +276,8 @@ namespace Lit.Story
             transitionStartFov = controlledCamera.fieldOfView;
             transitionDuration = Mathf.Max(0f, duration);
             transitionElapsed = 0f;
+            shotTravelElapsed = 0f;
+            ResetNod();
             transitioning = transitionDuration > 0f;
 
             if (!transitioning)
@@ -254,6 +286,26 @@ namespace Lit.Story
                 controlledCamera.transform.SetPositionAndRotation(position, rotation);
                 controlledCamera.fieldOfView = fov;
             }
+        }
+
+        private Quaternion AdvanceNod(float deltaTime)
+        {
+            if (!IsNodding) return Quaternion.identity;
+
+            nodElapsed = Mathf.Min(nodElapsed + deltaTime, nodDuration);
+            float progress = nodElapsed / nodDuration;
+            const float dipFraction = .38f;
+            float amount = progress < dipFraction
+                ? Mathf.SmoothStep(0f, 1f, progress / dipFraction)
+                : Mathf.SmoothStep(1f, 0f, (progress - dipFraction) / (1f - dipFraction));
+            return Quaternion.AngleAxis(nodDegrees * amount, Vector3.right);
+        }
+
+        private void ResetNod()
+        {
+            nodDuration = 0f;
+            nodElapsed = 0f;
+            appliedNod = Quaternion.identity;
         }
 
         private void ResolveDesiredPose(
@@ -301,6 +353,12 @@ namespace Lit.Story
                 }
 
                 rotation = ResolveLookRotation(position, lookTarget, actorRoot.rotation);
+                if (activeProfile != null && shotTravelElapsed > 0f && activeProfile.shotTravelDuration > 0f)
+                {
+                    float progress = Mathf.SmoothStep(0f, 1f, shotTravelElapsed / activeProfile.shotTravelDuration);
+                    position += rotation * (activeProfile.shotTravelLocalOffset * progress);
+                    rotation = ResolveLookRotation(position, lookTarget, rotation);
+                }
                 fieldOfView = activeProfile != null
                     ? activeProfile.fieldOfView
                     : fallbackFieldOfView;
