@@ -212,26 +212,34 @@ namespace Lit.Story
             {
                 AcquirePlayerLock(activeSequence);
             }
-            // Dialogue without an authored shot (for example Munin in Maison)
-            // keeps the gameplay camera. The first actual shot acquires it.
+            // Dialogue without an authored view keeps the gameplay camera.
 
             if (startWithLocalPlayerSeated)
             {
-                double deadline = Time.realtimeSinceStartupAsDouble + 2;
-                while (Time.realtimeSinceStartupAsDouble < deadline)
+                // The avatar can still settle onto the floor with gameplay input locked.
+                double physicsDeadline = Time.fixedTimeAsDouble + 2;
+                double realtimeDeadline = Time.realtimeSinceStartupAsDouble + 10;
+                string reason = null;
+                do
                 {
                     var root = LocalPlayerContext.LocalCharacterRoot;
                     var player = root != null ? root.GetComponent<SquadCharacterController>() : null;
-                    if (player != null && player.TrySetSittingImmediate(holdUntilStandUp: true))
+                    reason = player != null ? player.GetScriptedSittingBlockReason() : "personnage absent";
+                    if (player != null && (reason == null || player.IsSittingRequested))
                     {
-                        seatedOpeningPlayer = player;
-                        break;
+                        if (player.TrySetSittingImmediate(holdUntilStandUp: true))
+                        {
+                            seatedOpeningPlayer = player;
+                            break;
+                        }
+                        reason = player.GetScriptedSittingBlockReason();
                     }
 
                     yield return null;
                 }
+                while (Time.fixedTimeAsDouble < physicsDeadline && Time.realtimeSinceStartupAsDouble < realtimeDeadline);
                 if (seatedOpeningPlayer == null)
-                    Debug.LogWarning($"StorySequenceRunner: pose assise indisponible pour '{activeSequence.name}'.", this);
+                    Debug.LogWarning($"StorySequenceRunner: pose assise indisponible pour '{activeSequence.name}' : {reason}.", this);
             }
 
             int openingShotIndex = -1;

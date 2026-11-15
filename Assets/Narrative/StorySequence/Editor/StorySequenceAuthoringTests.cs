@@ -55,7 +55,7 @@ public sealed class StorySequenceAuthoringTests
     }
 
     [Test]
-    public void ConversationViewStagesMuninAheadAtSeatedEyeHeight()
+    public void ConversationViewFramesLucianFromMuninsSideWithoutCrowdingHisFace()
     {
         var viewObject = new GameObject("Conversation view");
         var playerObject = new GameObject("Seated player");
@@ -77,9 +77,21 @@ public sealed class StorySequenceAuthoringTests
             var position = (Vector3)pose[1];
             var target = (Vector3)pose[2];
             var rotation = (Quaternion)pose[3];
-            Assert.That(position.y, Is.EqualTo(eyes.position.y + .04f).Within(.001f));
-            Assert.That(target.x - position.x, Is.EqualTo(1.41f).Within(.001f));
-            Assert.That(Vector3.Dot(rotation * Vector3.forward, (target - position).normalized), Is.GreaterThan(.9999f));
+            Assert.That(position.y, Is.EqualTo(eyes.position.y + .46f).Within(.001f));
+            Assert.That(Vector3.Distance(position, eyes.position), Is.GreaterThan(2f));
+            Assert.That(Vector3.Dot(rotation * Vector3.forward, -player.transform.forward), Is.GreaterThan(.9f));
+            var camera = viewObject.AddComponent<Camera>();
+            camera.transform.SetPositionAndRotation(position, rotation);
+            camera.fieldOfView = 48f;
+            camera.aspect = 16f / 9f;
+            Vector3 face = camera.WorldToViewportPoint(eyes.position);
+            Vector3 orb = camera.WorldToViewportPoint(target);
+            Assert.That(face.x, Is.InRange(.15f, .85f));
+            Assert.That(face.y, Is.InRange(.15f, .85f));
+            Assert.That(orb.x, Is.InRange(.15f, .85f));
+            Assert.That(orb.y, Is.InRange(.15f, .85f));
+            Assert.That(orb.z, Is.LessThan(face.z));
+            Assert.That(Mathf.Abs(orb.x - face.x), Is.GreaterThan(.15f));
         }
         finally
         {

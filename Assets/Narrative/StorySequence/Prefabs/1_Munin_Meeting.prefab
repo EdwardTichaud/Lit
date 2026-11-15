@@ -162,8 +162,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceConversationView
   cameraPoint: {fileID: 2171863246060046674}
   interlocutorVisual: {fileID: 414199898864774836, guid: 53e72f7426d557a4f96c6ab9bdbcc518, type: 3}
-  eyeOffset: {x: 0, y: 0.04, z: 0.24}
-  interlocutorOffset: {x: 0, y: 0.02, z: 1.65}
+  cameraOffset: {x: 0.55, y: 0.46, z: 2.3}
+  interlocutorOffset: {x: -0.26, y: -0.05, z: 1.2}
+  interlocutorLightLumens: 300
 --- !u!1 &2171863246060046672
 GameObject:
   m_ObjectHideFlags: 0
@@ -175,7 +176,7 @@ GameObject:
   - component: {fileID: 2171863246060046673}
   - component: {fileID: 2171863246060046674}
   m_Layer: 0
-  m_Name: Lucian - Regard vers Munin
+  m_Name: Munin - Regard vers Lucian
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -208,7 +209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
-  pointId: munin.meeting.lucian.pov
+  pointId: munin.meeting.reverse
   lookTarget: {fileID: 0}
   lookAtOffset: {x: 0, y: 0, z: 0}
   fieldOfView: 48

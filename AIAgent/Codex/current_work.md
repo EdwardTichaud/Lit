@@ -1,13 +1,15 @@
 ## Rencontre avec Munin (2026-11-15)
 
 GameFlow choisit l'instance `1_Munin_Meeting` de `Maison_Sequences` apres
-placement de l'escouade lors de Nouvelle partie. La sequence demande l'assise
-et cadre depuis les yeux de Lucian face a l'orbe de Munin. Hochement sur la
-derniere replique, puis restitution de la camera de jeu et du controle.
-Validation : 55 tests EditMode passes. Parcours isole Maison sans la video :
-orbe visible en face, hochement observe sur la bonne replique, nettoyage
-et exploration restitues. La pose assise etait indisponible dans cet essai ;
-le cadrage a fonctionne depuis la hauteur effective de Lucian.
+placement de l'escouade lors de Nouvelle partie. La pose assise scriptée lit
+le contact du corps UCC plutôt que l'état de son gestionnaire de commandes,
+désactivé par la séquence. Contrechamp à environ 2,4 m, Lucian de face,
+orbe de Munin au premier plan avec éclairage temporaire. Hochement sur la
+dernière réplique, puis retour à la caméra de jeu et au contrôle.
+Validation : 55 tests ciblés et parcours isolé dans la Maison, sans rejouer
+la vidéo. Assise `Sitting_Idle` confirmée avec contact au sol, hochement et
+restitution du contrôle. Sur la capture, une dalle masque encore le bas
+de la pose.
 Voir `systems/narrative.md`.
 
 ## Placement des objets monde (2026-11-15)

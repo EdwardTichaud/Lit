@@ -347,7 +347,7 @@ public static partial class BootstrapDistrictPlayProbe
                         bool meeting = checkMuninSeat && runner.Sequence.sequenceId == "1_Munin_Meeting";
                         if (checkMuninSeat && !meeting) continue;
                         if (meeting &&
-                            !report.checks.Contains("The live opening camera looks directly at Munin's temporary orb."))
+                            !report.checks.Contains("The opening shows Lucian from the front with Munin in the foreground."))
                         {
                             if (DialoguePanelUI.Instance?.dialogueText?.text?.Contains("Qui es-tu") != true ||
                                 !DialoguePanelUI.Instance.IsShowing) continue;
@@ -357,10 +357,22 @@ public static partial class BootstrapDistrictPlayProbe
                             var driver = runner.GetComponent<Lit.Story.StorySequenceCameraDriver>();
                             var camera = Camera.main;
                             var orb = view != null && view.transform.Find("Munin_v4(Clone)") is Transform visual ? visual : null;
+                            var lucian = LocalPlayerContext.LocalCharacterRoot;
+                            var actorView = lucian.GetComponent<Lit.Story.StorySequenceActor>();
+                            var actorController = lucian.GetComponent<SquadCharacterController>();
+                            Vector3 face = camera != null ? camera.WorldToViewportPoint(actorView.CameraAnchor.position) : Vector3.zero;
+                            Vector3 foreground = camera != null && orb != null ? camera.WorldToViewportPoint(orb.position) : Vector3.zero;
                             Check(driver.IsCinematicActive && camera != null && orb != null &&
-                                  Vector3.Dot(camera.transform.forward, (orb.position - camera.transform.position).normalized) > .999f,
-                                "The live opening camera looks directly at Munin's temporary orb.");
+                                  Vector3.Dot(camera.transform.forward, -lucian.forward) > .8f &&
+                                  face.z > 1.9f && foreground.z > 0f && foreground.z < face.z &&
+                                  face.x > .1f && face.x < .9f && face.y > .1f && face.y < .9f &&
+                                  foreground.x > .1f && foreground.x < .9f && foreground.y > .1f && foreground.y < .9f,
+                                "The opening shows Lucian from the front with Munin in the foreground.");
                             ScreenCapture.CaptureScreenshot(Path.Combine(report.run, "MuninFaceToFace.png"));
+                            Check(actorController.IsSittingRequested &&
+                                  actorView.Animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Sitting_Idle"),
+                                "Lucian is seated during the opening. Physical ground contact: " +
+                                actorController.GetComponent<LitOpsiveLocomotionBridge>().Grounded);
                         }
                         if (meeting &&
                             DialoguePanelUI.Instance?.dialogueText?.text?.Contains("il est temps") == true &&
@@ -389,7 +401,7 @@ public static partial class BootstrapDistrictPlayProbe
                 if (checkMuninSeat)
                 {
                     if (Lit.Story.StorySequenceRunner.IsAnySequencePlaying || actor.IsInSittingCycle) return;
-                    if (!report.checks.Contains("The live opening camera looks directly at Munin's temporary orb.")) return;
+                    if (!report.checks.Contains("The opening shows Lucian from the front with Munin in the foreground.")) return;
                     Check(!actor.IsMovementInputSuppressed, "Movement is released after the opening.");
                     Check(report.checks.Contains("The departure line dips the camera without moving its position."),
                         "The nod was observed on the authored line before resuming gameplay.");

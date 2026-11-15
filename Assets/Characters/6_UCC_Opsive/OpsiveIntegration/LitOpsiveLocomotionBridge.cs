@@ -195,9 +195,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Other
     }
 
-    public bool IsDriving => isActiveAndEnabled &&
+    public bool HasActiveLocomotionBody => isActiveAndEnabled && locomotion != null && locomotion.isActiveAndEnabled;
+    public bool IsDriving => HasActiveLocomotionBody &&
                              driveFromSquadFacade &&
-                             locomotion != null && locomotion.isActiveAndEnabled &&
                              locomotionHandler != null && locomotionHandler.isActiveAndEnabled;
     public string DriveDiagnostic =>
         "bridge=" + isActiveAndEnabled +

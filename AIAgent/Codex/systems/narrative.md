@@ -603,9 +603,12 @@ Luc suit le meme socle que Nina, sans flags historiques car son ancien flux n'en
 ## Rencontre Munin apres la video de nouvelle partie
 
 Dans `Maison_Sequences`, l'instance `1_Munin_Meeting` active l'option
-`Start With Local Player Seated`. Lucian utilise le point de depart pres
-du foyer et entre dans `Sitting_Idle` sous le fondu d'ouverture. Il se leve
-apres les repliques et le choix du nom, puis recupere le mouvement.
+`Start With Local Player Seated`. Apres placement pres du foyer, le runner
+attend le contact au sol du corps UCC et la disponibilite de l'etat
+`Sitting_Idle` sous le noir, sans exiger que les commandes gameplay soient
+actives. L'attente borne les temps
+physique et reel ; si la pose reste indisponible, le journal donne la condition
+bloquante. Le lever restitue le mouvement apres les repliques.
 
 Asset : Narrative/StorySequence/Sequences/1_Munin_Meeting.asset, rig homonyme
 sous Prefabs reference par MainMenu. Nouvelle partie queue la rencontre ; GameFlow
@@ -620,9 +623,11 @@ Quatre etapes : question de Lucian -> ChooseMuninName -> presentation avec le
 nom choisi -> invitation au depart. Les trois VoiceLineData dans
 VoiceLines/1_Munin_Meeting sont textuelles, sans voix ajoutee. Les dialogues
 attendent Interact. Apres la demande de pose assise et avant le fondu d'ouverture,
-StorySequenceConversationView cadre depuis les yeux de Lucian et place
-`Munin_v4` en face. L'orbe reutilise le prefab visuel, sans controleur de
-gameplay ni acteur reseau. Le plan est conserve pendant le choix du nom.
+StorySequenceConversationView place la camera du cote de Munin a environ
+2,4 m du visage de Lucian, de face, avec `Munin_v4` decale au premier plan.
+L'orbe reutilise le prefab visuel, sans controleur de gameplay ni acteur
+reseau. Une lumiere locale ephemere rend le visage lisible dans la Maison,
+sans effet sur les Flames. Le plan est conserve pendant le choix du nom.
 La derniere replique declenche un hochement unique de 4 degres sur 0,56 s ;
 une validation rapide ne l'interrompt pas. Fin ou annulation nettoie l'orbe
 et rend la camera au gameplay. Les autres sequences gardent leur cadrage

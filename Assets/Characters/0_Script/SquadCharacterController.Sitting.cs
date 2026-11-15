@@ -118,7 +118,7 @@ public partial class SquadCharacterController
             return true;
         }
 
-        if (!CanEnterScriptedSittingImmediate())
+        if (GetScriptedSittingBlockReason() != null)
         {
             return false;
         }
@@ -231,25 +231,20 @@ public partial class SquadCharacterController
         return !IsUccLocomotionActive || IsGrounded;
     }
 
-    private bool CanEnterScriptedSittingImmediate()
+    internal string GetScriptedSittingBlockReason()
     {
-        if (!isActiveAndEnabled ||
-            animator == null ||
-            !animator.isActiveAndEnabled ||
-            currentHp <= 0 ||
-            IsFlightActive ||
-            !HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool) ||
-            !animator.HasState(0, SittingIdleFullPathHash))
-        {
-            return false;
-        }
-
-        if (IsExternalLocomotionDriverActive && !IsUccLocomotionActive)
-        {
-            return false;
-        }
-
-        return !IsUccLocomotionActive || IsGrounded;
+        if (!isActiveAndEnabled) return "personnage inactif";
+        if (animator == null || !animator.isActiveAndEnabled) return "Animator inactif";
+        if (currentHp <= 0 || IsFlightActive) return "personnage KO ou en vol";
+        if (!HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool)) return "parametre IsSitting absent";
+        if (!animator.HasState(0, SittingIdleFullPathHash)) return "etat Sitting_Idle absent";
+        // During a story sequence the UCC input handler is disabled, but its
+        // physics body still owns ground contact. Do not use IsDriving here.
+        var bridge = GetUccLocomotionBridge();
+        bool hasUccBody = bridge != null && bridge.HasActiveLocomotionBody;
+        if (IsExternalLocomotionDriverActive && !hasUccBody)
+            return "locomotion externe active";
+        return hasUccBody && !bridge.Grounded ? "le contact au sol UCC manque" : null;
     }
 
     private void UpdateStandUpCompletion()
