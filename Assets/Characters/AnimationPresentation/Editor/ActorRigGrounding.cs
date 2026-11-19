@@ -139,9 +139,9 @@ public static class ActorRecoveryPreview
         string folder = "Assets/Characters/3_Enemy/Iluvilirae/PresentationPreview";
         System.IO.Directory.CreateDirectory(folder); AssetDatabase.Refresh();
         string path = folder + "/Juggernaut_Recovery_" + originalControllerHash.Substring(0,8) + ".controller";
-        if (!AssetDatabase.LoadAssetAtPath<AnimatorController>(path) && !AssetDatabase.CopyAsset(JuggernautV2Setup.ControllerPath,path))
+        if (!AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(path) && !AssetDatabase.CopyAsset(JuggernautV2Setup.ControllerPath,path))
             throw new InvalidOperationException("Could not create isolated preview controller.");
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(path);
         profile = UnityEngine.Object.Instantiate(enemy.combatProfile);
         profile.name += " (recovery preview)";
         var states = controller.layers.SelectMany(l => LocomotionPresentationCalibration.States(l.stateMachine)).ToArray();

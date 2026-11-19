@@ -96,7 +96,7 @@ public static class PlayerInPlaceAudit
     public static bool IsRootCandidate(AnimationClip clip)
     {
         string path = AssetDatabase.GetAssetPath(clip);
-        if (path.StartsWith("Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/", StringComparison.Ordinal)) return false;
+        if (AnimationLibraryAssets.IsWithin(path, "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace")) return false;
         return path.IndexOf("root", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
@@ -110,13 +110,13 @@ public static class PlayerInPlaceAudit
     public static Dictionary<AnimationClip, List<string>> Collect(List<string> failures)
     {
         var result = new Dictionary<AnimationClip, List<string>>();
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null) throw new InvalidOperationException("Player_Model is missing");
         foreach (var layer in controller.layers)
             Visit(layer.stateMachine, layer.name, (state, path) => CollectMotion(state.motion, path, result, failures));
-        foreach (var guid in AssetDatabase.FindAssets("t:SkillSO", new[] { "Assets/CombatRealTime/Skills" }))
+        foreach (var guid in AnimationLibraryAssets.FindAssets("t:SkillSO", new[] { "Assets/CombatRealTime/Skills" }))
         {
-            var skill = AssetDatabase.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(guid));
+            var skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(guid));
             if (skill != null && skill.animationClip != null) Add(result, skill.animationClip, AssetDatabase.GetAssetPath(skill));
         }
         foreach (var sequence in PlayerSequences())
@@ -134,13 +134,13 @@ public static class PlayerInPlaceAudit
         }
         return result;
     }
-    public static IEnumerable<ThresholdSequence> PlayerSequences() => AssetDatabase.FindAssets("t:ThresholdSequence")
-        .Select(g => AssetDatabase.LoadAssetAtPath<ThresholdSequence>(AssetDatabase.GUIDToAssetPath(g))).Where(s => s != null);
+    public static IEnumerable<ThresholdSequence> PlayerSequences() => AnimationLibraryAssets.FindAssets("t:ThresholdSequence")
+        .Select(g => AnimationLibraryAssets.LoadAssetAtPath<ThresholdSequence>(AssetDatabase.GUIDToAssetPath(g))).Where(s => s != null);
     public static IEnumerable<AnimatorOverrideController> PlayerOverrides()
     {
-        foreach (var guid in AssetDatabase.FindAssets("t:AnimatorOverrideController"))
+        foreach (var guid in AnimationLibraryAssets.FindAssets("t:AnimatorOverrideController"))
         {
-            var asset = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(AssetDatabase.GUIDToAssetPath(guid));
+            var asset = AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(AssetDatabase.GUIDToAssetPath(guid));
             RuntimeAnimatorController basis = asset;
             var seen = new HashSet<RuntimeAnimatorController>();
             while (basis is AnimatorOverrideController wrapper && seen.Add(basis)) basis = wrapper.runtimeAnimatorController;

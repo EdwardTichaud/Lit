@@ -20,7 +20,7 @@ public sealed class BelmontCycleTests
         var parent = new GameObject("Isolated death policy"); parent.SetActive(false);
         try
         {
-            var source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
             Assert.That(source, Is.Not.Null);
             var actor = Object.Instantiate(source, parent.transform);
             var enemy = actor.GetComponent<EnemyController>();
@@ -57,7 +57,7 @@ public sealed class BelmontCycleTests
         var root = new GameObject("Belmont isolated boss contract"); root.SetActive(false);
         try
         {
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(Root + "/Data/CharacterData_BrokenAnchor.asset");
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(Root + "/Data/CharacterData_BrokenAnchor.asset");
             Assert.That(data, Is.Not.Null);
             var actor = Object.Instantiate(data.ResolveWorldPrefab(), root.transform);
             var enemy = actor.GetComponent<EnemyController>();
@@ -100,7 +100,7 @@ public sealed class BelmontCycleTests
     [TestCase(1, 2, 0)] [TestCase(2, 0, 1)] [TestCase(2, 1, 0)]
     public void DevTorchObjectivesStayParallelAndDoNotWriteProgress(int a, int b, int c)
     {
-        var definition = AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/BelmontCycle.asset");
+        var definition = AnimationLibraryAssets.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/BelmontCycle.asset");
         var root = new GameObject("Belmont isolated Dev contract"); root.SetActive(false);
         try
         {

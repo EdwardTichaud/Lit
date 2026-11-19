@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -25,7 +25,6 @@ namespace Lit.Story
         [SerializeField] private StorySequenceCameraDriver cameraDriver;
         [SerializeField] private StorySequenceDialoguePresenter dialoguePresenter;
         [SerializeField] private StorySequenceFadeController fadeController;
-        [SerializeField] private StorySequenceConversationView conversationView;
 
         [Header("Events")]
         [SerializeField] private UnityEvent onSequenceStarted;
@@ -243,8 +242,6 @@ namespace Lit.Story
             }
 
             int openingShotIndex = -1;
-            if (conversationView != null)
-                conversationView.Prepare(bindings.ResolveActor("player"), cameraDriver);
             if (activeSequence.startFromBlack)
             {
                 openingShotIndex = PrepareOpeningShot(activeSequence);
@@ -499,18 +496,25 @@ namespace Lit.Story
                 : step.speakerCharacterData != null ? speaker.ResolveDisplayName()
                 : actor != null ? actor.DisplayName : step.actorId;
             Transform audioAnchor = actor != null ? actor.FaceAnchor : null;
-            bool nodStarted = cameraDriver.PlayNod(step.dialogueNodDegrees, step.dialogueNodDuration);
             yield return dialoguePresenter.Present(
                 step.voiceLine,
                 speakerName,
                 audioAnchor,
                 step.dialogueMaxDisplayDuration,
                 useUnscaledTime,
-                () => (!nodStarted || !cameraDriver.IsNodding) && ConsumeAdvanceRequest(),
-                speaker);
-            // A timed line can finish on its own; still let the gesture settle before cutting.
-            while (nodStarted && cameraDriver.IsNodding)
-                yield return null;
+                ConsumeAdvanceRequest,
+                speaker,
+                actor != null ? actor.Root : null,
+                listener != null ? listener.Root : null,
+                sequence != null && sequence.lockPlayerControl,
+                step.overrideDialogueDirection ? step.dialogueDirection : step.voiceLine.dialogueDirection,
+                this);
+            // Play the response after the line has closed, before cutting away.
+            if (cameraDriver.PlayNod(step.dialogueNodDegrees, step.dialogueNodDuration))
+            {
+                while (cameraDriver.IsNodding)
+                    yield return null;
+            }
         }
 
         private IEnumerator ExecuteCameraShot(StorySequenceStep step, bool useUnscaledTime, bool cameraPrepared)
@@ -816,10 +820,18 @@ namespace Lit.Story
                 return;
             }
 
-            playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(this, out playerLock, 
-                disableGameplayInput: true,
-                stopActiveAbilities: activeSequence.stopActiveAbilitiesOnLock);
-            if (playerLockHeld)
+            // An ordinary conversation keeps the motor's existing deceleration. Authored
+            // Timeline, sitting and fade openings retain their explicit staging contract.
+            bool conversation = !activeSequence.startFromBlack && !startWithLocalPlayerSeated &&
+                activeSequence.steps != null && activeSequence.steps.Exists(s => s != null && s.type == StorySequenceStepType.Dialogue) &&
+                !activeSequence.steps.Exists(s => s != null && (s.type == StorySequenceStepType.Timeline ||
+                    s.type == StorySequenceStepType.Sitting || s.type == StorySequenceStepType.ProgressivePlayerStop));
+            playerLockHeld = conversation
+                ? lockedPlayerController.TryBeginUccProgressiveStop(this, out playerLock,
+                    disableGameplayInput: true, stopActiveAbilities: activeSequence.stopActiveAbilitiesOnLock)
+                : lockedPlayerController.TryBeginUccExternalLock(this, out playerLock,
+                    disableGameplayInput: true, stopActiveAbilities: activeSequence.stopActiveAbilitiesOnLock);
+            if (playerLockHeld && !conversation)
             {
                 lockedPlayerController.GetComponent<PlayerAnimationController>()?.PrepareCinematicIdle();
             }
@@ -856,7 +868,6 @@ namespace Lit.Story
         {
             dialoguePresenter?.HideImmediate();
             cameraDriver?.EndCinematic(snapBackToGameplay: true);
-            conversationView?.Clear();
         }
 
         private void ReleasePlayerControl()

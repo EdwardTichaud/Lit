@@ -134,8 +134,8 @@ public static class LucianSupportPilot
                 if(report.maximumDesiredPoseError>.005f || report.maximumUpperBodyPositionError>.005f || report.maximumIKPoseError>.005f || report.minimumSoleFK<-.003f || report.minimumSoleIK<-.003f || report.minimumSubframeSoleFK<-.003f || report.minimumSubframeSoleIK<-.003f || report.maximumAnkleHorizontalChange>.005f || report.maximumFootRotationChange>3f || !report.eventsPreserved || report.maximumRootMotion>.005f)
                     throw new InvalidOperationException("Pilot pose/IK/support contract failed; inspect report, no asset installed");
                 Directory.CreateDirectory(Folder);AssetDatabase.Refresh();
-                var existing=AssetDatabase.LoadAssetAtPath<AnimationClip>(report.candidate);
-                if(existing==null) {AssetDatabase.CreateAsset(candidate,report.candidate);candidate=null;}
+                var existing=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(report.candidate);
+                if(existing==null) {AnimationLibraryAssets.CreateAsset(candidate,report.candidate);candidate=null;}
                 else if(!ActorFacingCalibration.SameAuthoring(existing,candidate))throw new InvalidOperationException("Existing pilot differs; authoring preserved");
                 report.status="Pilot FK/IK/pose gates passed. Runtime UCC and visual qualification still required.";
                 void Vector(string name,Vector3 v) {for(int axis=0;axis<3;axis++)values[name+"."+"xyz"[axis]].Add(v[axis]);}

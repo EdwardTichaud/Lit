@@ -24,11 +24,11 @@ internal static class EnolaKnifeHumanoidAuthoring
     internal static void Install()
     {
         const string root = "Assets/Gameplay/EnolaKnifeGame/";
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(root + "EnolaKnife.controller");
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(root + "EnolaKnife.controller");
         var sources = controller.layers[0].stateMachine.states.Select(s =>
         {
             string path = "Assets/TricksUp/FFFAnimPack/Prefabs/" + s.state.name + ".FBX";
-            var clip = AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>()
+            var clip = AnimationLibraryAssets.LoadAllAssetsAtPath(path).OfType<AnimationClip>()
                 .FirstOrDefault(c => !c.name.StartsWith("__preview__", StringComparison.Ordinal));
             if (clip == null || !clip.humanMotion)
                 throw new InvalidOperationException($"{path} lacks a Humanoid animation (found {clip?.name ?? "none"}).");
@@ -38,12 +38,12 @@ internal static class EnolaKnifeHumanoidAuthoring
         foreach (var (state, source) in sources)
         {
             string path = root + state.name + "_Humanoid.anim";
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(path);
             if (clip == null)
             {
                 clip = UnityEngine.Object.Instantiate(source);
                 clip.name = state.name + "_Humanoid";
-                AssetDatabase.CreateAsset(clip, path);
+                AnimationLibraryAssets.CreateAsset(clip, path);
             }
             var settings = AnimationUtility.GetAnimationClipSettings(clip);
             settings.loopTime = state.name == EnolaKnifeGame.Idle;

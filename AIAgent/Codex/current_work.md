@@ -3,13 +3,19 @@
 GameFlow choisit l'instance `1_Munin_Meeting` de `Maison_Sequences` apres
 placement de l'escouade lors de Nouvelle partie. La pose assise scriptée lit
 le contact du corps UCC plutôt que l'état de son gestionnaire de commandes,
-désactivé par la séquence. Contrechamp à environ 2,4 m, Lucian de face,
-orbe de Munin au premier plan avec éclairage temporaire. Hochement sur la
-dernière réplique, puis retour à la caméra de jeu et au contrôle.
-Validation : 55 tests ciblés et parcours isolé dans la Maison, sans rejouer
-la vidéo. Assise `Sitting_Idle` confirmée avec contact au sol, hochement et
-restitution du contrôle. Sur la capture, une dalle masque encore le bas
-de la pose.
+désactivé par la séquence. Munin est le point de vue fixe de la caméra
+(0,410002 ; -0,070000 ; 6,599998), sans orbe ni lumière ajoutés. Hochement
+après la fermeture de la dernière réplique, puis retour à la caméra de jeu et au contrôle.
+Le plan, l'absence d'orbe et le retour au gameplay sont vérifiés en jeu ;
+55 tests ciblés passent.
+Respiration de la caméra à la rencontre et, plus légère, en exploration.
+Elle ne modifie ni le repère de Munin, ni la visée UCC, ni les collisions.
+Le recalage des pieds et du bassin est suspendu pendant l'assise et le lever,
+sans modifier la capsule. Le parcours isolé dans la Maison confirme la reprise
+du recalage et du contrôle. À phase égale, le bassin remonte de 0,329 m sans
+déplacer la racine. Les pieds restent sous la surface sondée à cet emplacement
+(0,232 m à gauche, 0,126 m à droite) : la pose ou le placement restent à
+ajuster séparément.
 Voir `systems/narrative.md`.
 
 ## Placement des objets monde (2026-11-15)

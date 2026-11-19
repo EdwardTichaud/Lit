@@ -10,7 +10,7 @@ public sealed class LitBrainsProductionPolicyTests
     public void ProductionJuggernautImportsItsAuthoredVisionInsteadOfDefaultSettings()
     {
         const string path = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
-        var data = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(path);
         Assert.IsNotNull(data);
         Assert.AreEqual("c54e94b14c7826c4482529b6d4d739ec", data.UniqueId);
         Assert.AreEqual(30f, data.vision.maximumDistance, "Validate the imported asset, not only its YAML text.");
@@ -40,7 +40,7 @@ public sealed class LitBrainsProductionPolicyTests
     [Test]
     public void NearbyCoverKeepsApproachMovingUntilTheTargetIsVisible()
     {
-        var data = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
+        var data = Object.Instantiate(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
         var target = new GameObject("Close target beyond cover");
         var wall = new GameObject("Physical cover between actors");
         try

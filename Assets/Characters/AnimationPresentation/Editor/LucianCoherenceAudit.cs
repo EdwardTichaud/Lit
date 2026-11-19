@@ -85,7 +85,7 @@ public static class LucianCoherenceAudit
     static void ApplyLocomotionAuthority()
     {
         const string path="Assets/Characters/1_Squad/Lucian/Lucian.asset";
-        var asset=AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+        var asset=AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(path);
         if(asset==null)throw new InvalidOperationException("Lucian CharacterData unresolved");
         var data=new SerializedObject(asset);
         var field=data.FindProperty("playerSettings.locomotion.preserveWholeBodyLocomotion");
@@ -214,7 +214,7 @@ public static class LucianCoherenceAudit
         var hd=camera.GetComponent<HDAdditionalCameraData>();hd.clearColorMode=HDAdditionalCameraData.ClearColorMode.Color;hd.backgroundColorHDR=new Color(.12f,.14f,.17f);hd.volumeLayerMask=1<<31;
         foreach(var field in new[]{FrameSettingsField.ExposureControl,FrameSettingsField.Postprocess}) {hd.renderingPathCustomFrameSettings.SetEnabled(field,true);hd.renderingPathCustomFrameSettingsOverrideMask.mask[(uint)field]=true;}
         var volume=new GameObject("Lucian audit exposure").AddComponent<Volume>();SceneManager.MoveGameObjectToScene(volume.gameObject,scene);volume.gameObject.layer=31;volume.isGlobal=true;
-        volume.sharedProfile=AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Characters/3_Enemy/Iluvilirae/Iluvilirae_Test_Volume.asset");
+        volume.sharedProfile=AnimationLibraryAssets.LoadAssetAtPath<VolumeProfile>("Assets/Characters/3_Enemy/Iluvilirae/Iluvilirae_Test_Volume.asset");
         foreach(float yaw in new[]{155f,225f}) {var light=new GameObject("Lucian audit light").AddComponent<Light>();SceneManager.MoveGameObjectToScene(light.gameObject,scene);light.type=LightType.Directional;light.cullingMask=1<<31;light.transform.rotation=Quaternion.Euler(35,yaw,0);light.gameObject.AddComponent<HDAdditionalLightData>();light.intensity=yaw==155?12000:2500;}
         return camera;
     }

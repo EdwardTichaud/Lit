@@ -26,7 +26,7 @@ public static class LucianBrainsCombatSetup
             if (world.freeAttacks == null) world.freeAttacks = new FreeAttackProfile();
             world.freeAttacks.contactDashMotion = ContactDashMotion.Burst;
             world.freeAttacks.retreatLandingDeceleration = 60f;
-            var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
+            var source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
             var sourceCamera = source.GetComponentInChildren<LitGameplayCameraModeController>(true);
             var sourceWorld = source.GetComponentInChildren<CombatWorldRuntime>(true);
             if (world.lockCursorPrefab == null && sourceWorld != null)
@@ -85,7 +85,7 @@ public static class LucianBrainsCombatSetup
             LucianAirComboSetup.Configure();
             SkillTargetingAuthoring.MigrateLoadedLab(arena);
             arena.enemyAttackSkills = new[] { "Strike", "Sweep", "Followup" }
-                .Select(name => AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_" + name + ".asset")).ToArray();
+                .Select(name => AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_" + name + ".asset")).ToArray();
             if (arena.enemyAttackSkills.Any(skill => skill == null)) throw new InvalidOperationException("Juggernaut authored attack definitions missing.");
             var wheel = UnityEngine.Object.FindAnyObjectByType<SkillWheel>(FindObjectsInactive.Include);
             if (wheel == null) wheel = CreateWheel(skills);
@@ -112,11 +112,11 @@ public static class LucianBrainsCombatSetup
         string skillPath = folder + "/CombatLab_CounterSkill.asset";
         string timelinePath = folder + "/CombatLab_CounterSkill.playable";
         string rigPath = folder + "/CombatLab_CounterRig.prefab";
-        if (AssetDatabase.LoadAssetAtPath<CounterSkillSO>(skillPath) == null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<CounterSkillSO>(skillPath) == null)
             AssetDatabase.CopyAsset("Assets/CombatRealTime/Counters/CounterSkill_TemporalRiposte.asset", skillPath);
-        if (AssetDatabase.LoadAssetAtPath<TimelineAsset>(timelinePath) == null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(timelinePath) == null)
             AssetDatabase.CopyAsset("Assets/CombatRealTime/Counters/CounterSkill_TemporalRiposte.playable", timelinePath);
-        var timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(timelinePath);
+        var timeline = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(timelinePath);
         const string cameraKey = "CombatLab.CounterCamera";
         foreach (var track in timeline.GetOutputTracks().OfType<CinemachineTrack>())
             foreach (var clip in track.GetClips())
@@ -125,7 +125,7 @@ public static class LucianBrainsCombatSetup
                     shot.VirtualCamera.exposedName = new PropertyName(cameraKey);
                     EditorUtility.SetDirty(shot);
                 }
-        var rig = AssetDatabase.LoadAssetAtPath<CombatCinematicRig>(rigPath);
+        var rig = AnimationLibraryAssets.LoadAssetAtPath<CombatCinematicRig>(rigPath);
         if (rig == null)
         {
             var root = new GameObject("CombatLab_CounterRig", typeof(PlayableDirector), typeof(SignalReceiver), typeof(CombatCinematicRig));
@@ -150,7 +150,7 @@ public static class LucianBrainsCombatSetup
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
         ConfigureRelativeCounterRig(rigPath, timeline);
-        var skill = AssetDatabase.LoadAssetAtPath<CounterSkillSO>(skillPath);
+        var skill = AnimationLibraryAssets.LoadAssetAtPath<CounterSkillSO>(skillPath);
         var settings = new SerializedObject(skill);
         settings.FindProperty("timeline").objectReferenceValue = timeline;
         settings.FindProperty("combatCinematicRigPrefab").objectReferenceValue = rig;
@@ -260,12 +260,12 @@ public static class LucianBrainsCombatSetup
 
     public static void UpgradeEnemy()
     {
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(JuggernautV2Setup.ControllerPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(JuggernautV2Setup.ControllerPath);
         var machine = controller.layers[0].stateMachine;
         if (!machine.states.Any(s => s.state.name == "Knocked Out"))
         {
             var knockedOut = machine.AddState("Knocked Out", new Vector3(750, 140));
-            knockedOut.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(CounterKnockoutSignalSetup.AnimationPath)
+            knockedOut.motion = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(CounterKnockoutSignalSetup.AnimationPath)
                 ?? machine.states.First(s => s.state.name == "Hurt").state.motion;
             if (knockedOut.motion is AnimationClip clip) knockedOut.speed = clip.length / 2f;
             // The stun timer owns the exit; no automatic transition can end it early.
@@ -291,7 +291,7 @@ public static class LucianBrainsCombatSetup
 
     private static void EnsureFluidProfile()
     {
-        var profile = AssetDatabase.LoadAssetAtPath<LitBrainsCombatProfile>(FluidProfilePath);
+        var profile = AnimationLibraryAssets.LoadAssetAtPath<LitBrainsCombatProfile>(FluidProfilePath);
         if (profile == null)
         {
             profile = ScriptableObject.CreateInstance<LitBrainsCombatProfile>();
@@ -306,12 +306,12 @@ public static class LucianBrainsCombatSetup
             for (int i = 0; i < 3; i++)
                 profile.attacks[i] = new LitBrainsAttackProfile {
                     stateName = i == 0 ? "Attack" : "Attack_" + names[i],
-                    clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(JuggernautV2Setup.Folder + "/Animations/Juggernaut_v2_" + names[i] + ".anim"),
+                    clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(JuggernautV2Setup.Folder + "/Animations/Juggernaut_v2_" + names[i] + ".anim"),
                     reactionSeconds = (strike[i] - 7) / 30f, strikeSeconds = strike[i] / 30f,
                     impactSeconds = impact[i] / 30f, recoverySeconds = recovery[i] / 30f,
                     preparationAdvanceDistance = 1f, advanceDistance = .9f,
                     advanceSeconds = .2f, recoveryDurationSeconds = .2f };
-            AssetDatabase.CreateAsset(profile, FluidProfilePath);
+            AnimationLibraryAssets.CreateAsset(profile, FluidProfilePath);
         }
         foreach (var attack in profile.attacks)
         {
@@ -332,7 +332,7 @@ public static class LucianBrainsCombatSetup
             var brain = enemy.GetComponent<LitBrainsEnemy>();
             brain.combatProfile = profile;
             if (brain.VFX_KnockedOut == null)
-                brain.VFX_KnockedOut = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/VFX_KnockedOut.prefab");
+                brain.VFX_KnockedOut = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Prefabs/VFX_KnockedOut.prefab");
             PrefabUtility.SaveAsPrefabAsset(enemy, JuggernautV2Setup.PrefabPath);
         }
         finally { PrefabUtility.UnloadPrefabContents(enemy); }
@@ -340,16 +340,16 @@ public static class LucianBrainsCombatSetup
 
     private static void ConfigureFluidLaboratory(LucianBrainsCombatArena arena, GameObject root)
     {
-        EnemyCounterTimingValidation.Validate(AssetDatabase.LoadAssetAtPath<LitBrainsCombatProfile>(FluidProfilePath));
+        EnemyCounterTimingValidation.Validate(AnimationLibraryAssets.LoadAssetAtPath<LitBrainsCombatProfile>(FluidProfilePath));
         if (arena.basicSkills == null) throw new InvalidOperationException("Missing basic skills.");
         for (int i = 0; i < arena.basicSkills.Length; i++)
         {
             string path = IluviliraeSetup.Folder + "/CombatLab_BasicSkill_" + (i + 1) + ".asset";
-            var copy = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(path);
+            var copy = AnimationLibraryAssets.LoadAssetAtPath<BasicSkillsSO>(path);
             if (copy == null)
             {
                 AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(arena.basicSkills[i]), path);
-                copy = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(path);
+                copy = AnimationLibraryAssets.LoadAssetAtPath<BasicSkillsSO>(path);
                 copy.interruptionForce = i == 0 ? 20 : i == 1 ? 30 : 50;
                 copy.maximumHitDistance = 2.6f;
                 copy.impactFeedback.hitStopSeconds = i == 0 ? .04f : i == 1 ? .05f : .07f;
@@ -396,7 +396,7 @@ public static class LucianBrainsCombatSetup
         for (int i = 0; i < directions.Length; i++)
         {
             string path = JuggernautV2Setup.Folder + "/Animations/Juggernaut_v2_" + gait + "_" + directions[i] + ".anim";
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(path);
             if (clip == null)
             {
                 var source = ActorAnimationAudit.Source(ActorAnimationAudit.EnemySource(gait + "_" + directions[i]));
@@ -406,7 +406,7 @@ public static class LucianBrainsCombatSetup
                 var settings = AnimationUtility.GetAnimationClipSettings(clip);
                 settings.loopTime = true;
                 AnimationUtility.SetAnimationClipSettings(clip, settings);
-                AssetDatabase.CreateAsset(clip, path);
+                AnimationLibraryAssets.CreateAsset(clip, path);
             }
             float angle = (i + 1) * Mathf.PI * 0.25f;
             tree.AddChild(clip, new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)));

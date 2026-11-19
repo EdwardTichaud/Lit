@@ -28,6 +28,12 @@ MonoBehaviour:
   fadeFromBlackAfterGameplayRestore: 0
   gameplayFadeInDuration: 0.75
   steps:
+  - label: Munin - Point de vue
+    type: 2
+    skippable: 0
+    cameraPointId: munin.meeting.pov
+    cameraTransitionDuration: 0
+    cameraHoldDuration: 0
   - label: Lucian - Question
     type: 1
     skippable: 1

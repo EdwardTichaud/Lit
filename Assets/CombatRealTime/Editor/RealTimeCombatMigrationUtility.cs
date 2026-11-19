@@ -213,7 +213,7 @@ public static class RealTimeCombatMigrationUtility
     private static void RemoveRetiredActionMap()
     {
         const string path = "Assets/PlayerInputs.inputactions";
-        InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(path);
+        InputActionAsset actions = AnimationLibraryAssets.LoadAssetAtPath<InputActionAsset>(path);
         if (actions == null)
         {
             throw new InvalidOperationException("PlayerInputs.inputactions introuvable.");
@@ -241,12 +241,12 @@ public static class RealTimeCombatMigrationUtility
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destination));
         }
 
-        if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(destination) != null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Object>(destination) != null)
         {
             return;
         }
 
-        if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(source) != null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Object>(source) != null)
         {
             string error = AssetDatabase.MoveAsset(source, destination);
             if (!string.IsNullOrEmpty(error))
@@ -261,7 +261,7 @@ public static class RealTimeCombatMigrationUtility
         for (int i = 0; i < RetiredAssetPaths.Length; i++)
         {
             string path = RetiredAssetPaths[i];
-            if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path) != null && !AssetDatabase.DeleteAsset(path))
+            if (AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Object>(path) != null && !AssetDatabase.DeleteAsset(path))
             {
                 throw new InvalidOperationException("Suppression impossible : " + path);
             }
@@ -274,8 +274,8 @@ public static class RealTimeCombatMigrationUtility
     {
         const string source = "Assets/Combat/Prefabs/BattleSphere.prefab";
         const string archive = "Assets/Legacy/TurnBasedCombatRetired/BattleSphere.prefab";
-        if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(source) == null ||
-            AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(archive) != null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Object>(source) == null ||
+            AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Object>(archive) != null)
         {
             return;
         }

@@ -32,6 +32,8 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     [Header("Exploration Framing")]
     [SerializeField, Min(0f), Tooltip("Native UCC horizontal pivot slack. Zero keeps the lateral follow continuous and prevents its sign-based threshold from trembling in one direction.")]
     private float horizontalPivotFreedom;
+    [SerializeField, Range(0f, 1f), Tooltip("Subtle render-only breathing during exploration.")]
+    private float explorationBreathingStrength;
     [SerializeField, Min(0f), Tooltip("Native UCC smoothing for the look offset only; aim input remains immediate.")]
     private float lookOffsetSmoothing = 0.08f;
     [SerializeField, Min(0f), Tooltip("Short, bounded positional inertia used by exploration only. It does not delay aiming or combat lock-on.")]
@@ -61,6 +63,7 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     [SerializeField, Min(0.1f)] private float startupRetrySeconds = 3f;
 
     private LitUccCameraCharacterBinder characterBinder;
+    private LitCameraDirector breathingDirector;
     private Coroutine startupRoutine;
     private bool smoothViewInstalled;
 
@@ -135,6 +138,8 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
 
     private void OnDisable()
     {
+        if (breathingDirector != null) breathingDirector.SetExplorationBreathing(0f);
+        breathingDirector = null;
         if (characterBinder != null)
         {
             characterBinder.CharacterBound -= OnCharacterBound;
@@ -166,6 +171,11 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
         }
 
         ConfigureStableRootAnchor();
+        if (Application.isPlaying && explorationBreathingStrength > 0f && breathingDirector == null)
+        {
+            breathingDirector = LitCameraDirector.EnsureInstance(cameraController.GetComponent<Camera>());
+            breathingDirector?.SetExplorationBreathing(explorationBreathingStrength);
+        }
 
         // A late scene or perspective initialization can restore the
         // serialized Adventure view after this adapter first installs its

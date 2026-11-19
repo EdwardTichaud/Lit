@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 
@@ -256,6 +256,7 @@ public sealed class PlayerAnimationController : CharacterAnimationController
 
     public override void BeginCinematicMotion(int sessionToken)
     {
+        GetComponent<CharacterDialoguePresentationController>()?.SuspendForPriority();
         cinematicSessionToken = sessionToken;
         ResolveReferences();
         GetComponent<PlayerStateMotionController>()?.Cancel();

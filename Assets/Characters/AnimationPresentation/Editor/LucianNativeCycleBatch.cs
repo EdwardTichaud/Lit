@@ -36,7 +36,7 @@ public static class LucianNativeCycleBatch
         var sources=measurements.cycles.Where(c=>!c.footIK).ToArray();
         if(sources.Length!=18)throw new InvalidOperationException("Expected eighteen measured source cycles");
         var manifest=new Manifest {stride=stride};
-        var controller=AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
+        var controller=AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
         var overrides=new List<KeyValuePair<AnimationClip,AnimationClip>>();controller.GetOverrides(overrides);
         // Resolve every GUID/sub-asset before creating any new candidate.
         foreach(var item in sources)
@@ -48,7 +48,7 @@ public static class LucianNativeCycleBatch
             if(item.clip.EndsWith("Twinblades_Common_Run_Loop_Inplace.FBX"))name="Lucian_Common_Run_SupportIK";
             string target="Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/"+name+".anim";
             if(stride)target=target.Replace("_SupportIK.anim","_Stride03.anim");
-            if(stride&&item.clip.EndsWith("Twinblades_Common_Run_Loop_Inplace.FBX"))target="Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Run_Stride02.anim";
+            if(stride&&item.clip.EndsWith("Twinblades_Common_Run_Loop_Inplace.FBX"))target="Assets/Animations/Twinblades/Locomotion/Lucian/CoherencePilot/Lucian_Common_Run_Stride02.anim";
             var consumers=overrides.Where(p=>p.Key==source).ToArray();
             if(consumers.Length!=1)throw new InvalidOperationException("Source override consumer unresolved: "+item.clip);
             string previous=AssetDatabase.GetAssetPath(consumers[0].Value??consumers[0].Key);
@@ -98,11 +98,11 @@ public static class LucianNativeCycleBatch
             var r=entry.validation;
             if(r==null||r.sourceHash!=AssetDatabase.GetAssetDependencyHash(entry.source).ToString()||r.avatarHash!=avatarHash||r.candidateHash!=AssetDatabase.GetAssetDependencyHash(entry.candidate).ToString())
                 throw new InvalidOperationException("Revalidate changed input/candidate: "+entry.source);
-            var source=ActorAnimationAudit.Source(entry.source,entry.fileId);var target=AssetDatabase.LoadAssetAtPath<AnimationClip>(entry.candidate);
+            var source=ActorAnimationAudit.Source(entry.source,entry.fileId);var target=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(entry.candidate);
             if(target==null)throw new InvalidOperationException("Candidate missing: "+entry.candidate);
             replacements.Add(source,target);
         }
-        var controller=AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
+        var controller=AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
         var pairs=new List<KeyValuePair<AnimationClip,AnimationClip>>();controller.GetOverrides(pairs);
         var covered=new HashSet<AnimationClip>();bool changed=false;
         for(int i=0;i<pairs.Count;i++)
@@ -116,7 +116,7 @@ public static class LucianNativeCycleBatch
             if(effective!=replacements[source]){pairs[i]=new KeyValuePair<AnimationClip,AnimationClip>(pairs[i].Key,replacements[source]);changed=true;}
         }
         if(covered.Count!=18)throw new InvalidOperationException("Not all cycle consumers resolved");
-        var profile=AssetDatabase.LoadAssetAtPath<LocomotionPresentationProfile>(LucianCadencePreview.Folder+"/LocomotionMeasurements.asset");
+        var profile=AnimationLibraryAssets.LoadAssetAtPath<LocomotionPresentationProfile>(LucianCadencePreview.Folder+"/LocomotionMeasurements.asset");
         var cycles=profile.walk.Concat(profile.run).Concat(new[]{profile.explorationWalk,profile.explorationRun}).ToArray();
         if(cycles.Length!=18||cycles.Any(c=>c==null||manifest.entries.Count(e=>AssetDatabase.GetAssetPath(c.clip)==e.source||AssetDatabase.GetAssetPath(c.clip)==e.previous||AssetDatabase.GetAssetPath(c.clip)==e.candidate)!=1))throw new InvalidOperationException("Profile consumers changed");
         if(profile.footSupports!=null)
@@ -142,7 +142,7 @@ public static class LucianNativeCycleBatch
             {
                 string current=AssetDatabase.GetAssetPath(cycle.clip);
                 var entry=manifest.entries.Single(e=>current==e.source||current==e.previous||current==e.candidate);
-                var target=AssetDatabase.LoadAssetAtPath<AnimationClip>(entry.candidate);
+                var target=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(entry.candidate);
                 if(cycle.clip!=target)
                 {
                     cycle.clip=target;
@@ -160,12 +160,12 @@ public static class LucianNativeCycleBatch
             if(profileChanged){EditorUtility.SetDirty(profile);AssetDatabase.SaveAssetIfDirty(profile);}
             if(ik is not LitPresentationCharacterIK)
             {
-                var serialized=new SerializedObject(ik);serialized.FindProperty("m_Script").objectReferenceValue=AssetDatabase.LoadAssetAtPath<MonoScript>("Assets/Characters/AnimationPresentation/LitPresentationCharacterIK.cs");serialized.ApplyModifiedPropertiesWithoutUndo();
+                var serialized=new SerializedObject(ik);serialized.FindProperty("m_Script").objectReferenceValue=AnimationLibraryAssets.LoadAssetAtPath<MonoScript>("Assets/Characters/AnimationPresentation/LitPresentationCharacterIK.cs");serialized.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(prefab,LucianCadencePreview.Folder+"/LucianCadence.prefab");
             }
         }
         finally{PrefabUtility.UnloadPrefabContents(prefab);}
-        if(AssetDatabase.LoadAssetAtPath<GameObject>(LucianCadencePreview.Folder+"/LucianCadence.prefab").GetComponentInChildren<LitPresentationCharacterIK>(true)==null)
+        if(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(LucianCadencePreview.Folder+"/LucianCadence.prefab").GetComponentInChildren<LitPresentationCharacterIK>(true)==null)
             throw new InvalidOperationException("Candidate IK adapter did not serialize");
     }
 }

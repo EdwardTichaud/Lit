@@ -22,11 +22,11 @@ public static class AurellSkillSetup
             var scene = EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
             var arena = UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>();
             if (arena == null || arena.lucianPrefab == null) throw new InvalidOperationException("Laboratory player prefab missing.");
-            var baseSkill = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>("Assets/CombatRealTime/Skills/BasicSkill_3.asset");
+            var baseSkill = AnimationLibraryAssets.LoadAssetAtPath<BasicSkillsSO>("Assets/CombatRealTime/Skills/BasicSkill_3.asset");
             var source = baseSkill.animationClip;
             string clipPath = Folder + "/JusteRetour_InPlace.anim";
-            if (AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath) == null) AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(source), clipPath);
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+            if (AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath) == null) AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(source), clipPath);
+            var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath);
             AnimationUtility.SetAnimationEvents(clip, AnimationUtility.GetAnimationEvents(source).Where(e =>
                 e.functionName == "ShowSword" || e.functionName == "ResolveSkillImpact" || e.functionName == "HideSwordWhenComboEnds").ToArray());
             EditorUtility.SetDirty(clip);
@@ -53,14 +53,14 @@ public static class AurellSkillSetup
             var kit = new[] { intercession, rempart, sommation, retour };
             foreach (var skill in kit) SkillTargetingAuthoring.ConfigureIfMissing(skill);
             foreach (var skill in kit) EditorUtility.SetDirty(skill);
-            if (AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPath) == null)
                 AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath);
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPath);
             data.characterName = "Aurell"; data.characterId = "Aurell"; data.hp = 100; data.isEnemy = false;
             data.combatSkills = new List<SkillSO>(kit); data.voiceLines.Clear();
             data.enemyCombatProfile = null; data.enableCombatHealthThresholds = false; data.combatHealthThresholdStages.Clear();
             data.groundBasicSkills = arena.basicSkills.Where(s => s != null).ToList();
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath) == null)
                 AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(arena.lucianPrefab), PrefabPath);
             var root = PrefabUtility.LoadPrefabContents(PrefabPath);
             try
@@ -83,7 +83,7 @@ public static class AurellSkillSetup
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
-            data.worldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath); EditorUtility.SetDirty(data);
+            data.worldPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath); EditorUtility.SetDirty(data);
             arena.aurellPrefab = data.worldPrefab; arena.useAurell = true; arena.spawnProtectionAlly = true;
             EditorUtility.SetDirty(arena); EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
@@ -96,8 +96,8 @@ public static class AurellSkillSetup
     private static SkillSO Create(string asset, string label, SkillProtectionKind kind, float cooldown)
     {
         string path = SkillFolder + "/Skill_" + asset + ".asset";
-        var skill = AssetDatabase.LoadAssetAtPath<SkillSO>(path);
-        if (skill == null) { skill = ScriptableObject.CreateInstance<SkillSO>(); AssetDatabase.CreateAsset(skill, path); }
+        var skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(path);
+        if (skill == null) { skill = ScriptableObject.CreateInstance<SkillSO>(); AnimationLibraryAssets.CreateAsset(skill, path); }
         skill.skillName = label; skill.cooldownSeconds = cooldown; skill.damages = 0;
         skill.protection.kind = kind; skill.clarityGainOnHit = 0; skill.impactFeedback.enabled = false;
         return skill;

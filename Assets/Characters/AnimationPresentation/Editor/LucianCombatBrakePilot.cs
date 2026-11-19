@@ -13,8 +13,8 @@ using Object = UnityEngine.Object;
 public static class LucianCombatBrakePilot
 {
     const string Folder = "Library/LucianCoherence";
-    const string PilotPath = "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_CombatBrake_FL_RightSupport_Pilot.anim";
-    const string TransferPath = "Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_CombatBrake_FL_WeightTransfer_Pilot.anim";
+    const string PilotPath = "Assets/Animations/Twinblades/Battle/Lucian/CoherencePilot/Lucian_CombatBrake_FL_RightSupport_Pilot.anim";
+    const string TransferPath = "Assets/Animations/Twinblades/Battle/Lucian/CoherencePilot/Lucian_CombatBrake_FL_WeightTransfer_Pilot.anim";
     const int Steps = 120;
     const int TransferSample = 92;
 
@@ -74,10 +74,10 @@ public static class LucianCombatBrakePilot
         var donors = JsonUtility.FromJson<Donors>(File.ReadAllText(Folder + "/brake-donor-audit.json"));
         var match = donors.matches.Single(m => m.pair == "Approach to CombatIdle");
         var actor = ActorAnimationAudit.Actor(false);
-        var profile = AssetDatabase.LoadAssetAtPath<LocomotionPresentationProfile>(NativeFootSupportPreparation.ProfilePath);
+        var profile = AnimationLibraryAssets.LoadAssetAtPath<LocomotionPresentationProfile>(NativeFootSupportPreparation.ProfilePath);
         NativeFootSupportPreparation.Validate(profile, profile.footSupports, true);
         var data = profile.footSupports;
-        var approach = AssetDatabase.LoadAssetAtPath<AnimationClip>(donors.approachClip);
+        var approach = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(donors.approachClip);
         var stop = ActorAnimationAudit.Source(donors.stopClip);
         var idle = ActorAnimationAudit.Source(donors.combatIdleClip);
         using var sampler = new ActorPoseSampler(actor);
@@ -228,7 +228,7 @@ public static class LucianCombatBrakePilot
             }
             if (renderComparison)
             {
-                var pilot = AssetDatabase.LoadAssetAtPath<AnimationClip>(PilotPath);
+                var pilot = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(PilotPath);
                 if (pilot == null || Mathf.Abs(pilot.length - duration) > .00001f)
                     throw new InvalidOperationException("The published brake preview is missing or has a different duration.");
                 sampler.Dispose();
@@ -278,8 +278,8 @@ public static class LucianCombatBrakePilot
             if (publish && weightTransfer)
             {
                 sampler.Dispose();
-                CaptureComparison(actor, AssetDatabase.LoadAssetAtPath<AnimationClip>(PilotPath),
-                    AssetDatabase.LoadAssetAtPath<AnimationClip>(outputAsset), "combat-brake-weight-transfer-visual");
+                CaptureComparison(actor, AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(PilotPath),
+                    AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(outputAsset), "combat-brake-weight-transfer-visual");
             }
         }
         finally { Object.DestroyImmediate(clip); }
@@ -317,7 +317,7 @@ public static class LucianCombatBrakePilot
             }
             var volume = new GameObject("Brake inspection exposure").AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Characters/3_Enemy/Iluvilirae/Iluvilirae_Test_Volume.asset");
+            volume.sharedProfile = AnimationLibraryAssets.LoadAssetAtPath<VolumeProfile>("Assets/Characters/3_Enemy/Iluvilirae/Iluvilirae_Test_Volume.asset");
             foreach (float yaw in new[] { 155f, 225f })
             {
                 var light = new GameObject("Brake inspection light").AddComponent<Light>();
@@ -391,7 +391,7 @@ public static class LucianCombatBrakePilot
 
     static void SavePilot(string path, AnimationClip clip, ActorPoseSampler.Frame[] expected, ActorPoseSampler sampler, Result result)
     {
-        var persisted = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+        var persisted = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(path);
         bool created = persisted == null;
         try
         {
@@ -400,10 +400,10 @@ public static class LucianCombatBrakePilot
                 if (File.Exists(path)) throw new InvalidOperationException("The brake preview path is occupied.");
                 persisted = Object.Instantiate(clip);
                 persisted.name = clip.name;
-                AssetDatabase.CreateAsset(persisted, path);
+                AnimationLibraryAssets.CreateAsset(persisted, path);
                 AssetDatabase.SaveAssetIfDirty(persisted);
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                persisted = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                persisted = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(path);
             }
             else if (EditorJsonUtility.ToJson(persisted) != EditorJsonUtility.ToJson(clip))
                 throw new InvalidOperationException("The brake preview was modified. Review before replacing it.");

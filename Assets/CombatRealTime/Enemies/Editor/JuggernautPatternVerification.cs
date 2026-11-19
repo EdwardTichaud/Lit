@@ -80,14 +80,14 @@ public static class JuggernautPatternVerification
         floor.transform.SetParent(fixture.transform);
         floor.transform.position = origin + Vector3.down * .5f;
         floor.transform.localScale = new Vector3(50f, 1f, 50f);
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "Juggernaut_Combat.prefab");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(Folder + "Juggernaut_Combat.prefab");
         var settings = NavMesh.GetSettingsByID(prefab.GetComponent<NavMeshAgent>().agentTypeID);
         var source = new NavMeshBuildSource { shape = NavMeshBuildSourceShape.Box, size = new Vector3(50f, 1f, 50f), transform = Matrix4x4.TRS(floor.transform.position, Quaternion.identity, Vector3.one), area = 0 };
         var mesh = NavMeshBuilder.BuildNavMeshData(settings, new System.Collections.Generic.List<NavMeshBuildSource> { source }, new Bounds(origin, new Vector3(55f, 12f, 55f)), Vector3.zero, Quaternion.identity);
         nav = NavMesh.AddNavMeshData(mesh);
         var actor = UnityEngine.Object.Instantiate(prefab, origin, Quaternion.identity, fixture.transform);
         foreach (var network in actor.GetComponentsInChildren<Unity.Netcode.Components.NetworkTransform>(true)) network.enabled = false;
-        var data = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset"));
+        var data = UnityEngine.Object.Instantiate(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset"));
         data.enableCombatHealthThresholds = false;
         data.hp = 10000;
         var profile = UnityEngine.Object.Instantiate(data.enemyCombatProfile);
@@ -118,11 +118,11 @@ public static class JuggernautPatternVerification
     [MenuItem("Lit/Combat/Validate Juggernaut Patterns")]
     public static void ValidateAssets()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset");
         if (data == null || data.combatSkills == null || data.combatSkills.Count == 0 || data.enemyCombatProfile == null ||
             !data.enemyCombatProfile.patterns.Any(p => p != null && p.IsConfigured && p.weight > 0 && p.skills.All(data.combatSkills.Contains)))
             throw new Exception("Au moins un pattern complet doit correspondre aux skills equipes.");
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "Juggernaut_Combat.prefab");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(Folder + "Juggernaut_Combat.prefab");
         var controller = prefab.GetComponent<Animator>().runtimeAnimatorController as AnimatorController;
         if (controller == null || controller.name != "Juggernaut_Model") throw new Exception("controller invalide");
         var machine = controller.layers[0].stateMachine;

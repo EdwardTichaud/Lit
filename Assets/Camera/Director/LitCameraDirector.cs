@@ -44,6 +44,33 @@ public sealed class LitCameraDirector : MonoBehaviour
     private bool chargeFramingActive;
     private float chargeFramingWeight, chargeFovReduction, chargeBehindOffset, chargeBlendSeconds;
     private double chargeLastRenderAt;
+    private MonoBehaviour storyBreathingOwner;
+    private float storyBreathingStrength, explorationBreathingStrength, breathingWeight;
+    private bool wasStoryBreathing;
+    private double breathingLastRenderAt;
+
+    public void SetExplorationBreathing(float strength)
+    {
+        explorationBreathingStrength = Mathf.Clamp01(strength);
+        if (explorationBreathingStrength > 0f) SubscribeRendering();
+    }
+
+    public void SetStoryBreathing(MonoBehaviour owner, float strength)
+    {
+        if (strength <= 0f)
+        {
+            if (storyBreathingOwner == owner)
+            {
+                storyBreathingOwner = null;
+                storyBreathingStrength = 0f;
+                breathingWeight = 0f;
+            }
+            return;
+        }
+        storyBreathingOwner = owner;
+        storyBreathingStrength = Mathf.Clamp01(strength);
+        SubscribeRendering();
+    }
 
     public bool IsChargeFramingActive => chargeFramingActive;
 
@@ -134,12 +161,18 @@ public sealed class LitCameraDirector : MonoBehaviour
         cameraSession++;
         chargeFramingActive = false;
         chargeFramingWeight = 0f;
+        breathingWeight = 0f;
+        breathingLastRenderAt = 0;
         CancelOutputBlend();
         ReleaseCinemachine();
         UnsubscribeRendering();
     }
 
-    private void OnEnable() => UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
+    private void OnEnable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
+        if (explorationBreathingStrength > 0f || storyBreathingStrength > 0f) SubscribeRendering();
+    }
     private void OnSceneUnloaded(UnityEngine.SceneManagement.Scene scene)
     { chargeFramingActive = false; chargeFramingWeight = 0f; CancelOutputBlend(); }
 
@@ -338,12 +371,38 @@ public sealed class LitCameraDirector : MonoBehaviour
             fov = Mathf.Lerp(blendSource.fov, destination.fov, weight)
         };
         hasDisplayedPose = true;
-        if (elapsed01 < 1f || chargeWeight > 0f)
+        bool storyBreathing = !hasUccState && storyBreathingOwner != null && storyBreathingOwner.isActiveAndEnabled;
+        bool explorationBreathing = !storyBreathing && !hasUccState && !chargeFramingActive && chargeWeight <= 0f &&
+            uccCameraController != null && uccCameraController.isActiveAndEnabled && uccCameraController.Character != null &&
+            InputModeCoordinator.CurrentMode == InputMode.Exploration;
+        float targetBreathing = storyBreathing ? storyBreathingStrength :
+            explorationBreathing ? explorationBreathingStrength : 0f;
+        if (targetBreathing <= 0f || storyBreathing != wasStoryBreathing) breathingWeight = 0f;
+        float breathingDelta = (float)System.Math.Min(.05, System.Math.Max(0, now - breathingLastRenderAt));
+        breathingWeight = Mathf.MoveTowards(breathingWeight, targetBreathing, breathingDelta * 1.5f);
+        breathingLastRenderAt = now;
+        wasStoryBreathing = storyBreathing;
+
+        if (elapsed01 >= 1f) outputBlendSeconds = 0f;
+        if (elapsed01 < 1f || chargeWeight > 0f || breathingWeight > 0f)
         {
-            lastDisplayedPose.Apply(camera);
+            CameraPose renderPose = lastDisplayedPose;
+            ApplyBreathing(now, breathingWeight, storyBreathing, ref renderPose.position, ref renderPose.rotation);
+            renderPose.Apply(camera);
             renderPoseOverridden = true;
         }
-        else outputBlendSeconds = 0f;
+    }
+
+    internal static void ApplyBreathing(double now, float strength, bool allowTranslation,
+        ref Vector3 position, ref Quaternion rotation)
+    {
+        if (strength <= 0f) return;
+        float phase = (float)(now % 9.2 / 4.6) * 2f * Mathf.PI;
+        float breath = Mathf.Sin(phase);
+        float sway = Mathf.Sin(phase * .5f);
+        if (allowTranslation)
+            position += rotation * (new Vector3(.008f * sway, .020f * breath, .006f * breath) * strength);
+        rotation *= Quaternion.Euler(.32f * breath * strength, .13f * sway * strength, .14f * sway * strength);
     }
 
     private void EndRender(ScriptableRenderContext _, Camera camera)

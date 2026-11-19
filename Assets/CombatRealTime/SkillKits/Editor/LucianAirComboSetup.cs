@@ -16,9 +16,9 @@ public static class LucianAirComboSetup
     public static void Configure()
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before authoring.");
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(GroundImpactSkillSetup.DataPath);
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(GroundImpactSkillSetup.ControllerPath);
-        var first = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(FirstPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(GroundImpactSkillSetup.DataPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(GroundImpactSkillSetup.ControllerPath);
+        var first = AnimationLibraryAssets.LoadAssetAtPath<BasicSkillsSO>(FirstPath);
         if (data == null || controller == null || first == null)
             throw new InvalidOperationException("Lucian laboratory aerial assets missing.");
         if (!AssetDatabase.IsValidFolder(Folder)) AssetDatabase.CreateFolder(GroundImpactSkillSetup.Folder, "AirCombo");
@@ -49,13 +49,13 @@ public static class LucianAirComboSetup
     private static BasicSkillsSO Create(BasicSkillsSO first, int index)
     {
         string path = Folder + "/AirBasicSkill_" + index + ".asset";
-        var skill = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(path);
+        var skill = AnimationLibraryAssets.LoadAssetAtPath<BasicSkillsSO>(path);
         if (skill != null)
         {
             UseTwinbladesAirClip(skill, index);
             return skill;
         }
-        var source = AssetDatabase.LoadAssetAtPath<BasicSkillsSO>(GroundImpactSkillSetup.Folder + "/CombatLab_BasicSkill_" + index + ".asset");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<BasicSkillsSO>(GroundImpactSkillSetup.Folder + "/CombatLab_BasicSkill_" + index + ".asset");
         if (source == null) throw new InvalidOperationException("Sword swing source missing: " + index);
         skill = UnityEngine.Object.Instantiate(first);
         skill.name = "AirBasicSkill_" + index;
@@ -73,7 +73,7 @@ public static class LucianAirComboSetup
         skill.presentation.chainTransitionNormalizedTime = impact01 + .1f;
         skill.presentation.recoveryNormalizedTime = .82f;
         skill.presentation.mobilityCancelNormalizedTime = impact01 + .04f;
-        AssetDatabase.CreateAsset(skill, path);
+        AnimationLibraryAssets.CreateAsset(skill, path);
         UseTwinbladesAirClip(skill, index);
         return skill;
     }
@@ -82,8 +82,8 @@ public static class LucianAirComboSetup
     {
         string path = Folder + "/AirBasicSkill_" + index + "_InPlace.anim";
         string provenance = "LucianAirCombo.TwinbladesAir.v1:" + AerialSourcePath(index);
-        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
-        if (clip != null && skill.AnimationClip == clip && AssetImporter.GetAtPath(path).userData == provenance) return;
+        var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(path);
+        if (clip != null && skill.AnimationClip == clip && AnimationLibraryAssets.GetImporterAtPath(path).userData == provenance) return;
         var source = ActorAnimationAudit.Source(AerialSourcePath(index));
         if (!source.isHumanMotion) throw new InvalidOperationException("Humanoid aerial source required: " + source.name);
         var replacement = UnityEngine.Object.Instantiate(source);
@@ -108,7 +108,7 @@ public static class LucianAirComboSetup
             // Replace the authored copy in place: Animator and saved references keep their GUID.
             if (clip == null)
             {
-                AssetDatabase.CreateAsset(replacement, path);
+                AnimationLibraryAssets.CreateAsset(replacement, path);
                 clip = replacement;
             }
             else
@@ -116,7 +116,7 @@ public static class LucianAirComboSetup
                 EditorUtility.CopySerialized(replacement, clip);
                 EditorUtility.SetDirty(clip);
             }
-            var importer = AssetImporter.GetAtPath(path);
+            var importer = AnimationLibraryAssets.GetImporterAtPath(path);
             importer.userData = provenance;
             AssetDatabase.WriteImportSettingsIfDirty(path);
             if (skill.AnimationClip != clip) { skill.animationClip = clip; EditorUtility.SetDirty(skill); }

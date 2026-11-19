@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Lucian
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    dialoguePresentation: {fileID: 11400000, guid: 1b203da3a26a9e346b0c827d85ab1a6b, type: 2}
     combatPresentation:
       damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:

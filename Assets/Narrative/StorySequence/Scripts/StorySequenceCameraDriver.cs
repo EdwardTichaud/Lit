@@ -25,6 +25,7 @@ namespace Lit.Story
         private StorySequenceActor activeListener;
         private StorySequenceCameraProfile activeProfile;
         private StorySequenceCameraPoint activePoint;
+        private LitCameraDirector breathingDirector;
 
         private Vector3 transitionStartPosition;
         private Quaternion transitionStartRotation;
@@ -122,6 +123,7 @@ namespace Lit.Story
             activeListener = listener;
             activeProfile = profile;
             activePoint = null;
+            SetBreathing(0f);
             StartTransition(ResolveTransitionDuration(profile, durationOverride));
         }
 
@@ -137,7 +139,15 @@ namespace Lit.Story
             activeListener = null;
             activeProfile = null;
             activePoint = point;
+            SetBreathing(point.BreathingStrength);
             StartTransition(Mathf.Max(0f, duration));
+        }
+
+        private void SetBreathing(float strength)
+        {
+            if (strength > 0f && Application.isPlaying && breathingDirector == null)
+                breathingDirector = LitCameraDirector.EnsureInstance(controlledCamera);
+            breathingDirector?.SetStoryBreathing(this, strength);
         }
 
         public bool PlayNod(float degrees, float duration)
@@ -159,6 +169,7 @@ namespace Lit.Story
             }
 
             cinematicActive = false;
+            SetBreathing(0f);
             if (controlledCamera != null && appliedNod != Quaternion.identity)
                 controlledCamera.transform.rotation *= Quaternion.Inverse(appliedNod);
             ResetNod();
@@ -320,7 +331,9 @@ namespace Lit.Story
                 Vector3 lookTarget = activePoint.LookTarget != null
                     ? activePoint.LookTarget.position + activePoint.LookAtOffset
                     : position + pointTransform.forward;
-                rotation = ResolveLookRotation(position, lookTarget, pointTransform.rotation);
+                rotation = activePoint.UseAuthoredRotation
+                    ? pointTransform.rotation
+                    : ResolveLookRotation(position, lookTarget, pointTransform.rotation);
                 fieldOfView = activePoint.FieldOfView;
                 return;
             }

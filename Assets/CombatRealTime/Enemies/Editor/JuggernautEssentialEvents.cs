@@ -30,7 +30,7 @@ public static class JuggernautEssentialEvents
     public static void Configure()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Quitter Play Mode.");
-        var skills = Names.Select(n => AssetDatabase.LoadAssetAtPath<SkillSO>(Folder + "Skill_Juggernaut_" + n + ".asset")).ToArray();
+        var skills = Names.Select(n => AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(Folder + "Skill_Juggernaut_" + n + ".asset")).ToArray();
         if (skills.Any(s => s == null || s.AnimationClip == null)) throw new InvalidOperationException("Skill ou clip Juggernaut absent.");
         for (int i = 0; i < skills.Length; i++) ConfigureSkill(skills[i], QteTimes[i]);
         AssetDatabase.SaveAssets();

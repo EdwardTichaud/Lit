@@ -60,6 +60,7 @@ public partial class SquadCharacterController
             }
 
             sittingRequested = true;
+            SetSittingGroundingSuppressed(true);
             waitingForStandUpCompletion = false;
             observedStandUpState = false;
             standUpQueued = false;
@@ -109,6 +110,7 @@ public partial class SquadCharacterController
         if (sittingRequested)
         {
             holdSittingUntilStandUp |= holdUntilStandUp;
+            SetSittingGroundingSuppressed(true);
             if (animator != null && animator.HasState(0, SittingIdleFullPathHash))
             {
                 animator.Play(SittingIdleFullPathHash, 0, Mathf.Repeat(normalizedTime, 1f));
@@ -131,6 +133,7 @@ public partial class SquadCharacterController
         }
 
         sittingRequested = true;
+        SetSittingGroundingSuppressed(true);
         holdSittingUntilStandUp = holdUntilStandUp;
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
@@ -318,6 +321,7 @@ public partial class SquadCharacterController
 
     private void ReleaseSittingMovementSuppression()
     {
+        SetSittingGroundingSuppressed(false);
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
         standUpQueued = false;
@@ -328,6 +332,12 @@ public partial class SquadCharacterController
         }
 
         ResetSittingIdleTimer();
+    }
+
+    private void SetSittingGroundingSuppressed(bool suppressed)
+    {
+        if (TryGetComponent<Opsive.UltimateCharacterController.Character.CharacterIK>(out var ik))
+            ik.LowerBodyGroundingSuppressed = suppressed;
     }
 
     private void CancelSittingState()

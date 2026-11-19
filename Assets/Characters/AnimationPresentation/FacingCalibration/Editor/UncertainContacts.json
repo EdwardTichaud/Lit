@@ -5,8 +5,8 @@
     "cases": [
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
-            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "reference": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_F_Inplace.FBX",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": false,
             "controllerFootIK": false,
@@ -40,8 +40,8 @@
         },
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
-            "reference": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_F_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "reference": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_F_Inplace.FBX",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": true,
             "controllerFootIK": false,
@@ -77,8 +77,8 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
-            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "reference": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": false,
             "controllerFootIK": false,
@@ -110,8 +110,8 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
-            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "reference": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": true,
             "controllerFootIK": false,
@@ -142,8 +142,8 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
-            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "reference": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": false,
             "controllerFootIK": false,
@@ -174,8 +174,8 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
-            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "reference": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": true,
             "controllerFootIK": false,
@@ -203,8 +203,8 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
-            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "reference": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": false,
             "controllerFootIK": false,
@@ -237,8 +237,8 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
-            "reference": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "reference": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk.anim",
             "status": "Unresolved: contact duration/height or phase ambiguity requires rendered review; no offset applied",
             "nativeIK": true,
             "controllerFootIK": false,

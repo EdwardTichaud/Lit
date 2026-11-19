@@ -75,7 +75,7 @@ public sealed class EnemyUnificationTests
     [TestCase("Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut.prefab")]
     public void EnemyPrefabUsesOneControllerAndNoPlayerAnimationReceiver(string path)
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
         Assert.That(prefab, Is.Not.Null);
         Assert.That(prefab.GetComponents<EnemyController>().Length, Is.EqualTo(1));
         Assert.That(prefab.GetComponents<CharacterInfo>().Length, Is.EqualTo(1));

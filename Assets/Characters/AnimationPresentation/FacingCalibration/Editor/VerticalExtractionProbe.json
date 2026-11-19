@@ -3,7 +3,7 @@
     "cases": [
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
             "settings": "BakeY=False Feet=False",
             "maximumSupportError": 1.028351068496704,
             "bodyYRange": 0.015461303293704987,
@@ -12,7 +12,7 @@
         },
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
             "settings": "BakeY=False Feet=True",
             "maximumSupportError": 0.08321718126535416,
             "bodyYRange": 0.10199505090713501,
@@ -21,7 +21,7 @@
         },
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
             "settings": "BakeY=True Feet=False",
             "maximumSupportError": 0.9912863373756409,
             "bodyYRange": 0.06020422652363777,
@@ -30,7 +30,7 @@
         },
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
             "settings": "BakeY=True Feet=True",
             "maximumSupportError": 0.08103273063898087,
             "bodyYRange": 0.06020420789718628,
@@ -39,7 +39,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
             "settings": "BakeY=False Feet=False",
             "maximumSupportError": 1.0184246301651,
             "bodyYRange": 0.014961540699005127,
@@ -48,7 +48,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
             "settings": "BakeY=False Feet=True",
             "maximumSupportError": 0.09082700312137604,
             "bodyYRange": 0.1003183126449585,
@@ -57,7 +57,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
             "settings": "BakeY=True Feet=False",
             "maximumSupportError": 0.9902634620666504,
             "bodyYRange": 0.06012780964374542,
@@ -66,7 +66,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
             "settings": "BakeY=True Feet=True",
             "maximumSupportError": 0.10397510975599289,
             "bodyYRange": 0.060127854347229004,
@@ -75,7 +75,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
             "settings": "BakeY=False Feet=False",
             "maximumSupportError": 1.0306326150894165,
             "bodyYRange": 0.013468990102410316,
@@ -84,7 +84,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
             "settings": "BakeY=False Feet=True",
             "maximumSupportError": 0.10013159364461899,
             "bodyYRange": 0.12166482210159302,
@@ -93,7 +93,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
             "settings": "BakeY=True Feet=False",
             "maximumSupportError": 1.0009561777114868,
             "bodyYRange": 0.07625637948513031,
@@ -102,7 +102,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
             "settings": "BakeY=True Feet=True",
             "maximumSupportError": 0.0896104946732521,
             "bodyYRange": 0.0762563943862915,
@@ -111,7 +111,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
             "settings": "BakeY=False Feet=False",
             "maximumSupportError": 1.026087760925293,
             "bodyYRange": 0.01356133259832859,
@@ -120,7 +120,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
             "settings": "BakeY=False Feet=True",
             "maximumSupportError": 0.06681414693593979,
             "bodyYRange": 0.08566296100616455,
@@ -129,7 +129,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
             "settings": "BakeY=True Feet=False",
             "maximumSupportError": 1.0112167596817017,
             "bodyYRange": 0.07147850841283798,
@@ -138,7 +138,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
             "settings": "BakeY=True Feet=True",
             "maximumSupportError": 0.07113831490278244,
             "bodyYRange": 0.07147854566574097,

@@ -25,7 +25,7 @@ public static class ProductionBrainsEnemyConversionValidation
         try
         {
             const string characterPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(characterPath);
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(characterPath);
             Require(data != null, "Actual production CharacterData resolves", result);
             string prefabPath = AssetDatabase.GetAssetPath(data.ResolveWorldPrefab());
             string identity = data.UniqueId;
@@ -37,7 +37,7 @@ public static class ProductionBrainsEnemyConversionValidation
             var immutable = immutablePaths.ToDictionary(path => path, File.ReadAllBytes);
             var request = ProductionBrainsEnemyConversion.GenerateReviewedAssets(data);
             ProductionBrainsEnemyConversion.Apply(request);
-            var converted = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            var converted = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(prefabPath);
             Require(converted.GetComponent<EnemyController>() == null && converted.GetComponent<LitBrainsEnemy>() != null,
                 "One Brains executor replaces the legacy controller", result);
             Require(ProductionBrainsEnemyConversion.Analyze(data).CanApply,

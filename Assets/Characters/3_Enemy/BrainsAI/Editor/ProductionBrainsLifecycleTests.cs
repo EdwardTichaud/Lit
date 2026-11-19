@@ -165,7 +165,7 @@ public sealed class ProductionBrainsLifecycleTests
         var root = policy.gameObject;
         var fov = root.AddComponent<FOV>();
         var brain = root.AddComponent<LitBrainsEnemy>(); brain.fov = fov;
-        brain.ConfigureCharacterData(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
+        brain.ConfigureCharacterData(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
         brain.RefreshEncounterPolicies(); policy.Refresh();
         var target = Root("Committed target").transform;
         typeof(LitBrainsEnemy).GetProperty("AttackPhase").SetValue(brain, LitBrainsAttackPhase.Strike);

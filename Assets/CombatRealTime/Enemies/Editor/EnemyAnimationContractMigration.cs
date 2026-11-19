@@ -172,7 +172,7 @@ public sealed class EnemyAnimationContractMigration : IPreprocessBuildWithReport
             }
 
             info.SetCharacterData(data);
-            data.worldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            data.worldPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
             body.isKinematic = true;
             body.useGravity = false;
             body.constraints = RigidbodyConstraints.FreezeRotation;
@@ -198,7 +198,7 @@ public sealed class EnemyAnimationContractMigration : IPreprocessBuildWithReport
 
     private static AnimatorController CopyControllerIfMissing(string sourcePath, string targetPath, string name)
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(targetPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(targetPath);
         if (controller == null)
         {
             if (!AssetDatabase.CopyAsset(sourcePath, targetPath))
@@ -250,7 +250,7 @@ public sealed class EnemyAnimationContractMigration : IPreprocessBuildWithReport
             return;
         }
 
-        if (info != null && info.SourceData != null && info.SourceData.worldPrefab != AssetDatabase.LoadAssetAtPath<GameObject>(path))
+        if (info != null && info.SourceData != null && info.SourceData.worldPrefab != AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path))
             failures.Add(path + " : CharacterData.worldPrefab ne référence pas ce prefab.");
 
         foreach (string parameter in EnemyAnimatorContract.RequiredParameters)
@@ -301,7 +301,7 @@ public sealed class EnemyAnimationContractMigration : IPreprocessBuildWithReport
 
     private static T Require<T>(string path) where T : UnityEngine.Object
     {
-        T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+        T asset = AnimationLibraryAssets.LoadAssetAtPath<T>(path);
         if (asset == null) throw new InvalidOperationException("Asset requis introuvable : " + path);
         return asset;
     }

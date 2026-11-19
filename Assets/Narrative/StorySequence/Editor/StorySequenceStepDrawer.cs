@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -20,6 +20,9 @@ namespace Lit.Story.Editor
                     yield return "speakerNameOverride";
                     yield return "speakerCharacterData";
                     yield return "voiceLine";
+                    yield return "overrideDialogueDirection";
+                    if (step.FindPropertyRelative("overrideDialogueDirection").boolValue)
+                        yield return "dialogueDirection";
                     yield return "dialogueMaxDisplayDuration";
                     yield return "focusCameraOnSpeaker";
                     if (step.FindPropertyRelative("focusCameraOnSpeaker").boolValue)

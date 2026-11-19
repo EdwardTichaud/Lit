@@ -56,12 +56,12 @@ public static partial class CharacterAnimationCleanup
         if (!File.Exists(destination)) File.Copy(path, destination);
         if (File.Exists(path + ".meta") && !File.Exists(destination + ".meta")) File.Copy(path + ".meta", destination + ".meta");
     }
-    static T Asset<T>(string path) where T:Object => AssetDatabase.LoadAssetAtPath<T>(path) ?? throw new InvalidOperationException("Missing asset: " + path);
+    static T Asset<T>(string path) where T:Object => AnimationLibraryAssets.LoadAssetAtPath<T>(path) ?? throw new InvalidOperationException("Missing asset: " + path);
     static void Retire(string path) { if (AssetDatabase.LoadMainAssetAtPath(path) != null && !retired.Contains(path)) { Backup(path); retired.Add(path); } }
     static void MapSubAssets(string source, string destination)
     {
-        var targets = AssetDatabase.LoadAllAssetsAtPath(destination);
-        foreach (var old in AssetDatabase.LoadAllAssetsAtPath(source))
+        var targets = AnimationLibraryAssets.LoadAllAssetsAtPath(destination);
+        foreach (var old in AnimationLibraryAssets.LoadAllAssetsAtPath(source))
         {
             if (old == null) continue;
             Object replacement = null;
@@ -117,7 +117,7 @@ public static partial class CharacterAnimationCleanup
             string path=AssetDatabase.GetAssetPath(animator.runtimeAnimatorController);
             string model=path==GolemController?GolemMain:path==JuggernautController?"Assets/Characters/3_Enemy/Juggernaut/Iron_Juggernaut/Meshes/MidPoly.fbx":null;
             if(model==null)continue;
-            var avatar=AssetDatabase.LoadAllAssetsAtPath(model).OfType<Avatar>().SingleOrDefault();
+            var avatar=AnimationLibraryAssets.LoadAllAssetsAtPath(model).OfType<Avatar>().SingleOrDefault();
             if(avatar==null || !avatar.isValid)throw new InvalidOperationException("Invalid canonical avatar: "+model);
             if(animator.avatar!=avatar){animator.avatar=avatar;EditorUtility.SetDirty(animator);changed=true;}
         }
@@ -135,13 +135,13 @@ public static partial class CharacterAnimationCleanup
         foreach(var path in AuthoredAssets().Where(p=>p.StartsWith(ExecutionFolder) || p.StartsWith("Assets/StoneGolem/Animations/Calibrated")))Backup(path);
         try
         {
-            var sourceImporter=(ModelImporter)AssetImporter.GetAtPath(GolemHelper);
-            var importer=(ModelImporter)AssetImporter.GetAtPath(GolemMain); Backup(GolemMain);
+            var sourceImporter=(ModelImporter)AnimationLibraryAssets.GetImporterAtPath(GolemHelper);
+            var importer=(ModelImporter)AnimationLibraryAssets.GetImporterAtPath(GolemMain); Backup(GolemMain);
             if(sourceImporter==null || sourceImporter.animationType!=ModelImporterAnimationType.Human)throw new InvalidOperationException("Requested existing Golem Humanoid source unavailable");
             var description=sourceImporter.humanDescription;
             importer.animationType=ModelImporterAnimationType.Human;importer.avatarSetup=ModelImporterAvatarSetup.CreateFromThisModel;
             importer.sourceAvatar=null;importer.humanDescription=description;importer.optimizeGameObjects=false;importer.SaveAndReimport();
-            var golemAvatar=AssetDatabase.LoadAllAssetsAtPath(GolemMain).OfType<Avatar>().SingleOrDefault();
+            var golemAvatar=AnimationLibraryAssets.LoadAllAssetsAtPath(GolemMain).OfType<Avatar>().SingleOrDefault();
             if(golemAvatar==null || !golemAvatar.isHuman || !golemAvatar.isValid)throw new InvalidOperationException("Canonical Golem Humanoid avatar invalid");
             MapSubAssets(GolemHelper,GolemMain);
             Checkpoint("Canonical StoneGolem Humanoid avatar prepared");
@@ -155,7 +155,7 @@ public static partial class CharacterAnimationCleanup
                 var target=Asset<AnimatorController>(group[0]); Backup(group[0]);
                 foreach(var oldPath in group.Skip(1))
                 {
-                    var old=AssetDatabase.LoadAssetAtPath<AnimatorController>(oldPath);if(old==null)continue;
+                    var old=AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(oldPath);if(old==null)continue;
                     Backup(oldPath); MergeGraph(old,target,true); replacements[old]=target;pathReplacements[oldPath]=group[0];Retire(oldPath);
                 }
                 Checkpoint("Merged controller graph: "+group[0]);
@@ -185,7 +185,7 @@ public static partial class CharacterAnimationCleanup
                     }
                     finally{PrefabUtility.UnloadPrefabContents(root);}
                 }
-                else foreach(var value in AssetDatabase.LoadAllAssetsAtPath(path))if(RemapProperties(value,Resolve)){AssetDatabase.SaveAssetIfDirty(value);report.rewrittenAssets++;}
+                else foreach(var value in AnimationLibraryAssets.LoadAllAssetsAtPath(path))if(RemapProperties(value,Resolve)){AssetDatabase.SaveAssetIfDirty(value);report.rewrittenAssets++;}
             }
             foreach(var code in AssetDatabase.GetAllAssetPaths().Where(p=>p.StartsWith("Assets/")&&p.EndsWith(".cs")&&!p.StartsWith("Assets/Editor/CharacterAnimationCleanup")).ToArray())
             {

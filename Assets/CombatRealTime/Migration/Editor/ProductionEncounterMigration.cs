@@ -67,11 +67,11 @@ public static class ProductionEncounterMigration
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling)
             throw new InvalidOperationException("Encounter authoring requires an idle editor outside Play Mode.");
         var report = new Report { applied = apply, sceneConsumersEvaluated = includeSceneConsumers };
-        var catalog = AssetDatabase.LoadAssetAtPath<CombatNetworkSkillCatalog>(CombatNetworkSetup.CatalogPath);
+        var catalog = AnimationLibraryAssets.LoadAssetAtPath<CombatNetworkSkillCatalog>(CombatNetworkSetup.CatalogPath);
         if (catalog == null) report.errors.Add("Install the common network skill catalog before encounter wiring.");
         var prefabs = new Dictionary<string, GameObject>(StringComparer.Ordinal);
         var profilePlans = PlanEncounterProfiles(report);
-        var scenes = includeSceneConsumers ? AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" })
+        var scenes = includeSceneConsumers ? AnimationLibraryAssets.FindAssets("t:Scene", new[] { "Assets/Scenes" })
             .Select(AssetDatabase.GUIDToAssetPath).Concat(EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path))
             .Where(path => AssetDatabase.LoadMainAssetAtPath(path) != null).Distinct(StringComparer.Ordinal)
             .OrderBy(path => path, StringComparer.Ordinal).ToArray() : Array.Empty<string>();
@@ -79,7 +79,7 @@ public static class ProductionEncounterMigration
             path => new HashSet<string>(AssetDatabase.GetDependencies(path, true), StringComparer.Ordinal));
         for (int i = 0; i < DataPaths.Length; i++)
         {
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPaths[i]);
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPaths[i]);
             var entry = new Entry { dataPath = DataPaths[i], dataGuid = AssetDatabase.AssetPathToGUID(DataPaths[i]) };
             report.encounters.Add(entry);
             if (data == null) { entry.errors.Add("Required original CharacterData missing."); continue; }
@@ -125,7 +125,7 @@ public static class ProductionEncounterMigration
                 {
                     if (plan.create)
                     {
-                        AssetDatabase.CreateAsset(plan.profile, plan.path);
+                        AnimationLibraryAssets.CreateAsset(plan.profile, plan.path);
                         report.savedAssets.Add(plan.path);
                         report.savedAssets.Add(plan.path + ".meta");
                     }
@@ -230,7 +230,7 @@ public static class ProductionEncounterMigration
         // encounters are not automatically converted or assigned unrelated attacks.
         foreach (int index in new[] { 1, 3, 4, 5, 6 })
         {
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPaths[index]);
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPaths[index]);
             if (data == null || data.worldPrefab == null) continue;
             if (index < 5 && IsEquippedProfile(data, data.enemyCombatProfile))
             {
@@ -241,7 +241,7 @@ public static class ProductionEncounterMigration
             string directory = index >= 5 ? "Assets/Characters/3_Enemy/GiantJuggernaut" :
                 Path.GetDirectoryName(DataPaths[index]).Replace('\\', '/');
             string path = directory + "/" + Ids[index] + "_CombatProfile.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<EnemyCombatProfileSO>(path);
+            var existing = AnimationLibraryAssets.LoadAssetAtPath<EnemyCombatProfileSO>(path);
             if (EditorUtility.IsDirty(data) || existing != null && EditorUtility.IsDirty(existing))
                 report.errors.Add("Save dirty encounter identity/profile before migration: " + DataPaths[index]);
             if (existing == null && AssetDatabase.LoadMainAssetAtPath(path) != null)

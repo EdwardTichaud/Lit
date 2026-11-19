@@ -31,7 +31,7 @@ public static class JuggernautV2Setup
     [MenuItem("Lit/Brains AI/Create Juggernaut V2")]
     public static void Create()
     {
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) { Validate(); return; }
+        if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath) != null) { Validate(); return; }
         Directory.CreateDirectory(Folder + "/Animations");
         AssetDatabase.Refresh();
         AnimationClip Copy(string clip, string name, bool loop = false) =>
@@ -47,7 +47,7 @@ public static class JuggernautV2Setup
         var death = Copy("InPlace_Death_v2", "Death");
         var controller = IluviliraeSetup.CreateController(idle, walk, run, strike, hurt, death, ControllerPath);
         AddAttackVariants(controller, sweep, followup);
-        var originalData = AssetDatabase.LoadAssetAtPath<CharacterData>(OriginalFolder + "Juggernaut.asset");
+        var originalData = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(OriginalFolder + "Juggernaut.asset");
         var data = ScriptableObject.CreateInstance<CharacterData>();
         data.characterId = "juggernaut_v2_brainsai_test";
         data.characterName = "Juggernaut v2";
@@ -57,8 +57,8 @@ public static class JuggernautV2Setup
             data.vision = JsonUtility.FromJson<CharacterVisionSettings>(JsonUtility.ToJson(originalData.vision));
         // Match Iluvilirae: the actor itself must not obstruct its own view.
         data.vision.obstructionMask = LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction");
-        AssetDatabase.CreateAsset(data, Folder + "/Juggernaut_v2.asset");
-        var original = AssetDatabase.LoadAssetAtPath<GameObject>(OriginalPrefab);
+        AnimationLibraryAssets.CreateAsset(data, Folder + "/Juggernaut_v2.asset");
+        var original = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(OriginalPrefab);
         if (original == null) throw new InvalidOperationException("Juggernaut_Combat missing.");
         var root = (GameObject)PrefabUtility.InstantiatePrefab(original);
         try
@@ -162,7 +162,7 @@ public static class JuggernautV2Setup
         {
             var arena = scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<IluviliraeTestArena>(true)).Single();
             UnityEngine.Object.DestroyImmediate(arena.enemy.gameObject);
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath);
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
             instance.transform.position = new Vector3(0, 0, -4);
             var brain = instance.GetComponent<JuggernautV2Brain>();
@@ -179,7 +179,7 @@ public static class JuggernautV2Setup
                     transform = Matrix4x4.TRS(go.transform.position, go.transform.rotation, Vector3.one), size = go.transform.localScale }).ToList();
             var navigation = NavMeshBuilder.BuildNavMeshData(settings, sources, new Bounds(Vector3.zero, new Vector3(32, 12, 32)), Vector3.zero, Quaternion.identity);
             if (navigation == null) throw new InvalidOperationException("Juggernaut test NavMesh bake failed.");
-            AssetDatabase.CreateAsset(navigation, Folder + "/Juggernaut_v2_Test_NavMesh.asset");
+            AnimationLibraryAssets.CreateAsset(navigation, Folder + "/Juggernaut_v2_Test_NavMesh.asset");
             arena.navigation = navigation;
             EditorSceneManager.SaveScene(scene);
         }
@@ -193,7 +193,7 @@ public static class JuggernautV2Setup
     [MenuItem("Lit/Brains AI/Validate Juggernaut V2")]
     public static void Validate()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath);
         if (prefab == null) throw new InvalidOperationException("Juggernaut v2 missing.");
         var brain = prefab.GetComponent<JuggernautV2Brain>();
         if (brain == null || brain.fov == null || !brain.fov.useExternalDetection || brain.characterData == null || brain.characterData.worldPrefab != prefab)
@@ -203,11 +203,11 @@ public static class JuggernautV2Setup
         if (prefab.GetComponent<Rigidbody>() != null || prefab.GetComponent<SphereCollider>() != null)
             throw new InvalidOperationException("Legacy movement/detection components remain.");
         var animator = prefab.GetComponent<Animator>();
-        var original = AssetDatabase.LoadAssetAtPath<GameObject>(OriginalPrefab);
+        var original = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(OriginalPrefab);
         if (!animator.isHuman || animator.avatar != original.GetComponent<Animator>().avatar || animator.applyRootMotion)
             throw new InvalidOperationException("Juggernaut avatar/root motion invalid.");
         var controller = animator.runtimeAnimatorController as AnimatorController;
-        var knockoutClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(CounterKnockoutSignalSetup.AnimationPath);
+        var knockoutClip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(CounterKnockoutSignalSetup.AnimationPath);
         // animationClips counts bindings, including the same clip in multiple states.
         int expectedClipBindings = 22 + (controller == null ? 0 : controller.layers[0].stateMachine.states.Count(s =>
             s.state.name == "Knocked Out" || knockoutClip != null && s.state.motion == knockoutClip));

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -201,6 +201,8 @@ public class LocalVoiceLineController : MonoBehaviour
     private Coroutine displayRoutine;
     private AudioSource activeSource;
     private AudioClipSO activeAudioClip;
+    private DialoguePresentationSession dialoguePresentation;
+    private float dialogueSpeechElapsed, dialogueSpeechDuration;
     private AudioSource localSource;
     private Transform textInstanceRoot;
     private bool warnedMissingTextRoot;
@@ -253,6 +255,8 @@ public class LocalVoiceLineController : MonoBehaviour
     private void OnDisable()
     {
         // Unity appelle OnDisable a la desactivation; il faut liberer input/audio pour eviter les callbacks orphelins.
+        dialoguePresentation?.Dispose();
+        dialoguePresentation = null;
         EndMusicDucking();
         LocalInputRouter.Interact -= OnInteractPerformed;
         ReleaseTextInputFocus();
@@ -263,6 +267,13 @@ public class LocalVoiceLineController : MonoBehaviour
         // LateUpdate garde le texte et le son alignes apres le deplacement des personnages.
         UpdateTextTransform();
         UpdateAudioTransform();
+        if (dialoguePresentation != null)
+        {
+            dialogueSpeechElapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            bool ended = activeSource != null && dialogueSpeechElapsed > .1f && !activeSource.isPlaying;
+            if (ended || dialogueSpeechElapsed >= dialogueSpeechDuration)
+                dialoguePresentation.FinishSpeaking();
+        }
     }
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
@@ -383,7 +394,7 @@ public class LocalVoiceLineController : MonoBehaviour
             return PlayVoiceLineSequence(data);
         }
 
-        return PlayLine(data.voiceLineText, data.voiceLineAudioClip);
+        return PlayLineCore(data.voiceLineText, data.voiceLineAudioClip, data);
     }
 
     /// <summary>
@@ -440,7 +451,9 @@ public class LocalVoiceLineController : MonoBehaviour
     /// <summary>
     /// Affiche un texte et joue le clip associe sans passer par une VoiceLineData.
     /// </summary>
-    public bool PlayLine(string text, AudioClipSO clip)
+    public bool PlayLine(string text, AudioClipSO clip) => PlayLineCore(text, clip, null);
+
+    private bool PlayLineCore(string text, AudioClipSO clip, VoiceLineData data)
     {
         EnsureTextTarget();
         if (textTarget == null)
@@ -458,6 +471,7 @@ public class LocalVoiceLineController : MonoBehaviour
 
         BeginMusicDucking();
         PlayAudio(clip);
+        BeginDialoguePresentation(data, clip);
         return true;
     }
 
@@ -475,11 +489,12 @@ public class LocalVoiceLineController : MonoBehaviour
         List<VoiceLineData.VoiceLineTextCue> cues = BuildSortedCues(data);
         if (cues == null || cues.Count == 0)
         {
-            return PlayLine(data.voiceLineText, data.voiceLineAudioClip);
+            return PlayLineCore(data.voiceLineText, data.voiceLineAudioClip, data);
         }
 
         BeginMusicDucking();
         PlayAudio(data.voiceLineAudioClip);
+        BeginDialoguePresentation(data, data.voiceLineAudioClip);
         displayRoutine = StartCoroutine(PlayCuesRoutine(cues, data.voiceLineAudioClip));
         return true;
     }
@@ -598,6 +613,11 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void SetTextVisible(bool visible)
     {
+        if (!visible)
+        {
+            dialoguePresentation?.Dispose();
+            dialoguePresentation = null;
+        }
         if (visible)
         {
             textVisible = true;
@@ -736,8 +756,24 @@ public class LocalVoiceLineController : MonoBehaviour
         return null;
     }
 
+    private void BeginDialoguePresentation(VoiceLineData data, AudioClipSO clip)
+    {
+        ResolveCharacterData();
+        var physicalActor = GetComponentInParent<CharacterDialoguePresentationController>();
+        Transform speaker = physicalActor != null ? physicalActor.transform : DialoguePresentationSession.ResolveSpeaker(characterData);
+        var next = new DialoguePresentationSession(this, speaker, null, false, data != null ? data.dialogueDirection : null);
+        dialoguePresentation?.Dispose();
+        dialoguePresentation = next;
+        dialogueSpeechElapsed = 0;
+        dialogueSpeechDuration = clip != null && clip.audioClip != null ?
+            clip.audioClip.length / Mathf.Max(.1f, activeSource != null ? Mathf.Abs(activeSource.pitch) : 1f) :
+            physicalActor != null ? physicalActor.Profile?.textGestureSeconds ?? 2.5f : 2.5f;
+    }
+
     private void StopCurrentPlayback()
     {
+        dialoguePresentation?.Dispose();
+        dialoguePresentation = null;
         if (displayRoutine != null)
         {
             StopCoroutine(displayRoutine);
@@ -787,6 +823,8 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void DismissCurrentText(bool stopAudio)
     {
+        dialoguePresentation?.Dispose();
+        dialoguePresentation = null;
         if (displayRoutine != null)
         {
             StopCoroutine(displayRoutine);

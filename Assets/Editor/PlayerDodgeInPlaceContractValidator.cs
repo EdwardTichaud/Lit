@@ -21,7 +21,7 @@ public static class PlayerDodgeInPlaceContractValidator
     public static void Validate()
     {
         var failures = new List<string>();
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null)
         {
             Debug.LogError("[Player Dodge InPlace] Player_Model.controller is missing.");
@@ -67,7 +67,7 @@ public static class PlayerDodgeInPlaceContractValidator
 
     private static CombatMobilityController LoadMobilityController(List<string> failures)
     {
-        GameObject root = AssetDatabase.LoadAssetAtPath<GameObject>(SessionPrefabPath);
+        GameObject root = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(SessionPrefabPath);
         if (root == null)
         {
             failures.Add("GameplaySessionRoot is missing.");

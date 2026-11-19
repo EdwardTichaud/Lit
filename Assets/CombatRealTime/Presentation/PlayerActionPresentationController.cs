@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 
@@ -50,6 +50,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         if (!preserveAirborneHold) ReleaseChargedPlayerHold();
         TerminateAction(activeToken, ActionEndReason.Interrupted, false);
         activeToken++;
+        GetComponent<CharacterDialoguePresentationController>()?.SuspendForPriority();
         actionActive = true;
         externallyDriven = true;
         activeAllowsMobilityCancel = allowMobility;
@@ -408,6 +409,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             return true;
         }
 
+        GetComponent<CharacterDialoguePresentationController>()?.SuspendForPriority();
         deathAnimationLocked = true;
         deathStateHash = stateHash;
         CancelAction();
@@ -895,6 +897,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         activeToken++;
         activeStateHash = stateHash;
         activeFacingMode = profile.facingMode;
+        GetComponent<CharacterDialoguePresentationController>()?.SuspendForPriority();
         actionActive = true;
         activeActionIsBasic = isBasicAction;
         attackContext = nextAttack?.WithGeneration(activeToken);

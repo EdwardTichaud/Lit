@@ -10,13 +10,13 @@ public sealed class JuggernautV2Tests
     public void PrototypePreservesModelAndHasIndependentDataAndAnimator()
     {
         Assert.DoesNotThrow(JuggernautV2Setup.Validate);
-        var original = AssetDatabase.LoadAssetAtPath<GameObject>(JuggernautV2Setup.OriginalPrefab);
-        var prototype = AssetDatabase.LoadAssetAtPath<GameObject>(JuggernautV2Setup.PrefabPath);
+        var original = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(JuggernautV2Setup.OriginalPrefab);
+        var prototype = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(JuggernautV2Setup.PrefabPath);
         var brain = prototype.GetComponent<JuggernautV2Brain>();
         Assert.That(brain, Is.InstanceOf<LitBrainsEnemy>());
         Assert.That(prototype.GetComponent<Animator>().runtimeAnimatorController,
             Is.Not.EqualTo(original.GetComponent<Animator>().runtimeAnimatorController));
-        Assert.That(brain.characterData, Is.Not.EqualTo(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset")));
+        Assert.That(brain.characterData, Is.Not.EqualTo(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset")));
         Assert.That(brain.characterData.hp, Is.EqualTo(300));
         Assert.That(brain.detectionTargetOverride, Is.Null);
         Assert.That(prototype.GetComponent<UnityEngine.AI.NavMeshAgent>().enabled, Is.False);
@@ -29,7 +29,7 @@ public sealed class JuggernautV2Tests
     [Test]
     public void EachAttackIdHasOneTransitionAndNeverCallsLegacyAnimationEvents()
     {
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(JuggernautV2Setup.ControllerPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(JuggernautV2Setup.ControllerPath);
         var machine = controller.layers[0].stateMachine;
         var attacks = machine.anyStateTransitions.Where(t => t.destinationState.tag == "Attack").ToArray();
         Assert.That(attacks.Length, Is.EqualTo(3));

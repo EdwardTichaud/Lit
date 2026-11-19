@@ -12,7 +12,7 @@ public static partial class CharacterAnimationCleanup
     static void FinishEditorChanges()
     {
         report=JsonUtility.FromJson<Report>(File.ReadAllText(Output+"/report.json"));replacements.Clear();
-        const string plain="Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Attack15_Inplace.FBX";
+        const string plain="Assets/Animations/Twinblades/Battle/Lucian/TwinSword_Attack15_Inplace.FBX";
         const string original="Assets/Characters/1_Squad/Lucian/Animation/TwinSword_Attack15_Inplace_0679cb06.FBX";
         if(File.Exists(original)&&File.Exists(plain))
         {
@@ -29,7 +29,7 @@ public static partial class CharacterAnimationCleanup
                     try{bool changed=false;foreach(var c in root.GetComponentsInChildren<Component>(true))changed|=RemapProperties(c,Resolve);if(changed)PrefabUtility.SaveAsPrefabAsset(root,path);}
                     finally{PrefabUtility.UnloadPrefabContents(root);}
                 }
-                else foreach(var asset in AssetDatabase.LoadAllAssetsAtPath(path))if(RemapProperties(asset,Resolve))AssetDatabase.SaveAssetIfDirty(asset);
+                else foreach(var asset in AnimationLibraryAssets.LoadAllAssetsAtPath(path))if(RemapProperties(asset,Resolve))AssetDatabase.SaveAssetIfDirty(asset);
             }
             if(!AssetDatabase.DeleteAsset(plain))throw new InvalidOperationException("Cannot remove exact animation duplicate");
             string error=AssetDatabase.MoveAsset(original,plain);if(!string.IsNullOrEmpty(error))throw new InvalidOperationException(error);
@@ -46,7 +46,7 @@ public static partial class CharacterAnimationCleanup
     static void ValidateCleanup()
     {
         var report=JsonUtility.FromJson<Report>(File.ReadAllText(Output+"/report.json"));
-        var avatar=AssetDatabase.LoadAllAssetsAtPath(GolemMain).OfType<Avatar>().SingleOrDefault();
+        var avatar=AnimationLibraryAssets.LoadAllAssetsAtPath(GolemMain).OfType<Avatar>().SingleOrDefault();
         if(avatar==null||!avatar.isHuman||!avatar.isValid)throw new InvalidOperationException("Canonical Golem Humanoid avatar missing");
         foreach(var path in report.deleted.Where(p=>!p.Contains(" (")))
             if(AssetDatabase.LoadMainAssetAtPath(path)!=null)throw new InvalidOperationException("Retired asset recreated: "+path);

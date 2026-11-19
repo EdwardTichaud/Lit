@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>Leg-only presentation for free grounded movement; UCC still owns all motion.</summary>
 [DefaultExecutionOrder(200)]
@@ -32,7 +32,7 @@ public sealed class PlayerMovingLegsOverlay : MonoBehaviour
         }
         if (layer < 0) return; // Historical controllers are not implicitly migrated.
         var health = GetComponent<SquadCharacterController>();
-        bool blocked = !bridge.isActiveAndEnabled || !bridge.Grounded || bridge.IsInputSuppressedByUcc ||
+        bool blocked = GetComponent<CharacterDialoguePresentationController>()?.OwnsFullBody == true || !bridge.isActiveAndEnabled || !bridge.Grounded || bridge.IsInputSuppressedByUcc ||
             bridge.IsCinematicMotionSessionActive || GetComponent<PlayerActionPresentationController>()?.IsDeathAnimationLocked == true ||
             health != null && health.CurrentHp <= 0;
         if (blocked) { animator.SetLayerWeight(layer, 0); return; }

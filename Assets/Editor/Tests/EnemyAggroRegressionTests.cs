@@ -93,7 +93,7 @@ public sealed class EnemyAggroRegressionTests
     [Test]
     public void AssomoirHasOneBoundInstantImpactAtAuthorRequestedTime()
     {
-        var skill = AssetDatabase.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(
+        var skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(
             "a182c503e933adb42ad6608ded0f8702"));
         Assert.That(skill, Is.Not.Null);
         int impacts = 0;
@@ -242,8 +242,8 @@ public sealed class EnemyAggroRegressionTests
     [Test]
     public void CounterClipCleanupPreservesAuthoredImpactAndRemovesMissingReceivers()
     {
-        var clip = Object.Instantiate(AssetDatabase.LoadAssetAtPath<AnimationClip>(
-            "Assets/Characters/1_Squad/Lucian/Animation/Counter_Sword.anim"));
+        var clip = Object.Instantiate(AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(
+            "Assets/Animations/Autres/Battle/Lucian/Counter_Sword.anim"));
         try
         {
             var events = new System.Collections.Generic.List<AnimationEvent> {
@@ -312,8 +312,8 @@ public sealed class EnemyAggroRegressionTests
         var info = actor.GetComponent<CharacterInfo>();
         var data = Object.Instantiate(info.CharacterData);
         var profile = Object.Instantiate(data.enemyCombatProfile);
-        var jump = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset");
-        var strike = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Strike.asset");
+        var jump = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset");
+        var strike = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Strike.asset");
         try
         {
             data.combatSkills = new System.Collections.Generic.List<SkillSO> { jump };
@@ -361,7 +361,7 @@ public sealed class EnemyAggroRegressionTests
     [TestCase("Assomoir", .837f)]
     public void EssentialEventsAreConfiguredAndReinstallationIsStable(string name, float qteTime)
     {
-        var source = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_" + name + ".asset");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_" + name + ".asset");
         JuggernautEssentialEvents.Validate(source);
         var sourceEvents = AnimationUtility.GetAnimationEvents(source.AnimationClip);
         var qte = System.Array.Find(sourceEvents, e => e.functionName == "OpenEnemyReactionOpportunity");
@@ -512,7 +512,7 @@ public sealed class EnemyAggroRegressionTests
     {
         container = new GameObject("Aggro regression fixture");
         container.SetActive(false);
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(
             "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab");
         actor = Object.Instantiate(prefab, container.transform);
         brain = actor.GetComponent<EnemyController>();

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Lit.Timeline;
 using UnityEngine;
@@ -37,6 +37,8 @@ namespace Lit.Story
         [Tooltip("Locuteur explicite si l'acteur de mise en scene est different. Sinon utilise le CharacterData de l'acteur.")]
         public CharacterData speakerCharacterData;
         public VoiceLineData voiceLine;
+        public bool overrideDialogueDirection;
+        public DialogueDirection dialogueDirection = new DialogueDirection();
         [HideInInspector]
         public bool waitForInteractAfterLine;
         [Min(0f), Tooltip("Duree maximale d'affichage. 0 = attend indefiniment jusqu'a Interact.")]
@@ -44,7 +46,7 @@ namespace Lit.Story
         [Tooltip("Change automatiquement le plan camera vers le locuteur.")]
         public bool focusCameraOnSpeaker = true;
         public StorySequenceCameraProfile dialogueCameraProfile;
-        [Range(0f, 15f), Tooltip("Hochement vers le bas de la camera cinematographique active. Zero = aucun.")]
+        [Range(0f, 15f), Tooltip("Hochement de la camera apres la fermeture du dialogue. Zero = aucun.")]
         public float dialogueNodDegrees;
         [Min(0f)] public float dialogueNodDuration;
 

@@ -62,7 +62,7 @@ public static class FallingPhaseSceneBuilder
         collider.height = 1.9f;
         collider.radius = 0.38f;
 
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(LucianPrefabPath);
+        GameObject source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(LucianPrefabPath);
         if (source == null)
         {
             throw new FileNotFoundException("Lucian prefab was not found.", LucianPrefabPath);
@@ -84,7 +84,7 @@ public static class FallingPhaseSceneBuilder
 
         FallingPlayerController player = root.AddComponent<FallingPlayerController>();
         SerializedObject playerData = new SerializedObject(player);
-        playerData.FindProperty("inputActions").objectReferenceValue = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
+        playerData.FindProperty("inputActions").objectReferenceValue = AnimationLibraryAssets.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
         playerData.FindProperty("animator").objectReferenceValue = animator;
         playerData.ApplyModifiedPropertiesWithoutUndo();
         return player;
@@ -164,9 +164,9 @@ public static class FallingPhaseSceneBuilder
     private static GameObject CreateStaticObstaclePrefab(Material material)
     {
         string path = RootPath + "/Prefabs/FallingObstacle_Static.prefab";
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path) != null)
         {
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
         }
 
         GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -182,9 +182,9 @@ public static class FallingPhaseSceneBuilder
     private static GameObject CreateMobileObstaclePrefab(Material material)
     {
         string path = RootPath + "/Prefabs/FallingObstacle_Mobile.prefab";
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path) != null)
         {
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
         }
 
         GameObject obstacle = new GameObject("FallingObstacle_Mobile");
@@ -208,7 +208,7 @@ public static class FallingPhaseSceneBuilder
     private static Material CreateMaterial(string materialName, Color color)
     {
         string path = RootPath + "/Materials/" + materialName + ".mat";
-        Material existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+        Material existing = AnimationLibraryAssets.LoadAssetAtPath<Material>(path);
         if (existing != null)
         {
             return existing;
@@ -223,19 +223,19 @@ public static class FallingPhaseSceneBuilder
         Material material = new Material(shader) { name = materialName };
         if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
         if (material.HasProperty("_EmissiveColor")) material.SetColor("_EmissiveColor", color * 0.25f);
-        AssetDatabase.CreateAsset(material, path);
+        AnimationLibraryAssets.CreateAsset(material, path);
         return material;
     }
 
     private static AnimatorController CreateFallingController()
     {
-        if (AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath) == null &&
+        if (AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath) == null &&
             !AssetDatabase.CopyAsset(PlayerControllerPath, ControllerPath))
         {
             throw new IOException("Player_Model_Falling controller could not be created.");
         }
 
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         EnsureParameter(controller, "FallingBoost", AnimatorControllerParameterType.Bool);
         EnsureParameter(controller, "BoostCharge", AnimatorControllerParameterType.Bool);
         EnsureParameter(controller, "FallingImpact", AnimatorControllerParameterType.Trigger);
@@ -245,7 +245,7 @@ public static class FallingPhaseSceneBuilder
         AnimatorState charge = FindOrCreateState(stateMachine, "BoostCharge");
         AnimatorState boost = FindOrCreateState(stateMachine, "Falling_Boost");
         AnimatorState impact = FindOrCreateState(stateMachine, "Falling_Impact");
-        falling.motion = LoadClip("Assets/Characters/1_Squad/Lucian/Animation/Mixamo_Flying.fbx");
+        falling.motion = LoadClip("Assets/Animations/Mixamo/Locomotion/Lucian/Mixamo_Flying.fbx");
         charge.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Moving_Backward.fbx");
         boost.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Strike_Fly.fbx");
         impact.motion = LoadClip("Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Get_Hit_Hard.fbx");
@@ -382,7 +382,7 @@ public static class FallingPhaseSceneBuilder
 
     private static AnimationClip LoadClip(string path)
     {
-        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        Object[] assets = AnimationLibraryAssets.LoadAllAssetsAtPath(path);
         for (int i = 0; i < assets.Length; i++)
         {
             if (assets[i] is AnimationClip clip && !clip.name.StartsWith("__preview__"))

@@ -39,7 +39,7 @@ public static class CounterHitSignalSetup
             ("Assets/Characters/3_Enemy/Juggernaut_v2/StoneGolem_Humanoid.controller", "gethit1"),
             ("Assets/Werewolf/Werewolf Animator Controller.controller", "gethit1") })
         {
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(specification.Item1);
+            var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(specification.Item1);
             if (controller == null) throw new InvalidOperationException("Missing target controller: " + specification.Item1);
             var machine = controller.layers[0].stateMachine;
             foreach (var original in machine.states.Select(s => s.state).Where(s => s.name == specification.Item2 ||
@@ -67,7 +67,7 @@ public static class CounterHitSignalSetup
         var existing = track.GetMarkers().OfType<CounterHitSignal>().OrderBy(m => m.time).ToArray();
         if (existing.Length == 0)
         {
-            var skill = AssetDatabase.LoadAssetAtPath<CounterSkillSO>("Assets/Characters/3_Enemy/Iluvilirae/CombatLab_CounterSkill.asset");
+            var skill = AnimationLibraryAssets.LoadAssetAtPath<CounterSkillSO>("Assets/Characters/3_Enemy/Iluvilirae/CombatLab_CounterSkill.asset");
             int total = skill != null ? skill.Damage : 25;
             for (int i = 0; i < contactTimes.Length; i++)
             {

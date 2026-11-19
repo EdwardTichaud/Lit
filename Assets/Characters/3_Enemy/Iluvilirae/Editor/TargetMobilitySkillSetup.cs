@@ -9,22 +9,22 @@ public static class TargetMobilitySkillSetup
     public const string EclairPath = "Assets/CombatRealTime/Skills/Skill_1_Eclair.asset";
     public const string BondPath = "Assets/CombatRealTime/Skills/Skill_BondOffensif.asset";
     private const string Folder = "Assets/CombatRealTime/Skills/TargetMobility";
-    private const string SourceClip = "Assets/Characters/1_Squad/Lucian/Animation/Skill_1_Eclair.anim";
+    private const string SourceClip = "Assets/Animations/Autres/Battle/Lucian/Skill_1_Eclair.anim";
 
     [MenuItem("Lit/Combat Lab/Configure Eclair And Bond Offensif")]
     public static void Configure()
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before authoring.");
-        var eclair = AssetDatabase.LoadAssetAtPath<SkillSO>(EclairPath);
+        var eclair = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(EclairPath);
         if (eclair == null) throw new InvalidOperationException("Eclair is missing.");
-        bool newBond = AssetDatabase.LoadAssetAtPath<SkillSO>(BondPath) == null;
+        bool newBond = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(BondPath) == null;
         if (newBond) AssetDatabase.CopyAsset(EclairPath, BondPath);
-        var bond = AssetDatabase.LoadAssetAtPath<SkillSO>(BondPath);
+        var bond = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(BondPath);
         if (!AssetDatabase.IsValidFolder(Folder)) AssetDatabase.CreateFolder("Assets/CombatRealTime/Skills", "TargetMobility");
-        var original = AssetDatabase.LoadAssetAtPath<AnimationClip>(SourceClip);
+        var original = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(SourceClip);
         string clipPath = Folder + "/Eclair_Contact.anim";
-        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-        if (clip == null) { clip = UnityEngine.Object.Instantiate(original); clip.name = "Eclair_Contact"; AssetDatabase.CreateAsset(clip, clipPath); }
+        var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath);
+        if (clip == null) { clip = UnityEngine.Object.Instantiate(original); clip.name = "Eclair_Contact"; AnimationLibraryAssets.CreateAsset(clip, clipPath); }
         var events = AnimationUtility.GetAnimationEvents(clip).Where(e => e.functionName != "HitEnemy" && e.functionName != "ResolveSkillImpact" && e.functionName != "OpenSkillContactWindow");
         AnimationUtility.SetAnimationEvents(clip, events.Concat(new[] {
             new AnimationEvent { functionName = "OpenSkillContactWindow", time = .08f }

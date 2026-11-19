@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -38,6 +38,7 @@ namespace Lit.Story
         private bool usingDialoguePanel;
         private string activeSpeakerName;
         private string activeDialogueText;
+        private DialoguePresentationSession presentationSession;
 
         public IEnumerator Present(
             VoiceLineData line,
@@ -46,7 +47,12 @@ namespace Lit.Story
             float maximumDisplayDuration,
             bool useUnscaledTime,
             Func<bool> consumeSkipRequest,
-            CharacterData speakerData = null)
+            CharacterData speakerData = null,
+            Transform presentationSpeaker = null,
+            Transform presentationListener = null,
+            bool stationary = false,
+            DialogueDirection direction = null,
+            UnityEngine.Object presentationOwner = null)
         {
             if (line == null)
             {
@@ -69,6 +75,17 @@ namespace Lit.Story
 
             BeginMusicDucking();
             PlayAudio(line.voiceLineAudioClip, audioAnchor);
+            var nextPresentation = new DialoguePresentationSession(
+                presentationOwner != null ? presentationOwner : this, presentationSpeaker, presentationListener,
+                stationary, direction ?? line.dialogueDirection);
+            presentationSession?.Dispose();
+            presentationSession = nextPresentation;
+            float voiceDuration = line.voiceLineAudioClip != null && line.voiceLineAudioClip.audioClip != null
+                ? line.voiceLineAudioClip.audioClip.length / Mathf.Max(.1f, activeSource != null ? Mathf.Abs(activeSource.pitch) : 1f)
+                : 0;
+            float textGestureDuration = presentationSpeaker != null ?
+                presentationSpeaker.GetComponentInParent<CharacterDialoguePresentationController>()?.Profile?.textGestureSeconds ?? 2.5f : 2.5f;
+
             usingDialoguePanel = dialoguePanel != null &&
                                  dialoguePanel.ShowControlledMessage(
                                      BuildDialoguePanelText(activeSpeakerName, GetCurrentDialogue()), portrait);
@@ -106,6 +123,11 @@ namespace Lit.Story
                 float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
                 displayElapsed += deltaTime;
                 playbackTime = ResolvePlaybackTime(playbackTime, useUnscaledTime);
+                bool audioFinished = voiceDuration > 0 && displayElapsed > .1f &&
+                    (displayElapsed >= voiceDuration || activeSource != null &&
+                        (!activeSource.isPlaying || activeSource.clip != line.voiceLineAudioClip.audioClip));
+                if (audioFinished || voiceDuration <= 0 && displayElapsed >= textGestureDuration)
+                    presentationSession?.FinishSpeaking();
                 while (nextCue < cues.Count &&
                        playbackTime >= Mathf.Max(0f, cues[nextCue].time))
                 {
@@ -116,6 +138,7 @@ namespace Lit.Story
                 yield return null;
             }
 
+            presentationSession?.FinishSpeaking();
             StopAudio();
             EndMusicDucking();
             if (usingDialoguePanel && dialoguePanel != null)
@@ -138,6 +161,8 @@ namespace Lit.Story
 
         public void HideImmediate()
         {
+            presentationSession?.Dispose();
+            presentationSession = null;
             StopAudio();
             EndMusicDucking();
             ResolveDialoguePanel(createIfMissing: false);
@@ -448,6 +473,8 @@ namespace Lit.Story
 
         private void OnDisable()
         {
+            presentationSession?.Dispose();
+            presentationSession = null;
             StopAudio();
             EndMusicDucking();
             SetPortrait(null);

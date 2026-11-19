@@ -80,10 +80,10 @@ public static class ProductionCombatAudit
             foreach (string identity in new[] { "Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut_CharacterData.asset", "Assets/Characters/3_Enemy/Juggernaut/GiantJuggernaut.asset" })
                 Root(identity, "distinct-production-giant-identity");
             foreach (var scene in EditorBuildSettings.scenes.Where(scene => scene.enabled)) Root(scene.path, "enabled-build-scene");
-            foreach (string guid in AssetDatabase.FindAssets("t:ZoneManifest", new[] { "Assets" }))
+            foreach (string guid in AnimationLibraryAssets.FindAssets("t:ZoneManifest", new[] { "Assets" }))
             {
                 string path = ResolveGuid(guid); Root(path, "zone-manifest");
-                var zone = AssetDatabase.LoadAssetAtPath<ZoneManifest>(path);
+                var zone = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>(path);
                 if (zone == null) { Block("unresolved-zone", path, "ZoneManifest cannot be loaded."); continue; }
                 foreach (string name in new[] { zone.PrimarySceneName }.Concat(zone.LoadingSceneNames).Concat(zone.PostLoadingSceneNames))
                 {
@@ -243,7 +243,7 @@ public static class ProductionCombatAudit
             string shaderGuid = Regex.Match(shaderReference, @"\bguid:\s*([a-fA-F0-9]{32})").Groups[1].Value;
             string shaderPath = ResolveGuid(shaderGuid);
             if (!IsAsset(shaderPath) || !Exists(shaderPath)) return false;
-            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            var material = AnimationLibraryAssets.LoadAssetAtPath<Material>(path);
             if (material == null || material.shader == null || AssetDatabase.GetAssetPath(material.shader) != shaderPath) return false;
             string[] slots = CombatInventoryReference.UnusedTextureSlots(text, guid, material.HasProperty);
             if (slots.Length == 0) return false;

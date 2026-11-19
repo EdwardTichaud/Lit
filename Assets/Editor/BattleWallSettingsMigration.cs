@@ -67,7 +67,7 @@ internal static class BattleWallSettingsMigration
 
     private static bool SetArenaWall(string assetPath, bool enabled)
     {
-        CharacterData data = AssetDatabase.LoadAssetAtPath<CharacterData>(assetPath);
+        CharacterData data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(assetPath);
         if (data == null)
         {
             Debug.LogWarning("[BattleWallMigration] CharacterData introuvable : " + assetPath);

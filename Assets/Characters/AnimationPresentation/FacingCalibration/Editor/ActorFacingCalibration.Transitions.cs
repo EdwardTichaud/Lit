@@ -134,7 +134,7 @@ public static partial class ActorFacingCalibration
     public static void AuditTransitions()
     {
         var inputs=Resolve();var report=new TransitionReport();
-        foreach(var input in inputs){input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);if(input.candidate==null)throw new InvalidOperationException("Prepare clips first: "+input.entry.target);}
+        foreach(var input in inputs){input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);if(input.candidate==null)throw new InvalidOperationException("Prepare clips first: "+input.entry.target);}
         foreach(var group in inputs.GroupBy(i=>i.entry.actor))
         {
             var cycles=group.ToArray();var phase=cycles.Length==3?MeasurePhase(cycles[1],cycles[2]):new Phase {actor=group.Key,status="No native Run; no Walk/Run transition"};report.phases.Add(phase);

@@ -30,13 +30,13 @@ public sealed class AnimationEventsTests
     {
         var path = AssetDatabase.GUIDToAssetPath("95818c943a004c47a64b9f42e568f020");
         Assert.That(path, Does.EndWith("/AnimationEvents.cs"));
-        Assert.AreEqual(typeof(AnimationEvents), AssetDatabase.LoadAssetAtPath<MonoScript>(path).GetClass());
+        Assert.AreEqual(typeof(AnimationEvents), AnimationLibraryAssets.LoadAssetAtPath<MonoScript>(path).GetClass());
     }
 
     [Test]
     public void NativeCounterSignalsTargetTheCentralReceiver()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CounterKnockoutSignalSetup.RigPath);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(CounterKnockoutSignalSetup.RigPath);
         var signals = prefab.GetComponent<SignalReceiver>();
         foreach (var signal in signals.GetRegisteredSignals())
         {
@@ -88,7 +88,7 @@ public sealed class AnimationEventsTests
         var errors = new List<string>();
         foreach (var path in paths)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
             Assert.IsNotNull(prefab, path);
             AnimationEventsAuthoring.ValidateHierarchy(prefab, path, errors);
         }

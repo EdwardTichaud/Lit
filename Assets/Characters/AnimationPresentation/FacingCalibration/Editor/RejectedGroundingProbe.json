@@ -5,7 +5,7 @@
     "cases": [
         {
             "actor": "Lucian",
-            "clip": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+            "clip": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
             "status": "Feasible pose-only candidate. Rendered stance, loop seam and horizontal slip NOT validated; no asset written",
             "floor": -0.02202899567782879,
             "bodyYResponse": 0.9923589825630188,
@@ -22,7 +22,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_B.anim",
             "status": "Feasible pose-only candidate. Rendered stance, loop seam and horizontal slip NOT validated; no asset written",
             "floor": -0.02930258773267269,
             "bodyYResponse": 1.0007737874984741,
@@ -39,7 +39,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_L.anim",
             "status": "Feasible pose-only candidate. Rendered stance, loop seam and horizontal slip NOT validated; no asset written",
             "floor": -0.02930258773267269,
             "bodyYResponse": 1.0007719993591309,
@@ -56,7 +56,7 @@
         },
         {
             "actor": "Juggernaut",
-            "clip": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+            "clip": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
             "status": "Feasible pose-only candidate. Rendered stance, loop seam and horizontal slip NOT validated; no asset written",
             "floor": -0.02930258773267269,
             "bodyYResponse": 1.0007741451263428,

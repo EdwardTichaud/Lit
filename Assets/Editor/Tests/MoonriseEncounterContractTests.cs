@@ -74,7 +74,7 @@ public sealed class MoonriseEncounterContractTests
     [Test]
     public void EquippedProductionKitCanAnswerCloseRangeWithItsReviewedPatterns()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var brain = data.ResolveWorldPrefab().GetComponent<LitBrainsEnemy>();
         var authored = data.enemyCombatProfile.patterns.SelectMany(pattern => pattern.skills).Distinct().ToArray();
         Assert.That(authored.Where(skill => !data.combatSkills.Contains(skill)), Is.Empty,
@@ -107,16 +107,16 @@ public sealed class MoonriseEncounterContractTests
     [Test]
     public void ProductionJuggernautHasItsRealKnockoutPresentation()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var prefab = data.ResolveWorldPrefab();
         var brain = prefab.GetComponent<LitBrainsEnemy>();
         Assert.That(brain, Is.Not.Null);
-        Assert.That(brain.VFX_KnockedOut, Is.EqualTo(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/VFX_KnockedOut.prefab")));
+        Assert.That(brain.VFX_KnockedOut, Is.EqualTo(AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Prefabs/VFX_KnockedOut.prefab")));
         Assert.That(brain.combatProfile.knockoutState, Is.EqualTo("Base Layer.Knocked Out"));
         Assert.That(brain.combatProfile.knockoutState, Is.Not.EqualTo(brain.combatProfile.hurtState));
         var controller = (AnimatorController)prefab.GetComponent<Animator>().runtimeAnimatorController;
         var state = controller.layers[0].stateMachine.states.Single(entry => entry.state.name == "Knocked Out").state;
-        Assert.That(state.motion, Is.EqualTo(AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Characters/4_Animations/Mixamo_KnockedOut.anim")));
+        Assert.That(state.motion, Is.EqualTo(AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>("Assets/Animations/Mixamo/Battle/Commun/Mixamo_KnockedOut.anim")));
         Assert.That(state.transitions, Is.Empty, "The stun owner releases this state; an automatic exit must not override its vulnerability window.");
         Assert.That(state.speed, Is.GreaterThan(0));
         Assert.That(prefab.GetComponent<ProductionBrainsDeathLifecycle>(), Is.Not.Null);

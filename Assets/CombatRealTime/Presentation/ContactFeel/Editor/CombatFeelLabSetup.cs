@@ -13,10 +13,10 @@ public static class CombatFeelLabSetup
     public static void InstallActionCamera()
     {
         Install();
-        var camera = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>(CameraPath);
+        var camera = AnimationLibraryAssets.LoadAssetAtPath<LitTacticalCameraProfile>(CameraPath);
         if (camera.actionFraming == null || !camera.actionFraming.enabled)
         {
-            var exploration = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>("Assets/CombatRealTime/Camera/TacticalDefault.asset");
+            var exploration = AnimationLibraryAssets.LoadAssetAtPath<LitTacticalCameraProfile>("Assets/CombatRealTime/Camera/TacticalDefault.asset");
             camera.initialDistance = exploration.initialDistance;
             camera.initialPitch = exploration.initialPitch;
             camera.fieldOfView = exploration.fieldOfView;
@@ -97,7 +97,7 @@ public static class CombatFeelLabSetup
             var cameraMode = arena.arenaCamera.GetComponent<LitGameplayCameraModeController>();
             if (cameraMode == null) throw new InvalidOperationException("Lab camera mode missing.");
             var serialized = new SerializedObject(cameraMode);
-            var profile = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>(CameraPath);
+            var profile = AnimationLibraryAssets.LoadAssetAtPath<LitTacticalCameraProfile>(CameraPath);
             if (profile == null)
             {
                 var source = serialized.FindProperty("profile").objectReferenceValue as LitTacticalCameraProfile;
@@ -107,7 +107,7 @@ public static class CombatFeelLabSetup
                 profile.initialDistance = 7.5f;
                 profile.initialPitch = 38;
                 profile.fieldOfView = 58;
-                AssetDatabase.CreateAsset(profile, CameraPath);
+                AnimationLibraryAssets.CreateAsset(profile, CameraPath);
             }
             if (serialized.FindProperty("profile").objectReferenceValue != profile)
             {

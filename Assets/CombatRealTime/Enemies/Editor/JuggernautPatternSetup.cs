@@ -31,10 +31,10 @@ public static class JuggernautPatternSetup
     public static void Configure()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Quitter Play Mode avant migration.");
-        var source = AssetDatabase.LoadAssetAtPath<AnimatorController>("Assets/Characters/4_Animations/Player_Model.controller");
-        var old = AssetDatabase.LoadAssetAtPath<AnimatorController>(Folder + "Juggernaut.controller");
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset");
-        var assomoir = AssetDatabase.LoadAssetAtPath<SkillSO>(Folder + "Skill_Juggernaut_Assomoir.asset");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>("Assets/Characters/4_Animations/Player_Model.controller");
+        var old = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(Folder + "Juggernaut.controller");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(Folder + "Juggernaut.asset");
+        var assomoir = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(Folder + "Skill_Juggernaut_Assomoir.asset");
         if (source == null || old == null || data == null || assomoir == null) throw new InvalidOperationException("Sources Juggernaut absentes.");
         string[] sourceNames = { "TwinSword_attack03_Inplace", "TwinSword_attack04_Inplace", "TwinSword_Attack15_Inplace" };
         AnimationClip[] clips = sourceNames.Select(n => (Find(source.layers[0].stateMachine, n)?.motion ??
@@ -42,16 +42,16 @@ public static class JuggernautPatternSetup
         if (clips.Any(c => c == null || !c.humanMotion)) throw new InvalidOperationException("Clips Humanoid requis : " +
             string.Join(", ", sourceNames.Select((n, i) => n + "=" + (clips[i] == null ? "ABSENT" : clips[i].name + ":human=" + clips[i].humanMotion))));
         string controllerPath = Folder + "Juggernaut_Model.controller";
-        if (AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath) == null &&
+        if (AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(controllerPath) == null &&
             !AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(source), controllerPath)) throw new InvalidOperationException("Copie controller refusee.");
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(controllerPath);
         var machine = controller.layers[0].stateMachine;
         controller.layers = new[] { controller.layers[0] };
         string[] names = { "Juggernaut_Strike", "Juggernaut_Followup", "Juggernaut_Sweep" };
         var skills = new List<SkillSO>();
         for (int i = 0; i < clips.Length; i++)
         {
-            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(Folder + names[i] + ".anim");
+            AnimationClip clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(Folder + names[i] + ".anim");
             if (clip == null)
             {
                 clip = UnityEngine.Object.Instantiate(clips[i]);
@@ -64,15 +64,15 @@ public static class JuggernautPatternSetup
                     new AnimationEvent { functionName = "OpenEnemyReactionOpportunity", time = length * .3f },
                     Event("LockEnemyAttackDirection", length * .42f), Event("EnemyAttack", length * .48f),
                     Event("EndEnemyAttack", length * .94f) });
-                AssetDatabase.CreateAsset(clip, Folder + names[i] + ".anim");
+                AnimationLibraryAssets.CreateAsset(clip, Folder + names[i] + ".anim");
             }
             string skillPath = Folder + "Skill_" + names[i] + ".asset";
-            SkillSO skill = AssetDatabase.LoadAssetAtPath<SkillSO>(skillPath);
+            SkillSO skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(skillPath);
             if (skill == null)
             {
                 skill = UnityEngine.Object.Instantiate(assomoir);
                 skill.name = "Skill_" + names[i];
-                AssetDatabase.CreateAsset(skill, skillPath);
+                AnimationLibraryAssets.CreateAsset(skill, skillPath);
             }
             var serialized = new SerializedObject(skill);
             serialized.FindProperty("skillName").stringValue = names[i];
@@ -137,7 +137,7 @@ public static class JuggernautPatternSetup
             if (!kept.Contains(child.state.name)) machine.RemoveState(child.state);
         }
         machine.defaultState = Find(machine, "CombatIdle");
-        var profile = AssetDatabase.LoadAssetAtPath<EnemyCombatProfileSO>(Folder + "Juggernaut_CombatProfile.asset");
+        var profile = AnimationLibraryAssets.LoadAssetAtPath<EnemyCombatProfileSO>(Folder + "Juggernaut_CombatProfile.asset");
         if (profile == null) throw new InvalidOperationException("Profil absent.");
         profile.patterns = new List<EnemyCombatPattern> {
             Pattern("Frappe", new[] {skills[0]}, 40, 1.5f, .7f),
@@ -196,12 +196,12 @@ public static class JuggernautPatternSetup
         if (!sourcePath.StartsWith(Folder, StringComparison.Ordinal) || !sourcePath.EndsWith(".anim", StringComparison.Ordinal))
         {
             string path = Folder + "InPlace_" + clip.name.Replace("/", "_") + ".anim";
-            var copy = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            var copy = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(path);
             if (copy == null)
             {
                 copy = UnityEngine.Object.Instantiate(clip);
                 copy.name = "InPlace_" + clip.name;
-                AssetDatabase.CreateAsset(copy, path);
+                AnimationLibraryAssets.CreateAsset(copy, path);
             }
             clip = copy;
         }
@@ -213,7 +213,7 @@ public static class JuggernautPatternSetup
     public static void ConfigureLocomotion()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Quitter Play Mode.");
-        ConfigureLocomotion(AssetDatabase.LoadAssetAtPath<AnimatorController>(Folder + "Juggernaut_Model.controller"));
+        ConfigureLocomotion(AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(Folder + "Juggernaut_Model.controller"));
         AssetDatabase.SaveAssets();
     }
 
@@ -257,14 +257,14 @@ public static class JuggernautPatternSetup
         if (name == "Death_v2") sourcePath = ActorAnimationAudit.EnemySource("Death");
         if (sourcePath == null)
         {
-            var paths = AssetDatabase.FindAssets(name + " t:Model")
+            var paths = AnimationLibraryAssets.FindAssets(name + " t:Model")
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Where(p => System.IO.Path.GetFileNameWithoutExtension(p) == name).ToArray();
             if (paths.Length != 1) throw new InvalidOperationException("Original source unresolved; no pose flattening allowed: " + clip.name);
             sourcePath = paths[0];
         }
         var source = ActorAnimationAudit.Source(sourcePath);
-        var actor = AssetDatabase.LoadAssetAtPath<GameObject>(JuggernautV2Setup.OriginalPrefab).GetComponent<Animator>();
+        var actor = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(JuggernautV2Setup.OriginalPrefab).GetComponent<Animator>();
         var candidate = ActorClipReconstruction.Candidate(source, clip, actor);
         try
         {

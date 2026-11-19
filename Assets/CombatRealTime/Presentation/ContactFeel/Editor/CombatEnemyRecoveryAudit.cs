@@ -23,7 +23,7 @@ public static class CombatEnemyRecoveryAudit
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before authoring.");
         var report = Measure();
-        var profile = AssetDatabase.LoadAssetAtPath<LitBrainsCombatProfile>(ProfilePath);
+        var profile = AnimationLibraryAssets.LoadAssetAtPath<LitBrainsCombatProfile>(ProfilePath);
         bool changed = false;
         foreach (var exit in report.exits.Where(e => e.candidate))
         {
@@ -35,8 +35,8 @@ public static class CombatEnemyRecoveryAudit
     }
     public static Report Measure()
     {
-        var profile = AssetDatabase.LoadAssetAtPath<LitBrainsCombatProfile>(ProfilePath);
-        var actor = AssetDatabase.LoadAssetAtPath<GameObject>(ChargedSkillSetup.EnemyPath).GetComponent<Animator>();
+        var profile = AnimationLibraryAssets.LoadAssetAtPath<LitBrainsCombatProfile>(ProfilePath);
+        var actor = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(ChargedSkillSetup.EnemyPath).GetComponent<Animator>();
         var controller = actor.runtimeAnimatorController as AnimatorController;
         if (profile == null || controller == null) throw new InvalidOperationException("Lab recovery sources missing.");
         var states = controller.layers[0].stateMachine.states.Select(s => s.state).ToArray();

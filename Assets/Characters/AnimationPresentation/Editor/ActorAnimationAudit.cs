@@ -45,13 +45,13 @@ public static class ActorAnimationAudit
     [Serializable] public sealed class Manifest { public int version = 1; public List<Entry> entries = new List<Entry>(); public List<string> unresolved = new List<string>(); }
     public static Animator Actor(bool enemy)
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(enemy ? EnemyFolder + "Juggernaut_v2.prefab" : PlayerPrefab);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(enemy ? EnemyFolder + "Juggernaut_v2.prefab" : PlayerPrefab);
         var contract = prefab.GetComponent<CharacterAnimationController>();
         return contract != null ? contract.Animator : prefab.GetComponent<Animator>();
     }
     public static AnimationClip Source(string path, long id = 0)
     {
-        var clips = AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>()
+        var clips = AnimationLibraryAssets.LoadAllAssetsAtPath(path).OfType<AnimationClip>()
             .Where(c => !c.name.StartsWith("__preview__")).ToArray();
         if (id != 0) clips = clips.Where(c => { AssetDatabase.TryGetGUIDAndLocalFileIdentifier(c, out string _, out long fileId); return fileId == id; }).ToArray();
         if (clips.Length != 1) throw new InvalidOperationException("Unresolved or ambiguous clip: " + path + " (" + clips.Length + ")");
@@ -63,8 +63,8 @@ public static class ActorAnimationAudit
         if (name == "Followup") return Sources + "TwinSword_attack04_Inplace.FBX";
         if (name == "Sweep") return Sources + "TwinSword_Attack15_Inplace.FBX";
         if (name == "Idle") return Sources + "Twinblades_Idle_Inplace.FBX";
-        if (name == "Hurt") return "Assets/0 - UnityPackages/Fab/TwinBladesBundle/TwinSwordAnimsetBase_V2/Animation/InPlace/TwinSword_Hit_L_Inplace.FBX";
-        if (name == "Death") return "Assets/0 - UnityPackages/Fab/TwinBladesBundle/Twinblades_Expansion_V2/Animation/Inplace/Hit/Death_v2.anim";
+        if (name == "Hurt") return "Assets/Animations/Twinblades/Battle/Sources/TwinBlades/InPlace/TwinSword_Hit_L_Inplace.FBX";
+        if (name == "Death") return "Assets/Animations/Twinblades/Battle/Sources/Twinblades_Expansion_V2/Inplace/Hit/Death_v2.anim";
         if (name.StartsWith("Walk") || name.StartsWith("Run"))
         {
             var parts = name.Split('_');
@@ -98,12 +98,12 @@ public static class ActorAnimationAudit
                 manifest.unresolved.AddRange(failures); // Audit reports missing bindings; it never guesses a repair.
             }
             string folder = enemy ? EnemyFolder + "Animations" : Sources + "PlayerInPlace";
-            var paths = AssetDatabase.FindAssets("t:AnimationClip", new[] { folder }).Select(AssetDatabase.GUIDToAssetPath)
+            var paths = AnimationLibraryAssets.FindAssets("t:AnimationClip", new[] { folder }).Select(AssetDatabase.GUIDToAssetPath)
                 .Concat(consumers.Keys.Select(AssetDatabase.GetAssetPath)).Distinct().OrderBy(p => p).ToArray();
             using (var sampler = new ActorPoseSampler(Actor(enemy)))
             foreach (string path in paths)
             {
-                foreach (var clip in AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")))
+                foreach (var clip in AnimationLibraryAssets.LoadAllAssetsAtPath(path).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")))
                 {
                 if (clip == null || !clip.isHumanMotion) continue;
                 ActorPoseSampler.Frame[] frames; string soleIssue = null;

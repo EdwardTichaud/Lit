@@ -22,7 +22,7 @@ public static class LucianStanceReferenceAudit
             if(mode=="support-ik")
             {
                 string name=entry.clip.Contains("_Run_")?"Lucian_Common_Run_SupportIK":"Lucian_Common_Walk_Loop_SupportIK";
-                clip=AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/"+name+".anim");
+                clip=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>("Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/"+name+".anim");
             }
             var frames=sampler.Sample(clip,rootMotion:mode.StartsWith("root"),sampleCount:240,measureSoles:true,applyFootIK:mode.EndsWith("ik"));
             var rows=frames.Select(f=>string.Join(",",new[]{f.time,f.root.x,f.root.y,f.root.z,f.body.y,f.leftFoot.x,f.leftFoot.y,f.leftFoot.z,f.rightFoot.x,f.rightFoot.y,f.rightFoot.z,f.leftToe.x,f.leftToe.y,f.leftToe.z,f.rightToe.x,f.rightToe.y,f.rightToe.z,f.leftSole.x,f.leftSole.y,f.leftSole.z,f.rightSole.x,f.rightSole.y,f.rightSole.z}.Select(v=>v.ToString("R",CultureInfo.InvariantCulture))));

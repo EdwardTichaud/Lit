@@ -22,7 +22,7 @@ public static class PlayerInPlaceMigration
             AssetDatabase.TryGetGUIDAndLocalFileIdentifier(source, out string guid, out long id);
             var entry = manifest.replacements.FirstOrDefault(r => r.sourceGuid == guid && r.sourceId == id);
             if (entry != null)
-                return AssetDatabase.LoadAllAssetsAtPath(entry.targetPath).OfType<AnimationClip>().First(c => !c.name.StartsWith("__preview__"));
+                return AnimationLibraryAssets.LoadAllAssetsAtPath(entry.targetPath).OfType<AnimationClip>().First(c => !c.name.StartsWith("__preview__"));
         }
         if (!PlayerInPlaceAudit.IsRootCandidate(source)) return source;
         throw new InvalidOperationException("Run Migrate Player Gameplay To InPlace before installing this state: " + source.name);
@@ -91,7 +91,7 @@ public static class PlayerInPlaceMigration
             throw new InvalidOperationException("Resolve new missing references before migration: " + string.Join("; ", warnings.Except(originalManifest.preexistingWarnings)));
         var pending = new List<Prepared>();
         var sourcePaths = AssetDatabase.GetAllAssetPaths();
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerInPlaceAudit.ControllerPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(PlayerInPlaceAudit.ControllerPath);
         var skills = PlayerSkills().ToArray();
         var sequences = PlayerInPlaceAudit.PlayerSequences().ToArray();
         // Capture override keys before changing the underlying controller's motions.
@@ -102,7 +102,7 @@ public static class PlayerInPlaceMigration
         });
         foreach (string prefabPath in PlayerPrefabs)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(prefabPath);
             if (prefab == null || prefab.GetComponent<LitOpsiveLocomotionBridge>() == null ||
                 prefab.GetComponent<Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion>() == null)
                 throw new InvalidOperationException("Player motion dependencies missing: " + prefabPath);
@@ -127,7 +127,7 @@ public static class PlayerInPlaceMigration
                 AssetDatabase.TryGetGUIDAndLocalFileIdentifier(source, out string guid, out long id);
                 string equivalentPath = PlayerInPlaceAudit.FindEquivalent(path, sourcePaths);
                 var equivalents = string.IsNullOrEmpty(equivalentPath) ? Array.Empty<AnimationClip>() :
-                    AssetDatabase.LoadAllAssetsAtPath(equivalentPath).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToArray();
+                    AnimationLibraryAssets.LoadAllAssetsAtPath(equivalentPath).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToArray();
                 if (equivalents.Length > 1) throw new InvalidOperationException("Ambiguous InPlace subclips: " + equivalentPath);
                 AnimationClip target = equivalents.SingleOrDefault();
                 bool create = target == null || AnimationUtility.GetAnimationEvents(source).Length > 0 ||
@@ -172,7 +172,7 @@ public static class PlayerInPlaceMigration
             if (item.record.sourceEvents != item.record.targetEvents)
                 throw new InvalidOperationException("Animation events differ: " + item.record.sourcePath);
 
-        var library = AssetDatabase.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath) ?? ScriptableObject.CreateInstance<PlayerStateMotionLibrary>();
+        var library = AnimationLibraryAssets.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath) ?? ScriptableObject.CreateInstance<PlayerStateMotionLibrary>();
         var profiles = new List<PlayerStateMotionLibrary.Profile>(library.profiles);
         var byClip = pending.ToDictionary(p => p.source);
         foreach (var layer in controller.layers)
@@ -226,8 +226,8 @@ public static class PlayerInPlaceMigration
         EnsureFolder(Folder);
         EnsureFolder(Folder + "/Editor");
         library.profiles = profiles.ToArray();
-        foreach (var item in pending.Where(p => p.create)) AssetDatabase.CreateAsset(item.target, item.record.targetPath);
-        if (!AssetDatabase.Contains(library)) AssetDatabase.CreateAsset(library, LibraryPath);
+        foreach (var item in pending.Where(p => p.create)) AnimationLibraryAssets.CreateAsset(item.target, item.record.targetPath);
+        if (!AssetDatabase.Contains(library)) AnimationLibraryAssets.CreateAsset(library, LibraryPath);
         else EditorUtility.SetDirty(library);
         foreach (var layer in controller.layers)
             PlayerInPlaceAudit.Visit(layer.stateMachine, layer.name, (state, _) => {
@@ -298,8 +298,8 @@ public static class PlayerInPlaceMigration
         Debug.Log($"[Player InPlace] Migrated {pending.Count} clips, {profiles.Count} script trajectories. Jump/dodge unchanged. Backup: {backup}");
     }
 
-    public static IEnumerable<SkillSO> PlayerSkills() => AssetDatabase.FindAssets("t:SkillSO", new[] { "Assets/CombatRealTime/Skills" })
-        .Select(g => AssetDatabase.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(g))).Where(s => s != null);
+    public static IEnumerable<SkillSO> PlayerSkills() => AnimationLibraryAssets.FindAssets("t:SkillSO", new[] { "Assets/CombatRealTime/Skills" })
+        .Select(g => AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(AssetDatabase.GUIDToAssetPath(g))).Where(s => s != null);
     private static bool LegacyAirborne(SkillSO skill) => skill != null &&
         new SerializedObject(skill).FindProperty("presentation.allowAirborneRootMotion")?.boolValue == true;
     private static bool NeedsSkillTrajectory(SkillSO skill)
@@ -374,14 +374,14 @@ public static class PlayerInPlaceMigration
     }
     private static float LegacyFloat(string name, float fallback)
     {
-        var b = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath).GetComponent<LitOpsiveLocomotionBridge>();
+        var b = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PlayerInPlaceAudit.LucianPath).GetComponent<LitOpsiveLocomotionBridge>();
         return new SerializedObject(b).FindProperty(name)?.floatValue ?? fallback;
     }
     private static string ProtectedJump() => string.Join("\n", PlayerPrefabs.Select(p =>
-        JsonUtility.ToJson(AssetDatabase.LoadAssetAtPath<GameObject>(p).GetComponent<PlayerScriptedJumpController>())));
+        JsonUtility.ToJson(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(p).GetComponent<PlayerScriptedJumpController>())));
     private static string ProtectedDodge()
     {
-        var root = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
+        var root = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Core/System/GameplaySessionRoot.prefab");
         return JsonUtility.ToJson(root.GetComponentInChildren<PlayerScriptedDodgeController>(true)) + "\n" +
                JsonUtility.ToJson(root.GetComponentInChildren<CombatMobilityController>(true));
     }
@@ -429,24 +429,24 @@ public static class PlayerInPlaceMigration
         foreach (string warning in warnings.Except(manifest.preexistingWarnings)) issues.Add(warning);
         using (var sampler = new PlayerInPlaceSampling())
             foreach (var clip in clips)
-                if (!IsProtectedJumpClip(clip, AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerInPlaceAudit.ControllerPath)) &&
+                if (!IsProtectedJumpClip(clip, AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(PlayerInPlaceAudit.ControllerPath)) &&
                     HasPhysicalTrajectory(sampler.Sample(clip))) issues.Add("Physical root trajectory: " + AssetDatabase.GetAssetPath(clip));
         foreach (var record in manifest.replacements)
         {
-            var source = AssetDatabase.LoadAllAssetsAtPath(record.sourcePath).OfType<AnimationClip>().FirstOrDefault(c => {
+            var source = AnimationLibraryAssets.LoadAllAssetsAtPath(record.sourcePath).OfType<AnimationClip>().FirstOrDefault(c => {
                 AssetDatabase.TryGetGUIDAndLocalFileIdentifier(c, out string _, out long id); return id == record.sourceId;
             });
-            var target = AssetDatabase.LoadAllAssetsAtPath(record.targetPath).OfType<AnimationClip>().FirstOrDefault(c => !c.name.StartsWith("__preview__"));
+            var target = AnimationLibraryAssets.LoadAllAssetsAtPath(record.targetPath).OfType<AnimationClip>().FirstOrDefault(c => !c.name.StartsWith("__preview__"));
             if (source == null || target == null) { issues.Add("Missing migration clip: " + record.sourcePath); continue; }
             if (Events(source) != Events(target)) issues.Add("Changed animation events: " + record.targetPath);
             if (Mathf.Abs(source.length - target.length) > .001f) issues.Add("Changed clip duration: " + record.targetPath);
         }
-        foreach (var path in PlayerPrefabs) ValidatePlayer(AssetDatabase.LoadAssetAtPath<GameObject>(path), issues);
-        var library = AssetDatabase.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath);
+        foreach (var path in PlayerPrefabs) ValidatePlayer(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path), issues);
+        var library = AnimationLibraryAssets.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath);
         if (library == null) issues.Add("Missing state motion library");
         else
         {
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerInPlaceAudit.ControllerPath);
+            var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(PlayerInPlaceAudit.ControllerPath);
             var states = new HashSet<string>();
             foreach (var layer in controller.layers) PlayerInPlaceAudit.Visit(layer.stateMachine, layer.name, (state, path) => {
                 states.Add(path);
@@ -487,7 +487,7 @@ public static class PlayerInPlaceMigration
 
     public static void FinalizeSerializedData()
     {
-        var library = AssetDatabase.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath);
+        var library = AnimationLibraryAssets.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath);
         foreach (string path in PlayerPrefabs) ConfigurePrefab(path, library);
         foreach (var skill in PlayerSkills()) EditorUtility.SetDirty(skill);
         AssetDatabase.SaveAssets();
@@ -502,12 +502,12 @@ public static class PlayerInPlaceMigration
         try
         {
             using (var sampler = new PlayerInPlaceSampling())
-            foreach (var record in manifest.replacements.Where(r => r.targetPath.StartsWith(Folder + "/")))
+            foreach (var record in manifest.replacements.Where(r => AnimationLibraryAssets.IsWithin(r.targetPath, Folder)))
             {
-                var source = AssetDatabase.LoadAllAssetsAtPath(record.sourcePath).OfType<AnimationClip>().Single(c => {
+                var source = AnimationLibraryAssets.LoadAllAssetsAtPath(record.sourcePath).OfType<AnimationClip>().Single(c => {
                     AssetDatabase.TryGetGUIDAndLocalFileIdentifier(c, out string _, out long id); return id == record.sourceId;
                 });
-                var target = AssetDatabase.LoadAssetAtPath<AnimationClip>(record.targetPath);
+                var target = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(record.targetPath);
                 var copy = Object.Instantiate(source);
                 prepared.Add(new KeyValuePair<AnimationClip, AnimationClip>(target, copy));
                 copy.name = target.name;
@@ -553,7 +553,7 @@ public static class PlayerInPlaceMigration
     {
         // The flame presentation layer receives InPlace clips for the complete graph contract,
         // without introducing a new physical movement command for equipping a flame.
-        var library = AssetDatabase.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath);
+        var library = AnimationLibraryAssets.LoadAssetAtPath<PlayerStateMotionLibrary>(LibraryPath);
         library.profiles = library.profiles.Where(p => !p.statePath.StartsWith("Upper Body Flame.", StringComparison.Ordinal)).ToArray();
         EditorUtility.SetDirty(library);
         AssetDatabase.SaveAssets();

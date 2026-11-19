@@ -12,7 +12,7 @@ public sealed class CombatAuthoredControlTests
     [TestCase("Soren")]
     public void PlayerUsesValidatedRotationFromCharacterDataWithoutAnArenaOverride(string character)
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/" + character + "/" + character + ".asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/" + character + "/" + character + ".asset");
         var settings = data.playerSettings.locomotion;
         Assert.That(settings.orientationWalkTurnRate, Is.EqualTo(720));
         Assert.That(settings.orientationSprintTurnRate, Is.EqualTo(1080));
@@ -55,7 +55,7 @@ public sealed class CombatAuthoredControlTests
     [Test]
     public void ProductionWorldOwnsAnActualWorldPrefabAndNotAScreenSpaceCanvas()
     {
-        var session = AssetDatabase.LoadAssetAtPath<GameObject>(ProductionCombatMigration.SessionPath);
+        var session = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(ProductionCombatMigration.SessionPath);
         var world = session.GetComponentInChildren<CombatWorldRuntime>(true);
         Assert.That(world.lockCursorPrefab, Is.Not.Null);
         Assert.That(world.lockCursorOffset, Is.EqualTo(Vector3.up * 3));
@@ -72,7 +72,7 @@ public sealed class CombatAuthoredControlTests
     [Test]
     public void JuggernautKeepsItsOwnPatternsWithValidatedTurnRate()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var brain = data.ResolveWorldPrefab().GetComponent<LitBrainsEnemy>();
         Assert.That(brain.combatProfile.turnDegreesPerSecond, Is.EqualTo(1080));
         Assert.That(data.enemyCombatProfile.trackingDegreesPerSecond, Is.EqualTo(1080));

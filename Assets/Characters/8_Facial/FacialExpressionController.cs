@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -107,6 +107,45 @@ public class FacialExpressionController : MonoBehaviour
         }
 
         currentOneShotPreset = null;
+        dialogueExpressionOwner = null;
+        dialogueExpressionWeights = null;
+        dialogueExpressionWeight = 0;
+    }
+
+    private Object dialogueExpressionOwner;
+    private int dialogueExpressionGeneration;
+    private Dictionary<string, float> dialogueExpressionWeights;
+    private float dialogueExpressionWeight;
+
+    public int BeginDialogueExpression(Object owner, FacialExpressionPreset preset)
+    {
+        if (owner == null || preset == null || !isActiveAndEnabled) return 0;
+        Initialize();
+        dialogueExpressionOwner = owner;
+        dialogueExpressionGeneration++;
+        dialogueExpressionWeights = BuildTargetWeights(preset);
+        // Dialogue never owns jaw-opening or lip-separation shapes.
+        foreach (var entry in preset.blendShapes)
+            if (entry != null && !IsDialogueSafeShape(entry.blendShapeName))
+                dialogueExpressionWeights[entry.blendShapeName] = 0;
+        return dialogueExpressionGeneration;
+    }
+
+    public void EndDialogueExpression(int generation, bool immediate = false)
+    {
+        if (generation == 0 || generation != dialogueExpressionGeneration) return;
+        dialogueExpressionOwner = null;
+        if (immediate) { dialogueExpressionWeight = 0; dialogueExpressionWeights = null; }
+    }
+
+    public static bool IsDialogueSafeShape(string shape)
+    {
+        if (string.IsNullOrEmpty(shape)) return false;
+        return shape.StartsWith("Brow", System.StringComparison.OrdinalIgnoreCase) ||
+            shape.StartsWith("Eye", System.StringComparison.OrdinalIgnoreCase) ||
+            shape.StartsWith("Nose", System.StringComparison.OrdinalIgnoreCase) ||
+            shape.IndexOf("Smile", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            shape.IndexOf("Dimple", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private void LateUpdate()
@@ -123,6 +162,20 @@ public class FacialExpressionController : MonoBehaviour
 
                 SetBlendShapeInternal(blendShapeName, weight);
             }
+        }
+
+        if (dialogueExpressionWeights != null && faceRenderer != null)
+        {
+            dialogueExpressionWeight = Mathf.MoveTowards(dialogueExpressionWeight,
+                dialogueExpressionOwner != null ? 1 : 0, GetDeltaTime() / .25f);
+            foreach (var pair in dialogueExpressionWeights)
+            {
+                if (!blendShapeCache.TryGetValue(pair.Key, out int index)) continue;
+                currentWeights.TryGetValue(pair.Key, out float passive);
+                faceRenderer.SetBlendShapeWeight(index, Mathf.Lerp(passive, pair.Value, dialogueExpressionWeight));
+            }
+            if (dialogueExpressionOwner == null && dialogueExpressionWeight <= 0)
+                dialogueExpressionWeights = null;
         }
 
         if (enforceNeutralJawPoseInLateUpdate)

@@ -36,9 +36,9 @@ public static class ProductionBrainsEnemyConversion
         public bool CanApply => CanGenerate && conversionBlockers.Count == 0;
     }
 
-    public static Report[] AuditProductionRoster() => AssetDatabase.FindAssets("t:CharacterData", new[] { "Assets" })
+    public static Report[] AuditProductionRoster() => AnimationLibraryAssets.FindAssets("t:CharacterData", new[] { "Assets" })
         .Select(AssetDatabase.GUIDToAssetPath).OrderBy(path => path, StringComparer.Ordinal)
-        .Select(AssetDatabase.LoadAssetAtPath<CharacterData>).Where(data => data != null && data.isEnemy)
+        .Select(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>).Where(data => data != null && data.isEnemy)
         .Select(data => Analyze(data)).ToArray();
 
     [MenuItem("Lit/Combat/Production Enemies/Audit All Enemy Characters")]
@@ -56,12 +56,12 @@ public static class ProductionBrainsEnemyConversion
     }
 
     [MenuItem("Lit/Combat/Production Enemies/Generate Reviewed Juggernaut Assets")]
-    public static void GenerateJuggernaut() => GenerateReviewedAssets(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
+    public static void GenerateJuggernaut() => GenerateReviewedAssets(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset"));
 
     [MenuItem("Lit/Combat/Production Enemies/Convert Production Juggernaut In Place")]
     public static void ConvertJuggernaut()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var report = Analyze(data);
         if (!report.CanApply) throw new InvalidOperationException("No asset modified.\n" + string.Join("\n", report.blockers.Concat(report.conversionBlockers)));
         var request = GenerateReviewedAssets(data);
@@ -88,7 +88,7 @@ public static class ProductionBrainsEnemyConversion
         report.sourceProfile = data.enemyCombatProfile;
         if (string.IsNullOrEmpty(report.characterGuid) || data.UniqueId != report.characterGuid)
             report.blockers.Add("Character identity does not match its persistent asset GUID; identity repair is forbidden.");
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(report.prefabPath);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(report.prefabPath);
         if (prefab == null || PrefabUtility.GetPrefabAssetType(prefab) != PrefabAssetType.Regular)
         { report.blockers.Add("A regular, explicitly authored production prefab is required (no variant unpacking)."); return report; }
         report.scriptDiagnostics = ProductionBrainsScriptDiagnostics.Inspect(prefab);
@@ -125,7 +125,7 @@ public static class ProductionBrainsEnemyConversion
             string profilePath = AssetDatabase.GetAssetPath(existingBrain.combatProfile);
             string provenancePath = string.IsNullOrEmpty(profilePath) ? null :
                 System.IO.Path.GetDirectoryName(profilePath).Replace('\\', '/') + "/ConversionRequest.asset";
-            var provenance = provenancePath != null ? AssetDatabase.LoadAssetAtPath<ProductionBrainsEnemyConversionRequest>(provenancePath) : null;
+            var provenance = provenancePath != null ? AnimationLibraryAssets.LoadAssetAtPath<ProductionBrainsEnemyConversionRequest>(provenancePath) : null;
             if (provenance != null && provenance.character == data && provenance.reviewedProfile == existingBrain.combatProfile &&
                 provenance.reviewedController == animator.runtimeAnimatorController && provenance.sourceController != null &&
                 (sourceController == null || sourceController == provenance.sourceController))
@@ -277,7 +277,7 @@ public static class ProductionBrainsEnemyConversion
         if (!folder.StartsWith("Assets/", StringComparison.Ordinal) || folder.Contains("..") || folder.Contains('\\') || !folder.EndsWith("/BrainsProduction", StringComparison.Ordinal))
             throw new InvalidOperationException("Output must be a new explicit Assets/.../BrainsProduction folder.");
         string requestPath = folder + "/ConversionRequest.asset";
-        var existing = AssetDatabase.LoadAssetAtPath<ProductionBrainsEnemyConversionRequest>(requestPath);
+        var existing = AnimationLibraryAssets.LoadAssetAtPath<ProductionBrainsEnemyConversionRequest>(requestPath);
         var report = Analyze(data, existing != null ? existing.sourceController : null);
         if (!report.CanGenerate) throw new InvalidOperationException("No asset modified.\n" + string.Join("\n", report.blockers));
         if (existing != null)
@@ -337,7 +337,7 @@ public static class ProductionBrainsEnemyConversion
                 clip.name = mapping.clip.name + "_ProductionBrains";
                 AnimationUtility.SetAnimationEvents(clip, ReviewedEvents(mapping, clashConfig));
                 string clipPath = folder + "/" + mapping.skillGuid + ".anim";
-                AssetDatabase.CreateAsset(clip, clipPath);
+                AnimationLibraryAssets.CreateAsset(clip, clipPath);
                 created.Add(clipPath);
                 profile.attacks[i].clip = clip;
                 var state = states.Single(entry => entry.Key == mapping.statePath).Value;
@@ -355,7 +355,7 @@ public static class ProductionBrainsEnemyConversion
             EnsureParameter(controller, "Dead", AnimatorControllerParameterType.Bool);
             EnsureParameter(controller, "Grounded", AnimatorControllerParameterType.Bool);
             string profilePath = folder + "/ProductionProfile.asset";
-            AssetDatabase.CreateAsset(profile, profilePath);
+            AnimationLibraryAssets.CreateAsset(profile, profilePath);
             created.Add(profilePath);
             var request = ScriptableObject.CreateInstance<ProductionBrainsEnemyConversionRequest>();
             request.character = data;
@@ -363,7 +363,7 @@ public static class ProductionBrainsEnemyConversion
             request.requiresFlameInfluence = report.requiresFlameInfluence;
             request.reviewedProfile = profile;
             request.reviewedController = controller;
-            AssetDatabase.CreateAsset(request, requestPath);
+            AnimationLibraryAssets.CreateAsset(request, requestPath);
             created.Add(requestPath);
             EditorUtility.SetDirty(controller);
             ValidateDestination(report, profile, controller, clashConfig);

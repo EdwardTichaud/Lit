@@ -11,8 +11,8 @@ public static class MovingLegsAnimatorSetup
     [MenuItem("Lit/Animation/Install Moving Legs Overlay")]
     public static void Install()
     {
-        var mask = AssetDatabase.LoadAssetAtPath<AvatarMask>(MaskPath);
-        if (mask == null) { mask = new AvatarMask { name = "MovingLegs" }; AssetDatabase.CreateAsset(mask, MaskPath); }
+        var mask = AnimationLibraryAssets.LoadAssetAtPath<AvatarMask>(MaskPath);
+        if (mask == null) { mask = new AvatarMask { name = "MovingLegs" }; AnimationLibraryAssets.CreateAsset(mask, MaskPath); }
         for (int i = 0; i < (int)AvatarMaskBodyPart.LastBodyPart; i++) mask.SetHumanoidBodyPartActive((AvatarMaskBodyPart)i, false);
         mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftLeg, true);
         mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.RightLeg, true);
@@ -21,10 +21,10 @@ public static class MovingLegsAnimatorSetup
         EditorUtility.SetDirty(mask);
         var paths = new List<string> { "Assets/Characters/4_Animations/Player_Model.controller", "Assets/Characters/1_Squad/Soren/Soren_Model.controller" };
         const string labPath = "Assets/Characters/3_Enemy/Iluvilirae/Lucian_ImpactLab.controller";
-        if (AssetDatabase.LoadAssetAtPath<AnimatorController>(labPath) != null) paths.Add(labPath);
+        if (AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(labPath) != null) paths.Add(labPath);
         foreach (var path in paths)
         {
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+            var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null) throw new InvalidOperationException("Missing controller " + path);
             // Idempotent: do not overwrite an already authored overlay.
             if (controller.layers.Any(layer => layer.name == PlayerMovingLegsOverlay.LayerName)) continue;

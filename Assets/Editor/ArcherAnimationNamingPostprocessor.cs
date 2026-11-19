@@ -35,7 +35,7 @@ public sealed class ArcherAnimationNamingPostprocessor : AssetPostprocessor
     private static void QueueFolder()
     {
         if (!AssetDatabase.IsValidFolder(ArcherAnimationsFolder.TrimEnd('/'))) return;
-        foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { ArcherAnimationsFolder }))
+        foreach (string guid in AnimationLibraryAssets.FindAssets("t:Model", new[] { ArcherAnimationsFolder }))
             QueueAnimationAssets(new[] { AssetDatabase.GUIDToAssetPath(guid) });
     }
 
@@ -70,7 +70,7 @@ public sealed class ArcherAnimationNamingPostprocessor : AssetPostprocessor
 
         foreach (string path in paths)
         {
-            ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            ModelImporter importer = AnimationLibraryAssets.GetImporterAtPath(path) as ModelImporter;
             if (importer == null)
             {
                 continue;

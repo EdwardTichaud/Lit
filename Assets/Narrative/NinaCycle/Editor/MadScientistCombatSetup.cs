@@ -24,7 +24,7 @@ public static class MadScientistCombatSetup
     private const string SkillPath = Folder + "/Skill_MadScientist_Slash.asset";
     private const string ClipPath = Folder + "/MadScientist_Slash.anim";
     private const string ControllerPath = Folder + "/MadScientist.controller";
-    private const string SourceClipPath = "Assets/Characters/1_Squad/Lucian/Animation/Skill_3_Cicatrice.anim";
+    private const string SourceClipPath = "Assets/Animations/Autres/Battle/Lucian/Skill_3_Cicatrice.anim";
     private const string SourceControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
     private const string RequestPath = "Library/MadScientistCombatSetup.request";
     private static bool setupScheduled;
@@ -73,7 +73,7 @@ public static class MadScientistCombatSetup
         EnsureFolder();
         SkillSO skill = ConfigureSkill();
         EnemyCombatProfileSO profile = ConfigureProfile(skill);
-        CharacterData data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath);
+        CharacterData data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath);
         if (data == null) throw new System.InvalidOperationException("CharacterData Scientifique fou introuvable.");
         data.combatSkills.Clear();
         data.combatSkills.Add(skill);
@@ -101,21 +101,21 @@ public static class MadScientistCombatSetup
 
     private static SkillSO ConfigureSkill()
     {
-        AnimationClip source = AssetDatabase.LoadAssetAtPath<AnimationClip>(SourceClipPath);
+        AnimationClip source = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(SourceClipPath);
         if (source == null) throw new System.InvalidOperationException("Clip source Cicatrice introuvable.");
-        AnimationClip attackClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
+        AnimationClip attackClip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(ClipPath);
         if (attackClip == null)
         {
             attackClip = Object.Instantiate(source);
             attackClip.name = "MadScientist_Slash";
-            AssetDatabase.CreateAsset(attackClip, ClipPath);
+            AnimationLibraryAssets.CreateAsset(attackClip, ClipPath);
         }
 
-        SkillSO skill = AssetDatabase.LoadAssetAtPath<SkillSO>(SkillPath);
+        SkillSO skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(SkillPath);
         if (skill == null)
         {
             skill = ScriptableObject.CreateInstance<SkillSO>();
-            AssetDatabase.CreateAsset(skill, SkillPath);
+            AnimationLibraryAssets.CreateAsset(skill, SkillPath);
         }
         skill.name = "Skill_MadScientist_Slash";
         skill.skillName = "MadScientist_Slash";
@@ -155,12 +155,12 @@ public static class MadScientistCombatSetup
 
     private static void ConfigureController(AnimationClip attackClip)
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null)
         {
             if (!AssetDatabase.CopyAsset(SourceControllerPath, ControllerPath))
                 throw new System.InvalidOperationException("Copie du controller du Scientifique fou impossible.");
-            controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         }
         if (controller == null) throw new System.InvalidOperationException("Controller du Scientifique fou introuvable.");
         AnimatorState state = FindState(controller.layers[0].stateMachine, "MadScientist_Slash") ??
@@ -217,11 +217,11 @@ public static class MadScientistCombatSetup
 
     private static EnemyCombatProfileSO ConfigureProfile(SkillSO skill)
     {
-        EnemyCombatProfileSO profile = AssetDatabase.LoadAssetAtPath<EnemyCombatProfileSO>(ProfilePath);
+        EnemyCombatProfileSO profile = AnimationLibraryAssets.LoadAssetAtPath<EnemyCombatProfileSO>(ProfilePath);
         if (profile == null)
         {
             profile = ScriptableObject.CreateInstance<EnemyCombatProfileSO>();
-            AssetDatabase.CreateAsset(profile, ProfilePath);
+            AnimationLibraryAssets.CreateAsset(profile, ProfilePath);
         }
         profile.name = "MadScientist_CombatProfile";
         profile.patterns.Clear();
@@ -292,7 +292,7 @@ public static class MadScientistCombatSetup
     {
         Animator animator = root.GetComponent<Animator>();
         if (animator == null) throw new System.InvalidOperationException("Animator absent sur " + root.name);
-        animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
+        animator.runtimeAnimatorController = AnimationLibraryAssets.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
         animator.applyRootMotion = false;
         animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
 
@@ -307,7 +307,7 @@ public static class MadScientistCombatSetup
 
         CharacterInfo health = Ensure<CharacterInfo>(root);
         CharacterInfo info = Ensure<CharacterInfo>(root);
-        info.SetCharacterData(AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath));
+        info.SetCharacterData(AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath));
         EnemyController enemy = Ensure<EnemyController>(root);
         CharacterAnimationController animationRoot = Ensure<EnemyController>(root);
 
@@ -331,9 +331,9 @@ public static class MadScientistCombatSetup
         if (string.IsNullOrEmpty(data.enemyDeathOptions.dialogueLine))
             data.enemyDeathOptions.dialogueLine = "Qu'est ce que... j'ai fait...";
         if (data.enemyDeathOptions.voiceLine == null)
-            data.enemyDeathOptions.voiceLine = AssetDatabase.LoadAssetAtPath<AudioClipSO>("Assets/Narrative/NinaCycle/Data/deathVoiceLine.asset");
+            data.enemyDeathOptions.voiceLine = AnimationLibraryAssets.LoadAssetAtPath<AudioClipSO>("Assets/Narrative/NinaCycle/Data/deathVoiceLine.asset");
         GhostController ghost = Ensure<GhostController>(root);
-        ghost.SetGhostData(AssetDatabase.LoadAssetAtPath<GhostData>("Assets/Narrative/NinaCycle/Data/GhostData_Scientist.asset"));
+        ghost.SetGhostData(AnimationLibraryAssets.LoadAssetAtPath<GhostData>("Assets/Narrative/NinaCycle/Data/GhostData_Scientist.asset"));
         var ghostSettings = new SerializedObject(ghost);
         ghostSettings.FindProperty("playOnce").boolValue = false;
         ghostSettings.FindProperty("unlockKnowledgeOnListen").boolValue = false;

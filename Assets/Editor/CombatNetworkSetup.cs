@@ -93,7 +93,7 @@ public static class CombatNetworkSetup
     {
         var report = new Report();
         var cinematicSettings = ReadCinematicSettings(out _);
-        var catalog = AssetDatabase.LoadAssetAtPath<CombatNetworkSkillCatalog>(CatalogPath);
+        var catalog = AnimationLibraryAssets.LoadAssetAtPath<CombatNetworkSkillCatalog>(CatalogPath);
         if (catalog != null && EditorUtility.IsDirty(catalog)) report.blockers.Add("Save the dirty network catalog before migration: " + CatalogPath);
         if (AssetDatabase.LoadMainAssetAtPath(CatalogPath) != null && catalog == null)
             report.blockers.Add("Catalog path contains another asset type: " + CatalogPath);
@@ -138,7 +138,7 @@ public static class CombatNetworkSetup
         }
         foreach (var pair in prefabs)
         {
-            var root = AssetDatabase.LoadAssetAtPath<GameObject>(pair.Key);
+            var root = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(pair.Key);
             if (root == null) { report.blockers.Add("Missing actor prefab: " + pair.Key); continue; }
             var stage = UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
             if (EditorUtility.IsDirty(root) || stage != null && stage.assetPath == pair.Key && stage.scene.isDirty)
@@ -192,10 +192,10 @@ public static class CombatNetworkSetup
         }
         var reachable = approvedManifestOnly ? null : new HashSet<string>(ProductionCombatAudit.GetGameplayReachablePaths(), StringComparer.Ordinal);
         var dataPaths = approvedManifestOnly ? ProductionEncounterMigration.AuthoredEnemyDataPaths.Concat(new[] { "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset" }) :
-            AssetDatabase.FindAssets("t:CharacterData").Select(AssetDatabase.GUIDToAssetPath);
+            AnimationLibraryAssets.FindAssets("t:CharacterData").Select(AssetDatabase.GUIDToAssetPath);
         foreach (string dataPath in dataPaths)
         {
-            var character = AssetDatabase.LoadAssetAtPath<CharacterData>(dataPath);
+            var character = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(dataPath);
             if (character != null && character.isEnemy && character.worldPrefab != null)
             {
                 string path = AssetDatabase.GetAssetPath(character.worldPrefab);
@@ -228,11 +228,11 @@ public static class CombatNetworkSetup
     private static CombatNetworkSkillCatalog WriteCatalog(List<SkillSO> skills)
     {
         if (!AssetDatabase.IsValidFolder("Assets/Resources/CombatNetwork")) AssetDatabase.CreateFolder("Assets/Resources", "CombatNetwork");
-        var catalog = AssetDatabase.LoadAssetAtPath<CombatNetworkSkillCatalog>(CatalogPath);
+        var catalog = AnimationLibraryAssets.LoadAssetAtPath<CombatNetworkSkillCatalog>(CatalogPath);
         if (catalog == null)
         {
             catalog = ScriptableObject.CreateInstance<CombatNetworkSkillCatalog>();
-            AssetDatabase.CreateAsset(catalog, CatalogPath);
+            AnimationLibraryAssets.CreateAsset(catalog, CatalogPath);
         }
         var serialized = new SerializedObject(catalog);
         var entries = serialized.FindProperty("entries");
@@ -313,7 +313,7 @@ public static class CombatNetworkSetup
     private static CinematicSettings ReadCinematicSettings(out string error)
     {
         error = "Install/save the common GameplaySessionRoot combat settings before network cinematic authoring.";
-        var session = AssetDatabase.LoadAssetAtPath<GameObject>(ProductionCombatMigration.SessionPath);
+        var session = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(ProductionCombatMigration.SessionPath);
         if (session == null) return null;
         var managers = session.GetComponentsInChildren<RealTimeCombatManager>(true);
         var counters = session.GetComponentsInChildren<CounterSkillCombatController>(true);

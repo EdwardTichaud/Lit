@@ -25,7 +25,7 @@ public static class SceneIntegrityRepair
         for (int i = 0; i < SceneManager.sceneCount; i++)
             if (SceneManager.GetSceneAt(i).isDirty) throw new InvalidOperationException("Preserve unsaved scenes before repair.");
         changes.Clear();
-        var scenes = AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" }).Select(AssetDatabase.GUIDToAssetPath).ToArray();
+        var scenes = AnimationLibraryAssets.FindAssets("t:Scene", new[] { "Assets/Scenes" }).Select(AssetDatabase.GUIDToAssetPath).ToArray();
         try
         {
             foreach (string path in AssetDatabase.GetDependencies(scenes, true).Distinct().Where(p => p.EndsWith(".prefab")))
@@ -47,7 +47,7 @@ public static class SceneIntegrityRepair
             }
             foreach (string path in AssetDatabase.GetDependencies(scenes, true).Distinct().Where(p => p.EndsWith(".mat")))
             {
-                var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                var material = AnimationLibraryAssets.LoadAssetAtPath<Material>(path);
                 if (material != null && (material.shader == null || material.shader.name == "Hidden/InternalErrorShader") &&
                     path.StartsWith("Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Materials/", StringComparison.Ordinal))
                 {
@@ -58,7 +58,7 @@ public static class SceneIntegrityRepair
                     const string texturesRoot = "Assets/Characters/1_Squad/Lucian/Lucian_CC5_Embed/Lucian_CC5_Character_Model.fbm/";
                     foreach (var slot in new[] { ("_BaseColorMap", "_Diffuse.png"), ("_NormalMap", "_Normal.png") })
                     {
-                        var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturesRoot + material.name + slot.Item2);
+                        var texture = AnimationLibraryAssets.LoadAssetAtPath<Texture2D>(texturesRoot + material.name + slot.Item2);
                         if (texture != null && material.HasProperty(slot.Item1) && material.GetTexture(slot.Item1) == null)
                             material.SetTexture(slot.Item1, texture);
                     }
@@ -134,12 +134,12 @@ public static class SceneIntegrityRepair
             if (component is LineRenderer line && line.sharedMaterial == null && line.GetComponentInParent<FlameGuidanceArcRenderer>() != null)
             {
                 const string materialPath = "Assets/Gameplay/Temporal/FlameGuidance/Materials/FlameGuidanceArc.mat";
-                var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                var material = AnimationLibraryAssets.LoadAssetAtPath<Material>(materialPath);
                 if (material == null)
                 {
                     EnsureFolder(Path.GetDirectoryName(materialPath).Replace('\\', '/'));
                     material = new Material(Shader.Find("Sprites/Default")) { name = "FlameGuidanceArc" };
-                    AssetDatabase.CreateAsset(material, materialPath);
+                    AnimationLibraryAssets.CreateAsset(material, materialPath);
                 }
                 line.sharedMaterial = material; EditorUtility.SetDirty(line); changed = true;
                 changes.Add(path + " | " + line.name + " | authored guidance material; runtime reuses these lines");

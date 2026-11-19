@@ -1,6 +1,6 @@
 {
-    "source": "Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Strafe_Walk_BR_Inplace.FBX",
-    "candidate": "Assets/Characters/AnimationPresentation/FacingCalibration/RetouchedWalks/Lucian_Walk_BR_Inplace.anim",
+    "source": "Assets/Animations/Twinblades/Locomotion/Lucian/Twinblades_Strafe_Walk_BR_Inplace.FBX",
+    "candidate": "Assets/Animations/Twinblades/Locomotion/Calibration/FacingCalibration/RetouchedWalks/Lucian_Walk_BR_Inplace.anim",
     "status": "Lab copy only: pose and vertical contact gates passed; horizontal stance and rendered style review pending",
     "sourceGuid": "122ab03e6d900254f902c272de630ba6",
     "sourceHash": "EBE647D7DDB56C02DFCEFA0991FDFA30DA1FFDF4CAFFFDC7A27E4C1D7553A2FA",

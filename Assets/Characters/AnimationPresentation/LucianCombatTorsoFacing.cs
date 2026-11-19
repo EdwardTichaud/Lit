@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>Presentation only: keeps the authored feet/hips while aiming the combat torso along UCC's forward.</summary>
 [DefaultExecutionOrder(10000)]
@@ -33,7 +33,7 @@ public sealed class LucianCombatTorsoFacing : MonoBehaviour
         // If the Animator did not evaluate (pause/culling), undo our previous pose before measuring again.
         // Never restore an old pose over a fresh animation or a new action owner.
         ReleasePose();
-        bool eligible = animator != null && animator.isActiveAndEnabled && animator.isInitialized && animator.isHuman &&
+        bool eligible = GetComponent<CharacterDialoguePresentationController>()?.HasPresentationWeight != true && animator != null && animator.isActiveAndEnabled && animator.isInitialized && animator.isHuman &&
             bridge != null && bridge.IsCombatLockActive && !bridge.IsCombatFreeSprint &&
             !bridge.IsCombatDirectionalEvasionFacing && !bridge.IsCinematicMotionSessionActive &&
             (presentation == null || !presentation.IsActionActive) &&

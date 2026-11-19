@@ -193,7 +193,7 @@ public static partial class FreeAttackPlayValidation
         }
         else if (stage == 120)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab");
+            var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab");
             legacyObject = UnityEngine.Object.Instantiate(prefab, new Vector3(0, 0, -4.3f), Quaternion.identity);
             legacy = legacyObject.GetComponent<EnemyController>(); legacy.enabled = false;
             Set(legacy, "requiresFlameInfluence", false);
@@ -306,7 +306,7 @@ public static partial class FreeAttackPlayValidation
         else if (stage == 151 && elapsed > .3f && bridge.Grounded)
         {
             bridge.SetActionFacingDirection(Vector3.right); castOrigin = player.transform.position;
-            matrixSkill = AssetDatabase.LoadAssetAtPath<SkillSO>(voidCase % 2 == 0 ? TargetMobilitySkillSetup.EclairPath : TargetMobilitySkillSetup.BondPath);
+            matrixSkill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(voidCase % 2 == 0 ? TargetMobilitySkillSetup.EclairPath : TargetMobilitySkillSetup.BondPath);
             skills.SetAnimationEventSkill(matrixSkill); Check(manager.TryUseSkill(matrixSkill), "Safe partial void dash rejected"); Next(152);
         }
         else if (stage == 152 && !action.IsActionActive)

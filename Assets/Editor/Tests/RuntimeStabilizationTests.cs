@@ -19,7 +19,7 @@ public sealed class RuntimeStabilizationTests
     [Test]
     public void ScientistEncounterHasNoKnowledgePrerequisite()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Narrative/NinaCycle/Data/Enemy_ScientifiqueFou.asset");
         Assert.That(data, Is.Not.Null);
         Assert.That(data.enemyEncounterOptions.requiredKnowledge, Is.Null);
     }
@@ -137,7 +137,7 @@ public sealed class RuntimeStabilizationTests
     [TestCase("Luc/Enemy_Model_MadScientist")]
     public void NonUccPrefabsHaveNoOrphanColliderPositioner(string relativePath)
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/9_Ghosts/" + relativePath + ".prefab");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Characters/9_Ghosts/" + relativePath + ".prefab");
         Assert.That(prefab, Is.Not.Null);
         Assert.That(prefab.GetComponentsInChildren<Opsive.UltimateCharacterController.Character.CapsuleColliderPositioner>(true), Is.Empty);
         foreach (var agent in prefab.GetComponentsInChildren<NavMeshAgent>(true))
@@ -156,7 +156,7 @@ public sealed class RuntimeStabilizationTests
     [Test]
     public void LocomotionSpeedIsNotDrivenByCrouchClip()
     {
-        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/Idle_Crouch_7ac9514a_Inplace.anim");
+        var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>("Assets/Animations/Autres/Locomotion/Lucian/PlayerInPlace/Idle_Crouch_7ac9514a_Inplace.anim");
         Assert.That(clip, Is.Not.Null);
         Assert.That(AnimationUtility.GetCurveBindings(clip).Any(b => b.type == typeof(Animator) && b.propertyName == "Speed"), Is.False);
     }
@@ -232,7 +232,7 @@ public sealed class RuntimeStabilizationTests
     [Test]
     public void ScientistAuthoredPoseHasLocalBakedNavigation()
     {
-        var data = AssetDatabase.LoadAssetAtPath<NavMeshData>("Assets/Navigation/NavMeshData/District_1_Core_NavMeshData.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<NavMeshData>("Assets/Navigation/NavMeshData/District_1_Core_NavMeshData.asset");
         Assert.That(data, Is.Not.Null);
         var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/District_1/District_1_Enigme_Ghost_Nina.unity");
         var instance = NavMesh.AddNavMeshData(data, Vector3.zero, Quaternion.identity);

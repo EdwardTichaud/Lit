@@ -91,7 +91,7 @@ public static class PlayerModelAnimatorContinuityValidator
     [MenuItem("Lit/Animation/Validate Player_Model Continuity", priority = 120)]
     private static void Validate()
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null)
         {
             Debug.LogError("[Player_Model Continuity] Controller introuvable : " + ControllerPath);

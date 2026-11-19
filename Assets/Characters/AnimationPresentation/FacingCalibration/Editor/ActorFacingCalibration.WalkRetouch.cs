@@ -173,14 +173,14 @@ public static partial class ActorFacingCalibration
                 }
                 // The head-only calibration saver intentionally rejects changed feet. Keep
                 // these explicit retouch gates separate rather than weakening that contract.
-                var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+                var existing = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
                 if (existing != null)
                 {
                     if (!SameAuthoring(existing, candidate)) { EditorUtility.CopySerialized(candidate, existing); EditorUtility.SetDirty(existing); }
                     Object.DestroyImmediate(candidate); candidate = null;
                     AssetDatabase.SaveAssetIfDirty(existing);
                 }
-                else { AssetDatabase.CreateAsset(candidate, input.entry.target); AssetDatabase.SaveAssetIfDirty(candidate); candidate = null; }
+                else { AnimationLibraryAssets.CreateAsset(candidate, input.entry.target); AssetDatabase.SaveAssetIfDirty(candidate); candidate = null; }
             }
         }
         catch (Exception e) { report.status = "Rejected: " + e.Message; throw; }

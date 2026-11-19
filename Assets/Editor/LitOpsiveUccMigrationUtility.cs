@@ -134,7 +134,7 @@ public static class LitOpsiveUccMigrationUtility
             return;
         }
 
-        Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(targetPath);
+        Selection.activeObject = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(targetPath);
         Debug.Log(string.Equals(targetPath, sourcePath, StringComparison.Ordinal)
             ? $"Configured UCC locomotion prefab: {targetPath}"
             : $"Created UCC locomotion variant: {targetPath}");
@@ -228,7 +228,7 @@ public static class LitOpsiveUccMigrationUtility
             return LucianPrefabPath;
         }
 
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+        GameObject source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(sourcePath);
         if (source == null)
         {
             Debug.LogWarning($"Skipping missing character prefab: {sourcePath}");
@@ -236,7 +236,7 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         string targetPath = GetUccVariantPath(sourcePath);
-        if (!AssetDatabase.LoadAssetAtPath<GameObject>(targetPath))
+        if (!AnimationLibraryAssets.LoadAssetAtPath<GameObject>(targetPath))
         {
             if (!AssetDatabase.CopyAsset(sourcePath, targetPath))
             {
@@ -275,7 +275,7 @@ public static class LitOpsiveUccMigrationUtility
 
     private static void ConfigurePrefabInPlace(string prefabPath)
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        GameObject prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab == null)
         {
             throw new InvalidOperationException($"Missing character prefab: {prefabPath}");
@@ -535,7 +535,7 @@ public static class LitOpsiveUccMigrationUtility
 
     private static RuntimeAnimatorController ResolveAnimatorController(string path)
     {
-        return AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path);
+        return AnimationLibraryAssets.LoadAssetAtPath<RuntimeAnimatorController>(path);
     }
 
     private static void ConfigureBridgeAnimatorMode(LitOpsiveLocomotionBridge bridge, bool driveLitAnimatorParameters)
@@ -1005,7 +1005,7 @@ public static class LitOpsiveUccMigrationUtility
 
     private static void AppendPrefabUccAdoption(List<string> lines, string prefabPath, string label)
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        GameObject prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab == null)
         {
             lines.Add($"- {label}: missing prefab at {prefabPath}");
@@ -1080,7 +1080,7 @@ public static class LitOpsiveUccMigrationUtility
     {
         List<string> errors = new List<string>();
 
-        CharacterData lucianData = AssetDatabase.LoadAssetAtPath<CharacterData>(LucianCharacterDataPath);
+        CharacterData lucianData = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(LucianCharacterDataPath);
         if (lucianData == null)
         {
             errors.Add($"Missing CharacterData: {LucianCharacterDataPath}");
@@ -1112,7 +1112,7 @@ public static class LitOpsiveUccMigrationUtility
 
     private static void ValidateSquadUccPrefabs(List<string> errors, List<string> warnings, string skipPrefabPath)
     {
-        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
+        string[] prefabGuids = AnimationLibraryAssets.FindAssets("t:Prefab", new[] { "Assets" });
         for (int i = 0; i < prefabGuids.Length; i++)
         {
             string path = AssetDatabase.GUIDToAssetPath(prefabGuids[i]);
@@ -1122,7 +1122,7 @@ public static class LitOpsiveUccMigrationUtility
                 continue;
             }
 
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            GameObject prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
             if (prefab == null)
             {
                 continue;
@@ -1153,7 +1153,7 @@ public static class LitOpsiveUccMigrationUtility
 
     private static void ValidateSquadUccScenes(List<string> errors, List<string> warnings)
     {
-        string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets" });
+        string[] sceneGuids = AnimationLibraryAssets.FindAssets("t:Scene", new[] { "Assets" });
         for (int i = 0; i < sceneGuids.Length; i++)
         {
             string path = AssetDatabase.GUIDToAssetPath(sceneGuids[i]);
@@ -1247,7 +1247,7 @@ public static class LitOpsiveUccMigrationUtility
         List<string> warnings,
         string expectedAnimatorControllerPath)
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        GameObject prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab == null)
         {
             errors.Add($"Missing {label}: {prefabPath}");

@@ -52,7 +52,7 @@ public static class CombatLocomotionSetupUtility
 
     private static AnimatorController LoadController(string path)
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(path);
         if (controller == null)
         {
             throw new InvalidOperationException("AnimatorController introuvable : " + path);
@@ -140,7 +140,7 @@ public static class CombatLocomotionSetupUtility
     private static ChildMotion Child(string direction, Vector2 position, bool run)
     {
         string file = "Twinblades_Strafe_" + (run ? "Run" : "Walk") + "_" + direction + "_Root.FBX";
-        AnimationClip clip = Array.Find(AssetDatabase.LoadAllAssetsAtPath(StrafeFolder + file), candidate => candidate is AnimationClip) as AnimationClip;
+        AnimationClip clip = Array.Find(AnimationLibraryAssets.LoadAllAssetsAtPath(StrafeFolder + file), candidate => candidate is AnimationClip) as AnimationClip;
         if (clip == null)
         {
             throw new InvalidOperationException("Clip de strafe introuvable : " + file);
@@ -168,7 +168,7 @@ public static class CombatLocomotionSetupUtility
 
     private static void DeleteGeneratedBlendTrees(AnimatorController controller, string prefix)
     {
-        foreach (UnityEngine.Object asset in AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(controller)))
+        foreach (UnityEngine.Object asset in AnimationLibraryAssets.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(controller)))
         {
             if (asset is BlendTree tree && tree.name.StartsWith(prefix, StringComparison.Ordinal))
             {

@@ -21,12 +21,12 @@ public static class GroundImpactSkillSetup
         {
             var scene = EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
             var arena = UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>();
-            var rupture = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/CombatRealTime/Skills/Skill_4_JumpKick_Rupture.asset");
-            var skill = AssetDatabase.LoadAssetAtPath<SkillSO>(SkillPath);
-            if (skill == null) { skill = ScriptableObject.CreateInstance<SkillSO>(); AssetDatabase.CreateAsset(skill, SkillPath); }
+            var rupture = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/CombatRealTime/Skills/Skill_4_JumpKick_Rupture.asset");
+            var skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(SkillPath);
+            if (skill == null) { skill = ScriptableObject.CreateInstance<SkillSO>(); AnimationLibraryAssets.CreateAsset(skill, SkillPath); }
             string clipPath = Folder + "/ImpactDeLumiere_InPlace.anim";
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-            if (clip == null) { clip = UnityEngine.Object.Instantiate(rupture.AnimationClip); clip.name = "ImpactDeLumiere_InPlace"; AssetDatabase.CreateAsset(clip, clipPath); }
+            var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath);
+            if (clip == null) { clip = UnityEngine.Object.Instantiate(rupture.AnimationClip); clip.name = "ImpactDeLumiere_InPlace"; AnimationLibraryAssets.CreateAsset(clip, clipPath); }
             AnimationUtility.SetAnimationEvents(clip, Array.Empty<AnimationEvent>());
             var settings = AnimationUtility.GetAnimationClipSettings(clip); settings.loopTime = false;
             AnimationUtility.SetAnimationClipSettings(clip, settings);
@@ -44,24 +44,24 @@ public static class GroundImpactSkillSetup
             skill.impactFeedback.enabled = false;
             SkillTargetingAuthoring.ConfigureIfMissing(skill);
             EditorUtility.SetDirty(skill);
-            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath) == null)
             {
                 var source = arena.lucianPrefab.GetComponent<Animator>().runtimeAnimatorController;
                 if (source is AnimatorOverrideController overrides) source = overrides.runtimeAnimatorController;
                 AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(source), ControllerPath);
             }
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
             var machine = controller.layers[0].stateMachine;
             var state = machine.states.FirstOrDefault(s => s.state.name == "ImpactDeLumiere").state;
             if (state == null) state = machine.AddState("ImpactDeLumiere");
             state.motion = clip; state.tag = "RealTimeCombatInPlace";
             EditorUtility.SetDirty(state); EditorUtility.SetDirty(controller);
-            if (AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPath) == null)
                 AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);
-            var character = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath);
+            var character = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPath);
             if (!character.combatSkills.Contains(skill)) character.combatSkills.Add(skill);
             EditorUtility.SetDirty(character);
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath) == null)
                 AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(arena.lucianPrefab), PrefabPath);
             var root = PrefabUtility.LoadPrefabContents(PrefabPath);
             try
@@ -77,7 +77,7 @@ public static class GroundImpactSkillSetup
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
-            arena.lucianPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            arena.lucianPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath);
             character.worldPrefab = arena.lucianPrefab; EditorUtility.SetDirty(character);
             arena.character = CombatLabCharacter.Lucian;
             var catalog = Resources.Load<CombatSkillKitCatalog>("CombatSkillKits/Default");

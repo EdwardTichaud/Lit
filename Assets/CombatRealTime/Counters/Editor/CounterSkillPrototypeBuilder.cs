@@ -17,7 +17,7 @@ public static class CounterSkillPrototypeBuilder
     private const string SessionRootPath = "Assets/Core/System/GameplaySessionRoot.prefab";
     private const string CounterSwordGuid = "2622150291d55c442964e5d6fc048a04";
     private const string JuggernautCounteredGuid = "37a89e362d7404e4b99804c51c57ed3b";
-    private const string AssomoirPath = "Assets/Characters/1_Squad/Lucian/Animation/Juggernaut_Assomoir.anim";
+    private const string AssomoirPath = "Assets/Animations/Autres/Battle/Lucian/Juggernaut_Assomoir.anim";
     private const string AssomoirSkillPath = "Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset";
     private const string AttackAlertPath = "Assets/CombatRealTime/Presentation/AttackLightAlert.prefab";
     private const string ThreatAudioPath = "Assets/Audio/AudioClips/AudioClip_SFX_LightCharge.asset";
@@ -51,7 +51,7 @@ public static class CounterSkillPrototypeBuilder
     public static void ConfigureReactionTelegraph()
     {
         ConfigureAssomoirEvents();
-        ConfigureSessionRoot(AssetDatabase.LoadAssetAtPath<CounterSkillSO>(SkillPath));
+        ConfigureSessionRoot(AnimationLibraryAssets.LoadAssetAtPath<CounterSkillSO>(SkillPath));
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[Combat Telegraph] Assomoir et BattleManager configures.");
@@ -59,11 +59,11 @@ public static class CounterSkillPrototypeBuilder
 
     private static TimelineAsset BuildTimeline(AnimationClip playerClip, AnimationClip enemyClip)
     {
-        TimelineAsset timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(TimelinePath);
+        TimelineAsset timeline = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(TimelinePath);
         if (timeline == null)
         {
             timeline = ScriptableObject.CreateInstance<TimelineAsset>();
-            AssetDatabase.CreateAsset(timeline, TimelinePath);
+            AnimationLibraryAssets.CreateAsset(timeline, TimelinePath);
         }
 
         ClearTracks(timeline);
@@ -90,11 +90,11 @@ public static class CounterSkillPrototypeBuilder
 
     private static CounterSkillSO BuildSkill(TimelineAsset timeline)
     {
-        CounterSkillSO skill = AssetDatabase.LoadAssetAtPath<CounterSkillSO>(SkillPath);
+        CounterSkillSO skill = AnimationLibraryAssets.LoadAssetAtPath<CounterSkillSO>(SkillPath);
         if (skill == null)
         {
             skill = ScriptableObject.CreateInstance<CounterSkillSO>();
-            AssetDatabase.CreateAsset(skill, SkillPath);
+            AnimationLibraryAssets.CreateAsset(skill, SkillPath);
         }
 
         SerializedObject serialized = new SerializedObject(skill);
@@ -196,7 +196,7 @@ public static class CounterSkillPrototypeBuilder
 
     private static void ConfigureAssomoirEvents()
     {
-        var skill = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset");
+        var skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset");
         if (skill != null) JuggernautEssentialEvents.ConfigureSkill(skill, .837f);
     }
 
@@ -209,11 +209,11 @@ public static class CounterSkillPrototypeBuilder
             return;
         }
 
-        Material material = AssetDatabase.LoadAssetAtPath<Material>(WarningMaterialPath);
+        Material material = AnimationLibraryAssets.LoadAssetAtPath<Material>(WarningMaterialPath);
         if (material == null)
         {
             material = new Material(shader) { name = "MAT_CombatWarning" };
-            AssetDatabase.CreateAsset(material, WarningMaterialPath);
+            AnimationLibraryAssets.CreateAsset(material, WarningMaterialPath);
         }
 
         Transform volumeTransform = battleManager.Find("CombatWarningPass");
@@ -256,7 +256,7 @@ public static class CounterSkillPrototypeBuilder
     private static AnimationClip LoadClip(string guid)
     {
         string path = AssetDatabase.GUIDToAssetPath(guid);
-        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        Object[] assets = AnimationLibraryAssets.LoadAllAssetsAtPath(path);
         for (int i = 0; i < assets.Length; i++)
         {
             if (assets[i] is AnimationClip clip && !clip.name.StartsWith("__preview__")) return clip;

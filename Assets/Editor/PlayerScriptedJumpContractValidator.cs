@@ -21,7 +21,7 @@ public static class PlayerScriptedJumpContractValidator
     public static void Validate()
     {
         List<string> failures = new List<string>();
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null) failures.Add("Player_Model.controller is missing.");
         else ValidateController(controller, failures);
         foreach (string path in PrefabPaths) ValidatePrefab(path, controller, failures);

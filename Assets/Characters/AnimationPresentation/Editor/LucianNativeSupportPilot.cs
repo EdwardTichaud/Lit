@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 public static class LucianNativeSupportPilot
 {
     const string Output="Library/LucianCoherence/support-native";
-    const string ClipPath="Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Run_SupportIK.anim";
+    const string ClipPath="Assets/Animations/Twinblades/Locomotion/Lucian/CoherencePilot/Lucian_Common_Run_SupportIK.anim";
     [Serializable] internal sealed class Report
     {
         public string source,candidate=ClipPath,status="Prevalidation",sourceGuid,sourceHash,avatarHash,candidateHash;
@@ -153,10 +153,10 @@ public static class LucianNativeSupportPilot
                 File.WriteAllLines(output+"/subframes.csv",new[]{"time,left_sole,right_sole"}.Concat(sub.Select(f=>string.Join(",",new[]{f.time,f.leftSole.y-report.floor,f.rightSole.y-report.floor}.Select(v=>v.ToString("R",CultureInfo.InvariantCulture))))));
                 if(report.minimumSole<-.003f||report.subframeMinimumSole<-.003f||report.maximumAnkleError>.005f||report.maximumFootRotationError>3||report.maximumUpperBodyError>.005f||report.maximumRootMotion>.005f||!report.eventsPreserved||!report.musclesPreserved)
                     throw new InvalidOperationException("Native IK pilot fails pose/support gates; no candidate installed");
-                var existing=AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-                if(existing==null){AssetDatabase.CreateAsset(candidate,clipPath);candidate=null;}
+                var existing=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath);
+                if(existing==null){AnimationLibraryAssets.CreateAsset(candidate,clipPath);candidate=null;}
                 else if(!ActorFacingCalibration.SameAuthoring(existing,candidate))throw new InvalidOperationException("Existing native IK pilot differs; preserved");
-                var persisted=AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+                var persisted=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath);
                 var repeated=sampler.Sample(persisted,sampleCount:count*2+1,measureSoles:true,applyFootIK:true,cycles:2);
                 report.persistedMinimumSole=repeated.Min(f=>Mathf.Min(f.leftSole.y,f.rightSole.y))-report.floor;
                 if(report.persistedMinimumSole<-.003f)throw new InvalidOperationException("Persisted two-cycle support fails; no binding authorized");
@@ -174,7 +174,7 @@ public static class LucianNativeSupportPilot
     }
     public static void CheckPersisted()
     {
-        var clip=AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
+        var clip=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(ClipPath);
         if(clip==null)throw new InvalidOperationException("Pilot missing");
         var report=JsonUtility.FromJson<Report>(File.ReadAllText(Output+"/report.json"));
         using(var sampler=new ActorPoseSampler(ActorAnimationAudit.Actor(false)))
@@ -191,7 +191,7 @@ public static class LucianNativeSupportPilot
         var left=actor.GetBoneTransform(HumanBodyBones.LeftShoulder)??actor.GetBoneTransform(HumanBodyBones.LeftUpperArm);
         var right=actor.GetBoneTransform(HumanBodyBones.RightShoulder)??actor.GetBoneTransform(HumanBodyBones.RightUpperArm);
         if(left==null||right==null)throw new InvalidOperationException("Humanoid arm paths missing");
-        var mask=AssetDatabase.LoadAssetAtPath<AvatarMask>(path);
+        var mask=AnimationLibraryAssets.LoadAssetAtPath<AvatarMask>(path);
         if(mask==null)
         {
             mask=new AvatarMask {name="LucianTorchArms"};
@@ -204,16 +204,16 @@ public static class LucianNativeSupportPilot
                 var p=AnimationUtility.CalculateTransformPath(transforms[i],actor.transform);mask.SetTransformPath(i,p);
                 mask.SetTransformActive(i,p==lp||p.StartsWith(lp+"/",StringComparison.Ordinal)||p==rp||p.StartsWith(rp+"/",StringComparison.Ordinal));
             }
-            AssetDatabase.CreateAsset(mask,path);
+            AnimationLibraryAssets.CreateAsset(mask,path);
         }
-        var controller=AssetDatabase.LoadAssetAtPath<AnimatorController>(LucianCadencePreview.Folder+"/LucianCadence.controller");
+        var controller=AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(LucianCadencePreview.Folder+"/LucianCadence.controller");
         var layers=controller.layers;var layer=layers.Single(l=>l.name=="Upper Body Flame");
         if(layer.avatarMask!=mask){layer.avatarMask=mask;controller.layers=layers;EditorUtility.SetDirty(controller);AssetDatabase.SaveAssetIfDirty(controller);}
     }
     public static void CheckController()
     {
-        var clip=AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
-        var controller=AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
+        var clip=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(ClipPath);
+        var controller=AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
         var report=JsonUtility.FromJson<Report>(File.ReadAllText(Output+"/report.json"));
         using(var sampler=new ActorPoseSampler(ActorAnimationAudit.Actor(false)))
         {
@@ -235,7 +235,7 @@ public static class LucianNativeSupportPilot
     }
     public static void CheckContactSampler()
     {
-        var clip=AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
+        var clip=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(ClipPath);
         ActorSoleSampler manual=null,baked=null;
         ActorSoleSampler.ContactPoint? ml=null,mr=null,bl=null,br=null;
         float minimumError=0,anchorError=0;int sampled=0;
@@ -292,19 +292,19 @@ public static class LucianNativeSupportPilot
     public static void PrepareStridePilot()
     {
         var source=ActorAnimationAudit.Source(ActorAnimationAudit.Sources+"Twinblades_Common_Run_Loop_Inplace.FBX");
-        Prepare(source,"Assets/Characters/1_Squad/Lucian/Animation/CoherencePilot/Lucian_Common_Run_Stride02.anim","Library/LucianCoherence/stride-pilot",true,true);
+        Prepare(source,"Assets/Animations/Twinblades/Locomotion/Lucian/CoherencePilot/Lucian_Common_Run_Stride02.anim","Library/LucianCoherence/stride-pilot",true,true);
     }
     public static void BindStridePilot()
     {
         var r=JsonUtility.FromJson<Report>(File.ReadAllText("Library/LucianCoherence/stride-pilot/report.json"));
         if(!r.status.StartsWith("PASS")||r.contactNativeSpeed<1||r.sourceHash!=AssetDatabase.GetAssetDependencyHash(r.source).ToString()||r.candidateHash!=AssetDatabase.GetAssetDependencyHash(r.candidate).ToString())throw new InvalidOperationException("Stride pilot prevalidation missing or stale");
-        var clip=AssetDatabase.LoadAssetAtPath<AnimationClip>(r.candidate);
-        var controller=AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
+        var clip=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(r.candidate);
+        var controller=AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(LucianCadencePreview.Folder+"/LucianCadence.overrideController");
         var pairs=new List<KeyValuePair<AnimationClip,AnimationClip>>();controller.GetOverrides(pairs);
         if(pairs.Count(p=>p.Key.name=="Twinblades_Common_Run_Loop_Inplace")!=1)throw new InvalidOperationException("Ambiguous common run consumer");
         bool changed=false;for(int i=0;i<pairs.Count;i++)if(pairs[i].Key.name=="Twinblades_Common_Run_Loop_Inplace"&&pairs[i].Value!=clip){pairs[i]=new KeyValuePair<AnimationClip,AnimationClip>(pairs[i].Key,clip);changed=true;}
         if(changed){controller.ApplyOverrides(pairs);AssetDatabase.SaveAssetIfDirty(controller);}
-        var profile=AssetDatabase.LoadAssetAtPath<LocomotionPresentationProfile>(LucianCadencePreview.Folder+"/LocomotionMeasurements.asset");
+        var profile=AnimationLibraryAssets.LoadAssetAtPath<LocomotionPresentationProfile>(LucianCadencePreview.Folder+"/LocomotionMeasurements.asset");
         bool rebind=profile.explorationRun.clip!=clip;
         if(rebind||!profile.RequiresNativeFootIK(clip))
         {
@@ -331,8 +331,8 @@ public static class LucianNativeSupportPilot
         if(factors.Length<24||factors.Any(f=>float.IsNaN(f)||float.IsInfinity(f)||f<.8f||f>1.2f))throw new InvalidOperationException("Ambiguous cadence correction; no automatic approximation");
         float factor=factors.Length%2==1?factors[factors.Length/2]:(factors[factors.Length/2-1]+factors[factors.Length/2])*.5f;
         float speed=fit.previousNativeSpeed/factor;
-        var profile=AssetDatabase.LoadAssetAtPath<LocomotionPresentationProfile>(LucianCadencePreview.Folder+"/LocomotionMeasurements.asset");
-        if(profile.explorationRun.clip!=AssetDatabase.LoadAssetAtPath<AnimationClip>(source.candidate)||Mathf.Abs(profile.explorationRun.nativeSpeed-fit.previousNativeSpeed)>.0001f&&Mathf.Abs(profile.explorationRun.nativeSpeed-speed)>.0001f)
+        var profile=AnimationLibraryAssets.LoadAssetAtPath<LocomotionPresentationProfile>(LucianCadencePreview.Folder+"/LocomotionMeasurements.asset");
+        if(profile.explorationRun.clip!=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(source.candidate)||Mathf.Abs(profile.explorationRun.nativeSpeed-fit.previousNativeSpeed)>.0001f&&Mathf.Abs(profile.explorationRun.nativeSpeed-speed)>.0001f)
             throw new InvalidOperationException("Existing cadence authoring changed; preserved");
         if(Mathf.Abs(profile.explorationRun.nativeSpeed-speed)>.00001f){profile.explorationRun.nativeSpeed=speed;EditorUtility.SetDirty(profile);AssetDatabase.SaveAssetIfDirty(profile);}
         File.WriteAllText("Library/LucianCoherence/stride-pilot/cadence-result.txt","source="+fit.run+"\ncontacts="+factors.Length+"\nfactor="+factor.ToString("R",CultureInfo.InvariantCulture)+"\nnative_speed="+speed.ToString("R",CultureInfo.InvariantCulture));

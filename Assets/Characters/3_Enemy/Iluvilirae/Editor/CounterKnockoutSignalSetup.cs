@@ -11,22 +11,22 @@ public static class CounterKnockoutSignalSetup
 {
     public const string TimelinePath = "Assets/Characters/3_Enemy/Iluvilirae/CombatLab_CounterSkill_2.playable";
     public const string SignalPath = "Assets/Characters/3_Enemy/Iluvilirae/CombatLab_KnockedOut.signal";
-    public const string AnimationPath = "Assets/Characters/4_Animations/Mixamo_KnockedOut.anim";
+    public const string AnimationPath = "Assets/Animations/Mixamo/Battle/Commun/Mixamo_KnockedOut.anim";
     public const string RigPath = "Assets/Characters/3_Enemy/Iluvilirae/CombatLab_CounterRig.prefab";
     public const string CameraShakeSignalPath = "Assets/Characters/3_Enemy/Iluvilirae/CombatLab_CameraShake.signal";
 
     [MenuItem("Lit/Combat Lab/Configure Counter CameraShake Signals")]
     public static void ConfigureCameraShake()
     {
-        var timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(TimelinePath);
-        var signal = AssetDatabase.LoadAssetAtPath<SignalAsset>(CameraShakeSignalPath);
+        var timeline = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(TimelinePath);
+        var signal = AnimationLibraryAssets.LoadAssetAtPath<SignalAsset>(CameraShakeSignalPath);
         var markers = timeline.GetRootTracks().OfType<SignalTrack>().SelectMany(t => t.GetMarkers())
             .OfType<SignalEmitter>().Where(m => m.asset == null || signal != null && m.asset == signal).ToArray();
         if (markers.Length != 4) throw new InvalidOperationException("Expected four authored camera shake signals. No markers changed.");
         if (signal == null)
         {
             signal = ScriptableObject.CreateInstance<SignalAsset>();
-            AssetDatabase.CreateAsset(signal, CameraShakeSignalPath);
+            AnimationLibraryAssets.CreateAsset(signal, CameraShakeSignalPath);
         }
         foreach (var marker in markers)
         {
@@ -76,15 +76,15 @@ public static class CounterKnockoutSignalSetup
     [MenuItem("Lit/Combat Lab/Configure Counter KnockedOut Signal")]
     public static void Configure()
     {
-        var timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(TimelinePath);
-        var animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimationPath);
+        var timeline = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(TimelinePath);
+        var animation = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(AnimationPath);
         if (timeline == null || animation == null) throw new InvalidOperationException("Counter Timeline or Mixamo_KnockedOut missing.");
-        var signal = AssetDatabase.LoadAssetAtPath<SignalAsset>(SignalPath);
+        var signal = AnimationLibraryAssets.LoadAssetAtPath<SignalAsset>(SignalPath);
         if (signal == null)
         {
             signal = ScriptableObject.CreateInstance<SignalAsset>();
             signal.name = "KnockedOut";
-            AssetDatabase.CreateAsset(signal, SignalPath);
+            AnimationLibraryAssets.CreateAsset(signal, SignalPath);
         }
         var track = timeline.GetRootTracks().OfType<SignalTrack>().FirstOrDefault()
             ?? timeline.CreateTrack<SignalTrack>(null, "Signals");
@@ -120,7 +120,7 @@ public static class CounterKnockoutSignalSetup
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
         finally { PrefabUtility.UnloadPrefabContents(root); }
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(JuggernautV2Setup.ControllerPath);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(JuggernautV2Setup.ControllerPath);
         var state = controller.layers[0].stateMachine.states.Single(s => s.state.name == "Knocked Out").state;
         state.motion = animation;
         state.speed = animation.length / 2f;

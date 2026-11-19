@@ -23,7 +23,7 @@ public static class SorenSkillSetup
             var scene = EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
             var arena = UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>();
             if (arena == null || arena.lucianPrefab == null) throw new InvalidOperationException("Laboratory player missing.");
-            var arrow = AssetDatabase.LoadAssetAtPath<SkillSO>("Assets/CombatRealTime/Skills/Skill_2_Fleche de lumière.asset");
+            var arrow = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>("Assets/CombatRealTime/Skills/Skill_2_Fleche de lumière.asset");
             if (arrow == null) throw new InvalidOperationException("Existing light arrow missing.");
             var revelation = Skill("Revelation", "Révélation", SkillControlKind.Revelation, 20);
             revelation.control.range = 25; revelation.control.durationSeconds = 6; revelation.control.strength = .2f;
@@ -36,12 +36,12 @@ public static class SorenSkillSetup
             retreat.animatorState = "Base Layer.Soren_PasDeRecul";
             retreat.description = "Deplacement directionnel de 5 m en 0,25 s. Respecte obstacles et vide. Aucune invulnerabilite.";
             string clipPath = Folder + "/PasDeRecul_InPlace.anim";
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+            var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(clipPath);
             if (clip == null)
             {
-                var original = AssetDatabase.LoadAllAssetsAtPath("Assets/Characters/1_Squad/Lucian/Animation/Twinblades_Dodge_F_Inplace.FBX")
+                var original = AnimationLibraryAssets.LoadAllAssetsAtPath("Assets/Animations/Twinblades/Battle/Lucian/Twinblades_Dodge_F_Inplace.FBX")
                     .OfType<AnimationClip>().First(c => !c.name.StartsWith("__preview"));
-                clip = UnityEngine.Object.Instantiate(original); clip.name = "PasDeRecul_InPlace"; AssetDatabase.CreateAsset(clip, clipPath);
+                clip = UnityEngine.Object.Instantiate(original); clip.name = "PasDeRecul_InPlace"; AnimationLibraryAssets.CreateAsset(clip, clipPath);
             }
             AnimationUtility.SetAnimationEvents(clip, Array.Empty<AnimationEvent>());
             var settings = AnimationUtility.GetAnimationClipSettings(clip); settings.loopTime = false;
@@ -54,9 +54,9 @@ public static class SorenSkillSetup
             string controllerPath = Folder + "/Soren_Model.controller";
             var sourceController = arena.lucianPrefab.GetComponent<Animator>().runtimeAnimatorController;
             if (sourceController is AnimatorOverrideController overrides) sourceController = overrides.runtimeAnimatorController;
-            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(controllerPath) == null)
                 AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(sourceController), controllerPath);
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+            var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(controllerPath);
             var machine = controller.layers[0].stateMachine;
             var state = machine.states.FirstOrDefault(s => s.state.name == "Soren_PasDeRecul").state;
             if (state == null) state = machine.AddState("Soren_PasDeRecul");
@@ -65,13 +65,13 @@ public static class SorenSkillSetup
             var kit = new[] { arrow, revelation, entrave, retreat };
             foreach (var skill in kit) SkillTargetingAuthoring.ConfigureIfMissing(skill);
             foreach (var skill in new[] { revelation, entrave, retreat }) EditorUtility.SetDirty(skill);
-            if (AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath) == null) AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(DataPath);
+            if (AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPath) == null) AssetDatabase.CopyAsset("Assets/Characters/1_Squad/Lucian/Lucian.asset", DataPath);
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(DataPath);
             data.characterName = "Soren"; data.characterId = "Soren"; data.hp = 100; data.isEnemy = false;
             data.combatSkills = new List<SkillSO>(kit); data.voiceLines.Clear();
             data.enemyCombatProfile = null; data.enableCombatHealthThresholds = false; data.combatHealthThresholdStages.Clear();
             data.groundBasicSkills = arena.basicSkills.Where(s => s != null).ToList();
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null) AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(arena.lucianPrefab), PrefabPath);
+            if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath) == null) AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(arena.lucianPrefab), PrefabPath);
             var root = PrefabUtility.LoadPrefabContents(PrefabPath);
             try
             {
@@ -90,7 +90,7 @@ public static class SorenSkillSetup
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
-            data.worldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath); EditorUtility.SetDirty(data);
+            data.worldPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath); EditorUtility.SetDirty(data);
             arena.sorenPrefab = data.worldPrefab; arena.character = CombatLabCharacter.Soren;
             var arenaSerialized = new SerializedObject(arena); arenaSerialized.FindProperty("migrateAurellMode").boolValue = false; arenaSerialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(arena); EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
@@ -100,8 +100,8 @@ public static class SorenSkillSetup
     private static SkillSO Skill(string name, string label, SkillControlKind kind, float cooldown)
     {
         string path = SkillFolder + "/Skill_" + name + ".asset";
-        var skill = AssetDatabase.LoadAssetAtPath<SkillSO>(path);
-        if (skill == null) { skill = ScriptableObject.CreateInstance<SkillSO>(); AssetDatabase.CreateAsset(skill, path); }
+        var skill = AnimationLibraryAssets.LoadAssetAtPath<SkillSO>(path);
+        if (skill == null) { skill = ScriptableObject.CreateInstance<SkillSO>(); AnimationLibraryAssets.CreateAsset(skill, path); }
         skill.skillName = label; skill.control.kind = kind; skill.cooldownSeconds = cooldown;
         skill.damages = 0; skill.clarityGainOnHit = 0; skill.impactFeedback.enabled = false;
         return skill;

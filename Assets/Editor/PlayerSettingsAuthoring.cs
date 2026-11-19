@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -45,7 +45,7 @@ internal static class PlayerSettingsAuthoring
         if (block.name == "jump") return 1;
         if (block.name == "dodge" || block.name == "dash") return 2;
         if (block.name == "equipment") return 3;
-        if (block.name == "trajectories" || block.name == "combatPresentation" || field.name.EndsWith("Param", StringComparison.Ordinal)) return 4;
+        if (block.name == "dialoguePresentation" || block.name == "trajectories" || block.name == "combatPresentation" || field.name.EndsWith("Param", StringComparison.Ordinal)) return 4;
         if (block.name == "interactions") return 5;
         if (block.name == "face" || block.name == "footsteps") return 6;
         return 0;
@@ -60,6 +60,11 @@ internal static class PlayerSettingsAuthoring
             while (block.NextVisible(first) && !SerializedProperty.EqualContents(block, end))
             {
                 first = false;
+                if (block.propertyType == SerializedPropertyType.ObjectReference)
+                {
+                    if (Category(block, block) == category) fields.Add(block.Copy());
+                    continue;
+                }
                 var field = block.Copy(); var blockEnd = block.GetEndProperty(); bool child = true;
                 while (field.NextVisible(child) && !SerializedProperty.EqualContents(field, blockEnd))
                 {

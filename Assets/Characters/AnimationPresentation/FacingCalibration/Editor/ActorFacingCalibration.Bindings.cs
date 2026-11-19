@@ -21,15 +21,15 @@ public static partial class ActorFacingCalibration
     }
     static AnimationClip SavePreviewClip(Input input)
     {
-        var existing=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+        var existing=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
         if(existing!=null)
         {
             if(!SameAuthoring(existing,input.candidate)){EditorUtility.CopySerialized(input.candidate,existing);EditorUtility.SetDirty(existing);}
             Object.DestroyImmediate(input.candidate);input.candidate=existing;
         }
-        else AssetDatabase.CreateAsset(input.candidate,input.entry.target);
+        else AnimationLibraryAssets.CreateAsset(input.candidate,input.entry.target);
         AssetDatabase.SaveAssetIfDirty(input.candidate);AssetDatabase.ImportAsset(input.entry.target,ImportAssetOptions.ForceUpdate);
-        input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);Measure(input);
+        input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);Measure(input);
         return input.candidate;
     }
     [MenuItem("Lit/Animation Presentation/Facing Calibration/Prepare Actor Preview Bindings (Not Installed)")]
@@ -85,8 +85,8 @@ public static partial class ActorFacingCalibration
                 var check=new ControllerView(preview);
                 foreach(var pair in pairs)if(check.Resolve(pair.Key)!=pair.Value)throw new InvalidOperationException("Preview did not preserve an effective motion binding");
                 row.previewController=Folder+"/Controllers/"+preview.name+".overrideController";
-                var existing=AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(row.previewController);
-                if(existing==null)AssetDatabase.CreateAsset(preview,row.previewController);
+                var existing=AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(row.previewController);
+                if(existing==null)AnimationLibraryAssets.CreateAsset(preview,row.previewController);
                 else
                 {
                     var old=new List<KeyValuePair<AnimationClip,AnimationClip>>();existing.GetOverrides(old);

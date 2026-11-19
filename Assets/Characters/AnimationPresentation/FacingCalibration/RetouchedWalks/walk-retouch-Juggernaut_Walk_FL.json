@@ -1,6 +1,6 @@
 {
-    "source": "Assets/Characters/3_Enemy/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
-    "candidate": "Assets/Characters/AnimationPresentation/FacingCalibration/RetouchedWalks/Juggernaut_Walk_FL.anim",
+    "source": "Assets/Animations/Autres/Locomotion/Juggernaut_v2/Animations/Juggernaut_v2_Walk_FL.anim",
+    "candidate": "Assets/Animations/Autres/Locomotion/Calibration/FacingCalibration/RetouchedWalks/Juggernaut_Walk_FL.anim",
     "status": "Lab copy only: pose and vertical contact gates passed; horizontal stance and rendered style review pending",
     "sourceGuid": "caf91b0417130934898c1c73a38b5386",
     "sourceHash": "F3A688D26458A2CF39293959086EA64EAB8BF370AACE90B0162D80A0D4564D7D",

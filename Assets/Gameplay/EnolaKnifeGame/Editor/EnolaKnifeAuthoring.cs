@@ -44,7 +44,7 @@ public static class EnolaKnifeAuthoring
         try
         {
             var home = Open("Assets/Scenes/Maison/Maison_Core.unity");
-            var hub = AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_Maison.asset");
+            var hub = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_Maison.asset");
             foreach (var asset in hub.loadingScenes) Open(AssetDatabase.GetAssetPath(asset));
             var scene = Open(ScenePath);
             var bootstrap = Open("Assets/Scenes/Bootstrap.unity");
@@ -55,11 +55,11 @@ public static class EnolaKnifeAuthoring
             Vector3 entryFloor = existingEntrance != null ? existingEntrance.transform.position : FindEntryFloor(homeSpawn.transform);
             var reward = LoadReward();
             var manifest = LoadManifest();
-            var wood = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Completion/Data/LimbesExpansionStone.mat");
+            var wood = AnimationLibraryAssets.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Completion/Data/LimbesExpansionStone.mat");
             if (stool.GetComponent<EnolaKnifeGame>() == null)
             {
                 var game = stool.AddComponent<EnolaKnifeGame>(); game.stoolPoint = stool.transform.Find("StoolPoint"); game.reward = reward;
-                game.knifePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ORPH_Tools/Prefab/HDRP_ORPH_ToolsPrefab/HDRP_SM_ORPH_Knife.prefab");
+                game.knifePrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/ORPH_Tools/Prefab/HDRP_ORPH_ToolsPrefab/HDRP_SM_ORPH_Knife.prefab");
                 var action = ConfigureAction(stool, "Jouer avec Enola", .48f);
                 UnityEventTools.AddPersistentListener(action.onInteract, game.Begin);
             }
@@ -148,7 +148,7 @@ public static class EnolaKnifeAuthoring
         var root = New(scene, name, position);
         var pedestal = Primitive(scene, "Borne", PrimitiveType.Cylinder, position + Vector3.up * .4f, new Vector3(.48f, .4f, .48f), material);
         pedestal.transform.SetParent(root.transform, true);
-        var glow = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Lighting/Limbes_Lueur.mat");
+        var glow = AnimationLibraryAssets.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Lighting/Limbes_Lueur.mat");
         var orb = Primitive(scene, "Signe", PrimitiveType.Sphere, position + Vector3.up * 1.04f, Vector3.one * .22f, glow);
         UnityEngine.Object.DestroyImmediate(orb.GetComponent<Collider>()); orb.transform.SetParent(root.transform, true);
         return root;
@@ -173,32 +173,32 @@ public static class EnolaKnifeAuthoring
     {
         if (!AssetDatabase.IsValidFolder("Assets/Resources/Knowledges")) AssetDatabase.CreateFolder("Assets/Resources", "Knowledges");
         string path = "Assets/Resources/Knowledges/" + EnolaKnifeGame.RewardId + ".asset";
-        var asset = AssetDatabase.LoadAssetAtPath<KnowledgeSO>(path);
+        var asset = AnimationLibraryAssets.LoadAssetAtPath<KnowledgeSO>(path);
         if (asset != null) return asset;
         asset = ScriptableObject.CreateInstance<KnowledgeSO>(); asset.knowledgeId = EnolaKnifeGame.RewardId;
         asset.title = "La cadence d'Enola";
         asset.description = "Enola a appris le jeu du couteau enfant. Elle privilégie une cadence régulière : observer, attendre le bon temps, puis agir sans précipitation.";
         asset.personId = "ghost_enola_vivejoie"; asset.tags.Add("enola.knife");
-        AssetDatabase.CreateAsset(asset, path); return asset;
+        AnimationLibraryAssets.CreateAsset(asset, path); return asset;
     }
     private static ZoneManifest LoadManifest()
     {
-        var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>(ManifestPath);
+        var manifest = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>(ManifestPath);
         if (manifest != null) return manifest;
         manifest = ScriptableObject.CreateInstance<ZoneManifest>();
         var data = new SerializedObject(manifest);
         data.FindProperty("editorSceneReferencesMigrated").boolValue = true;
-        data.FindProperty("primaryScene").objectReferenceValue = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
+        data.FindProperty("primaryScene").objectReferenceValue = AnimationLibraryAssets.LoadAssetAtPath<SceneAsset>(ScenePath);
         data.FindProperty("primarySceneName").stringValue = "Fracture_Cycle_Enola";
         data.FindProperty("loadingMessage").stringValue = "Rejoindre la fracture d'Enola…";
-        data.ApplyModifiedPropertiesWithoutUndo(); AssetDatabase.CreateAsset(manifest, ManifestPath); return manifest;
+        data.ApplyModifiedPropertiesWithoutUndo(); AnimationLibraryAssets.CreateAsset(manifest, ManifestPath); return manifest;
     }
     private static RuntimeAnimatorController LoadActivityAnimator()
     {
         const string path = "Assets/Gameplay/EnolaKnifeGame/EnolaKnife.controller";
-        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(path);
         if (controller != null) return controller;
-        var source = AssetDatabase.LoadAssetAtPath<AnimatorController>("Assets/Characters/4_Animations/Player_Model.controller");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>("Assets/Characters/4_Animations/Player_Model.controller");
         // Clone the parameter contract used by UCC/locomotion, but only the five activity states.
         controller = AnimatorController.CreateAnimatorControllerAtPath(path);
         foreach (var parameter in source.parameters) controller.AddParameter(parameter);
@@ -206,7 +206,7 @@ public static class EnolaKnifeAuthoring
         foreach (var name in new[] { EnolaKnifeGame.Idle, "AS_Left_HitBetweenThumbIndex", "AS_Left_HitBetweenIndexMiddle",
                      "AS_Left_HitBetweenMiddleRing", "AS_Left_HitBetweenRingPinky" })
         {
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/TricksUp/FFFAnimPack/Animations/" + name + ".anim");
+            var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>("Assets/TricksUp/FFFAnimPack/Animations/" + name + ".anim");
             if (clip == null) throw new InvalidOperationException("Missing knife animation " + name);
             var state = machine.AddState(name); state.motion = clip;
             if (name == EnolaKnifeGame.Idle) machine.defaultState = state;

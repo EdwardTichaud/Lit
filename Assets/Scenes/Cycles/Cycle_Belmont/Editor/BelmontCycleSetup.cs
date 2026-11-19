@@ -133,7 +133,7 @@ public static class BelmontCycleSetup
         enemyData.characterId = "shadow_warden_belmont"; enemyData.characterName = "Veilleur d’Ombre"; enemyData.isEnemy = true;
         enemyData.hp = 90; enemyData.worldPrefab = enemyPrefab;
         // Combat profile and skills deliberately inherit the stable Juggernaut setup for this first pass.
-        CharacterData juggernaut = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        CharacterData juggernaut = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         if (juggernaut != null) { enemyData.enemyCombatProfile = juggernaut.enemyCombatProfile; enemyData.combatSkills = new List<SkillSO>(juggernaut.combatSkills); enemyData.enemySettings = juggernaut.enemySettings; enemyData.vision = juggernaut.vision; }
 
         BuildScene(cycle, ghostData, roster, note, maintenance, enemyPrefab, enemyData);
@@ -165,7 +165,7 @@ public static class BelmontCycleSetup
             var conduitThree = CreateCycleFlame(root, "Flame_Conduit_3", new Vector3(0, 0, 31), "district1.belmont.conduit_3", false);
             conduitOne.gameObject.SetActive(false); conduitTwo.gameObject.SetActive(false); conduitThree.gameObject.SetActive(false);
             var anchorRoot = new GameObject("BrokenAnchor_Spawn"); anchorRoot.transform.SetParent(root.transform, false); anchorRoot.transform.localPosition = new Vector3(0, 0, 40); anchorRoot.SetActive(false);
-            var giantPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut.prefab");
+            var giantPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut.prefab");
             if (giantPrefab == null) throw new InvalidOperationException("Prefab GiantJuggernaut introuvable.");
             var anchor = PrefabUtility.InstantiatePrefab(giantPrefab, anchorRoot.transform) as GameObject; anchor.name = "BrokenAnchor"; anchor.transform.localPosition = Vector3.zero;
             var anchorEnemy = anchor.GetComponent<EnemyController>();
@@ -192,7 +192,7 @@ public static class BelmontCycleSetup
 
     private static GameObject CreateEnemyPrefab()
     {
-        GameObject shadowGuardian = AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs + "/ShadowGuardian.prefab");
+        GameObject shadowGuardian = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(Prefabs + "/ShadowGuardian.prefab");
         if (shadowGuardian == null) throw new InvalidOperationException("Prefab ShadowGuardian introuvable.");
         return shadowGuardian;
     }
@@ -200,9 +200,9 @@ public static class BelmontCycleSetup
     private static GameObject CreateGhostPrefab()
     {
         const string path = Prefabs + "/Prefab_Ghost_Eloise_Belmont.prefab";
-        GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        GameObject existing = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
         if (existing != null) return existing;
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/9_Ghosts/Nina/Ghost_Model_Nina.prefab");
+        GameObject source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Characters/9_Ghosts/Nina/Ghost_Model_Nina.prefab");
         if (source == null) throw new InvalidOperationException("Prefab de fantôme source introuvable.");
         GameObject instance = PrefabUtility.InstantiatePrefab(source) as GameObject;
         instance.name = "Prefab_Ghost_Eloise_Belmont";
@@ -321,7 +321,7 @@ public static class BelmontCycleSetup
 
     private static void CreateReadable(GameObject parent, string name, Item item, Vector3 position)
     {
-        var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Environment/2_Props/Props_Note_1.prefab");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Environment/2_Props/Props_Note_1.prefab");
         GameObject go = source != null ? PrefabUtility.InstantiatePrefab(source, parent.transform) as GameObject : GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name; go.transform.SetParent(parent.transform, false); go.transform.localPosition = position; go.AddComponent<NetworkObject>();
         var interactable = go.GetComponent<InteractableItem>() ?? go.AddComponent<InteractableItem>();
@@ -336,13 +336,13 @@ public static class BelmontCycleSetup
     private static CycleStep KnowledgeStep(string id, string title, string description, KnowledgeSO knowledge) => new CycleStep { id = id, title = title, description = description, kind = CycleStepKind.Knowledge, knowledge = knowledge, prerequisites = new CycleRequirements { mode = CycleRequirementMode.All, conditions = Array.Empty<CycleRequirement>() } };
     private static CycleRequirements Steps(params string[] ids) => new CycleRequirements { mode = CycleRequirementMode.All, conditions = ids.Select(id => new CycleRequirement { kind = CycleRequirementKind.Step, stepId = id }).ToArray() };
     private static KnowledgeRequirement AllKnowledge(params KnowledgeSO[] values) => new KnowledgeRequirement { requiredKnowledge = values.ToList() };
-    private static T Asset<T>(string path) where T : ScriptableObject { var value = AssetDatabase.LoadAssetAtPath<T>(path); if (value != null) return value; value = ScriptableObject.CreateInstance<T>(); AssetDatabase.CreateAsset(value, path); return value; }
+    private static T Asset<T>(string path) where T : ScriptableObject { var value = AnimationLibraryAssets.LoadAssetAtPath<T>(path); if (value != null) return value; value = ScriptableObject.CreateInstance<T>(); AnimationLibraryAssets.CreateAsset(value, path); return value; }
     private static void EnsureFolder(string path) { if (AssetDatabase.IsValidFolder(path)) return; string parent = path[..path.LastIndexOf('/')]; EnsureFolder(parent); AssetDatabase.CreateFolder(parent, path[(path.LastIndexOf('/') + 1)..]); }
     private static GameObject Child(GameObject parent, string name) { var child = new GameObject(name); child.transform.SetParent(parent.transform, false); return child; }
     private static void Register(string scenePath)
     {
-        var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset");
-        var asset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
+        var manifest = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset");
+        var asset = AnimationLibraryAssets.LoadAssetAtPath<SceneAsset>(scenePath);
         if (manifest != null && asset != null)
         {
             if (!manifest.loadingScenes.Contains(asset)) manifest.loadingScenes.Add(asset);

@@ -78,8 +78,8 @@ public static class LimbesExpansionAuthoring
             EditorSceneManager.OpenScene(SceneFolder + "/Reve_Limbes.unity", OpenSceneMode.Single);
         EnsureFolder(Folder); EnsureFolder(Folder + "/Data"); EnsureFolder(Folder + "/Sequences");
         EnsureFolder(Folder + "/Prefabs");
-        stone = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Materials/Limbes_8508bf557d417f64ea03e22431806255.mat");
-        glow = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Lighting/Limbes_Lueur.mat");
+        stone = AnimationLibraryAssets.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Materials/Limbes_8508bf557d417f64ea03e22431806255.mat");
+        glow = AnimationLibraryAssets.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Lighting/Limbes_Lueur.mat");
         if (stone == null || glow == null) throw new InvalidOperationException("Existing Limbes materials required.");
         Scene active = SceneManager.GetActiveScene();
         var owned = new List<Scene>();
@@ -91,8 +91,8 @@ public static class LimbesExpansionAuthoring
             var routes = Child(root.transform, "Parcours_3D", Vector3.zero);
             var permanent = Child(root.transform, "Souvenirs_et_progression", Vector3.zero);
             var definitions = new List<CycleDefinition> {
-                AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/LimbesSeuilCycle.asset"),
-                AssetDatabase.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/LimbesChambreCycle.asset")
+                AnimationLibraryAssets.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/LimbesSeuilCycle.asset"),
+                AnimationLibraryAssets.LoadAssetAtPath<CycleDefinition>("Assets/Resources/Narrative/LimbesChambreCycle.asset")
             };
             for (int index = 0; index < 3; index++)
             {
@@ -120,7 +120,7 @@ public static class LimbesExpansionAuthoring
             var progression = root.AddComponent<LimbesZoneProgression>();
             progression.explorationCycles = definitions.ToArray(); progression.conclusionCycle = final;
             progression.arenaAccess = bridge; progression.boss = boss;
-            progression.bossIntroduction = AssetDatabase.LoadAssetAtPath<StorySequenceAsset>(Folder + "/Sequences/AngelIntroduction.asset");
+            progression.bossIntroduction = AnimationLibraryAssets.LoadAssetAtPath<StorySequenceAsset>(Folder + "/Sequences/AngelIntroduction.asset");
             // The pre-existing retreat portals remain available; this final one denotes zone completion.
             var sourceScene = EditorSceneManager.OpenScene(SceneFolder + "/Reve_Limbes_Interactives.unity", OpenSceneMode.Additive);
             owned.Add(sourceScene);
@@ -160,7 +160,7 @@ public static class LimbesExpansionAuthoring
         Walkway(root.transform, turn, end, "Retour_en_surplomb");
         Floor(root.transform, "Palier_intermediaire", turn, new Vector3(6, .6f, 6));
         Floor(root.transform, "Terrasse_du_souvenir", end, new Vector3(9, .8f, 9));
-        var archPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Prefabs/Doorway_Pillar_01 Variant.prefab");
+        var archPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Prefabs/Doorway_Pillar_01 Variant.prefab");
         if (archPrefab != null)
         {
             var arch = (GameObject)PrefabUtility.InstantiatePrefab(archPrefab, parent.gameObject.scene);
@@ -183,7 +183,7 @@ public static class LimbesExpansionAuthoring
         definition.title = Titles[index]; definition.category = CycleCategory.Main;
         definition.description = "Explorer les trois niveaux de la branche et confronter leurs preuves au souvenir du sommet.";
         definition.cycleSceneName = scene.name; definition.playCinematicAfterDefeat = false;
-        AssetDatabase.CreateAsset(definition, "Assets/Resources/Narrative/Limbes" + label + "Cycle.asset");
+        AnimationLibraryAssets.CreateAsset(definition, "Assets/Resources/Narrative/Limbes" + label + "Cycle.asset");
         controller.definition = definition;
         var steps = new List<CycleStep>();
         for (int proof = 0; proof < 3; proof++)
@@ -205,9 +205,9 @@ public static class LimbesExpansionAuthoring
         string id = cycleId + ".proof." + proof;
         var knowledge = ScriptableObject.CreateInstance<KnowledgeSO>(); knowledge.knowledgeId = id;
         knowledge.title = Proofs[index][proof]; knowledge.description = Texts[index][proof]; knowledge.districtId = "reve.limbes";
-        AssetDatabase.CreateAsset(knowledge, Folder + "/Data/Knowledge_" + Labels[index] + "_" + proof + ".asset");
+        AnimationLibraryAssets.CreateAsset(knowledge, Folder + "/Data/Knowledge_" + Labels[index] + "_" + proof + ".asset");
         Set(knowledge, "uniqueId", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(knowledge)));
-        var template = AssetDatabase.LoadAssetAtPath<Item>("Assets/Scenes/Reve/Cycles/Seuil/Data/Item_0.asset");
+        var template = AnimationLibraryAssets.LoadAssetAtPath<Item>("Assets/Scenes/Reve/Cycles/Seuil/Data/Item_0.asset");
         if (template == null) throw new InvalidOperationException("Existing Limbes readable required.");
         var item = Object.Instantiate(template); item.name = "Preuve_" + Labels[index] + "_" + proof;
         item.itemId = id; item.readableContentId = id; item.itemName = knowledge.title;
@@ -215,7 +215,7 @@ public static class LimbesExpansionAuthoring
         item.knowledgeUnlockedOnPickup = new List<KnowledgeSO> { knowledge };
         item.knowledgeUnlockedOnRead = new List<KnowledgeSO> { knowledge };
         item.worldPrefab = null;
-        AssetDatabase.CreateAsset(item, Folder + "/Data/" + item.name + ".asset");
+        AnimationLibraryAssets.CreateAsset(item, Folder + "/Data/" + item.name + ".asset");
         knowledge.readableItem = item;
         var go = Child(parent, item.name, point + Vector3.up * .35f);
         Primitive(go.transform, "Pierre_inscrite", PrimitiveType.Cube, Vector3.zero, new Vector3(.9f, .4f, .65f), glow, false);
@@ -242,8 +242,8 @@ public static class LimbesExpansionAuthoring
         var asset = ScriptableObject.CreateInstance<StorySequenceAsset>(); asset.sequenceId = "limbes." + id.ToLowerInvariant();
         asset.displayName = title; asset.playOnce = true; asset.startFromBlack = false;
         asset.fadeToBlackBeforeGameplay = false; asset.fadeFromBlackAfterGameplayRestore = false;
-        AssetDatabase.CreateAsset(asset, Folder + "/Sequences/" + id + ".asset");
-        var template = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Narrative/StorySequence/Prefabs/StorySequenceRig.prefab");
+        AnimationLibraryAssets.CreateAsset(asset, Folder + "/Sequences/" + id + ".asset");
+        var template = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Narrative/StorySequence/Prefabs/StorySequenceRig.prefab");
         var rig = (GameObject)PrefabUtility.InstantiatePrefab(template, parent.gameObject.scene);
         PrefabUtility.UnpackPrefabInstance(rig, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
         rig.name = "Souvenir_" + id; rig.transform.SetParent(parent, false); rig.transform.localPosition = point;
@@ -265,7 +265,7 @@ public static class LimbesExpansionAuthoring
         for (int i = 0; i < lines.Length; i++)
         {
             var line = ScriptableObject.CreateInstance<VoiceLineData>(); line.voiceLineText = lines[i];
-            AssetDatabase.CreateAsset(line, Folder + "/Sequences/" + id + "_Line_" + i + ".asset");
+            AnimationLibraryAssets.CreateAsset(line, Folder + "/Sequences/" + id + "_Line_" + i + ".asset");
             asset.steps.Add(new StorySequenceStep { type = StorySequenceStepType.Dialogue, label = "Lucian " + (i + 1), actorId = "Lucian", speakerNameOverride = "Lucian", voiceLine = line, skippable = true, focusCameraOnSpeaker = false });
         }
         var gate = rig.AddComponent<LimbesMemorySequence>(); gate.runner = runner; gate.cycle = cycle;
@@ -277,13 +277,13 @@ public static class LimbesExpansionAuthoring
 
     private static LimbesAngelBoss CreateBoss(Scene scene, Transform arena, Transform center)
     {
-        var source = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var data = Object.Instantiate(source); data.name = "Limbes_StoneAngel"; data.characterId = "limbes.stone_angel";
         data.characterName = "La Gargouille des Limbes"; data.hp = 300; data.enableCombatHealthThresholds = false;
         var profile = Object.Instantiate(source.enemyCombatProfile); profile.name = "Limbes_StoneAngel_Profile";
         profile.pursuitRadius = 24; profile.guardChance = 0;
-        AssetDatabase.CreateAsset(profile, Folder + "/Data/AngelCombatProfile.asset"); data.enemyCombatProfile = profile;
-        AssetDatabase.CreateAsset(data, Folder + "/Data/AngelCharacter.asset");
+        AnimationLibraryAssets.CreateAsset(profile, Folder + "/Data/AngelCombatProfile.asset"); data.enemyCombatProfile = profile;
+        AnimationLibraryAssets.CreateAsset(data, Folder + "/Data/AngelCharacter.asset");
         Set(data, "uniqueId", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(data)));
         var root = (GameObject)PrefabUtility.InstantiatePrefab(source.worldPrefab, scene);
         PrefabUtility.UnpackPrefabInstance(root, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
@@ -291,7 +291,7 @@ public static class LimbesExpansionAuthoring
         root.GetComponent<CharacterInfo>().SetCharacterData(data);
         root.GetComponent<LitBrainsEnemy>().ConfigureCharacterData(data);
         foreach (var renderer in root.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
-        var statue = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Environment/Statue/AngelOfJustice/Import/AngelOfJustice.prefab"), scene);
+        var statue = (GameObject)PrefabUtility.InstantiatePrefab(AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Environment/Statue/AngelOfJustice/Import/AngelOfJustice.prefab"), scene);
         statue.name = "Corps_de_pierre_ange"; statue.transform.SetParent(root.transform, false);
         statue.transform.localPosition = Vector3.zero;
         foreach (var collider in statue.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(collider);
@@ -304,7 +304,7 @@ public static class LimbesExpansionAuthoring
         var definition = ScriptableObject.CreateInstance<BossDefinitionSO>();
         Set(definition, "bossId", "limbes.stone_angel"); Set(definition, "displayName", "La Gargouille des Limbes");
         Set(definition, "damagePolicy", 0); Set(definition, "segmentCount", 300); Set(definition, "engagementDistance", 12f);
-        AssetDatabase.CreateAsset(definition, Folder + "/Data/AngelBoss.asset"); Set(boss, "definition", definition);
+        AnimationLibraryAssets.CreateAsset(definition, Folder + "/Data/AngelBoss.asset"); Set(boss, "definition", definition);
         var bolt = Primitive(null, "Limbes_Angel_Bolt", PrimitiveType.Sphere, Vector3.zero, Vector3.one * .45f, glow, false);
         bolt.AddComponent<LimbesAngelBolt>();
         boss.boltPrefab = PrefabUtility.SaveAsPrefabAsset(bolt, Folder + "/Prefabs/AngelBolt.prefab").GetComponent<LimbesAngelBolt>();
@@ -323,7 +323,7 @@ public static class LimbesExpansionAuthoring
             new CycleStep { id = "defeated", title = "Vaincre la Gargouille des Limbes", kind = CycleStepKind.NamedFact, sourceId = "angel_defeat", prerequisites = RequireSteps("introduced") },
             new CycleStep { id = "departed", title = "Comprendre ce que le château a conservé", kind = CycleStepKind.NamedFact, sourceId = "departure", prerequisites = RequireSteps("defeated"), terminal = true }
         };
-        AssetDatabase.CreateAsset(definition, "Assets/Resources/Narrative/LimbesAngelCycle.asset");
+        AnimationLibraryAssets.CreateAsset(definition, "Assets/Resources/Narrative/LimbesAngelCycle.asset");
         var root = Child(permanent, "Cycle_Ange", Vector3.zero); var controller = root.AddComponent<CycleController>(); controller.definition = definition;
         // The zone adapter reports the production actor health through the trusted named-fact bridge.
         CreateStory(permanent, "AngelIntroduction", "La pierre ailée", new Vector3(4, 9, 113), new[] {
@@ -341,10 +341,10 @@ public static class LimbesExpansionAuthoring
 
     private static void RegisterScenes(IEnumerable<Scene> scenes, Scene world)
     {
-        var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>(SceneFolder + "/ZoneManifest_Reve_Limbes.asset");
+        var manifest = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>(SceneFolder + "/ZoneManifest_Reve_Limbes.asset");
         foreach (var scene in scenes)
         {
-            if (!manifest.loadingScenes.Any(a => AssetDatabase.GetAssetPath(a) == scene.path)) manifest.loadingScenes.Add(AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path));
+            if (!manifest.loadingScenes.Any(a => AssetDatabase.GetAssetPath(a) == scene.path)) manifest.loadingScenes.Add(AnimationLibraryAssets.LoadAssetAtPath<SceneAsset>(scene.path));
             if (!EditorBuildSettings.scenes.Any(s => s.path == scene.path)) EditorBuildSettings.scenes = EditorBuildSettings.scenes.Concat(new[] { new EditorBuildSettingsScene(scene.path, true) }).ToArray();
         }
         var props = new SerializedObject(manifest); var names = props.FindProperty("loadingSceneNames"); names.arraySize = manifest.loadingScenes.Count;
@@ -364,14 +364,14 @@ public static class LimbesExpansionAuthoring
             if (surface.navMeshData == null) throw new InvalidOperationException("Navigation build failed.");
             var data = Object.Instantiate(surface.navMeshData);
             string navPath = Folder + "/LimbesExpandedNavigation.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<NavMeshData>(navPath);
-            if (existing == null) AssetDatabase.CreateAsset(data, navPath);
+            var existing = AnimationLibraryAssets.LoadAssetAtPath<NavMeshData>(navPath);
+            if (existing == null) AnimationLibraryAssets.CreateAsset(data, navPath);
             else
             {
                 EditorUtility.CopySerialized(data, existing); Object.DestroyImmediate(data);
                 data = existing; EditorUtility.SetDirty(data); AssetDatabase.SaveAssetIfDirty(data);
             }
-            var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>(SceneFolder + "/ZoneManifest_Reve_Limbes.asset");
+            var manifest = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>(SceneFolder + "/ZoneManifest_Reve_Limbes.asset");
             Set(manifest, "bakedNavMeshData", data); Set(manifest, "bakedNavMeshVersion", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
             Set(manifest, "bakedNavMeshAgentTypeId", surface.agentTypeID); AssetDatabase.SaveAssetIfDirty(manifest);
         }
@@ -383,8 +383,8 @@ public static class LimbesExpansionAuthoring
         var root = PrefabUtility.LoadPrefabContents(path);
         try
         {
-            var items = AssetDatabase.FindAssets("t:Item", new[] { Folder + "/Data" })
-                .Select(id => AssetDatabase.LoadAssetAtPath<Item>(AssetDatabase.GUIDToAssetPath(id))).Where(i => i != null).ToArray();
+            var items = AnimationLibraryAssets.FindAssets("t:Item", new[] { Folder + "/Data" })
+                .Select(id => AnimationLibraryAssets.LoadAssetAtPath<Item>(AssetDatabase.GUIDToAssetPath(id))).Where(i => i != null).ToArray();
             foreach (var registry in root.GetComponentsInChildren<ItemRegistry>(true))
                 foreach (var item in items) if (!registry.items.Any(i => i != null && i.itemId == item.itemId)) registry.items.Add(item);
             foreach (var store in root.GetComponentsInChildren<CharacterStateStore>(true))
@@ -399,7 +399,7 @@ public static class LimbesExpansionAuthoring
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         var boss = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<LimbesAngelBoss>(true)).Single();
         var progression = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<LimbesZoneProgression>(true)).Single();
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(Folder + "/Data/AngelCharacter.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(Folder + "/Data/AngelCharacter.asset");
         boss.GetComponent<LitBrainsEnemy>().ConfigureCharacterData(data);
         var body = boss.GetComponent<Rigidbody>();
         if (body == null) body = boss.gameObject.AddComponent<Rigidbody>();
@@ -420,7 +420,7 @@ public static class LimbesExpansionAuthoring
     {
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         var owned = new List<Scene>();
-        stone = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Materials/Limbes_8508bf557d417f64ea03e22431806255.mat");
+        stone = AnimationLibraryAssets.LoadAssetAtPath<Material>("Assets/Scenes/Reve/Materials/Limbes_8508bf557d417f64ea03e22431806255.mat");
         EnsureFolder(Folder + "/Geometry");
         foreach (int index in Enumerable.Range(0, 3))
         {
@@ -438,7 +438,7 @@ public static class LimbesExpansionAuthoring
                 mesh.triangles = new[] { 0,3,2,0,2,1, 4,5,6,4,6,7, 0,1,5,0,5,4, 1,2,6,1,6,5, 2,3,7,2,7,6, 3,0,4,3,4,7 };
                 mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up, Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
                 mesh.RecalculateNormals(); mesh.RecalculateBounds();
-                AssetDatabase.CreateAsset(mesh, Folder + "/Geometry/" + mesh.name + ".asset");
+                AnimationLibraryAssets.CreateAsset(mesh, Folder + "/Geometry/" + mesh.name + ".asset");
                 var ramp = Child(branch, "Rampe_" + part, Vector3.zero);
                 ramp.AddComponent<MeshFilter>().sharedMesh = mesh; ramp.AddComponent<MeshRenderer>().sharedMaterial = stone;
                 ramp.AddComponent<MeshCollider>().sharedMesh = mesh;
@@ -518,25 +518,25 @@ public static class LimbesExpansionAuthoring
         foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
         visual.position += new Vector3(boss.transform.position.x - bounds.center.x, boss.transform.position.y - bounds.min.y, boss.transform.position.z - bounds.center.z);
         const string materialPath = Folder + "/Data/LimbesExpansionStone.mat";
-        var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+        var material = AnimationLibraryAssets.LoadAssetAtPath<Material>(materialPath);
         if (material == null)
         {
             material = new Material(Shader.Find("HDRP/Lit")) { name = "LimbesExpansionStone" };
-            material.SetTexture("_BaseColorMap", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Textures/T_Stone_Wall_01_Master_BaseColor.png"));
+            material.SetTexture("_BaseColorMap", AnimationLibraryAssets.LoadAssetAtPath<Texture2D>("Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Textures/T_Stone_Wall_01_Master_BaseColor.png"));
             material.SetTextureScale("_BaseColorMap", Vector2.one * 4);
             material.SetColor("_BaseColor", Color.white); material.SetFloat("_Smoothness", .2f);
-            AssetDatabase.CreateAsset(material, materialPath);
+            AnimationLibraryAssets.CreateAsset(material, materialPath);
         }
         foreach (var renderer in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<MeshRenderer>(true)))
             if (renderer.GetComponentInParent<LimbesAngelBoss>() == null && renderer.GetComponentInParent<Flame>() == null)
                 renderer.sharedMaterials = renderer.sharedMaterials.Select(_ => material).ToArray();
         const string angelMaterialPath = Folder + "/Data/LimbesAngelStone.mat";
-        var angelMaterial = AssetDatabase.LoadAssetAtPath<Material>(angelMaterialPath);
+        var angelMaterial = AnimationLibraryAssets.LoadAssetAtPath<Material>(angelMaterialPath);
         if (angelMaterial == null)
         {
             angelMaterial = new Material(Shader.Find("HDRP/Lit")) { name = "LimbesAngelStone" };
             angelMaterial.SetColor("_BaseColor", new Color(.67f, .65f, .57f)); angelMaterial.SetFloat("_Smoothness", .3f);
-            AssetDatabase.CreateAsset(angelMaterial, angelMaterialPath);
+            AnimationLibraryAssets.CreateAsset(angelMaterial, angelMaterialPath);
         }
         foreach (var renderer in renderers) renderer.sharedMaterials = renderer.sharedMaterials.Select(_ => angelMaterial).ToArray();
         foreach (string label in Labels)
@@ -595,7 +595,7 @@ public static class LimbesExpansionAuthoring
     }
     private static void AddFlame(Scene scene, Transform parent, Vector3 position, string id, float radius)
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Model_Flame_WallTorch.prefab");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Prefabs/Model_Flame_WallTorch.prefab");
         var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene); root.transform.SetParent(parent, false); root.transform.localPosition = position;
         root.name = "Flame_" + id; root.GetComponent<Flame>().ConfigureFromSceneMarker("reve.limbes.expansion." + id, false, true, 2, radius, 0);
     }

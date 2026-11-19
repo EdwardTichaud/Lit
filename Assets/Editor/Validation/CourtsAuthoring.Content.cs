@@ -17,7 +17,7 @@ public static partial class CourtsAuthoring
         definition.title = title; definition.category = category; definition.playCinematicAfterDefeat = false;
         // Content remains in the Core: props, shortcuts and memory places must survive cycle completion.
         definition.cycleSceneName = string.Empty;
-        AssetDatabase.CreateAsset(definition, "Assets/Resources/Narrative/Courts_" + id + "Cycle.asset");
+        AnimationLibraryAssets.CreateAsset(definition, "Assets/Resources/Narrative/Courts_" + id + "Cycle.asset");
         controller = Child(root, "Cycle_" + id, Vector3.zero).AddComponent<CycleController>(); controller.definition = definition;
         return definition;
     }
@@ -128,7 +128,7 @@ public static partial class CourtsAuthoring
         var source = Load<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var data = Object.Instantiate(source); data.name = "CourtsGargoyle"; data.characterId = "district2.courts.gargoyle";
         data.characterName = "La Gargouille des cours"; data.hp = 200; data.enableCombatHealthThresholds = false;
-        AssetDatabase.CreateAsset(data, Folder + "/Data/CourtsGargoyle.asset"); Set(data, "uniqueId", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(data)));
+        AnimationLibraryAssets.CreateAsset(data, Folder + "/Data/CourtsGargoyle.asset"); Set(data, "uniqueId", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(data)));
         var markerRoot = Child(root, "Marker_Gargouille_des_cours", new Vector3(0, 0, 81));
         var actor = (GameObject)PrefabUtility.InstantiatePrefab(source.worldPrefab, root.gameObject.scene);
         PrefabUtility.UnpackPrefabInstance(actor, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
@@ -147,12 +147,12 @@ public static partial class CourtsAuthoring
         string id = cycle.cycleId + "." + suffix;
         var knowledge = ScriptableObject.CreateInstance<KnowledgeSO>(); knowledge.knowledgeId = id; knowledge.title = title;
         knowledge.description = text; knowledge.districtId = "district2.courts"; knowledge.cycles = new List<CycleDefinition> { cycle };
-        AssetDatabase.CreateAsset(knowledge, Folder + "/Data/Knowledge_" + cycle.name + "_" + suffix + ".asset");
+        AnimationLibraryAssets.CreateAsset(knowledge, Folder + "/Data/Knowledge_" + cycle.name + "_" + suffix + ".asset");
         Set(knowledge, "uniqueId", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(knowledge)));
         var item = Object.Instantiate(Load<Item>("Assets/Scenes/Reve/Cycles/Seuil/Data/Item_0.asset"));
         item.itemId = id; item.readableContentId = id; item.itemName = title; item.description = item.parchmentText = text;
         item.knowledgeUnlockedOnPickup = new List<KnowledgeSO>(); item.knowledgeUnlockedOnRead = new List<KnowledgeSO> { knowledge }; item.worldPrefab = null;
-        AssetDatabase.CreateAsset(item, Folder + "/Data/Note_" + cycle.name + "_" + suffix + ".asset"); knowledge.readableItem = item; Items.Add(item);
+        AnimationLibraryAssets.CreateAsset(item, Folder + "/Data/Note_" + cycle.name + "_" + suffix + ".asset"); knowledge.readableItem = item; Items.Add(item);
         var go = Child(root, "Note_" + suffix, point);
         var visible = Block(go.transform, "Document", Vector3.zero, new Vector3(.6f, .1f, .4f)); Object.DestroyImmediate(visible.GetComponent<Collider>()); visible.GetComponent<Renderer>().sharedMaterial = glow;
         var box = go.AddComponent<BoxCollider>(); box.isTrigger = true; box.size = new Vector3(1, .8f, 1);
@@ -177,7 +177,7 @@ public static partial class CourtsAuthoring
     {
         var asset = ScriptableObject.CreateInstance<StorySequenceAsset>(); asset.sequenceId = "district2.courts." + id.ToLowerInvariant();
         asset.displayName = title; asset.playOnce = true; asset.startFromBlack = false; asset.fadeToBlackBeforeGameplay = false; asset.fadeFromBlackAfterGameplayRestore = false;
-        AssetDatabase.CreateAsset(asset, Folder + "/Sequences/" + id + ".asset");
+        AnimationLibraryAssets.CreateAsset(asset, Folder + "/Sequences/" + id + ".asset");
         var rig = (GameObject)PrefabUtility.InstantiatePrefab(Load<GameObject>("Assets/Narrative/StorySequence/Prefabs/StorySequenceRig.prefab"), root.gameObject.scene);
         PrefabUtility.UnpackPrefabInstance(rig, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
         rig.name = "Sequence_" + id; rig.transform.SetParent(root, false); rig.transform.localPosition = point;
@@ -193,7 +193,7 @@ public static partial class CourtsAuthoring
         asset.steps.Add(new StorySequenceStep { type = StorySequenceStepType.SceneEvent, eventId = "gameplay" });
         for (int i = 0; i < lines.Length; i++)
         {
-            var line = ScriptableObject.CreateInstance<VoiceLineData>(); line.voiceLineText = lines[i]; AssetDatabase.CreateAsset(line, Folder + "/Sequences/" + id + "_Line_" + i + ".asset");
+            var line = ScriptableObject.CreateInstance<VoiceLineData>(); line.voiceLineText = lines[i]; AnimationLibraryAssets.CreateAsset(line, Folder + "/Sequences/" + id + "_Line_" + i + ".asset");
             asset.steps.Add(new StorySequenceStep { type = StorySequenceStepType.Dialogue, actorId = "Lucian", speakerNameOverride = "Lucian", voiceLine = line, skippable = true, focusCameraOnSpeaker = false });
         }
         if (cycle != null)

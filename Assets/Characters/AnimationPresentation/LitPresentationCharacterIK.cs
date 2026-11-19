@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Opsive.UltimateCharacterController.Character;
 using UnityEngine;
 
@@ -124,6 +124,12 @@ public sealed partial class LitPresentationCharacterIK : CharacterIK
     {
         RootSpaceGoalsApplied=false;
         SupportBlendApplied=false;
+        if (GetComponentInParent<CharacterDialoguePresentationController>()?.HasFullBodyWeight == true)
+        {
+            PreservingNativeFootIK = false;
+            base.UpdateSolvers(layerIndex);
+            return;
+        }
         NativeFootGoalCurves.Pose rootGoals = default;
         bool probeGoals = layerIndex == BaseLayerIndex && TryMeasuredRunStop(out rootGoals);
 #if UNITY_EDITOR

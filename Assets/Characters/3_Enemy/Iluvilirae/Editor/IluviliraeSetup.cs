@@ -41,22 +41,22 @@ public static class IluviliraeSetup
     {
         Directory.CreateDirectory(Folder + "/Animations");
         AssetDatabase.Refresh();
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath) != null)
         {
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) == null)
+            if (AnimationLibraryAssets.LoadAssetAtPath<SceneAsset>(ScenePath) == null)
             {
-                CreateScene(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+                CreateScene(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath));
                 AssetDatabase.SaveAssets();
             }
             Validate(); // Never overwrite subsequent Inspector authoring.
             return;
         }
-        var idle = CopyClip("Assets/BrainsAI/Animations/Animators/Locomation-Idle.anim", "Idle", true);
-        var walk = CopyClip("Assets/BrainsAI/Animations/Animators/Locomation-Walk.anim", "Walk", true);
-        var run = CopyClip("Assets/BrainsAI/Animations/Animators/Locomation-Run-Forward.anim", "Run", true);
-        var attack = CopyClip("Assets/BrainsAI/Animations/Animators/Attack.anim", "Attack", false);
-        var hurt = CopyClip("Assets/Characters/3_Enemy/Juggernaut/InPlace_TwinSword_Hit_L_Inplace.anim", "Hurt", false);
-        var death = CopyClip("Assets/BrainsAI/Animations/Animators/Dead.anim", "Death", false);
+        var idle = CopyClip("Assets/Animations/Autres/Locomotion/BrainsAI/Animations/Animators/Locomation-Idle.anim", "Idle", true);
+        var walk = CopyClip("Assets/Animations/Autres/Locomotion/BrainsAI/Animations/Animators/Locomation-Walk.anim", "Walk", true);
+        var run = CopyClip("Assets/Animations/Autres/Locomotion/BrainsAI/Animations/Animators/Locomation-Run-Forward.anim", "Run", true);
+        var attack = CopyClip("Assets/Animations/Autres/Battle/BrainsAI/Animations/Animators/Attack.anim", "Attack", false);
+        var hurt = CopyClip("Assets/Animations/Twinblades/Battle/Juggernaut/InPlace_TwinSword_Hit_L_Inplace.anim", "Hurt", false);
+        var death = CopyClip("Assets/Animations/Autres/Battle/BrainsAI/Animations/Animators/Dead.anim", "Death", false);
         var controller = CreateController(idle, walk, run, attack, hurt, death);
         var data = ScriptableObject.CreateInstance<CharacterData>();
         data.characterId = "iluvilirae_brainsai_test";
@@ -66,9 +66,9 @@ public static class IluviliraeSetup
         data.vision.maximumDistance = 14;
         data.vision.fieldOfViewDegrees = 140;
         data.vision.obstructionMask = LayerMask.GetMask("Default", "Ground", "Obstacle", "CameraObstruction");
-        AssetDatabase.CreateAsset(data, Folder + "/Iluvilirae.asset");
+        AnimationLibraryAssets.CreateAsset(data, Folder + "/Iluvilirae.asset");
 
-        var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/BrainsAI/Prefabs/Ultrabot - Attacker AI.prefab");
+        var source = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/BrainsAI/Prefabs/Ultrabot - Attacker AI.prefab");
         if (source == null) throw new InvalidOperationException("Brains AI attacker model is missing.");
         var root = (GameObject)PrefabUtility.InstantiatePrefab(source);
         try
@@ -131,7 +131,7 @@ public static class IluviliraeSetup
             EditorUtility.SetDirty(data);
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
-        CreateScene(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+        CreateScene(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath));
         AssetDatabase.SaveAssets();
         Validate();
         Debug.Log("[Iluvilirae] Prefab, owned animations/controller and isolated test scene created.");
@@ -140,7 +140,7 @@ public static class IluviliraeSetup
     public static AnimationClip CopyClip(string source, string name, bool loop, string folder = Folder, string prefix = "Iluvilirae")
     {
         var original = source.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
-            ? ActorAnimationAudit.Source(source) : AssetDatabase.LoadAssetAtPath<AnimationClip>(source);
+            ? ActorAnimationAudit.Source(source) : AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(source);
         if (original == null || !original.isHumanMotion) throw new InvalidOperationException("Missing humanoid animation: " + source);
         var clip = UnityEngine.Object.Instantiate(original);
         clip.name = prefix + "_" + name;
@@ -148,7 +148,7 @@ public static class IluviliraeSetup
         var settings = AnimationUtility.GetAnimationClipSettings(clip);
         settings.loopTime = loop;
         AnimationUtility.SetAnimationClipSettings(clip, settings);
-        AssetDatabase.CreateAsset(clip, folder + "/Animations/" + clip.name + ".anim");
+        AnimationLibraryAssets.CreateAsset(clip, folder + "/Animations/" + clip.name + ".anim");
         return clip;
     }
 
@@ -210,7 +210,7 @@ public static class IluviliraeSetup
         var material = new Material(Shader.Find("HDRP/Lit")) { name = name };
         material.SetColor("_BaseColor", color);
         material.SetFloat("_Smoothness", smoothness);
-        AssetDatabase.CreateAsset(material, Folder + "/" + name + ".mat");
+        AnimationLibraryAssets.CreateAsset(material, Folder + "/" + name + ".mat");
         return material;
     }
 
@@ -239,7 +239,7 @@ public static class IluviliraeSetup
             var navigation = NavMeshBuilder.BuildNavMeshData(NavMesh.GetSettingsByID(0), sources,
                 new Bounds(Vector3.zero, new Vector3(32, 12, 32)), Vector3.zero, Quaternion.identity);
             if (navigation == null) throw new InvalidOperationException("Test NavMesh bake failed.");
-            AssetDatabase.CreateAsset(navigation, Folder + "/Iluvilirae_Test_NavMesh.asset");
+            AnimationLibraryAssets.CreateAsset(navigation, Folder + "/Iluvilirae_Test_NavMesh.asset");
             var target = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             target.name = "TestPlayerTarget_ArrowKeys";
             target.transform.position = new Vector3(0, 0, 5);
@@ -272,7 +272,7 @@ public static class IluviliraeSetup
             light.shadows = LightShadows.Soft;
             light.gameObject.AddComponent<HDAdditionalLightData>();
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, Folder + "/Iluvilirae_Test_Volume.asset");
+            AnimationLibraryAssets.CreateAsset(profile, Folder + "/Iluvilirae_Test_Volume.asset");
             var exposure = profile.Add<Exposure>(true);
             exposure.mode.Override(ExposureMode.Fixed);
             exposure.fixedExposure.Override(9);
@@ -292,7 +292,7 @@ public static class IluviliraeSetup
     [MenuItem("Lit/Brains AI/Validate Iluvilirae")]
     public static void Validate()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(PrefabPath);
         if (prefab == null) throw new InvalidOperationException("Iluvilirae prefab missing.");
         var brain = prefab.GetComponent<IluviliraeBrain>();
         if (brain == null || brain.fov == null || !brain.fov.useExternalDetection || brain.characterData == null)
@@ -308,7 +308,7 @@ public static class IluviliraeSetup
         foreach (var clip in controller.animationClips)
             if (!clip.isHumanMotion || AnimationUtility.GetAnimationEvents(clip).Length != 0 || !AssetDatabase.GetAssetPath(clip).StartsWith(Folder))
                 throw new InvalidOperationException("Invalid owned animation: " + clip.name);
-        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) == null || AssetDatabase.LoadAssetAtPath<NavMeshData>(Folder + "/Iluvilirae_Test_NavMesh.asset") == null)
+        if (AnimationLibraryAssets.LoadAssetAtPath<SceneAsset>(ScenePath) == null || AnimationLibraryAssets.LoadAssetAtPath<NavMeshData>(Folder + "/Iluvilirae_Test_NavMesh.asset") == null)
             throw new InvalidOperationException("Iluvilirae test scene/NavMesh missing.");
     }
 }

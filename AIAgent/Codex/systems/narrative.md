@@ -608,7 +608,10 @@ attend le contact au sol du corps UCC et la disponibilite de l'etat
 `Sitting_Idle` sous le noir, sans exiger que les commandes gameplay soient
 actives. L'attente borne les temps
 physique et reel ; si la pose reste indisponible, le journal donne la condition
-bloquante. Le lever restitue le mouvement apres les repliques.
+bloquante. L'assise suspend uniquement le recalage du bassin et des pieds
+de CharacterIK ; la capsule, le contact au sol et les corrections du haut
+du corps restent actifs. Le recalage reprend apres le lever ou l'annulation
+du cycle.
 
 Asset : Narrative/StorySequence/Sequences/1_Munin_Meeting.asset, rig homonyme
 sous Prefabs reference par MainMenu. Nouvelle partie queue la rencontre ; GameFlow
@@ -619,18 +622,19 @@ attend la disparition du loading. Annulation/retour menu nettoient l'attente et
 la demande ; Charger et les portails n'en creent pas. Presentation locale au
 createur seulement ; pas de nouveau protocole reseau narratif.
 
-Quatre etapes : question de Lucian -> ChooseMuninName -> presentation avec le
-nom choisi -> invitation au depart. Les trois VoiceLineData dans
-VoiceLines/1_Munin_Meeting sont textuelles, sans voix ajoutee. Les dialogues
-attendent Interact. Apres la demande de pose assise et avant le fondu d'ouverture,
-StorySequenceConversationView place la camera du cote de Munin a environ
-2,4 m du visage de Lucian, de face, avec `Munin_v4` decale au premier plan.
-L'orbe reutilise le prefab visuel, sans controleur de gameplay ni acteur
-reseau. Une lumiere locale ephemere rend le visage lisible dans la Maison,
-sans effet sur les Flames. Le plan est conserve pendant le choix du nom.
-La derniere replique declenche un hochement unique de 4 degres sur 0,56 s ;
-une validation rapide ne l'interrompt pas. Fin ou annulation nettoie l'orbe
-et rend la camera au gameplay. Les autres sequences gardent leur cadrage
+Cinq etapes : plan fixe de Munin -> question de Lucian -> ChooseMuninName ->
+presentation avec le nom choisi -> invitation au depart. Les trois VoiceLineData
+dans VoiceLines/1_Munin_Meeting sont textuelles et attendent Interact.
+Le plan `munin.meeting.pov` est prepare apres l'assise, avant le fondu.
+Le marqueur du prefab porte la position et la rotation monde validees ; son
+echelle 5 n'est pas appliquee a la camera partagee. Munin est ce point de vue :
+aucun orbe ni eclairage supplementaire n'est instancie. Le cadrage est conserve
+pendant le choix du nom.
+Le marqueur active un souffle discret de rendu (balancement et decalage
+de quelques centimetres), sans modifier sa pose de base ni le hochement.
+Une fois la derniere replique fermee, la camera hoche une seule fois de
+4 degres sur 0,56 s avant le retour au jeu. Fin ou annulation rend la camera
+au gameplay. Les autres sequences gardent leur cadrage
 et n'ont pas de hochement par defaut.
 
 ChooseMuninName est ajoute a la fin de l'enum (10) sans renumeroter les anciens

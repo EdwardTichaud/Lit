@@ -1,4 +1,4 @@
-// Role:
+﻿// Role:
 // ScriptableObject data for one voiced line and optional timed text cues.
 // Usage:
 // Referenced by LocalVoiceLineController and voice line assets.
@@ -17,6 +17,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "VoiceLine", menuName = "Scriptable Objects/Audio/Voice Line")]
 public class VoiceLineData : ScriptableObject
 {
+    public DialogueDirection dialogueDirection = new DialogueDirection();
     /// <summary>
     /// Timed text cue displayed at a specific time in the audio.
     /// </summary>

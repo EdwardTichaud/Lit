@@ -803,6 +803,7 @@ GameObject:
   - component: {fileID: 2882272597370712736}
   - component: {fileID: 6523252574977752942}
   - component: {fileID: 7460539971518471536}
+  - component: {fileID: 2297218047254538220}
   m_Layer: 6
   m_Name: LucianCadence
   m_TagString: Player
@@ -2333,6 +2334,20 @@ MonoBehaviour:
   heavyPitch: {x: 0.88, y: 0.94}
   lightDamage: 5
   heavyDamage: 15
+--- !u!114 &2297218047254538220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 372525362500307665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a38c8d2ae0f81404ba85d355bc3472f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDialoguePresentationController
+  ShowTopMostFoldoutHeaderGroup: 1
+  fallbackProfile: {fileID: 11400000, guid: 1b203da3a26a9e346b0c827d85ab1a6b, type: 2}
 --- !u!1 &514401839847761817
 GameObject:
   m_ObjectHideFlags: 0

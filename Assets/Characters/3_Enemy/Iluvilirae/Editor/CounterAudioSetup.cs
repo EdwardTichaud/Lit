@@ -14,7 +14,7 @@ public static class CounterAudioSetup
     [MenuItem("Lit/Combat Lab/Configure Counter Audio And Sword")]
     public static void Configure()
     {
-        var timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
+        var timeline = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
         if (timeline == null) throw new InvalidOperationException("CounterSkill_2 Timeline missing.");
         var track = timeline.GetRootTracks().OfType<SignalTrack>().First(t => t.name == "Signals");
         var slash = AudioAsset("SFX_Counter_SwordSlash", "Assets/FreeGameSoundsVol1/SFX/Sword_Swing_Fast_Light/Sword_Swing_Fast_Light_01.wav", .7f);
@@ -23,9 +23,9 @@ public static class CounterAudioSetup
         var voiceSignal = Signal("CombatLab_CounterVoice");
         var showSwordSignal = Signal("CombatLab_CounterShowSword");
         var hideSwordSignal = Signal("CombatLab_CounterHideSword");
-        var hitSignal = AssetDatabase.LoadAssetAtPath<SignalAsset>(Folder + "CombatLab_CounterHitVfx.signal");
+        var hitSignal = AnimationLibraryAssets.LoadAssetAtPath<SignalAsset>(Folder + "CombatLab_CounterHitVfx.signal");
         var hitPrefab = HitPrefab();
-        var contactSignal = AssetDatabase.LoadAssetAtPath<SignalAsset>(CounterKnockoutSignalSetup.CameraShakeSignalPath);
+        var contactSignal = AnimationLibraryAssets.LoadAssetAtPath<SignalAsset>(CounterKnockoutSignalSetup.CameraShakeSignalPath);
         var contacts = track.GetMarkers().OfType<SignalEmitter>().Where(m => m.asset == contactSignal).Select(m => m.time).OrderBy(t => t).ToArray();
         var previousHitTimes = track.GetMarkers().OfType<SignalEmitter>().Where(m => hitSignal != null && m.asset == hitSignal).Select(m => m.time).OrderBy(t => t).ToArray();
         if (contacts.Length != 4) throw new InvalidOperationException("Expected four authored counter contacts.");
@@ -62,9 +62,9 @@ public static class CounterAudioSetup
     private static GameObject HitPrefab()
     {
         string path = Folder + "CombatLab_CounterHitVfx.prefab";
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path);
         if (prefab != null) return prefab;
-        var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/0 - UnityPackages/UnityAssets/FullOpaqueSpell/Materials/M_Particles.mat");
+        var material = AnimationLibraryAssets.LoadAssetAtPath<Material>("Assets/0 - UnityPackages/UnityAssets/FullOpaqueSpell/Materials/M_Particles.mat");
         if (material == null) throw new InvalidOperationException("Existing sparks material missing.");
         var root = new GameObject("CombatLab_CounterHitVfx", typeof(ParticleSystem));
         try
@@ -96,24 +96,24 @@ public static class CounterAudioSetup
     private static AudioClipSO AudioAsset(string name, string clipPath, float volume)
     {
         string path = AudioFolder + name + ".asset";
-        var asset = AssetDatabase.LoadAssetAtPath<AudioClipSO>(path);
+        var asset = AnimationLibraryAssets.LoadAssetAtPath<AudioClipSO>(path);
         if (asset != null) return asset; // Preserve subsequent author choices.
-        var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(clipPath);
+        var clip = AnimationLibraryAssets.LoadAssetAtPath<AudioClip>(clipPath);
         if (clip == null) throw new InvalidOperationException("Audio clip missing: " + clipPath);
         asset = ScriptableObject.CreateInstance<AudioClipSO>();
         asset.title = name; asset.audioClip = clip; asset.volume = volume;
         asset.loop = false; asset.affectedByTimeScale = false;
-        AssetDatabase.CreateAsset(asset, path);
+        AnimationLibraryAssets.CreateAsset(asset, path);
         return asset;
     }
 
     private static SignalAsset Signal(string name)
     {
         string path = Folder + name + ".signal";
-        var signal = AssetDatabase.LoadAssetAtPath<SignalAsset>(path);
+        var signal = AnimationLibraryAssets.LoadAssetAtPath<SignalAsset>(path);
         if (signal != null) return signal;
         signal = ScriptableObject.CreateInstance<SignalAsset>();
-        AssetDatabase.CreateAsset(signal, path);
+        AnimationLibraryAssets.CreateAsset(signal, path);
         return signal;
     }
 
@@ -153,13 +153,13 @@ public static class CounterAudioSetup
 
     private static void Validate()
     {
-        var timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
-        var rig = AssetDatabase.LoadAssetAtPath<GameObject>(CounterKnockoutSignalSetup.RigPath);
+        var timeline = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
+        var rig = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(CounterKnockoutSignalSetup.RigPath);
         var receiver = rig.GetComponent<SignalReceiver>();
         foreach (var pair in new[] { ("CombatLab_CounterSlash", "PlaySfx", 4), ("CombatLab_CounterVoice", "PlayVoice", 1),
             ("CombatLab_CounterShowSword", "ShowTimelineSword", 1), ("CombatLab_CounterHideSword", "HideTimelineSword", 1) })
         {
-            var signal = AssetDatabase.LoadAssetAtPath<SignalAsset>(Folder + pair.Item1 + ".signal");
+            var signal = AnimationLibraryAssets.LoadAssetAtPath<SignalAsset>(Folder + pair.Item1 + ".signal");
             int count = timeline.GetRootTracks().OfType<SignalTrack>().SelectMany(t => t.GetMarkers()).OfType<SignalEmitter>().Count(m => m.asset == signal);
             var reaction = receiver.GetReaction(signal);
             if (pair.Item1 == "CombatLab_CounterSlash") continue; // Swing SFX now belongs to each unified contact.
@@ -167,7 +167,7 @@ public static class CounterAudioSetup
                 throw new InvalidOperationException("Counter audio validation failed: " + pair.Item1);
         }
         if (CombatCinematicRig.CounterHits(timeline).Count() != 4) throw new InvalidOperationException("Expected four unified CounterHit markers");
-        var hitPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "CombatLab_CounterHitVfx.prefab");
+        var hitPrefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(Folder + "CombatLab_CounterHitVfx.prefab");
         var particles = hitPrefab.GetComponent<ParticleSystem>();
         if (particles.main.loop || !particles.main.useUnscaledTime || particles.main.stopAction != ParticleSystemStopAction.Destroy ||
             particles.emission.burstCount != 1 || hitPrefab.GetComponent<ParticleSystemRenderer>().sharedMaterial == null)

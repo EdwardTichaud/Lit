@@ -1,0 +1,121 @@
+{
+  "clips": [
+    {
+      "id": "Speak_Explain_A",
+      "source": "Assets/Animations/Autres/Dialogue/Lucian/Lucian_Dialogue_Motion_Humanoid.Fbx",
+      "result": "Facial/head-only source. Excluded from body gesture selection.",
+      "sourceId": 4213507563621380147,
+      "seconds": 30.000001907348633,
+      "beforeDistance": 0.0009954158449545503,
+      "beforeYaw": 0.0006639533094130456,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.001379671972244978,
+      "fullBody": true
+    },
+    {
+      "id": "Speak_Explain_B",
+      "source": "Assets/Animations/Autres/Dialogue/Lucian/Lucian_Dialogue_Motion_Humanoid.Fbx",
+      "result": "Facial/head-only source. Excluded from body gesture selection.",
+      "sourceId": 1512675888789599045,
+      "seconds": 13.933334350585938,
+      "beforeDistance": 0.000268273230176419,
+      "beforeYaw": 0.0007783439941704273,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.00047344222548417747,
+      "fullBody": true
+    },
+    {
+      "id": "Speak_Firm",
+      "source": "Assets/Animations/Autres/Dialogue/Lucian/Lucian_Dialogue_Motion_Humanoid.Fbx",
+      "result": "Upper-body use approved. Full-body requires pose/appui review. Visual review pending.",
+      "sourceId": 1127808672041325000,
+      "seconds": 24.666667938232422,
+      "beforeDistance": 0.19038371741771698,
+      "beforeYaw": 15.102677345275879,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.22707712650299072,
+      "fullBody": false
+    },
+    {
+      "id": "Speak_Seated",
+      "source": "Assets/Animations/Autres/Dialogue/Lucian/Lucian_Dialogue_Motion_Humanoid.Fbx",
+      "result": "Upper-body use approved. Full-body requires pose/appui review. Visual review pending.",
+      "sourceId": -77431794931059068,
+      "seconds": 23.30000114440918,
+      "beforeDistance": 0.12111009657382965,
+      "beforeYaw": 16.39971923828125,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.4923660457134247,
+      "fullBody": false
+    },
+    {
+      "id": "Listen_Attentive",
+      "source": "Assets/Animations/Mixamo/Interaction/Lucian/Mixamo_Idle_Breathing.anim",
+      "result": "Measured Inplace, foot span <= 3 cm. Visual review pending.",
+      "sourceId": 7400000,
+      "seconds": 7.100000381469727,
+      "beforeDistance": 0.0,
+      "beforeYaw": 0.0,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.027858609333634377,
+      "fullBody": true
+    },
+    {
+      "id": "Wait_Attentive",
+      "source": "Assets/Animations/Mixamo/Interaction/Lucian/Mixamo_Idle_Breathing.anim",
+      "result": "Measured Inplace, foot span <= 3 cm. Visual review pending.",
+      "sourceId": 7400000,
+      "seconds": 7.100000381469727,
+      "beforeDistance": 0.0,
+      "beforeYaw": 0.0,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.027858609333634377,
+      "fullBody": true
+    },
+    {
+      "id": "Speak_Neutral",
+      "source": "Assets/Animations/Autres/Dialogue/NPCStandingIdleAnimations/Animations/IP/A_IP_Standing_Idle_Talking_F.FBX",
+      "result": "Upper-body use approved. Full-body requires pose/appui review. Visual review pending.",
+      "sourceId": 8993902097722301239,
+      "seconds": 44.500003814697266,
+      "beforeDistance": 0.0861000046133995,
+      "beforeYaw": 6.079391956329346,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.12871183454990387,
+      "fullBody": false
+    },
+    {
+      "id": "Speak_Question",
+      "source": "Assets/Animations/Autres/Dialogue/NPCStandingIdleAnimations/Animations/IP/A_IP_Standing_Idle_Talking_L.FBX",
+      "result": "Upper-body use approved. Full-body requires pose/appui review. Visual review pending.",
+      "sourceId": 8993902097722301239,
+      "seconds": 29.066667556762695,
+      "beforeDistance": 0.08027244359254837,
+      "beforeYaw": 36.812957763671875,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.14716768264770508,
+      "fullBody": false
+    },
+    {
+      "id": "Speak_Explain_C",
+      "source": "Assets/Animations/Autres/Dialogue/NPCStandingIdleAnimations/Animations/IP/A_IP_Standing_Idle_Talking_R.FBX",
+      "result": "Upper-body use approved. Full-body requires pose/appui review. Visual review pending.",
+      "sourceId": 8993902097722301239,
+      "seconds": 22.33333396911621,
+      "beforeDistance": 0.06256241351366043,
+      "beforeYaw": 13.635784149169922,
+      "afterDistance": 0.0,
+      "afterYaw": 0.0,
+      "footSpan": 0.11260566115379333,
+      "fullBody": false
+    }
+  ]
+}

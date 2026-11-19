@@ -11,7 +11,7 @@ public sealed class ProductionBrainsEnemyConversionTests
     [Test]
     public void ProductionJuggernautAuditProvesAllOwnAuthoredAttacksWithoutFlatteningPatterns()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath);
         Assert.IsNotNull(data);
         string before = EditorJsonUtility.ToJson(data);
         string prefabGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(data.ResolveWorldPrefab()));
@@ -37,7 +37,7 @@ public sealed class ProductionBrainsEnemyConversionTests
     [Test]
     public void InspectionCandidateContainsOnlyExactSourceSkillsAndDoesNotReplaceCharacterData()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath);
         var report = ProductionBrainsEnemyConversion.Analyze(data);
         var candidate = ProductionBrainsEnemyConversion.CreateInspectionCandidate(report);
         try
@@ -47,7 +47,7 @@ public sealed class ProductionBrainsEnemyConversionTests
             CollectionAssert.AreEqual(report.attacks.Select(attack => attack.clip).ToArray(), candidate.attacks.Select(attack => attack.clip).ToArray());
             Assert.AreEqual(data.enemySettings.ActorHitAnimatorState, candidate.hurtState);
             Assert.IsFalse(AssetDatabase.Contains(candidate));
-            Assert.AreSame(data, AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath));
+            Assert.AreSame(data, AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath));
         }
         finally { Object.DestroyImmediate(candidate); }
     }
@@ -55,7 +55,7 @@ public sealed class ProductionBrainsEnemyConversionTests
     [Test]
     public void BlockedConversionCannotOverwriteProductionAssetsOrBorrowPrototypeAttacks()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath);
         string dataBefore = EditorJsonUtility.ToJson(data);
         var prefab = data.ResolveWorldPrefab();
         string prefabBefore = EditorJsonUtility.ToJson(prefab);
@@ -90,7 +90,7 @@ public sealed class ProductionBrainsEnemyConversionTests
     [Test]
     public void GeneratorProducesExecutableSourceMappedAssetsAndSecondPassPreservesTheirGuids()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(CharacterPath);
         string dataBefore = EditorJsonUtility.ToJson(data);
         string sourceBefore = EditorJsonUtility.ToJson(data.enemyCombatProfile);
         string root = "Assets/__BrainsProductionTest_" + System.Guid.NewGuid().ToString("N");
@@ -126,7 +126,7 @@ public sealed class ProductionBrainsEnemyConversionTests
             string controllerPath = AssetDatabase.GetAssetPath(request.reviewedController);
             string controllerGuid = AssetDatabase.AssetPathToGUID(controllerPath);
             AssetDatabase.ImportAsset(controllerPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
-            var reloaded = AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(controllerPath);
+            var reloaded = AnimationLibraryAssets.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(controllerPath);
             ProductionBrainsAnimatorGraph.Validate(reloaded);
             Assert.IsNotNull(reloaded.layers[0].stateMachine.defaultState);
             Assert.AreEqual("CombatIdle", reloaded.layers[0].stateMachine.defaultState.name);
@@ -165,7 +165,7 @@ public sealed class ProductionBrainsEnemyConversionTests
     [TestCase("Assets/Scenes/Cycles/Cycle_Ardent/Data/CharacterData_FalseChoir.asset", "Boss encounter")]
     public void AuthoredSpecialEnemiesKeepTheirOwnIdentityAndRejectGenericConversion(string path, string expectedBlocker)
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(path);
         Assert.IsNotNull(data, "The actual production identity must resolve; do not replace it with a fixture.");
         byte[] before = System.IO.File.ReadAllBytes(path);
         var report = ProductionBrainsEnemyConversion.Analyze(data);
@@ -182,10 +182,10 @@ public sealed class ProductionBrainsEnemyConversionTests
         const string guid = "cdafc37f32b176349b1684c4455b98e9";
         string path = AssetDatabase.GUIDToAssetPath(guid);
         Assert.IsNotEmpty(path, "Sync/import the Visual Effect Graph dependency into the isolated project, not a replacement script.");
-        var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path);
+        var script = AnimationLibraryAssets.LoadAssetAtPath<MonoScript>(path);
         Assert.IsNotNull(script);
         Assert.AreEqual("UnityEngine.VFX.Utility.VFXPropertyBinder", script.GetClass()?.FullName);
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/ShadowGuardian.prefab");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/ShadowGuardian.prefab");
         Assert.IsNotNull(prefab);
         Assert.IsFalse(prefab.GetComponentsInChildren<MonoBehaviour>(true).Any(component => component == null));
     }
@@ -214,8 +214,8 @@ public sealed class ProductionBrainsEnemyConversionTests
     [Test]
     public void GiantAliasesAreAuditedIndependentlyWithoutIdentityRepair()
     {
-        var first = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut_CharacterData.asset");
-        var second = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/GiantJuggernaut.asset");
+        var first = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/GiantJuggernaut/GiantJuggernaut_CharacterData.asset");
+        var second = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/GiantJuggernaut.asset");
         Assert.IsNotNull(first);
         Assert.IsNotNull(second);
         Assert.AreNotEqual(first.UniqueId, second.UniqueId);

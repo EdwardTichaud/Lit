@@ -26,7 +26,7 @@ public sealed class LitDistrictVisibilityTests
         Material source = null, copy = null; Texture2D texture = null;
         try
         {
-            var original = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.shadergraph");
+            var original = AnimationLibraryAssets.LoadAssetAtPath<Shader>("Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.shadergraph");
             Assert.That(original, Is.Not.Null);
             Assert.That(LitMaisonVisibilityZone.IsAutodesk(original), Is.True, original.name);
             source = new Material(original); texture = new Texture2D(2, 2);
@@ -137,7 +137,7 @@ public sealed class LitDistrictVisibilityTests
             var floor = GameObject.CreatePrimitive(PrimitiveType.Cube); floor.name = "Floor_Validation";
             SceneManager.MoveGameObjectToScene(wall, scene); SceneManager.MoveGameObjectToScene(floor, scene);
             source = new Material(Shader.Find("HDRP/Lit"));
-            autodesk = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.shadergraph"));
+            autodesk = new Material(AnimationLibraryAssets.LoadAssetAtPath<Shader>("Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.shadergraph"));
             wall.GetComponent<Renderer>().sharedMaterials = new[] { source, autodesk };
             floor.GetComponent<Renderer>().sharedMaterial = source;
             zoneRoot = new GameObject("District validator");

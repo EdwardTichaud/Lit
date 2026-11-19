@@ -13,7 +13,7 @@ public static class RealTimeCombatAnimatorInstaller
     private const string CombatIdleStateName = "CombatIdle";
     private const string Root = "Assets/0 - UnityPackages/Fab/TwinBladesBundle/";
     private const string InPlaceRoot = "Assets/Characters/1_Squad/Lucian/Animation/";
-    private const string GuardClipPath = "Assets/Characters/1_Squad/Lucian/Animation/Anim_SF_Block_v2.fbx";
+    private const string GuardClipPath = "Assets/Animations/Autres/Battle/Lucian/Anim_SF_Block_v2.fbx";
     private const string GuardStateName = "Guard_Block";
 
     private static readonly string[] CombatWalkInPlaceClipPaths =
@@ -82,7 +82,7 @@ public static class RealTimeCombatAnimatorInstaller
     [MenuItem("Lit/Combat/Install Player InPlace States")]
     public static void Install()
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null) return;
 
         bool changed = false;
@@ -212,7 +212,7 @@ public static class RealTimeCombatAnimatorInstaller
 
     private static BlendTree FindOrCreateBlendTree(AnimatorController controller, string name)
     {
-        foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(ControllerPath))
+        foreach (Object asset in AnimationLibraryAssets.LoadAllAssetsAtPath(ControllerPath))
         {
             if (asset is BlendTree tree && tree.name == name)
             {
@@ -342,7 +342,7 @@ public static class RealTimeCombatAnimatorInstaller
 
     private static AnimationClip LoadClip(string path)
     {
-        foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+        foreach (Object asset in AnimationLibraryAssets.LoadAllAssetsAtPath(path))
             if (asset is AnimationClip clip && !clip.name.StartsWith("__preview__")) return clip;
         return null;
     }

@@ -1,9 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 [System.Serializable]
 public sealed class PlayerSettings
 {
+    [Tooltip("Profil des gestes et expressions de dialogue propres au personnage.")]
+    public DialoguePresentationProfile dialoguePresentation;
     [Tooltip("Presentation des reactions propres a ce personnage.")]
     public PlayerCombatPresentationSettings combatPresentation = new PlayerCombatPresentationSettings();
     [Tooltip("Controle, locomotion, orientation, vol et franchissement via UCC.")] public PlayerLocomotionSettings locomotion = new PlayerLocomotionSettings();

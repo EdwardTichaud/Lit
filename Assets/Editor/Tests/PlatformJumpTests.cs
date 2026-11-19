@@ -86,7 +86,7 @@ public sealed class PlatformJumpTests
     [TestCase("Assets/Characters/3_Enemy/Iluvilirae/Lucian_ImpactLab.asset")]
     public void LucianUsesResponsiveTakeoffWithoutChangingHisArc(string path)
     {
-        var data = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(path);
         Assert.That(data, Is.Not.Null);
         Assert.That(data.playerSettings.jump.jumpHeight, Is.EqualTo(100));
         Assert.That(data.playerSettings.jump.jumpStartTakeoffNormalizedTime, Is.EqualTo(.13f));

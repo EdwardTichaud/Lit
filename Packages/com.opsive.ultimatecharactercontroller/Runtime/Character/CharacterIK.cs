@@ -106,6 +106,19 @@ namespace Opsive.UltimateCharacterController.Character
         public float LookAtAdjustmentSpeed { get { return m_LookAtAdjustmentSpeed; } set { m_LookAtAdjustmentSpeed = value; } }
         public string ActiveLookAtStateName { get { return m_ActiveLookAtStateName; } set { m_ActiveLookAtStateName = value; } }
         public float HipsPositionOffset { get { return m_HipsPositionOffset; } set { m_HipsPositionOffset = value; } }
+        /// <summary>Leaves the animated feet and pelvis alone without disabling upper-body IK.</summary>
+        public bool LowerBodyGroundingSuppressed
+        {
+            get => m_LowerBodyGroundingSuppressed;
+            set
+            {
+                if (m_LowerBodyGroundingSuppressed == value) { return; }
+                m_LowerBodyGroundingSuppressed = value;
+                m_HasGroundedHipsPose = false;
+                m_HipsOffset = 0;
+                m_FootIKWeight[0] = m_FootIKWeight[1] = 0;
+            }
+        }
         public float LookAtWeightAdjustmentSpeed { get { return m_LookAtWeightAdjustmentSpeed; } set { m_LookAtWeightAdjustmentSpeed = value; } }
         public float HipsPositionAdjustmentSpeed
         {
@@ -207,6 +220,8 @@ namespace Opsive.UltimateCharacterController.Character
         private Vector3 m_CharacterMovement;
 
         private Vector3 m_HipsPosition;
+        private bool m_LowerBodyGroundingSuppressed;
+        private bool m_HasGroundedHipsPose = true;
         private float m_HipsOffset;
         private float[] m_FootOffset = new float[2];
         private float[] m_FootIKWeight = new float[2];
@@ -728,7 +743,10 @@ namespace Opsive.UltimateCharacterController.Character
                 // Any target interpolations should first be updated before ik is run.
                 UpdateTargetInterpolations();
                 // Position the legs to stand on the ground.
-                PositionLowerBody();
+                if (!m_LowerBodyGroundingSuppressed) {
+                    PositionLowerBody();
+                    m_HasGroundedHipsPose = true;
+                }
                 // The upper body should look in the direction of the LookSource.
                 LookAtTarget();
             } else if (layerIndex == m_UpperBodyLayerIndex) { // Upper body.
@@ -1192,7 +1210,9 @@ namespace Opsive.UltimateCharacterController.Character
         /// </summary>
         public void LateUpdate()
         {
-            m_Hips.position = m_Transform.TransformPoint(m_HipsPosition);
+            if (!m_LowerBodyGroundingSuppressed && m_HasGroundedHipsPose) {
+                m_Hips.position = m_Transform.TransformPoint(m_HipsPosition);
+            }
 
             // After the IK has finished positioning the limbs for the first time reset the immediate position. It should smoothly blend
             // during runtime.

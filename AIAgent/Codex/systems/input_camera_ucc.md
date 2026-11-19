@@ -363,6 +363,11 @@ Generations idempotentes ; nettoyage du raccord sur desactivation/changement
 de scene. Les bakers conservent les reglages et le preview AnimationLab du
 CounterSkill utilise le meme rendu, sans controler la camera gameplay.
 
+Le directeur compose aussi une respiration de rendu. En exploration elle est
+uniquement angulaire, tres legere et sans effet sur le suivi ou les collisions
+UCC. Elle est exclue du combat, des menus et des prises de controle externes ;
+les plans StorySequence peuvent l'activer explicitement.
+
 ## Reglage de rotation au laboratoire (2026-10-10)
 
 ConfigureTurnRates active le facing tactique a vitesse bornee dans

@@ -70,7 +70,7 @@ public static class CombatMigrationImplementationInstall
         var result = new Report();
         result.backup = ProductionCombatMigration.ReportDirectory + "/InstallBackups/" + result.runId;
         string juggernautPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(juggernautPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(juggernautPath);
         var conversion = ProductionBrainsEnemyConversion.Analyze(data);
         if (!conversion.CanApply)
             throw new InvalidOperationException("Production Juggernaut preflight failed before any installation:\n" +

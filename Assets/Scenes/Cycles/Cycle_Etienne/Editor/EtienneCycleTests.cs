@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 public sealed class EtienneCycleTests
 {
     const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-    static CycleDefinition Definition => AssetDatabase.LoadAssetAtPath<CycleDefinition>(EtienneCycleValidation.DefinitionPath);
+    static CycleDefinition Definition => AnimationLibraryAssets.LoadAssetAtPath<CycleDefinition>(EtienneCycleValidation.DefinitionPath);
 
     [Test] public void AuthoredScenesPassReadOnlyAudit() => Assert.That(EtienneCycleValidation.Audit(), Is.Empty);
 
@@ -102,12 +102,12 @@ public sealed class EtienneCycleTests
 
     [Test] public void PoidsMortHasIndependentDataAndOrdinaryDamage()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(EtienneCycleValidation.Root + "/Prefabs/Prefab_DeadWeight.prefab");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(EtienneCycleValidation.Root + "/Prefabs/Prefab_DeadWeight.prefab");
         var b = prefab.GetComponent<DeadWeightBoss>(); var d = prefab.GetComponent<CharacterInfo>().SourceData;
         Assert.That(d.hp, Is.EqualTo(300)); Assert.That(d.worldPrefab, Is.EqualTo(prefab));
         Assert.That(b.SuppressDefaultEnemyBrain, Is.False); Assert.That(b.Definition.ShowBossBar, Is.False);
         Assert.That(b.Definition.DamagePolicy, Is.EqualTo(BossDamagePolicy.Normal));
-        var anchor = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/BrokenAnchor.prefab").GetComponent<BrokenAnchorBoss>();
+        var anchor = AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Scenes/Cycles/Cycle_Belmont/Prefabs/BrokenAnchor.prefab").GetComponent<BrokenAnchorBoss>();
         Assert.That(anchor.SuppressDefaultEnemyBrain, Is.True, "BrokenAnchor must retain its custom brain.");
         Assert.That(anchor.Definition.DamagePolicy, Is.EqualTo(BossDamagePolicy.Invulnerable));
     }
@@ -117,8 +117,8 @@ public sealed class EtienneCycleTests
         var go = new GameObject("Poids mort isolated test");go.SetActive(false);
         try
         {
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(EtienneCycleValidation.Root + "/Data/CharacterData_DeadWeight.asset");
-            var definition = AssetDatabase.LoadAssetAtPath<BossDefinitionSO>(EtienneCycleValidation.Root + "/Data/BossDefinition_DeadWeight.asset");
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(EtienneCycleValidation.Root + "/Data/CharacterData_DeadWeight.asset");
+            var definition = AnimationLibraryAssets.LoadAssetAtPath<BossDefinitionSO>(EtienneCycleValidation.Root + "/Data/BossDefinition_DeadWeight.asset");
             Assert.That(data, Is.Not.Null, "Missing authored DeadWeight CharacterData; do not substitute fixture assets.");
             Assert.That(definition, Is.Not.Null, "Missing authored DeadWeight BossDefinition.");
             var prefab = data.ResolveWorldPrefab();
@@ -180,7 +180,7 @@ public sealed class EtienneCycleTests
     }
     [Test] public void MemoryUsesEditableTracksInsteadOfScriptedClock()
     {
-        var timeline = AssetDatabase.LoadAssetAtPath<UnityEngine.Timeline.TimelineAsset>(EtienneCycleValidation.Root + "/Timeline/TenirJusquAuDernier.playable");
+        var timeline = AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Timeline.TimelineAsset>(EtienneCycleValidation.Root + "/Timeline/TenirJusquAuDernier.playable");
         Assert.That(timeline.GetRootTracks().Select(t=>t.name), Is.EquivalentTo(new[]{"Caméras","Personnages","Contrepoids","Son"}));
         var tracks = timeline.GetOutputTracks().ToArray();
         var shots = tracks.OfType<Unity.Cinemachine.CinemachineTrack>().Single().GetClips().OrderBy(c=>c.start).ToArray();

@@ -41,7 +41,7 @@ public static class CombatMigrationAuthoringDiagnostics
             var report = new VisionImportReport { sourceSha256 = Hash(original) };
             void Record(string label, string path)
             {
-                var data = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+                var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(path);
                 if (data == null) throw new InvalidOperationException("CharacterData import failed: " + path);
                 report.records.Add(new VisionImportRecord { label = label, path = AssetDatabase.GetAssetPath(data),
                     guid = AssetDatabase.AssetPathToGUID(path), characterId = data.UniqueId, vision = JsonUtility.ToJson(data.vision) });
@@ -124,7 +124,7 @@ public static class CombatMigrationAuthoringDiagnostics
         var report = new Report();
         report.zones.Add(Inspect(EtienneCycleValidation.EnvironmentPath, EtienneCycleValidation.CyclePath));
         report.zones.Add(Inspect(ArdentCycleValidation.EnvironmentPath, ArdentCycleValidation.CyclePath));
-        using (var world = new CycleZoneFlameScope(AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset")))
+        using (var world = new CycleZoneFlameScope(AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset")))
         {
             report.activeWorldFlames = world.Flames.Length;
             var ghost = SceneManager.GetSceneByPath(EtienneCycleValidation.CyclePath).GetRootGameObjects()

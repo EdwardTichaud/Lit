@@ -56,7 +56,7 @@ public static class CombatClashAuthoring
         }
         finally { PrefabUtility.UnloadPrefabContents(root); }
         if (guid != AssetDatabase.AssetPathToGUID(path)) throw new InvalidOperationException("Clash authoring changed prefab GUID: " + path);
-        Validate(AssetDatabase.LoadAssetAtPath<GameObject>(path), enemy);
+        Validate(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(path), enemy);
         return true;
     }
 
@@ -420,7 +420,7 @@ public static class ProductionCombatMigration
         var current = Property(new SerializedObject(cameraMode), "profile").objectReferenceValue as LitTacticalCameraProfile;
         Require(source, "Lab camera profile");
         Require(current, "Production exploration camera profile");
-        var profile = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>(CameraProfilePath);
+        var profile = AnimationLibraryAssets.LoadAssetAtPath<LitTacticalCameraProfile>(CameraProfilePath);
         if (profile == null)
         {
             if (AssetDatabase.LoadMainAssetAtPath(CameraProfilePath) != null)
@@ -650,7 +650,7 @@ public static class ProductionCombatMigration
         while (baseController is AnimatorOverrideController generated &&
             AssetDatabase.GetAssetPath(baseController).StartsWith(ControllerDirectory + "/", StringComparison.Ordinal))
             baseController = generated.runtimeAnimatorController;
-        var existing = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
+        var existing = AnimationLibraryAssets.LoadAssetAtPath<AnimatorOverrideController>(path);
         if (existing == null && AssetDatabase.LoadMainAssetAtPath(path) != null)
             throw new InvalidOperationException("Refusing to replace a non-override asset: " + path);
         var working = new AnimatorOverrideController(baseController);
@@ -682,7 +682,7 @@ public static class ProductionCombatMigration
                 if (existing == null)
                 {
                     existing = new AnimatorOverrideController(baseController) { name = name + "_ProductionCombat" };
-                    AssetDatabase.CreateAsset(existing, path);
+                    AnimationLibraryAssets.CreateAsset(existing, path);
                 }
                 else existing.runtimeAnimatorController = baseController;
                 existing.ApplyOverrides(mappings);
@@ -742,11 +742,11 @@ public static class ProductionCombatMigration
     {
         var enemyAssets = new HashSet<string>();
         int unreachableCharacters = 0;
-        foreach (string guid in AssetDatabase.FindAssets("t:CharacterData", new[] { "Assets" }).OrderBy(value => value))
+        foreach (string guid in AnimationLibraryAssets.FindAssets("t:CharacterData", new[] { "Assets" }).OrderBy(value => value))
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             if (!pass.audit.Graph.Reachable.Contains(path)) { unreachableCharacters++; continue; }
-            var data = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+            var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(path);
             if (data == null) continue;
             pass.report.saveSubjects.Add("character:" + guid + ":" + data.UniqueId + ":" + data.characterId);
             string prefabPath = AssetDatabase.GetAssetPath(data.worldPrefab);
@@ -918,7 +918,7 @@ public static class ProductionCombatMigration
         return types[0];
     }
     private static Component Get(GameObject host, string name) => host.GetComponent(RequireType(name));
-    private static T Load<T>(string path) where T : Object => AssetDatabase.LoadAssetAtPath<T>(path) ??
+    private static T Load<T>(string path) where T : Object => AnimationLibraryAssets.LoadAssetAtPath<T>(path) ??
         throw new InvalidOperationException("Missing " + typeof(T).Name + ": " + path);
     private static void Require(Object value, string label)
     {

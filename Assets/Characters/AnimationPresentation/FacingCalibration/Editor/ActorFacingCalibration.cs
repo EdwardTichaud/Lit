@@ -92,14 +92,14 @@ public static partial class ActorFacingCalibration
         var result = new List<Input>();
         string sources = ActorAnimationAudit.Sources;
         var actors = new[] { ActorAnimationAudit.Actor(false), ActorAnimationAudit.Actor(true),
-            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Werewolf/Prefab/Basemesh1.prefab")?.GetComponentInChildren<Animator>(true),
-            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/StoneGolem/Prefab/StoneGolem_Skin1.prefab")?.GetComponentInChildren<Animator>(true) };
+            AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/Werewolf/Prefab/Basemesh1.prefab")?.GetComponentInChildren<Animator>(true),
+            AnimationLibraryAssets.LoadAssetAtPath<GameObject>("Assets/StoneGolem/Prefab/StoneGolem_Skin1.prefab")?.GetComponentInChildren<Animator>(true) };
         string[] names = { "Lucian", "Juggernaut", "Werewolf", "StoneGolem" };
         string[][] paths = {
             new[] {sources+"Twinblades_Idle_Inplace.FBX", sources+"Twinblades_Strafe_Walk_F_Inplace.FBX", sources+"Twinblades_Strafe_Run_F_Inplace.FBX"},
             new[] {sources+"Twinblades_Idle_Inplace.FBX", sources+"Twinblades_Strafe_Walk_F_Inplace.FBX", sources+"Twinblades_Strafe_Run_F_Inplace.FBX"},
-            new[] {"Assets/Werewolf/Animations/Werewolf@idle1.fbx", "Assets/Werewolf/Animations/Werewolf@walk.fbx"},
-            new[] {"Assets/StoneGolem/Animations/StoneGolem@idle1.fbx", "Assets/StoneGolem/Animations/StoneGolem@walkF.fbx", "Assets/StoneGolem/Animations/StoneGolem@jogF.fbx"} };
+            new[] {"Assets/Animations/Autres/Locomotion/Werewolf/Animations/Werewolf@idle1.fbx", "Assets/Animations/Autres/Locomotion/Werewolf/Animations/Werewolf@walk.fbx"},
+            new[] {"Assets/Animations/Autres/Locomotion/StoneGolem/Animations/StoneGolem@idle1.fbx", "Assets/Animations/Autres/Locomotion/StoneGolem/Animations/StoneGolem@walkF.fbx", "Assets/Animations/Autres/Locomotion/StoneGolem/Animations/StoneGolem@jogF.fbx"} };
         // Measured on the actual avatars. Offsets affect ONLY two upper-body muscles, not Root Rotation.
         float[][] offsets = { new[] {-.7440892f, -.4956805f, -.2226866f}, new[] {-.7468941f, -.4911797f, -.2017483f}, new float[2], new float[3] };
         for (int actor = 0; actor < actors.Length; actor++)
@@ -260,16 +260,16 @@ public static partial class ActorFacingCalibration
             Directory.CreateDirectory(Folder+"/Clips");AssetDatabase.Refresh();
             foreach(var input in inputs)
             {
-                var existing=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+                var existing=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
                 if(existing!=null)
                 {
                     if(!SameAuthoring(existing,input.candidate)){EditorUtility.CopySerialized(input.candidate,existing);EditorUtility.SetDirty(existing);}
                     Object.DestroyImmediate(input.candidate);input.candidate=existing;
                 }
-                else AssetDatabase.CreateAsset(input.candidate,input.entry.target);
+                else AnimationLibraryAssets.CreateAsset(input.candidate,input.entry.target);
             }
             foreach(var input in inputs)AssetDatabase.SaveAssetIfDirty(input.candidate);
-            foreach(var input in inputs){AssetDatabase.ImportAsset(input.entry.target,ImportAssetOptions.ForceUpdate);input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);Measure(input);
+            foreach(var input in inputs){AssetDatabase.ImportAsset(input.entry.target,ImportAssetOptions.ForceUpdate);input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);Measure(input);
                 if(Hash(input.entry.source)!=input.entry.sourceHash || Hash(input.entry.source+".meta")!=input.entry.metadataHash)throw new InvalidOperationException("Source changed during calibration");}
             SaveReport(inputs,"candidates");BuildScene(inputs);
         }
@@ -305,7 +305,7 @@ public static partial class ActorFacingCalibration
         if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play Mode before capturing the isolated comparison.");
         foreach(var input in inputs)
         {
-            if(input.candidate==null)input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+            if(input.candidate==null)input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
             if(input.candidate==null)throw new InvalidOperationException("Prepare the lab before capturing: "+input.entry.target);
         }
         var previous=SceneManager.GetActiveScene();var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Additive);
@@ -346,7 +346,7 @@ public static partial class ActorFacingCalibration
             fill.gameObject.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();fill.intensity=2500;
             var volume=new GameObject("Facing capture exposure").AddComponent<UnityEngine.Rendering.Volume>();volume.gameObject.layer=31;volume.isGlobal=true;volume.priority=1000;
             SceneManager.MoveGameObjectToScene(volume.gameObject,renderScene);
-            volume.sharedProfile=AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>("Assets/Characters/3_Enemy/Iluvilirae/Iluvilirae_Test_Volume.asset");
+            volume.sharedProfile=AnimationLibraryAssets.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>("Assets/Characters/3_Enemy/Iluvilirae/Iluvilirae_Test_Volume.asset");
             Directory.CreateDirectory(ReportFolder+"/"+captureFolder);
             foreach(var input in inputs)
             {
@@ -412,7 +412,7 @@ public static partial class ActorFacingCalibration
         var inputs=Resolve();
         foreach(var input in inputs)
         {
-            input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+            input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
             if(input.candidate==null)throw new InvalidOperationException("Prepare clips first: "+input.entry.target);
         }
         BuildScene(inputs,true);

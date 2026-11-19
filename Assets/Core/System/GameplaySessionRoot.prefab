@@ -3121,6 +3121,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LitSmoothUccCameraViewAdapter
   cameraController: {fileID: 8540125469264114897}
   horizontalPivotFreedom: 0
+  explorationBreathingStrength: 0.4
   lookOffsetSmoothing: 0.08
   followSmoothTime: 0.16
   maximumFollowSpeed: 20

@@ -30,74 +30,55 @@ public sealed class StorySequenceAuthoringTests
     }
 
     [Test]
-    public void MaisonOpeningDialogueKeepsTheConversationViewInsteadOfCuttingToLucian()
+    public void MaisonOpeningUsesMuninsExactWorldPoseBeforeFade()
     {
-        var intro = AssetDatabase.LoadAssetAtPath<StorySequenceAsset>(
-            "Assets/Narrative/StorySequence/Sequences/1_Munin_Meeting.asset");
-        Assert.That(intro, Is.Not.Null);
-        Assert.That(intro.startFromBlack, Is.True);
-        Assert.That(intro.steps[0].type, Is.EqualTo(StorySequenceStepType.Dialogue));
-        Assert.That(intro.steps[0].focusCameraOnSpeaker, Is.False);
-        var root = new GameObject("Passive Maison intro");
-        root.SetActive(false);
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Narrative/StorySequence/Prefabs/1_Munin_Meeting.prefab");
+        var preview = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
         try
         {
-            var driver = root.AddComponent<StorySequenceCameraDriver>();
-            var runner = root.AddComponent<StorySequenceRunner>();
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab, preview);
+            var cameraObject = new GameObject("Munin test camera");
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(cameraObject, preview);
+            var camera = cameraObject.AddComponent<Camera>();
+            var driver = root.GetComponent<StorySequenceCameraDriver>();
+            var runner = root.GetComponent<StorySequenceRunner>();
             const System.Reflection.BindingFlags fields = System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.NonPublic;
+            typeof(StorySequenceCameraDriver).GetField("controlledCamera", fields).SetValue(driver, camera);
             typeof(StorySequenceRunner).GetField("cameraDriver", fields).SetValue(runner, driver);
+            typeof(StorySequenceRunner).GetField("bindings", fields).SetValue(runner, root.GetComponent<StorySequenceSceneBindings>());
             var prepare = typeof(StorySequenceRunner).GetMethod("PrepareOpeningShot", fields);
-            Assert.That(prepare.Invoke(runner, new object[] { intro }), Is.EqualTo(-1));
-            Assert.That(driver.IsCinematicActive, Is.False);
+
+            Assert.That(prepare.Invoke(runner, new object[] { runner.Sequence }), Is.EqualTo(0));
+            Assert.That(driver.IsCinematicActive, Is.True);
+            var expectedPosition = new Vector3(.410001755f, -.069999695f, 6.599998474f);
+            var expectedRotation = new Quaternion(-.067592032f, .992857516f, -.006620084f, .098089859f);
+            Assert.That(Vector3.Distance(camera.transform.position, expectedPosition), Is.LessThan(.00001f));
+            Assert.That(Quaternion.Angle(camera.transform.rotation, expectedRotation), Is.LessThan(.02f));
+            Assert.That(camera.transform.localScale, Is.EqualTo(Vector3.one));
         }
-        finally { UnityEngine.Object.DestroyImmediate(root); }
+        finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(preview); }
     }
 
     [Test]
-    public void ConversationViewFramesLucianFromMuninsSideWithoutCrowdingHisFace()
+    public void BreathingAddsBoundedMotionWithoutMovingTheExplorationCamera()
     {
-        var viewObject = new GameObject("Conversation view");
-        var playerObject = new GameObject("Seated player");
-        try
-        {
-            var view = viewObject.AddComponent<StorySequenceConversationView>();
-            var player = playerObject.AddComponent<StorySequenceActor>();
-            var eyes = new GameObject("Seated eye anchor").transform;
-            eyes.SetParent(playerObject.transform, false);
-            eyes.localPosition = new Vector3(0f, 1.1f, 0f);
-            playerObject.transform.SetPositionAndRotation(new Vector3(2f, 3f, 4f), Quaternion.Euler(0f, 90f, 0f));
-            var actorSettings = new SerializedObject(player);
-            actorSettings.FindProperty("cameraAnchor").objectReferenceValue = eyes;
-            actorSettings.ApplyModifiedPropertiesWithoutUndo();
-            var resolve = typeof(StorySequenceConversationView).GetMethod("ResolveStaging",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            object[] pose = { player, Vector3.zero, Vector3.zero, Quaternion.identity };
-            resolve.Invoke(view, pose);
-            var position = (Vector3)pose[1];
-            var target = (Vector3)pose[2];
-            var rotation = (Quaternion)pose[3];
-            Assert.That(position.y, Is.EqualTo(eyes.position.y + .46f).Within(.001f));
-            Assert.That(Vector3.Distance(position, eyes.position), Is.GreaterThan(2f));
-            Assert.That(Vector3.Dot(rotation * Vector3.forward, -player.transform.forward), Is.GreaterThan(.9f));
-            var camera = viewObject.AddComponent<Camera>();
-            camera.transform.SetPositionAndRotation(position, rotation);
-            camera.fieldOfView = 48f;
-            camera.aspect = 16f / 9f;
-            Vector3 face = camera.WorldToViewportPoint(eyes.position);
-            Vector3 orb = camera.WorldToViewportPoint(target);
-            Assert.That(face.x, Is.InRange(.15f, .85f));
-            Assert.That(face.y, Is.InRange(.15f, .85f));
-            Assert.That(orb.x, Is.InRange(.15f, .85f));
-            Assert.That(orb.y, Is.InRange(.15f, .85f));
-            Assert.That(orb.z, Is.LessThan(face.z));
-            Assert.That(Mathf.Abs(orb.x - face.x), Is.GreaterThan(.15f));
-        }
-        finally
-        {
-            UnityEngine.Object.DestroyImmediate(viewObject);
-            UnityEngine.Object.DestroyImmediate(playerObject);
-        }
+        var apply = typeof(LitCameraDirector).GetMethod("ApplyBreathing",
+            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var origin = new Vector3(3f, 4f, 5f);
+        var facing = Quaternion.Euler(10f, 25f, 0f);
+        object[] story = { 1.15d, 1f, true, origin, facing };
+        object[] exploration = { 1.15d, .4f, false, origin, facing };
+        apply.Invoke(null, story);
+        apply.Invoke(null, exploration);
+        Assert.That(Vector3.Distance(origin, (Vector3)story[3]), Is.InRange(.015f, .03f));
+        Assert.That(Vector3.Distance(origin, (Vector3)exploration[3]), Is.Zero);
+        float storyAngle = Quaternion.Angle(facing, (Quaternion)story[4]);
+        float explorationDeflection = Vector3.Distance(facing * Vector3.forward,
+            (Quaternion)exploration[4] * Vector3.forward);
+        Assert.That(storyAngle, Is.InRange(.25f, .45f));
+        Assert.That(explorationDeflection, Is.InRange(.0015f, .0032f));
     }
 
     [Test]
@@ -411,28 +392,26 @@ public sealed class StorySequenceAuthoringTests
         Assert.That(runner.Sequence.startFromBlack, Is.True);
         Assert.That(runner.Sequence.playOnce, Is.True);
         Assert.That(runner.Sequence.TryValidate(out string issue), Is.True, issue);
-        Assert.That(runner.Sequence.steps.Count, Is.EqualTo(4));
-        Assert.That(runner.Sequence.steps[0].type, Is.EqualTo(StorySequenceStepType.Dialogue));
-        Assert.That(runner.Sequence.steps[1].type, Is.EqualTo(StorySequenceStepType.ChooseMuninName));
-        Assert.That(runner.Sequence.steps[1].skippable, Is.False);
-        Assert.That(runner.Sequence.steps[2].type, Is.EqualTo(StorySequenceStepType.Dialogue));
-        StringAssert.Contains("[Munin]", runner.Sequence.steps[2].voiceLine.voiceLineText);
+        Assert.That(runner.Sequence.steps.Count, Is.EqualTo(5));
+        Assert.That(runner.Sequence.steps[0].type, Is.EqualTo(StorySequenceStepType.CameraShot));
+        Assert.That(runner.Sequence.steps[0].cameraTransitionDuration, Is.Zero);
+        Assert.That(runner.Sequence.steps[1].type, Is.EqualTo(StorySequenceStepType.Dialogue));
+        Assert.That(runner.Sequence.steps[2].type, Is.EqualTo(StorySequenceStepType.ChooseMuninName));
+        Assert.That(runner.Sequence.steps[2].skippable, Is.False);
         Assert.That(runner.Sequence.steps[3].type, Is.EqualTo(StorySequenceStepType.Dialogue));
-        Assert.That(runner.Sequence.steps[3].dialogueNodDegrees, Is.EqualTo(4f));
-        Assert.That(runner.Sequence.steps[3].dialogueNodDuration, Is.EqualTo(.56f));
-        for (int i = 0; i < 3; i++)
+        StringAssert.Contains("[Munin]", runner.Sequence.steps[3].voiceLine.voiceLineText);
+        Assert.That(runner.Sequence.steps[4].type, Is.EqualTo(StorySequenceStepType.Dialogue));
+        Assert.That(runner.Sequence.steps[4].dialogueNodDegrees, Is.EqualTo(4f));
+        Assert.That(runner.Sequence.steps[4].dialogueNodDuration, Is.EqualTo(.56f));
+        for (int i = 0; i < 4; i++)
             Assert.That(runner.Sequence.steps[i].dialogueNodDegrees, Is.Zero);
-        var view = prefab.GetComponent<StorySequenceConversationView>();
-        Assert.That(view, Is.Not.Null);
-        Assert.That(new SerializedObject(runner).FindProperty("conversationView").objectReferenceValue, Is.SameAs(view));
-        var viewSettings = new SerializedObject(view);
-        var mark = viewSettings.FindProperty("cameraPoint").objectReferenceValue as StorySequenceCameraPoint;
+        var mark = prefab.GetComponent<StorySequenceSceneBindings>().ResolveCameraPoint(runner.Sequence.steps[0].cameraPointId);
         Assert.That(mark, Is.Not.Null);
-        Assert.That(mark.transform.IsChildOf(prefab.transform), Is.True);
-        var orb = viewSettings.FindProperty("interlocutorVisual").objectReferenceValue as GameObject;
-        Assert.That(orb, Is.Not.Null);
-        Assert.That(orb.GetComponentInChildren<ParticleSystem>(true), Is.Not.Null);
-        Assert.That(orb.GetComponentInChildren<MuninController>(true), Is.Null);
+        Assert.That(mark.UseAuthoredRotation, Is.True);
+        Assert.That(mark.transform.localScale, Is.EqualTo(Vector3.one * 5f));
+        Assert.That(prefab.GetComponentsInChildren<Light>(true), Is.Empty);
+        Assert.That(AssetDatabase.GetDependencies(AssetDatabase.GetAssetPath(prefab)),
+            Has.None.EndsWith("/Munin_v4.prefab"));
         var lucian = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset");
         Assert.That(lucian.portrait, Is.Not.Null);
         Assert.That(AssetDatabase.GetAssetPath(lucian.portrait),
@@ -441,6 +420,7 @@ public sealed class StorySequenceAuthoringTests
         {
             if (step.type != StorySequenceStepType.Dialogue) continue;
             Assert.That(step.actorId, Is.EqualTo("player"));
+            Assert.That(step.focusCameraOnSpeaker, Is.False, "Munin keeps the same point of view throughout the conversation.");
             Assert.That(step.speakerCharacterData, Is.Null, "The portrait must follow the controlled character.");
         }
         // The keyboard is a persistent Bootstrap panel, deliberately absent
@@ -467,8 +447,11 @@ public sealed class StorySequenceAuthoringTests
             Assert.That(sceneRunner, Is.Not.Null);
             var settings = new SerializedObject(sceneRunner);
             Assert.That(settings.FindProperty("startWithLocalPlayerSeated").boolValue, Is.True);
-            Assert.That(settings.FindProperty("conversationView").objectReferenceValue,
-                Is.SameAs(sceneRunner.GetComponent<StorySequenceConversationView>()));
+            var sceneMark = sceneRunner.GetComponent<StorySequenceSceneBindings>().ResolveCameraPoint(
+                sceneRunner.Sequence.steps[0].cameraPointId);
+            Assert.That(sceneMark, Is.Not.Null);
+            Assert.That(Vector3.Distance(sceneMark.transform.position, mark.transform.position), Is.LessThan(.00001f));
+            Assert.That(Quaternion.Angle(sceneMark.transform.rotation, mark.transform.rotation), Is.LessThan(.02f));
             Assert.That(settings.FindProperty("playOnStart").boolValue, Is.False);
         }
         finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(maison); }

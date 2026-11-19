@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Linq;
 using Unity.Netcode;
@@ -100,7 +100,17 @@ public sealed partial class CycleController
             bool shown = DialoguePanelUI.TryShowTimedConversation(binding.line, binding.durationSeconds,
                 completed => { natural = completed; finished = true; }, autoDialogueOwner, binding.speakerCharacterData);
             if (!shown) yield break;
-            while (LocalAutoDialogueIsCurrent(generation) && !finished && Time.realtimeSinceStartupAsDouble < timeout) yield return null;
+            using (var presentation = new DialoguePresentationSession(this,
+                DialoguePresentationSession.ResolveSpeaker(binding.speakerCharacterData), null, false, null))
+            {
+                float spoken = 0;
+                while (LocalAutoDialogueIsCurrent(generation) && !finished && Time.realtimeSinceStartupAsDouble < timeout)
+                {
+                    spoken += Time.unscaledDeltaTime;
+                    if (spoken >= 2.5f) presentation.FinishSpeaking();
+                    yield return null;
+                }
+            }
             // A player may pass the line immediately. Keep the host's minimum-time
             // guard intact: an early successful acknowledgement would otherwise be
             // rejected and never resent, causing a timeout and a replay of the line.

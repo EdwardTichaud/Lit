@@ -139,7 +139,7 @@ public static partial class ActorFacingCalibration
                     if(reused!=null)
                     {
                         input.entry.target=reused.entry.target;input.entry.muscleOffset=reused.entry.muscleOffset;
-                        input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+                        input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
                         if(input.candidate==null)throw new InvalidOperationException("First-lot candidate missing: "+input.entry.target);
                     }
                     else
@@ -158,16 +158,16 @@ public static partial class ActorFacingCalibration
             foreach(var input in inputs)
             {
                 if(input.candidate==null || AssetDatabase.Contains(input.candidate))continue;
-                var existing=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);
+                var existing=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);
                 if(existing!=null)
                 {
                     if(!SameAuthoring(existing,input.candidate)){EditorUtility.CopySerialized(input.candidate,existing);EditorUtility.SetDirty(existing);}
                     Object.DestroyImmediate(input.candidate);input.candidate=existing;
                 }
-                else AssetDatabase.CreateAsset(input.candidate,input.entry.target);
+                else AnimationLibraryAssets.CreateAsset(input.candidate,input.entry.target);
                 AssetDatabase.SaveAssetIfDirty(input.candidate);
                 AssetDatabase.ImportAsset(input.entry.target,ImportAssetOptions.ForceUpdate);
-                input.candidate=AssetDatabase.LoadAssetAtPath<AnimationClip>(input.entry.target);Measure(input,5);
+                input.candidate=AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(input.entry.target);Measure(input,5);
             }
             foreach(var input in inputs)
                 if(Hash(input.entry.source)!=input.entry.sourceHash || Hash(input.entry.source+".meta")!=input.entry.metadataHash)throw new InvalidOperationException("Directional source changed");

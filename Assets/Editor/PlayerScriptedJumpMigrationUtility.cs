@@ -29,13 +29,13 @@ public static class PlayerScriptedJumpMigrationUtility
 
     private static void MigrateController()
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        AnimatorController controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (controller == null) throw new InvalidOperationException("Player_Model.controller is missing.");
         AnimatorStateMachine root = controller.layers[0].stateMachine;
-        SetMotion(root, "Jump_Start", "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/inplace/jump_start_inplace.fbx");
-        SetMotion(root, "Jump_Loop", "Assets/Characters/4_Animations/Dynamic_Archer_Set/Animation/Humanoid/inplace/jump_inplace.fbx");
-        SetMotion(root, "Falling", "Assets/Characters/1_Squad/Lucian/Animation/jump_falling_loop_inplace.fbx");
-        SetMotion(root, "Jump_End", "Assets/Characters/1_Squad/Lucian/Animation/jump_landing_inplace.fbx");
+        SetMotion(root, "Jump_Start", "Assets/Animations/Autres/Locomotion/Dynamic_Archer_Set/Humanoid/inplace/jump_start_inplace.fbx");
+        SetMotion(root, "Jump_Loop", "Assets/Animations/Autres/Locomotion/Dynamic_Archer_Set/Humanoid/inplace/jump_inplace.fbx");
+        SetMotion(root, "Falling", "Assets/Animations/Autres/Locomotion/Lucian/jump_falling_loop_inplace.fbx");
+        SetMotion(root, "Jump_End", "Assets/Animations/Autres/Locomotion/Lucian/jump_landing_inplace.fbx");
         RemoveJumpRoll(root);
         RemoveMissingBehaviours(root);
         int jumpRollParameterIndex = System.Array.FindIndex(controller.parameters, parameter => parameter.name == "JumpRollTrigger");
@@ -46,7 +46,7 @@ public static class PlayerScriptedJumpMigrationUtility
     private static void SetMotion(AnimatorStateMachine root, string stateName, string clipPath)
     {
         AnimatorState state = FindState(root, stateName);
-        AnimationClip clip = AssetDatabase.LoadAllAssetsAtPath(clipPath).OfType<AnimationClip>().FirstOrDefault();
+        AnimationClip clip = AnimationLibraryAssets.LoadAllAssetsAtPath(clipPath).OfType<AnimationClip>().FirstOrDefault();
         if (state == null || clip == null) throw new InvalidOperationException("Missing scripted jump state or in-place clip: " + stateName);
         state.motion = clip;
     }

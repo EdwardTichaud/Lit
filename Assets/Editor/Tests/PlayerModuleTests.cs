@@ -100,8 +100,8 @@ public sealed class PlayerModuleTests
     public void PlayerPrefabHasValidModulesAndMigratedSettings(string character)
     {
         string folder = "Assets/Characters/1_Squad/" + character + "/";
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(folder + "Player_Model_" + character + ".prefab");
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>(folder + character + ".asset");
+        var prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(folder + "Player_Model_" + character + ".prefab");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>(folder + character + ".asset");
         Assert.That(data, Is.Not.Null);
         Assert.That(data.playerSettings.jump, Is.Not.Null);
         Assert.That(data.playerSettings.locomotion, Is.Not.Null);
@@ -127,7 +127,7 @@ public sealed class PlayerModuleTests
     public void PlayerPrefabEnablesTheTorchAnimationLayer(string character)
     {
         string folder = "Assets/Characters/1_Squad/" + character + "/";
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(folder + "Player_Model_" + character + ".prefab");
+        GameObject prefab = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(folder + "Player_Model_" + character + ".prefab");
         var squad = prefab.GetComponent<SquadCharacterController>();
         var animator = prefab.GetComponent<Animator>();
         var controller = animator.runtimeAnimatorController as AnimatorController;
@@ -180,7 +180,7 @@ public sealed class PlayerModuleTests
     public void LucianFlameClipsDoNotAnimateTheLowerBody(string clipName)
     {
         const string folder = "Assets/Characters/1_Squad/Lucian/Animation/PlayerInPlace/";
-        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(folder + clipName);
+        var clip = AnimationLibraryAssets.LoadAssetAtPath<AnimationClip>(folder + clipName);
         Assert.That(clip, Is.Not.Null);
 
         foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))

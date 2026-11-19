@@ -16,7 +16,7 @@ public sealed class ProductionCombatFeelMigrationTests
         try
         {
             if (opened) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
-            var manifest = AssetDatabase.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset");
+            var manifest = AnimationLibraryAssets.LoadAssetAtPath<ZoneManifest>("Assets/Scenes/Maison/ZoneManifest_District_1.asset");
             GameFlowService flow = null;
             foreach (var root in scene.GetRootGameObjects())
                 foreach (var candidate in root.GetComponentsInChildren<GameFlowService>(true))
@@ -38,9 +38,9 @@ public sealed class ProductionCombatFeelMigrationTests
     [Test]
     public void ChargedSkillKeepsCanonicalIdentityAndValidatedPreparation()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset");
-        var canonical = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(ChargedSkillSetup.SourceSkillPath);
-        var validated = AssetDatabase.LoadAssetAtPath<ChargedSkillSO>(ChargedSkillSetup.SkillPath);
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/Lucian/Lucian.asset");
+        var canonical = AnimationLibraryAssets.LoadAssetAtPath<ChargedSkillSO>(ChargedSkillSetup.SourceSkillPath);
+        var validated = AnimationLibraryAssets.LoadAssetAtPath<ChargedSkillSO>(ChargedSkillSetup.SkillPath);
         Assert.That(data.chargedSkill, Is.SameAs(canonical));
         Assert.That(canonical.preparationMode, Is.EqualTo(ChargedPreparationMode.BasicTail));
         Assert.That(canonical.launchTrajectory, Is.EqualTo(ChargedLaunchTrajectory.Impulse));
@@ -55,11 +55,11 @@ public sealed class ProductionCombatFeelMigrationTests
     [Test]
     public void ProductionCameraUsesActionFramingWithoutReplacingWideExploration()
     {
-        var session = AssetDatabase.LoadAssetAtPath<GameObject>(ProductionCombatMigration.SessionPath);
+        var session = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(ProductionCombatMigration.SessionPath);
         var mode = session.GetComponentInChildren<LitGameplayCameraModeController>(true);
         var profile = new SerializedObject(mode).FindProperty("profile").objectReferenceValue as LitTacticalCameraProfile;
-        var wide = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>("Assets/CombatRealTime/Camera/TacticalDefault.asset");
-        var validated = AssetDatabase.LoadAssetAtPath<LitTacticalCameraProfile>(CombatFeelLabSetup.CameraPath);
+        var wide = AnimationLibraryAssets.LoadAssetAtPath<LitTacticalCameraProfile>("Assets/CombatRealTime/Camera/TacticalDefault.asset");
+        var validated = AnimationLibraryAssets.LoadAssetAtPath<LitTacticalCameraProfile>(CombatFeelLabSetup.CameraPath);
         Assert.That(AssetDatabase.GetAssetPath(profile), Is.EqualTo(ProductionCombatMigration.CameraProfilePath));
         Assert.That(profile, Is.Not.SameAs(wide));
         Assert.That(profile.initialDistance, Is.EqualTo(wide.initialDistance));
@@ -72,11 +72,11 @@ public sealed class ProductionCombatFeelMigrationTests
     [Test]
     public void ProductionJuggernautHasSingleContactPoseWithoutReplacingItsIdentity()
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset");
         var prefab = data.ResolveWorldPrefab();
         Assert.That(prefab.GetComponents<CombatContactPose>(), Has.Length.EqualTo(1));
         Assert.That(prefab.GetComponent<LitBrainsEnemy>().characterData, Is.SameAs(data));
-        Assert.That(prefab, Is.Not.SameAs(AssetDatabase.LoadAssetAtPath<GameObject>(ChargedSkillSetup.EnemyPath)));
+        Assert.That(prefab, Is.Not.SameAs(AnimationLibraryAssets.LoadAssetAtPath<GameObject>(ChargedSkillSetup.EnemyPath)));
     }
 
     [TestCase("Lucian")]
@@ -85,9 +85,9 @@ public sealed class ProductionCombatFeelMigrationTests
     [TestCase("Soren")]
     public void PlayerHasSingleAuthoredContactAudioWithValidatedSettings(string character)
     {
-        var data = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/" + character + "/" + character + ".asset");
+        var data = AnimationLibraryAssets.LoadAssetAtPath<CharacterData>("Assets/Characters/1_Squad/" + character + "/" + character + ".asset");
         var audio = data.ResolveWorldPrefab().GetComponents<CombatContactAudio>();
-        var validated = AssetDatabase.LoadAssetAtPath<GameObject>(GroundImpactSkillSetup.PrefabPath).GetComponent<CombatContactAudio>();
+        var validated = AnimationLibraryAssets.LoadAssetAtPath<GameObject>(GroundImpactSkillSetup.PrefabPath).GetComponent<CombatContactAudio>();
         Assert.That(audio, Has.Length.EqualTo(1));
         Assert.That(audio[0].lightPitch, Is.EqualTo(validated.lightPitch));
         Assert.That(audio[0].heavyPitch, Is.EqualTo(validated.heavyPitch));

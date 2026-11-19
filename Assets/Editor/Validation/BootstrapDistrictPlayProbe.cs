@@ -33,6 +33,7 @@ public static partial class BootstrapDistrictPlayProbe
         public int limbesWalkIndex;
         public float limbesBossPeak;
         public double started, stageStarted;
+        public double muninDepartureSeenAt;
         public bool oldOptionsEnabled, passed, restored, recovery, limbes, limbesCycles, limbesRoutes, limbesExpansion, passageDiscovery, courts, secretContent, districtConnection, moonriseCombat, fracture;
         public bool enola;
         public bool stabilization;
@@ -347,45 +348,60 @@ public static partial class BootstrapDistrictPlayProbe
                         bool meeting = checkMuninSeat && runner.Sequence.sequenceId == "1_Munin_Meeting";
                         if (checkMuninSeat && !meeting) continue;
                         if (meeting &&
-                            !report.checks.Contains("The opening shows Lucian from the front with Munin in the foreground."))
+                            !report.checks.Contains("The camera holds Munin's authored position and rotation without spawning an orb."))
                         {
                             if (DialoguePanelUI.Instance?.dialogueText?.text?.Contains("Qui es-tu") != true ||
                                 !DialoguePanelUI.Instance.IsShowing) continue;
                             Check(runner.gameObject.scene.name == "Maison_Sequences",
                                 "Munin's opening runs from the authored Maison scene instance.");
-                            var view = runner.GetComponent<Lit.Story.StorySequenceConversationView>();
                             var driver = runner.GetComponent<Lit.Story.StorySequenceCameraDriver>();
                             var camera = Camera.main;
-                            var orb = view != null && view.transform.Find("Munin_v4(Clone)") is Transform visual ? visual : null;
+                            var mark = runner.GetComponent<Lit.Story.StorySequenceSceneBindings>()
+                                .ResolveCameraPoint(runner.Sequence.steps[0].cameraPointId);
                             var lucian = LocalPlayerContext.LocalCharacterRoot;
                             var actorView = lucian.GetComponent<Lit.Story.StorySequenceActor>();
                             var actorController = lucian.GetComponent<SquadCharacterController>();
-                            Vector3 face = camera != null ? camera.WorldToViewportPoint(actorView.CameraAnchor.position) : Vector3.zero;
-                            Vector3 foreground = camera != null && orb != null ? camera.WorldToViewportPoint(orb.position) : Vector3.zero;
-                            Check(driver.IsCinematicActive && camera != null && orb != null &&
-                                  Vector3.Dot(camera.transform.forward, -lucian.forward) > .8f &&
-                                  face.z > 1.9f && foreground.z > 0f && foreground.z < face.z &&
-                                  face.x > .1f && face.x < .9f && face.y > .1f && face.y < .9f &&
-                                  foreground.x > .1f && foreground.x < .9f && foreground.y > .1f && foreground.y < .9f,
-                                "The opening shows Lucian from the front with Munin in the foreground.");
+                            Check(driver.IsCinematicActive && camera != null && mark != null &&
+                                  Vector3.Distance(camera.transform.position, mark.transform.position) < .001f &&
+                                  Quaternion.Angle(camera.transform.rotation, mark.transform.rotation) < .02f &&
+                                  runner.transform.Find("Munin_v4(Clone)") == null,
+                                "The camera holds Munin's authored position and rotation without spawning an orb.");
+                            Check(RenderedBreathingWeight(camera) > .05f,
+                                "Munin's story camera breathes on top of the unchanged authored pose.");
                             ScreenCapture.CaptureScreenshot(Path.Combine(report.run, "MuninFaceToFace.png"));
                             Check(actorController.IsSittingRequested &&
                                   actorView.Animator.GetCurrentAnimatorStateInfo(0).IsName("Base Layer.Sitting_Idle"),
                                 "Lucian is seated during the opening. Physical ground contact: " +
                                 actorController.GetComponent<LitOpsiveLocomotionBridge>().Grounded);
+                            CompareMuninSeatedGrounding(actorView.Animator, lucian);
                         }
-                        if (meeting &&
-                            DialoguePanelUI.Instance?.dialogueText?.text?.Contains("il est temps") == true &&
-                            !report.checks.Contains("The departure line dips the camera without moving its position."))
+                        if (meeting)
                         {
                             var driver = runner.GetComponent<Lit.Story.StorySequenceCameraDriver>();
                             var point = runner.GetComponentInChildren<Lit.Story.StorySequenceCameraPoint>();
                             var camera = Camera.main;
-                            if (driver.IsNodding && camera != null &&
+                            var panel = DialoguePanelUI.Instance;
+                            bool departureOpen = panel != null && panel.IsExternallyControlled &&
+                                panel.dialogueText?.text?.Contains("il est temps") == true;
+                            if (departureOpen)
+                            {
+                                if (driver.IsNodding)
+                                    throw new InvalidOperationException("Munin nodded while the departure line was still open.");
+                                if (report.muninDepartureSeenAt == 0)
+                                    report.muninDepartureSeenAt = EditorApplication.timeSinceStartup;
+                                if (EditorApplication.timeSinceStartup - report.muninDepartureSeenAt < .75)
+                                    continue;
+                                if (!report.checks.Contains("The camera stays still until the departure line is advanced."))
+                                    Check(camera != null && Quaternion.Angle(camera.transform.rotation, point.transform.rotation) < .02f,
+                                        "The camera stays still until the departure line is advanced.");
+                            }
+                            if (report.muninDepartureSeenAt > 0 && driver.IsNodding && camera != null &&
+                                !report.checks.Contains("The camera nods only after the departure line has closed.") &&
                                 Vector3.Dot(camera.transform.forward, point.transform.up) < -.025f)
                             {
-                                Check(Vector3.Distance(camera.transform.position, point.transform.position) < .01f,
-                                    "The departure line dips the camera without moving its position.");
+                                Check(panel != null && !panel.IsExternallyControlled &&
+                                      Vector3.Distance(camera.transform.position, point.transform.position) < .01f,
+                                    "The camera nods only after the departure line has closed.");
                             }
                         }
                         typeof(Lit.Story.StorySequenceRunner).GetField("advanceRequested", Private).SetValue(runner, true);
@@ -401,15 +417,23 @@ public static partial class BootstrapDistrictPlayProbe
                 if (checkMuninSeat)
                 {
                     if (Lit.Story.StorySequenceRunner.IsAnySequencePlaying || actor.IsInSittingCycle) return;
-                    if (!report.checks.Contains("The opening shows Lucian from the front with Munin in the foreground.")) return;
+                    if (!report.checks.Contains("The camera holds Munin's authored position and rotation without spawning an orb.")) return;
+                    float explorationBreathing = RenderedBreathingWeight(Camera.main);
+                    if (explorationBreathing <= .05f) return;
+                    Check(explorationBreathing <= .401f && InputModeCoordinator.CurrentMode == InputMode.Exploration,
+                        "Subtle exploration breathing resumes after the story camera releases control.");
                     Check(!actor.IsMovementInputSuppressed, "Movement is released after the opening.");
-                    Check(report.checks.Contains("The departure line dips the camera without moving its position."),
-                        "The nod was observed on the authored line before resuming gameplay.");
-                    var views = UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceConversationView>();
-                    Check(views.Length == 1 && views.All(view => view.transform.Find("Munin_v4(Clone)") == null &&
-                              !view.GetComponent<Lit.Story.StorySequenceCameraDriver>().IsCinematicActive),
-                        "The orb and cinematic camera are cleaned up after the meeting.");
-                    Finish(true, "Munin's opening faces the orb, nods on the departure line, and restores exploration.");
+                    Check(!actor.GetComponent<Opsive.UltimateCharacterController.Character.CharacterIK>().LowerBodyGroundingSuppressed,
+                        "Standing foot and pelvis correction resumes after the seated cycle.");
+                    Check(report.checks.Contains("The camera stays still until the departure line is advanced.") &&
+                          report.checks.Contains("The camera nods only after the departure line has closed."),
+                        "The nod follows the departure line and precedes the return to gameplay.");
+                    var meetings = UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceRunner>()
+                        .Where(runner => runner.Sequence != null && runner.Sequence.sequenceId == "1_Munin_Meeting").ToArray();
+                    Check(meetings.Length == 1 &&
+                          !meetings[0].GetComponent<Lit.Story.StorySequenceCameraDriver>().IsCinematicActive,
+                        "The cinematic camera is released after the meeting.");
+                    Finish(true, "Munin nods after the departure line has closed, then restores exploration.");
                     return;
                 }
                 Check(saves.HasActiveSave && saves.CurrentSessionType == SaveSessionType.Solo, "Actual menu created an isolated solo session and spawned the controlled avatar.");
@@ -555,6 +579,61 @@ public static partial class BootstrapDistrictPlayProbe
             return;
         }
         throw new InvalidOperationException("No safe physical approach to the authored District_1 portal.");
+    }
+
+    private static float RenderedBreathingWeight(Camera camera)
+    {
+        var director = camera != null ? camera.GetComponent<LitCameraDirector>() : null;
+        return director != null
+            ? (float)typeof(LitCameraDirector).GetField("breathingWeight", Private).GetValue(director)
+            : 0f;
+    }
+
+    private static void CompareMuninSeatedGrounding(Animator animator, Transform actor)
+    {
+        var ik = actor.GetComponent<Opsive.UltimateCharacterController.Character.CharacterIK>();
+        Check(ik != null && ik.isActiveAndEnabled && ik.LowerBodyGroundingSuppressed,
+            "The seated cycle suspends only the lower-body grounding solver.");
+        var state = animator.GetCurrentAnimatorStateInfo(0);
+        float phase = Mathf.Repeat(state.normalizedTime, 1f);
+        var bones = new[] { HumanBodyBones.Hips, HumanBodyBones.LeftLowerLeg, HumanBodyBones.RightLowerLeg,
+            HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot };
+        Vector3 rootPosition = actor.position;
+        Vector3[] Sample(bool suppressed)
+        {
+            ik.LowerBodyGroundingSuppressed = suppressed;
+            typeof(Opsive.UltimateCharacterController.Character.CharacterIK).GetMethod("ImmediatePosition", Private)
+                .Invoke(ik, null);
+            animator.Play(state.fullPathHash, 0, phase);
+            animator.Update(0f);
+            ik.LateUpdate();
+            return bones.Select(bone => animator.GetBoneTransform(bone).position).ToArray();
+        }
+        Vector3[] corrected;
+        Vector3[] baseline;
+        try
+        {
+            baseline = Sample(false);
+        }
+        finally
+        {
+            corrected = Sample(true);
+        }
+        Check(Vector3.Distance(rootPosition, actor.position) < .001f,
+            "The seated IK comparison did not move the character root.");
+        for (int i = 0; i < bones.Length; i++)
+        {
+            float clearance(Vector3 position)
+            {
+                var hits = Physics.RaycastAll(position + Vector3.up, Vector3.down, 2f,
+                    Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                var ground = hits.Where(hit => hit.normal.y > .55f && !hit.collider.transform.IsChildOf(actor))
+                    .OrderBy(hit => hit.distance).FirstOrDefault();
+                return ground.collider != null ? position.y - ground.point.y : float.NaN;
+            }
+            Check(true, $"Seated A/B {bones[i]}: vertical change {corrected[i].y - baseline[i].y:F3} m; " +
+                $"bone-to-surface {clearance(baseline[i]):F3} -> {clearance(corrected[i]):F3} m.");
+        }
     }
 
     private static void Check(bool condition, string message)

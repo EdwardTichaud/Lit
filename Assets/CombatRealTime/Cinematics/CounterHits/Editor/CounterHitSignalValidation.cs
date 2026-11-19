@@ -34,7 +34,7 @@ public static class CounterHitSignalValidation
             CounterHitSignal.RoundDamage(float.PositiveInfinity) == 0 && CounterHitSignal.RoundDamage(float.MaxValue) == int.MaxValue, "damage rounding/finite bounds");
         if (validateAssets)
         {
-        var timelineAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
+        var timelineAsset = AnimationLibraryAssets.LoadAssetAtPath<TimelineAsset>(CounterKnockoutSignalSetup.TimelinePath);
         var migrated = CombatCinematicRig.CounterHits(timelineAsset).OrderBy(m => m.time).ToArray();
         // Contact count is authored in Timeline; adding valid contacts must not fail cleanup validation.
         Require(migrated.Length > 0 && migrated.All(m => m.IsValid && m.vfx != null && m.sfx != null), "migrated contacts/effects");
@@ -42,7 +42,7 @@ public static class CounterHitSignalValidation
         var paths = new[] { "Assets/Characters/3_Enemy/Juggernaut/BrainsProduction/Production.controller", "Assets/Characters/3_Enemy/Juggernaut_v2/StoneGolem_Humanoid.controller", "Assets/Werewolf/Werewolf Animator Controller.controller" };
         foreach (var path in paths)
         {
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+            var controller = AnimationLibraryAssets.LoadAssetAtPath<AnimatorController>(path);
             Require(controller.layers[0].stateMachine.states.Any(s => s.state.name == "Hit_1" && s.state.motion != null), "native Hit_1: " + path);
         }
         }
