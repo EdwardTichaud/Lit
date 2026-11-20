@@ -106,7 +106,7 @@ public static class SimpleLucianAnimationPlayProbe
     }
     private static void Require(bool condition,string message){if(!condition)throw new InvalidOperationException(message);}
     private static void Record(string label,LitOpsiveLocomotionBridge b,Animator a)
-    {records.Add(label+" speed="+b.PlanarVelocity.magnitude.ToString("F3")+" LitSpeed="+a.GetFloat("LitSpeed").ToString("F3")+" cadence="+a.GetFloat("LocomotionPlaybackRate").ToString("F3")+" state="+a.GetCurrentAnimatorStateInfo(0).fullPathHash+" "+b.DriveDiagnostic+" input="+b.CurrentWorldMoveInput);}
+    {records.Add(label+" speed="+b.PlanarVelocity.magnitude.ToString("F3")+" LitSpeed="+a.GetFloat("LitSpeed").ToString("F3")+" state="+a.GetCurrentAnimatorStateInfo(0).fullPathHash+" "+b.DriveDiagnostic+" input="+b.CurrentWorldMoveInput);}
     private static void Next(int next){stage=next;since=EditorApplication.timeSinceStartup;}
     private static void Finish(string result)
     {

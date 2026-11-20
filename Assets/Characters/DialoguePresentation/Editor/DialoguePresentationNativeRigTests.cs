@@ -45,12 +45,16 @@ public class DialoguePresentationNativeRigTests
             Assert.That(handChange,Is.GreaterThan(.005f),"Positive control: the torch layer must animate the holding arm.");
         }
     }
-    [Test] public void OnlyGroundCyclesUseTheCadenceMultiplier()
+    [Test] public void LucianLocomotionUsesManuallyAuthoredStateSpeeds()
     {
-        var c=AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(SimpleLucianAnimationSetup.ControllerPath);
-        foreach(var s in LocomotionPresentationCalibration.States(c.layers[0].stateMachine))
-            if(s.name!="Locomotion" && s.name!="CombatLocomotion")
-                Assert.That(s.speedParameterActive && s.speedParameter==LocomotionPresentationProfile.PlaybackParameter,Is.False,s.name);
+        foreach (string path in SimpleLucianAnimationSetup.ControllerPaths)
+        {
+            var c=AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(path);
+            Assert.That(c.parameters.Any(p=>p.name=="LocomotionPlaybackRate"),Is.False,path);
+            foreach(var state in LocomotionPresentationCalibration.States(c.layers[0].stateMachine))
+                if(state.name=="Locomotion" || state.name=="CombatLocomotion")
+                    Assert.That(state.speedParameterActive,Is.False,path+" / "+state.name);
+        }
     }
     [Test] public void LucianPrefabsHaveNoMissingComponents()
     {
@@ -67,10 +71,5 @@ public class DialoguePresentationNativeRigTests
         var p=data.playerSettings.locomotion.presentationProfile;
         Assert.That(typeof(LocomotionPresentationProfile).GetField("footSupports"), Is.Null);
         Assert.That(typeof(LocomotionPresentationProfile.Cycle).GetField("footGoals"), Is.Null);
-        foreach(bool sprint in new[]{false,true})
-        {
-            p.Evaluate(0,sprint,Vector2.up,out float stopped,out float idleRate);
-            Assert.That(stopped,Is.Zero);Assert.That(idleRate,Is.EqualTo(1));
-        }
     }
 }

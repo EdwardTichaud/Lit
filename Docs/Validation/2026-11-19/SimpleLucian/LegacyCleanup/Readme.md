@@ -13,3 +13,5 @@ Vérifications du nettoyage :
 - Derniers tests Editor et Play Mode après nettoyage : en attente de la sauvegarde de Bootstrap demandée par Unity. Les résultats antérieurs au nettoyage ne constituent pas cette validation.
 
 La validation visuelle complète en jeu reste nécessaire ; ce nettoyage ne certifie pas le ressenti de toutes les animations.
+
+Le 20 novembre 2026, la suite Editor a ete relancee apres retrait de la cadence automatique : 56 tests passent, y compris le controle des composants manquants. Les essais visuels et Play Mode complets restent distincts. Voir ../../../../2026-11-20/ManualLocomotionSpeeds/Readme.md.

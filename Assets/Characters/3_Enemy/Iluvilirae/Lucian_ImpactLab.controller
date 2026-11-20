@@ -1730,13 +1730,13 @@ AnimatorState:
   m_IKOnFeet: 1
   m_WriteDefaultValues: 1
   m_Mirror: 0
-  m_SpeedParameterActive: 1
+  m_SpeedParameterActive: 0
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 2451094409712344004}
   m_Tag: 
-  m_SpeedParameter: LocomotionPlaybackRate
+  m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
@@ -2066,12 +2066,6 @@ AnimatorController:
   - m_Name: ChargedBasicPlaybackRate
     m_Type: 1
     m_DefaultFloat: 1
-    m_DefaultInt: 0
-    m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
-  - m_Name: LocomotionPlaybackRate
-    m_Type: 1
-    m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
@@ -3180,7 +3174,7 @@ BlendTree:
   m_Name: WholeBody_Exploration
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 74f7dd4628313f2459f0fd6f6f6c65c6, type: 2}
+    m_Motion: {fileID: -203655887218126122, guid: 3d602b86a7deb5f408891d0c604b6495, type: 3}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -3188,19 +3182,19 @@ BlendTree:
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 7d50f5f93c12e984c8ecc5f846061efa, type: 2}
-    m_Threshold: 1.1771302
+    m_Motion: {fileID: 7400000, guid: 5bd07f7df3c170e42aebf043a84fab91, type: 2}
+    m_Threshold: 0.5
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: 
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 5a0edccbea563f842a26fa335cc76c3b, type: 2}
-    m_Threshold: 3.0937917
+    m_Motion: {fileID: 696169470063394953, guid: fb6740b6d263756479e5dd0c6a78a054, type: 3}
+    m_Threshold: 1
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
-    m_CycleOffset: 0.8129252
+    m_CycleOffset: 0
     m_DirectBlendParameter: 
     m_Mirror: 0
   m_BlendParameter: LitSpeed
@@ -4493,13 +4487,13 @@ AnimatorState:
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
   m_Mirror: 0
-  m_SpeedParameterActive: 1
+  m_SpeedParameterActive: 0
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 4375349383127959776}
   m_Tag: RealTimeCombatInPlace
-  m_SpeedParameter: LocomotionPlaybackRate
+  m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 

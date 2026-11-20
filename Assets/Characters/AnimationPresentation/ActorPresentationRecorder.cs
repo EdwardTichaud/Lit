@@ -15,8 +15,6 @@ public sealed class ActorPresentationRecorder : MonoBehaviour
     private StreamWriter writer;
     private Vector3 previous;
     private float elapsed;
-    private int rateHash = Animator.StringToHash(LocomotionPresentationProfile.PlaybackParameter);
-    private bool hasRate;
     private ActorSoleSampler soles;
     private int speedHash;
     private bool hasSpeed;
@@ -36,7 +34,6 @@ public sealed class ActorPresentationRecorder : MonoBehaviour
         soles = new ActorSoleSampler(animator);
         leftPatch=new ActorContactPatchTracker(soles,true);rightPatch=new ActorContactPatchTracker(soles,false);
         leftContact=new ActorFootContactTracker(soles,true);rightContact=new ActorFootContactTracker(soles,false);contactGround=GroundAt;
-        foreach (var parameter in animator.parameters) if (parameter.nameHash == rateHash) hasRate = true;
         foreach (var parameter in animator.parameters)
             if (parameter.name == "LitSpeed" || parameter.name == "Speed" && !hasSpeed)
             { speedHash = parameter.nameHash; hasSpeed = true; }
@@ -62,7 +59,7 @@ public sealed class ActorPresentationRecorder : MonoBehaviour
         float[] values = { elapsed, speed, agent != null && agent.enabled ? agent.velocity.magnitude : 0,
             state.fullPathHash, animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0).fullPathHash : 0,
             state.normalizedTime, animator.IsInTransition(0) ? animator.GetAnimatorTransitionInfo(0).normalizedTime : 0,
-            hasRate ? animator.GetFloat(rateHash) : 1, enemy != null ? enemy.ActionSequenceId : player != null ? player.ActionGeneration : 0 };
+            state.speed * state.speedMultiplier, enemy != null ? enemy.ActionSequenceId : player != null ? player.ActionGeneration : 0 };
         var text = System.Array.ConvertAll(values, v => v.ToString("R", CultureInfo.InvariantCulture));
         text[3] = state.fullPathHash.ToString(CultureInfo.InvariantCulture);
         text[4] = (animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0).fullPathHash : 0).ToString(CultureInfo.InvariantCulture);

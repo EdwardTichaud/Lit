@@ -1,0 +1,2 @@
+PASS Assets/Characters/3_Enemy/Iluvilirae/Lucian_ImpactLab.controller: all authored values and pre-existing changes preserved; only retired multiplier bindings/parameter removed.
+PASS Assets/Characters/AnimationPresentation/LucianCoherencePreview/Cadence01/LucianCadence.controller: all authored values and pre-existing changes preserved; only retired multiplier bindings/parameter removed.

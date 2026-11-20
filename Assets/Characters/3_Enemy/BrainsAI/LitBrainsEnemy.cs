@@ -169,11 +169,7 @@ public partial class LitBrainsEnemy : Brain, ICombatTarget, ICombatImpactReceive
         {
             Vector3 localVelocity = transform.InverseTransformDirection(velocity);
             var direction = new Vector2(localVelocity.x, localVelocity.z).normalized;
-            // The navigation request selects the gait; only obtained velocity drives activity/cadence.
-            if (anim.speed <= 0) return;
-            presentationProfile.Evaluate(speed / anim.speed, requestedNavigationSpeed > walkSpeed + .05f, direction, out float measuredBlend, out float cadence);
-            anim.SetFloat("Speed", measuredBlend);
-            anim.SetFloat(LocomotionPresentationProfile.PlaybackParameter, cadence);
+            anim.SetFloat("Speed", speed);
             if (presentationClock == null) presentationClock = GetComponent<CombatTimeDomain>();
             float presentationDelta = presentationClock != null ? presentationClock.DeltaTime : Time.deltaTime;
             anim.SetFloat("MoveX", direction.x, .08f, presentationDelta);

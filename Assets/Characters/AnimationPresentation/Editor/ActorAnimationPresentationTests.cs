@@ -36,24 +36,6 @@ public sealed class ActorAnimationPresentationTests
         finally { UnityEngine.Object.DestroyImmediate(candidate); }
     }
     [Test]
-    public void NativeCadenceUsesObtainedVelocityAndDoesNotWritePhysics()
-    {
-        var profile = ScriptableObject.CreateInstance<LocomotionPresentationProfile>();
-        var clip = new AnimationClip();
-        try
-        {
-            profile.walk = new[] { new LocomotionPresentationProfile.Cycle {clip=clip,nativeSpeed=1.2f} };
-            profile.run = new[] { new LocomotionPresentationProfile.Cycle {clip=clip,nativeSpeed=3.1f} };
-            profile.Evaluate(1.2f,false,Vector2.up,out var blend,out var rate);
-            Assert.AreEqual(1,rate,.0001f); Assert.AreEqual(profile.blendThresholds.x,blend,.0001f);
-            profile.Evaluate(2.4f,false,Vector2.up,out blend,out rate);
-            Assert.AreEqual(2,rate,.0001f);
-            profile.Evaluate(0,true,Vector2.up,out blend,out rate);
-            Assert.AreEqual(0,blend); Assert.AreEqual(1,rate);
-        }
-        finally { UnityEngine.Object.DestroyImmediate(profile); UnityEngine.Object.DestroyImmediate(clip); }
-    }
-    [Test]
     public void UnresolvedSourceIsNeverApproximated()
     {
         Assert.Throws<InvalidOperationException>(() => ActorAnimationAudit.Source("Assets/Missing_Source.fbx"));
@@ -70,17 +52,6 @@ public sealed class ActorAnimationPresentationTests
             Assert.IsFalse(handoff.validated,"Unmeasured exits must not activate implicitly.");
         }
         finally { UnityEngine.Object.DestroyImmediate(clip); }
-    }
-    [Test]
-    public void LocomotionMultiplierCannotAffectActionStates()
-    {
-        foreach (bool enemy in new[] {false,true})
-        {
-            var controller = ActorAnimationAudit.Actor(enemy).runtimeAnimatorController as AnimatorController;
-            foreach (var state in controller.layers.SelectMany(l => LocomotionPresentationCalibration.States(l.stateMachine)))
-                if (state.speedParameter == LocomotionPresentationProfile.PlaybackParameter && state.speedParameterActive)
-                    Assert.That(state.name,Is.EqualTo("Locomotion").Or.EqualTo("CombatLocomotion"));
-        }
     }
 }
 #endif

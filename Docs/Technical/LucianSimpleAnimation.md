@@ -4,7 +4,7 @@
 
 Lucian utilise une couche principale en corps entier et une seule couche de bras pour porter la torche. UCC garde l'autorité physique. Les vitesses, accélérations, distances des actions et clips de saut ne sont pas recalibrés par cette migration.
 
-L'écoute et l'attente réutilisent le même clip Idle que l'exploration, sans copie ni écart de posture supplémentaire. La présentation du dialogue demande ses états au contrôleur d'actions existant. Le bridge calcule seulement vitesse de présentation, direction et cadence depuis le déplacement obtenu. L'input reste une intention et ne fabrique pas de vitesse supposée. Les fondus de locomotion utilisent 0,18 s ; ceux du dialogue utilisent le profil, 0,25 s par défaut. La cadence ne concerne que Locomotion et CombatLocomotion.
+L'écoute et l'attente réutilisent le même clip Idle que l'exploration, sans copie ni écart de posture supplémentaire. La présentation du dialogue demande ses états au contrôleur d'actions existant. Le bridge transmet la vitesse physique et la direction aux Blend Trees. Les vitesses des etats et leurs seuils se reglent manuellement dans l'Animator ; aucun calcul de cadence ne les adapte au moteur.
 
 ## Sources et données
 
@@ -15,7 +15,7 @@ L'écoute et l'attente réutilisent le même clip Idle que l'exploration, sans c
 
 Les 24 copies de locomotion et le profil mesuré sont sous `Assets/Animations/Autres/Locomotion/Lucian/SimpleWholeBody`. Les originaux fournisseur sont conservés. Le manifeste identifie GUID, sous-asset, source, copie, vitesse native, phase et trajectoire mesurée. La conversion retire seulement la trajectoire physique par échantillonnage sur l'avatar de Lucian, puis conserve la pose complète.
 
-Vitesses natives mesurées : exploration 1,177 m/s (marche), 3,094 m/s (jogging) ; cycles de lock avant 0,848 m/s et 3,543 m/s. Les autres directions ont leurs propres mesures. La cadence suit la vitesse obtenue dans le domaine temporel de l'acteur, avec des bornes 0,5–2. Le mélange Idle/cycle absorbe les très faibles vitesses ; aucune vitesse du moteur n'est modifiée.
+Vitesses natives mesurées : exploration 1,177 m/s (marche), 3,094 m/s (jogging) ; cycles de lock avant 0,848 m/s et 3,543 m/s. Les autres directions ont leurs propres mesures. Ces mesures restent documentaires. Aucune cadence n'est calculee automatiquement ; regler manuellement les vitesses des etats Animator, les seuils des Blend Trees et UCC.
 
 Le profil réutilise les données existantes. Les champs historiques de contacts, pieds et récupération ne pilotent pas ce chemin. Unity peut désérialiser ces classes en objets vides : seule une donnée complète et explicitement configurée est significative ; le chemin simplifié n'en consomme aucune.
 
@@ -42,7 +42,7 @@ Les copies conservent leurs GUID lors d'une seconde installation. Le validateur 
 
 Les réglages physiques de Lucian et de ses deux variantes de laboratoire sont comparés aux données initiales. La sérialisation Unity a ajouté dans la variante ImpactLab le champ booléen existant holdLandingThroughContactLoss à sa valeur par défaut false ; elle n'en a pas changé le comportement.
 
-Les tests vérifient le contrat installé, les choix de dialogue, les anciennes sessions, les courbes originales de jambes/bassin, l'isolation effective du bras de torche, l'absence de contacts compensatoires et la limitation de cadence aux cycles au sol.
+Les tests vérifient le contrat installé, les choix de dialogue, les anciennes sessions, les courbes originales de jambes/bassin, l'isolation effective du bras de torche, l'absence de contacts compensatoires et l'absence du multiplicateur automatique de cadence sur Lucian.
 
 Les captures de poses ne remplacent pas la validation de transitions en mouvement. Le contrôle visuel final doit inclure exploration, lock, diagonales, départs/arrêts, combos, esquives, réception, assise, torche, dialogues et cinématiques ; puis pente, mur, ralenti et host/client. Les effets de torche et la simulation de cape ne sont pas validés par des captures de pose fixes.
 
@@ -55,3 +55,9 @@ Les 15 premiers assets de dialogue retirés étaient prouvés sans consommateur 
 Les preuves sont conservées sous `Docs/Validation/2026-11-19/SimpleLucian`. Les parcours visuels complets, les collisions dans toutes les situations, le ralenti et le host/client ne sont pas déclarés validés par ces tests ciblés.
 
 La réinstallation finale a conservé à l'identique les 88 assets contrôlés. Le test réseau vérifie aussi la sérialisation du drapeau de suppression corporelle : les observateurs suivent la décision du propriétaire, sans déduire le mouvement depuis un moteur distant désactivé. Le smoke test couvre le retour depuis la présentation cinématique avec des inputs annoncés maintenus.
+
+## Reglages manuels des vitesses - 20 novembre 2026
+
+Le calcul de cadence par vitesse native et le parametre `LocomotionPlaybackRate` sont supprimes du chemin de Lucian. Le menu `Lit > Animation > Simple Lucian > Use Manual Locomotion Speeds` retire uniquement les anciens liens vers ce parametre dans ses deux controllers. Il conserve les valeurs `Speed` des etats, les vitesses des enfants, les seuils, les transitions et les modifications existantes. Une reinstallation ne reactive plus ce multiplicateur.
+
+Regler la presentation avec `Speed` sur les etats de locomotion et les seuils `LitSpeed` des Blend Trees. `LitSpeed` transmet directement la vitesse planaire en m/s. La vitesse de deplacement se regle dans UCC. Le temps global de combat et de cinematique reste independant de ce retrait.

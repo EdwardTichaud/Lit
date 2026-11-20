@@ -43,7 +43,7 @@ public static class SimpleLucianAnimationSetup
         File.WriteAllText(Report + "/error.txt", "");
         try
         {
-            if (mode == "audit") Audit(); else if (mode == "apply") Install(); else if (mode == "validate") Validate(); else if (mode == "cleanup") RetireUnusedDialogueCopies();
+            if (mode == "audit") Audit(); else if (mode == "apply") Install(); else if (mode == "validate") Validate(); else if (mode == "cleanup") RetireUnusedDialogueCopies(); else if(mode == "manual-speed") RemoveAutomaticLocomotionCadence();
             else throw new InvalidOperationException("Unknown simple animation request: " + mode);
             File.WriteAllText(Report + "/result.txt", mode + " PASS " + DateTime.UtcNow.ToString("O"));
         }
@@ -128,8 +128,7 @@ public static class SimpleLucianAnimationSetup
         {
             profile=ScriptableObject.CreateInstance<LocomotionPresentationProfile>();
             profile.validated=true;profile.measuredAvatar=avatar.avatar;
-            profile.chooseGaitFromObtainedSpeed=true;profile.matchSimpleDirectionalBlend=true;
-            profile.minimumCadence=.5f;profile.maximumCadence=2f;profile.stopSpeed=.05f;
+            profile.stopSpeed=.05f;
             profile.explorationWalk=Cycle(manifest.entries.Single(e=>e.id=="Walk"));
             profile.explorationRun=Cycle(manifest.entries.Single(e=>e.id=="Run"));
             profile.explorationRun.cycleOffset=profile.explorationRun.leftContactPhase-profile.explorationWalk.leftContactPhase;
@@ -137,10 +136,6 @@ public static class SimpleLucianAnimationSetup
             profile.run=manifest.entries.Where(e=>e.id.StartsWith("Combat_run_")).Select(Cycle).ToArray();
             float reference=profile.walk[0].leftContactPhase;
             foreach(var c in profile.walk.Concat(profile.run)) c.cycleOffset=c.leftContactPhase-reference;
-            profile.blendThresholds=new Vector2(profile.walk[0].nativeSpeed,profile.run[0].nativeSpeed);
-            profile.explorationBlendThresholds=new Vector2(profile.explorationWalk.nativeSpeed,profile.explorationRun.nativeSpeed);
-            if(profile.blendThresholds.y<=profile.blendThresholds.x || profile.explorationBlendThresholds.y<=profile.explorationBlendThresholds.x)
-                throw new InvalidOperationException("Run must be faster than walk in measured source cycles.");
             AssetDatabase.CreateAsset(profile,Folder+"/Lucian_WholeBody.asset");
         }
         var dialogue=data.playerSettings.dialoguePresentation;
@@ -211,8 +206,32 @@ public static class SimpleLucianAnimationSetup
         }
         if(EditorJsonUtility.ToJson(p)!=before){EditorUtility.SetDirty(p);AssetDatabase.SaveAssetIfDirty(p);}
     }
+    [MenuItem("Lit/Animation/Simple Lucian/Use Manual Locomotion Speeds")]
+    public static void RemoveAutomaticLocomotionCadence()
+    {
+        foreach(string path in ControllerPaths)
+            RemoveAutomaticLocomotionCadence(AssetDatabase.LoadAssetAtPath<AnimatorController>(path));
+    }
+    private static void RemoveAutomaticLocomotionCadence(AnimatorController controller)
+    {
+        if(controller==null)throw new InvalidOperationException("Missing Lucian controller.");
+        const string retiredParameter="LocomotionPlaybackRate";
+        bool changed=false;
+        foreach(var state in controller.layers.SelectMany(l=>LocomotionPresentationCalibration.States(l.stateMachine)))
+        {
+            if(state.speedParameter!=retiredParameter)continue;
+            state.speedParameterActive=false;
+            state.speedParameter=string.Empty;
+            EditorUtility.SetDirty(state);changed=true;
+        }
+        for(int index=controller.parameters.Length-1;index>=0;index--)
+            if(controller.parameters[index].name==retiredParameter)
+            {controller.RemoveParameter(index);changed=true;}
+        if(changed){EditorUtility.SetDirty(controller);AssetDatabase.SaveAssetIfDirty(controller);}
+    }
     private static void PrepareController(AnimatorController c,Manifest m,LocomotionPresentationProfile p,DialoguePresentationProfile d)
     {
+        RemoveAutomaticLocomotionCadence(c);
         if(c.layers.Length==2 && c.layers[1].avatarMask!=null && c.layers[0].stateMachine.states.Any(s=>s.state.name=="Dialogue_Speak_Neutral"))
         {
             foreach(var state in LocomotionPresentationCalibration.States(c.layers[0].stateMachine))
@@ -257,8 +276,6 @@ public static class SimpleLucianAnimationSetup
             else if(name=="Run_Stop")state.motion=null; // Not selected by the simple bridge: no compatible authored run stop.
             else if(name=="WalkStartToRun")state.motion=explore;
             else if(name=="Turn_L180" || name=="Turn_R180") {state.motion=null;state.speed=1;} // No authored 180-degree clip: never synthesize one from a 90-degree turn.
-            if(name=="Locomotion" || name=="CombatLocomotion")
-            {state.speedParameter=LocomotionPresentationProfile.PlaybackParameter;state.speedParameterActive=true;}
             EditorUtility.SetDirty(state);
         }
         foreach(var g in d.gestures.Where(g=>g.validated && g.body!=null))
@@ -267,7 +284,6 @@ public static class SimpleLucianAnimationSetup
             var state=main.states.Select(s=>s.state).SingleOrDefault(s=>s.name==name)??main.AddState(name);
             state.motion=g.body;state.writeDefaultValues=false;state.iKOnFeet=false;
         }
-        if(!c.parameters.Any(p=>p.name==LocomotionPresentationProfile.PlaybackParameter)) c.AddParameter(LocomotionPresentationProfile.PlaybackParameter,AnimatorControllerParameterType.Float);
         // Ground-state transitions are owned by the bridge. Keep action/traversal transitions intact.
         var ground=new HashSet<string>{"Locomotion","CombatLocomotion","CombatIdle","Walk_Start","Run_Start","Walk_Stop","Run_Stop","WalkStartToRun","Turn_L90","Turn_R90","Turn_L180","Turn_R180"};
         foreach(var state in LocomotionPresentationCalibration.States(main).Where(s=>ground.Contains(s.name)))
@@ -343,6 +359,9 @@ public static class SimpleLucianAnimationSetup
         foreach(var path in ControllerPaths)
         {
             var c=AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+            if(c.parameters.Any(p=>p.name=="LocomotionPlaybackRate") ||
+                c.layers.SelectMany(l=>LocomotionPresentationCalibration.States(l.stateMachine)).Any(s=>s.speedParameterActive && s.speedParameter=="LocomotionPlaybackRate"))
+                throw new BuildFailedException("Automatic locomotion cadence remains: "+path);
             if(c.layers.Length!=2 || c.layers[0].avatarMask!=null || c.layers[1].avatarMask==null)throw new BuildFailedException("Lucian must have exactly base + torch arm layers.");
             var mask=c.layers[1].avatarMask;
             for(int i=0;i<(int)AvatarMaskBodyPart.LastBodyPart;i++)

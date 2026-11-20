@@ -106,21 +106,4 @@ public static class LocomotionPresentationCalibration
     }
     private static bool UsesClip(Motion motion, AnimationClip clip)
         => motion == clip || motion is BlendTree tree && tree.children.Any(child => UsesClip(child.motion,clip));
-    /// <summary>Only named cycle states get the multiplier; actions/starts/stops/Timeline remain at their authored cadence.</summary>
-    public static void BindCadence(AnimatorController controller, params string[] stateNames)
-    {
-        if (!controller.parameters.Any(p => p.name == LocomotionPresentationProfile.PlaybackParameter))
-        {
-            controller.AddParameter(new AnimatorControllerParameter { name = LocomotionPresentationProfile.PlaybackParameter,
-                type = AnimatorControllerParameterType.Float, defaultFloat = 1 });
-        }
-        foreach (var state in controller.layers.SelectMany(l => States(l.stateMachine)).Where(s => stateNames.Contains(s.name)))
-        {
-            if (state.speedParameterActive && state.speedParameter != LocomotionPresentationProfile.PlaybackParameter)
-                throw new InvalidOperationException("Cadence already owned: " + state.name);
-            if (state.speedParameterActive && state.speedParameter == LocomotionPresentationProfile.PlaybackParameter) continue;
-            state.speedParameter = LocomotionPresentationProfile.PlaybackParameter;
-            state.speedParameterActive = true; EditorUtility.SetDirty(state);
-        }
-    }
 }

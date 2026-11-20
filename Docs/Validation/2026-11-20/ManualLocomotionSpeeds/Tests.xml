@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="56" result="Passed" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:29Z" duration="1,0807176">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2926" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:29Z" duration="1.080718" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2920" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1574" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:29Z" duration="0.879712" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="14420" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="2510" name="CycleAutoDialogueTests" fullname="CycleAutoDialogueTests" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.058959" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2522" name="CancellationAndTimeoutRejectLateResults" fullname="CycleAutoDialogueTests.CancellationAndTimeoutRejectLateResults" methodname="CancellationAndTimeoutRejectLateResults" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1616579832" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.020797" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2519" name="DisconnectedViewerDoesNotHoldUpACompletedViewer" fullname="CycleAutoDialogueTests.DisconnectedViewerDoesNotHoldUpACompletedViewer" methodname="DisconnectedViewerDoesNotHoldUpACompletedViewer" classname="CycleAutoDialogueTests" runstate="Runnable" seed="770687331" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.001641" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2515" name="EarlyUnknownStaleAndDuplicateAcknowledgementsCannotAdvance" fullname="CycleAutoDialogueTests.EarlyUnknownStaleAndDuplicateAcknowledgementsCannotAdvance" methodname="EarlyUnknownStaleAndDuplicateAcknowledgementsCannotAdvance" classname="CycleAutoDialogueTests" runstate="Runnable" seed="47695522" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000783" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2523" name="EmptyOrDuplicateParticipantsAreHandledExplicitly" fullname="CycleAutoDialogueTests.EmptyOrDuplicateParticipantsAreHandledExplicitly" methodname="EmptyOrDuplicateParticipantsAreHandledExplicitly" classname="CycleAutoDialogueTests" runstate="Runnable" seed="982149968" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000398" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2514" name="EveryFrozenViewerMustFinishNaturally" fullname="CycleAutoDialogueTests.EveryFrozenViewerMustFinishNaturally" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.003162" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2512" name="EveryFrozenViewerMustFinishNaturally(1UL,2UL)" fullname="CycleAutoDialogueTests.EveryFrozenViewerMustFinishNaturally(1UL,2UL)" methodname="EveryFrozenViewerMustFinishNaturally" classname="CycleAutoDialogueTests" runstate="Runnable" seed="2025690962" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000547" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2513" name="EveryFrozenViewerMustFinishNaturally(2UL,1UL)" fullname="CycleAutoDialogueTests.EveryFrozenViewerMustFinishNaturally(2UL,1UL)" methodname="EveryFrozenViewerMustFinishNaturally" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1338160060" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000126" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2520" name="EveryoneDisconnectingCannotValidateAnUnseenLine" fullname="CycleAutoDialogueTests.EveryoneDisconnectingCannotValidateAnUnseenLine" methodname="EveryoneDisconnectingCannotValidateAnUnseenLine" classname="CycleAutoDialogueTests" runstate="Runnable" seed="51100696" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000677" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2526" name="InvalidClockCannotProduceAnAcknowledgement" fullname="CycleAutoDialogueTests.InvalidClockCannotProduceAnAcknowledgement" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.002869" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2524" name="InvalidClockCannotProduceAnAcknowledgement(double.NaN)" fullname="CycleAutoDialogueTests.InvalidClockCannotProduceAnAcknowledgement(double.NaN)" methodname="InvalidClockCannotProduceAnAcknowledgement" classname="CycleAutoDialogueTests" runstate="Runnable" seed="627439174" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000656" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2525" name="InvalidClockCannotProduceAnAcknowledgement(double.PositiveInfinity)" fullname="CycleAutoDialogueTests.InvalidClockCannotProduceAnAcknowledgement(double.PositiveInfinity)" methodname="InvalidClockCannotProduceAnAcknowledgement" classname="CycleAutoDialogueTests" runstate="Runnable" seed="620565352" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000199" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2521" name="LateArrivalDoesNotJoinTheFrozenAudienceOrConfirmForIt" fullname="CycleAutoDialogueTests.LateArrivalDoesNotJoinTheFrozenAudienceOrConfirmForIt" methodname="LateArrivalDoesNotJoinTheFrozenAudienceOrConfirmForIt" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1439479311" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.003786" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2518" name="RefusalOrInterruptionFailsWithoutCompletingOthers" fullname="CycleAutoDialogueTests.RefusalOrInterruptionFailsWithoutCompletingOthers" classname="CycleAutoDialogueTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.001935" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2516" name="RefusalOrInterruptionFailsWithoutCompletingOthers(False)" fullname="CycleAutoDialogueTests.RefusalOrInterruptionFailsWithoutCompletingOthers(False)" methodname="RefusalOrInterruptionFailsWithoutCompletingOthers" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1481492890" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000560" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2517" name="RefusalOrInterruptionFailsWithoutCompletingOthers(True)" fullname="CycleAutoDialogueTests.RefusalOrInterruptionFailsWithoutCompletingOthers(True)" methodname="RefusalOrInterruptionFailsWithoutCompletingOthers" classname="CycleAutoDialogueTests" runstate="Runnable" seed="468892880" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000177" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2511" name="TimerAloneNeverCompletesADialogue" fullname="CycleAutoDialogueTests.TimerAloneNeverCompletesADialogue" methodname="TimerAloneNeverCompletesADialogue" classname="CycleAutoDialogueTests" runstate="Runnable" seed="1626261134" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:28Z" duration="0.000382" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1134" name="DialoguePresentationNativeRigTests" fullname="DialoguePresentationNativeRigTests" classname="DialoguePresentationNativeRigTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:29Z" duration="0.334867" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1135" name="DialogueCopiesKeepTheOriginalLegAndSpineCurves" fullname="DialoguePresentationNativeRigTests.DialogueCopiesKeepTheOriginalLegAndSpineCurves" methodname="DialogueCopiesKeepTheOriginalLegAndSpineCurves" classname="DialoguePresentationNativeRigTests" runstate="Runnable" seed="1228742687" result="Passed" start-time="2026-11-20 17:24:28Z" end-time="2026-11-20 17:24:29Z" duration="0.161367" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1139" name="LocomotionProfileHasNoPoseCompensationData" fullname="DialoguePresentationNativeRigTests.LocomotionProfileHasNoPoseCompensationData" methodname="LocomotionProfileHasNoPoseCompensationData" classname="DialoguePresentationNativeRigTests" runstate="Runnable" seed="1098305412" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000468" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1137" name="LucianLocomotionUsesManuallyAuthoredStateSpeeds" fullname="DialoguePresentationNativeRigTests.LucianLocomotionUsesManuallyAuthoredStateSpeeds" methodname="LucianLocomotionUsesManuallyAuthoredStateSpeeds" classname="DialoguePresentationNativeRigTests" runstate="Runnable" seed="1823061058" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.005306" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1138" name="LucianPrefabsHaveNoMissingComponents" fullname="DialoguePresentationNativeRigTests.LucianPrefabsHaveNoMissingComponents" methodname="LucianPrefabsHaveNoMissingComponents" classname="DialoguePresentationNativeRigTests" runstate="Runnable" seed="1330919119" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.002803" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1136" name="TorchMaskDoesNotReplacePelvisFeetOrTheFreeArm" fullname="DialoguePresentationNativeRigTests.TorchMaskDoesNotReplacePelvisFeetOrTheFreeArm" methodname="TorchMaskDoesNotReplacePelvisFeetOrTheFreeArm" classname="DialoguePresentationNativeRigTests" runstate="Runnable" seed="386250773" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.162895" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1140" name="DialoguePresentationTests" fullname="DialoguePresentationTests" classname="DialoguePresentationTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.050099" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1147" name="AFormerLineCannotReleaseTheNewPresentation" fullname="DialoguePresentationTests.AFormerLineCannotReleaseTheNewPresentation" methodname="AFormerLineCannotReleaseTheNewPresentation" classname="DialoguePresentationTests" runstate="Runnable" seed="1757972125" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.008427" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1145" name="AValidExplicitGestureOverridesAutomaticChoice" fullname="DialoguePresentationTests.AValidExplicitGestureOverridesAutomaticChoice" methodname="AValidExplicitGestureOverridesAutomaticChoice" classname="DialoguePresentationTests" runstate="Runnable" seed="1485671544" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000950" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1149" name="DialogueUsesCompleteBodyStatesInsteadOfLayers" fullname="DialoguePresentationTests.DialogueUsesCompleteBodyStatesInsteadOfLayers" methodname="DialogueUsesCompleteBodyStatesInsteadOfLayers" classname="DialoguePresentationTests" runstate="Runnable" seed="1121180816" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000627" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1141" name="InstalledContractIsComplete" fullname="DialoguePresentationTests.InstalledContractIsComplete" methodname="InstalledContractIsComplete" classname="DialoguePresentationTests" runstate="Runnable" seed="1854910894" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.025993" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[SIMPLE_LUCIAN_CONTRACT_PASS
+]]></output>
+        </test-case>
+        <test-case id="1142" name="MobileBodySuppressionIsPartOfTheReplicatedState" fullname="DialoguePresentationTests.MobileBodySuppressionIsPartOfTheReplicatedState" methodname="MobileBodySuppressionIsPartOfTheReplicatedState" classname="DialoguePresentationTests" runstate="Runnable" seed="335937467" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.006132" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1148" name="MouthOpeningIsNeverAdmittedByDialogueExpressions" fullname="DialoguePresentationTests.MouthOpeningIsNeverAdmittedByDialogueExpressions" methodname="MouthOpeningIsNeverAdmittedByDialogueExpressions" classname="DialoguePresentationTests" runstate="Runnable" seed="1374903088" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000386" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1143" name="OldLinesReceiveAnExpressiveDefault" fullname="DialoguePresentationTests.OldLinesReceiveAnExpressiveDefault" methodname="OldLinesReceiveAnExpressiveDefault" classname="DialoguePresentationTests" runstate="Runnable" seed="662297681" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000642" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1150" name="RoleWithoutCompatibleAnimationsReturnsUnavailable" fullname="DialoguePresentationTests.RoleWithoutCompatibleAnimationsReturnsUnavailable" methodname="RoleWithoutCompatibleAnimationsReturnsUnavailable" classname="DialoguePresentationTests" runstate="Runnable" seed="702665727" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000333" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1144" name="SeatedSpeechNeverSelectsAStandingOnlyGesture" fullname="DialoguePresentationTests.SeatedSpeechNeverSelectsAStandingOnlyGesture" methodname="SeatedSpeechNeverSelectsAStandingOnlyGesture" classname="DialoguePresentationTests" runstate="Runnable" seed="344358129" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000413" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1146" name="VariationAvoidsImmediateRepetition" fullname="DialoguePresentationTests.VariationAvoidsImmediateRepetition" methodname="VariationAvoidsImmediateRepetition" classname="DialoguePresentationTests" runstate="Runnable" seed="720610625" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000489" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2746" name="StorySequenceAuthoringTests" fullname="StorySequenceAuthoringTests" classname="StorySequenceAuthoringTests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.266113" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="2749" name="BreathingAddsBoundedMotionWithoutMovingTheExplorationCamera" fullname="StorySequenceAuthoringTests.BreathingAddsBoundedMotionWithoutMovingTheExplorationCamera" methodname="BreathingAddsBoundedMotionWithoutMovingTheExplorationCamera" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="228751630" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.006676" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2766" name="ChosenNameIsNormalizedWithAnEmptyFallback" fullname="StorySequenceAuthoringTests.ChosenNameIsNormalizedWithAnEmptyFallback" classname="StorySequenceAuthoringTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.012061" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2761" name="ChosenNameIsNormalizedWithAnEmptyFallback(null,&quot;Munin&quot;)" fullname="StorySequenceAuthoringTests.ChosenNameIsNormalizedWithAnEmptyFallback(null,&quot;Munin&quot;)" methodname="ChosenNameIsNormalizedWithAnEmptyFallback" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1393027149" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.002611" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2762" name="ChosenNameIsNormalizedWithAnEmptyFallback(&quot;&quot;,&quot;Munin&quot;)" fullname="StorySequenceAuthoringTests.ChosenNameIsNormalizedWithAnEmptyFallback(&quot;&quot;,&quot;Munin&quot;)" methodname="ChosenNameIsNormalizedWithAnEmptyFallback" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1704032703" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000404" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2763" name="ChosenNameIsNormalizedWithAnEmptyFallback(&quot;   &quot;,&quot;Munin&quot;)" fullname="StorySequenceAuthoringTests.ChosenNameIsNormalizedWithAnEmptyFallback(&quot;   &quot;,&quot;Munin&quot;)" methodname="ChosenNameIsNormalizedWithAnEmptyFallback" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1266954120" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000484" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2764" name="ChosenNameIsNormalizedWithAnEmptyFallback(&quot;  Eowyn  &quot;,&quot;Eowyn&quot;)" fullname="StorySequenceAuthoringTests.ChosenNameIsNormalizedWithAnEmptyFallback(&quot;  Eowyn  &quot;,&quot;Eowyn&quot;)" methodname="ChosenNameIsNormalizedWithAnEmptyFallback" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="123777612" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.003486" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2765" name="ChosenNameIsNormalizedWithAnEmptyFallback(&quot;Anne-Marie&quot;,&quot;Anne-Marie&quot;)" fullname="StorySequenceAuthoringTests.ChosenNameIsNormalizedWithAnEmptyFallback(&quot;Anne-Marie&quot;,&quot;Anne-Marie&quot;)" methodname="ChosenNameIsNormalizedWithAnEmptyFallback" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1073033909" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000511" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2767" name="ChosenNameIsPlainTextAndBounded" fullname="StorySequenceAuthoringTests.ChosenNameIsPlainTextAndBounded" methodname="ChosenNameIsPlainTextAndBounded" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="482544105" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000799" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2753" name="DialogueMustHaveContentAndAnExit" fullname="StorySequenceAuthoringTests.DialogueMustHaveContentAndAnExit" methodname="DialogueMustHaveContentAndAnExit" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1949026293" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.002236" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2750" name="DialogueNodDipsOnceWithoutDisplacingTheCameraAndClearsOnReturn" fullname="StorySequenceAuthoringTests.DialogueNodDipsOnceWithoutDisplacingTheCameraAndClearsOnReturn" methodname="DialogueNodDipsOnceWithoutDisplacingTheCameraAndClearsOnReturn" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="2087690492" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.008717" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2775" name="DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker" fullname="StorySequenceAuthoringTests.DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker" classname="StorySequenceAuthoringTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.027155" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2773" name="DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker(False)" fullname="StorySequenceAuthoringTests.DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker(False)" methodname="DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="964220246" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.018090" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2774" name="DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker(True)" fullname="StorySequenceAuthoringTests.DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker(True)" methodname="DialoguePortraitUsesTheExistingImageAndClearsForAnUnknownSpeaker" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="37390958" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.003763" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2769" name="DialogueTokenResolutionDoesNotMutateTheAuthoredVoiceLine" fullname="StorySequenceAuthoringTests.DialogueTokenResolutionDoesNotMutateTheAuthoredVoiceLine" methodname="DialogueTokenResolutionDoesNotMutateTheAuthoredVoiceLine" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1186341087" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.003539" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2751" name="EmptyDraftCannotBePlayedOrSilentlyCompleted" fullname="StorySequenceAuthoringTests.EmptyDraftCannotBePlayedOrSilentlyCompleted" methodname="EmptyDraftCannotBePlayedOrSilentlyCompleted" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1328905704" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.001562" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2748" name="MaisonOpeningUsesMuninsExactWorldPoseBeforeFade" fullname="StorySequenceAuthoringTests.MaisonOpeningUsesMuninsExactWorldPoseBeforeFade" methodname="MaisonOpeningUsesMuninsExactWorldPoseBeforeFade" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1123604610" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.020681" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="2759" name="MissingRequiredStepReferencesAreRejected" fullname="StorySequenceAuthoringTests.MissingRequiredStepReferencesAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.007978" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2754" name="MissingRequiredStepReferencesAreRejected(AnimatorTrigger)" fullname="StorySequenceAuthoringTests.MissingRequiredStepReferencesAreRejected(AnimatorTrigger)" methodname="MissingRequiredStepReferencesAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="516582714" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000849" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2755" name="MissingRequiredStepReferencesAreRejected(SceneEvent)" fullname="StorySequenceAuthoringTests.MissingRequiredStepReferencesAreRejected(SceneEvent)" methodname="MissingRequiredStepReferencesAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="814495104" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000308" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2756" name="MissingRequiredStepReferencesAreRejected(CameraShot)" fullname="StorySequenceAuthoringTests.MissingRequiredStepReferencesAreRejected(CameraShot)" methodname="MissingRequiredStepReferencesAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="888856986" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000311" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2757" name="MissingRequiredStepReferencesAreRejected(Timeline)" fullname="StorySequenceAuthoringTests.MissingRequiredStepReferencesAreRejected(Timeline)" methodname="MissingRequiredStepReferencesAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="83591023" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000322" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2758" name="MissingRequiredStepReferencesAreRejected(Sitting)" fullname="StorySequenceAuthoringTests.MissingRequiredStepReferencesAreRejected(Sitting)" methodname="MissingRequiredStepReferencesAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="414640175" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000415" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="2770" name="NamePromptDoesNotEmbedOrInstantiateItsOwnKeyboard" fullname="StorySequenceAuthoringTests.NamePromptDoesNotEmbedOrInstantiateItsOwnKeyboard" methodname="NamePromptDoesNotEmbedOrInstantiateItsOwnKeyboard" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="98136695" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000684" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2776" name="NamePromptUsesExistingMenuCursorKeysWithoutButtonsAndRestoresTheirAppearance" fullname="StorySequenceAuthoringTests.NamePromptUsesExistingMenuCursorKeysWithoutButtonsAndRestoresTheirAppearance" methodname="NamePromptUsesExistingMenuCursorKeysWithoutButtonsAndRestoresTheirAppearance" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="15929072" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.013113" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2768" name="NameUsesTheRealWorldSnapshotSerializerAndResetsBetweenGames" fullname="StorySequenceAuthoringTests.NameUsesTheRealWorldSnapshotSerializerAndResetsBetweenGames" methodname="NameUsesTheRealWorldSnapshotSerializerAndResetsBetweenGames" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1974530546" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.010467" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2752" name="NullAndUnknownStepsAreRejected" fullname="StorySequenceAuthoringTests.NullAndUnknownStepsAreRejected" methodname="NullAndUnknownStepsAreRejected" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="2134472198" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.000608" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2777" name="OpeningMeetingIsReferencedByMenuAndDoesNotAutoplayDuringInstantiation" fullname="StorySequenceAuthoringTests.OpeningMeetingIsReferencedByMenuAndDoesNotAutoplayDuringInstantiation" methodname="OpeningMeetingIsReferencedByMenuAndDoesNotAutoplayDuringInstantiation" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1422806485" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.113321" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2772" name="PlayerDialoguePortraitFollowsLocalCharacterEvenWithoutASequenceActor" fullname="StorySequenceAuthoringTests.PlayerDialoguePortraitFollowsLocalCharacterEvenWithoutASequenceActor" methodname="PlayerDialoguePortraitFollowsLocalCharacterEvenWithoutASequenceActor" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1420646852" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.005685" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2771" name="SequenceActorResolvesCharacterDataFromItsCharacterInsteadOfItsDisplayName" fullname="StorySequenceAuthoringTests.SequenceActorResolvesCharacterDataFromItsCharacterInsteadOfItsDisplayName" methodname="SequenceActorResolvesCharacterDataFromItsCharacterInsteadOfItsDisplayName" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1370429851" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.002725" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2760" name="SimpleWaitIsValidAndSerializedNewStepsHaveSafeDefaults" fullname="StorySequenceAuthoringTests.SimpleWaitIsValidAndSerializedNewStepsHaveSafeDefaults" methodname="SimpleWaitIsValidAndSerializedNewStepsHaveSafeDefaults" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1831235803" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.007545" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="2747" name="UccIgnoresActorSnapsWhileTheStoryOwnsTheCamera" fullname="StorySequenceAuthoringTests.UccIgnoresActorSnapsWhileTheStoryOwnsTheCamera" methodname="UccIgnoresActorSnapsWhileTheStoryOwnsTheCamera" classname="StorySequenceAuthoringTests" runstate="Runnable" seed="1365009118" result="Passed" start-time="2026-11-20 17:24:29Z" end-time="2026-11-20 17:24:29Z" duration="0.003200" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
