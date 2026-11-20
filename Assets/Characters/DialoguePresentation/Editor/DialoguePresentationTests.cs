@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -8,6 +8,23 @@ public sealed class DialoguePresentationTests
     private static DialoguePresentationProfile Profile => AssetDatabase.LoadAssetAtPath<DialoguePresentationProfile>(DialoguePresentationSetup.ProfilePath);
 
     [Test] public void InstalledContractIsComplete() => DialoguePresentationValidator.Validate();
+
+    [Test] public void MobileBodySuppressionIsPartOfTheReplicatedState()
+    {
+        var speaking = new DialoguePresentationState { active = true, bodySuppressed = false };
+        var walking = speaking;
+        walking.bodySuppressed = true;
+        Assert.That(speaking.Equals(walking), Is.False);
+        using (var writer = new Unity.Netcode.FastBufferWriter(256, Unity.Collections.Allocator.Temp))
+        {
+            writer.WriteNetworkSerializable(walking);
+            using (var reader = new Unity.Netcode.FastBufferReader(writer, Unity.Collections.Allocator.Temp))
+            {
+                reader.ReadNetworkSerializable(out DialoguePresentationState received);
+                Assert.That(received.Equals(walking), Is.True);
+            }
+        }
+    }
 
     [Test] public void OldLinesReceiveAnExpressiveDefault()
     {
@@ -22,8 +39,7 @@ public sealed class DialoguePresentationTests
         foreach (DialogueIntent intent in System.Enum.GetValues(typeof(DialogueIntent)))
         {
             int index = Profile.Choose(DialogueRole.Speaking, intent, true, null, -1, 45);
-            Assert.That(index, Is.GreaterThanOrEqualTo(0));
-            Assert.That(Profile.gestures[index].seated, Is.True);
+            Assert.That(index, Is.EqualTo(-1), "Keep Sit Idle when a complete seated gesture is unavailable.");
         }
     }
 
@@ -78,40 +94,11 @@ public sealed class DialoguePresentationTests
     }
 
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public void UpperBodyDialoguePreservesBaseFeetAndPelvis(bool seated)
+    [Test] public void DialogueUsesCompleteBodyStatesInsteadOfLayers()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab");
-        var source = prefab.GetComponent<CharacterAnimationController>().Animator;
-        var gesture = Profile.gestures.First(g => g.validated && g.role == DialogueRole.Speaking && (seated ? g.seated : g.standing));
-        int layer = System.Array.IndexOf(source.runtimeAnimatorController.animationClips, gesture.upperBody);
-        Assert.That(layer, Is.GreaterThanOrEqualTo(0));
-        using (var sampler = new ActorPoseSampler(source))
+        foreach (var g in Profile.gestures.Where(g => g.validated))
         {
-            var baseline = sampler.Sample(gesture.upperBody, sampleCount: 60, controller: source.runtimeAnimatorController,
-                configureController: p =>
-                {
-                    p.SetBool("IsSitting", seated);
-                    p.SetFloat("LitSpeed", 0);
-                    p.Play(seated ? "Base Layer.Sitting_Idle" : "Base Layer.Locomotion", 0, .2f);
-                });
-            var animated = sampler.Sample(gesture.upperBody, sampleCount: 60, controller: source.runtimeAnimatorController,
-                configureController: p =>
-                {
-                    p.SetBool("IsSitting", seated);
-                    p.SetFloat("LitSpeed", 0);
-                    p.Play(seated ? "Base Layer.Sitting_Idle" : "Base Layer.Locomotion", 0, .2f);
-                    int overlay = p.GetLayerIndex(CharacterDialoguePresentationController.Layers[1]);
-                    p.SetLayerWeight(overlay, 1);
-                    p.Play(CharacterDialoguePresentationController.Layers[1] + "." + gesture.id, overlay, .3f);
-                });
-            for (int i = 0; i < baseline.Length; i++)
-            {
-                Assert.That(Vector3.Distance(baseline[i].body, animated[i].body), Is.LessThan(.0001f), "Pelvis at sample " + i);
-                Assert.That(Vector3.Distance(baseline[i].leftFoot, animated[i].leftFoot), Is.LessThan(.0001f), "Left foot at sample " + i);
-                Assert.That(Vector3.Distance(baseline[i].rightFoot, animated[i].rightFoot), Is.LessThan(.0001f), "Right foot at sample " + i);
-            }
+            Assert.That(g.body, Is.Not.Null, g.id);
         }
     }
 

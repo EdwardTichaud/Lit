@@ -28,7 +28,6 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
     public SkillSO[] enemyAttackSkills;
     public Camera arenaCamera;
     [Tooltip("Aim Lucian's combat torso without rotating the authored hips/feet or the physical motor.")]
-    public bool alignPlayerCombatTorso = true;
     [Header("Encounter tuning (test only)")]
     public Vector3 playerSpawn = new Vector3(0, 0.1f, 5);
     public Vector3 enemySpawn = new Vector3(0, 0, -4);
@@ -140,8 +139,6 @@ public sealed class LucianBrainsCombatArena : MonoBehaviour, IInputModeHandler
         };
         if (selected == null) { Debug.LogError("[Combat Lab] Selected character prefab is missing: " + character, this); return; }
         var playerObject = Instantiate(selected, playerSpawn, Quaternion.Euler(0, 180, 0));
-        if (alignPlayerCombatTorso && playerObject.GetComponent<LucianCombatTorsoFacing>() == null)
-            playerObject.AddComponent<LucianCombatTorsoFacing>();
         Player = playerObject.GetComponent<SquadCharacterController>();
         bridge = playerObject.GetComponent<LitOpsiveLocomotionBridge>();
         presentation = playerObject.GetComponent<PlayerActionPresentationController>();

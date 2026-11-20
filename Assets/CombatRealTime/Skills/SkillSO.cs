@@ -168,14 +168,6 @@ public enum PlayerActionMovementPolicy
     ExistingScripted = 2
 }
 
-public enum PlayerActionFacingMode
-{
-    // Le rig regarde la cible, sans modifier la direction physique UCC.
-    VisualOnly,
-    // La capsule UCC tourne aussi vers la cible. Reserve aux actions dirigees.
-    UccBody
-}
-
 public enum EnemyActionMovementMode
 {
     Grounded,
@@ -261,8 +253,6 @@ public sealed class PlayerActionPresentationProfile
     public MotionHandoffProfile handoff = MotionHandoffProfile.CreateActionDefault();
     public VisualActionHandoff visualHandoff = new VisualActionHandoff();
     [Header("Facing And Inertia")]
-    [Tooltip("UccBody : la capsule UCC conserve l'orientation vers la cible apres l'action. VisualOnly ne tourne que le rig et convient aux poses non dirigees.")]
-    public PlayerActionFacingMode facingMode = PlayerActionFacingMode.UccBody;
     public bool allowMoveAfterRecovery = true;
     public bool allowDodgeAfterRecovery = true;
     [Tooltip("Autorise les actions de mobilite a interrompre ce skill a partir de Mobility Cancel Normalized Time.")]

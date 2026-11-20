@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: Lucian_ImpactLab
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    dialoguePresentation: {fileID: 11400000, guid: 1b203da3a26a9e346b0c827d85ab1a6b, type: 2}
     combatPresentation:
       damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
-      presentationProfile: {fileID: 0}
+      presentationProfile: {fileID: 11400000, guid: 18d95703bbba4044e80e62a438dfef6c, type: 2}
+      preserveWholeBodyLocomotion: 1
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02
@@ -222,6 +224,7 @@ MonoBehaviour:
       enforceControlledWeightsInLateUpdate: 1
     trajectories:
       library: {fileID: 11400000, guid: 113c5c487be663e419c9f350ce8dda4b, type: 2}
+      holdLandingThroughContactLoss: 0
     dash:
       dashOvershootDistance: 1.25
       dashImpulsePerMeter: 8

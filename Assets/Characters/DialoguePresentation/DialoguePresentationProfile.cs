@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,7 +24,6 @@ public sealed class DialoguePresentationProfile : ScriptableObject
         public AnimationClip source;
         public long sourceId;
         public AnimationClip body;
-        public AnimationClip upperBody;
         public DialogueRole role;
         public DialogueIntent intent;
         public bool seated;
@@ -48,7 +47,7 @@ public sealed class DialoguePresentationProfile : ScriptableObject
     {
         if (intent == DialogueIntent.Automatic) intent = defaultIntent;
         var configured = expressions.Find(entry => entry.intent == intent);
-        return configured != null && configured.preset != null ? configured.preset : gesture.expression;
+        return configured != null && configured.preset != null ? configured.preset : gesture?.expression;
     }
 
     [Min(.05f)] public float blendSeconds = .25f;
@@ -66,7 +65,7 @@ public sealed class DialoguePresentationProfile : ScriptableObject
         for (int i = 0; i < gestures.Count; i++)
         {
             var g = gestures[i];
-            if (!g.validated || g.upperBody == null || g.role != role || (seated ? !g.seated : !g.standing))
+            if (!g.validated || g.body == null || g.role != role || (seated ? !g.seated : !g.standing))
                 continue;
             if (!string.IsNullOrEmpty(requestedId) && g.id == requestedId) return i;
             candidates.Add(i);

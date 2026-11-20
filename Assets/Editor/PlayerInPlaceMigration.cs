@@ -184,12 +184,11 @@ public static class PlayerInPlaceMigration
                 if (sample.MaxDisplacement <= .005f && sample.MaxYaw <= .1f) return;
                 // The previous player bridge applied this multiplier to authored actions.
                 float multiplier = LegacyFloat("rootMotionSpeedMultiplier", 1.04f);
-                bool visualFacing = skill != null && skill.presentation.facingMode == PlayerActionFacingMode.VisualOnly;
                 profiles.Add(new PlayerStateMotionLibrary.Profile {
                     statePath = statePath, duration = sample.duration,
                     localX = PlayerInPlaceSampling.Curve(sample.positions.Select(p => p.x * multiplier).ToArray()),
                     localZ = PlayerInPlaceSampling.Curve(sample.positions.Select(p => p.z * multiplier).ToArray()),
-                    yaw = PlayerInPlaceSampling.Curve(sample.yaw.Select(v => visualFacing ? 0f : v).ToArray()),
+                    yaw = PlayerInPlaceSampling.Curve(sample.yaw.Select(v => v).ToArray()),
                     allowAirborne = LegacyAirborne(skill), initialUpwardSpeed = 0f
                 });
             });
@@ -354,9 +353,6 @@ public static class PlayerInPlaceMigration
                 authoredSettings.FindProperty("playerSettings.locomotion.adaptMovingGroundRelief").boolValue = false;
             if (wasRoot)
             {
-                // Keep the same physical tuning and animator speed conversion when removing the old branch.
-                var blend = so.FindProperty("groundedRootMotionSpeedToBlend");
-                if (blend != null) authoredSettings.FindProperty("playerSettings.locomotion.groundedAnimationSpeedToBlend").floatValue = blend.floatValue;
                 authoredSettings.FindProperty("playerSettings.locomotion.tuneGroundedUccPhysics").boolValue = false;
             }
             foreach (string field in new[] { "useRootMotionLocomotion", "preserveAnimatorRootMotion", "restoreRootMotionSettingsOnDisable" })

@@ -6553,7 +6553,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 307263867}
-  - component: {fileID: 307263866}
   m_Layer: 0
   m_Name: "Facing comparison \u2014 visual only"
   m_TagString: Untagged
@@ -6561,71 +6560,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &307263866
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 307263865}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5049737e3e12cf547b1b1207004456c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FacingCalibrationLab
-  actors:
-  - label: Lucian SOURCE
-    animator: {fileID: 579025221}
-    idle: {fileID: 7400000, guid: 63c42a314261def49a3a549d82121e1a, type: 3}
-    walk: {fileID: 7400002, guid: 2007bdb87ed7c0449bcbb2820fa9a926, type: 3}
-    run: {fileID: 7400002, guid: fe242bac2a3e9b74081d0c054f0d7462, type: 3}
-    walkToRunPhaseOffset: 0.8666667
-  - label: Lucian CALIBRATED
-    animator: {fileID: 2064441412}
-    idle: {fileID: 7400000, guid: 1278cc2549864024b8cd0ffbf30a28ce, type: 2}
-    walk: {fileID: 7400000, guid: 4797c0fb92845094dbc0944e54f4148b, type: 2}
-    run: {fileID: 7400000, guid: 908d06c6a3252c24d9253b77e913053f, type: 2}
-    walkToRunPhaseOffset: 0.8666667
-  - label: Juggernaut SOURCE
-    animator: {fileID: 230112759}
-    idle: {fileID: 7400000, guid: 63c42a314261def49a3a549d82121e1a, type: 3}
-    walk: {fileID: 7400002, guid: 2007bdb87ed7c0449bcbb2820fa9a926, type: 3}
-    run: {fileID: 7400002, guid: fe242bac2a3e9b74081d0c054f0d7462, type: 3}
-    walkToRunPhaseOffset: 0.9166667
-  - label: Juggernaut CALIBRATED
-    animator: {fileID: 2063969421}
-    idle: {fileID: 7400000, guid: 604c5db2c86e11648931b15e7542fab0, type: 2}
-    walk: {fileID: 7400000, guid: 09399d0915d836b4e903dd63b25c53ae, type: 2}
-    run: {fileID: 7400000, guid: 274b93b51ec5df94680a714d1d3aaa48, type: 2}
-    walkToRunPhaseOffset: 0.9166667
-  - label: Werewolf SOURCE
-    animator: {fileID: 1929304666}
-    idle: {fileID: 1827226128182048838, guid: 1cc648d777287e24d9f59983b69d34da, type: 3}
-    walk: {fileID: 1827226128182048838, guid: f20339c98896a6a49b612d07fc6c0934, type: 3}
-    run: {fileID: 0}
-    walkToRunPhaseOffset: 0
-  - label: Werewolf CALIBRATED
-    animator: {fileID: 1943908078}
-    idle: {fileID: 7400000, guid: 8aa6cf731b0b3a643a8340ee87d42522, type: 2}
-    walk: {fileID: 7400000, guid: e95f1987583a9fc4699eb5b341a75294, type: 2}
-    run: {fileID: 0}
-    walkToRunPhaseOffset: 0
-  - label: StoneGolem SOURCE
-    animator: {fileID: 1856803235}
-    idle: {fileID: 1827226128182048838, guid: be61213d840fed945a119e86f3413f4c, type: 3}
-    walk: {fileID: 1827226128182048838, guid: f62a03ea36fba8f4191893f1c3a2868a, type: 3}
-    run: {fileID: 1827226128182048838, guid: e74589f3fa6c60d40802e26d46b88b95, type: 3}
-    walkToRunPhaseOffset: 0.875
-  - label: StoneGolem CALIBRATED
-    animator: {fileID: 333624492}
-    idle: {fileID: 7400000, guid: 89137ae7db81cec478c592b63fb98013, type: 2}
-    walk: {fileID: 7400000, guid: 83e7b79f20139724d8355b89aba6f8e8, type: 2}
-    run: {fileID: 7400000, guid: a659f52683e52bb438c0adbf41880fc1, type: 2}
-    walkToRunPhaseOffset: 0.875
-  cycle: 0
-  transitionSeconds: 0.2
-  paused: 0
-  repeat: 1
 --- !u!4 &307263867
 Transform:
   m_ObjectHideFlags: 0

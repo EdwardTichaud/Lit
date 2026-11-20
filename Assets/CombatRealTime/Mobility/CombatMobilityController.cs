@@ -407,7 +407,6 @@ public sealed partial class CombatMobilityController : MonoBehaviour
             recoveryNormalizedTime = settings.recoveryNormalizedTime,
             exitBlendSeconds = 0.08f,
             movementPolicy = movementPolicy,
-            facingMode = PlayerActionFacingMode.UccBody,
             allowMoveAfterRecovery = true,
             allowDodgeAfterRecovery = true,
             allowMobilityCancel = true

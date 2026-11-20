@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 [System.Serializable]
@@ -132,8 +132,6 @@ public sealed class PlayerLocomotionSettings
 {
     [Tooltip("Optional measured presentation profile. Does not change UCC physics.")]
     public LocomotionPresentationProfile presentationProfile;
-    [Tooltip("Keep the base layer's complete pelvis/leg pose during locomotion and its transitions. The separate leg overlay remains available for mobile upper-body actions.")]
-    public bool preserveWholeBodyLocomotion;
     [Tooltip("Journaliser le franchissement pour diagnostiquer ses interruptions.")] public bool logScriptedTraversalDiagnostics;
     [Min(1), Tooltip("Nombre de ticks entre deux traces de franchissement.")] public int scriptedTraversalDiagnosticTickInterval = 8;
     [Min(0f), Tooltip("Deplacement externe en metres a partir duquel signaler une correction pendant le franchissement.")] public float scriptedTraversalExternalCorrectionDistance = 0.02f;
@@ -237,10 +235,6 @@ public sealed class PlayerLocomotionSettings
     [Tooltip("Nom exact du parametre Animator pour move start trigger.")] public string moveStartTriggerParam = "MoveStartTrigger";
     [Tooltip("Nom exact du parametre Animator pour move stop trigger.")] public string moveStopTriggerParam = "MoveStopTrigger";
     [Tooltip("Nom exact du parametre Animator pour turn in place.")] public string turnInPlaceParam = "TurnInPlace";
-    [Min(0.01f)] [Tooltip("Conversion de la vitesse physique vers le blend de locomotion.")] public float groundedAnimationSpeedToBlend = 0.48f;
-    [Min(0f)] [Tooltip("Vitesse de montee du parametre de vitesse animee.")] public float groundedAnimatorSpeedRiseRate = 13.5f;
-    [Min(0f)] [Tooltip("Vitesse de diminution du parametre de vitesse animee.")] public float groundedAnimatorSpeedFallRate = 5.4f;
-    [Min(0f)] [Tooltip("Vitesse de mise a jour du parametre de rotation animee.")] public float groundedAnimatorTurnRate = 5.4f;
     [Range(0f, 1f)] [Tooltip("Angle minimal pour presenter une rotation sur place, en degres.")] public float groundedTurnInPlaceThreshold = 0.55f;
     [Min(0f)] [Tooltip("Vitesse maximale permettant la rotation sur place.")] public float groundedTurnInPlaceMaxSpeed = 0.35f;
     [Tooltip("Autoriser les clips de rotation sur place.")] public bool enableGroundedTurnInPlaceClips = false;

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 
@@ -297,12 +297,6 @@ public sealed class PlayerAnimationController : CharacterAnimationController
             {
                 animator.SetBool(parameter.nameHash, false);
             }
-        }
-
-        int movingLegsLayer = animator.GetLayerIndex(PlayerMovingLegsOverlay.LayerName);
-        if (movingLegsLayer > 0)
-        {
-            animator.SetLayerWeight(movingLegsLayer, 0f);
         }
 
         // Sample the idle pose before the Timeline creates or evaluates its animation graph.

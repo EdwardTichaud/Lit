@@ -17,8 +17,8 @@ MonoBehaviour:
     combatPresentation:
       damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
-      presentationProfile: {fileID: 0}
-      preserveWholeBodyLocomotion: 0
+      presentationProfile: {fileID: 11400000, guid: 18d95703bbba4044e80e62a438dfef6c, type: 2}
+      preserveWholeBodyLocomotion: 1
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8
       scriptedTraversalExternalCorrectionDistance: 0.02

@@ -792,7 +792,6 @@ GameObject:
   - component: {fileID: 8416060044593499487}
   - component: {fileID: 5663095735446488192}
   - component: {fileID: 171322044434279707}
-  - component: {fileID: 1480955641409980954}
   - component: {fileID: 3566340646771082989}
   - component: {fileID: 4173456320500178900}
   - component: {fileID: 2145079940661936940}
@@ -1691,7 +1690,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 372525362500307665}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9964cca5ed17c234a9c3bd0b73005a87, type: 3}
+  m_Script: {fileID: 11500000, guid: b2f0dc0d141852c4fa74c5aeee60f7c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.CharacterIK
   m_States:
@@ -2131,20 +2130,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dda4afb447652b840bca6c89a3f20fdc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerJusticeStrike
---- !u!114 &1480955641409980954
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 372525362500307665}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de1e8c01de1377d4393b73b114bed1ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianCombatTorsoFacing
-  maximumCorrection: 65
-  entryBlendSeconds: 0.08
 --- !u!114 &3566340646771082989
 MonoBehaviour:
   m_ObjectHideFlags: 0

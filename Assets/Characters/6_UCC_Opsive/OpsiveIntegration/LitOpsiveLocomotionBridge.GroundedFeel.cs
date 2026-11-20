@@ -1,6 +1,5 @@
 using Opsive.UltimateCharacterController.Character.Abilities;
 using UnityEngine;
-using System.Text;
 
 public partial class LitOpsiveLocomotionBridge
 {
@@ -32,10 +31,6 @@ public partial class LitOpsiveLocomotionBridge
     private string moveStartTriggerParam { get => ModuleSettings.moveStartTriggerParam; set => ModuleSettings.moveStartTriggerParam = value; }
     private string moveStopTriggerParam { get => ModuleSettings.moveStopTriggerParam; set => ModuleSettings.moveStopTriggerParam = value; }
     private string turnInPlaceParam { get => ModuleSettings.turnInPlaceParam; set => ModuleSettings.turnInPlaceParam = value; }
-    private float groundedAnimationSpeedToBlend { get => ModuleSettings.groundedAnimationSpeedToBlend; set => ModuleSettings.groundedAnimationSpeedToBlend = value; }
-    private float groundedAnimatorSpeedRiseRate { get => ModuleSettings.groundedAnimatorSpeedRiseRate; set => ModuleSettings.groundedAnimatorSpeedRiseRate = value; }
-    private float groundedAnimatorSpeedFallRate { get => ModuleSettings.groundedAnimatorSpeedFallRate; set => ModuleSettings.groundedAnimatorSpeedFallRate = value; }
-    private float groundedAnimatorTurnRate { get => ModuleSettings.groundedAnimatorTurnRate; set => ModuleSettings.groundedAnimatorTurnRate = value; }
     private float groundedTurnInPlaceThreshold { get => ModuleSettings.groundedTurnInPlaceThreshold; set => ModuleSettings.groundedTurnInPlaceThreshold = value; }
     private float groundedTurnInPlaceMaxSpeed { get => ModuleSettings.groundedTurnInPlaceMaxSpeed; set => ModuleSettings.groundedTurnInPlaceMaxSpeed = value; }
     private bool enableGroundedTurnInPlaceClips { get => ModuleSettings.enableGroundedTurnInPlaceClips; set => ModuleSettings.enableGroundedTurnInPlaceClips = value; }
@@ -66,11 +61,7 @@ public partial class LitOpsiveLocomotionBridge
     private bool groundedMoveIntent;
     private float groundedMoveIntentAge;
     private bool wasGroundedMoveIntentForAge;
-    private float groundedPresentationSpeed;
     private float groundedPresentationTurn;
-    private bool groundedMoveStartTierOverrideActive;
-    private float groundedMoveStartTierOverride;
-    private float groundedMoveStartTierOverrideExpiresAt;
     private bool groundedPivotActive;
     private float groundedPivotHoldTimer;
     private float groundedPivotDuration;
@@ -81,28 +72,6 @@ public partial class LitOpsiveLocomotionBridge
     private Vector2 groundedMoveTransitionLocalDirection;
     private float groundedMoveTransitionDirectionTimer;
     private LocomotionPresentationState groundedPresentationState;
-    private float groundedPresentationStateAge;
-    private float groundedStopRequestTimer;
-    private float groundedStopSettledTimer;
-    private bool groundedStopReachedExit;
-
-    private bool recordLocomotionDiagnostics { get => ModuleSettings.recordLocomotionDiagnostics; set => ModuleSettings.recordLocomotionDiagnostics = value; }
-    private const int LocomotionHistoryCapacity = 120;
-    private readonly LocomotionSample[] locomotionHistory = new LocomotionSample[LocomotionHistoryCapacity];
-    private int locomotionHistoryNext;
-    private int locomotionHistoryCount;
-
-    private struct LocomotionSample
-    {
-        public float Time;
-        public float InputMagnitude;
-        public float PhysicalSpeed;
-        public float PresentationSpeed;
-        public LocomotionPresentationState State;
-        public int CurrentStateHash;
-        public int NextStateHash;
-        public bool InTransition;
-    }
 
     private bool groundedFeelProfileApplied;
     private Vector3 previousGroundedMotorAcceleration;
@@ -338,130 +307,6 @@ public partial class LitOpsiveLocomotionBridge
             : Mathf.Max(0f, groundedInputAcceleration);
     }
 
-    private bool TryUpdateGroundedFeelAnimatorParameters(Vector3 velocity, float speed, bool moving)
-    {
-        if (!enableCinematicGroundedFeel)
-        {
-            return false;
-        }
-
-        // CombatLocomotion is driven by the target-relative input. A released
-        // stick is the authority for the visual stop: residual UCC velocity
-        // must not keep an InPlace walk/strafe pose alive.
-        bool hasRawCombatMoveIntent = desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone;
-        bool isStoppedCombatIdle = combatLockActive &&
-                                   !hasRawCombatMoveIntent &&
-                                   currentWorldMoveInput.sqrMagnitude <= movementDeadZone * movementDeadZone;
-        if (isStoppedCombatIdle)
-        {
-            groundedPresentationSpeed = 0f;
-            groundedPresentationTurn = 0f;
-            ResetGroundedMoveTransitionDirection();
-            ResetGroundedMoveStartTierOverride();
-            SetAnimatorFloat(speedParam, 0f);
-            SetGroundedDirectionalAnimatorParameters(0f, Vector3.zero);
-            SetAnimatorFloat(horizontalMovementParam, 0f);
-            SetAnimatorFloat(forwardMovementParam, 0f);
-            SetAnimatorFloat(combatMoveMagnitudeParam, 0f);
-            SetAnimatorBool(isMovingParam, false);
-            SetAnimatorFloat(locomotionTierParam, 0f);
-            SetAnimatorFloat(turnParam, 0f);
-            SetAnimatorBool(turnInPlaceParam, false);
-            ResetAnimatorTrigger(moveStartTriggerParam);
-            ResetAnimatorTrigger(moveStopTriggerParam);
-            EnterCombatIdleFromLocomotion();
-            return true;
-        }
-
-        float deltaTime = ResolveGroundedFeelDeltaTime();
-        float targetSpeed = ResolveGroundedPresentationSpeed(speed);
-        float speedRate = targetSpeed > groundedPresentationSpeed
-            ? groundedAnimatorSpeedRiseRate
-            : groundedAnimatorSpeedFallRate;
-        groundedPresentationSpeed = Mathf.MoveTowards(
-            groundedPresentationSpeed,
-            targetSpeed,
-            Mathf.Max(0f, speedRate) * deltaTime);
-
-        float targetTurn = ResolveGroundedPresentationTurn(velocity);
-        groundedPresentationTurn = Mathf.MoveTowards(
-            groundedPresentationTurn,
-            targetTurn,
-            Mathf.Max(0f, groundedAnimatorTurnRate) * deltaTime);
-
-        UpdateGroundedPresentationState(speed, velocity, deltaTime);
-        bool shouldAnimateMoving = groundedPresentationState != LocomotionPresentationState.Idle ||
-                                  moving || groundedPresentationSpeed > 0.05f;
-        SetAnimatorFloat(speedParam, groundedPresentationSpeed);
-        SetGroundedDirectionalAnimatorParameters(groundedPresentationSpeed, velocity);
-        SetAnimatorBool(isMovingParam, shouldAnimateMoving);
-        SetAnimatorFloat(locomotionTierParam, ResolveGroundedLocomotionTier());
-        SetAnimatorFloat(turnParam, groundedPresentationTurn);
-        SetAnimatorBool(turnInPlaceParam, enableGroundedTurnInPlaceClips && ShouldGroundedTurnInPlace(speed, targetTurn));
-        RecordLocomotionSample(speed);
-        return true;
-    }
-
-    private float ResolveGroundedPresentationSpeed(float physicalSpeed)
-    {
-        float physicalSpeedToBlend = groundedAnimationSpeedToBlend;
-        float scaledPhysicalSpeed = physicalSpeed * Mathf.Max(0.01f, physicalSpeedToBlend);
-        float inputBlendSpeed = 0f;
-        float inputMagnitude = currentWorldMoveInput.magnitude;
-        if (inputMagnitude > 0f)
-        {
-            float targetBlendTop = sprintPressed ? runPresentationSpeed : walkPresentationSpeed;
-            inputBlendSpeed = inputMagnitude * targetBlendTop;
-        }
-
-        float maximumPresentationSpeed = sprintPressed ? runPresentationSpeed : walkPresentationSpeed;
-        return Mathf.Clamp(Mathf.Max(scaledPhysicalSpeed, inputBlendSpeed), 0f, maximumPresentationSpeed);
-    }
-
-    private float ResolveGroundedPresentationTurn(Vector3 velocity)
-    {
-        if (groundedPivotActive)
-        {
-            return groundedPivotTurnValue;
-        }
-
-        Vector3 direction = Vector3.zero;
-        if (desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
-        {
-            direction = new Vector3(desiredGroundedWorldMoveInput.x, 0f, desiredGroundedWorldMoveInput.y);
-        }
-        else if (velocity.sqrMagnitude > 0.0001f)
-        {
-            direction = velocity;
-        }
-        else
-        {
-            direction = lastPlanarDirection;
-        }
-
-        if (direction.sqrMagnitude <= 0.0001f)
-        {
-            return 0f;
-        }
-
-        return Mathf.Clamp(Vector3.SignedAngle(transform.forward, direction.normalized, Vector3.up) / 90f, -1f, 1f);
-    }
-
-    private bool ShouldGroundedTurnInPlace(float speed, float targetTurn)
-    {
-        if (groundedPivotActive)
-        {
-            return locomotion != null && locomotion.Grounded;
-        }
-
-        return locomotion != null &&
-               locomotion.Grounded &&
-               groundedMoveIntent &&
-               speed <= groundedTurnInPlaceMaxSpeed &&
-               currentWorldMoveInput.magnitude <= movementDeadZone * 1.5f &&
-               Mathf.Abs(targetTurn) >= groundedTurnInPlaceThreshold;
-    }
-
     private void TickGroundedPivotTurn(float deltaTime)
     {
         if (groundedPivotHoldTimer > 0f)
@@ -520,11 +365,6 @@ public partial class LitOpsiveLocomotionBridge
         targetDirection.Normalize();
         float signedAngle = Vector3.SignedAngle(transform.forward, targetDirection, Vector3.up);
         float absAngle = Mathf.Abs(signedAngle);
-        if (ShouldSnapGroundedStationaryTurn(planarVelocity, absAngle))
-        {
-            SnapGroundedStationaryTurn(targetDirection);
-            return false;
-        }
 
         if (absAngle < groundedPivotMinAngle)
         {
@@ -545,7 +385,6 @@ public partial class LitOpsiveLocomotionBridge
 
         groundedPivotTurnValue = signedTurn;
         groundedPresentationTurn = signedTurn;
-        groundedPresentationSpeed = 0f;
         groundedPivotTargetDirection = targetDirection;
         hasGroundedPivotTargetDirection = true;
         CommitGroundedPivotTargetDirection();
@@ -553,41 +392,6 @@ public partial class LitOpsiveLocomotionBridge
         groundedPivotHoldTimer = groundedPivotDuration;
         groundedPivotActive = true;
         return true;
-    }
-
-    private bool ShouldSnapGroundedStationaryTurn(Vector3 planarVelocity, float absAngle)
-    {
-        // Exploration turns must remain authored pivots. A serialized legacy
-        // prefab may still carry the old flag, but gameplay no longer permits
-        // a transform snap outside explicit teleport/cinematic flows.
-        return false;
-    }
-
-    private void SnapGroundedStationaryTurn(Vector3 targetDirection)
-    {
-        if (targetDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        targetDirection.Normalize();
-        Quaternion targetRotation = Quaternion.LookRotation(targetDirection, Vector3.up);
-        if (locomotion != null)
-        {
-            locomotion.SetPositionAndRotation(transform.position, targetRotation, false, false);
-        }
-        else
-        {
-            transform.rotation = targetRotation;
-        }
-
-        ResetGroundedPivotTurn();
-        groundedPivotCooldownTimer = Mathf.Max(groundedPivotCooldownTimer, groundedPivotCooldown);
-        groundedPivotTurnValue = 0f;
-        groundedPresentationTurn = 0f;
-        smoothedGroundedWorldMoveInput = Vector2.zero;
-        lastPlanarDirection = targetDirection;
-        ForceOrientationLookDirection(targetDirection);
     }
 
     private Vector2 ResolveGroundedPivotMoveInput(Vector2 targetWorldMoveInput, float targetMagnitude)
@@ -680,211 +484,6 @@ public partial class LitOpsiveLocomotionBridge
         ForceOrientationLookDirection(direction);
     }
 
-    private void UpdateGroundedPresentationState(float speed, Vector3 velocity, float deltaTime)
-    {
-        if (animator == null || IsFlightModeActive)
-        {
-            groundedPresentationState = LocomotionPresentationState.Idle;
-            return;
-        }
-
-        if (groundedPivotActive)
-        {
-            ResetAnimatorTrigger(moveStartTriggerParam);
-            ResetAnimatorTrigger(moveStopTriggerParam);
-            SetGroundedPresentationState(LocomotionPresentationState.Pivoting);
-            return;
-        }
-
-        if (groundedPresentationState == LocomotionPresentationState.Pivoting)
-        {
-            if (groundedMoveIntent)
-            {
-                EnterGroundedStart(velocity);
-            }
-            else
-            {
-                SetGroundedPresentationState(LocomotionPresentationState.Idle);
-            }
-        }
-
-        switch (groundedPresentationState)
-        {
-            case LocomotionPresentationState.Idle:
-                if (groundedMoveIntent)
-                {
-                    EnterGroundedStart(velocity);
-                }
-                break;
-
-            case LocomotionPresentationState.Starting:
-                if (groundedMoveIntent)
-                {
-                    groundedStopRequestTimer = 0f;
-                    if (groundedPresentationStateAge >= 0.08f && !IsGroundedStartStateActive())
-                    {
-                        SetGroundedPresentationState(LocomotionPresentationState.Moving);
-                    }
-                }
-                else if ((groundedStopRequestTimer += deltaTime) >= groundedStopRequestDelay)
-                {
-                    EnterGroundedStop(velocity);
-                }
-                break;
-
-            case LocomotionPresentationState.Moving:
-                if (groundedMoveIntent)
-                {
-                    groundedStopRequestTimer = 0f;
-                }
-                else if ((groundedStopRequestTimer += deltaTime) >= groundedStopRequestDelay)
-                {
-                    EnterGroundedStop(velocity);
-                }
-                break;
-
-            case LocomotionPresentationState.Stopping:
-                if (groundedMoveIntent)
-                {
-                    EnterGroundedStart(velocity);
-                }
-                else
-                {
-                    TrackGroundedStopExit();
-                    if (IsGroundedStopStateReadyToSettle() && speed <= groundedStopSettledSpeed)
-                    {
-                        groundedStopSettledTimer += deltaTime;
-                        if (groundedStopSettledTimer >= groundedStopSettledDuration)
-                        {
-                            SetGroundedPresentationState(LocomotionPresentationState.Idle);
-                        }
-                    }
-                    else
-                    {
-                        groundedStopSettledTimer = 0f;
-                    }
-                }
-                break;
-        }
-    }
-
-    private void EnterGroundedStart(Vector3 velocity)
-    {
-        LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
-        ResetAnimatorTrigger(moveStopTriggerParam);
-        ArmGroundedMoveStartTierOverride();
-        SetAnimatorFloat(locomotionTierParam, groundedMoveStartTierOverride);
-        SetAnimatorTrigger(moveStartTriggerParam);
-        SetGroundedPresentationState(LocomotionPresentationState.Starting);
-    }
-
-    private void EnterGroundedStop(Vector3 velocity)
-    {
-        LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
-        ResetAnimatorTrigger(moveStartTriggerParam);
-        SetAnimatorTrigger(moveStopTriggerParam);
-        groundedStopReachedExit = false;
-        SetGroundedPresentationState(LocomotionPresentationState.Stopping);
-    }
-
-    private void SetGroundedPresentationState(LocomotionPresentationState state)
-    {
-        if (groundedPresentationState == state)
-        {
-            return;
-        }
-
-        groundedPresentationState = state;
-        groundedPresentationStateAge = 0f;
-        groundedStopRequestTimer = 0f;
-        groundedStopSettledTimer = 0f;
-        if (state != LocomotionPresentationState.Stopping)
-        {
-            groundedStopReachedExit = false;
-        }
-    }
-
-    private void TrackGroundedStopExit()
-    {
-        if (animator == null || groundedStopReachedExit)
-        {
-            return;
-        }
-
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        groundedStopReachedExit =
-            (state.IsName("Walk_Stop") || state.IsName("Run_Stop")) &&
-            state.normalizedTime >= groundedStopExitNormalizedTime;
-    }
-
-    private bool IsGroundedStopStateReadyToSettle()
-    {
-        if (animator == null || !groundedStopReachedExit)
-        {
-            return false;
-        }
-
-        // The Animator begins its authored Stop -> Locomotion blend at the
-        // same normalized time. Waiting for a non-transitioning Stop state
-        // would therefore keep the bridge in Stopping forever. Once that
-        // blend has completed, Locomotion at near-zero presentation speed is
-        // the authoritative settled pose.
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        return !animator.IsInTransition(0) &&
-               state.IsName("Locomotion") &&
-               groundedPresentationSpeed <= 0.05f;
-    }
-
-    private void ArmGroundedMoveStartTierOverride()
-    {
-        groundedMoveStartTierOverride = sprintPressed
-            ? runPresentationSpeed
-            : ResolveLocomotionTier(groundedPresentationSpeed);
-        groundedMoveStartTierOverrideActive = true;
-        groundedMoveStartTierOverrideExpiresAt = Time.unscaledTime + 0.35f;
-    }
-
-    private float ResolveGroundedLocomotionTier()
-    {
-        if (!groundedMoveStartTierOverrideActive)
-        {
-            return ResolveLocomotionTier(groundedPresentationSpeed);
-        }
-
-        // Keep the tier stable until Animator consumes MoveStartTrigger. Without
-        // this hold, the smoothed presentation speed rewrites it to walk before
-        // the state machine can select Run_Start.
-        float selectedTier = groundedMoveStartTierOverride;
-        if (IsGroundedStartStateActive() || Time.unscaledTime >= groundedMoveStartTierOverrideExpiresAt)
-        {
-            groundedMoveStartTierOverrideActive = false;
-        }
-
-        return selectedTier;
-    }
-
-    private bool IsGroundedStartStateActive()
-    {
-        if (animator == null)
-        {
-            return false;
-        }
-
-        const int baseLayerIndex = 0;
-        if (animator.IsInTransition(baseLayerIndex) &&
-            IsGroundedStartState(animator.GetNextAnimatorStateInfo(baseLayerIndex)))
-        {
-            return true;
-        }
-
-        return IsGroundedStartState(animator.GetCurrentAnimatorStateInfo(baseLayerIndex));
-    }
-
-    private static bool IsGroundedStartState(AnimatorStateInfo stateInfo)
-    {
-        return stateInfo.IsName("Walk_Start") || stateInfo.IsName("Run_Start");
-    }
-
     private void TickGroundedMoveIntentAge(float deltaTime)
     {
         if (groundedMoveIntent)
@@ -913,71 +512,6 @@ public partial class LitOpsiveLocomotionBridge
         }
     }
 
-    private void LatchGroundedMoveTransitionDirection(Vector2 localDirection)
-    {
-        if (localDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        groundedMoveTransitionLocalDirection = localDirection.normalized;
-        groundedMoveTransitionDirectionTimer = Mathf.Max(0f, groundedMoveTransitionDirectionHoldTime);
-    }
-
-    private bool TryGetGroundedMoveTransitionLocalDirection(out Vector2 localDirection, out float parameterSpeed)
-    {
-        if (groundedMoveTransitionDirectionTimer > 0f &&
-            groundedMoveTransitionLocalDirection.sqrMagnitude > 0.0001f)
-        {
-            localDirection = groundedMoveTransitionLocalDirection.normalized;
-            parameterSpeed = Mathf.Max(0f, groundedMoveTransitionParameterSpeed);
-            return true;
-        }
-
-        localDirection = Vector2.zero;
-        parameterSpeed = 0f;
-        return false;
-    }
-
-    private Vector2 ResolveGroundedMoveTransitionLocalDirection(Vector3 fallbackVelocity)
-    {
-        if (combatLockActive && combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone)
-        {
-            return Vector2.ClampMagnitude(combatLockLocalInput, 1f);
-        }
-
-        if (UseForwardOnlyGroundedLocomotion)
-        {
-            return Vector2.up;
-        }
-
-        Vector3 direction = Vector3.zero;
-        if (desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
-        {
-            direction = new Vector3(desiredGroundedWorldMoveInput.x, 0f, desiredGroundedWorldMoveInput.y);
-        }
-        else if (currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
-        {
-            direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
-        }
-        else if (fallbackVelocity.sqrMagnitude > 0.0001f)
-        {
-            direction = fallbackVelocity;
-        }
-        else
-        {
-            direction = lastPlanarDirection;
-        }
-
-        direction.y = 0f;
-        if (direction.sqrMagnitude <= 0.0001f)
-        {
-            return Vector2.zero;
-        }
-
-        return ResolveLocalMoveInput(direction.normalized, 1f);
-    }
-
     private void ResetGroundedFeelState()
     {
         desiredGroundedWorldMoveInput = Vector2.zero;
@@ -985,14 +519,8 @@ public partial class LitOpsiveLocomotionBridge
         groundedMoveIntent = false;
 
         ResetGroundedMoveIntentAge();
-        groundedPresentationSpeed = 0f;
         groundedPresentationTurn = 0f;
         groundedPresentationState = LocomotionPresentationState.Idle;
-        groundedPresentationStateAge = 0f;
-        groundedStopRequestTimer = 0f;
-        groundedStopSettledTimer = 0f;
-        groundedStopReachedExit = false;
-        ResetGroundedMoveStartTierOverride();
         ResetGroundedPivotTurn();
         ResetGroundedMoveTransitionDirection();
     }
@@ -1004,11 +532,6 @@ public partial class LitOpsiveLocomotionBridge
         groundedMoveIntent = false;
 
         groundedPresentationState = LocomotionPresentationState.Idle;
-        groundedPresentationStateAge = 0f;
-        groundedStopRequestTimer = 0f;
-        groundedStopSettledTimer = 0f;
-        groundedStopReachedExit = false;
-        ResetGroundedMoveStartTierOverride();
         ResetGroundedMoveIntentAge();
         ResetGroundedPivotTurn();
         ResetGroundedMoveTransitionDirection();
@@ -1037,13 +560,6 @@ public partial class LitOpsiveLocomotionBridge
         groundedMoveTransitionDirectionTimer = 0f;
     }
 
-    private void ResetGroundedMoveStartTierOverride()
-    {
-        groundedMoveStartTierOverrideActive = false;
-        groundedMoveStartTierOverride = 0f;
-        groundedMoveStartTierOverrideExpiresAt = 0f;
-    }
-
     private float ResolveGroundedFeelDeltaTime()
     {
         if (animator != null && timeDomain != null && ModuleSettings.presentationProfile != null &&
@@ -1051,52 +567,6 @@ public partial class LitOpsiveLocomotionBridge
             return Time.inFixedTimeStep ? timeDomain.FixedDeltaTime : timeDomain.DeltaTime;
         float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
         return Mathf.Max(deltaTime, 0.0001f);
-    }
-
-    private void RecordLocomotionSample(float physicalSpeed)
-    {
-        groundedPresentationStateAge += ResolveGroundedFeelDeltaTime();
-        if (!recordLocomotionDiagnostics)
-        {
-            return;
-        }
-
-        AnimatorStateInfo current = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
-        AnimatorStateInfo next = animator != null && animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
-        locomotionHistory[locomotionHistoryNext] = new LocomotionSample
-        {
-            Time = Time.unscaledTime,
-            InputMagnitude = currentWorldMoveInput.magnitude,
-            PhysicalSpeed = physicalSpeed,
-            PresentationSpeed = groundedPresentationSpeed,
-            State = groundedPresentationState,
-            CurrentStateHash = current.fullPathHash,
-            NextStateHash = next.fullPathHash,
-            InTransition = animator != null && animator.IsInTransition(0)
-        };
-        locomotionHistoryNext = (locomotionHistoryNext + 1) % LocomotionHistoryCapacity;
-        locomotionHistoryCount = Mathf.Min(locomotionHistoryCount + 1, LocomotionHistoryCapacity);
-    }
-
-    [ContextMenu("Dump Locomotion Presentation Diagnostics")]
-    private void DumpLocomotionPresentationDiagnostics()
-    {
-        StringBuilder report = new StringBuilder("[LocomotionPresentation] samples=").Append(locomotionHistoryCount);
-        for (int i = 0; i < locomotionHistoryCount; i++)
-        {
-            int index = (locomotionHistoryNext - locomotionHistoryCount + i + LocomotionHistoryCapacity) % LocomotionHistoryCapacity;
-            LocomotionSample sample = locomotionHistory[index];
-            report.Append('\n').Append(sample.Time.ToString("F3"))
-                .Append(" input=").Append(sample.InputMagnitude.ToString("F2"))
-                .Append(" physical=").Append(sample.PhysicalSpeed.ToString("F2"))
-                .Append(" presented=").Append(sample.PresentationSpeed.ToString("F2"))
-                .Append(" state=").Append(sample.State)
-                .Append(" animator=").Append(sample.CurrentStateHash)
-                .Append(" next=").Append(sample.NextStateHash)
-                .Append(" transition=").Append(sample.InTransition);
-        }
-
-        Debug.Log(report.ToString(), this);
     }
 
     private void ResetAnimatorTrigger(string parameter)

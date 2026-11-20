@@ -23,11 +23,6 @@ public static class ActorAnimationLabValidation
         EditorSceneManager.OpenScene(IluviliraeSetup.ScenePath);
         SessionState.SetBool(Key,true); EditorApplication.isPlaying = true;
     }
-    public static void RunWithCandidates()
-    {
-        LocomotionPresentationCalibration.PrepareLaboratoryCandidates();
-        Run();
-    }
     private static void Tick()
     {
         if (!SessionState.GetBool(Key,false) || !EditorApplication.isPlaying || EditorApplication.isCompiling) return;

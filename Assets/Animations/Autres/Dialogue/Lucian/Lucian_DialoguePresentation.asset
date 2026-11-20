@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67330d1cd84356143b51de5faf3f00fd, type: 3}
   m_Name: Lucian_DialoguePresentation
   m_EditorClassIdentifier: Assembly-CSharp::DialoguePresentationProfile
+  wholeBodyPresentation: 1
   expressions:
   - intent: 1
     preset: {fileID: 11400000, guid: 8ac24a771c522d648b996995d22e6310, type: 2}
@@ -37,92 +38,92 @@ MonoBehaviour:
   - id: Speak_Explain_A
     source: {fileID: 4213507563621380147, guid: ee932ccbce2fd394cbd1fb20352f2fde, type: 3}
     sourceId: 4213507563621380147
-    body: {fileID: 7400000, guid: e83c0322d7837aa459e5f80d03418c7f, type: 2}
-    upperBody: {fileID: 7400000, guid: 457f46e59b69cbe48acc86d2e421e315, type: 2}
+    body: {fileID: 0}
+    upperBody: {fileID: 0}
     role: 0
     intent: 2
     seated: 0
     standing: 1
     weight: 1
-    startNormalizedTime: 0.00000000
+    startNormalizedTime: 0
     validated: 0
     validation: Facial/head-only source. Excluded from body gesture selection.
     expression: {fileID: 0}
   - id: Speak_Explain_B
     source: {fileID: 1512675888789599045, guid: ee932ccbce2fd394cbd1fb20352f2fde, type: 3}
     sourceId: 1512675888789599045
-    body: {fileID: 7400000, guid: 408792ddc36779143afb22142d483505, type: 2}
-    upperBody: {fileID: 7400000, guid: ac641b43c40f9674d999383eac54b876, type: 2}
+    body: {fileID: 0}
+    upperBody: {fileID: 0}
     role: 0
     intent: 2
     seated: 0
     standing: 1
     weight: 1
-    startNormalizedTime: 0.00000000
+    startNormalizedTime: 0
     validated: 0
     validation: Facial/head-only source. Excluded from body gesture selection.
     expression: {fileID: 0}
   - id: Speak_Firm
     source: {fileID: 1127808672041325000, guid: ee932ccbce2fd394cbd1fb20352f2fde, type: 3}
     sourceId: 1127808672041325000
-    body: {fileID: 0}
-    upperBody: {fileID: 7400000, guid: 3d4f669887ed92249af03ad4ce63caeb, type: 2}
+    body: {fileID: 7400000, guid: 74b88e758dd88054c8771b0c6ea9e340, type: 2}
+    upperBody: {fileID: 0}
     role: 0
     intent: 4
     seated: 0
     standing: 1
     weight: 1
-    startNormalizedTime: 0.00000000
+    startNormalizedTime: 0
     validated: 1
-    validation: Upper-body use approved. Full-body requires pose/appui review. Visual review pending.
+    validation: Complete original body pose; root trajectory removed. In-game review pending.
     expression: {fileID: 0}
   - id: Speak_Seated
     source: {fileID: -77431794931059068, guid: ee932ccbce2fd394cbd1fb20352f2fde, type: 3}
     sourceId: -77431794931059068
     body: {fileID: 0}
-    upperBody: {fileID: 7400000, guid: 2821819da3a84f8448a869dc6f067cb3, type: 2}
+    upperBody: {fileID: 0}
     role: 0
     intent: 2
     seated: 1
     standing: 0
     weight: 1
-    startNormalizedTime: 0.59012873
-    validated: 1
-    validation: Upper-body use approved. Full-body requires pose/appui review. Visual review pending.
+    startNormalizedTime: 0.5901287
+    validated: 0
+    validation: Complete seated gesture not qualified; keep Sit Idle with voice/expression.
     expression: {fileID: 0}
   - id: Listen_Attentive
-    source: {fileID: 7400000, guid: b513f53ece478654eacdc1a6b56b4367, type: 2}
+    source: {fileID: 7400000, guid: bf0cee455e1198b4cb8b02e849cbab6d, type: 3}
     sourceId: 7400000
-    body: {fileID: 7400000, guid: 73f30f0e078c3144c8701f8934e65151, type: 2}
-    upperBody: {fileID: 7400000, guid: 51380969144be544698590e686cbc5da, type: 2}
+    body: {fileID: 7400000, guid: 74f7dd4628313f2459f0fd6f6f6c65c6, type: 2}
+    upperBody: {fileID: 0}
     role: 1
     intent: 1
-    seated: 1
+    seated: 0
     standing: 1
     weight: 1
-    startNormalizedTime: 0.00000000
+    startNormalizedTime: 0
     validated: 1
-    validation: Measured Inplace, foot span <= 3 cm. Visual review pending.
+    validation: Complete original body pose; root trajectory removed. In-game review pending.
     expression: {fileID: 0}
   - id: Wait_Attentive
-    source: {fileID: 7400000, guid: b513f53ece478654eacdc1a6b56b4367, type: 2}
+    source: {fileID: 7400000, guid: bf0cee455e1198b4cb8b02e849cbab6d, type: 3}
     sourceId: 7400000
-    body: {fileID: 7400000, guid: fd8645b7334bffa41abe895b2699aa46, type: 2}
-    upperBody: {fileID: 7400000, guid: 678feebb939c4a54cb57c5c1fb000e3f, type: 2}
+    body: {fileID: 7400000, guid: 74f7dd4628313f2459f0fd6f6f6c65c6, type: 2}
+    upperBody: {fileID: 0}
     role: 2
     intent: 1
-    seated: 1
+    seated: 0
     standing: 1
     weight: 1
-    startNormalizedTime: 0.00000000
+    startNormalizedTime: 0
     validated: 1
-    validation: Measured Inplace, foot span <= 3 cm. Visual review pending.
+    validation: Complete original body pose; root trajectory removed. In-game review pending.
     expression: {fileID: 0}
   - id: Speak_Neutral
     source: {fileID: 8993902097722301239, guid: 8663397864d151d4ea8ce6ab092e3094, type: 3}
     sourceId: 8993902097722301239
-    body: {fileID: 0}
-    upperBody: {fileID: 7400000, guid: fffcc04228e7f434aba2750d7895d024, type: 2}
+    body: {fileID: 7400000, guid: d144e43ceb5d07f489eff486addaeebb, type: 2}
+    upperBody: {fileID: 0}
     role: 0
     intent: 1
     seated: 0
@@ -130,27 +131,27 @@ MonoBehaviour:
     weight: 1
     startNormalizedTime: 0.22471908
     validated: 1
-    validation: Upper-body use approved. Full-body requires pose/appui review. Visual review pending.
+    validation: Complete original body pose; root trajectory removed. In-game review pending.
     expression: {fileID: 0}
   - id: Speak_Question
     source: {fileID: 8993902097722301239, guid: f1db22b43bcd0e3438761ae33ba18a6b, type: 3}
     sourceId: 8993902097722301239
-    body: {fileID: 0}
-    upperBody: {fileID: 7400000, guid: 26b8cdac1e65bf34e94136b43b95d44a, type: 2}
+    body: {fileID: 7400000, guid: 6d2be3d8259074c4a9acfdf978bbbe22, type: 2}
+    upperBody: {fileID: 0}
     role: 0
     intent: 3
     seated: 0
     standing: 1
     weight: 1
-    startNormalizedTime: 0.17201834
+    startNormalizedTime: 0.17201833
     validated: 1
-    validation: Upper-body use approved. Full-body requires pose/appui review. Visual review pending.
+    validation: Complete original body pose; root trajectory removed. In-game review pending.
     expression: {fileID: 0}
   - id: Speak_Explain_C
     source: {fileID: 8993902097722301239, guid: c511dfe9b944c2c4d9bf34c2abde762d, type: 3}
     sourceId: 8993902097722301239
-    body: {fileID: 0}
-    upperBody: {fileID: 7400000, guid: 0f3b204a9322bb749b3157c6c642c96f, type: 2}
+    body: {fileID: 7400000, guid: f5fbc10eae6d7e74085b7ec034bfdb59, type: 2}
+    upperBody: {fileID: 0}
     role: 0
     intent: 2
     seated: 0
@@ -158,5 +159,5 @@ MonoBehaviour:
     weight: 1
     startNormalizedTime: 0.08955224
     validated: 1
-    validation: Upper-body use approved. Full-body requires pose/appui review. Visual review pending.
+    validation: Complete original body pose; root trajectory removed. In-game review pending.
     expression: {fileID: 0}

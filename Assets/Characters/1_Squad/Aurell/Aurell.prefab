@@ -2631,7 +2631,6 @@ GameObject:
   - component: {fileID: 4123326500705931544}
   - component: {fileID: 722667548486803561}
   - component: {fileID: 5267902418899867719}
-  - component: {fileID: 6068301057913572398}
   - component: {fileID: 1215766615007576241}
   - component: {fileID: 4800570953135326837}
   - component: {fileID: 445702111332130825}
@@ -2691,7 +2690,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that are already bound by a Humanoid avatar. These transforms can only be changed by Humanoid clips.\n\tTransform 'thigh_l'\n\tTransform 'thigh_r'\n\tTransform 'spine_02'\n\tTransform 'thigh_l'\n\tTransform 'calf_l'\n\tTransform 'foot_l'\n\tTransform 'foot_r'\n\tTransform 'thigh_r'\n\tTransform 'calf_r'\n\tTransform 'root'\n\tand more ...\n\tFrom animation clip 'AS_Left_HitBetweenIndexMiddle'\n\tFrom animation clip 'AS_Left_HitBetweenMiddleRing'\n\tFrom animation clip 'AS_Left_HitBetweenRingPinky'\n\tFrom animation clip 'AS_Left_HitBetweenThumbIndex'\n\tFrom animation clip 'AS_Left_HitIndex'\n\tFrom animation clip 'AS_Left_HitMiddle'\n\tFrom animation clip 'AS_Left_HitPinky'\n\tFrom animation clip 'AS_Left_HitRing'\n\tFrom animation clip 'AS_Left_HitThumb'\n\tFrom animation clip 'AS_Left_KnifeRaisedIdle'\n\tand more ..."
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -3945,20 +3944,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatTimeDomain
   animator: {fileID: 0}
---- !u!114 &6068301057913572398
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de1e8c01de1377d4393b73b114bed1ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianCombatTorsoFacing
-  maximumCorrection: 65
-  entryBlendSeconds: 0.08
 --- !u!114 &1215766615007576241
 MonoBehaviour:
   m_ObjectHideFlags: 0

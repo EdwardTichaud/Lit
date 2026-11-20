@@ -2662,7 +2662,6 @@ GameObject:
   - component: {fileID: 5277271952661802958}
   - component: {fileID: 6288607466740529254}
   - component: {fileID: 466048291528164588}
-  - component: {fileID: 5436285832118514473}
   - component: {fileID: 856335320029125526}
   - component: {fileID: 7272462795113575414}
   - component: {fileID: 1262533667926129251}
@@ -3976,20 +3975,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f297d444e19b4247b323dd996c0c1ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerGuardState
---- !u!114 &5436285832118514473
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de1e8c01de1377d4393b73b114bed1ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianCombatTorsoFacing
-  maximumCorrection: 65
-  entryBlendSeconds: 0.08
 --- !u!114 &856335320029125526
 MonoBehaviour:
   m_ObjectHideFlags: 0

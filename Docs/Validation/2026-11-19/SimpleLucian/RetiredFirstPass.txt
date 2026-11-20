@@ -1,0 +1,15 @@
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/DialogueBody.mask
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/DialogueFreeArm.mask
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/DialogueUpperBody.mask
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Listen_Attentive_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Explain_A.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Explain_A_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Explain_B.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Explain_B_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Explain_C_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Firm_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Neutral_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Question_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Seated.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Speak_Seated_UpperBody.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Wait_Attentive_UpperBody.anim

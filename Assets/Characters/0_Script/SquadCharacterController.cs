@@ -2965,6 +2965,9 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private float ResolveFlameAnimationLayerWeightTarget()
     {
+        if (GetComponent<LitOpsiveLocomotionBridge>()?.UsesSimpleWholeBodyPresentation == true &&
+            (GetComponent<PlayerActionPresentationController>()?.IsActionActive == true ||
+             GetComponent<CharacterAnimationController>()?.IsCinematicMotionActive == true || CurrentHp <= 0)) return 0;
         if (PlayerAnimationController.IsClingAnimation(animator))
         {
             return 0f;

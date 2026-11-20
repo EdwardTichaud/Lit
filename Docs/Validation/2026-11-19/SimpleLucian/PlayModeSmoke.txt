@@ -1,0 +1,5 @@
+PASS
+walk speed=0,657 LitSpeed=1,177 cadence=0,558 state=-7429206 bridge=True facade=True locomotion=True handler=True override=True velocity=(0.000, 0.000, 0.657) input=(0.00, 0.00)
+speaking speed=0,000 LitSpeed=0,000 cadence=1,000 state=1202511731 bridge=True facade=True locomotion=True handler=False override=False velocity=(0.000, 0.000, 0.000) input=(0.00, 0.00)
+mobile-bark speed=0,658 LitSpeed=1,177 cadence=0,559 state=-1269438207 bridge=True facade=True locomotion=True handler=True override=True velocity=(0.000, 0.000, 0.658) input=(0.00, 0.00)
+cinematic-resume speed=0,000 LitSpeed=0,000 cadence=1,000 state=-1269438207 bridge=True facade=True locomotion=True handler=True override=True velocity=(0.000, 0.000, 0.000) input=(0.00, 0.00)

@@ -595,9 +595,6 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "groundedDirectionChangeAcceleration",
             LucianGroundedDirectionChangeAcceleration);
-        SetSerializedFloat(serializedObject, "groundedAnimatorSpeedRiseRate", LucianGroundedAnimatorSpeedRiseRate);
-        SetSerializedFloat(serializedObject, "groundedAnimatorSpeedFallRate", LucianGroundedAnimatorSpeedFallRate);
-        SetSerializedFloat(serializedObject, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate);
 
         SetSerializedFloat(
             serializedObject,
@@ -1403,17 +1400,6 @@ public static class LitOpsiveUccMigrationUtility
                 "groundedDirectionChangeAcceleration",
                 LucianGroundedDirectionChangeAcceleration,
                 errors);
-            ValidateSerializedFloat(
-                bridge,
-                "groundedAnimatorSpeedRiseRate",
-                LucianGroundedAnimatorSpeedRiseRate,
-                errors);
-            ValidateSerializedFloat(
-                bridge,
-                "groundedAnimatorSpeedFallRate",
-                LucianGroundedAnimatorSpeedFallRate,
-                errors);
-            ValidateSerializedFloat(bridge, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate, errors);
             ValidateSerializedFloat(
                 bridge,
                 "groundedMoveTransitionDirectionHoldTime",

@@ -1,0 +1,9 @@
+Removed LucianCombatTorsoFacing on Soren
+Restored standard UCC IK on LucianCadence
+Removed LucianCombatTorsoFacing on Vesta
+Removed LucianCombatTorsoFacing on Aurell
+Removed FacingCalibrationLab on Facing comparison — visual only
+Removed obsolete layers: Assets/Characters/1_Squad/Soren/Soren_Model.controller
+Removed obsolete layers: Assets/Characters/1_Squad/Vesta/Vesta_Model.controller
+Removed obsolete layers: Assets/Characters/4_Animations/Player_Model.controller
+Removed obsolete support dataset: Assets/Characters/AnimationPresentation/LucianCoherencePreview/Cadence01/LucianFootSupports.asset

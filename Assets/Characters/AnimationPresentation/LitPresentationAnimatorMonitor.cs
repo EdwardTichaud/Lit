@@ -11,7 +11,7 @@ public sealed class LitPresentationAnimatorMonitor : AnimatorMonitor
         {
             if (!isActiveAndEnabled) return false;
             if (presentationBridge == null) presentationBridge = GetComponentInParent<LitOpsiveLocomotionBridge>();
-            return presentationBridge != null && presentationBridge.IsMeasuredLocomotionPresentationActive;
+            return presentationBridge != null && (presentationBridge.UsesSimpleWholeBodyPresentation || presentationBridge.IsMeasuredLocomotionPresentationActive);
         }
     }
     public override bool SetHorizontalMovementParameter(float value,float timeScale,float dampingTime)

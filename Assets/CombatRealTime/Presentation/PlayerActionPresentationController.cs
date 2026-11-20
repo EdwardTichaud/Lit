@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -8,8 +8,6 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private const string LocomotionState = "Base Layer.Locomotion";
     private const string CombatLocomotionState = "Base Layer.CombatLocomotion";
     private const string CombatIdleState = "Base Layer.CombatIdle";
-    private const string WalkStartState = "Base Layer.Walk_Start";
-    private const string RunStartState = "Base Layer.Run_Start";
 
     [SerializeField] private Animator animator;
     private LitOpsiveLocomotionBridge locomotionBridge;
@@ -81,7 +79,6 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         activeActionIsBasic = skill is BasicSkillsSO;
         activeActionName = skill.SkillName;
         activeAllowsMobilityCancel = skill.Presentation.allowMobilityCancel;
-        activeFacingMode = skill.Presentation.facingMode;
         chainWindowOpen = mobilityCancelOpen = recoveryOpen = false;
         return true;
     }
@@ -138,7 +135,6 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
     private bool targetLungeOwnsPlanarMotion;
     private int activeStateHash;
     private int activeToken;
-    private PlayerActionFacingMode activeFacingMode;
     private bool actionActive;
     private bool activeActionIsBasic;
     private bool basicSkillInterruptedByDamage;
@@ -436,11 +432,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         locomotionBridge?.GetComponent<PlayerStateMotionController>()?.Cancel();
         locomotionBridge?.RefreshLocomotionPresentation();
 
-        string destination = ResolveLocomotionDestination(movementHeld, sprintHeld);
+        string destination = ResolveCurrentLocomotionDestination();
         int destinationHash = Animator.StringToHash(destination);
         if (animator.HasState(0, destinationHash))
         {
-            animator.CrossFade(destinationHash, Mathf.Clamp(transitionSeconds, 0f, 0.25f), 0);
+            animator.CrossFadeInFixedTime(destinationHash, Mathf.Clamp(transitionSeconds, 0f, .25f), 0);
         }
     }
 
@@ -457,6 +453,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
     private void OnDisable()
     {
+        dialoguePresentationOwner = null;
         ReleaseChargedPlayerHold();
         SkillEventsOnDisable();
         TerminateAction(activeToken, ActionEndReason.OwnerDisabled);
@@ -896,7 +893,6 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
         activeToken++;
         activeStateHash = stateHash;
-        activeFacingMode = profile.facingMode;
         GetComponent<CharacterDialoguePresentationController>()?.SuspendForPriority();
         actionActive = true;
         activeActionIsBasic = isBasicAction;
@@ -1126,11 +1122,6 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
             return;
         }
 
-        if (activeFacingMode == PlayerActionFacingMode.VisualOnly && FaceVisualRig(direction))
-        {
-            return;
-        }
-
         if (locomotionBridge != null)
         {
             locomotionBridge.SetActionFacingDirection(direction);
@@ -1141,24 +1132,6 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
         }
-    }
-
-    private bool FaceVisualRig(Vector3 worldDirection)
-    {
-        if (animator == null || !animator.isHuman)
-        {
-            return false;
-        }
-
-        Transform hips = animator.GetBoneTransform(HumanBodyBones.Hips);
-        if (hips == null)
-        {
-            return false;
-        }
-
-        float yaw = Vector3.SignedAngle(transform.forward, worldDirection.normalized, transform.up);
-        hips.rotation = Quaternion.AngleAxis(yaw, transform.up) * hips.rotation;
-        return true;
     }
 
     private void ResumeLocomotion(PlayerActionPresentationProfile profile, int token)
@@ -1181,12 +1154,7 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
 
         MotionHandoffProfile handoff = profile.handoff ?? MotionHandoffProfile.CreateActionDefault();
         float blend = Mathf.Max(profile.exitBlendSeconds, handoff.locomotionBlendSeconds);
-        if (profile.visualHandoff != null && profile.visualHandoff.validated)
-        {
-            animator.CrossFadeInFixedTime(ResolveCurrentLocomotionDestination(), profile.visualHandoff.blendSeconds, 0,
-                profile.visualHandoff.destinationPhase * profile.visualHandoff.destinationCycleSeconds);
-        }
-        else animator.CrossFade(ResolveCurrentLocomotionDestination(), Mathf.Clamp(blend, 0f, 0.25f), 0);
+        animator.CrossFadeInFixedTime(ResolveCurrentLocomotionDestination(), Mathf.Clamp(blend, .12f, .25f), 0);
         FinishWithoutTransition(token);
     }
 
@@ -1304,23 +1272,11 @@ public sealed partial class PlayerActionPresentationController : MonoBehaviour
         activeAirborneHoldHandle = 0;
     }
 
-    private string ResolveLocomotionDestination(bool movementHeld, bool sprintHeld)
-    {
-        if (locomotionBridge != null && locomotionBridge.IsCombatLockActive)
-        {
-            return movementHeld ? CombatLocomotionState : CombatIdleState;
-        }
-
-        return !movementHeld
-            ? LocomotionState
-            : sprintHeld ? RunStartState : WalkStartState;
-    }
-
     private string ResolveCurrentLocomotionDestination()
     {
-        return ResolveLocomotionDestination(
-            locomotionBridge != null && locomotionBridge.HasLocomotionIntent,
-            locomotionBridge != null && locomotionBridge.IsSprintHeld);
+        return locomotionBridge != null && locomotionBridge.IsCombatLockActive && !locomotionBridge.IsCombatFreeSprint
+            ? (locomotionBridge.PlanarVelocity.sqrMagnitude > .0025f ? CombatLocomotionState : CombatIdleState)
+            : LocomotionState;
     }
 
     private void KeepDeathAnimationActive()

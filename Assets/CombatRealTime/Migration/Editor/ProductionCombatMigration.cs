@@ -584,7 +584,6 @@ public static class ProductionCombatMigration
                     name == "Aurell" ? new[] { "PlayerJusticeStrike" } :
                     name == "Soren" ? new[] { "PlayerControlSkills" } : name == "Vesta" ? new[] { "PlayerRegenerationEffect" } : Array.Empty<string>();
                 foreach (string component in characterModules) Ensure(pass, root, component, prefabPath);
-                if (arena.alignPlayerCombatTorso) Ensure(pass, root, "LucianCombatTorsoFacing", prefabPath);
                 Reference(pass, Get(root, "CharacterInfo"), "characterData", target, prefabPath);
                 Reference(pass, Get(root, "SquadCharacterController"), "characterData", target, prefabPath);
                 var presentation = Get(root, "PlayerActionPresentationController");

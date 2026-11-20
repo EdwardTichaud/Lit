@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: LucianCadence
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   playerSettings:
+    dialoguePresentation: {fileID: 11400000, guid: 1b203da3a26a9e346b0c827d85ab1a6b, type: 2}
     combatPresentation:
       damageReactionAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
     locomotion:
-      presentationProfile: {fileID: 11400000, guid: 87d0e8d1953f0b04491a04c3bdcb464c, type: 2}
+      presentationProfile: {fileID: 11400000, guid: 18d95703bbba4044e80e62a438dfef6c, type: 2}
       preserveWholeBodyLocomotion: 1
       logScriptedTraversalDiagnostics: 0
       scriptedTraversalDiagnosticTickInterval: 8

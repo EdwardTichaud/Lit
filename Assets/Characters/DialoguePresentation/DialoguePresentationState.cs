@@ -4,7 +4,7 @@ using Unity.Netcode;
 /// <summary>Owner-selected presentation. Clients never choose a new gesture for a remote actor.</summary>
 public struct DialoguePresentationState : INetworkSerializable, System.IEquatable<DialoguePresentationState>
 {
-    public bool active, stationary, seated, suspended;
+    public bool active, stationary, seated, suspended, bodySuppressed;
     public int generation, gesture, revision;
     public double startedAt;
     public float intensity;
@@ -16,6 +16,7 @@ public struct DialoguePresentationState : INetworkSerializable, System.IEquatabl
     {
         serializer.SerializeValue(ref active);
         serializer.SerializeValue(ref suspended);
+        serializer.SerializeValue(ref bodySuppressed);
         serializer.SerializeValue(ref stationary);
         serializer.SerializeValue(ref seated);
         serializer.SerializeValue(ref generation);
@@ -28,7 +29,7 @@ public struct DialoguePresentationState : INetworkSerializable, System.IEquatabl
         serializer.SerializeValue(ref listenerActorId);
     }
     public bool Equals(DialoguePresentationState other) =>
-        active == other.active && suspended == other.suspended && stationary == other.stationary && seated == other.seated &&
+        active == other.active && suspended == other.suspended && bodySuppressed == other.bodySuppressed && stationary == other.stationary && seated == other.seated &&
         generation == other.generation && revision == other.revision && startedAt.Equals(other.startedAt) && gesture == other.gesture && intensity.Equals(other.intensity) && intent == other.intent &&
         listenerId == other.listenerId && listenerActorId.Equals(other.listenerActorId);
 }

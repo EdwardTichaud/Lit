@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -19,6 +19,19 @@ public sealed class DialoguePresentationVerification : ICallbacks
     static DialoguePresentationVerification() => EditorApplication.update += Poll;
     private static void Poll()
     {
+        if (File.Exists(Report + "/tests-only.request") && !EditorApplication.isCompiling && !EditorApplication.isUpdating &&
+            !EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            File.Delete(Report + "/tests-only.request");
+            RunTests(); return;
+        }
+        if (File.Exists(Report + "/capture-only.request") && !EditorApplication.isCompiling && !EditorApplication.isUpdating &&
+            !EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            File.Delete(Report + "/capture-only.request");
+            try { Capture(); } catch(Exception e) {File.WriteAllText(Report + "/verification.error", e.ToString());Debug.LogException(e);}
+            return;
+        }
         if (!File.Exists(Report + "/verify-v3.request") || File.Exists(Report + "/install-v4.request") ||
             EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode ||
             AssetDatabase.IsAssetImportWorkerProcess()) return;
@@ -30,6 +43,13 @@ public sealed class DialoguePresentationVerification : ICallbacks
         try
         {
             Capture();
+            RunTests();
+        }
+        catch (Exception e) { File.WriteAllText(Report + "/verification.error", e.ToString()); Debug.LogException(e); }
+    }
+    [MenuItem("Lit/Animation/Run Dialogue Regression Tests")]
+    public static void RunTests()
+    {
             runner = ScriptableObject.CreateInstance<TestRunnerApi>();
             runner.RegisterCallbacks(new DialoguePresentationVerification());
             runner.Execute(new ExecutionSettings(new Filter
@@ -37,8 +57,6 @@ public sealed class DialoguePresentationVerification : ICallbacks
                 testMode = TestMode.EditMode,
                 groupNames = new[] { "^DialoguePresentationTests", "^DialoguePresentationNativeRigTests", "^StorySequenceAuthoringTests", "^CycleAutoDialogueTests" }
             }) { runSynchronously = true });
-        }
-        catch (Exception e) { File.WriteAllText(Report + "/verification.error", e.ToString()); Debug.LogException(e); }
     }
     public void RunStarted(ITestAdaptor tests) { }
     public void TestStarted(ITestAdaptor test) { }
@@ -175,8 +193,6 @@ public sealed class DialoguePresentationVerification : ICallbacks
                 animator.SetBool("Moving", false);
                 animator.Play(shot.seated ? "Base Layer.Sitting_Idle" : "Base Layer.Locomotion", 0, .2f);
                 animator.Update(.05f);
-                foreach (string name in CharacterDialoguePresentationController.Layers)
-                    animator.SetLayerWeight(animator.GetLayerIndex(name), 0);
                 int flameLayer = animator.GetLayerIndex("Upper Body Flame");
                 if (flameLayer >= 0)
                 {
@@ -186,11 +202,8 @@ public sealed class DialoguePresentationVerification : ICallbacks
                 if (!string.IsNullOrEmpty(shot.gesture))
                 {
                     var entry = profile.gestures.Single(g => g.id == shot.gesture);
-                    int mode = shot.mode == 0 && entry.body == null ? 1 : shot.mode;
-                    string layerName = CharacterDialoguePresentationController.Layers[mode];
-                    int layer = animator.GetLayerIndex(layerName);
-                    animator.SetLayerWeight(layer, 1);
-                    animator.Play(layerName + "." + entry.id, layer, Mathf.Clamp01(entry.startNormalizedTime + .03f));
+                    if (entry.validated && entry.body != null)
+                        animator.Play("Base Layer.Dialogue_" + entry.id, 0, Mathf.Clamp01(entry.startNormalizedTime + .03f));
                 }
                 animator.Update(0);
                 var face = actor.GetComponentInChildren<FacialExpressionController>(true);

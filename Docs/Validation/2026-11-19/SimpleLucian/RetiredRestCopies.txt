@@ -1,0 +1,2 @@
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Listen_Attentive.anim
+REMOVED unreferenced: Assets/Animations/Autres/Dialogue/Lucian/Wait_Attentive.anim

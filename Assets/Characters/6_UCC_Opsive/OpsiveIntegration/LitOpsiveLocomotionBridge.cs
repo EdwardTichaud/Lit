@@ -176,7 +176,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool logCombatLockMotionDiagnostics { get => ModuleSettings.logCombatLockMotionDiagnostics; set => ModuleSettings.logCombatLockMotionDiagnostics = value; }
     private Vector3 smoothedCombatFacingDirection;
     private bool hasSmoothedCombatFacingDirection;
-    private bool combatIdlePresentationActive;
     private bool combatOrbitRadiusActive;
     private float combatOrbitRadius;
     private bool lastLoggedCombatOrbitActive;
@@ -1392,12 +1391,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         });
     }
 
-    private void Start()
-    {
-        // Presentation attaches after the UCC input/physics stack has initialized.
-        EnsureComponent<PlayerMovingLegsOverlay>();
-    }
-
     private void Awake()
     {
         ResolveReferences();
@@ -1428,7 +1421,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private void OnDisable()
     {
         StopClingCarryMotion();
-        measuredCombatResponse.Reset();
         RestoreActionTakeoff();
         ReleaseTargetCollisionBypasses();
         RestoreExplorationMovementType();
@@ -1550,7 +1542,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             // evasion. Reapplying the same target every frame must not.
             combatDirectionalEvasionFacing = false;
             hasSmoothedCombatFacingDirection = false;
-            combatIdlePresentationActive = false;
             ResetCombatOrbitRadius();
         }
         ResolveCombatLocomotionMode(combatRawMoveInput);
@@ -1583,7 +1574,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         combatLockTarget = null;
         combatDirectionalEvasionFacing = false;
         hasSmoothedCombatFacingDirection = false;
-        combatIdlePresentationActive = false;
         ResetCombatOrbitRadius();
         RestoreExplorationMovementType();
         SetAnimatorBool("CombatStrafeActive", false);
@@ -1716,7 +1706,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return true;
         }
 
-        ExitCombatIdleForMovement();
 
         Vector3 radialOut = transform.position - combatLockTarget.position;
         radialOut.y = 0f;
@@ -1915,63 +1904,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             " velocity=" + PlanarVelocity.ToString("F2") +
             " animatorState=" + animatorState,
             this);
-    }
-
-    private void EnterCombatIdleFromLocomotion()
-    {
-        if (combatIdlePresentationActive || animator == null ||
-            GetComponent<PlayerActionPresentationController>()?.IsActionActive == true ||
-            !animator.HasState(0, CombatLocomotionStateHash) ||
-            !animator.HasState(0, CombatIdleStateHash))
-        {
-            return;
-        }
-
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        if (state.fullPathHash != CombatLocomotionStateHash || HasNonLocomotionCombatDestination())
-        {
-            return;
-        }
-
-#if UNITY_EDITOR
-        float fixedFade = GetComponent<LitPresentationCharacterIK>()?.CombatBrakeFadeForProbe ?? 0;
-        if (fixedFade > 0)
-            animator.CrossFadeInFixedTime(CombatIdleStateHash, fixedFade, 0);
-        else
-#endif
-            animator.CrossFade(CombatIdleStateHash, 0.04f, 0);
-        combatIdlePresentationActive = true;
-    }
-
-    private void ExitCombatIdleForMovement()
-    {
-        if (!combatIdlePresentationActive || animator == null ||
-            !animator.HasState(0, CombatLocomotionStateHash))
-        {
-            return;
-        }
-
-        // The current state can still be Idle while a skill's entry blend is
-        // pending. Never replace that destination with a locomotion request.
-        if (GetComponent<PlayerActionPresentationController>()?.IsActionActive == true || HasNonLocomotionCombatDestination())
-        {
-            combatIdlePresentationActive = false;
-            return;
-        }
-
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        bool isTransitioningToCombatIdle = animator.IsInTransition(0) &&
-                                           animator.GetNextAnimatorStateInfo(0).fullPathHash == CombatIdleStateHash;
-        if (state.fullPathHash != CombatIdleStateHash && !isTransitioningToCombatIdle)
-        {
-            // A skill, guard or evasion took control since the visual idle.
-            // Its own presentation controller is now the authority.
-            combatIdlePresentationActive = false;
-            return;
-        }
-
-        animator.CrossFade(CombatLocomotionStateHash, 0.03f, 0);
-        combatIdlePresentationActive = false;
     }
 
     private bool HasNonLocomotionCombatDestination()
@@ -2425,7 +2357,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         float magnitude = currentWorldMoveInput.magnitude;
         if (combatLockActive && !combatDirectionalEvasionFacing)
         {
-            if (magnitude > movementDeadZone) ExitCombatIdleForMovement();
             if (IsTargetStrafe) MaintainCombatLockFacing();
             combatLockLocalInput = ResolveLocalMoveInput(new Vector3(currentWorldMoveInput.x, 0, currentWorldMoveInput.y), magnitude);
             if (IsCombatFreeSprint) combatLockLocalInput = Vector2.up * magnitude;
@@ -2713,39 +2644,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Vector3 velocity = ResolvePlanarVelocity();
         float speed = velocity.magnitude;
 
-        if (TryUpdateMeasuredLocomotionPresentation(velocity, speed)) return;
-
-        // In locked combat the visual state follows the held target-relative
-        // input, never residual UCC inertia. This keeps the Animator in
-        // CombatIdle as soon as the stick is released while UCC finishes its
-        // physical deceleration.
-        if (combatLockActive && !combatDirectionalEvasionFacing)
-        {
-            bool hasCombatMoveIntent = combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone;
-            if (IsCombatFreeSprint) SetCombatAnimatorInput(Vector2.up * (hasCombatMoveIntent ? combatLockLocalInput.magnitude : 0f));
-            SetAnimatorFloat(speedParam, hasCombatMoveIntent ? speed : 0f);
-            SetAnimatorBool(isMovingParam, hasCombatMoveIntent);
-            SetAnimatorFloat(locomotionTierParam, hasCombatMoveIntent ? ResolveLocomotionTier(speed) : 0f);
-            SetAnimatorFloat(turnParam, 0f);
-            if (!hasCombatMoveIntent)
-            {
-                EnterCombatIdleFromLocomotion();
-            }
-            return;
-        }
-
-        bool moving = currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone || speed > 0.05f;
-
-        if (TryUpdateGroundedFeelAnimatorParameters(velocity, speed, moving))
-        {
-            return;
-        }
-
-        SetAnimatorFloat(speedParam, speed);
-        SetGroundedDirectionalAnimatorParameters(speed, velocity);
-        SetAnimatorBool(isMovingParam, moving);
-        SetAnimatorFloat(locomotionTierParam, ResolveLocomotionTier(speed));
-        SetAnimatorFloat(turnParam, ResolveSignedTurn(velocity));
+        UpdateSimpleWholeBodyPresentation(velocity, speed);
     }
 
     private Vector3 ResolvePlanarVelocity()
@@ -2771,52 +2670,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         lastPosition = transform.position;
         delta.y = 0f;
         return delta / deltaTime;
-    }
-
-    private float ResolveLocomotionTier(float speed)
-    {
-        // Correspond aux seuils du blend tree combat InPlace. Le sprint garde
-        // une selection franche marche/course sans influencer la translation,
-        // qui reste entierement sous l'autorite UCC.
-        return sprintPressed ? 3.25f : 1.1f;
-    }
-
-    private float ResolveSignedTurn(Vector3 velocity)
-    {
-        Vector3 direction = velocity.sqrMagnitude > 0.0001f ? velocity.normalized : lastPlanarDirection;
-        if (direction.sqrMagnitude <= 0.0001f)
-        {
-            return 0f;
-        }
-
-        return Mathf.Clamp(Vector3.SignedAngle(transform.forward, direction, Vector3.up) / 90f, -1f, 1f);
-    }
-
-    private void SetGroundedDirectionalAnimatorParameters(float presentationSpeed, Vector3 fallbackVelocity)
-    {
-        Vector2 localDirection;
-        float parameterSpeed;
-        if (TryGetGroundedMoveTransitionLocalDirection(out Vector2 latchedLocalDirection, out float latchedParameterSpeed))
-        {
-            localDirection = latchedLocalDirection;
-            parameterSpeed = Mathf.Max(Mathf.Max(0f, presentationSpeed), latchedParameterSpeed);
-        }
-        else
-        {
-            localDirection = ResolveGroundedLocalMoveDirection(fallbackVelocity);
-            parameterSpeed = Mathf.Max(0f, presentationSpeed);
-        }
-
-        if (UseForwardOnlyGroundedLocomotion)
-        {
-            SetAnimatorFloat(horizontalMovementParam, 0f);
-            SetAnimatorFloat(forwardMovementParam, parameterSpeed);
-            return;
-        }
-
-        Vector2 directionalSpeed = localDirection * parameterSpeed;
-        SetAnimatorFloat(horizontalMovementParam, directionalSpeed.x);
-        SetAnimatorFloat(forwardMovementParam, directionalSpeed.y);
     }
 
     private Vector2 ResolveGroundedLocalMoveDirection(Vector3 fallbackVelocity)

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ade0fe6647f43bd8ee9d7ab22ffb317, type: 3}
   m_Name: LocomotionMeasurements
   m_EditorClassIdentifier: Assembly-CSharp::LocomotionPresentationProfile
+  wholeBodyPresentation: 0
   runStop:
     left:
       clip: {fileID: 7400000, guid: ce79795920cd87e4b9a9e76405b7afee, type: 2}
@@ -594053,26 +594054,8 @@ MonoBehaviour:
         m_RotationOrder: 4
   validated: 1
   supportValidated: 0
-  footSupports: {fileID: 11400000, guid: c3164906cd31feb42967dd1d198b34ce, type: 2}
-  nativeFootIKClips:
-  - {fileID: 7400000, guid: 655ab37fc7b518f4db617380bd89048e, type: 2}
-  - {fileID: 7400000, guid: c210af4a764a84b43a59a6355eaf3ef8, type: 2}
-  - {fileID: 7400000, guid: 136726b4fbc5df44cacd0d48710b3520, type: 2}
-  - {fileID: 7400000, guid: 55470529aa1c42a42b5e449106b4c07d, type: 2}
-  - {fileID: 7400000, guid: 4dd213f7026a3fe42a64ec56cc7cce5a, type: 2}
-  - {fileID: 7400000, guid: e13704b32dc6c674da021af16f8f63f6, type: 2}
-  - {fileID: 7400000, guid: 661f3685bdd49b3478ede28c72693597, type: 2}
-  - {fileID: 7400000, guid: 55caaeb9093a6bc49a1dd57581ba75cb, type: 2}
-  - {fileID: 7400000, guid: 1e65daadbc0691446a2f4ad01d397758, type: 2}
-  - {fileID: 7400000, guid: 66c2b768988ab3649aac131d5b6fab2a, type: 2}
-  - {fileID: 7400000, guid: 9b7422794badb3e4aa348fc367887ada, type: 2}
-  - {fileID: 7400000, guid: 10d15e6d86cad7a4abc1c9a7f3272c59, type: 2}
-  - {fileID: 7400000, guid: c95297295261e054cb23885a07b7e57d, type: 2}
-  - {fileID: 7400000, guid: 98ed083e2f5a4dd408c9ee1f36cddbb1, type: 2}
-  - {fileID: 7400000, guid: 86e6a6a7c19701a4fb687baa7a95113b, type: 2}
-  - {fileID: 7400000, guid: 295169d0e0ae0f0499beae3c90c188ef, type: 2}
-  - {fileID: 7400000, guid: 83e265b51f9b75c4fafa99174e7e2c45, type: 2}
-  - {fileID: 7400000, guid: 8beeaa5805b07de4dac989706d3bbbf0, type: 2}
+  footSupports: {fileID: 0}
+  nativeFootIKClips: []
   chooseGaitFromObtainedSpeed: 1
   matchSimpleDirectionalBlend: 1
   directionDegreesPerSecond: 360

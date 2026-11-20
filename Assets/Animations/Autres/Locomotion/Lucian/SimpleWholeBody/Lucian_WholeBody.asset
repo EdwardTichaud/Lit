@@ -1,0 +1,273 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ade0fe6647f43bd8ee9d7ab22ffb317, type: 3}
+  m_Name: Lucian_WholeBody
+  m_EditorClassIdentifier: Assembly-CSharp::LocomotionPresentationProfile
+  wholeBodyPresentation: 1
+  runStop:
+    left:
+      clip: {fileID: 0}
+      direction: {x: 0, y: 1}
+      nativeSpeed: 0
+      leftContactPhase: 0
+      rightContactPhase: 0
+      cycleOffset: 0
+      footGoals:
+        leftPosition: []
+        rightPosition: []
+        leftRotation: []
+        rightRotation: []
+    right:
+      clip: {fileID: 0}
+      direction: {x: 0, y: 1}
+      nativeSpeed: 0
+      leftContactPhase: 0
+      rightContactPhase: 0
+      cycleOffset: 0
+      footGoals:
+        leftPosition: []
+        rightPosition: []
+        leftRotation: []
+        rightRotation: []
+    idle:
+      clip: {fileID: 0}
+      direction: {x: 0, y: 1}
+      nativeSpeed: 0
+      leftContactPhase: 0
+      rightContactPhase: 0
+      cycleOffset: 0
+      footGoals:
+        leftPosition: []
+        rightPosition: []
+        leftRotation: []
+        rightRotation: []
+    solePlane: 0
+    leftReferencePhase: 0
+    rightReferencePhase: 0
+  measuredAvatar: {fileID: 9000000, guid: db19a32c9d8c08a4681098e8b4cd781f, type: 3}
+  walk:
+  - clip: {fileID: 7400000, guid: f53840370bf39744680a9c44448d4f76, type: 2}
+    direction: {x: 0, y: 1}
+    nativeSpeed: 0.8479806
+    leftContactPhase: 0.9892473
+    rightContactPhase: 0
+    cycleOffset: 0
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 5a78b31e8766a4e4f84bb7e3d22b4f38, type: 2}
+    direction: {x: 0.70710677, y: 0.70710677}
+    nativeSpeed: 0.846055
+    leftContactPhase: 0.010752689
+    rightContactPhase: 0
+    cycleOffset: -0.97849464
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 7d05a2f029506014da25874512bbdcf5, type: 2}
+    direction: {x: 1, y: -0.00000004371139}
+    nativeSpeed: 0.9018121
+    leftContactPhase: 0.06451613
+    rightContactPhase: 0
+    cycleOffset: -0.9247312
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: cd1b1b033d8b1104985f914ba202b0a2, type: 2}
+    direction: {x: 0.70710677, y: -0.70710677}
+    nativeSpeed: 0.8385348
+    leftContactPhase: 0.8924731
+    rightContactPhase: 0
+    cycleOffset: -0.09677422
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: af4204ff7c9bb7e48855dee08cf1cb60, type: 2}
+    direction: {x: -0.00000008742278, y: -1}
+    nativeSpeed: 0.866276
+    leftContactPhase: 0.021505378
+    rightContactPhase: 0
+    cycleOffset: -0.96774197
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: c0891e300b9dee343a151b7fd6afc458, type: 2}
+    direction: {x: -0.7071069, y: -0.70710665}
+    nativeSpeed: 0.83541197
+    leftContactPhase: 0.010752689
+    rightContactPhase: 0
+    cycleOffset: -0.97849464
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: ca8703a4e67d4ac46b9c8a347822f376, type: 2}
+    direction: {x: -1, y: 0.000000011924881}
+    nativeSpeed: 0.89681774
+    leftContactPhase: 0.06451613
+    rightContactPhase: 0
+    cycleOffset: -0.9247312
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 42df9bdb40a80964fb0e6c623077f091, type: 2}
+    direction: {x: -0.70710653, y: 0.707107}
+    nativeSpeed: 0.8498434
+    leftContactPhase: 0.08602151
+    rightContactPhase: 0
+    cycleOffset: -0.9032258
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  run:
+  - clip: {fileID: 7400000, guid: a1a6989c6d7d128488204a536c1e549a, type: 2}
+    direction: {x: 0, y: 1}
+    nativeSpeed: 3.5426455
+    leftContactPhase: 0.975
+    rightContactPhase: 0
+    cycleOffset: -0.014247298
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 417a7fc05ba72324dac4f6af35731862, type: 2}
+    direction: {x: 0.70710677, y: 0.70710677}
+    nativeSpeed: 3.693009
+    leftContactPhase: 0.975
+    rightContactPhase: 0
+    cycleOffset: -0.014247298
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: b1682191516f6b24880a6783d36f61a1, type: 2}
+    direction: {x: 1, y: -0.00000004371139}
+    nativeSpeed: 3.8821666
+    leftContactPhase: 0.925
+    rightContactPhase: 0
+    cycleOffset: -0.06424731
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: bf5b7e54b71909f44b458fa1cc960b9c, type: 2}
+    direction: {x: 0.70710677, y: -0.70710677}
+    nativeSpeed: 4.1205826
+    leftContactPhase: 0.87500006
+    rightContactPhase: 0
+    cycleOffset: -0.11424726
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 30e32b4e04f56b24da04d608353cc386, type: 2}
+    direction: {x: -0.00000008742278, y: -1}
+    nativeSpeed: 3.958774
+    leftContactPhase: 0.87500006
+    rightContactPhase: 0
+    cycleOffset: -0.11424726
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 5e4f8a8df48732b4fbb2233a0703dfd0, type: 2}
+    direction: {x: -0.7071069, y: -0.70710665}
+    nativeSpeed: 3.5465226
+    leftContactPhase: 0.90000004
+    rightContactPhase: 0
+    cycleOffset: -0.08924729
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: b7eb1e9f50d6c8648afbdc05ddce1871, type: 2}
+    direction: {x: -1, y: 0.000000011924881}
+    nativeSpeed: 3.3265033
+    leftContactPhase: 0.975
+    rightContactPhase: 0
+    cycleOffset: -0.014247298
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  - clip: {fileID: 7400000, guid: 0fb4a89956293c94cb41d058a13a3771, type: 2}
+    direction: {x: -0.70710653, y: 0.707107}
+    nativeSpeed: 3.1507773
+    leftContactPhase: 0.025
+    rightContactPhase: 0
+    cycleOffset: -0.96424735
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  explorationWalk:
+    clip: {fileID: 7400000, guid: 7d50f5f93c12e984c8ecc5f846061efa, type: 2}
+    direction: {x: 0, y: 1}
+    nativeSpeed: 1.1771302
+    leftContactPhase: 0.16666666
+    rightContactPhase: 0
+    cycleOffset: 0
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  explorationRun:
+    clip: {fileID: 7400000, guid: 5a0edccbea563f842a26fa335cc76c3b, type: 2}
+    direction: {x: 0, y: 1}
+    nativeSpeed: 3.0937917
+    leftContactPhase: 0.97959185
+    rightContactPhase: 0
+    cycleOffset: 0.8129252
+    footGoals:
+      leftPosition: []
+      rightPosition: []
+      leftRotation: []
+      rightRotation: []
+  validated: 1
+  supportValidated: 0
+  footSupports: {fileID: 0}
+  nativeFootIKClips: []
+  chooseGaitFromObtainedSpeed: 1
+  matchSimpleDirectionalBlend: 1
+  directionDegreesPerSecond: 0
+  gaitBlendSeconds: 0
+  stopSpeed: 0.05
+  minimumCadence: 0.5
+  maximumCadence: 2
+  blendThresholds: {x: 0.8479806, y: 3.5426455}
+  explorationBlendThresholds: {x: 1.1771302, y: 3.0937917}
+  alignNavMeshGround: 0
+  maximumNavMeshGroundCorrection: 0.25
