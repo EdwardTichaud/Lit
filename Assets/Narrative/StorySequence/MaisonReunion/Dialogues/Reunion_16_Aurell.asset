@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33830734393831c4da92754792125df2, type: 3}
   m_Name: Reunion_16_Aurell
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
+  dialogueDirection:
+    intent: 0
+    intensity: 1
+    gestureId: 
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Allez, assieds-toi. On va en parler."
+  voiceLineText: "Allez, en attendant, on se pose un petit peu? J'ai h\xE2te d'\xE9couter vos histoires."
   voiceLineCues: []

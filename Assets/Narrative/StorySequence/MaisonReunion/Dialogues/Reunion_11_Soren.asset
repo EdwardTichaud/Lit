@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33830734393831c4da92754792125df2, type: 3}
   m_Name: Reunion_11_Soren
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
+  dialogueDirection:
+    intent: 0
+    intensity: 1
+    gestureId: 
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "Le mien m'a sorti : \xAB C'\xE9tait toi. \xBB Merci, \xE7a m'aide."
+  voiceLineText: "Je ne crois pas que \xE7a me soit d\xE9j\xE0 arriv\xE9..."
   voiceLineCues: []

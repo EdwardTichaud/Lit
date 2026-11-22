@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33830734393831c4da92754792125df2, type: 3}
   m_Name: Reunion_05_Lucian
   m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
+  dialogueDirection:
+    intent: 0
+    intensity: 1
+    gestureId: 
   voiceLineIndex: 0
   voiceLineAudioClip: {fileID: 0}
-  voiceLineText: "J'ai rencontr\xE9 mon ange gardien. [Munin]. Enfin\u2026 c'est lui qui m'a trouv\xE9."
+  voiceLineText: "J'ai rencontr\xE9 mon ange gardien. Enfin\u2026 c'est lui qui m'a trouv\xE9."
   voiceLineCues: []

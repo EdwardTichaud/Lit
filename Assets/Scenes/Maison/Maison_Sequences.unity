@@ -144,7 +144,7 @@ Transform:
   m_GameObject: {fileID: 37367991}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.80229294, z: -0, w: 0.5969305}
-  m_LocalPosition: {x: 3, y: -0.95, z: 1.5}
+  m_LocalPosition: {x: 3, y: -0.43, z: 1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -270,7 +270,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
   pointId: hearth.portal
   lookTarget: {fileID: 0}
@@ -278,6 +278,8 @@ MonoBehaviour:
   fieldOfView: 46
   useAuthoredRotation: 1
   breathingStrength: 0
+  orbitArcDegrees: 0
+  orbitPeriod: 180
 --- !u!4 &1512969111
 Transform:
   m_ObjectHideFlags: 0
@@ -320,7 +322,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
   pointId: hearth.wide
   lookTarget: {fileID: 1216391764111064312}
@@ -376,6 +378,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1216391764111064312}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &316484462444819438
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2262108128322606474}
+  - component: {fileID: 4366518251658724120}
+  - component: {fileID: 2857579364308853793}
+  - component: {fileID: 5150630412931941879}
+  - component: {fileID: 3551199230038963031}
+  - component: {fileID: 8656248213685098108}
+  - component: {fileID: 8656248213685098104}
+  m_Layer: 0
+  m_Name: Maison_Munin_Meeting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!114 &427135453205465761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -473,7 +497,24 @@ MonoBehaviour:
   cameraPoints: []
   directors: []
   events: []
+  spawnPoints: []
   searchSceneWhenBindingMissing: 1
+--- !u!4 &2262108128322606474
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316484462444819438}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8656248213685098087}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2747535340471328110
 GameObject:
   m_ObjectHideFlags: 0
@@ -496,6 +537,26 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2857579364308853793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316484462444819438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07d4bcf678a3f9c429eafb1745344878, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraDriver
+  controlledCamera: {fileID: 0}
+  uccCameraController: {fileID: 0}
+  uccCameraHandler: {fileID: 0}
+  uccCameraBinder: {fileID: 0}
+  additionalGameplayCameraBehaviours: []
+  fallbackLocalOffset: {x: 0.85, y: 1.65, z: 2.4}
+  fallbackFieldOfView: 45
+  fallbackFollowSharpness: 12
 --- !u!114 &2895194214526618963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -506,7 +567,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07d4bcf678a3f9c429eafb1745344878, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraDriver
   controlledCamera: {fileID: 0}
   uccCameraController: {fileID: 0}
@@ -516,6 +577,22 @@ MonoBehaviour:
   fallbackLocalOffset: {x: 0.85, y: 1.65, z: 2.4}
   fallbackFieldOfView: 45
   fallbackFollowSharpness: 12
+--- !u!114 &3551199230038963031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316484462444819438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bd37c89cf364884f8c1a611db80fa51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceFadeController
+  canvasGroup: {fileID: 0}
+  fadeImage: {fileID: 0}
+  fadeColor: {r: 0, g: 0, b: 0, a: 1}
+  sortingOrder: 32747
 --- !u!114 &3683134918966995562
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -526,7 +603,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad6a29de2919a844488319fc463cb884, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceSceneBindings
   actors: []
   cameraPoints:
@@ -544,10 +621,10 @@ MonoBehaviour:
           m_Mode: 0
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName:
+            m_ObjectArgumentAssemblyTypeName: 
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument:
+            m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
   - eventId: hearth.gather
@@ -560,10 +637,10 @@ MonoBehaviour:
           m_Mode: 0
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName:
+            m_ObjectArgumentAssemblyTypeName: 
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument:
+            m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
   spawnPoints:
@@ -581,9 +658,28 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument:
+            m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+  searchSceneWhenBindingMissing: 1
+--- !u!114 &4366518251658724120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316484462444819438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad6a29de2919a844488319fc463cb884, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceSceneBindings
+  actors: []
+  cameraPoints:
+  - {fileID: 8656248213685098084}
+  directors: []
+  events: []
+  spawnPoints: []
   searchSceneWhenBindingMissing: 1
 --- !u!4 &4405025658349386506
 Transform:
@@ -610,23 +706,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6bd37c89cf364884f8c1a611db80fa51, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceFadeController
   canvasGroup: {fileID: 0}
   fadeImage: {fileID: 0}
   fadeColor: {r: 0, g: 0, b: 0, a: 1}
   sortingOrder: 32747
---- !u!114 &5260016986412051589
+--- !u!114 &5150630412931941879
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 856108855267531420}
+  m_GameObject: {fileID: 316484462444819438}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9109231d0ee6054bbfe367635ebae06, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceDialoguePresenter
   canvasGroup: {fileID: 0}
   speakerText: {fileID: 0}
@@ -640,8 +736,30 @@ MonoBehaviour:
   panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
   speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
   uiFadeDuration: 0.15
-  duckMusic: 1
-  musicDuckMultiplier: 0.45
+--- !u!114 &5260016986412051589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9109231d0ee6054bbfe367635ebae06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceDialoguePresenter
+  canvasGroup: {fileID: 0}
+  speakerText: {fileID: 0}
+  dialogueText: {fileID: 0}
+  continueHintText: {fileID: 0}
+  portraitImage: {fileID: 0}
+  dialoguePanel: {fileID: 0}
+  showSpeakerName: 1
+  createRuntimeUiWhenMissing: 1
+  sortingOrder: 32737
+  panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
+  speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
+  uiFadeDuration: 0.15
 --- !u!114 &6513471457653913852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,8 +817,6 @@ MonoBehaviour:
   panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
   speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
   uiFadeDuration: 0.15
-  duckMusic: 1
-  musicDuckMultiplier: 0.45
 --- !u!114 &7295799744921987960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -730,23 +846,6 @@ MonoBehaviour:
     waitingPointIndex: 4
   approachDistance: 3
   maximumHeightDifference: 1.5
---- !u!1001 &7351328140778381110
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2171863246060046666, guid: 9d5740d511d840ca8fe0534f6687bcd9, type: 3}
-      propertyPath: startWithLocalPlayerSeated
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9d5740d511d840ca8fe0534f6687bcd9, type: 3}
 --- !u!114 &8621237026348531470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -757,7 +856,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
   playerTransform: {fileID: 613161224}
   playerApproachTimeout: 15
@@ -782,10 +881,10 @@ MonoBehaviour:
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName:
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument:
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
   onSequenceAborted:
@@ -797,10 +896,10 @@ MonoBehaviour:
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName:
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument:
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
   namePrompt: {fileID: 0}
@@ -814,7 +913,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d428fa654ffa44389e98308ee2168319, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldInteractionPrompt
   target: {fileID: 0}
   label: Interagir
@@ -829,7 +928,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 162efeea378ab534e91aaa1ab126fe77, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.MaisonHearthVigil
   runner: {fileID: 8621237026348531470}
   prerequisite: {fileID: 11400000, guid: ca40384d26cbf0042b26fed4e8ed01ad, type: 2}
@@ -845,10 +944,107 @@ MonoBehaviour:
   prompt: {fileID: 8621237026348531471}
   foyerScene: Maison_Interactives
   departurePortalPath: Maison_Interactive_Root/Portals/Portal_1
+--- !u!114 &8656248213685098084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8656248213685098086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
+  pointId: munin.meeting.pov
+  lookTarget: {fileID: 0}
+  lookAtOffset: {x: 0, y: 0, z: 0}
+  fieldOfView: 48
+  useAuthoredRotation: 1
+  breathingStrength: 1
+  orbitArcDegrees: 0
+  orbitPeriod: 180
+--- !u!1 &8656248213685098086
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8656248213685098087}
+  - component: {fileID: 8656248213685098084}
+  m_Layer: 0
+  m_Name: Munin - Point de vue
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8656248213685098087
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8656248213685098086}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.06759203, y: 0.9928575, z: -0.006620084, w: 0.09808986}
+  m_LocalPosition: {x: 0.41000175, y: -0.069999695, z: 6.5999985}
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2262108128322606474}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8656248213685098104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316484462444819438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12bf94e8386b41dbbec3fab0df90fa19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceNamePrompt
+--- !u!114 &8656248213685098108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316484462444819438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
+  playerTransform: {fileID: 0}
+  playerApproachTimeout: 30
+  playerNavMeshAgentTypeId: 0
+  sequence: {fileID: 11400000, guid: a455ec891c2e47fe990773f795b9a1d9, type: 2}
+  playOnStart: 0
+  startDelay: 0
+  startWithLocalPlayerSeated: 1
+  bindings: {fileID: 0}
+  cameraDriver: {fileID: 0}
+  dialoguePresenter: {fileID: 0}
+  fadeController: {fileID: 0}
+  onSequenceStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSequenceCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSequenceAborted:
+    m_PersistentCalls:
+      m_Calls: []
+  namePrompt: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 7351328140778381110}
+  - {fileID: 2262108128322606474}
   - {fileID: 4405025658349386506}
   - {fileID: 1216391764111064312}
