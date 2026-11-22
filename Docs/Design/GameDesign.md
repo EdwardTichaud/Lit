@@ -260,6 +260,27 @@ Ils rejouent afin de :
 La rejouabilité vient principalement de la coopération, des rôles complémentaires
 et des décisions de parcours, pas d'une génération procédurale de campagne.
 
+### Zones cachées reliées entre régions
+
+Certaines branches cachées relient plusieurs régions. Une découverte dans un
+district peut ouvrir un portail vers une zone cachée des Limbes. L'exploration
+d'une région renouvelle ainsi les possibilités de parcours dans une autre.
+
+Exemple retenu pour la conception : Observateur révèle un accès caché dans
+District_1. Une compétence débloquée plus tard permet d'atteindre cet accès,
+puis un portail mène à une zone cachée des Limbes. Cette branche peut accueillir
+un boss additionnel, une connaissance ou une récompense qui donne envie de
+préparer un nouveau départ depuis la Maison.
+
+Les découvertes et les accès débloqués sont conservés dans la sauvegarde de la
+partie hébergée par son créateur, avec la progression de chaque personnage et du
+monde. Les joueurs invités retrouvent cet état lorsqu'ils rejoignent la partie.
+La première visite révèle des possibilités ; les compétences acquises ensuite
+permettent d'explorer davantage et de choisir de nouveaux itinéraires.
+
+Le placement des deux extrémités, la condition d'accès et le contenu de cette
+liaison District_1–Limbes restent à définir lors de son intégration en scène.
+
 ### Expéditions dans les labyrinthes de fracture
 
 Plan de première livraison : [Premier labyrinthe — objectif et production](Premier_Labyrinthe_Plan.md).

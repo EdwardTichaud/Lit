@@ -29,12 +29,9 @@ namespace Lit.Story
 
         [Header("Playback")]
         [SerializeField, Min(0f)] private float uiFadeDuration = 0.15f;
-        [SerializeField] private bool duckMusic = true;
-        [SerializeField, Range(0f, 1f)] private float musicDuckMultiplier = 0.45f;
 
         private AudioSource activeSource;
         private bool activeClipLoops;
-        private bool musicDucked;
         private bool usingDialoguePanel;
         private string activeSpeakerName;
         private string activeDialogueText;
@@ -72,8 +69,6 @@ namespace Lit.Story
             {
                 SetDialogue(cues[0].time <= 0f ? cues[0].text : line.voiceLineText);
             }
-
-            BeginMusicDucking();
             PlayAudio(line.voiceLineAudioClip, audioAnchor);
             var nextPresentation = new DialoguePresentationSession(
                 presentationOwner != null ? presentationOwner : this, presentationSpeaker, presentationListener,
@@ -140,7 +135,6 @@ namespace Lit.Story
 
             presentationSession?.FinishSpeaking();
             StopAudio();
-            EndMusicDucking();
             if (usingDialoguePanel && dialoguePanel != null)
             {
                 dialoguePanel.HideControlled();
@@ -164,7 +158,6 @@ namespace Lit.Story
             presentationSession?.Dispose();
             presentationSession = null;
             StopAudio();
-            EndMusicDucking();
             ResolveDialoguePanel(createIfMissing: false);
             dialoguePanel?.HideControlledImmediate();
             usingDialoguePanel = false;
@@ -247,28 +240,6 @@ namespace Lit.Story
 
             activeSource = null;
             activeClipLoops = false;
-        }
-
-        private void BeginMusicDucking()
-        {
-            if (!duckMusic || musicDucked || AudioManager.Instance == null)
-            {
-                return;
-            }
-
-            AudioManager.Instance.BeginMusicDucking(musicDuckMultiplier);
-            musicDucked = true;
-        }
-
-        private void EndMusicDucking()
-        {
-            if (!musicDucked)
-            {
-                return;
-            }
-
-            AudioManager.Instance?.EndMusicDucking();
-            musicDucked = false;
         }
 
         private IEnumerator FadeCanvasTo(float target, float duration, bool useUnscaledTime)
@@ -476,7 +447,6 @@ namespace Lit.Story
             presentationSession?.Dispose();
             presentationSession = null;
             StopAudio();
-            EndMusicDucking();
             SetPortrait(null);
         }
     }

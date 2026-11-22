@@ -55,6 +55,9 @@ public sealed class CycleDefinition : ScriptableObject
     [Tooltip("Titre du cycle pour l'auteur et le futur journal.")] public string title;
     [TextArea, Tooltip("Resume narratif du cycle, sans effet sur sa progression.")] public string description;
     [Tooltip("Classement principal ou annexe ; ne change pas les regles cooperatives.")] public CycleCategory category;
+    public CycleAudience audience;
+    public bool IsAvailableInCurrentSession => IsAvailableInSession(SoloTeamProgression.IsSolo);
+    public bool IsAvailableInSession(bool solo) => audience != CycleAudience.SoloOnly || solo;
     [Tooltip("Conditions pour rendre le cycle disponible ; une liste vide le rend disponible immediatement.")]
     public CycleRequirements prerequisites = new CycleRequirements();
     [Tooltip("Objectifs nommes ; toutes les etapes terminales sont requises pour terminer.")]

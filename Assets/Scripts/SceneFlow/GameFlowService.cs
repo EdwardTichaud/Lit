@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 [DefaultExecutionOrder(-10000)]
 [DisallowMultipleComponent]
-public sealed class GameFlowService : MonoBehaviour
+public sealed partial class GameFlowService : MonoBehaviour
 {
     private const string BootstrapSceneName = "Bootstrap";
     private const string DefaultMenuSceneName = "MainMenu";
@@ -220,6 +220,8 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void OnDestroy()
     {
+        InputFocusStack.Pop(this);
+        InputModeCoordinator.Exit(this);
         CancelHubIntroMusic();
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneUnloaded -= OnSceneUnloaded;
@@ -462,6 +464,8 @@ public sealed class GameFlowService : MonoBehaviour
             return false;
         }
 
+        transitionFailure = null;
+        LastTransitionFailure = null;
         initialGameplaySceneName = sceneToLoad;
 
         // Le menu a deja prepare le runtime avant StartHost. Le refaire apres
@@ -486,7 +490,9 @@ public sealed class GameFlowService : MonoBehaviour
 
     private bool BeginZoneTravel(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)
     {
-        if (IsTransitioning || !HasGameplaySession || destination == null || !destination.IsValid || !CanLoad(destination.PrimarySceneName))
+        if (IsTransitioning || RequiresWorldRecovery || !HasGameplaySession || destination == null || !destination.IsValid ||
+            destination.PrimarySceneName == activeGameplaySceneName || !CanLoad(destination.PrimarySceneName) ||
+            NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !NetworkManager.Singleton.IsServer)
         {
             return false;
         }
@@ -499,7 +505,9 @@ public sealed class GameFlowService : MonoBehaviour
 
     private bool BeginReturnToHub(string spawnId)
     {
-        if (IsTransitioning || !HasGameplaySession || !CanLoad(HubSceneName))
+        if (IsTransitioning || RequiresWorldRecovery || !HasGameplaySession || hubManifest == null || !hubManifest.IsValid ||
+            activeGameplaySceneName == HubSceneName || !CanLoad(HubSceneName) ||
+            NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !NetworkManager.Singleton.IsServer)
         {
             return false;
         }
@@ -528,6 +536,7 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Begin($"Demarrage -> {sceneName}");
         string loadingMessage = manifest != null ? manifest.LoadingMessage : "Chargement de la partie...";
         yield return LoadSingleRoutine(sceneName, loadingMessage);
+        if (transitionFailure != null) { yield return RejectInitialStart(); yield break; }
         SceneTransitionProfiler.Mark("Scene activee");
         loadedZoneSceneNames.Clear();
         AddLoadedGameplayScene(sceneName);
@@ -540,10 +549,13 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         bool hasCharacterSave = CharacterStateStore.Instance != null && CharacterStateStore.Instance.HasSaveFile;
-        RestoreActiveSaveAfterSceneLoad(sceneName);
+        if (transitionFailure != null) { yield return RejectInitialStart(); yield break; }
+        if (!RestoreActiveSaveAfterSceneLoad(sceneName)) FailTransition("La sauvegarde n’a pas pu etre restauree.");
+        if (transitionFailure != null) { yield return RejectInitialStart(); yield break; }
 
         yield return RebuildNavigationForLoadedWorldRoutine("demarrage " + sceneName, manifest);
 
+        if (transitionFailure != null) { yield return RejectInitialStart(); yield break; }
         activeGameplaySceneName = sceneName;
         IsPreparingGameplayScene = false;
         SquadManager.Instance?.InitializeForLoadedGameplayScene();
@@ -556,6 +568,7 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Mark("Managers prets");
         yield return PlaceSquadAtSpawnRoutine(spawnId, sceneName,
             ShouldUseInitialSceneSpawn(spawnId, usePrimarySceneSpawnFallback, hasCharacterSave));
+        if (transitionFailure != null) { yield return RejectInitialStart(); yield break; }
         EnforceSingleAudioListener();
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(sceneName);
@@ -571,6 +584,7 @@ public sealed class GameFlowService : MonoBehaviour
             runner.PlayAfterLoading();
         }
         LoadingScreenService.HideWhenSceneIsReady();
+        yield return LoadingScreenService.WaitUntilHidden();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
         StartPostLoading(manifest);
@@ -611,164 +625,12 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator TravelToZoneRoutine(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)
     {
-        SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {destination.PrimarySceneName}");
-        // Le son du portail a deja ete lance par PortalController. On attend
-        // que l'overlay soit visible avant de demarrer le chargement lourd.
-        using (SceneTransitionProfiler.OverlayPresentation.Auto())
-        {
-            SceneTransitionProfiler.Mark("Presentation de l'overlay");
-        }
-        yield return LoadingScreenService.ShowAndWaitForPresentation(destination.LoadingMessage);
-        SceneTransitionProfiler.ResetFrameGapMeasurement();
-        SceneTransitionProfiler.Mark("Overlay opaque");
-        bool postLoadingReady = false;
-        yield return FinishPostLoadingRequests(true, ready => postLoadingReady = ready);
-        if (!postLoadingReady) { transitionRoutine = null; yield break; }
-        List<string> previousScenes = CaptureLoadedGameplayScenes();
-        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(previousScenes))
-        {
-            yield return RevealRejectedDepartureRoutine("La conservation de la zone a échoué. Le passage reste disponible pour réessayer.");
-            transitionRoutine = null;
-            yield break;
-        }
-        yield return StopProximityStreaming();
-        ReleaseZonePresentation(preserveAudio: true);
-        HashSet<string> alreadyLoadedScenes = CaptureLoadedUnitySceneNames();
-        loadedZoneSceneNames.Clear();
-
-        yield return LoadAdditiveRoutine(destination.PrimarySceneName, destination.LoadingMessage);
-        SceneTransitionProfiler.Mark("Scene de zone activee");
-        AddLoadedGameplayScene(destination.PrimarySceneName);
-        InstallZonePresentation(destination, destination.PrimarySceneName);
-        yield return null;
-        SceneTransitionProfiler.Mark("Presentation de zone appliquee");
-        yield return LoadManifestLoadingScenes(destination, destination.LoadingMessage);
-
-        Scene targetScene = SceneManager.GetSceneByName(destination.PrimarySceneName);
-        if (targetScene.IsValid() && targetScene.isLoaded)
-        {
-            SceneManager.SetActiveScene(targetScene);
-        }
-
-        // UCC cree son SimulationManager a la premiere apparition du joueur.
-        // Sans cette promotion, il est cree dans Maison puis detruit avec elle
-        // et UCC ne fait plus qu'actualiser sa vitesse interne sans appliquer
-        // la position au Rigidbody/Transform dans la zone suivante.
-        PreserveUccSimulationManager();
-        bool retainHubForLateJoin = ShouldKeepHubLoadedForLateJoin();
-        for (int i = previousScenes.Count - 1; i >= 0; i--)
-        {
-            if (retainHubForLateJoin && IsHubManifestScene(previousScenes[i]))
-            {
-                continue;
-            }
-
-            yield return UnloadSceneIfLoaded(previousScenes[i]);
-            SceneTransitionProfiler.Mark($"Sous-scene precedente dechargee ({previousScenes[i]})");
-        }
-
-        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.RestoreArchivedScenes(
-                loadedZoneSceneNames.FindAll(name => !alreadyLoadedScenes.Contains(name))))
-        {
-            LoadingScreenService.SetProgress(0f, "La restauration de la zone a échoué.");
-            transitionRoutine = null;
-            yield break;
-        }
-        yield return RebuildNavigationForLoadedWorldRoutine("arrivee " + destination.PrimarySceneName, destination);
-
-        activeGameplaySceneName = destination.PrimarySceneName;
-        // Une transition de zone ferme le contexte de jeu precedent. Sans
-        // cette remise a zero, un focus UI laisse par Maison bloque le moteur
-        // du personnage et la camera, alors que l'Animator peut encore voir
-        // l'input brut et jouer une animation de marche sur place.
-        yield return PlaceSquadAtPortalDestinationRoutine(destinationPoints);
-        EnforceSingleAudioListener();
-        RestoreLocalGameplayInputAfterSessionStart();
-        StartProximityStreaming(destination.PrimarySceneName);
-#if UNITY_EDITOR
-        StartCoroutine(LogZoneControlProbe(destination.PrimarySceneName));
-#endif
-        SceneTransitionProfiler.Mark("Escouade placee");
-        LoadingScreenService.HideWhenSceneIsReady();
-        SceneTransitionProfiler.End("Ecran pret a disparaitre");
-        transitionRoutine = null;
-        StartPostLoading(destination);
+        yield return SafeZoneTransition(destination, destinationPoints, null);
     }
 
     private IEnumerator ReturnToHubRoutine(string spawnId)
     {
-        string hubScene = HubSceneName;
-        string hubLoadingMessage = hubManifest != null && hubManifest.IsValid
-            ? hubManifest.LoadingMessage
-            : "Retour a la Maison...";
-        SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {hubScene}");
-        yield return LoadingScreenService.ShowAndWaitForPresentation(hubLoadingMessage);
-        SceneTransitionProfiler.ResetFrameGapMeasurement();
-        SceneTransitionProfiler.Mark("Overlay opaque");
-        bool postLoadingReady = false;
-        yield return FinishPostLoadingRequests(true, ready => postLoadingReady = ready);
-        if (!postLoadingReady) { transitionRoutine = null; yield break; }
-        List<string> previousScenes = CaptureLoadedGameplayScenes();
-        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.CaptureScenesBeforeUnload(previousScenes))
-        {
-            yield return RevealRejectedDepartureRoutine("La conservation de la zone a échoué. Le retour reste disponible pour réessayer.");
-            transitionRoutine = null;
-            yield break;
-        }
-        yield return StopProximityStreaming();
-        ReleaseZonePresentation(preserveAudio: true);
-        HashSet<string> alreadyLoadedScenes = CaptureLoadedUnitySceneNames();
-        loadedZoneSceneNames.Clear();
-
-        yield return LoadAdditiveRoutine(hubScene, hubLoadingMessage);
-        SceneTransitionProfiler.Mark("Maison activee");
-        AddLoadedGameplayScene(hubScene);
-        InstallZonePresentation(hubManifest, hubScene);
-        yield return null;
-        SceneTransitionProfiler.Mark("Presentation de zone appliquee");
-        if (hubManifest != null && hubManifest.IsValid)
-        {
-            yield return LoadManifestLoadingScenes(hubManifest, hubLoadingMessage);
-        }
-
-        Scene loadedHubScene = SceneManager.GetSceneByName(hubScene);
-        if (loadedHubScene.IsValid() && loadedHubScene.isLoaded)
-        {
-            SceneManager.SetActiveScene(loadedHubScene);
-        }
-
-        PreserveUccSimulationManager();
-        for (int i = previousScenes.Count - 1; i >= 0; i--)
-        {
-            yield return UnloadSceneIfLoaded(previousScenes[i]);
-            SceneTransitionProfiler.Mark($"Sous-scene dechargee ({previousScenes[i]})");
-        }
-
-        if (WorldStateManager.Instance != null && !WorldStateManager.Instance.RestoreArchivedScenes(
-                loadedZoneSceneNames.FindAll(name => !alreadyLoadedScenes.Contains(name))))
-        {
-            LoadingScreenService.SetProgress(0f, "La restauration de la Maison a échoué.");
-            transitionRoutine = null;
-            yield break;
-        }
-        yield return RebuildNavigationForLoadedWorldRoutine("retour " + hubScene, hubManifest);
-
-        activeGameplaySceneName = hubScene;
-        // Returning without an explicit portal spawn must never keep the
-        // previous zone's coordinates after that zone has been unloaded.
-        // This fallback is for travel only, not restoration of a saved pose.
-        yield return PlaceSquadAtSpawnRoutine(spawnId, hubScene, usePrimarySceneSpawnFallback: true);
-        EnforceSingleAudioListener();
-        RestoreLocalGameplayInputAfterSessionStart();
-        StartProximityStreaming(hubScene);
-#if UNITY_EDITOR
-        StartCoroutine(LogZoneControlProbe(hubScene));
-#endif
-        SceneTransitionProfiler.Mark("Escouade placee");
-        LoadingScreenService.HideWhenSceneIsReady();
-        SceneTransitionProfiler.End("Ecran pret a disparaitre");
-        transitionRoutine = null;
-        StartPostLoading(hubManifest);
+        yield return SafeZoneTransition(hubManifest, null, spawnId);
     }
 
     private static HashSet<string> CaptureLoadedUnitySceneNames()
@@ -799,6 +661,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator ReturnToMenuRoutine()
     {
+        transitionFailure = null;
         CancelHubIntroMusic();
         pendingNewGameOpeningSequence = null;
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
@@ -998,6 +861,7 @@ public sealed class GameFlowService : MonoBehaviour
         if (manifest != null && !ValidateManifestScenesLoaded(manifest, out string sceneReport))
         {
             Debug.LogError("[GameFlow] NavMesh build annule : " + sceneReport);
+            Instance?.FailTransition(sceneReport);
             yield break;
         }
 
@@ -1023,7 +887,7 @@ public sealed class GameFlowService : MonoBehaviour
                 if (Time.unscaledTime >= deadline)
                 {
                     Debug.LogError("[GameFlow] Delai de preparation NavMesh depasse pour " + zoneId +
-                                   ". La scene est revelee sans navigation afin de ne jamais bloquer le chargement.");
+                                   ". Le controle reste bloque tant que la destination n’est pas valide.");
                     world.InvalidateWorld("delai GameFlow");
                     break;
                 }
@@ -1034,16 +898,19 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark(world.IsReady
                 ? "NavMesh destination pret"
                 : "NavMesh destination indisponible");
+            if (!world.IsReady) Instance?.FailTransition("Navigation indisponible pour " + zoneId);
             yield break;
         }
 
         SquadAIManager navigation = SquadAIManager.Instance;
         if (navigation == null)
         {
+            Instance?.FailTransition("Aucun service de navigation pour " + reason);
             yield break;
         }
 
         bool success = navigation.RebuildNavMeshForLoadedWorld(reason);
+        if (!success) Instance?.FailTransition("Navigation indisponible : " + reason);
         SceneTransitionProfiler.Mark(success
             ? "NavMesh destination pret"
             : "NavMesh destination indisponible");
@@ -1122,34 +989,16 @@ public sealed class GameFlowService : MonoBehaviour
     {
         yield return LoadingScreenService.ShowAndWaitForPresentation(loadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
-        SceneTransitionProfiler.Mark("Overlay opaque");
         SetAudioListener(bootstrapListener);
-        foreach (var binder in FindObjectsByType<LitUccCameraCharacterBinder>())
-            binder.DetachCharacter();
-        AsyncOperation operation;
-        using (SceneTransitionProfiler.SceneLoadRequest.Auto())
-        {
-            operation = LoadScene(sceneName, LoadSceneMode.Single);
-        }
-        SceneTransitionProfiler.Mark("Prechargement demande");
-        yield return WaitForScenePreloadAndActivation(operation, sceneName, loadingMessage);
+        foreach (var binder in FindObjectsByType<LitUccCameraCharacterBinder>()) binder.DetachCharacter();
+        yield return CheckedSceneOperation(sceneName, LoadSceneMode.Single, false, loadingMessage);
     }
 
     private static IEnumerator LoadAdditiveRoutine(string sceneName, string loadingMessage)
     {
-        Scene scene = SceneManager.GetSceneByName(sceneName);
-        if (scene.IsValid() && scene.isLoaded)
-        {
-            yield break;
-        }
-
-        AsyncOperation operation;
-        using (SceneTransitionProfiler.SceneLoadRequest.Auto())
-        {
-            operation = LoadScene(sceneName, LoadSceneMode.Additive);
-        }
-        SceneTransitionProfiler.Mark($"Prechargement demande ({sceneName})");
-        yield return WaitForScenePreloadAndActivation(operation, sceneName, loadingMessage);
+        if (SceneManager.GetSceneByName(sceneName).isLoaded || Instance == null || Instance.transitionFailure != null) yield break;
+        if (Instance.zoneTransitionInProgress) Instance.AddLoadedGameplayScene(sceneName);
+        yield return CheckedSceneOperation(sceneName, LoadSceneMode.Additive, false, loadingMessage);
     }
 
     private void StartPostLoading(ZoneManifest destination)
@@ -1194,6 +1043,14 @@ public sealed class GameFlowService : MonoBehaviour
 
             SceneTransitionProfiler.Mark($"Post chargement demande ({sceneName})");
             yield return LoadAdditiveAfterGameplayRoutine(sceneName);
+            if (transitionFailure != null)
+            {
+                WorldStateManager.Instance?.RequireRecovery(transitionFailure);
+                postLoadingRoutine = null;
+                EndPostLoadingPriority();
+                InfoBoxUI.TryShowToast("Le chargement complementaire a echoue. La sauvegarde est bloquee : " + transitionFailure, 8);
+                yield break;
+            }
             if (generation != postLoadingGeneration)
             {
                 yield break;
@@ -1224,112 +1081,18 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator LoadAdditiveAfterGameplayRoutine(string sceneName)
     {
-        Scene scene = SceneManager.GetSceneByName(sceneName);
-        if (scene.IsValid() && scene.isLoaded)
-        {
-            yield break;
-        }
-
-        AsyncOperation operation = LoadScene(sceneName, LoadSceneMode.Additive);
-        // The native request outlives a stopped coroutine. Remember ownership
-        // before yielding so a portal cannot leave an untracked scene behind.
+        if (SceneManager.GetSceneByName(sceneName).isLoaded) yield break;
         AddLoadedGameplayScene(sceneName);
         pendingPostLoadingScenes.Add(sceneName);
-        if (operation == null)
-        {
-            while (!SceneManager.GetSceneByName(sceneName).isLoaded)
-            {
-                yield return null;
-            }
-
-            yield break;
-        }
-
-        operation.allowSceneActivation = false;
-        while (operation.progress < 0.9f)
-        {
-            yield return null;
-        }
-
-        // Le chargement reste sequentiel afin de ne jamais empiler deux
-        // activations pendant que le joueur explore la zone.
-        yield return null;
-        SceneTransitionProfiler.Mark($"Post activation demandee ({sceneName})");
-        operation.allowSceneActivation = true;
-        while (!operation.isDone)
-        {
-            yield return null;
-        }
-    }
-
-    private static IEnumerator WaitForScenePreloadAndActivation(AsyncOperation operation, string sceneName, string loadingMessage)
-    {
-        if (operation == null)
-        {
-            while (!SceneManager.GetSceneByName(sceneName).isLoaded)
-            {
-                SceneTransitionProfiler.Pulse();
-                yield return null;
-            }
-
-            LoadingScreenService.SetProgress(1f, loadingMessage);
-            yield break;
-        }
-
-        operation.allowSceneActivation = false;
-        while (operation.progress < 0.9f)
-        {
-            SceneTransitionProfiler.Pulse();
-            LoadingScreenService.SetProgress(Mathf.Clamp01(operation.progress / 0.9f), loadingMessage);
-            yield return null;
-        }
-
-        // Tous les assets sont prets. L'activation peut encore provoquer un
-        // pic, mais il se produit derriere l'overlay deja opaque.
-        LoadingScreenService.SetProgress(0.9f, loadingMessage);
-        yield return null;
-        SceneTransitionProfiler.Pulse();
-        SceneTransitionProfiler.Mark($"Prechargement termine ({sceneName})");
-        using (SceneTransitionProfiler.SceneActivation.Auto())
-        {
-            operation.allowSceneActivation = true;
-        }
-        SceneTransitionProfiler.Mark($"Activation demandee ({sceneName})");
-
-        while (!operation.isDone)
-        {
-            SceneTransitionProfiler.Pulse();
-            yield return null;
-        }
-
-        SceneTransitionProfiler.Pulse();
-        LoadingScreenService.SetProgress(1f, loadingMessage);
+        yield return CheckedSceneOperation(sceneName, LoadSceneMode.Additive, false, null);
     }
 
     private static IEnumerator UnloadSceneIfLoaded(string sceneName)
     {
         Scene scene = SceneManager.GetSceneByName(sceneName);
-        // The following Single load retires the final scene; Unity cannot unload it additively.
-        if (!scene.IsValid() || !scene.isLoaded || SceneManager.sceneCount <= 1)
-        {
-            yield break;
-        }
-
-        foreach (var binder in FindObjectsByType<LitUccCameraCharacterBinder>())
-            binder.DetachCharacterFromScene(scene);
-
-        AsyncOperation operation;
-        using (SceneTransitionProfiler.SceneUnloadRequest.Auto())
-        {
-            operation = UnloadScene(scene);
-        }
-        SceneTransitionProfiler.Mark($"Dechargement demande ({sceneName})");
-        while ((operation != null && !operation.isDone) ||
-               (operation == null && scene.isLoaded))
-        {
-            SceneTransitionProfiler.Pulse();
-            yield return null;
-        }
+        if (!scene.IsValid() || !scene.isLoaded || SceneManager.sceneCount <= 1) yield break;
+        foreach (var binder in FindObjectsByType<LitUccCameraCharacterBinder>()) binder.DetachCharacterFromScene(scene);
+        yield return CheckedSceneOperation(sceneName, LoadSceneMode.Additive, true, null);
     }
 
     private bool EnsureGameplaySession()
@@ -1456,47 +1219,29 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator PlaceSquadAtSpawnRoutine(string spawnId, string primarySceneName = null, bool usePrimarySceneSpawnFallback = false)
     {
-        if (SquadManager.Instance == null)
+        double deadline = Time.realtimeSinceStartupAsDouble + 10;
+        while (SquadManager.Instance != null && SquadManager.Instance.GetSceneTransitionPlayers().Count < ExpectedTransitionPlayers &&
+               Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+        if (SquadManager.Instance == null) { FailTransition("Escouade absente."); yield break; }
+        if (SquadManager.Instance.GetSceneTransitionPlayers().Count < ExpectedTransitionPlayers)
+        { FailTransition("Tous les personnages connectes ne sont pas prets."); yield break; }
+        var scope = ManifestSceneSet(ResolveGameplayManifest(primarySceneName));
+        if (scope.Count == 0) scope.Add(primarySceneName);
+        var poses = new List<Pose>();
+        if (!string.IsNullOrWhiteSpace(spawnId) || usePrimarySceneSpawnFallback)
         {
-            yield break;
+            var points = ResolveZoneSpawns(spawnId, primarySceneName, scope);
+            foreach (var point in points) poses.Add(new Pose(point.transform.position, point.transform.rotation));
+            if (poses.Count == 0) { FailTransition("Aucun spawn valide dans " + primarySceneName); yield break; }
         }
-
-        bool hasRequestedSpawn = !string.IsNullOrWhiteSpace(spawnId);
-        IReadOnlyList<ZoneSpawnPoint> partySpawns = hasRequestedSpawn
-            ? ZoneSpawnPoint.FindAll(spawnId)
-            : null;
-        ZoneSpawnPoint spawn = partySpawns != null && partySpawns.Count > 0 ? partySpawns[0] : null;
-        if (spawn == null && usePrimarySceneSpawnFallback)
-        {
-            spawn = ZoneSpawnPoint.FindFirstInScene(primarySceneName);
-        }
-
-        if (spawn != null)
-        {
-            using (SceneTransitionProfiler.SquadPlacement.Auto())
-            {
-                if (partySpawns != null && partySpawns.Count > 1)
-                {
-                    SquadManager.Instance.MoveSquadToSpawns(partySpawns);
-                }
-                else
-                {
-                    SquadManager.Instance.MoveSquadToSpawn(spawn.transform);
-                }
-            }
-
-            // UCC traite le snap de l'Animator et le sol dans son cycle de
-            // physique. L'input/camera ne sont rendus qu'apres ce cycle.
-            yield return new WaitForFixedUpdate();
-            Physics.SyncTransforms();
-            LocalInputRouter.RaiseCameraRecenter();
-            yield break;
-        }
-
-        if (hasRequestedSpawn)
-        {
-            Debug.LogWarning($"[GameFlow] No ZoneSpawnPoint with id '{spawnId}' was found in the loaded scenes. Squad position was left unchanged.");
-        }
+        else foreach (var player in SquadManager.Instance.GetSceneTransitionPlayers())
+            poses.Add(new Pose(player.transform.position, player.transform.rotation));
+        if (!SceneTransitionPlacement.Validate(SquadManager.Instance.GetSceneTransitionPlayers(), poses, scope, out string issue) ||
+            !SquadManager.Instance.TryMoveSquadToDestinationPoints(poses, out issue))
+        { FailTransition(issue); yield break; }
+        yield return new WaitForFixedUpdate();
+        Physics.SyncTransforms();
+        LocalInputRouter.RaiseCameraRecenter();
     }
 
     private void RestoreLocalGameplayInputAfterSessionStart()
@@ -1674,18 +1419,20 @@ public sealed class GameFlowService : MonoBehaviour
         return metadataSceneName;
     }
 
-    private static void RestoreActiveSaveAfterSceneLoad(string sceneName)
+    private static bool RestoreActiveSaveAfterSceneLoad(string sceneName)
     {
         CharacterStateStore store = CharacterStateStore.Instance;
         if (store == null || !store.HasSaveFile)
         {
-            return;
+            return true;
         }
 
-        if (!store.RestoreActiveSaveForLoadedScene(sceneName))
+        bool restored = store.RestoreActiveSaveForLoadedScene(sceneName);
+        if (!restored)
         {
             Debug.LogError($"[GameFlow] La restauration de sauvegarde a echoue pour la scene '{sceneName}'.", store);
         }
+        return restored;
     }
 
     private void EnforceSingleAudioListener()
@@ -1731,11 +1478,13 @@ public sealed class GameFlowService : MonoBehaviour
             {
                 Debug.LogError("[GameFlow] Scene obligatoire absente des Build Settings ou introuvable : " +
                                additionalScene + ". Le bake NavMesh est annule pour eviter un monde incomplet.", this);
+                FailTransition("Scene obligatoire indisponible : " + additionalScene);
                 yield break;
             }
 
             SceneTransitionProfiler.Mark($"Phase loading {i + 1}/{manifest.LoadingSceneNames.Count} demandee ({additionalScene})");
             yield return LoadAdditiveRoutine(additionalScene, loadingMessage);
+            if (transitionFailure != null) yield break;
             AddLoadedGameplayScene(additionalScene);
             SceneTransitionProfiler.Mark($"Phase loading {i + 1}/{manifest.LoadingSceneNames.Count} activee ({additionalScene})");
             yield return WaitForStableLoadingFrames();
@@ -1796,24 +1545,6 @@ public sealed class GameFlowService : MonoBehaviour
         activeZoneRuntimeContext.ReleasePresentation(preserveAudio);
         Destroy(activeZoneRuntimeContext.gameObject);
         activeZoneRuntimeContext = null;
-    }
-
-    private IEnumerator PlaceSquadAtPortalDestinationRoutine(IReadOnlyList<Pose> destinationPoints)
-    {
-        if (SquadManager.Instance == null || destinationPoints == null || destinationPoints.Count == 0)
-        {
-            Debug.LogWarning("[GameFlow] Le portail de changement de zone n'a aucun Destination Point. L'escouade conserve sa position.");
-            yield break;
-        }
-
-        using (SceneTransitionProfiler.SquadPlacement.Auto())
-        {
-            SquadManager.Instance.MoveSquadToDestinationPoints(destinationPoints);
-        }
-
-        yield return new WaitForFixedUpdate();
-        Physics.SyncTransforms();
-        LocalInputRouter.RaiseCameraRecenter();
     }
 
     // La Maison reste chargee pendant une session reseau hors hub : un nouveau
@@ -1920,37 +1651,6 @@ public sealed class GameFlowService : MonoBehaviour
     private static bool CanLoad(string sceneName)
     {
         return !string.IsNullOrWhiteSpace(sceneName) && Application.CanStreamedLevelBeLoaded(sceneName);
-    }
-
-    private static AsyncOperation LoadScene(string sceneName, LoadSceneMode mode)
-    {
-        NetworkManager networkManager = NetworkManager.Singleton;
-        if (networkManager != null && networkManager.IsListening && networkManager.IsServer && networkManager.SceneManager != null)
-        {
-            networkManager.SceneManager.ActiveSceneSynchronizationEnabled = true;
-            networkManager.SceneManager.LoadScene(sceneName, mode);
-            return null;
-        }
-
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, mode);
-        if (Instance != null && operation != null)
-        {
-            Instance.pendingSceneOperations.RemoveAll(op => op == null || op.isDone);
-            Instance.pendingSceneOperations.Add(operation);
-        }
-        return operation;
-    }
-
-    private static AsyncOperation UnloadScene(Scene scene)
-    {
-        NetworkManager networkManager = NetworkManager.Singleton;
-        if (networkManager != null && networkManager.IsListening && networkManager.IsServer && networkManager.SceneManager != null)
-        {
-            networkManager.SceneManager.UnloadScene(scene);
-            return null;
-        }
-
-        return SceneManager.UnloadSceneAsync(scene);
     }
 
     /// <summary>Only a completed cycle's dedicated additive scene may leave the loaded world.</summary>

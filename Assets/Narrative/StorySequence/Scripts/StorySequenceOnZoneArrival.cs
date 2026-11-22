@@ -11,6 +11,7 @@ namespace Lit.Story
         [SerializeField] private StorySequenceRunner runner;
         [SerializeField] private StorySequenceSceneBindings bindings;
         [SerializeField] private string[] requiredSceneNames = System.Array.Empty<string>();
+        [SerializeField] private ZoneManifest zoneManifest;
         private Coroutine routine;
         private bool ownsPlayback;
 
@@ -38,7 +39,7 @@ namespace Lit.Story
                 ownsPlayback = runner.Play();
                 while (ownsPlayback && runner.IsPlaying)
                 {
-                    if (SceneManager.GetActiveScene() != gameObject.scene)
+                    if (!IsDestinationActive())
                     {
                         runner.Abort();
                         break;
@@ -54,15 +55,23 @@ namespace Lit.Story
 
         private bool CanStart()
         {
-            if (bindings == null || SceneManager.GetActiveScene() != gameObject.scene ||
+            if (bindings == null || !IsDestinationActive() ||
                 LoadingScreenService.IsLoading || GameFlowService.IsPreparingGameplayScene ||
                 (GameFlowService.Instance != null && GameFlowService.Instance.IsTransitioning) ||
                 StorySequenceRunner.IsAnySequencePlaying || InputModeCoordinator.IsGameplayBlocked)
                 return false;
-            foreach (string name in requiredSceneNames)
+            var required = zoneManifest != null ? zoneManifest.LoadingSceneNames : requiredSceneNames;
+            foreach (string name in required)
+            {
+                if (zoneManifest != null && CycleProgressionService.ShouldSkipScene(name)) continue;
                 if (!SceneManager.GetSceneByName(name).isLoaded) return false;
+            }
             return true;
         }
+
+        private bool IsDestinationActive() => zoneManifest != null
+            ? SceneManager.GetActiveScene().name == zoneManifest.PrimarySceneName
+            : SceneManager.GetActiveScene() == gameObject.scene;
 
         private void OnDisable()
         {

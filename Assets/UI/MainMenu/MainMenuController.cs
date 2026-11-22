@@ -38,6 +38,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private CanvasGroup soloOptionsGroup;
     [SerializeField] private CanvasGroup multiOptionsGroup;
     [SerializeField] private CanvasGroup optionsGroup;
+    [SerializeField] private MainMenuSettingsView settingsView;
     [SerializeField] private CanvasGroup loadMenuGroup;
     [SerializeField] private CanvasGroup mainMenuGroup;
     [SerializeField] private bool waitForAnyInput = true;
@@ -233,9 +234,17 @@ public class MainMenuController : MonoBehaviour
         EnsureSaveManager();
         ResolveOptionalReferences();
         MainMenuPreferences.Apply();
-        if (optionsGroup != null) optionsGroup.gameObject.SetActive(false);
-        optionsGroup = MainMenuSettingsView.Create(this);
-        optionsCursorRoot = optionsGroup.transform as RectTransform;
+        if (settingsView != null && settingsView.Bind(this))
+        {
+            if (optionsGroup != null && optionsGroup != settingsView.Group) optionsGroup.gameObject.SetActive(false);
+            optionsGroup = settingsView.Group;
+            optionsCursorRoot = settingsView.NavigationRoot;
+        }
+        else
+        {
+            optionsGroup = null;
+            Debug.LogError("[MainMenu] MenuSettingsCanvas doit etre assigne dans la scene.", this);
+        }
         ApplyInitialMenuVisibility();
         ConfigureNewGameActions();
         ConfigureJoinActions();
@@ -500,6 +509,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        settingsView?.RefreshLabels();
         SetMenuState(MenuState.Options);
     }
 

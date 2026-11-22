@@ -191,7 +191,7 @@ public sealed class SkillWheel : MonoBehaviour
         SetSelectedSlot(selectedSlotIndex);
     }
 
-    public void ShowKit(string name, SkillSO[] skills)
+    public void ShowKit(string name, SkillSO[] skills, string navigationHint = null)
     {
         ResolveSlots();
         if (savedPositions == null)
@@ -207,7 +207,8 @@ public sealed class SkillWheel : MonoBehaviour
         {
             if (slots[i] == null) continue;
             SetSkill(i, skills != null && i < Mathf.Min(4, skills.Length) ? skills[i] : null);
-            slots[i].SetShortcut(i < 4 ? name + " — " + buttons[i] + "\nB : Retour" : string.Empty);
+            slots[i].SetShortcut(i < 4 ? name + " — " + buttons[i] + "\n" +
+                (string.IsNullOrEmpty(navigationHint) ? string.Empty : navigationHint + " · ") + "B : Retour" : string.Empty);
             if (i < 4)
             {
                 slots[i].gameObject.SetActive(true);

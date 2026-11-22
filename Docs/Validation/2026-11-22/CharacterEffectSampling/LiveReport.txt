@@ -1,0 +1,30 @@
+Unity 6000.6.4f1 | Direct3D12 | playing=True
+
+EFFECT Lucian_ImpactLab(Clone)/CC_Base_Body active=True
+renderer=Lucian_ImpactLab(Clone)/CC_Base_Body prefab=Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Effect Prefabs/Holy.prefab
+instance=Lucian_ImpactLab(Clone)/CC_Base_Body/Holy (Instance) [Effect 1] vfx=Holy (Instance) [Effect 1]
+graph=Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Core/Graphs/Character Local Connect.vfx hasBuffer=True alive=294 culled=False
+mesh=CC_Base_Body readable=True vertices=6761 submeshes=6 bounds=Center: (0.00, -0.04, 0.89), Extents: (0.90, 0.19, 0.89)
+submesh=0 baseVertex=0 descriptor=0 start=0 count=6912
+submesh=1 baseVertex=0 descriptor=1356 start=6912 count=4824
+submesh=2 baseVertex=0 descriptor=2296 start=11736 count=9258
+submesh=3 baseVertex=0 descriptor=4420 start=20994 count=6534
+submesh=4 baseVertex=0 descriptor=5744 start=27528 count=1560
+submesh=5 baseVertex=0 descriptor=6104 start=29088 count=2868
+attribute=Position format=Float32 dimension=3 stream=0
+attribute=Normal format=Float32 dimension=3 stream=0
+attribute=Tangent format=Float32 dimension=4 stream=0
+attribute=TexCoord0 format=Float32 dimension=2 stream=1
+attribute=TexCoord1 format=Float32 dimension=2 stream=1
+attribute=BlendWeight format=Float32 dimension=4 stream=2
+attribute=BlendIndices format=UInt32 dimension=4 stream=2
+rootBone=Lucian_ImpactLab(Clone)/root/pelvis offscreen=False localBounds=Center: (0.00, -0.08, 0.01), Extents: (0.90, 0.91, 0.23)
+currentBakedBounds=Center: (-0.02, 0.33, 0.10), Extents: (0.51, 0.54, 0.45) localToWorld=-1.00000	0.00000	0.00000	0.00000
+0.00000	1.00000	0.00000	-0.10000
+0.00000	0.00000	-1.00000	5.00000
+0.00000	0.00000	0.00000	1.00000
+
+bufferValid=True cpuSamples=10652
+bufferCount=10652 stride=12 expectedStride=12
+GPU_DATA distinctTriangles=3886 invalid=0 expectedBindPoseBounds=Center: (0.00, -0.04, 0.89), Extents: (0.89, 0.19, 0.88)
+firstSample=9151 barycentric=(0.14, 0.08)

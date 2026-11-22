@@ -18,7 +18,8 @@ namespace Lit.Story
         SceneEvent,
         ProgressivePlayerStop,
         LaunchCombat,
-        ChooseMuninName
+        ChooseMuninName,
+        InstantiateGameObject
     }
 
     [Serializable]
@@ -97,6 +98,15 @@ namespace Lit.Story
         [Header("Scene Event")]
         public string eventId;
 
+        [Header("Instantiate GameObject")]
+        public string spawnId;
+        public GameObject spawnPrefab;
+        [Tooltip("Transform assigned in the scene bindings, identified by this ID.")]
+        public string spawnPointId;
+        public bool parentToSpawnPoint = true;
+        [Tooltip("Keep after success and recreate when this completed sequence is loaded. Abort always removes it.")]
+        public bool keepSpawnAfterCompletion;
+
         [Header("Combat")]
         [Min(0f), Tooltip("Degats de lumiere appliques a l'ennemi au lancement du combat.")]
         public float openingCombatDamage = 50f;
@@ -154,6 +164,7 @@ namespace Lit.Story
                 issue = "Sequence vide : ajoutez les etapes de la rencontre avant de la jouer.";
                 return false;
             }
+            var spawnIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < steps.Count; i++)
             {
                 var step = steps[i];
@@ -179,6 +190,12 @@ namespace Lit.Story
                          string.IsNullOrWhiteSpace(step.actorId)) problem = "acteur requis";
                 else if (step.type == StorySequenceStepType.SceneEvent && string.IsNullOrWhiteSpace(step.eventId))
                     problem = "identifiant d'evenement manquant";
+                else if (step.type == StorySequenceStepType.InstantiateGameObject)
+                {
+                    if (step.spawnPrefab == null || string.IsNullOrWhiteSpace(step.spawnId) || string.IsNullOrWhiteSpace(step.spawnPointId))
+                        problem = "prefab, spawnId et spawnPointId requis";
+                    else if (!spawnIds.Add(step.spawnId.Trim())) problem = "spawnId duplique";
+                }
                 if (problem != null)
                 {
                     issue = $"Etape {i + 1} ({step?.label}) : {problem}.";

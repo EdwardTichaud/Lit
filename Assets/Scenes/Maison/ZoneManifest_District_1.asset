@@ -40,6 +40,7 @@ MonoBehaviour:
   - {fileID: 102900000, guid: a03ce4f3c746b2347b3692e610aa0b43, type: 3}
   - {fileID: 102900000, guid: cca91f091e8091841af9b9a49880cab0, type: 3}
   - {fileID: 102900000, guid: 187190b8a62ea6649a3abf5777543a19, type: 3}
+  - {fileID: 102900000, guid: 86b7b928a1675d047a01c86529380642, type: 3}
   postLoadingScenes: []
   primarySceneName: District_1_Core
   loadingMessage: Exploration du quartier de la Lune...
@@ -73,6 +74,7 @@ MonoBehaviour:
   - District_1_AbilityShortcuts
   - District_1_SecretNotes
   - District_1_Fracture_Environment
+  - District_1_Cycle_Aurell
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
   bakedNavMeshData: {fileID: 23800000, guid: 6ed3124537c056248be7910b9d74c089, type: 2}

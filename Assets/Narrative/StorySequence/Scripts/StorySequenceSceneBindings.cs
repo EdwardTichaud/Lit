@@ -36,9 +36,13 @@ namespace Lit.Story
         [SerializeField] private List<StorySequenceCameraPoint> cameraPoints = new List<StorySequenceCameraPoint>();
         [SerializeField] private List<StorySequenceDirectorBinding> directors = new List<StorySequenceDirectorBinding>();
         [SerializeField] private List<StorySequenceEventBinding> events = new List<StorySequenceEventBinding>();
+        [SerializeField] private List<StorySequenceSpawnBinding> spawnPoints = new List<StorySequenceSpawnBinding>();
         [SerializeField] private bool searchSceneWhenBindingMissing = true;
 
         private StorySequenceActor runtimeLocalPlayerActor;
+
+        public StorySequenceSpawnBinding ResolveSpawnPoint(string id) => spawnPoints.Find(binding => binding != null &&
+            !string.IsNullOrWhiteSpace(id) && string.Equals(binding.spawnPointId, id.Trim(), StringComparison.OrdinalIgnoreCase));
 
         // Explicit scene-owned presentation bindings take precedence over squad/global searches.
         public void BindRuntimeActor(string actorId, StorySequenceActor actor)

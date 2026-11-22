@@ -119,6 +119,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &144082954
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 144082955}
+  - component: {fileID: 144082956}
+  m_Layer: 0
+  m_Name: LucianSpawnPoint_Coop_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &144082955
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144082954}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.5597685, z: -0, w: 0.82864904}
+  m_LocalPosition: {x: -0.19528478, y: 0, z: -2.1243806}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 313813593}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &144082956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144082954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 2
 --- !u!1 &313813592
 GameObject:
   m_ObjectHideFlags: 0
@@ -152,6 +198,9 @@ Transform:
   - {fileID: 514608971}
   - {fileID: 927977559}
   - {fileID: 2085788745}
+  - {fileID: 591548801}
+  - {fileID: 144082955}
+  - {fileID: 1750022676}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &336291303
@@ -340,6 +389,52 @@ MonoBehaviour:
   waitingIndex: 5
   gizmoRadius: 0.2
   gizmoColor: {r: 0.2, g: 0.9, b: 1, a: 0.9}
+--- !u!1 &591548800
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 591548801}
+  - component: {fileID: 591548802}
+  m_Layer: 0
+  m_Name: LucianSpawnPoint_Coop_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &591548801
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 591548800}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.5597685, z: -0, w: 0.82864904}
+  m_LocalPosition: {x: -1.3111496, y: 0, z: -1.6256297}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 313813593}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &591548802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 591548800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 1
 --- !u!1 &657731524
 GameObject:
   m_ObjectHideFlags: 0
@@ -366,7 +461,7 @@ Transform:
   m_GameObject: {fileID: 657731524}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.5597685, z: -0, w: 0.82864904}
-  m_LocalPosition: {x: -0.38, y: 0, z: -1.04}
+  m_LocalPosition: {x: -0.38000014, y: 0, z: -1.0400004}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -663,6 +758,52 @@ MonoBehaviour:
   waitingIndex: 1
   gizmoRadius: 0.2
   gizmoColor: {r: 0.2, g: 0.9, b: 1, a: 0.9}
+--- !u!1 &1750022675
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1750022676}
+  - component: {fileID: 1750022677}
+  m_Layer: 0
+  m_Name: LucianSpawnPoint_Coop_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1750022676
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750022675}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.5597685, z: -0, w: 0.82864904}
+  m_LocalPosition: {x: 0.6925241, y: 0, z: -1.2843199}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 313813593}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1750022677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750022675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 3
 --- !u!1 &1778800438
 GameObject:
   m_ObjectHideFlags: 0

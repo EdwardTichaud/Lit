@@ -71,6 +71,19 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     public IReadOnlyList<Transform> DestinationPoints => destinationPoints;
     public bool IsSceneTransition => destinationMode == DestinationMode.SceneTransition;
 
+    // A sequence-created portal can reuse authored scene arrival anchors without moving them.
+    public void CopyDestinationFrom(PortalController source)
+    {
+        if (source == null) throw new System.ArgumentNullException(nameof(source));
+        source.EnsureDestinationPoints();
+        destinationMode = source.destinationMode;
+        destinationZone = source.destinationZone;
+        destinationPoints = new List<Transform>(source.destinationPoints);
+        legacyDestinationPoint = null;
+        destinationLocalOffset = source.destinationLocalOffset;
+        useDestinationRotation = source.useDestinationRotation;
+    }
+
     private void Reset()
     {
         EnsureDestinationPoints();

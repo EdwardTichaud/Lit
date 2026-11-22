@@ -1,5 +1,37 @@
 # Narration et connaissances
 
+## Arrivee dans les Limbes (2026-11-22)
+
+StorySequenceOnZoneArrival peut referencer son ZoneManifest. Il attend le Core
+et les scenes obligatoires declarees, en respectant les cycles deja termines,
+plutot qu'un ancien nom de scene Lighting. Il attend toujours la fin du
+chargement et du verrou GameFlow avant de jouer, et interrompt sa propre
+sequence si la zone active change. Reve_Limbes utilise ce raccord.
+Les triggers de proximite attendent aussi la fin du chargement visuel,
+de la preparation GameFlow et des autres modes qui bloquent le gameplay.
+OnTriggerStay retente normalement ensuite ; aucune completion n'est forcee.
+
+## Raccord des passages des Limbes (2026-11-22)
+
+Les passages limbes.1 et limbes.2 sont de nouveau materialises dans
+Reve_Limbes_Secrets. Ils reutilisent Passage_09/10, leurs savoirs et leurs
+sequences secret.recognition.09/10 ; aucune nouvelle identite de note ou de
+decouverte. Depuis le Seuil, les destinations sont les plateformes permanentes
+actuelles gauche (577.6,123.05,27) et droite (624,125.05,46). Deux triggers
+partagent une meme decouverte ; la note ou Observateur revele le passage,
+Sauf-Conduit equipe autorise la traversee individuelle dans les deux sens.
+Raccords et conservation des objets controles statiquement ; pas de recette
+Play Mode ni host/client pour cette restauration.
+
+## Direction des zones cachées interconnectées (2026-11-22)
+
+GameDesign.md décrit une liaison cachée District_1 vers une zone cachée des
+Limbes. Observateur peut annoncer un accès exploitable après un déblocage
+ultérieur. Découvertes, accès et progression des personnages restent liés à la
+partie de l'hôte. L'emplacement et la condition du portail restent à définir.
+Le chemin actuel documenté District_1–Stillhaven–Limbes reste la liaison de
+campagne existante. La nouvelle branche constitue une décision de conception.
+
 ## Direction : labyrinthes de fracture (2026-11-01)
 
 Audit de realisation : Docs/Design/Premier_Labyrinthe_Audit.md. Scene de test
@@ -676,3 +708,232 @@ A qualifier en Play depuis Bootstrap : intro complete, fermeture question,
 saisie nom/validation vide, reprise des deux repliques sans double validation,
 restitution UCC/camera, sauvegarde/recharge du nom, seconde nouvelle partie,
 annulation du rig pendant la saisie, manette/souris/clavier, Domain Reload On/Off.
+
+## Premier compagnon : Aurell, Une éternité d’avance (2026-11-22)
+
+Cycle solo district1.aurell_reunion dans la scène additive District_1_Cycle_Aurell,
+référencée au manifeste District_1, au catalogue narratif et aux Build Settings.
+Six étapes nommées : arrival, absence_1 à absence_4, reunion_completed terminale.
+Aucun flag historique ni dépendance à un autre cycle. Les anciennes parties
+peuvent jouer ce contenu sans remise à zéro de leurs recrutements/techniques.
+CycleAudience.All reste la valeur des contenus existants ; SoloOnly exclut ce
+cycle du chargement multijoueur sans écrire de completion fictive.
+
+AurellReunionCycle attend le retour effectif en Exploration dans District_1_Core
+après loading et transition avant de rapporter arrival. Quatre répliques de Lucian
+(5/4/5/4 secondes) répondent implicitement aux pensées de Munin : aucun texte,
+acteur ni doublage de Munin ajouté. Chaque réplique achevée est persistée ; combat,
+menu, autre dialogue ou désactivation interrompent la ligne courante sans la
+valider. Elle reprend ensuite, sans rejouer les lignes déjà terminées.
+DialoguePanelUI.TryShowTimedConversation accepte blocksGameplayInput, true par
+défaut pour préserver les usages existants. Cette introduction utilise false et
+ne capture pas Interagir. CycleAutoDialogueBinding expose la même option.
+
+Dans la nouvelle scène : déplacez Aurell_MeetingAnchor_PLACE_ME vers le refuge
+choisi au milieu du parcours, vérifiez sol, approche et cadrages, puis cochez
+Placement Confirmed sur AurellReunionAnchor. Tant que le placement n'est pas
+confirmé, le visuel et l'interaction restent indisponibles en jeu ; l'introduction
+reste indépendante. Les gizmos indiquent un rayon d'interaction de 3 m. Le prompt
+Parler à Aurell utilise UI_World_InteractionBox et ne demande aucune Flame.
+
+Le visuel narratif dédié réutilise Aurell_Maison_Presentation avec un contrôleur
+à une pose assise existante en boucle, sans UCC, réseau ni root motion. Interagir
+après l'introduction lance six répliques manuelles du StorySequenceRunner,
+contrôle bloqué et cadrages relatifs aux deux acteurs. Deux profils séparent les
+hauteurs assis/debout et conservent le côté de l'axe de conversation. Aucun
+positionnement ni téléportation de Lucian. La fin réussie après restitution du
+contrôle rapporte reunion_completed ; annuler ne recrute personne. Le visuel
+est alors masqué et la scène déchargée avec une marge de 3 s.
+
+RecruitCompanion est ajouté à la fin de CycleRewardKind (valeur 5, valeurs
+historiques inchangées). La récompense recrute Aurell et ouvre Intercession
+seulement. CycleProgressionService réconcilie les recrutements des étapes
+terminées, même après restauration d'un reçu ou arrivée tardive du gestionnaire,
+sans réduire les techniques existantes ni répéter une annonce. Une restauration
+utilise RecruitMember(member, false) ; la signature historique à un argument
+reste disponible.
+
+CompanionReunionState relie Maison à l'étape arrival : avant le premier départ,
+les trois compagnons sont présents ; ensuite, seuls les recrutés apparaissent.
+La conversation de groupe du prologue ne se lance plus après ce départ, sans
+attendre des acteurs absents. En multijoueur, la présence de groupe et les
+personnages disponibles au départ sont conservés ; aucun dialogue de disparition.
+
+Installation native réussie. Contrôle statique des 285 objets/composants de la
+scène, références, hiérarchie, textes, progression et raccords réussi ; compilation
+runtime/éditeur avec le compilateur Unity réussie. AurellReunionTests et la suite
+ciblée sont prêts, mais l'exécution native a été bloquée avant les tests par la
+fenêtre Unity Scene(s) Have Been Modified. Aucun passage Play/manette ou
+host/client validé. Résultats dans Library/AurellFirstEncounter. Le placement et
+le cadrage final restent volontairement à qualifier après choix de l'auteur.
+
+## Veillée au foyer : Ceux qui répondent (2026-11-22)
+
+Maison_Sequences contient Maison_Hearth_FirstVigil. L'interaction du Foyer
+propose cette séquence seulement après la fin de maison.companions.first_reunion,
+avec Lucian local côté autoritaire et les trois présentations narratives disponibles.
+Elle ne démarre pas par proximité. Avant disponibilité, après completion ou sans
+le groupe, le foyer conserve son assise ordinaire ; aucune Flame ni ressource de
+torche n'est requise. Le prompt utilise UI_World_InteractionBox.
+
+Identité persistante : maison.hearth.first_vigil, playOnce actif. Le store existant
+sauvegarde les completions dans les métadonnées du slot, pas dans PlayerPrefs ni
+dans CharacterState.json. Une interruption ne termine pas la séquence : elle
+reste rejouable. Les parties déjà commencées conservent leurs accès aux portails ;
+aucun nouveau verrou de départ avant la veillée n'est ajouté.
+
+Le runner rejoint Lucian_HearthSeat par le déplacement narratif UCC existant,
+sans téléportation. L'événement hearth.seat_lucian utilise TryBeginStorySitting :
+contrôle du corps/sol et des états Animator, animation Sit_Down et maintien de
+l'assise sans dépendre des commandes désactivées par la mise en scène. Sous le
+fondu noir, hearth.gather place les trois acteurs existants de
+MaisonCompanionReunion sur leurs sièges, avec un contrôleur assis dédié en boucle.
+Aucun doublon d'avatar, personnage jouable ou gestionnaire n'est créé.
+
+Vingt-sept VoiceLineData éditables racontent leurs voyages, les mondes sauvés,
+leur indépendance et leur fidélité à l'appel. Les taquineries posent l'amitié
+ancienne ; aucun titre divin ni secret final Lucian–Munin n'est expliqué.
+Dernière réplique de Lucian : « Je sens que ma lumière vacille. » Silence,
+hearth.reveal_portal, plan du portail, puis Soren : « C'est l'heure. »
+Aucun doublage invente : progression manuelle avec Interagir, volume musical
+conserve par le presentateur existant. La camera reste en plongee sur le groupe pendant
+les 25 premieres repliques : aucun recentrage par intervenant ni retour
+intermediaire au plan large. Un seul rapprochement sur Lucian (2,5 s) souligne
+sa lumiere vacillante, puis le plan du portail est rejoint en 3 s. Les points
+hearth.wide / hearth.portal et quatre sieges restent editables dans la scene.
+
+Le point hearth.wide est a 3,4 m, FOV 55, et vise le centre du groupe.
+StorySequenceCameraPoint propose un arc lent autour de Look Target : amplitude
+18 degres et periode 180 s pour cette veillee. Le temps continue entre les
+repliques, independamment de leur duree de lecture ; le mouvement sinusoidal
+reste borne et sans saut aux inversions. Les autres points gardent un arc nul
+par defaut. Les reglages sont dans l'Inspector, sans deplacer les ancres auteur
+au runtime.
+
+Le portail visible est maintenant cree par l'etape InstantiateGameObject de
+la sequence : prefab Hearth_DeparturePortal, spawnId hearth.departure_portal,
+binding hearth.portal_position vers Hearth_Portal_Appearance. Le callback
+dynamique OnPortalSpawned recoit l'instance et reprend la configuration de
+teleportation du Portal_1 de Maison, dont les quatre ancres d'arrivee ne
+bougent jamais. Le portail de scene est masque pendant la mise en scene,
+puis remplace par cette instance. Annuler supprime l'instance et restaure
+la visibilite initiale. La completion conserve le portail ; au rechargement
+ou a la reception du gate partage existant, il est recree sans rejouer le dialogue.
+Le prefab cree possede un trigger auteur non bloquant.
+
+narrative.maison.hearth.portal_open est écrit seulement par l'autorité après
+succès, et réconcilié depuis une ancienne completion locale si nécessaire. Ce
+booléen suit la sauvegarde du monde et les snapshots narratifs autoritaires
+existants ; les clients et arrivants tardifs retrouvent le même emplacement du
+portail sans nouveau RPC. Il interdit aussi un rejeu sans métadonnées locales.
+La mise en scène reste locale à Lucian côté hôte, comme le prologue existant :
+aucune caméra distante ni commande d'un autre joueur n'est forcée. Parcours
+coopératif réel encore à qualifier.
+
+Validation : contrôles NUnit natifs de disponibilité, interruption, préservation
+des poses, chorégraphie, scène, fin partagée et inclusion du signal dans le paquet
+narratif ; résultats NativeChecks.txt dans Library/MaisonHearthVigil. Compilation
+runtime/Editor avec Unity et contrôles des références : 25 documents de scène
+ajoutés, valeurs et identités existantes conservées (trois valeurs par défaut de
+placement sérialisées sur l'ancien runner).
+
+Le parcours Play utilise GameFlow et un slot isolé : approche UCC depuis un point
+proche du siège, assise, groupe, avancement automatique des 27 dialogues,
+apparition du portail, quatre arrivées inchangées, lever et reprise du contrôle.
+Retour menu, sauvegarde réelle et rechargement confirment la lecture unique.
+PlayProbe.first.json conserve la première exécution ; son vérificateur cherchait
+initialement la completion dans CharacterState au lieu des métadonnées du nouveau
+slot automatique. Ce contrôle a été corrigé ; PlayProbe.json / PlayProbe.result
+confirment ensuite le chargement de cette sauvegarde. Aucune scène auteur n'est
+sauvegardée par le probe et ses réglages Bootstrap sont restaurés. Aucun focus
+ou événement clavier/souris n'est envoyé.
+
+Les essais relèvent aussi les configurations préexistantes Sun Root/Sun Volume,
+VFX/caméra du menu et collisions de cape, ainsi qu'un état DefaultScenario à la
+sortie du Play. Ces erreurs restent dans les rapports et ne sont pas corrigées
+par ce lot. Le parcours automatisé ne qualifie ni le rythme de lecture, ni les
+cadrages rendus, ni une manette physique ; ces vérifications visuelles restent à
+faire sur les marqueurs auteurs.
+
+
+Validation de la camera de veillee (2026-11-22) : compilation Unity, dix
+assertions natives et parcours complet avec sauvegarde/menu/rechargement
+reussis. Le probe mesure le deplacement reel de Main Camera entre deux
+repliques (environ 14 cm en six secondes) et produit deux captures HDRP de
+groupe inspectees. Le cadre a ete recentre pour degager les quatre tetes du
+pilier proche. Reglages Bootstrap restaures et parties utilisateur intactes.
+Ces echantillons ne qualifient pas une lecture longue manuelle, la manette ou
+le multijoueur. Les erreurs de configuration preexistantes restent consignees.
+Le dernier arret signale aussi un UiOneShot_SFX_Save_Success non nettoye ;
+ce son de sauvegarde n'est pas modifie par les changements de camera.
+
+
+## Etape InstantiateGameObject (2026-11-22)
+
+Dans le StorySequenceAsset, ajouter InstantiateGameObject et renseigner
+spawnId (unique dans cette sequence), spawnPrefab et spawnPointId. Dans le
+StorySequenceSceneBindings du rig, ajouter une entree Spawn Points avec le
+meme ID et glisser le Transform de scene dans Point. Parent To Spawn Point
+fait suivre l'ancre a l'objet ; sinon l'objet reste a sa pose de creation dans
+la meme scene. La pose de depart reprend position et rotation de l'ancre ;
+les offsets se reglent avec l'ancre. Un rappel On Spawned optionnel recoit
+l'instance pour des raccordements aux objets de scene, y compris a la restauration.
+
+Le runner possede ses instances par spawnId et ne duplique pas un objet deja
+cree. Sans Keep Spawn After Completion, l'objet disparait a la fin. Avec cette
+option, il reste apres succes et une sequence playOnce terminee le restaure
+au chargement. Un abandon, une desactivation ou la destruction du runner
+nettoient les instances ; une erreur de creation annule l'etape. Les anciens
+numeros d'etapes sont conserves (nouvelle valeur ajoutee a la fin de l'enum).
+L'etape utilise Instantiate pour les objets de scene ; elle ne remplace pas
+le protocole de spawn autoritaire des NetworkObject. Le portail utilise la
+restauration du gate partage existant et le registre reseau des interactions.
+
+Validation actualisee apres reparation du rig ouvert : compilation Unity,
+six tests natifs d'instanciation et onze de veillee reussis. Le parcours Play
+confirme apparition, completion et restauration du portail apres rechargement.
+Les premiers essais etaient limites par une fenetre de rechargement ouverte
+dans l'editeur, puis par le binding ancien conserve dans la scene ouverte.
+L'utilisation effective du portail et host/client tardif restent a qualifier.
+
+
+## Volume pendant les dialogues (2026-11-22)
+
+StorySequenceDialoguePresenter et LocalVoiceLineController ne demandent plus
+d'attenuation automatique de la musique. Les appels de debut/fin et leurs
+options de ducking ont ete retires : repliques locales et dialogues de sequence
+conservent le volume choisi par le joueur pendant toute leur duree. Le volume
+du clip de voix reste celui de son AudioClipSO. Les traitements audio explicites
+des pistes Timeline restent independants de l'ouverture d'un dialogue.
+
+Compilation C# runtime/editeur verifiee ; aucune reference d'attenuation ne
+reste dans ces deux lecteurs. Ecoute en jeu non effectuee : l'editeur ne traite
+toujours pas le rafraichissement. Verifier une replique locale et un dialogue
+de sequence, puis leur fermeture/interruption, a volume musical constant.
+
+
+## Foyer : raccord de veillee apres migration (2026-11-22)
+
+Defaut reproduit : la scene Maison_Sequences deja ouverte conservait les
+anciens bindings, sans hearth.portal_position, alors que le fichier sur disque
+etait correct. BindGroup refusait la veillee et Foyer executait l'assise
+ordinaire. La rencontre des compagnons et les acteurs etaient bien disponibles.
+
+La commande Lit/Narrative/Maison/Repair Open Hearth Portal Binding reimporte
+la scene avec le schema compile, puis retablit seulement l'ancre locale
+Hearth_Portal_Appearance et le rappel dynamique OnPortalSpawned dans les rigs
+ouverts qui en ont besoin. Elle conserve les autres modifications et ne
+sauvegarde pas la scene. Elle ne duplique pas un rappel deja present.
+
+Une configuration incomplete produit maintenant un avertissement precis et
+consomme l'interaction, sans assise ni saut de remplacement. L'absence normale
+des compagnons liee a la progression conserve l'assise habituelle du foyer.
+Le probe exige maintenant une vraie prise en charge par la veillee, selectionne
+la sauvegarde de sa propre session et laisse la restauration du portail aboutir.
+
+Apres raccord : parcours Play isole reussi avec approche UCC, assise, 27
+dialogues, groupe, prefab de portail et quatre arrivees inchangees, retour des
+commandes, sauvegarde/menu/rechargement et portail recree. Le rapport de
+reparation confirme before=missing dans la scene ouverte. Les six tests
+natifs d'instanciation et les onze de veillee passent egalement. Configurations volumes, VFX menu et
+cape preexistantes restent visibles. Aucun test manette reel ni reseau.

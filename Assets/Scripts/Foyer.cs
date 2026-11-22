@@ -1,8 +1,10 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class Foyer : MonoBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler
+public sealed class Foyer : MonoBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler, IInteractionLightPolicy
 {
+    public bool RequiresFlame => false;
+
     [Header("Interaction")]
     [SerializeField, Tooltip("Collider utilise pour detecter le foyer. Le premier collider enfant est utilise s'il est vide.")]
     private Collider interactionCollider;
@@ -106,6 +108,9 @@ public sealed class Foyer : MonoBehaviour, ICharacterDetectedInteractable, ILoca
             return true;
         }
 
+        var vigil = FindAnyObjectByType<Lit.Story.MaisonHearthVigil>();
+        // Once the story owns this press, do not route a rejected/preparing start to sitting or jump.
+        if (vigil != null && vigil.TryHandleFoyer(this, controller, out _)) return true;
         controller.TryToggleSitting();
         return true;
     }

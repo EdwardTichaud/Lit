@@ -865,23 +865,38 @@ public class SquadManager : MonoBehaviour
     /// </summary>
     public void MoveSquadToDestinationPoints(IReadOnlyList<Pose> destinationPoints)
     {
-        if (destinationPoints == null || destinationPoints.Count == 0)
-        {
-            return;
-        }
+        if (!TryMoveSquadToDestinationPoints(destinationPoints, out string issue))
+            Debug.LogWarning("[SquadManager] Placement refuse : " + issue, this);
+    }
 
-        List<GameObject> playersInSpawnOrder = GetPlayersInSpawnOrder();
-        for (int i = 0; i < playersInSpawnOrder.Count; i++)
-        {
-            GameObject character = playersInSpawnOrder[i];
-            if (character == null)
-            {
-                continue;
-            }
+    public IReadOnlyList<GameObject> GetSceneTransitionPlayers() => GetPlayersInSpawnOrder();
 
-            Pose destination = destinationPoints[Mathf.Min(i, destinationPoints.Count - 1)];
-            TryTeleportCharacterForSceneTransition(character, destination.position, destination.rotation);
+    public bool TryMoveSquadToDestinationPoints(IReadOnlyList<Pose> points, out string issue)
+    {
+        var players = GetPlayersInSpawnOrder();
+        issue = null;
+        if (players.Count == 0 || points == null || points.Count < players.Count)
+        { issue = "Un emplacement distinct est requis pour chaque joueur."; return false; }
+        var previous = new Pose[players.Count];
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i] == null) { issue = "Personnage de transition absent."; return false; }
+            if (!SceneTransitionPlacement.IsFinite(points[i].position))
+            { issue = "Position d'arrivee non finie."; return false; }
+            previous[i] = new Pose(players[i].transform.position, players[i].transform.rotation);
+            for (int j = 0; j < i; j++)
+                if ((points[i].position - points[j].position).sqrMagnitude < .64f)
+                { issue = "Les emplacements joueurs se superposent."; return false; }
         }
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (TryTeleportCharacterForSceneTransition(players[i], points[i].position, points[i].rotation)) continue;
+            issue = "UCC a refuse le placement de " + players[i].name;
+            for (int j = 0; j <= i; j++)
+                TryTeleportCharacterForSceneTransition(players[j], previous[j].position, previous[j].rotation);
+            return false;
+        }
+        return true;
     }
 
     /// <summary>Retourne l'index de spawn d'un joueur : le personnage principal est toujours 0.</summary>

@@ -1,3 +1,286 @@
+## Foyer : veillee a nouveau declenchable (2026-11-22)
+
+Cause reproduite : Maison_Sequences ouverte dans l'editeur avait garde les
+anciens bindings sans hearth.portal_position apres la migration du portail.
+Sur disque la reference existait ; en Play les prerequis, compagnons et foyer
+etaient valides, mais l'ancre etait absente. L'interaction devenait une assise
+ordinaire. Scene reimportee avec le schema compile et raccordement du rig ouvert
+repare (Transform et OnPortalSpawned), sans sauvegarder les autres changements.
+Outil disponible : Lit/Narrative/Maison/Repair Open Hearth Portal Binding.
+
+Les erreurs de configuration sont maintenant expliquees dans la console et
+l'input n'est pas reinterprete en assise/saut. Une absence legitime des compagnons
+conserve l'assise normale. Probe renforce : verifie le lancement reel et recharge
+le slot de sa propre session, en attendant la restauration du portail.
+
+Compilation Unity reussie. Onze controles natifs de veillee et six d'instanciation
+passent. Parcours Play isole reussi : approche UCC, assise, 27 dialogues, groupe,
+portail instancie avec quatre arrivees conservees, commandes rendues,
+sauvegarde/menu/rechargement et recreation du portail. Aucun focus/input PC
+pilote ni partie utilisateur modifiee ; reglages Bootstrap restaures.
+Rapports : Library/MaisonHearthVigil/{FoyerState.txt,RepairSpawnBinding.result,
+NativeChecks.txt,PlayProbe.*} et Library/StoryInstantiation/NativeChecks.txt.
+Les diagnostics preexistants volume/menu/cape persistent, hors cause du blocage.
+Pas de qualification manette reelle ni host/client. Documentation narrative
+mise a jour. Les anciens bilans de rafraichissement bloque sont historiques.
+
+## Dialogues : volume musical constant (2026-11-22)
+
+Suppression de l'attenuation musicale automatique de StorySequenceDialoguePresenter
+et LocalVoiceLineController : options, etats et appels Begin/EndMusicDucking
+retires. Les reglages audio joueur et volumes de voix restent les memes.
+Les pistes Timeline conservent leur traitement explicite independant.
+Compilation C# runtime/editeur verifiee, recherche de reliquats dans les lecteurs
+negative. Pas d'ecoute Play : Unity ne traite toujours pas le rafraichissement.
+A verifier apres reprise : dialogue local, sequence, fermeture et interruption,
+sans variation de musique. Rapports : Library/DialogueAudio/Compile*.log.
+Documentation narrative.md mise a jour ; aucun asset de scene/prefab modifie.
+
+## Sequences : instanciation sur un Transform (2026-11-22)
+
+Nouvelle etape InstantiateGameObject, ajoutee sans renumeroter les types
+existants : prefab, spawnId unique, ID d'ancre de scene, parentage optionnel,
+conservation apres succes. Spawn Points du rig reference les Transform et
+propose un callback dynamique On Spawned. Le runner gere absence de doublons,
+nettoyage sur abandon/fin/destruction et restauration des objets conserves
+pour une sequence playOnce terminee. Inspector et validation raccordes.
+
+La veillee cree Hearth_DeparturePortal au point Hearth_Portal_Appearance via
+cette etape, au lieu du SceneEvent RevealPortal supprime. OnPortalSpawned
+reprend les destinations du Portal_1 existant sans deplacer ses quatre ancres.
+Le portail original reste masque pendant/remplace apres la sequence ; son
+etat initial est rendu sur abandon. Prefab passable avec trigger auteur.
+Completion partagee existante utilisee pour recreer l'instance apres recharge.
+
+Compilation C# runtime/editeur et controles statiques des assets reussis.
+Six tests cibles ajoutes et tests/parcours de veillee adaptes, NON EXECUTES sur
+ce lot : Unity ne traite plus Refresh.request, journal fige a 16:37:40.
+Aucun pilotage du PC tente. Anciens rapports Play de veillee non valables pour
+cette modification. A verifier apres reprise de Unity : tests, apparition,
+annulation/rejeu, rechargement, teleportation et host/client. Rapports actuels :
+Library/StoryInstantiation/Compile*.log et AssetChecks.txt. Documentation :
+systems/narrative.md. Aucune partie utilisateur ni scene ouverte sauvegardee.
+
+## Menus : suppression de l'ancienne notion Light (2026-11-22)
+
+Les deux derniers libelles de creation de partie ont ete retires de MainMenu
+et de sa copie _Recovery/1 : champ vide "Nom de la partie", premier slot "Depart"
+(comme la valeur deja utilisee dans MainMenuController). Aucun mode, type de
+session ou code propre a cette ancienne notion n'existe encore dans les menus.
+Aucun asset archive ni copie creee. Les composants Unity Light d'eclairage sont
+independants. Controle des libelles, recherche des reliquats menus/creation et
+unicite des IDs YAML reussis ; rafraichissement Unity demande. Pas de modification
+de code, ni de reecriture des sauvegardes utilisateur existantes.
+
+## Camera de la veillee : derive de groupe (2026-11-22)
+
+Maison_Hearth_Vigil conserve le plan hearth.wide pendant les 25 premieres
+repliques, sans recentrage sur chaque intervenant. Camera recentree en plongee
+sur les quatre personnages : position (0.2, 3.4, 1.1), FOV 55, centre (-.2, .15,
+3.15), arc lent de 18 degres et periode 180 s. Un seul rapprochement sur Lucian
+lors de sa lumiere vacillante (2.5 s), puis transition au portail (3 s).
+Scene, sequence et assistant d'installation concordent.
+
+StorySequenceCameraPoint expose l'arc et la periode dans l'Inspector ; le driver
+continue son temps de mouvement entre les dialogues. Les points existants ont
+un arc nul par defaut. Compilation Unity, dix assertions natives et parcours
+complet de veillee/rechargement reussis. La camera bouge de 0.14 m environ entre
+deux repliques echantillonnees a six secondes d'intervalle. Deux captures HDRP
+inspectees : quatre tetes visibles, cadrage recentre pour eviter le pilier.
+Rapports/images : Library/MaisonHearthVigil/NativeChecks.txt, PlayProbe.*,
+CameraSample_*.txt et GroupCamera_*.png. Les erreurs preexistantes volumes,
+VFX menu et cape persistent. Pas de qualification manette ou multijoueur.
+Documentation systems/narrative.md mise a jour ; reglages editeur restaures,
+sauvegardes utilisateur preservees.
+
+## Assise/releve joueur : vitesse et commandes (2026-11-22)
+
+Sit_Down et Stand_Up acceleres x2 sur les quatre controllers joueurs utilises
+par les overrides runtime ; Sitting_Idle et vitesse globale inchanges.
+SquadCharacterController expose la transition en cours, consomme le mouvement
+recu pendant l'assise et impose un retour du stick au neutre avant une nouvelle
+demande de releve. Les interactions repetees pendant assise/releve sont ignorees.
+LocalInputRouter ne diffuse pas les appuis gameplay pendant ces transitions ;
+dialogues/menus avec focus et ordres explicites des sequences sont preserves.
+
+Compilation Unity reussie. PlayerSittingPlayProbe valide dans une partie isolee
+Lucian/UCC : reglages des quatre controllers, mouvement et torche ignores,
+stick maintenu sans releve, relachement/nouveau geste, interaction assise
+ulterieure et liberation du verrou de mouvement. Configuration editeur restauree,
+aucune scene source sauvegardee ni partie utilisateur touchee. Rapport :
+Library/PlayerSitting/PlayProbe.result. Quatre erreurs de configuration deja
+presentes (volumes, VFX menu, cape) restent visibles. Documentation :
+systems/squad_characters.md. Ressenti visuel et parcours multi non qualifies.
+
+## Apercus des sauvegardes (2026-11-22)
+
+CharacterStateStore enregistre screenshot.png avec les donnees du meme slot,
+pour les sauvegardes manuelles et automatiques. Capture camera HDRP sans les
+Canvas d'interface, 1280 pixels par defaut (reglable dans Save preview), ratio
+conserve. La camera suspendue par LoadingScreenService reste capturable lors
+du retour menu. MainMenu_Load presente l'image du slot selectionne via son
+apercu existant. Les anciennes parties restent compatibles sans image.
+
+Compilation Unity et sept assertions NUnit natives reussies. Parcours Play
+Mode isole reussi : sauvegarde manuelle, renouvellement automatique, sauvegarde
+de sortie et image visible dans le vrai menu de chargement. Un overlay rouge
+de test est exclu et restaure ; les apercus montrent la couleur du jeu attendue.
+Aucune scene sauvegardee, configuration editeur restauree, parties utilisateur
+inchangees. Rapports : Library/SaveScreenshots/NativeChecks.txt et PlayProbe.*.
+Les erreurs preexistantes de volumes, VFX du menu et rig de cape persistent ;
+aucune erreur de capture observee dans ce parcours. Documentation persistence
+mise a jour. Le rendu sans dispositif graphique n'a pas d'apercu et conserve
+la sauvegarde de progression avec avertissement.
+
+## Maison : veillée Ceux qui répondent (2026-11-22)
+
+Séquence ponctuelle au foyer après les retrouvailles de groupe : marche UCC
+jusqu'au siège, assise animée, fondu, trois présentations existantes assises,
+27 dialogues, lumière vacillante de Lucian, apparition du Portal_1 près du foyer
+et « C'est l'heure » de Soren. Lecture unique par partie, annulation réessayable,
+assise ordinaire du foyer conservée. Dialogues et cadrages sont éditables dans
+StorySequence/MaisonHearth ; le rig est dans Maison_Sequences.
+
+Portal_1 conserve ses quatre destinations ; pose/visibilité restaurées sur
+annulation. Fin partagée narrative.maison.hearth.portal_open sauvegardée et
+incluse dans la synchronisation narrative existante ; aucun nouveau protocole
+cinématique coop. Les commandes et la caméra des autres joueurs restent libres.
+
+Installation native et contrôles d'assets réussis, compilation Unity ; assertions
+NUnit natives dans Library/MaisonHearthVigil/NativeChecks.txt. Play automatisé
+avec vraie approche/assise UCC, groupe, 27 dialogues, portail et contrôle rendu,
+puis sauvegarde/menu/rechargement et non-rejeu vérifiés. Métadonnées du slot
+automatique lues après correction du vérificateur de sauvegarde du probe.
+Réglages éditeur restaurés, sauvegardes réelles de l'utilisateur non utilisées.
+Les logs conservent les erreurs préexistantes volumes, VFX menu, cape et état
+DefaultScenario à l'arrêt. Pas de qualification de rendu/cadrage/manette réelle
+ni de parcours host/client. Détails et résultats dans systems/narrative.md.
+
+## Premier compagnon : cycle Aurell dans Moonrise (2026-11-22)
+
+Cycle solo Une éternité d’avance installé : arrivée et quatre répliques de Lucian
+en mouvement, puis dialogue posé avec Aurell blessé, recrutement Intercession et
+retour narratif à Maison. Étapes nommées sauvegardées, récompense de recrutement
+réconciliée après restauration/gestionnaire tardif ; acquis précédents conservés.
+Maison montre tous les compagnons avant le départ, puis les seuls recrutés.
+Le cycle et la disparition des compagnons sont exclus du multijoueur.
+
+À PLACER PAR L'AUTEUR : ouvrir District_1_Cycle_Aurell, déplacer
+Aurell_MeetingAnchor_PLACE_ME au refuge choisi à mi-parcours et cocher Placement
+Confirmed. La rencontre reste masquée avant confirmation ; l'introduction fonctionne.
+Dialogues, contrôleur assis et cadrages relatifs sont dans Narrative/AurellReunion.
+
+Installation native, raccords manifeste/catalogue/build et contrôle statique de
+285 objets/composants réussis. Compilation C# runtime/éditeur et tests compilés
+avec Unity. Exécution des tests natifs bloquée avant démarrage par la fenêtre
+Scene(s) Have Been Modified ; annulation demandée à l'utilisateur, aucun objet
+temporaire de test à enregistrer. Aucun résultat Play/manette/host-client revendiqué.
+Logs et sauvegardes avant installation : Library/AurellFirstEncounter.
+Voir systems/narrative.md et combat.md. Ne pas relancer l'installateur sur les
+assets existants : il refuse l'écrasement des contenus auteurs.
+
+## Cicatrice accessible dans Souvenirs (2026-11-22)
+
+Palette de récompenses partagées ajoutée à la roue : LB/RB, puis croix pour
+lancer ; B ferme. Aucun remplacement des seize techniques existantes. Cicatrice
+apparaît après scar_reward, relu depuis la progression de session sauvegardée ;
+le serveur vérifie la même autorisation. Ciblage OptionalTarget et entrée réseau
+raccordés au marqueur d'impact existant.
+
+Compilation runtime/éditeur avec le compilateur et les références Unity réussie.
+Contrôles statiques des bindings et du catalogue réussis. Tests ciblés ajoutés
+(CycleRewardSkillPaletteTests), pas exécutés : l'éditeur actif n'a pas réimporté
+les modifications en arrière-plan. Aucun parcours Play/manette ou host/client
+validé. Résultats de compilation : Library/CycleRewardSkills. Aucun déclencheur
+de test laissé en attente. Voir systems/combat.md pour le fonctionnement.
+
+## Securisation des transitions de zones (2026-11-22)
+
+Arrivees Maison -> District_1 corrigees : les anciens points enfants du visuel
+arrivaient environ 1,35 m sous le sol, dont un sans sol proche. Les huit portails
+de scene inspectes utilisent maintenant quatre ancres auteur independantes du
+visuel, avec sol et espace libre verifies dans les groupes cibles. Les groupes
+de spawn incomplets ont quatre slots ; scenes, GUID et identites existantes
+conserves. Sauvegardes exactes des neuf scenes editees par la migration dans
+Library/SceneTransitionRepairs/Backups ; detail dans Repair.txt et Audit.txt.
+
+GameFlow attend la destination complete, sa navigation, la validation physique
+et l'acceptation UCC avant de retirer la source. Echecs remontes, attentes
+bornees, checkpoint runtime et retour source ; fermeture sans sauvegarde si
+la recuperation echoue. Les validations de navigation ignorent aussi les
+repères des scenes source encore chargees. Les exports de sauvegarde et de
+JoinSync refusent un monde partiel. Le reseau verifie les statuts/evenements
+NGO ; un client en timeout est deconnecte sans modifier sa liaison persistante.
+Le checkpoint prive ne recree pas son acteur deconnecte lors d'un rollback.
+
+IsLoading couvre enfin l'overlay et son fondu, pas seulement la coroutine
+historique de chargement. La transition initiale et les voyages restent occupes
+jusqu'a disparition du noir ; les dialogues de proximite attendent cette fin.
+L'intro des Limbes lit son manifeste au lieu de Reve_Limbes_Lighting disparu.
+
+Validation : compilation Unity et 63/63 tests EditMode passes, sans ignore,
+dans Library/SceneTransitionRepairs/Tests.xml. Parcours rendu
+aba6c9ad385b44028805174be7a0155e : Bootstrap/menu, Maison -> District_1,
+retour Maison puis menu, avec deux refus de capture injectes et retries.
+27 verifications fonctionnelles passent, acteur conserve, au sol et mode
+Exploration retabli. Setup editeur restaure, fichiers auteurs preserves.
+Le gate global reste EN ECHEC : six logs Error de trois configurations
+preexistantes (MainMenuGameOptionsHoverVfx : camera/VFX absents ;
+LucianCapeCollision : references manquantes ; LocalVolumeSunController :
+Sun Root/Sun Volume absents). Ces erreurs ne sont ni filtrees ni masquees.
+
+RESTE A QUALIFIER : hote/client et quatre joueurs reels, timeout client et
+reconnexion, refus de chargement/restauration injectes, reprise disque d'une
+sauvegarde, demarrages directs et parcours des Limbes, build developpement.
+Le test rendu ne prouve pas les commandes de mouvement manuelles ni la fluidite.
+Aucune copie de projet creee ; le script ponctuel de migration est retire,
+les scenes corrigees, tests et rapports utiles sont conserves. Voir
+systems/runtime_session.md, persistence.md et narrative.md.
+
+## Passages des Limbes raccordes (2026-11-22)
+
+Reve_Limbes_Secrets contient de nouveau limbes.1 / limbes.2, relies aux
+definitions Passage_09 / Passage_10 et aux reconnaissances historiques.
+Deux extremites et triggers par passage, decouverte par note ou Observateur,
+traversee individuelle avec Sauf-Conduit. Arrivees sur les plateformes
+permanentes actuelles : (577.6,123.05,27) et (624,125.05,46), pas aux anciennes
+positions du blockout. Notes et objets preexistants conserves ; controle
+statique de toutes les nouvelles references et de la hierarchie passe.
+Aucun script runtime modifie. Aucun parcours Play Mode/reseau execute ;
+l'editeur executait une suite de tests independante. B02 et annexe actualises.
+
+## Identifiants d'objets dedupliques (2026-11-22)
+
+Les copies Lannieres en cuir, Livre_Puzzle_Test_1 et Note_Limbes_Climb ont
+respectivement les IDs lannieres_en_cuir, item_livre_puzzle_test_1 et
+item_note_limbes_climb. Les trois originaux conservent leur ancien ID ; GUID
+et references de scenes/prefabs inchanges. Controle des 175 Item : aucun
+identifiant effectif en doublon. Pas de code runtime modifie. B15 et l'annexe
+de l'audit sont actualises. Une ancienne sauvegarde ne permet pas de distinguer
+retroactivement les deux definitions qui partageaient une meme cle.
+
+## Audit global de progression (2026-11-22)
+
+Rapport en lecture seule du gameplay : Docs/Design/Audit_Progression_2026-11-22.md
+et annexe exhaustive des catalogues (18 cycles, 112 etapes, 62 savoirs,
+4 capacites, 175 objets). 39 constats separent raccords defectueux, contenus
+incomplets, choix deja approuves et validations restantes. Priorites : epoque
+calculee depuis les Ancient Flames chargees et retrait de celle de Belmont,
+collection 20 notes dont 10 reservees, deux passages Limbes sans adaptateur,
+Cicatrice hors kits gamepad, recrutement/techniques sans evenements auteurs,
+recharge Maison encore dependante de la construction legacy desactivee.
+La scene binaire de la nef a ete decodee sans modification ; son acces
+Clairmont est present. Aucun parcours Unity/reseau ni correction de gameplay
+effectue. Les overrides de capacites de test doivent etre coupes pour la recette.
+
+## Rejouabilite et liaisons cachees (2026-11-22)
+
+Direction ajoutee a Docs/Design/GameDesign.md : des branches cachees relient les
+regions, dont un portail District_1 vers une zone cachee des Limbes. Decouverte
+initiale, acces avec competences acquises plus tard et nouveaux itineraires.
+Progression du monde et de chaque personnage liee a la partie hebergee par son
+createur. Placement, condition d'acces et contenu de cette branche a definir.
+
 ## Rencontre avec Munin (2026-11-15)
 
 GameFlow choisit l'instance `1_Munin_Meeting` de `Maison_Sequences` apres

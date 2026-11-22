@@ -930,6 +930,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1340506836}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1073318357
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1073318359}
+  - component: {fileID: 1073318358}
+  m_Layer: 0
+  m_Name: Enola_Arrival_Coop_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1073318358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1073318357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 3
+--- !u!4 &1073318359
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1073318357}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -25.827818, y: -0.12000009, z: 26.767817}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1229398039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1182,6 +1228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnolaKnifeGame
   stoolPoint: {fileID: 732619018}
   reward: {fileID: 11400000, guid: fd680a85026ac294abeb7ee11b4c7c8a, type: 2}
+  speakerCharacterData: {fileID: 0}
   activityAnimator: {fileID: 9100000, guid: 034c699caa5f21a499b5511a1c68d155, type: 2}
   knifePrefab: {fileID: 504858609289749721, guid: 09ad6894d154da941b8fd4f81073d8bc, type: 3}
   knifeMaterial: {fileID: 2100000, guid: eb805dc75b120f143a9ce7f19ac2f43e, type: 2}
@@ -1592,6 +1639,52 @@ MonoBehaviour:
   opacityChannel: 0
   opacityTextureProperty: 
   outlined: 0
+--- !u!1 &1871895168
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1871895170}
+  - component: {fileID: 1871895169}
+  m_Layer: 0
+  m_Name: Enola_Arrival_Coop_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1871895169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871895168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 1
+--- !u!4 &1871895170
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871895168}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -23.95, y: -0.12000009, z: 25.99}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2126988376
 GameObject:
   m_ObjectHideFlags: 0
@@ -1734,6 +1827,52 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 51093653}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2144972197
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2144972199}
+  - component: {fileID: 2144972198}
+  m_Layer: 0
+  m_Name: Enola_Arrival_Coop_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2144972198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2144972197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2b8a4fe1db4db19df91d1cdc4bce09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneSpawnPoint
+  spawnId: Default
+  partySlot: 2
+--- !u!4 &2144972199
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2144972197}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -24.62905, y: -0.12000009, z: 27.006268}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &219713672401766345
 GameObject:
@@ -2237,3 +2376,6 @@ SceneRoots:
   - {fileID: 203004900}
   - {fileID: 395708049}
   - {fileID: 51093653}
+  - {fileID: 1871895170}
+  - {fileID: 2144972199}
+  - {fileID: 1073318359}

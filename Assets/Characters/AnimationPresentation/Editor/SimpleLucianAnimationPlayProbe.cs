@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>Opt-in bounded Play Mode smoke test. Uses a temporary play-start scene and restores the user's Editor setup.</summary>
 [InitializeOnLoad]
-public static class SimpleLucianAnimationPlayProbe
+public static partial class SimpleLucianAnimationPlayProbe
 {
     private const string Key="Lit.SimpleLucian.PlayProbe";
     private const string Folder=SimpleLucianAnimationSetup.Report;
@@ -33,6 +33,12 @@ public static class SimpleLucianAnimationPlayProbe
             var previous=SessionState.GetString(Key+".scene","");
             EditorSceneManager.playModeStartScene=string.IsNullOrEmpty(previous)?null:AssetDatabase.LoadAssetAtPath<SceneAsset>(previous);
             SessionState.SetBool(Key,false);
+            SessionState.SetBool(Key+".narrative",false);
+            if(SessionState.GetBool(Key+".batchNarrative",false))
+            {
+                SessionState.SetBool(Key+".batchNarrative",false);
+                EditorApplication.Exit(File.Exists("Library/DialoguePlacement/Play.txt")&&File.ReadAllText("Library/DialoguePlacement/Play.txt").StartsWith("PASS")?0:3);
+            }
         }
     }
     [MenuItem("Lit/Animation/Simple Lucian/4 Play Mode Smoke Test")]
@@ -54,7 +60,7 @@ public static class SimpleLucianAnimationPlayProbe
         {
             double now=EditorApplication.timeSinceStartup;
             if(began==0)began=since=now;
-            if(now-began>45)throw new InvalidOperationException("Play probe timed out at stage "+stage);
+            if(now-began>(SessionState.GetBool(Key+".narrative",false)?120:45))throw new InvalidOperationException("Play probe timed out at stage "+stage);
             if(arena==null)arena=UnityEngine.Object.FindAnyObjectByType<LucianBrainsCombatArena>();
             if(arena==null||arena.Player==null)return;
             var player=arena.Player;
@@ -67,6 +73,8 @@ public static class SimpleLucianAnimationPlayProbe
                 arena.Enemy.canAttack=false;arena.Enemy.enabled=false;
                 var nav=arena.Enemy.GetComponent<NavMeshAgent>();if(nav!=null&&nav.isOnNavMesh)nav.isStopped=true;
             }
+            if(SessionState.GetBool(Key+".narrative",false))
+            {if(stage==0&&!bridge.Grounded)return;TickNarrative(player,bridge,driver,now);return;}
             if(!bridge.Grounded)return;
             if(stage==0)
             {
@@ -110,6 +118,7 @@ public static class SimpleLucianAnimationPlayProbe
     private static void Next(int next){stage=next;since=EditorApplication.timeSinceStartup;}
     private static void Finish(string result)
     {
+        if(SessionState.GetBool(Key+".narrative",false))File.WriteAllText("Library/DialoguePlacement/Play.txt",result+"\n"+string.Join("\n",records));
         Directory.CreateDirectory(Folder);File.WriteAllText(Folder+"/play-result.txt",result+"\n"+string.Join("\n",records));
         if(input!=null){input.direction=Vector2.zero;UnityEngine.Object.Destroy(input);input=null;}
         EditorApplication.isPlaying=false;

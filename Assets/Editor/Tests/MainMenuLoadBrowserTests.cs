@@ -35,6 +35,39 @@ public sealed class MainMenuLoadBrowserTests
     public void TearDown() => Object.DestroyImmediate(root);
 
     [Test]
+    public void SettingsUseTheAuthoredPrefabWithCompleteBindings()
+    {
+        const string prefabPath = "Assets/Prefabs/MenuSettingsCanvas.prefab";
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        Assert.That(prefab, Is.Not.Null);
+        var view = prefab.GetComponent<MainMenuSettingsView>();
+        Assert.That(view, Is.Not.Null);
+        Assert.That(view.IsConfigured, Is.True);
+        Assert.That(view.Group.alpha, Is.Zero);
+        Assert.That(view.Group.interactable, Is.False);
+        Assert.That(view.Group.blocksRaycasts, Is.False);
+        Assert.That(prefab.GetComponent<Canvas>().renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+        Assert.That(view.NavigationRoot.GetComponentsInChildren<Button>(true).Length, Is.EqualTo(8));
+
+        var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/MainMenu/MainMenu.unity");
+        try
+        {
+            var controller = scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<MainMenuController>(true)).Single();
+            var serialized = new SerializedObject(controller);
+            var sceneView = serialized.FindProperty("settingsView").objectReferenceValue as MainMenuSettingsView;
+            Assert.That(sceneView, Is.Not.Null);
+            Assert.That(sceneView.IsConfigured, Is.True);
+            Assert.That(PrefabUtility.GetCorrespondingObjectFromSource(sceneView), Is.EqualTo(view));
+            Assert.That(serialized.FindProperty("optionsGroup").objectReferenceValue, Is.EqualTo(sceneView.Group));
+            Assert.That(serialized.FindProperty("optionsCursorRoot").objectReferenceValue, Is.EqualTo(sceneView.NavigationRoot));
+            Assert.That(controller.GetComponentsInChildren<MainMenuSettingsView>(true).Length, Is.EqualTo(1));
+            var legacy = controller.GetComponentsInChildren<Transform>(true).Single(t => t.name == "MainMenu_Options");
+            Assert.That(legacy.gameObject.activeSelf, Is.False);
+        }
+        finally { EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+    [Test]
     public void HoveringAnotherSessionPreservesChosenSessionAndSaveEntries()
     {
         var chosen = new SaveSessionInfo { sessionId = "chosen", sessionName = "Chosen" };

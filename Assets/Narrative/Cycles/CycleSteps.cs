@@ -6,12 +6,14 @@ public enum CycleStatus { Unavailable, Available, InProgress, Completed }
 public enum CycleStepKind { Knowledge, DialogueCompleted, EnemyDefeated, Interaction, SequenceCompleted, Read, Collected, ZoneEntered, NamedFact }
 public enum CycleRequirementKind { Step, Knowledge, CycleCompleted }
 public enum CycleRequirementMode { All, Any }
-public enum CycleRewardKind { Skill, Knowledge, Item, WorldVariable, Activation }
+public enum CycleAudience { All, SoloOnly }
+public enum CycleRewardKind { Skill, Knowledge, Item, WorldVariable, Activation, RecruitCompanion }
 
 [Serializable]
 public sealed class CycleReward
 {
     [Tooltip("Type de recompense partagee par toute la session.")] public CycleRewardKind kind;
+    public CombatSkillKit companion;
     public SkillSO skill;
     public KnowledgeSO knowledge;
     [Tooltip("Objet remis au coffre de la Maison.")] public Item item;
@@ -127,4 +129,5 @@ public sealed class CycleAutoDialogueBinding
     public CycleCondition condition = new CycleCondition();
     [TextArea] public string line;
     [Min(.1f)] public float durationSeconds = 4f;
+    public bool blocksGameplayInput = true;
 }

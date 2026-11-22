@@ -47,11 +47,11 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     /// <summary>Reports elapsed playback or intentional dismissal as completion;
     /// replacement, owner cancellation and teardown remain interruptions.</summary>
     public static bool TryShowTimedConversation(string message, float duration, Action<bool> finished,
-        object owner = null, CharacterData speaker = null)
+        object owner = null, CharacterData speaker = null, bool blocksGameplayInput = true)
     {
         var ui = GetOrCreate();
         bool shown = ui.ShowMessageInternal(message, duration, () => finished?.Invoke(ui.timedConversationCompleted),
-            true, true, speaker != null ? speaker.portrait : null);
+            blocksGameplayInput, true, speaker != null ? speaker.portrait : null);
         if (shown) ui.timedConversationOwner = owner;
         return shown;
     }

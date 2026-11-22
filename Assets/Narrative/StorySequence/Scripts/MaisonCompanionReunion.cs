@@ -45,6 +45,13 @@ namespace Lit.Story
             {
                 if (companion == null || companion.presentationPrefab == null)
                     continue;
+                bool visible = !System.Enum.TryParse<CombatSkillKit>(companion.actorId, out var member) ||
+                    CompanionReunionState.ShouldBePresent(member);
+                if (!visible)
+                {
+                    if (companion.instance != null) companion.instance.gameObject.SetActive(false);
+                    continue;
+                }
                 if (companion.instance == null)
                 {
                     Transform point = companion.waitingPoint;
@@ -55,6 +62,7 @@ namespace Lit.Story
                         point.position, point.rotation, transform);
                     companion.instance.name = companion.actorId + "_Maison";
                 }
+                companion.instance.gameObject.SetActive(true);
                 bindings.BindRuntimeActor(companion.actorId, companion.instance);
             }
         }
@@ -63,6 +71,9 @@ namespace Lit.Story
         {
             if (!ready || Time.unscaledTime < nextCheck) return;
             nextCheck = Time.unscaledTime + 0.2f;
+            EnsurePresentations();
+            // The original group conversation belongs to the prologue, not later returns.
+            if (SoloTeamProgression.IsSolo && CompanionReunionState.HasDeparted) return;
             if (runner == null || runner.Sequence == null || runner.IsPlaying ||
                 StorySequenceRunner.IsAnySequencePlaying || LoadingScreenService.IsLoading ||
                 InputModeCoordinator.IsGameplayBlocked ||

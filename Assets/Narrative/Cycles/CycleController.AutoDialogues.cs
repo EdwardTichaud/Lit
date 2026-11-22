@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Linq;
 using Unity.Netcode;
@@ -98,7 +98,7 @@ public sealed partial class CycleController
             if (!LocalAutoDialogueIsCurrent(generation) || Time.realtimeSinceStartupAsDouble >= timeout) yield break;
             double acknowledgeNotBefore = Time.realtimeSinceStartupAsDouble + Math.Max(.1d, binding.durationSeconds);
             bool shown = DialoguePanelUI.TryShowTimedConversation(binding.line, binding.durationSeconds,
-                completed => { natural = completed; finished = true; }, autoDialogueOwner, binding.speakerCharacterData);
+                completed => { natural = completed; finished = true; }, autoDialogueOwner, binding.speakerCharacterData, binding.blocksGameplayInput);
             if (!shown) yield break;
             using (var presentation = new DialoguePresentationSession(this,
                 DialoguePresentationSession.ResolveSpeaker(binding.speakerCharacterData), null, false, null))

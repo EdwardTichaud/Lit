@@ -28,6 +28,9 @@ namespace INab.VFXAssets
         {
             ourTarget = target as CharacterEffect;
             base.OnInspectorGUI();
+            serializedObject.Update();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnEnable"));
+            serializedObject.ApplyModifiedProperties();
         }
 
         protected virtual void DrawEffectSettings()

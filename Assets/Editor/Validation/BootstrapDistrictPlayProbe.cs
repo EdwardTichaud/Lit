@@ -277,6 +277,20 @@ public static partial class BootstrapDistrictPlayProbe
         if (flow == null || saves == null) return;
         if (!string.Equals(Path.GetFullPath(saves.GetSavesRoot()), Path.Combine(report.run, "Saves"), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Unexpected save root: aborting before any menu action.");
+        // A rejected departure leaves the player near real Maison story triggers.
+        // Advance their authored lines as in the opening fixture; never clear production dialogue locks.
+        if (report.recovery && report.stage >= 4)
+        {
+            foreach (var runner in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceRunner>())
+                if (runner.IsPlaying)
+                    typeof(Lit.Story.StorySequenceRunner).GetField("advanceRequested", Private).SetValue(runner, true);
+            foreach (var prompt in UnityEngine.Object.FindObjectsByType<Lit.Story.StorySequenceNamePrompt>())
+                if (prompt.IsOpen)
+                {
+                    typeof(Lit.Story.StorySequenceNamePrompt).GetField("draft", Private).SetValue(prompt, "Validation");
+                    typeof(Lit.Story.StorySequenceNamePrompt).GetField("submitted", Private).SetValue(prompt, true);
+                }
+        }
         var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuController>();
         if (report.stabilization)
         {

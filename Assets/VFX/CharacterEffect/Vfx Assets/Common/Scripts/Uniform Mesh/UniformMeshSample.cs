@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.VFX;
 using UnityEngine.VFX.Utility;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using System.Linq;
 using INab.CommonVFX;
 
@@ -437,6 +439,8 @@ namespace INab.VFXAssets
             }
         }
 
+        private bool graphReady;
+
         private bool EnsureEffectReferences(bool allowInstantiate)
         {
             ResolveEffectComponentsFromInstance();
@@ -461,6 +465,8 @@ namespace INab.VFXAssets
                     instanceTransform.localRotation = Quaternion.identity;
                     instanceTransform.localScale = Vector3.one;
                     instantiatedEffectPrefab.name = effectPrefab.name + " (Instance) [" + effectName + "]";
+                    if (!Application.isPlaying)
+                        instantiatedEffectPrefab.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
                 }
             }
 
@@ -526,30 +532,17 @@ namespace INab.VFXAssets
 
         #region Unity Lifecycle
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
-            bool isNull = false;
-
-            EnsureEffectReferences(Application.isPlaying);
-            if (vfxBinder == null) return;
-            var list = vfxBinder.GetPropertyBinders<VFXLossyTransformBinder>();
-            foreach (var item in list)
-            {
-                if (item.Target == null) isNull = true;
-            }
-
-            if (isNull)
-            {
-                ConfigureVFXBinders();
-            }
-
             SetupVfxGraph();
         }
 
-        protected virtual void Start()
+        /// <summary>Initializes dynamic instances as well as scene and pooled effects.</summary>
+        public bool EnsureReady()
         {
-            EnsureEffectReferences(Application.isPlaying);
-            SetupVfxGraph();
+            if (!graphReady || vfxComponent == null || meshBaker.m_Buffer == null || !meshBaker.m_Buffer.IsValid())
+                SetupVfxGraph();
+            return graphReady;
         }
 
         protected virtual void Update()
@@ -560,19 +553,18 @@ namespace INab.VFXAssets
 
         protected virtual void OnDisable()
         {
+            SendStopEvent();
             meshBaker.OnDisable();
+            graphReady = false;
         }
 
         protected virtual void OnValidate()
         {
-            if (enabled == false || gameObject.activeSelf == false) return;
-
+            // Unity can call OnValidate during deserialization. GPU allocation and
+            // graph initialization belong to OnEnable or an explicit Setup request.
             meshBaker.SampleCountMultiplier = sampleCountMultiplier;
             meshBaker.UsePerSubmeshBaking = usePerSubmeshBaking;
             meshBaker.SubmeshIndex = submeshIndex;
-
-            _SetGraphicsBuffer();
-
         }
 
         #endregion
@@ -590,18 +582,16 @@ namespace INab.VFXAssets
 
 
         /// <summary>Start the effect effect.</summary>
-        public void StartEffect()
+        public virtual void StartEffect()
         {
-            //vfxComponent.SetBool("Effect Active", true);
-            /////
-
-            SendPlayEvent();
+            if (!EnsureReady()) return;
             SetProperty_EffectActive(true);
+            SendPlayEvent();
             currentEffectState = EffectState.On;
         }
 
         /// <summary>Stop the effect effect.</summary>
-        public void StopEffect()
+        public virtual void StopEffect()
         {
             //vfxComponent.SetBool("Effect Active", false);
             ////
@@ -618,20 +608,24 @@ namespace INab.VFXAssets
         /// </summary>
         public virtual void SetupVfxGraph()
         {
-            EnsureEffectReferences(Application.isPlaying);
-            if (meshRenderer && vfxComponent)
-            {
-                MeshSetup.SetupRenderer(meshRenderer, vfxComponent);
-                //MeshSetup.SetupPropertyBinder(vfxBinder, meshTransform);
-            }
-
+            graphReady = false;
+#if UNITY_EDITOR
+            if (EditorUtility.IsPersistent(this)) return;
+#endif
+            if (!gameObject.scene.IsValid() || !EnsureEffectReferences(true) || meshRenderer == null) return;
+            if (meshBaker == null) meshBaker = new UniformMeshBaker();
+            if (vfxBinder == null)
+                vfxBinder = vfxComponent.GetComponent<VFXPropertyBinder>() ?? vfxComponent.gameObject.AddComponent<VFXPropertyBinder>();
+            ConfigureVFXBinders();
+            MeshSetup.SetupRenderer(meshRenderer, vfxComponent);
             OnValidate();
-
-            _BakeUniformMesh();
-
-            if (vfxComponent)
+            vfxComponent.Reinit();
+            meshBaker.Bake(vfxComponent, meshRenderer);
+            graphReady = meshBaker.m_Buffer != null && meshBaker.m_Buffer.IsValid();
+            if (graphReady && currentEffectState == EffectState.On)
             {
-                vfxComponent.Reinit();
+                SetProperty_EffectActive(true);
+                SendPlayEvent();
             }
         }
 

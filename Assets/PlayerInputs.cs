@@ -1705,6 +1705,16 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""CycleSkillPalette"",
+                    ""type"": ""Value"",
+                    ""id"": ""e3870ff9-c28c-4571-bf34-93a9ce9d3692"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -1795,6 +1805,39 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""action"": ""Cancel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""Palettes"",
+                    ""id"": ""c402cd11-94b2-49d8-bcaa-81961b173efd"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CycleSkillPalette"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""f4e49a68-fc50-4863-95f6-3c72b49cd505"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""CycleSkillPalette"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""b824fa65-62de-4274-941c-c546e4947529"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""CycleSkillPalette"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         },
@@ -1975,6 +2018,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_CombatWheel_SkillA = m_CombatWheel.FindAction("SkillA", throwIfNotFound: true);
         m_CombatWheel_SkillB = m_CombatWheel.FindAction("SkillB", throwIfNotFound: true);
         m_CombatWheel_CycleSupportTarget = m_CombatWheel.FindAction("CycleSupportTarget", throwIfNotFound: true);
+        m_CombatWheel_CycleSkillPalette = m_CombatWheel.FindAction("CycleSkillPalette", throwIfNotFound: true);
         // System
         m_System = asset.FindActionMap("System", throwIfNotFound: true);
         m_System_Pause = m_System.FindAction("Pause", throwIfNotFound: true);
@@ -3447,6 +3491,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_CombatWheel_SkillA;
     private readonly InputAction m_CombatWheel_SkillB;
     private readonly InputAction m_CombatWheel_CycleSupportTarget;
+    private readonly InputAction m_CombatWheel_CycleSkillPalette;
     /// <summary>
     /// Provides access to input actions defined in input action map "CombatWheel".
     /// </summary>
@@ -3494,6 +3539,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "CombatWheel/CycleSupportTarget".
         /// </summary>
         public InputAction @CycleSupportTarget => m_Wrapper.m_CombatWheel_CycleSupportTarget;
+        public InputAction @CycleSkillPalette => m_Wrapper.m_CombatWheel_CycleSkillPalette;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -3545,8 +3591,11 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @SkillB.performed += instance.OnSkillB;
             @SkillB.canceled += instance.OnSkillB;
             @CycleSupportTarget.started += instance.OnCycleSupportTarget;
+            @CycleSkillPalette.started += instance.OnCycleSkillPalette;
             @CycleSupportTarget.performed += instance.OnCycleSupportTarget;
+            @CycleSkillPalette.performed += instance.OnCycleSkillPalette;
             @CycleSupportTarget.canceled += instance.OnCycleSupportTarget;
+            @CycleSkillPalette.canceled += instance.OnCycleSkillPalette;
         }
 
         /// <summary>
@@ -3583,8 +3632,11 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @SkillB.performed -= instance.OnSkillB;
             @SkillB.canceled -= instance.OnSkillB;
             @CycleSupportTarget.started -= instance.OnCycleSupportTarget;
+            @CycleSkillPalette.started -= instance.OnCycleSkillPalette;
             @CycleSupportTarget.performed -= instance.OnCycleSupportTarget;
+            @CycleSkillPalette.performed -= instance.OnCycleSkillPalette;
             @CycleSupportTarget.canceled -= instance.OnCycleSupportTarget;
+            @CycleSkillPalette.canceled -= instance.OnCycleSkillPalette;
         }
 
         /// <summary>
@@ -4306,6 +4358,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCycleSupportTarget(InputAction.CallbackContext context);
+        void OnCycleSkillPalette(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "System" which allows adding and removing callbacks.

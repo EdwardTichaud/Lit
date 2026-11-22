@@ -2173,6 +2173,7 @@ MonoBehaviour:
   meshBaker:
     _sampleCount: 10652
     SampleCountMultiplier: 1
+    m_BakedSampling: []
     UsePerSubmeshBaking: 0
     SubmeshIndex: 0
   sampleCountMultiplier: 1
@@ -2190,6 +2191,7 @@ MonoBehaviour:
   _Foldout_3: 1
   _Foldout_4: 1
   _Foldout_5: 1
+  playOnEnable: 1
   effectState: 1
 --- !u!1 &2160324580470185257
 GameObject:
@@ -2857,8 +2859,6 @@ MonoBehaviour:
   fallbackSpatialBlend: 1
   fallbackMinDistance: 1
   fallbackMaxDistance: 20
-  duckMusicDuringVoiceLine: 1
-  musicDuckMultiplier: 0.5
 --- !u!54 &-8769395688154957966
 Rigidbody:
   m_ObjectHideFlags: 0

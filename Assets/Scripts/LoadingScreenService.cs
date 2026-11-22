@@ -90,7 +90,11 @@ public sealed class LoadingScreenService : MonoBehaviour
     private readonly Dictionary<ParticleSystem, ParticleEmissionSnapshot> particleEmissionSnapshots = new Dictionary<ParticleSystem, ParticleEmissionSnapshot>();
     private readonly List<SuspendedCameraState> suspendedCameras = new List<SuspendedCameraState>();
 
-    public static bool IsLoading => instance != null && instance.sceneLoadRoutine != null;
+    // GameFlow owns its own scene operations. Its overlay is still loading during
+    // presentation, the opaque hold and the reveal, even without a service-owned load coroutine.
+    public static bool IsLoading => instance != null && (instance.sceneLoadRoutine != null ||
+        instance.visibilityRoutine != null || instance.currentFadeTarget > .001f ||
+        instance.canvasGroup != null && instance.canvasGroup.alpha > .001f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void EnsureRuntime()

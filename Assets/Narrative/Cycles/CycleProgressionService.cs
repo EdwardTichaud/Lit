@@ -65,6 +65,7 @@ public sealed class CycleProgressionService : MonoBehaviour
         {
             nextDependencyCheck = Time.unscaledTime + .5f;
             HookDependencies();
+            if (Authority) ReconcileCompanionRewards();
         }
         if (dirty) Refresh();
     }
@@ -108,14 +109,17 @@ public sealed class CycleProgressionService : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(sceneName)) return false;
         foreach (var definition in definitions)
-            if (definition.cycleSceneName == sceneName && IsCompleted(definition)) return true;
+            if (definition.cycleSceneName == sceneName && (!definition.IsAvailableInCurrentSession || IsCompleted(definition))) return true;
         return false;
     }
     public static bool ShouldSkipScene(string sceneName)
     {
         if (Instance != null) return Instance.IsCompletedScene(sceneName);
+        if (string.IsNullOrWhiteSpace(sceneName)) return false;
+        foreach (var cycle in CycleCatalog.LoadDefinitions())
+            if (cycle.cycleSceneName == sceneName && !cycle.IsAvailableInCurrentSession) return true;
         var state = UnityEngine.Object.FindAnyObjectByType<WorldRulesStateManager>();
-        if (state == null || string.IsNullOrWhiteSpace(sceneName)) return false;
+        if (state == null) return false;
         foreach (var definition in CycleCatalog.LoadDefinitions())
             if (definition.cycleSceneName == sceneName &&
                 (state.TryGetInt(definition.StateKey + ".completed", out int completed) && completed != 0 ||
@@ -137,9 +141,8 @@ public sealed class CycleProgressionService : MonoBehaviour
     }
     public CycleStatus GetStatus(CycleDefinition cycle)
     {
-        if (!IsReady) return CycleStatus.Unavailable;
+        if (!IsReady || cycle == null || !cycle.IsAvailableInCurrentSession) return CycleStatus.Unavailable;
         if (IsCompleted(cycle)) return CycleStatus.Completed;
-        if (cycle == null) return CycleStatus.Unavailable;
         if (Read(cycle.StateKey) != 0) return CycleStatus.InProgress;
         if (cycle.steps != null) foreach (var step in cycle.steps)
             if (step != null && IsStepCompleted(cycle, step.id)) return CycleStatus.InProgress;
@@ -180,7 +183,7 @@ public sealed class CycleProgressionService : MonoBehaviour
     }
     internal bool ApplyEvent(CycleDefinition cycle, CycleStepKind kind, string sourceId)
     {
-        if (!Authority || cycle == null || string.IsNullOrWhiteSpace(sourceId)) return false;
+        if (!Authority || cycle == null || !cycle.IsAvailableInCurrentSession || string.IsNullOrWhiteSpace(sourceId)) return false;
         RegisterDefinition(cycle);
         Refresh();
         if (IsCompleted(cycle)) return false;
@@ -220,6 +223,7 @@ public sealed class CycleProgressionService : MonoBehaviour
                     bool changed = false;
                     foreach (var cycle in definitions)
                     {
+                        if (!cycle.IsAvailableInCurrentSession) continue;
                         foreach (var step in cycle.steps ?? Array.Empty<CycleStep>())
                         {
                             if (!IsStepActive(cycle, step)) continue;
@@ -276,7 +280,7 @@ public sealed class CycleProgressionService : MonoBehaviour
             if (reward == null) continue;
             string key = cycle.RewardKey(step.id, index);
             if (Read(key) != 0) continue;
-            bool applied = ApplyReward(cycle, step, index, reward);
+            bool applied = ApplyReward(cycle, step, index, reward, notify);
             if (!applied) continue;
             rules.SetInt(key, 1);
             if (notify)
@@ -288,10 +292,16 @@ public sealed class CycleProgressionService : MonoBehaviour
         }
     }
 
-    private bool ApplyReward(CycleDefinition cycle, CycleStep step, int index, CycleReward reward)
+    private bool ApplyReward(CycleDefinition cycle, CycleStep step, int index, CycleReward reward, bool notify = false)
     {
         switch (reward.kind)
         {
+            case CycleRewardKind.RecruitCompanion:
+                if (!cycle.IsAvailableInCurrentSession || !SoloTeamProgression.IsSolo) return false;
+                var team = SoloTeamProgression.Resolve();
+                if (team == null) return false;
+                team.RecruitMember(reward.companion, notify);
+                return team.IsRecruited(reward.companion);
             case CycleRewardKind.Skill:
                 if (reward.skill == null) return false;
                 return true;
@@ -313,6 +323,27 @@ public sealed class CycleProgressionService : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    private void ReconcileCompanionRewards()
+    {
+        if (rules == null || !SoloTeamProgression.IsSolo) return;
+        foreach (var cycle in definitions)
+        {
+            if (!cycle.IsAvailableInCurrentSession) continue;
+            foreach (var step in cycle.steps ?? Array.Empty<CycleStep>())
+            {
+                if (step == null || !IsStepCompleted(cycle, step.id)) continue;
+                var rewards = step.rewards ?? Array.Empty<CycleReward>();
+                for (int i = 0; i < rewards.Length; i++)
+                    if (rewards[i] != null && rewards[i].kind == CycleRewardKind.RecruitCompanion &&
+                        ApplyReward(cycle, step, i, rewards[i]))
+                    {
+                        string key = cycle.RewardKey(step.id, i);
+                        if (Read(key) == 0) rules.SetInt(key, 1);
+                    }
+            }
+        }
     }
 
     [Serializable] private sealed class Mailbox { public List<string> rewardKeys = new List<string>(); }

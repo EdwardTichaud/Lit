@@ -119,6 +119,263 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &37367991
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 37367992}
+  m_Layer: 0
+  m_Name: Hearth_Portal_Appearance
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &37367992
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37367991}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.80229294, z: -0, w: 0.5969305}
+  m_LocalPosition: {x: 3, y: -0.95, z: 1.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &613161223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 613161224}
+  m_Layer: 0
+  m_Name: Lucian_HearthSeat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &613161224
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 613161223}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.13213389, z: -0, w: 0.99123186}
+  m_LocalPosition: {x: -0.8, y: -0.579, z: 2.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &680184513
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 680184514}
+  m_Layer: 0
+  m_Name: Aurell_HearthSeat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &680184514
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680184513}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.10952151, z: -0, w: 0.99398446}
+  m_LocalPosition: {x: 0.35, y: -0.706, z: 2.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &689071766
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 689071767}
+  m_Layer: 0
+  m_Name: Soren_HearthSeat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &689071767
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 689071766}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.4748389, z: -0, w: 0.8800728}
+  m_LocalPosition: {x: -1.6, y: -0.466, z: 3.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1512969109
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1512969111}
+  - component: {fileID: 1512969110}
+  m_Layer: 0
+  m_Name: hearth.portal
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1512969110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1512969109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
+  pointId: hearth.portal
+  lookTarget: {fileID: 0}
+  lookAtOffset: {x: 0, y: 0, z: 0}
+  fieldOfView: 46
+  useAuthoredRotation: 1
+  breathingStrength: 0
+--- !u!4 &1512969111
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1512969109}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.116543815, y: 0.5749278, z: -0.08317531, w: 0.80557895}
+  m_LocalPosition: {x: -0.2, y: 1.4, z: 0.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1613953168
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1613953170}
+  - component: {fileID: 1613953169}
+  m_Layer: 0
+  m_Name: hearth.wide
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1613953169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1613953168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a931432c35483c745832327970e73f3e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraPoint
+  pointId: hearth.wide
+  lookTarget: {fileID: 1216391764111064312}
+  lookAtOffset: {x: -0.2, y: 0.15, z: 3.15}
+  fieldOfView: 55
+  useAuthoredRotation: 0
+  breathingStrength: 0
+  orbitArcDegrees: 18
+  orbitPeriod: 180
+--- !u!4 &1613953170
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1613953168}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.2390233, y: -0.38196167, z: 0.10295454, w: 0.8867771}
+  m_LocalPosition: {x: 0.2, y: 3.4, z: 1.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2011177156
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2011177157}
+  m_Layer: 0
+  m_Name: Vesta_HearthSeat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2011177157
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2011177156}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.49923426, z: -0, w: 0.86646706}
+  m_LocalPosition: {x: 1.15, y: -0.502, z: 3.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1216391764111064312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &427135453205465761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +396,51 @@ MonoBehaviour:
   fallbackLocalOffset: {x: 0.85, y: 1.65, z: 2.4}
   fallbackFieldOfView: 45
   fallbackFollowSharpness: 12
+--- !u!1 &856108855267531420
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1216391764111064312}
+  - component: {fileID: 3683134918966995562}
+  - component: {fileID: 2895194214526618963}
+  - component: {fileID: 5260016986412051589}
+  - component: {fileID: 4525420967561878053}
+  - component: {fileID: 8621237026348531470}
+  - component: {fileID: 8621237026348531472}
+  - component: {fileID: 8621237026348531471}
+  m_Layer: 0
+  m_Name: Maison_Hearth_FirstVigil
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1216391764111064312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 613161224}
+  - {fileID: 2011177157}
+  - {fileID: 689071767}
+  - {fileID: 680184514}
+  - {fileID: 37367992}
+  - {fileID: 1613953170}
+  - {fileID: 1512969111}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1372807091219652055
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -194,6 +496,95 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2895194214526618963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07d4bcf678a3f9c429eafb1745344878, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceCameraDriver
+  controlledCamera: {fileID: 0}
+  uccCameraController: {fileID: 0}
+  uccCameraHandler: {fileID: 0}
+  uccCameraBinder: {fileID: 0}
+  additionalGameplayCameraBehaviours: []
+  fallbackLocalOffset: {x: 0.85, y: 1.65, z: 2.4}
+  fallbackFieldOfView: 45
+  fallbackFollowSharpness: 12
+--- !u!114 &3683134918966995562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad6a29de2919a844488319fc463cb884, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceSceneBindings
+  actors: []
+  cameraPoints:
+  - {fileID: 1613953169}
+  - {fileID: 1512969110}
+  directors: []
+  events:
+  - eventId: hearth.seat_lucian
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8621237026348531472}
+          m_TargetAssemblyTypeName: Lit.Story.MaisonHearthVigil, Assembly-CSharp
+          m_MethodName: SeatLucian
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName:
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument:
+            m_BoolArgument: 0
+          m_CallState: 2
+  - eventId: hearth.gather
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8621237026348531472}
+          m_TargetAssemblyTypeName: Lit.Story.MaisonHearthVigil, Assembly-CSharp
+          m_MethodName: GatherAtHearth
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName:
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument:
+            m_BoolArgument: 0
+          m_CallState: 2
+  spawnPoints:
+  - spawnPointId: hearth.portal_position
+    point: {fileID: 37367992}
+    onSpawned:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8621237026348531472}
+          m_TargetAssemblyTypeName: Lit.Story.MaisonHearthVigil, Assembly-CSharp
+          m_MethodName: OnPortalSpawned
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument:
+            m_BoolArgument: 0
+          m_CallState: 2
+  searchSceneWhenBindingMissing: 1
 --- !u!4 &4405025658349386506
 Transform:
   m_ObjectHideFlags: 0
@@ -209,6 +600,48 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4525420967561878053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bd37c89cf364884f8c1a611db80fa51, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceFadeController
+  canvasGroup: {fileID: 0}
+  fadeImage: {fileID: 0}
+  fadeColor: {r: 0, g: 0, b: 0, a: 1}
+  sortingOrder: 32747
+--- !u!114 &5260016986412051589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9109231d0ee6054bbfe367635ebae06, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceDialoguePresenter
+  canvasGroup: {fileID: 0}
+  speakerText: {fileID: 0}
+  dialogueText: {fileID: 0}
+  continueHintText: {fileID: 0}
+  portraitImage: {fileID: 0}
+  dialoguePanel: {fileID: 0}
+  showSpeakerName: 1
+  createRuntimeUiWhenMissing: 1
+  sortingOrder: 32737
+  panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
+  speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
+  uiFadeDuration: 0.15
+  duckMusic: 1
+  musicDuckMultiplier: 0.45
 --- !u!114 &6513471457653913852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -221,6 +654,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
+  playerTransform: {fileID: 0}
+  playerApproachTimeout: 30
+  playerNavMeshAgentTypeId: 0
   sequence: {fileID: 11400000, guid: ca40384d26cbf0042b26fed4e8ed01ad, type: 2}
   playOnStart: 0
   startDelay: 0
@@ -311,9 +747,108 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9d5740d511d840ca8fe0534f6687bcd9, type: 3}
+--- !u!114 &8621237026348531470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
+  playerTransform: {fileID: 613161224}
+  playerApproachTimeout: 15
+  playerNavMeshAgentTypeId: 0
+  sequence: {fileID: 11400000, guid: cb81f32e1123c3240803c93fb5e5d572, type: 2}
+  playOnStart: 0
+  startDelay: 0
+  startWithLocalPlayerSeated: 0
+  bindings: {fileID: 0}
+  cameraDriver: {fileID: 0}
+  dialoguePresenter: {fileID: 0}
+  fadeController: {fileID: 0}
+  onSequenceStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSequenceCompleted:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8621237026348531472}
+        m_TargetAssemblyTypeName: Lit.Story.MaisonHearthVigil, Assembly-CSharp
+        m_MethodName: CompleteVigil
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName:
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
+  onSequenceAborted:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8621237026348531472}
+        m_TargetAssemblyTypeName: Lit.Story.MaisonHearthVigil, Assembly-CSharp
+        m_MethodName: AbortVigil
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName:
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
+  namePrompt: {fileID: 0}
+--- !u!114 &8621237026348531471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d428fa654ffa44389e98308ee2168319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldInteractionPrompt
+  target: {fileID: 0}
+  label: Interagir
+  worldOffset: {x: 0, y: 1.5, z: 0}
+--- !u!114 &8621237026348531472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856108855267531420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 162efeea378ab534e91aaa1ab126fe77, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.MaisonHearthVigil
+  runner: {fileID: 8621237026348531470}
+  prerequisite: {fileID: 11400000, guid: ca40384d26cbf0042b26fed4e8ed01ad, type: 2}
+  bindings: {fileID: 3683134918966995562}
+  companionSeats:
+  - actorId: Vesta
+    point: {fileID: 2011177157}
+  - actorId: Soren
+    point: {fileID: 689071767}
+  - actorId: Aurell
+    point: {fileID: 680184514}
+  seatedController: {fileID: 9100000, guid: 10801306528cec74cb1efe73f8c3018c, type: 2}
+  prompt: {fileID: 8621237026348531471}
+  foyerScene: Maison_Interactives
+  departurePortalPath: Maison_Interactive_Root/Portals/Portal_1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 7351328140778381110}
   - {fileID: 4405025658349386506}
+  - {fileID: 1216391764111064312}

@@ -753,14 +753,36 @@ Iluvilirae_Test, dont le personnage par défaut est Lucian : les quatre kits son
 disponibles immédiatement (16 skills avec Impact de lumiere au laboratoire), sans compagnon
 physique. RunBatchSceneProfile vérifie cette configuration réellement chargée ;
 le test de recrutement retire le profil uniquement de sa fixture non sauvegardée.
-Les points narratifs
-de recrutement restent à configurer dans les séquences ; aucun lieu n’est inventé.
+Le cycle solo district1.aurell_reunion raccorde désormais le recrutement d'Aurell
+à la fin réussie des retrouvailles dans District_1. Son ancre reste à placer par
+l'auteur ; Intercession seule devient disponible. Les points narratifs de
+recrutement de Vesta et Soren restent à configurer. Voir narrative.md.
 Validation : compilation et 21 tests Edit Mode passent (SoloTeamProgressionTests
 et DirectionalSkillKitTests) ; Play Iluvilirae_Test passe avec et sans Domain
 Reload, profil complet activé explicitement après les contrôles de verrouillage.
 Logs SoloTeamFinalTests.xml, SoloTeamPlay.log et SoloTeamPlayNoReload.log dans
 Library/ActorAnimationSandbox/Logs. Parcours campagne, HUD/manette physique et
 host/client restent des validations distinctes non effectuées dans ce lot.
+
+## Palette de récompenses Souvenirs (2026-11-22)
+
+Dans la roue de combat, LB/RB alterne entre le kit ouvert et les pages
+« Souvenirs » (quatre récompenses par page). La croix lance les slots
+0/1/2/3 avec gauche/haut/bas/droite ; B ferme. Pendant la roue, LB/RB ne zooment pas la caméra ; le stick conserve la rotation.
+Les seize techniques des kits restent inchangées. Sans récompense débloquée, aucune page supplémentaire.
+
+CycleSharedSkills relit les étapes récompensées de la session. Cicatrice est
+accessible après Nina/scar_reward, y compris après restauration d'une sauvegarde.
+Les changements de progression rafraîchissent la roue ; chaque lancement revérifie
+le déblocage. En réseau, CombatNetworkActorRuntime vérifie aussi ce déblocage
+partagé côté serveur ; posséder une entrée dans le catalogue réseau ne suffit pas.
+Cicatrice utilise OptionalTarget et son marqueur ResolveSkillImpact existant.
+
+Validation : compilation C# runtime et éditeur avec les références/compilateur
+Unity ; cohérence des actions générées et asset vérifiée, catalogue fixe inchangé.
+CycleRewardSkillPaletteTests couvre récompense, restauration, pagination,
+autorisation des quatre personnages, catalogue et gamepad virtuel. Tests ajoutés
+mais non exécutés dans l'éditeur actif ; parcours manette et host/client à vérifier.
 
 ## Kits directionnels solo (2026-10-13)
 

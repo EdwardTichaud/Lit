@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -9,7 +9,7 @@ namespace Lit.Story
 {
     [DefaultExecutionOrder(-50)]
     [DisallowMultipleComponent]
-    public sealed class StorySequenceRunner : MonoBehaviour
+    public sealed partial class StorySequenceRunner : MonoBehaviour
     {
         private static int activeSequenceCount;
 
@@ -63,7 +63,7 @@ namespace Lit.Story
             if (playOnStart &&
                 sequence != null &&
                 sequence.TryValidate(out _) &&
-                sequence.startFromBlack &&
+                sequence.startFromBlack && playerTransform == null &&
                 (!sequence.playOnce || !StorySequenceCompletionStore.IsCompleted(sequence)))
             {
                 fadeController.SetImmediate(1f);
@@ -72,16 +72,15 @@ namespace Lit.Story
 
         private IEnumerator Start()
         {
-            if (!playOnStart || sequence == null)
+            if (sequence != null && sequence.playOnce && StorySequenceCompletionStore.IsCompleted(sequence))
             {
-                yield break;
-            }
-
-            if (sequence.playOnce && StorySequenceCompletionStore.IsCompleted(sequence))
-            {
+                yield return LoadingScreenService.WaitUntilHidden();
+                RestoreCompletedSpawns();
                 fadeController.SetImmediate(0f);
                 yield break;
             }
+
+            if (!playOnStart || sequence == null) yield break;
 
             if (deferredPlaybackRoutine != null) yield break;
 
@@ -106,7 +105,7 @@ namespace Lit.Story
                 return;
             }
             ResolveReferences();
-            if (sequence.startFromBlack) fadeController?.SetImmediate(1f);
+            if (sequence.startFromBlack && playerTransform == null) fadeController?.SetImmediate(1f);
             deferredPlaybackRoutine = StartCoroutine(PlayAfterLoadingRoutine());
         }
 
@@ -148,8 +147,12 @@ namespace Lit.Story
                 return false;
             }
 
+            sequenceContentStarted=false;
+            hasPlayerPlacement=playerTransform!=null;
+            if(hasPlayerPlacement)playerPlacementPose=new Pose(playerTransform.position,playerTransform.rotation);
+            int run=++playbackGeneration;
             RegisterActiveSequence();
-            playbackRoutine = StartCoroutine(PlayRoutine(sequence));
+            playbackRoutine = StartCoroutine(PlayRoutine(sequence,run));
             return true;
         }
 
@@ -162,6 +165,8 @@ namespace Lit.Story
 
         public void Abort()
         {
+            ReleaseSequenceSpawns(false);
+            playbackGeneration++;
             CancelDeferredPlayback();
             if (playbackRoutine != null)
             {
@@ -175,10 +180,11 @@ namespace Lit.Story
             launchCombatDamageOnSequenceEnd = 0f;
             UnregisterActiveSequence();
             fadeController?.SetImmediate(0f);
+            if(!sequenceContentStarted)PreparationFailed?.Invoke();
             onSequenceAborted?.Invoke();
         }
 
-        private IEnumerator PlayRoutine(StorySequenceAsset activeSequence)
+        private IEnumerator PlayRoutine(StorySequenceAsset activeSequence,int run)
         {
             stepFailed = false;
             advanceRequested = false;
@@ -186,14 +192,20 @@ namespace Lit.Story
             launchCombatOnSequenceEnd = false;
             launchCombatDamageOnSequenceEnd = 0f;
             PushInputFocus();
-            onSequenceStarted?.Invoke();
-
-            if (activeSequence.startFromBlack)
+            // Reserve the runner immediately, but start authored content only after approach.
+            yield return null;
+            if(!hasPlayerPlacement)
+            {
+                sequenceContentStarted=true;
+                onSequenceStarted?.Invoke();PlaybackStarted?.Invoke();
+                if(run!=playbackGeneration || !isActiveAndEnabled)yield break;
+            }
+            if (activeSequence.startFromBlack && !hasPlayerPlacement)
             {
                 fadeController.SetImmediate(1f);
             }
 
-            if (activeSequence.waitForLocalPlayer)
+            if (activeSequence.waitForLocalPlayer || hasPlayerPlacement)
             {
                 yield return WaitForLocalPlayer(activeSequence.localPlayerWaitTimeout);
                 if (LocalPlayerContext.LocalCharacterRoot == null)
@@ -204,6 +216,20 @@ namespace Lit.Story
                     FinishPlayback(completed: false);
                     yield break;
                 }
+            }
+
+            if (hasPlayerPlacement)
+            {
+                yield return PreparePlayerPlacement();
+                if (stepFailed) { FinishPlayback(false); yield break; }
+                if (activeSequence.startFromBlack)
+                    yield return fadeController.FadeTo(1f,activeSequence.openingFadeDuration,activeSequence.useUnscaledTime);
+            }
+            if(hasPlayerPlacement)
+            {
+                sequenceContentStarted=true;
+                onSequenceStarted?.Invoke();PlaybackStarted?.Invoke();
+                if(run!=playbackGeneration || !isActiveAndEnabled)yield break;
             }
 
             bool deferPlayerLock = HasProgressivePlayerStop(activeSequence);
@@ -385,6 +411,10 @@ namespace Lit.Story
                     }
                     break;
 
+                case StorySequenceStepType.InstantiateGameObject:
+                    stepFailed = !TryInstantiateStep(step);
+                    break;
+
                 case StorySequenceStepType.ProgressivePlayerStop:
                     yield return ExecuteProgressivePlayerStop(step, useUnscaledTime);
                     break;
@@ -491,6 +521,15 @@ namespace Lit.Story
             }
 
             CharacterData speaker = bindings.ResolveDialogueSpeaker(step, actor);
+            var physicalSpeaker = step.speakerCharacterData != null ? DialoguePresentationSession.ResolveSpeaker(speaker) : null;
+            if(step.speakerCharacterData!=null && physicalSpeaker==null && speaker!=null)
+            {
+                var boundSpeaker=bindings.ResolveActor(speaker.characterId);
+                if(boundSpeaker!=null)physicalSpeaker=boundSpeaker.Root;
+            }
+            if(step.speakerCharacterData==null && actor!=null)physicalSpeaker=actor.Root;
+            if(conversationLook==null)BeginPlayerConversationLook(sequence);
+            conversationLook?.SetSequenceSpeaker(conversationLookToken,physicalSpeaker);
             string speakerName = !string.IsNullOrWhiteSpace(step.speakerNameOverride)
                 ? step.speakerNameOverride
                 : step.speakerCharacterData != null ? speaker.ResolveDisplayName()
@@ -506,7 +545,7 @@ namespace Lit.Story
                 speaker,
                 actor != null ? actor.Root : null,
                 listener != null ? listener.Root : null,
-                sequence != null && sequence.lockPlayerControl,
+                sequence != null && (sequence.lockPlayerControl || hasPlayerPlacement),
                 step.overrideDialogueDirection ? step.dialogueDirection : step.voiceLine.dialogueDirection,
                 this);
             // Play the response after the line has closed, before cutting away.
@@ -689,6 +728,8 @@ namespace Lit.Story
 
         private IEnumerator ExecuteTimeline(StorySequenceStep step)
         {
+            conversationLook?.EndSequenceLook(conversationLookToken);
+            conversationLook=null;conversationLookToken=0;
             PlayableDirector director = bindings.ResolveDirector(step.directorId);
             if (director == null || step.timeline == null || step.timelineBindingProfile == null)
             {
@@ -803,7 +844,7 @@ namespace Lit.Story
 
         private void AcquirePlayerLock(StorySequenceAsset activeSequence)
         {
-            if (!activeSequence.lockPlayerControl || playerLockHeld)
+            if ((!activeSequence.lockPlayerControl && !hasPlayerPlacement) || playerLockHeld)
             {
                 return;
             }
@@ -858,6 +899,9 @@ namespace Lit.Story
 
         private void RestoreGameplay()
         {
+            ReleasePlayerPreparation();
+            conversationLook?.EndSequenceLook(conversationLookToken);
+            conversationLook=null;conversationLookToken=0;
             namePrompt?.Cancel();
             dialoguePresenter?.HideImmediate();
             RestoreCamera();
@@ -888,6 +932,7 @@ namespace Lit.Story
 
         private void FinishPlayback(bool completed)
         {
+            ReleaseSequenceSpawns(completed);
             bool launchCombat = completed && launchCombatOnSequenceEnd;
             float openingCombatDamage = launchCombatDamageOnSequenceEnd;
             RestoreGameplay();
@@ -909,6 +954,7 @@ namespace Lit.Story
             else
             {
                 fadeController?.SetImmediate(0f);
+                if(!sequenceContentStarted)PreparationFailed?.Invoke();
                 onSequenceAborted?.Invoke();
             }
         }
@@ -1021,6 +1067,9 @@ namespace Lit.Story
 
         private void OnDisable()
         {
+            ReleaseSequenceSpawns(false);
+            playbackGeneration++;
+            if(IsPreparingPlayer)PreparationFailed?.Invoke();
             CancelDeferredPlayback();
             fadeController?.SetImmediate(0f);
             if (playbackRoutine != null)

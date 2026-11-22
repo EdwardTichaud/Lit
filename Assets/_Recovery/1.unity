@@ -2553,7 +2553,7 @@ MonoBehaviour:
   newGameConfirmAction: {fileID: 1518605368}
   newGameCancelAction: {fileID: 1468770376}
   newGameCursorRoot: {fileID: 0}
-  defaultNewGameSaveName: Light
+  defaultNewGameSaveName: Depart
   requireNewGameName: 1
   autoFocusNewGameInput: 1
   newGameConfirmDisabledAlpha: 0.4
@@ -4377,7 +4377,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Light
+  m_text: Nom de la partie
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}

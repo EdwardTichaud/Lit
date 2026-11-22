@@ -70,6 +70,13 @@ namespace Lit.Story.Editor
                 case StorySequenceStepType.SceneEvent:
                     yield return "eventId";
                     break;
+                case StorySequenceStepType.InstantiateGameObject:
+                    yield return "spawnId";
+                    yield return "spawnPrefab";
+                    yield return "spawnPointId";
+                    yield return "parentToSpawnPoint";
+                    yield return "keepSpawnAfterCompletion";
+                    break;
                 case StorySequenceStepType.ProgressivePlayerStop:
                     yield return "playerStopTimeout";
                     yield return "playerStopVelocityThreshold";

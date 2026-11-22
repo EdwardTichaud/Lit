@@ -1,5 +1,37 @@
 # Session runtime
 
+## Contrat des transitions (2026-11-22)
+
+GameFlow charge et valide la destination avant de retirer les scenes de depart.
+Les spawns sont recherches uniquement dans le groupe du manifeste cible ; un
+Default d'une zone encore chargee ne peut plus etre utilise par erreur.
+La validation exige un emplacement distinct par joueur, un sol de la zone cible,
+une capsule libre et l'acceptation de la teleportation UCC. Aucun fallback de
+Transform ni generation de sol n'est ajoute. Les destinations des portails de
+scene sont des racines auteur PortalDestinations_* dans leur scene source :
+deplacer le visuel du portail ne deplace plus leurs coordonnees mondiales.
+Des points cooperatifs sont ajoutes aux arrivees qui n'en avaient qu'un.
+
+IsLoading couvre l'etat visuel du LoadingScreenService, et non uniquement
+sa coroutine de chargement historique. GameFlow conserve sa transition jusqu'a
+la fin du fondu de sortie, y compris au premier demarrage. Les sequences
+de proximite attendent cette fin avant de reserver leur entree : un dialogue
+ou la saisie du nom ne peuvent plus commencer sous l'overlay puis perdre
+leur focus lors de la remise a zero des commandes d'arrivee.
+
+La navigation exclut les scenes de depart pendant le chevauchement des zones.
+Un echec recharge les scenes source deja retirees et restaure le checkpoint
+monde existant avant de rendre le controle. Un echec de cette recuperation
+ferme la session sans sauvegarder plutot que d'exposer un monde partiel.
+
+Les operations NGO verifient le statut de demande et les evenements complets,
+pas uniquement scene.isLoaded sur l'hote. L'attente utilise LoadSceneTimeOut
+configure ; hors reseau, le budget natif reste de 120 secondes. Un client en
+retard est deconnecte hors callback NGO et peut rejoindre a nouveau. L'echec
+de l'hote refuse la transition. Ces mecanismes ne constituent pas une preuve
+de recette multijoueur : hote/client, quatre joueurs, timeout et rejoin restent
+a qualifier nativement. Aucun schema de sauvegarde ni identifiant reseau migre.
+
 ## Extension continue de la fracture dans District 1 (2026-11-02)
 
 District_1_Fracture_Environment est une additive du manifeste, avec raccord

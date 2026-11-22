@@ -715,6 +715,15 @@ public static class LocalInputRouter
             return false;
         }
 
+        // Gameplay presses during seating transitions are discarded, never queued.
+        // Dialogue and menus keep their own input while they hold focus.
+        if (!InputFocusStack.HasAnyFocus())
+        {
+            var root = LocalPlayerContext.LocalCharacterRoot;
+            if (root != null && root.TryGetComponent(out SquadCharacterController actor) && actor.IsSittingTransitionActive)
+                return false;
+        }
+
         float debounce = InputDebounceSeconds;
         if (debounce <= 0f)
         {

@@ -300,6 +300,7 @@ MonoBehaviour:
   meshBaker:
     _sampleCount: 2632
     SampleCountMultiplier: 1
+    m_BakedSampling: []
     UsePerSubmeshBaking: 0
     SubmeshIndex: 0
   sampleCountMultiplier: 1
@@ -317,6 +318,7 @@ MonoBehaviour:
   _Foldout_3: 1
   _Foldout_4: 1
   _Foldout_5: 1
+  playOnEnable: 1
   effectState: 1
 --- !u!1 &537751503153432432
 GameObject:
@@ -948,9 +950,9 @@ SkinnedMeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 08b37d31cb0da4560ab6e757d58949ee, type: 2}
-  - {fileID: 2100000, guid: 58b06b2ca4c26ca42b4053f13056640e, type: 2}
+  - {fileID: 2100000, guid: ce5c97e5f1e3fbd31298e6a3217ef8a1, type: 2}
   - {fileID: 2100000, guid: 4a4df04c79f2e2f70b5da9c54764bc9b, type: 2}
-  - {fileID: 2100000, guid: 58b06b2ca4c26ca42b4053f13056640e, type: 2}
+  - {fileID: 2100000, guid: 326bf54650bf9233a5bb85cbfa0abc4c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2209,6 +2211,7 @@ MonoBehaviour:
   meshBaker:
     _sampleCount: 10652
     SampleCountMultiplier: 1
+    m_BakedSampling: []
     UsePerSubmeshBaking: 0
     SubmeshIndex: 0
   sampleCountMultiplier: 1
@@ -2226,6 +2229,7 @@ MonoBehaviour:
   _Foldout_3: 1
   _Foldout_4: 1
   _Foldout_5: 1
+  playOnEnable: 1
   effectState: 1
 --- !u!1 &2160324580470185257
 GameObject:
@@ -2895,8 +2899,6 @@ MonoBehaviour:
   fallbackSpatialBlend: 1
   fallbackMinDistance: 1
   fallbackMaxDistance: 20
-  duckMusicDuringVoiceLine: 1
-  musicDuckMultiplier: 0.5
 --- !u!54 &-8769395688154957966
 Rigidbody:
   m_ObjectHideFlags: 0

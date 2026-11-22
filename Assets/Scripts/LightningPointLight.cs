@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(Light))]
 public sealed class LightningPointLight : MonoBehaviour
 {
-    [Header("Light")]
-    [SerializeField] private Light targetLight;
-    [SerializeField] private bool forcePointLight = true;
+    [Header("Lights (configure each Light component in Inspector)")]
+    [SerializeField] private Light[] targetLights = new Light[0];
+    [SerializeField] private bool forcePointLight = false;
     [SerializeField] private bool disableLightWhenIdle = true;
-    [SerializeField, Min(0f)] private float idleIntensity;
-    [SerializeField, Min(0.01f)] private float idleRange = 20f;
-    [SerializeField] private Color idleColor = new Color(0.6f, 0.75f, 1f, 1f);
+    [Tooltip("0 = off, 100 = each Light's configured intensity.")]
+    [SerializeField, Min(0f)] private float idleIntensityPercent = 0f;
+    [Tooltip("100 = each Light's configured range.")]
+    [SerializeField, Min(0f)] private float idleRangePercent = 100f;
 
     [Header("Strike")]
     [SerializeField] private bool stormActive = true;
@@ -21,10 +21,10 @@ public sealed class LightningPointLight : MonoBehaviour
     [SerializeField] private Vector2Int pulseCount = new Vector2Int(2, 5);
     [SerializeField] private Vector2 pulseOnSeconds = new Vector2(0.035f, 0.11f);
     [SerializeField] private Vector2 pulseOffSeconds = new Vector2(0.025f, 0.16f);
-    [SerializeField] private Vector2 strikeIntensity = new Vector2(6500f, 18000f);
-    [SerializeField] private Vector2 strikeRange = new Vector2(45f, 95f);
-    [SerializeField] private Color coldFlashColor = new Color(0.63f, 0.78f, 1f, 1f);
-    [SerializeField] private Color hotFlashColor = new Color(1f, 0.96f, 0.82f, 1f);
+    [Tooltip("Random peak intensity, as a percentage of each Light's configured intensity. Values above 100 are supported.")]
+    [SerializeField] private Vector2 strikeIntensityPercent = new Vector2(100f, 150f);
+    [Tooltip("Random peak range, as a percentage of each Light's configured range.")]
+    [SerializeField] private Vector2 strikeRangePercent = new Vector2(100f, 100f);
     [SerializeField, Range(0f, 1f)] private float secondaryPulseStrength = 0.55f;
     [SerializeField, Min(0f)] private float afterglowSeconds = 0.18f;
 
@@ -44,12 +44,17 @@ public sealed class LightningPointLight : MonoBehaviour
     [Header("Timing")]
     [SerializeField] private bool useUnscaledTime;
 
-    private float initialIntensity;
-    private float initialRange;
-    private Color initialColor;
-    private Vector3 initialLocalPosition;
-    private bool initialEnabled;
-    private bool hasInitialState;
+    private struct LightInitialState
+    {
+        public Light light;
+        public bool enabled;
+        public float intensity;
+        public float range;
+        public Color color;
+        public Vector3 localPosition;
+    }
+
+    private readonly List<LightInitialState> initialStates = new List<LightInitialState>();
     private float nextStrikeTime;
     private Coroutine strikeRoutine;
 
@@ -58,16 +63,16 @@ public sealed class LightningPointLight : MonoBehaviour
 
     private void Reset()
     {
-        CacheLight();
+        CacheLights();
         CacheParticleSystems();
         ApplyLightMode();
         CacheInitialState();
-        ApplyIdleState();
+        // Do not overwrite the Light settings in the editor.
     }
 
     private void Awake()
     {
-        CacheLight();
+        CacheLights();
         CacheParticleSystems();
         ApplyLightMode();
         CacheInitialState();
@@ -75,9 +80,10 @@ public sealed class LightningPointLight : MonoBehaviour
 
     private void OnEnable()
     {
-        CacheLight();
+        CacheLights();
         CacheParticleSystems();
         ApplyLightMode();
+        initialStates.Clear(); // Refresh each Light baseline when the component is enabled.
         CacheInitialState();
         ApplyIdleState();
         ScheduleNextStrike();
@@ -96,14 +102,14 @@ public sealed class LightningPointLight : MonoBehaviour
 
     private void OnValidate()
     {
-        CacheLight();
-        idleIntensity = Mathf.Max(0f, idleIntensity);
-        idleRange = Mathf.Max(0.01f, idleRange);
+        CacheLights();
+        idleIntensityPercent = Mathf.Max(0f, idleIntensityPercent);
+        idleRangePercent = Mathf.Max(0f, idleRangePercent);
         strikeDelaySeconds = ValidateRange(strikeDelaySeconds, 0f, 0.01f);
         pulseOnSeconds = ValidateRange(pulseOnSeconds, 0.001f, 0.001f);
         pulseOffSeconds = ValidateRange(pulseOffSeconds, 0f, 0.001f);
-        strikeIntensity = ValidateRange(strikeIntensity, 0f, 1f);
-        strikeRange = ValidateRange(strikeRange, 0.01f, 1f);
+        strikeIntensityPercent = ValidateRange(strikeIntensityPercent, 0f, 0f);
+        strikeRangePercent = ValidateRange(strikeRangePercent, 0f, 0f);
         pulseCount.x = Mathf.Max(1, pulseCount.x);
         pulseCount.y = Mathf.Max(pulseCount.x, pulseCount.y);
         secondaryPulseStrength = Mathf.Clamp01(secondaryPulseStrength);
@@ -160,7 +166,8 @@ public sealed class LightningPointLight : MonoBehaviour
 
     private void StartStrike()
     {
-        if (targetLight == null)
+        CacheInitialState();
+        if (!HasValidLight())
         {
             return;
         }
@@ -177,15 +184,19 @@ public sealed class LightningPointLight : MonoBehaviour
     {
         if (randomizeLocalPosition)
         {
-            targetLight.transform.localPosition = initialLocalPosition + new Vector3(
-                Random.Range(-localPositionJitter.x, localPositionJitter.x),
-                Random.Range(-localPositionJitter.y, localPositionJitter.y),
-                Random.Range(-localPositionJitter.z, localPositionJitter.z));
+            foreach (LightInitialState state in initialStates)
+            {
+                if (state.light == null) continue;
+                state.light.transform.localPosition = state.localPosition + new Vector3(
+                    Random.Range(-localPositionJitter.x, localPositionJitter.x),
+                    Random.Range(-localPositionJitter.y, localPositionJitter.y),
+                    Random.Range(-localPositionJitter.z, localPositionJitter.z));
+            }
         }
 
         int pulses = Random.Range(pulseCount.x, pulseCount.y + 1);
-        float peakIntensity = Random.Range(strikeIntensity.x, strikeIntensity.y);
-        float peakRange = Random.Range(strikeRange.x, strikeRange.y);
+        float peakIntensityPercent = Random.Range(strikeIntensityPercent.x, strikeIntensityPercent.y);
+        float peakRangePercent = Random.Range(strikeRangePercent.x, strikeRangePercent.y);
 
         for (int i = 0; i < pulses; i++)
         {
@@ -194,9 +205,8 @@ public sealed class LightningPointLight : MonoBehaviour
                 : Random.Range(secondaryPulseStrength * 0.45f, secondaryPulseStrength);
 
             ApplyFlash(
-                peakIntensity * pulseStrength,
-                Mathf.Lerp(idleRange, peakRange, pulseStrength),
-                Color.Lerp(coldFlashColor, hotFlashColor, Random.value));
+                peakIntensityPercent * pulseStrength,
+                Mathf.Lerp(idleRangePercent, peakRangePercent, pulseStrength));
 
             yield return WaitSeconds(Random.Range(pulseOnSeconds.x, pulseOnSeconds.y));
 
@@ -210,12 +220,16 @@ public sealed class LightningPointLight : MonoBehaviour
 
         if (afterglowSeconds > 0f)
         {
-            yield return FadeToIdle(peakIntensity * 0.12f, peakRange * 0.65f, afterglowSeconds);
+            yield return FadeToIdle(peakIntensityPercent * 0.12f, peakRangePercent * 0.65f, afterglowSeconds);
         }
 
         if (restoreLocalPositionAfterStrike)
         {
-            targetLight.transform.localPosition = initialLocalPosition;
+            foreach (LightInitialState state in initialStates)
+            {
+                if (state.light != null)
+                    state.light.transform.localPosition = state.localPosition;
+            }
         }
 
         ApplyIdleState();
@@ -223,56 +237,77 @@ public sealed class LightningPointLight : MonoBehaviour
         ScheduleNextStrike();
     }
 
-    private IEnumerator FadeToIdle(float startIntensity, float startRange, float duration)
+    private IEnumerator FadeToIdle(float startIntensityPercent, float startRangePercent, float duration)
     {
         float elapsed = 0f;
-        Color startColor = Color.Lerp(coldFlashColor, idleColor, 0.45f);
-
         while (elapsed < duration)
         {
             elapsed += GetDeltaTime();
             float t = Mathf.Clamp01(elapsed / duration);
-            float eased = 1f - ((1f - t) * (1f - t));
+            float eased = 1f - (1f - t) * (1f - t);
 
             ApplyFlash(
-                Mathf.Lerp(startIntensity, idleIntensity, eased),
-                Mathf.Lerp(startRange, idleRange, eased),
-                Color.Lerp(startColor, idleColor, eased),
+                Mathf.Lerp(startIntensityPercent, idleIntensityPercent, eased),
+                Mathf.Lerp(startRangePercent, idleRangePercent, eased),
                 false);
 
             yield return null;
         }
     }
 
-    private void CacheLight()
+    private void CacheLights()
     {
-        if (targetLight == null)
+        // Use the local Light only as a fallback when no list has been assigned.
+        if (targetLights == null || targetLights.Length == 0)
         {
-            targetLight = GetComponent<Light>();
+            Light localLight = GetComponent<Light>();
+            if (localLight != null)
+                targetLights = new Light[] { localLight };
         }
+    }
+
+    private bool HasValidLight()
+    {
+        if (targetLights == null) return false;
+        foreach (Light light in targetLights)
+            if (light != null) return true;
+        return false;
     }
 
     private void CacheInitialState()
     {
-        if (targetLight == null || hasInitialState)
+        if (targetLights == null) return;
+        foreach (Light light in targetLights)
         {
-            return;
-        }
+            if (light == null) continue;
+            bool alreadyCached = false;
+            foreach (LightInitialState state in initialStates)
+            {
+                if (state.light == light)
+                {
+                    alreadyCached = true;
+                    break;
+                }
+            }
+            if (alreadyCached) continue;
 
-        initialEnabled = targetLight.enabled;
-        initialIntensity = targetLight.intensity;
-        initialRange = targetLight.range;
-        initialColor = targetLight.color;
-        initialLocalPosition = targetLight.transform.localPosition;
-        hasInitialState = true;
+            initialStates.Add(new LightInitialState
+            {
+                light = light,
+                enabled = light.enabled,
+                intensity = light.intensity,
+                range = light.range,
+                color = light.color,
+                localPosition = light.transform.localPosition
+            });
+        }
     }
 
     private void ApplyLightMode()
     {
-        if (targetLight != null && forcePointLight)
-        {
-            targetLight.type = LightType.Point;
-        }
+        if (!forcePointLight || targetLights == null) return;
+        foreach (Light light in targetLights)
+            if (light != null) light.type = LightType.Point;
     }
 
     private void CacheParticleSystems()
@@ -383,20 +418,29 @@ public sealed class LightningPointLight : MonoBehaviour
         return false;
     }
 
-    private void ApplyFlash(float intensity, float range, Color color, bool triggerParticlesOnIntensityIncrease = true)
+    // Percentages are relative to each individual Light's Inspector values
+    // captured before this component starts controlling them.
+    private void ApplyFlash(float intensityPercent, float rangePercent, bool triggerParticlesOnIntensityIncrease = true)
     {
-        float previousIntensity = targetLight.intensity;
-        float nextIntensity = Mathf.Max(0f, intensity);
-
-        targetLight.enabled = true;
-        targetLight.intensity = nextIntensity;
-        targetLight.range = Mathf.Max(0.01f, range);
-        targetLight.color = color;
-
-        if (triggerParticlesOnIntensityIncrease && nextIntensity > previousIntensity + particleTriggerIntensityThreshold)
+        bool shouldTriggerParticles = false;
+        foreach (LightInitialState state in initialStates)
         {
-            TriggerLightningParticles();
+            Light light = state.light;
+            if (light == null) continue;
+
+            float nextIntensity = Mathf.Max(0f, state.intensity * intensityPercent * 0.01f);
+            if (triggerParticlesOnIntensityIncrease &&
+                nextIntensity > light.intensity + particleTriggerIntensityThreshold)
+                shouldTriggerParticles = true;
+
+            light.intensity = nextIntensity;
+            light.range = Mathf.Max(0.01f, state.range * rangePercent * 0.01f);
+            light.color = state.color;
+            light.enabled = nextIntensity > 0.001f;
         }
+
+        if (shouldTriggerParticles)
+            TriggerLightningParticles();
     }
 
     private void TriggerLightningParticles()
@@ -430,29 +474,28 @@ public sealed class LightningPointLight : MonoBehaviour
 
     private void ApplyIdleState()
     {
-        if (targetLight == null)
+        foreach (LightInitialState state in initialStates)
         {
-            return;
+            Light light = state.light;
+            if (light == null) continue;
+            light.intensity = Mathf.Max(0f, state.intensity * idleIntensityPercent * 0.01f);
+            light.range = Mathf.Max(0.01f, state.range * idleRangePercent * 0.01f);
+            light.color = state.color;
+            light.enabled = !disableLightWhenIdle || light.intensity > 0.001f;
         }
-
-        targetLight.intensity = idleIntensity;
-        targetLight.range = idleRange;
-        targetLight.color = idleColor;
-        targetLight.enabled = !disableLightWhenIdle || idleIntensity > 0.001f;
     }
 
     private void RestoreInitialState()
     {
-        if (targetLight == null || !hasInitialState)
+        foreach (LightInitialState state in initialStates)
         {
-            return;
+            if (state.light == null) continue;
+            state.light.enabled = state.enabled;
+            state.light.intensity = state.intensity;
+            state.light.range = state.range;
+            state.light.color = state.color;
+            state.light.transform.localPosition = state.localPosition;
         }
-
-        targetLight.enabled = initialEnabled;
-        targetLight.intensity = initialIntensity;
-        targetLight.range = initialRange;
-        targetLight.color = initialColor;
-        targetLight.transform.localPosition = initialLocalPosition;
     }
 
     private void ScheduleNextStrike()

@@ -236,7 +236,11 @@ namespace Lit.Story
                 return;
             }
 
-            if (!transitioning && activeProfile != null && activeProfile.shotTravelDuration > 0f)
+            if (activePoint != null)
+            {
+                shotTravelElapsed += deltaTime;
+            }
+            else if (!transitioning && activeProfile != null && activeProfile.shotTravelDuration > 0f)
             {
                 shotTravelElapsed = Mathf.Min(shotTravelElapsed + deltaTime, activeProfile.shotTravelDuration);
             }
@@ -327,7 +331,7 @@ namespace Lit.Story
             if (activePoint != null)
             {
                 Transform pointTransform = activePoint.CameraTransform;
-                position = pointTransform.position;
+                position = activePoint.EvaluatePosition(shotTravelElapsed);
                 Vector3 lookTarget = activePoint.LookTarget != null
                     ? activePoint.LookTarget.position + activePoint.LookAtOffset
                     : position + pointTransform.forward;

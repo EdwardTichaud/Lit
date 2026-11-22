@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
   m_Name: "Item_Lanni\xE8res en cuir"
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  itemId: morceaux_de_papier
+  itemId: lannieres_en_cuir
   itemName: Morceaux de papier
   itemSprite: {fileID: 0}
   description: "Les restes d'un papier que vous avez d\xE9chir\xE9. Peut-\xEAtre

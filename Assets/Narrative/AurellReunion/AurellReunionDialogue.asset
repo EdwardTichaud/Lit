@@ -1,0 +1,276 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
+  m_Name: AurellReunionDialogue
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
+  sequenceId: district1.aurell.reunion
+  displayName: "Une Ã©ternitÃ© dâ€™avance"
+  description: 
+  playOnce: 0
+  waitForLocalPlayer: 1
+  localPlayerWaitTimeout: 0
+  lockPlayerControl: 1
+  stopActiveAbilitiesOnLock: 1
+  useUnscaledTime: 1
+  startFromBlack: 0
+  openingFadeDuration: 1
+  fadeToBlackBeforeGameplay: 0
+  closingFadeDuration: 0.5
+  fadeFromBlackAfterGameplayRestore: 0
+  gameplayFadeInDuration: 0.75
+  steps:
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Aurell
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: 4a9f99acc23a63b4a82dd2c27d6e684a, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: f48161094ecf40cf878b3f9479ba1452, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: d3984e5a2f9269d4d8387425113e20fd, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: b25d34d695f9f3d49a92d30dea1c5da6, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Aurell
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: 3d94d18f03d30544f942e203dabfafeb, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: f48161094ecf40cf878b3f9479ba1452, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: 1d7d9dd53a6379f42865b84511b16975, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: b25d34d695f9f3d49a92d30dea1c5da6, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Aurell
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: 71f1e5f8f3a7c0849b509b4bc4c94a56, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: f48161094ecf40cf878b3f9479ba1452, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: 4f16e18a9d96bc7489a6ff2ea1982fbf, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: b25d34d695f9f3d49a92d30dea1c5da6, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50

@@ -400,6 +400,14 @@ namespace Lit.Story.Editor
                 {
                     errors.Add($"{prefix}: eventId manquant.");
                 }
+                else if (step.type == StorySequenceStepType.InstantiateGameObject)
+                {
+                    var bindings = runner.GetComponent<StorySequenceSceneBindings>();
+                    if (bindings == null || bindings.ResolveSpawnPoint(step.spawnPointId)?.point == null)
+                        errors.Add($"{prefix}: Transform d'instanciation '{step.spawnPointId}' non assigne dans les bindings de scene.");
+                    if (step.spawnPrefab != null && !EditorUtility.IsPersistent(step.spawnPrefab))
+                        errors.Add($"{prefix}: utilisez un prefab du projet.");
+                }
             }
         }
 

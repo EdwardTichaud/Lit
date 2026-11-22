@@ -366,7 +366,7 @@ namespace Lit.Combat.Migration.Network
             if (skill is BasicSkillsSO basic) return basic.Context == BasicSkillContext.Airborne
                 ? data.airBasicSkills != null && data.airBasicSkills.Contains(basic)
                 : data.groundBasicSkills != null && data.groundBasicSkills.Contains(basic);
-            return data.combatSkills != null && data.combatSkills.Contains(skill);
+            return data.combatSkills != null && data.combatSkills.Contains(skill) || CycleSharedSkills.IsUnlocked(skill);
         }
 
         private bool TryPolicy(CombatNetworkSkillCatalog.Entry entry, CombatNetworkSkillFamily family, out CombatCommandPolicy policy)

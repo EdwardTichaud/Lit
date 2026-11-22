@@ -1,0 +1,5 @@
+PASS Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Core/Graphs/Character Local Connect.vfx
+PASS Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Core/Graphs/Character Fire.vfx
+PASS Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Core/Graphs/Character Smoke.vfx
+PASS Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Core/Graphs/Character Noisy.vfx
+PASS Assets/VFX/CharacterEffect/Vfx Assets/Character Effects/Core/Graphs/Character Points.vfx

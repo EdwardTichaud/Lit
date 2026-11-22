@@ -446,6 +446,13 @@ public sealed class SpiritBondController : MonoBehaviour
             holyEffect = hostCharacter.GetComponentInChildren<CharacterEffect>(true);
         }
 
+        // Fusion owns the Holy effect's authored activation frames.
+        if (holyEffect != null && holyEffect.playOnEnable)
+        {
+            holyEffect.playOnEnable = false;
+            if (!fused && !cinematicFusion && !combatFusion) holyEffect.StopEffect();
+        }
+
         if (hostAnimator == null && hostCharacter != null)
         {
             hostAnimator = hostCharacter.GetComponent<Animator>();

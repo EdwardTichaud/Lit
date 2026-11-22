@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.VFX;
 using INab.VFXAssets;
 
 /// <summary>
@@ -40,7 +39,6 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
     private Collider[] ownerColliders = System.Array.Empty<Collider>();
     private readonly RaycastHit[] sweepHits = new RaycastHit[16];
     private CharacterEffect[] childCharacterEffects = System.Array.Empty<CharacterEffect>();
-    private Coroutine deferredEffectRestart;
 
     private void Awake()
     {
@@ -211,41 +209,19 @@ public sealed class BrokenAnchorLightBall : MonoBehaviour
             if (effect == null) continue;
             RestartCharacterEffect(effect);
         }
-
-        // CharacterEffect initialise aussi son VFX dans Start(). Une boule est lancee
-        // le meme frame que son instanciation : rejouer l'effet au frame suivant evite
-        // que cette initialisation ne reinitialise un VFX qui vient juste de demarrer.
-        if (deferredEffectRestart != null) StopCoroutine(deferredEffectRestart);
-        deferredEffectRestart = StartCoroutine(RestartCharacterEffectsAfterInitialisation());
-    }
-
-    private System.Collections.IEnumerator RestartCharacterEffectsAfterInitialisation()
-    {
-        yield return null;
-        deferredEffectRestart = null;
-
-        foreach (CharacterEffect effect in childCharacterEffects)
-        {
-            if (effect != null) RestartCharacterEffect(effect);
-        }
     }
 
     private void RestartCharacterEffect(CharacterEffect effect)
     {
-        CharacterEffectRuntimeRepair.EnsureReady(effect);
-        VisualEffect vfx = effect.vfxComponent;
-        if (vfx == null)
+        // Setup resets the graph before binding its sampling buffer, then Play
+        // starts the new projectile session. No deferred second initialization.
+        effect.SetupVfxGraph();
+        if (!effect.EnsureReady())
         {
-            Trace("CharacterEffect ignore : VisualEffect introuvable");
+            Trace("CharacterEffect ignore : initialisation impossible");
             return;
         }
-
-        // StartEffect ne fait qu'un Play(). Pour un VFX non-boucle deja termine,
-        // Play seul ne garantit pas une nouvelle emission. Reinit repart du debut.
         effect.StartEffect();
-        vfx.Reinit();
-        effect.SetProperty_EffectActive(true);
-        vfx.Play();
         Trace("CharacterEffect joue | " + effect.name);
     }
 

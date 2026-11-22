@@ -19,6 +19,9 @@ public sealed class ZoneSpawnPoint : MonoBehaviour
 
     /// <summary>Retourne tous les points d'un meme identifiant, ordonnes par slot coop.</summary>
     public static IReadOnlyList<ZoneSpawnPoint> FindAll(string requestedSpawnId)
+        => FindAll(requestedSpawnId, null);
+
+    public static IReadOnlyList<ZoneSpawnPoint> FindAll(string requestedSpawnId, ICollection<string> sceneNames)
     {
         List<ZoneSpawnPoint> results = new List<ZoneSpawnPoint>();
         if (string.IsNullOrWhiteSpace(requestedSpawnId))
@@ -30,7 +33,9 @@ public sealed class ZoneSpawnPoint : MonoBehaviour
         for (int i = 0; i < points.Length; i++)
         {
             ZoneSpawnPoint point = points[i];
-            if (point != null && string.Equals(point.spawnId, requestedSpawnId, System.StringComparison.OrdinalIgnoreCase))
+            if (point != null && (sceneNames == null || point.isActiveAndEnabled) &&
+                (sceneNames == null || sceneNames.Contains(point.gameObject.scene.name)) &&
+                string.Equals(point.spawnId, requestedSpawnId, System.StringComparison.OrdinalIgnoreCase))
             {
                 results.Add(point);
             }

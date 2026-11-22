@@ -752,12 +752,12 @@ public sealed partial class RealTimeCombatInput : MonoBehaviour
 
     public SkillSO CurrentWheelSkill => skillWheel != null ? skillWheel.GetSkill(skillWheel.SelectedSlotIndex) : null;
 
-    public bool DisplaySkillKit(string name, SkillSO[] skills)
+    public bool DisplaySkillKit(string name, SkillSO[] skills, string navigationHint = null)
     {
         ResolveSkillWheel();
         if (skillWheel == null || !skillWheel.isActiveAndEnabled || skillWheel.SlotCount < 4) return false;
         if (paletteOpen) ClosePalette();
-        skillWheel.ShowKit(name, skills);
+        skillWheel.ShowKit(name, skills, navigationHint);
         SetSkillWheelVisible(true);
         if (skillWheelCanvasGroup != null) skillWheelCanvasGroup.alpha = 1f;
         return true;

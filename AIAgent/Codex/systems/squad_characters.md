@@ -107,3 +107,31 @@ conserve sa possibilite d'utilisation sur soi ; en reseau, les kits restent prop
 au personnage attribue. Aucun compagnon physique n'est ajoute pour porter un effet.
 Le migrateur prepare sur Lucian les modules necessaires aux kits empruntes, et les
 modules de garde/protection sur les quatre prefabs, sans debloquer de competence.
+
+
+## Assise et releve (2026-11-22)
+
+Les etats Sit_Down et Stand_Up des quatre controllers joueurs actifs
+(Player_Model, Vesta_Model, Soren_Model et Lucian_ImpactLab utilise par Lucian)
+jouent deux fois plus vite ; le sens inverse de Stand_Up de Lucian est conserve.
+Sitting_Idle et la vitesse globale de l'Animator restent inchanges.
+
+SquadCharacterController.IsSittingTransitionActive couvre l'entree dans la
+pose assise et toute la releve, jusqu'a la fin de la transition. TryToggleSitting
+et CanToggleSitting refusent une nouvelle interaction pendant ces phases.
+UpdateSittingState consomme les versions de mouvement sans programmer de
+releve ; un stick maintenu pendant l'assise doit revenir au neutre avant qu'un
+nouveau geste puisse faire lever le personnage. TrySetSitting(false) conserve
+son contrat explicite pour les sequences narratives et le nettoyage de scene.
+
+LocalInputRouter ignore les appuis gameplay pendant ces transitions, avant
+leur diffusion et sans les stocker. Les dialogues et menus qui detiennent le
+focus conservent leur propre navigation. Le verrou de mouvement existant
+reste libere par la fin observee de Stand_Up ou son secours habituel.
+
+Validation : compilation Unity et parcours isole PlayerSittingPlayProbe reussis.
+Verification des quatre assets, Lucian/UCC avec stick maintenu puis relache,
+nouvelle demande de releve, appuis de torche bloques et interactions repetees
+ignorees pendant les transitions ; commandes rendues ensuite. Aucun changement
+de scene source ni de sauvegarde utilisateur. Les erreurs deja presentes de
+volumes, VFX menu et cape persistent. Pas de qualification visuelle ou multi.

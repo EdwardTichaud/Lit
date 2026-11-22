@@ -13,6 +13,13 @@ MonoBehaviour:
   m_Name: Default
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Combat.Migration.Network.CombatNetworkSkillCatalog
   entries:
+  - skill: {fileID: 11400000, guid: eca322da99dd7bf40b06c5ebae562eb4, type: 2}
+    assetGuid: eca322da99dd7bf40b06c5ebae562eb4
+    heightTolerance: 1.8
+    contactArc: 110
+    obstructionMask:
+      serializedVersion: 2
+      m_Bits: 4294967291
   - skill: {fileID: 11400000, guid: 0084e99721186684cacbf63587ebffca, type: 2}
     assetGuid: 0084e99721186684cacbf63587ebffca
     heightTolerance: 1.8

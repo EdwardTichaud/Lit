@@ -62,19 +62,19 @@ MonoBehaviour:
     m_Value: 2
   threshold:
     m_OverrideState: 1
-    m_Value: 1.35
+    m_Value: 0.7
   intensity:
     m_OverrideState: 1
-    m_Value: 0.22
+    m_Value: 1
   scatter:
     m_OverrideState: 1
-    m_Value: 0.62
+    m_Value: 0.875
   tint:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   dirtTexture:
     m_OverrideState: 1
-    m_Value: {fileID: 0}
+    m_Value: {fileID: 2800000, guid: 0c46480840704b8429b1be471bce5ac8, type: 3}
   dirtIntensity:
     m_OverrideState: 1
     m_Value: 0
@@ -401,16 +401,16 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 0
   nearFocusStart:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0
   nearFocusEnd:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0.00001
   farFocusStart:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 2
   farFocusEnd:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 5
   m_NearSampleCount:
     m_OverrideState: 1

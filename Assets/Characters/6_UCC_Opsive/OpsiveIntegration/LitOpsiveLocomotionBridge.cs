@@ -354,6 +354,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public void SetMoveInput(Vector2 input, bool isWorldSpace)
     {
         ResolveReferences();
+        if (HasNarrativeWalk) return;
 
         if (IsInputSuppressedByUcc)
         {
@@ -377,6 +378,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     public void SetSprintModifier(bool pressed)
     {
+        if(HasNarrativeWalk)pressed=false;
         ResolveReferences();
 
         if (IsInputSuppressedByUcc)
@@ -1479,6 +1481,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (IsInputSuppressedByUcc)
         {
+            if (TickNarrativeWalk()) return;
             if (progressiveExternalStopActive)
             {
                 ApplyWorldMoveInput(Vector2.zero);

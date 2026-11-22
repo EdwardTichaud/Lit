@@ -121,6 +121,7 @@ MonoBehaviour:
   cameraPoints: []
   directors: []
   events: []
+  spawnPoints: []
   searchSceneWhenBindingMissing: 1
 --- !u!114 &2689676281634694663
 MonoBehaviour:
@@ -166,8 +167,6 @@ MonoBehaviour:
   panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
   speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
   uiFadeDuration: 0.15
-  duckMusic: 1
-  musicDuckMultiplier: 0.45
 --- !u!114 &3725580780196360561
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -196,9 +195,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
+  playerTransform: {fileID: 0}
+  playerApproachTimeout: 30
+  playerNavMeshAgentTypeId: 0
   sequence: {fileID: 11400000, guid: 7d1e5e5a74904e40ac15531082c5f718, type: 2}
   playOnStart: 0
   startDelay: 0
+  startWithLocalPlayerSeated: 0
   bindings: {fileID: 0}
   cameraDriver: {fileID: 0}
   dialoguePresenter: {fileID: 0}
@@ -660,6 +663,7 @@ MonoBehaviour:
   captureScreenshotOnSave: 1
   screenshotFileName: screenshot.png
   forceScreenshotOnSave: 1
+  screenshotMaxDimension: 1280
   savingPanel: {fileID: 0}
 --- !u!1 &1490784988004945664
 GameObject:
@@ -1469,7 +1473,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3569575547
+  GlobalObjectIdHash: 4101957069
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

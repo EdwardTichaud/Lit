@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,7 +9,7 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     private CombatSkillKitCatalog catalog;
     private RealTimeCombatInput combatInput;
     private RealTimeCombatManager manager;
-    private InputAction selectKit, wheelSelectKit, cancel, support;
+    private InputAction selectKit, wheelSelectKit, cancel, support, cyclePalette;
     private bool subscribed, cancelNeedsRelease, faceNeedsRelease;
     private int consumedFrame = -1;
     private Transform openedActor;
@@ -16,8 +17,14 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     private SoloTeamProgression subscribedTeam;
     private InputControl heldSelectControl;
     private CombatSkillKit heldSelectedKit;
+    private InputControl heldPaletteControl;
+    private readonly List<SkillSO> cycleRewardSkills = new();
+    private int palettePage;
+    private CycleProgressionService subscribedProgression;
     public bool IsOpen { get; private set; }
     public CombatSkillKit ActiveKit { get; private set; }
+    public bool ShowingCycleRewards => palettePage > 0;
+    public int PalettePageCount => 1 + (cycleRewardSkills.Count + 3) / 4;
     public bool IsSolo => SoloTeamProgression.IsSolo;
     public bool IsAvailable => isActiveAndEnabled && catalog != null &&
         (IsSolo || TryResolveKit(ActiveKit, out _));
@@ -27,7 +34,7 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         var manager = RealTimeCombatManager.Instance;
         var input = manager != null ? manager.GetComponent<CombatSkillKitInput>() : null;
         return actor != null && manager != null && (manager.IsCombatActive || manager.AllowsFreeAttacks) && manager.PlayerRoot == actor.transform &&
-            input != null && input.IsAvailable && input.IsSlotAvailable(kit, slot)
+            input != null && input.IsAvailable && input.IsKitSlotAvailable(kit, slot)
                 ? input.catalog.GetSkill(kit, slot) : null;
     }
 
@@ -55,6 +62,12 @@ public sealed class CombatSkillKitInput : MonoBehaviour
 
     private bool IsSlotAvailable(CombatSkillKit kit, int slot)
     {
+        if (!ShowingCycleRewards) return IsKitSlotAvailable(kit, slot);
+        return CycleSharedSkills.IsUnlocked(GetSlotSkill(kit, slot));
+    }
+
+    private bool IsKitSlotAvailable(CombatSkillKit kit, int slot)
+    {
         if (catalog == null || catalog.GetSkill(kit, slot) == null) return false;
         return IsSolo ? SoloTeamProgression.Resolve()?.IsUnlocked(kit, slot) == true :
             TryResolveKit(kit, out var owned) && owned == kit;
@@ -64,8 +77,58 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     {
         var result = new SkillSO[4];
         for (int i = 0; i < result.Length; i++)
-            if (IsSlotAvailable(kit, i)) result[i] = catalog.GetSkill(kit, i);
+            if (IsSlotAvailable(kit, i)) result[i] = GetSlotSkill(kit, i);
         return result;
+    }
+
+    private SkillSO GetSlotSkill(CombatSkillKit kit, int slot)
+    {
+        if (slot < 0 || slot >= 4) return null;
+        if (!ShowingCycleRewards) return catalog != null ? catalog.GetSkill(kit, slot) : null;
+        int index = (palettePage - 1) * 4 + slot;
+        return index < cycleRewardSkills.Count ? cycleRewardSkills[index] : null;
+    }
+
+    private void RefreshCycleRewards()
+    {
+        cycleRewardSkills.Clear();
+        CycleSharedSkills.AppendTo(cycleRewardSkills);
+        palettePage = Mathf.Clamp(palettePage, 0, PalettePageCount - 1);
+    }
+
+    private bool DisplayPalette(CombatSkillKit kit)
+    {
+        string title = ShowingCycleRewards ? "Souvenirs" + (PalettePageCount > 2 ? $" {palettePage}/{PalettePageCount - 1}" : "") : kit.ToString();
+        string hint = PalettePageCount > 1 ? (ShowingCycleRewards ? "LB/RB : Palettes" : "LB/RB : Souvenirs") : null;
+        if (combatInput == null || !combatInput.DisplaySkillKit(title, GetAvailableSkills(kit), hint)) return false;
+        ApplyLockedSlots(kit);
+        return true;
+    }
+
+    public bool CyclePalette(int direction)
+    {
+        if (!IsOpen || !IsAvailable || InputModeCoordinator.CurrentMode != InputMode.CombatWheel || direction == 0) return false;
+        RefreshCycleRewards();
+        if (PalettePageCount <= 1) return false;
+        int previous = palettePage;
+        palettePage = (palettePage + (direction > 0 ? 1 : -1) + PalettePageCount) % PalettePageCount;
+        if (DisplayPalette(ActiveKit)) return true;
+        palettePage = previous;
+        return false;
+    }
+
+    private void HookProgression()
+    {
+        if (subscribedProgression == CycleProgressionService.Instance) return;
+        if (subscribedProgression != null) subscribedProgression.Changed -= OnCycleRewardsChanged;
+        subscribedProgression = CycleProgressionService.Instance;
+        if (subscribedProgression != null) subscribedProgression.Changed += OnCycleRewardsChanged;
+    }
+
+    private void OnCycleRewardsChanged()
+    {
+        RefreshCycleRewards();
+        if (IsOpen) DisplayPalette(ActiveKit);
     }
 
     private void OnEnable()
@@ -76,11 +139,13 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         InputModeCoordinator.ModeChanged += OnModeChanged;
         subscribedTeam = SoloTeamProgression.Resolve();
         if (subscribedTeam != null) subscribedTeam.Changed += OnTeamChanged;
+        HookProgression();
         TrySubscribe();
     }
 
     private void Update()
     {
+        HookProgression();
         if (subscribed && LocalPlayerInput.FindSharedActionMap("RealTimeCombat") != selectKit.actionMap)
         {
             Close();
@@ -106,13 +171,16 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         wheelSelectKit = wheel.FindAction("SelectSkillKit", false);
         cancel = wheel.FindAction("Cancel", false);
         support = wheel.FindAction("CycleSupportTarget", false);
-        if (selectKit == null || wheelSelectKit == null || cancel == null || support == null) return;
+        cyclePalette = wheel.FindAction("CycleSkillPalette", false);
+        if (selectKit == null || wheelSelectKit == null || cancel == null || support == null || cyclePalette == null) return;
         selectKit.performed += OnSelect;
         wheelSelectKit.performed += OnSelect;
         selectKit.canceled += OnSelectionReleased;
         wheelSelectKit.canceled += OnSelectionReleased;
         cancel.performed += OnCancel;
         support.performed += OnSupport;
+        cyclePalette.performed += OnCyclePalette;
+        cyclePalette.canceled += OnPaletteReleased;
         subscribed = true;
     }
 
@@ -122,9 +190,12 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         InputModeCoordinator.ModeChanged -= OnModeChanged;
         if (subscribedTeam != null) subscribedTeam.Changed -= OnTeamChanged;
         subscribedTeam = null;
+        if (subscribedProgression != null) subscribedProgression.Changed -= OnCycleRewardsChanged;
+        subscribedProgression = null;
         Unsubscribe();
         faceNeedsRelease = false;
         heldSelectControl = null;
+        heldPaletteControl = null;
     }
 
     private void Unsubscribe()
@@ -137,6 +208,8 @@ public sealed class CombatSkillKitInput : MonoBehaviour
             wheelSelectKit.canceled -= OnSelectionReleased;
             cancel.performed -= OnCancel;
             support.performed -= OnSupport;
+            cyclePalette.performed -= OnCyclePalette;
+            cyclePalette.canceled -= OnPaletteReleased;
         }
         subscribed = false;
     }
@@ -193,9 +266,10 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         var actor = manager.PlayerRoot != null ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true) : null;
         if (actor == null || !actor.isActiveAndEnabled || actor.CurrentHp <= 0) return false;
         if (actor.GetComponent<PlayerActionPresentationController>()?.IsChargingSkill == true) return false;
-        if (IsOpen && ActiveKit == kit) return true;
-        if (combatInput == null || !combatInput.DisplaySkillKit(kit.ToString(), GetAvailableSkills(kit))) return false;
-        ApplyLockedSlots(kit);
+        if (IsOpen && ActiveKit == kit && !ShowingCycleRewards) return true;
+        palettePage = 0;
+        RefreshCycleRewards();
+        if (!DisplayPalette(kit)) return false;
         ActiveKit = kit;
         if (!IsOpen)
         {
@@ -219,8 +293,8 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         if (manager.PlayerRoot != openedActor || !manager.isActiveAndEnabled || IsSolo != openedSolo ||
             !TryResolveKit(ActiveKit, out var owned) || owned != ActiveKit) { Close(); return false; }
         if (!IsSlotAvailable(ActiveKit, slot))
-        { Feedback(catalog.GetSkill(ActiveKit, slot) == null ? "Emplacement vide" : "Compétence verrouillée"); return false; }
-        var skill = catalog.GetSkill(ActiveKit, slot);
+        { Feedback(GetSlotSkill(ActiveKit, slot) == null ? "Emplacement vide" : "Compétence verrouillée"); return false; }
+        var skill = GetSlotSkill(ActiveKit, slot);
         consumedFrame = Time.frameCount;
         faceNeedsRelease = AnyFaceHeld(Gamepad.current);
         var skills = FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include);
@@ -252,6 +326,19 @@ public sealed class CombatSkillKitInput : MonoBehaviour
         if (IsOpen) manager?.TryCycleSupportTarget(skill);
     }
 
+    private void OnCyclePalette(InputAction.CallbackContext context)
+    {
+        if (heldPaletteControl != null && heldPaletteControl.EvaluateMagnitude() <= .5f) heldPaletteControl = null;
+        if (context.control == heldPaletteControl) return;
+        heldPaletteControl = context.control;
+        CyclePalette(context.ReadValue<float>() > 0 ? 1 : -1);
+    }
+
+    private void OnPaletteReleased(InputAction.CallbackContext context)
+    {
+        if (heldPaletteControl != null && heldPaletteControl.EvaluateMagnitude() <= .5f) heldPaletteControl = null;
+    }
+
     private void Feedback(string message)
     {
         if (manager?.PlayerRoot != null)
@@ -262,6 +349,7 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     {
         if (!IsOpen) return;
         IsOpen = false;
+        palettePage = 0;
         openedActor = null;
         combatInput?.HideSkillKit();
         InputModeCoordinator.Exit(this);
@@ -278,14 +366,14 @@ public sealed class CombatSkillKitInput : MonoBehaviour
     {
         var wheel = FindAnyObjectByType<SkillWheel>(FindObjectsInactive.Include);
         for (int i = 0; i < 4; i++)
-            wheel?.SetKitSlotLocked(i, catalog.GetSkill(kit, i) != null && !IsSlotAvailable(kit, i));
+            wheel?.SetKitSlotLocked(i, GetSlotSkill(kit, i) != null && !IsSlotAvailable(kit, i));
     }
     private void OnTeamChanged()
     {
         if (!IsOpen || !IsSolo) return;
         var team = SoloTeamProgression.Resolve();
         if (team == null || !team.IsRecruited(ActiveKit)) { Close(); return; }
-        combatInput.DisplaySkillKit(ActiveKit.ToString(), GetAvailableSkills(ActiveKit));
-        ApplyLockedSlots(ActiveKit);
+        RefreshCycleRewards();
+        DisplayPalette(ActiveKit);
     }
 }

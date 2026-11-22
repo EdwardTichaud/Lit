@@ -24,6 +24,7 @@ public partial class SquadCharacterController
     private bool waitingForStandUpCompletion;
     private bool observedStandUpState;
     private bool standUpQueued;
+    private bool sittingMovementNeedsRelease;
     private float standUpRequestedAt;
     private float sittingIdleTrackingStartedAt;
     private uint sittingMovementActivityVersion;
@@ -31,11 +32,15 @@ public partial class SquadCharacterController
     public bool IsSittingRequested => sittingRequested;
     public bool IsInSittingCycle => sittingRequested || sittingMovementSuppressionActive;
 
-    public bool CanToggleSitting => IsInSittingCycle || CanEnterSitting();
+    public bool IsSittingTransitionActive => waitingForStandUpCompletion ||
+        (sittingRequested && animator != null && animator.isActiveAndEnabled &&
+         (animator.IsInTransition(0) || animator.GetCurrentAnimatorStateInfo(0).fullPathHash != SittingIdleFullPathHash));
+
+    public bool CanToggleSitting => !IsSittingTransitionActive && (IsInSittingCycle || CanEnterSitting());
 
     public bool TryToggleSitting()
     {
-        return TrySetSitting(!IsInSittingCycle);
+        return CanToggleSitting && TrySetSitting(!IsInSittingCycle);
     }
 
     public bool TrySetSitting(bool shouldSit)
@@ -64,6 +69,7 @@ public partial class SquadCharacterController
             waitingForStandUpCompletion = false;
             observedStandUpState = false;
             standUpQueued = false;
+            sittingMovementNeedsRelease = false;
             sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
             SetAnimatorBoolIfValid(sittingParam, true);
             return true;
@@ -138,6 +144,7 @@ public partial class SquadCharacterController
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
         standUpQueued = false;
+        sittingMovementNeedsRelease = false;
         sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
         SetAnimatorBoolIfValid(sittingParam, true);
         animator.Play(SittingIdleFullPathHash, 0, Mathf.Repeat(normalizedTime, 1f));
@@ -152,6 +159,7 @@ public partial class SquadCharacterController
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
         standUpQueued = false;
+        sittingMovementNeedsRelease = false;
         sittingIdleTrackingStartedAt = Time.unscaledTime;
         sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
         SetAnimatorBoolIfValid(sittingParam, false);
@@ -178,6 +186,15 @@ public partial class SquadCharacterController
 
         if (sittingRequested)
         {
+            // Discard movement received while sitting down, including a held stick.
+            // A fresh gesture after returning to neutral may request standing up.
+            if (IsSittingTransitionActive || sittingMovementNeedsRelease)
+            {
+                sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
+                sittingMovementNeedsRelease = LocalInputRouter.MoveValue.sqrMagnitude > movementInputDeadZone * movementInputDeadZone;
+                return;
+            }
+
             if (!holdSittingUntilStandUp && LocalInputRouter.CharacterMovementActivityVersion != sittingMovementActivityVersion)
             {
                 TrySetSitting(false);
@@ -202,6 +219,31 @@ public partial class SquadCharacterController
         {
             TrySetSitting(true);
         }
+    }
+
+    /// <summary>Story-owned seating checks the body, not gameplay input disabled by the story itself.</summary>
+    public bool TryBeginStorySitting()
+    {
+        if (sittingRequested) return true;
+        if (GetScriptedSittingBlockReason() != null) return false;
+        int downState = Animator.StringToHash("Base Layer.Sit_Down");
+        if (!animator.HasState(0, downState)) downState = SitDownStateHash;
+        if (!animator.HasState(0, downState)) return false;
+        Stop();
+        if (!sittingMovementSuppressionActive)
+        {
+            PushScriptedMovementSuppression();
+            sittingMovementSuppressionActive = true;
+        }
+        sittingRequested = true;
+        holdSittingUntilStandUp = true;
+        SetSittingGroundingSuppressed(true);
+        waitingForStandUpCompletion = observedStandUpState = standUpQueued = false;
+        sittingMovementNeedsRelease = false;
+        sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
+        SetAnimatorBoolIfValid(sittingParam, true);
+        animator.CrossFadeInFixedTime(downState, .1f, 0, 0f);
+        return true;
     }
 
     private bool CanEnterSitting()
@@ -325,6 +367,7 @@ public partial class SquadCharacterController
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
         standUpQueued = false;
+        sittingMovementNeedsRelease = false;
         if (sittingMovementSuppressionActive)
         {
             sittingMovementSuppressionActive = false;

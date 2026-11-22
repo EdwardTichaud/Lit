@@ -18,22 +18,22 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.15
   intensity:
     m_OverrideState: 1
-    m_Value: 0.2
+    m_Value: 1
   scatter:
     m_OverrideState: 1
     m_Value: 0.7
   tint:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    m_Value: {r: 1, g: 0.37254903, b: 0, a: 1}
   dirtTexture:
     m_OverrideState: 1
-    m_Value: {fileID: 0}
+    m_Value: {fileID: 2800000, guid: 0c46480840704b8429b1be471bce5ac8, type: 3}
   dirtIntensity:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 20
   anamorphic:
     m_OverrideState: 1
     m_Value: 1

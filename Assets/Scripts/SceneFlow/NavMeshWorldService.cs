@@ -44,6 +44,8 @@ public sealed class NavMeshWorldService : MonoBehaviour
     [SerializeField] private bool logDiagnostics = true;
 
     private string currentZoneId;
+    private readonly HashSet<string> currentWorldScenes = new HashSet<string>(StringComparer.Ordinal);
+    public bool IncludesScene(Scene scene) => currentWorldScenes.Count == 0 || currentWorldScenes.Contains(scene.name);
     private Coroutine buildRoutine;
     private bool runtimeBuildInProgress;
     private NavMeshWorldReport lastReport;
@@ -147,6 +149,13 @@ public sealed class NavMeshWorldService : MonoBehaviour
     public void BeginWorld(string zoneId, ZoneManifest manifest)
     {
         currentZoneId = zoneId;
+        currentWorldScenes.Clear();
+        if (manifest != null)
+        {
+            currentWorldScenes.Add(manifest.PrimarySceneName);
+            foreach (string name in manifest.LoadingSceneNames) currentWorldScenes.Add(name);
+            foreach (string name in manifest.PostLoadingSceneNames) currentWorldScenes.Add(name);
+        }
         StopBuildRoutine();
         InvalidateWorldInternal("nouvelle zone");
         SetState(NavMeshWorldState.Loading);
@@ -430,7 +439,7 @@ public sealed class NavMeshWorldService : MonoBehaviour
         {
             SceneMarker marker = markers[i];
             if (marker == null || !marker.isActiveAndEnabled || !marker.UsesCharacter ||
-                !IsGameplayScene(marker.gameObject.scene))
+                !IsGameplayScene(marker.gameObject.scene) || !IncludesScene(marker.gameObject.scene))
             {
                 continue;
             }

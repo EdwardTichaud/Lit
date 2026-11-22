@@ -560,6 +560,7 @@ public class SquadAIManager : MonoBehaviour
             // actual district floor from the resulting NavMesh. Only loaded
             // gameplay scenes are valid navigation geometry.
             Scene colliderScene = col.gameObject.scene;
+            if (NavMeshWorldService.Instance != null && !NavMeshWorldService.Instance.IncludesScene(colliderScene)) continue;
             if (!colliderScene.IsValid() || !colliderScene.isLoaded ||
                 colliderScene.name == "DontDestroyOnLoad" ||
                 colliderScene.name == "Bootstrap" ||
@@ -606,6 +607,7 @@ public class SquadAIManager : MonoBehaviour
         for (int i = 0; i < markers.Length; i++)
         {
             SceneMarker marker = markers[i];
+            if (marker != null && NavMeshWorldService.Instance != null && !NavMeshWorldService.Instance.IncludesScene(marker.gameObject.scene)) continue;
             if (marker == null || !marker.isActiveAndEnabled ||
                 !marker.gameObject.scene.IsValid() || !marker.gameObject.scene.isLoaded ||
                 marker.gameObject.scene.name == "DontDestroyOnLoad" ||
@@ -633,6 +635,7 @@ public class SquadAIManager : MonoBehaviour
         for (int i = 0; i < enemies.Length; i++)
         {
             EnemyController enemy = enemies[i];
+            if (enemy != null && NavMeshWorldService.Instance != null && !NavMeshWorldService.Instance.IncludesScene(enemy.gameObject.scene)) continue;
             if (enemy == null || !enemy.gameObject.scene.IsValid() || !enemy.gameObject.scene.isLoaded ||
                 enemy.gameObject.scene.name == "DontDestroyOnLoad" ||
                 enemy.gameObject.scene.name == "Bootstrap" ||
@@ -981,7 +984,8 @@ public class SquadAIManager : MonoBehaviour
     private static bool IsLoadedGameplayScene(Scene scene)
     {
         return scene.IsValid() && scene.isLoaded && scene.name != "DontDestroyOnLoad" &&
-               scene.name != "Bootstrap" && scene.name != "MainMenu";
+               scene.name != "Bootstrap" && scene.name != "MainMenu" &&
+               (NavMeshWorldService.Instance == null || NavMeshWorldService.Instance.IncludesScene(scene));
     }
 
     private void PublishNavMeshBuildReport(
@@ -1079,6 +1083,9 @@ public class SquadAIManager : MonoBehaviour
                 x.component != null && x.component.gameObject.GetComponent<NavMeshObstacle>() != null);
         }
 
+        if (NavMeshWorldService.Instance != null)
+            sources.RemoveAll(source => source.component != null &&
+                !NavMeshWorldService.Instance.IncludesScene(source.component.gameObject.scene));
         AppendModifierVolumes(surface, sources);
 
         return sources;
@@ -1136,6 +1143,7 @@ public class SquadAIManager : MonoBehaviour
         for (int i = 0; i < modifiers.Count; i++)
         {
             NavMeshModifierVolume modifier = modifiers[i];
+            if (modifier != null && NavMeshWorldService.Instance != null && !NavMeshWorldService.Instance.IncludesScene(modifier.gameObject.scene)) continue;
             if (modifier == null)
             {
                 continue;

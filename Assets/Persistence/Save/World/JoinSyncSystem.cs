@@ -106,6 +106,8 @@ public class JoinSyncSystem : MonoBehaviour
         if (PrivateSessionService.Instance?.Phase == PrivateSessionPhase.Lobby) return;
         if (hookedManager != null && hookedManager.IsServer && deferredSnapshotClients.Count > 0 &&
             !GameFlowService.IsPreparingGameplayScene && !(GameFlowService.Instance?.IsTransitioning ?? false) &&
+            !(worldStateManager?.RequiresRecovery ?? false) &&
+            !(GameFlowService.Instance?.HasUnsettledSceneOperations ?? false) &&
             !(worldSaveAdapter?.IsHostWorldRestoreInProgress ?? false))
         {
             foreach (ulong client in new List<ulong>(deferredSnapshotClients)) SendSnapshotToClient(client);
@@ -330,7 +332,9 @@ public class JoinSyncSystem : MonoBehaviour
 
         // A snapshot of a half-loaded additive group would reset good archived
         // data and fail reconstruction on clients still integrating its scenes.
-        if (GameFlowService.IsPreparingGameplayScene || (GameFlowService.Instance?.IsTransitioning ?? false))
+        if (GameFlowService.IsPreparingGameplayScene || (GameFlowService.Instance?.IsTransitioning ?? false) ||
+            (GameFlowService.Instance?.HasUnsettledSceneOperations ?? false) ||
+            (worldStateManager?.RequiresRecovery ?? false))
         {
             deferredSnapshotClients.Add(clientId);
             readyClients[clientId] = false;

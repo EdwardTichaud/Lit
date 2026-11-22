@@ -1,5 +1,19 @@
 # Persistance
 
+## Protection pendant les transitions (2026-11-22)
+
+La preparation d'une sauvegarde monde refuse un voyage de zone en cours.
+JoinSync differe les exports pendant une transition ou une recuperation requise.
+WorldStateManager verrouille les nouvelles captures apres un echec de restauration
+partielle ou complete. Une restauration complete reussie, ou la destruction puis
+recreation explicite de la session, leve ce verrou. La recuperation GameFlow
+utilise le checkpoint runtime et les archives existantes, sans publication disque.
+Les formats, IDs persistants et sauvegardes deja presentes restent inchanges.
+Si un client quitte pendant un voyage qui est ensuite annule, le checkpoint
+de travail ne recree pas son acteur deconnecte. La liaison persistante du
+joueur a son personnage et les donnees runtime connues de la session restent
+gerees par les services existants pour la reconnexion ; aucun nouvel ID cree.
+
 ## Personnage de marker restaure inactif
 
 PersistentNetworkObject.ApplyTransformState reinscrit l'objet du snapshot apres
@@ -43,7 +57,8 @@ CharacterStateStore prepare le JSON personnage, le binaire monde et les
 metadonnees sans remplacer les fichiers, puis les publie ensemble via
 SaveMetadataWriter.WriteBatchAtomic. TryPrepareWorldSnapshot et
 TryPrepareSaveMetadata ne publient aucun nouveau payload. Les fichiers gardent
-leurs noms et formats existants ; la capture d'ecran reste hors transaction.
+leurs noms et formats existants ; screenshot.png est publie dans la meme
+transaction lorsque la capture graphique est disponible.
 
 Les completions StorySequence suivent maintenant ce meme commit : modifications
 en memoire uniquement, hydration depuis le slot selectionne et publication avec
@@ -341,3 +356,34 @@ La flamme historique garde scene-flame:Maison:0DE640398. Sa copie distincte
 dans District_1_Corridor_Flammes utilise desormais
 scene-flame:District_1_Corridor_Flammes:4389905704937368489. Le format de sauvegarde
 est inchange ; un ancien etat partage ne permettait pas de distinguer les deux.
+
+
+## Apercu des sauvegardes (2026-11-22)
+
+Toute sauvegarde CharacterStateStore, manuelle ou automatique, demande une
+capture de la camera de jeu via SaveScreenshotCapture avant le commit du slot.
+Le PNG est lie au chemin prepare, jamais a une session resolue en differe.
+Un echec de publication restaure aussi l'ancienne photo. Les clients ne
+capturent pas de sauvegarde : l'hote reste autoritaire.
+
+La capture HDRP utilise StandardRequest ; les Canvas non world-space sont
+masques uniquement pendant le rendu, puis retablis dans finally. La camera
+MainCamera reste utilisable si LoadingScreenService l'a temporairement
+suspendue avant une sauvegarde de depart. Aucune reprise de camera ni commande
+UI n'est necessaire. Le plus grand cote vaut 1280 pixels par defaut, reglable
+sur CharacterStateStore (320-1920), ratio conserve et budget de 2 073 600 pixels.
+
+MainMenu_Load affiche ce screenshot.png existant dans les details du slot
+selectionne, via son cache horodate et son AspectRatioFitter. Les anciennes
+sauvegardes sans photo restent chargeables ; leur prochain enregistrement
+produit l'apercu. Sans camera ou dispositif graphique, la progression reste
+sauvee, LastScreenshotSucceeded reste faux et un avertissement indique la cause.
+
+Verification : tests cibles dans Save/Screenshots/Editor et parcours isole
+SaveScreenshotPlayProbe, sans ecriture dans les parties utilisateur.
+Compilation Unity reussie ; sept assertions NUnit natives passent.
+Le parcours Play Mode valide le renouvellement des PNG manuels/automatiques,
+la capture pendant le retour menu et la texture effectivement visible dans
+MainMenu_Load. Overlay rouge exclu et restaure ; sauvegardes utilisateur et
+scenes source preservees. Des erreurs deja presentes de configuration volumes,
+VFX menu et cape Lucian ont ete observees, sans erreur de capture.

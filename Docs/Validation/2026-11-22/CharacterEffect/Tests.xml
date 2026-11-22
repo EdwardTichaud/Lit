@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="12" result="Passed" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-22 07:53:18Z" end-time="2026-11-22 07:53:19Z" duration="0,3962392">
+  <test-suite type="TestSuite" id="1000" name="Lit" fullname="Lit" runstate="Runnable" testcasecount="2934" result="Passed" start-time="2026-11-22 07:53:18Z" end-time="2026-11-22 07:53:19Z" duration="0.396239" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2929" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/pierr/git/Lit/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="1582" result="Passed" start-time="2026-11-22 07:53:18Z" end-time="2026-11-22 07:53:19Z" duration="0.318702" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="12380" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1675" name="CharacterEffectLifecycleTests" fullname="CharacterEffectLifecycleTests" classname="CharacterEffectLifecycleTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-22 07:53:18Z" end-time="2026-11-22 07:53:19Z" duration="0.134713" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1676" name="ActivationInitializesAndPlaysWithoutStartOrSceneScan" fullname="CharacterEffectLifecycleTests.ActivationInitializesAndPlaysWithoutStartOrSceneScan" methodname="ActivationInitializesAndPlaysWithoutStartOrSceneScan" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="557906055" result="Passed" start-time="2026-11-22 07:53:18Z" end-time="2026-11-22 07:53:19Z" duration="0.065458" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1681" name="GpuSamplingRoundTripRetainsTriangleIndicesAndBarycentricCoordinates" fullname="CharacterEffectLifecycleTests.GpuSamplingRoundTripRetainsTriangleIndicesAndBarycentricCoordinates" methodname="GpuSamplingRoundTripRetainsTriangleIndicesAndBarycentricCoordinates" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="1337329466" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.012572" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1677" name="ManualOptOutAndLegacyEventsUseTheSameState" fullname="CharacterEffectLifecycleTests.ManualOptOutAndLegacyEventsUseTheSameState" methodname="ManualOptOutAndLegacyEventsUseTheSameState" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="793920646" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.001906" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1680" name="MissingBinderDoesNotBlockMeshInitialization" fullname="CharacterEffectLifecycleTests.MissingBinderDoesNotBlockMeshInitialization" methodname="MissingBinderDoesNotBlockMeshInitialization" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="710500043" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.011838" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1678" name="PooledAndComponentReactivationRestoreBuffersAndPlayback" fullname="CharacterEffectLifecycleTests.PooledAndComponentReactivationRestoreBuffersAndPlayback" methodname="PooledAndComponentReactivationRestoreBuffersAndPlayback" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="1111696122" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.002670" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1682" name="RealLucianBodyAndSwordMeshesCanBothInitialize" fullname="CharacterEffectLifecycleTests.RealLucianBodyAndSwordMeshesCanBothInitialize" methodname="RealLucianBodyAndSwordMeshesCanBothInitialize" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="799483269" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.011967" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1679" name="ShowingTheRendererRestartsOnlyAutomaticEffects" fullname="CharacterEffectLifecycleTests.ShowingTheRendererRestartsOnlyAutomaticEffects" methodname="ShowingTheRendererRestartsOnlyAutomaticEffects" classname="CharacterEffectLifecycleTests" runstate="Runnable" seed="1470481197" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.001587" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="2415" name="SceneIntegrityCharacterVfxTests" fullname="SceneIntegrityCharacterVfxTests" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.085084" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="2421" name="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" fullname="SceneIntegrityCharacterVfxTests.CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.071867" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="2416" name="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Dark&quot;)" fullname="SceneIntegrityCharacterVfxTests.CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Dark&quot;)" methodname="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" seed="266080053" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.015218" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2417" name="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Fire&quot;)" fullname="SceneIntegrityCharacterVfxTests.CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Fire&quot;)" methodname="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" seed="1760301075" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.034501" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2418" name="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Ice Fire&quot;)" fullname="SceneIntegrityCharacterVfxTests.CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Ice Fire&quot;)" methodname="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" seed="683271920" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.009505" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2419" name="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Mist&quot;)" fullname="SceneIntegrityCharacterVfxTests.CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Mist&quot;)" methodname="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" seed="1988563488" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.007358" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="2420" name="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Rage&quot;)" fullname="SceneIntegrityCharacterVfxTests.CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh(&quot;Rage&quot;)" methodname="CharacterGraphUsesTheActualStaticOrAnimatedActorWithoutADemoMesh" classname="SceneIntegrityCharacterVfxTests" runstate="Runnable" seed="399351931" result="Passed" start-time="2026-11-22 07:53:19Z" end-time="2026-11-22 07:53:19Z" duration="0.000567" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+            <output><![CDATA[Saving results to: C:/Users/pierr/AppData/LocalLow/DefaultCompany/Lit\TestResults.xml
+]]></output>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

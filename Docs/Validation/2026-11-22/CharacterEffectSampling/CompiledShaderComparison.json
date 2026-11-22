@@ -1,0 +1,13 @@
+{
+  "graph": "Character Local Connect",
+  "before": {
+    "bytes": 16038,
+    "surfaceBufferReads": 0
+  },
+  "after": {
+    "bytes": 27081,
+    "surfaceBufferReads": 5
+  },
+  "assetSettings": "Surface sampling + barycentric coordinates; correct before repair",
+  "repair": "Force-import Character Mesh Spawn block, then its five consuming graphs through AssetDatabase"
+}

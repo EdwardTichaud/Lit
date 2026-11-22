@@ -107,6 +107,8 @@ public class WorldSaveAdapter : MonoBehaviour
     {
         path = null;
         bytes = null;
+        if (GameFlowService.IsPreparingGameplayScene || GameFlowService.Instance != null &&
+            (GameFlowService.Instance.IsZoneTransitionInProgress || GameFlowService.Instance.HasUnsettledSceneOperations)) return false;
         if (!Application.isPlaying || !HasWorldSaveAuthority())
         {
             return false;

@@ -185,18 +185,6 @@ public class LocalVoiceLineController : MonoBehaviour
     [Tooltip("Distance max si AudioManager absent.")]
     public float fallbackMaxDistance = 20f;
 
-    [Header("Music Ducking")]
-    /// <summary>
-    /// Reduit temporairement la musique pendant la lecture d'une voice line.
-    /// </summary>
-    [Tooltip("Reduit la musique pendant une voiceline.")]
-    public bool duckMusicDuringVoiceLine = true;
-    /// <summary>
-    /// Multiplicateur de volume musique pendant le ducking.
-    /// </summary>
-    [Range(0f, 1f), Tooltip("Multiplicateur applique a la musique pendant une voiceline.")]
-    public float musicDuckMultiplier = 0.5f;
-
     private readonly Dictionary<int, VoiceLineData> lookup = new Dictionary<int, VoiceLineData>();
     private Coroutine displayRoutine;
     private AudioSource activeSource;
@@ -208,7 +196,6 @@ public class LocalVoiceLineController : MonoBehaviour
     private bool warnedMissingTextRoot;
     private Collider interactionCollider;
     private float nextInteractTime;
-    private bool isMusicDucked;
     private bool textVisible;
     private int textShownFrame = -1;
 
@@ -257,7 +244,6 @@ public class LocalVoiceLineController : MonoBehaviour
         // Unity appelle OnDisable a la desactivation; il faut liberer input/audio pour eviter les callbacks orphelins.
         dialoguePresentation?.Dispose();
         dialoguePresentation = null;
-        EndMusicDucking();
         LocalInputRouter.Interact -= OnInteractPerformed;
         ReleaseTextInputFocus();
     }
@@ -468,8 +454,6 @@ public class LocalVoiceLineController : MonoBehaviour
 
         float duration = ResolveTextDuration(clip);
         displayRoutine = StartCoroutine(CompleteLineAfterDelay(duration));
-
-        BeginMusicDucking();
         PlayAudio(clip);
         BeginDialoguePresentation(data, clip);
         return true;
@@ -491,8 +475,6 @@ public class LocalVoiceLineController : MonoBehaviour
         {
             return PlayLineCore(data.voiceLineText, data.voiceLineAudioClip, data);
         }
-
-        BeginMusicDucking();
         PlayAudio(data.voiceLineAudioClip);
         BeginDialoguePresentation(data, data.voiceLineAudioClip);
         displayRoutine = StartCoroutine(PlayCuesRoutine(cues, data.voiceLineAudioClip));
@@ -562,7 +544,6 @@ public class LocalVoiceLineController : MonoBehaviour
 
         if (!shownAny)
         {
-            EndMusicDucking();
             displayRoutine = null;
             yield break;
         }
@@ -577,8 +558,6 @@ public class LocalVoiceLineController : MonoBehaviour
         {
             SetTextVisible(false);
         }
-
-        EndMusicDucking();
         displayRoutine = null;
     }
 
@@ -789,7 +768,6 @@ public class LocalVoiceLineController : MonoBehaviour
         }
 
         activeAudioClip = null;
-        EndMusicDucking();
     }
 
     private float ResolveTextDuration(AudioClipSO clip)
@@ -816,8 +794,6 @@ public class LocalVoiceLineController : MonoBehaviour
         {
             SetTextVisible(false);
         }
-
-        EndMusicDucking();
         displayRoutine = null;
     }
 
@@ -842,7 +818,6 @@ public class LocalVoiceLineController : MonoBehaviour
         }
 
         SetTextVisible(false);
-        EndMusicDucking();
     }
 
     private void ReleaseTextInputFocus()
@@ -875,39 +850,6 @@ public class LocalVoiceLineController : MonoBehaviour
         source.volume = Mathf.Clamp01(clip.volume);
         source.Play();
         activeSource = source;
-    }
-
-    private void BeginMusicDucking()
-    {
-        if (!duckMusicDuringVoiceLine || isMusicDucked)
-        {
-            return;
-        }
-
-        AudioManager manager = AudioManager.Instance;
-        if (manager == null)
-        {
-            return;
-        }
-
-        manager.BeginMusicDucking(musicDuckMultiplier);
-        isMusicDucked = true;
-    }
-
-    private void EndMusicDucking()
-    {
-        if (!isMusicDucked)
-        {
-            return;
-        }
-
-        AudioManager manager = AudioManager.Instance;
-        if (manager != null)
-        {
-            manager.EndMusicDucking();
-        }
-
-        isMusicDucked = false;
     }
 
     private AudioSource EnsureLocalSource()

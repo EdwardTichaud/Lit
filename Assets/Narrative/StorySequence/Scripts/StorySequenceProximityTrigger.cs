@@ -10,7 +10,17 @@ namespace Lit.Story
         [SerializeField] private Collider triggerCollider;
         [SerializeField] private bool disableAfterTrigger = true;
 
-        private bool triggered;
+        private bool triggered,reserved,awaitingExit;
+        private void OnEnable(){if(runner!=null){runner.PlaybackStarted+=ConsumeReservation;runner.PreparationFailed+=CancelReservation;}}
+        private void OnDisable(){if(runner!=null){runner.PlaybackStarted-=ConsumeReservation;runner.PreparationFailed-=CancelReservation;}}
+        private void ConsumeReservation()
+        {
+            if(!reserved)return;
+            reserved=false;triggered=true;
+            if(disableAfterTrigger&&triggerCollider!=null)triggerCollider.enabled=false;
+        }
+        private void CancelReservation(){if(reserved){reserved=false;awaitingExit=true;}}
+        private void OnTriggerExit(Collider other){if(IsLocalPlayer(other))awaitingExit=false;}
 
         private void Reset()
         {
@@ -45,21 +55,19 @@ namespace Lit.Story
 
         private void TryTrigger(Collider other)
         {
-            if (triggered || runner == null || !IsLocalPlayer(other))
+            if (triggered || reserved || awaitingExit || runner == null || !IsLocalPlayer(other))
             {
                 return;
             }
 
-            if (!runner.Play())
-            {
-                return;
-            }
+            // OnTriggerStay retries after arrival. Do not reserve a scene-owned dialogue
+            // while GameFlow is still moving the character or retiring its source scene.
+            if (LoadingScreenService.IsLoading || GameFlowService.IsPreparingGameplayScene ||
+                (GameFlowService.Instance != null && GameFlowService.Instance.IsTransitioning) ||
+                InputModeCoordinator.IsGameplayBlocked) return;
 
-            triggered = true;
-            if (disableAfterTrigger && triggerCollider != null)
-            {
-                triggerCollider.enabled = false;
-            }
+            reserved=true;
+            if(!runner.Play())reserved=false;
         }
 
         private static bool IsLocalPlayer(Collider other)

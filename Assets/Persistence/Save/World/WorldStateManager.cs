@@ -18,6 +18,15 @@ public class WorldStateManager : MonoBehaviour
 
     public bool LastApplySucceeded => LastApplyResult != null && LastApplyResult.Succeeded;
     public bool LastCaptureSucceeded { get; private set; }
+    public bool RequiresRecovery { get; private set; }
+    public string RecoveryReason { get; private set; }
+
+    public void RequireRecovery(string reason)
+    {
+        RequiresRecovery = true;
+        LastCaptureSucceeded = false;
+        RecoveryReason = reason;
+    }
 
     private readonly List<PersistentObjectSnapshot> preservedLegacyBuildingSnapshots =
         new List<PersistentObjectSnapshot>();
@@ -41,6 +50,8 @@ public class WorldStateManager : MonoBehaviour
         preservedLegacyBuildingSnapshots.Clear();
         LastApplyResult = null;
         LastCaptureSucceeded = false;
+        RequiresRecovery = false;
+        RecoveryReason = null;
     }
 
     /// <summary>Records a gameplay removal before the scene object is destroyed.</summary>
@@ -57,6 +68,7 @@ public class WorldStateManager : MonoBehaviour
     /// <summary>Capture departure state while the scene's objects still exist.</summary>
     public bool CaptureScenesBeforeUnload(IEnumerable<string> sceneNames)
     {
+        if (RequiresRecovery) return false;
         if (!HasWorldAuthority() || sceneNames == null) return true;
         ResolveReferences();
         registry?.RefreshSceneObjects();
@@ -90,7 +102,9 @@ public class WorldStateManager : MonoBehaviour
             snapshot.RuntimeObjects.AddRange(copy.RuntimeObjects);
         }
         if (snapshot.SceneArchives.Count == 0) return true;
-        return ApplySnapshotInternal(snapshot, true, scope);
+        bool restored = ApplySnapshotInternal(snapshot, true, scope);
+        if (!restored) RequireRecovery("Restauration partielle des scenes refusee.");
+        return restored;
     }
 
     private PersistentSceneArchive GetOrCreateArchive(string sceneName)
@@ -149,6 +163,7 @@ public class WorldStateManager : MonoBehaviour
 
     public WorldSnapshot CaptureSnapshot(string captureReason = null, bool logValidationFailuresAsErrors = true)
     {
+        if (RequiresRecovery) { LastCaptureSucceeded = false; return null; }
         string resolvedCaptureReason = string.IsNullOrWhiteSpace(captureReason)
             ? "capture snapshot"
             : captureReason;
@@ -198,7 +213,10 @@ public class WorldStateManager : MonoBehaviour
 
     public bool ApplySnapshot(WorldSnapshot snapshot, bool serverSideLoad = false)
     {
-        return ApplySnapshotInternal(snapshot, serverSideLoad, null);
+        bool restored = ApplySnapshotInternal(snapshot, serverSideLoad, null);
+        RequiresRecovery = !restored;
+        RecoveryReason = restored ? null : "La restauration du monde a echoue.";
+        return restored;
     }
 
     // Validate data before sending it without loading scenes or replaying any

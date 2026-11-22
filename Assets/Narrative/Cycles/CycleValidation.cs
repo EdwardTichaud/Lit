@@ -21,6 +21,9 @@ public static class CycleValidation
             foreach (var reward in step.rewards ?? Array.Empty<CycleReward>())
             {
                 if (reward == null) { issues.Add("Recompense vide : " + step.id); continue; }
+                if (reward.kind == CycleRewardKind.RecruitCompanion &&
+                    (cycle.audience != CycleAudience.SoloOnly || reward.companion == CombatSkillKit.Lucian || !Enum.IsDefined(typeof(CombatSkillKit), reward.companion)))
+                    issues.Add("Recrutement : compagnon valide et cycle solo requis : " + step.id);
                 if (reward.kind == CycleRewardKind.Skill && reward.skill == null) issues.Add("Competence absente : " + step.id);
                 if (reward.kind == CycleRewardKind.Knowledge && reward.knowledge == null) issues.Add("Connaissance de recompense absente : " + step.id);
                 if (reward.kind == CycleRewardKind.Item && reward.item == null) issues.Add("Objet de recompense absent : " + step.id);

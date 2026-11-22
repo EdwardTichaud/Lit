@@ -1,0 +1,1675 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
+  m_Name: Maison_Hearth_Vigil
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
+  sequenceId: maison.hearth.first_vigil
+  displayName: "Ceux qui r\u00e9pondent"
+  description: "Une veill\u00e9e entre de vieux amis qui portent des mondes. La lumi\u00e8re de Lucian vacille ; l'appel reprend."
+  playOnce: 1
+  waitForLocalPlayer: 1
+  localPlayerWaitTimeout: 0
+  lockPlayerControl: 1
+  stopActiveAbilitiesOnLock: 1
+  useUnscaledTime: 1
+  startFromBlack: 0
+  openingFadeDuration: 1
+  fadeToBlackBeforeGameplay: 0
+  closingFadeDuration: 0.5
+  fadeFromBlackAfterGameplayRestore: 0
+  gameplayFadeInDuration: 0.75
+  steps:
+  - label: 
+    type: 2
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: hearth.wide
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.3
+    cameraHoldDuration: 0.2
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: hearth.seat_lucian
+    type: 7
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: hearth.seat_lucian
+    openingCombatDamage: 50
+  - label: 
+    type: 3
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 2.1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 0
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 1
+    fadeDuration: 0.65
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: hearth.gather
+    type: 7
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: hearth.gather
+    openingCombatDamage: 50
+  - label: 
+    type: 3
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 0.2
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 2
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: hearth.wide
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 0
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.85
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 3
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 0.45
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 1 Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    speakerCharacterData: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+    voiceLine: {fileID: 11400000, guid: a841f4b163652554cac66b5fb91cd478, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 2 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: dc8a575fefcbe6a4aae45e75810b08f9, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 3 Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: e60ec10812e2c0d449608f3693a72fe3, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 4 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: a2f5e3c956a43da4686f05cc3eccdf5d, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 5 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: 44f1f8dbd86a79e4096f09e3a448b5ce, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 6 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: d21ec3251b1ea244a947be471a89bffb, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 7 Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    speakerCharacterData: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+    voiceLine: {fileID: 11400000, guid: f212cab33be294e45b66144874e281b8, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 8 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: 2bfad696229fabf4cacf248e53df06cd, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 9 Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: 31a70bf0e97b6da448e63239e3ccd851, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 10 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: 3ac26b089bf9398488862962a1dad1a3, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 11 Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: 0f79bce1a7ef18146935980e2daa8066, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 12 Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    speakerCharacterData: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+    voiceLine: {fileID: 11400000, guid: eecb62ed3d997394db4970c619356d8f, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 13 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: 4d9ea0ca14f3e554a8311e68ae571f96, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 14 Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    speakerCharacterData: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+    voiceLine: {fileID: 11400000, guid: 5dfb8cfe3e331e34cbb0128dd607f6a9, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 15 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: fea7a36644a127b4990ca3a1be27b36e, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 16 Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: a8690912540e9ba40a0d8eddf8d33cd7, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 17 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: 5f3181419f3b5924ea760c3ba3217b33, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 18 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: 76dfb52934d45a94dbddd6c3549ef041, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 19 Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    speakerCharacterData: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+    voiceLine: {fileID: 11400000, guid: 0eefbed875c67fb4cac1f42745c3eeeb, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 20 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: 02084dacc615c1e4daf0c6a6e01baa78, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 21 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: d1338706b72a755438b9d11413a64a17, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 22 Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: ac58bdc290970bd44993ac02882e9be0, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 23 Aurell
+    type: 1
+    skippable: 1
+    actorId: Aurell
+    listenerId: Lucian
+    speakerNameOverride: Aurell
+    speakerCharacterData: {fileID: 11400000, guid: 929976f4f3fd5534391c76f3ba1a64d1, type: 2}
+    voiceLine: {fileID: 11400000, guid: de19697de9c59b542a939925fea929cf, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 24 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: f1c3e6ba29632c4438a45aaba12b598b, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 25 Vesta
+    type: 1
+    skippable: 1
+    actorId: Vesta
+    listenerId: Lucian
+    speakerNameOverride: Vesta
+    speakerCharacterData: {fileID: 11400000, guid: 29f5e603af694a78b8375e491c7e9811, type: 2}
+    voiceLine: {fileID: 11400000, guid: c8215790195e6404b9e4bfa804d0334a, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 26 Lucian
+    type: 1
+    skippable: 1
+    actorId: Lucian
+    listenerId: Vesta
+    speakerNameOverride: Lucian
+    speakerCharacterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+    voiceLine: {fileID: 11400000, guid: d7246a26337afce47afb1b301fe3ef95, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: 5337c94f8475d8445a898ee1a9b902c1, type: 2}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 2.5
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 3
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1.1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Create departure portal
+    type: 11
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+    spawnId: hearth.departure_portal
+    spawnPrefab: {fileID: 5194904346540188557, guid: 7c4c34b264514362b6c5748fdfc15d16, type: 3}
+    spawnPointId: hearth.portal_position
+    parentToSpawnPoint: 1
+    keepSpawnAfterCompletion: 1
+  - label: 
+    type: 2
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: hearth.portal
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 3
+    cameraHoldDuration: 1.25
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: Hearth 27 Soren
+    type: 1
+    skippable: 1
+    actorId: Soren
+    listenerId: Lucian
+    speakerNameOverride: Soren
+    speakerCharacterData: {fileID: 11400000, guid: 6b457f002c17e384189cd9c9dc119ea4, type: 2}
+    voiceLine: {fileID: 11400000, guid: 0f8137ee8d5f83a4d950dffbde161cbb, type: 2}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50
+  - label: 
+    type: 3
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    speakerCharacterData: {fileID: 0}
+    voiceLine: {fileID: 0}
+    overrideDialogueDirection: 0
+    dialogueDirection:
+      intent: 0
+      intensity: 1
+      gestureId: 
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    dialogueNodDegrees: 0
+    dialogueNodDuration: 0
+    oneShotAudioClips: []
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.6
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 0.5
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50

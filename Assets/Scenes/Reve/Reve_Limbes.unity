@@ -144,8 +144,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 254461461}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.55, y: 0.1, z: -2}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5499878, y: 0.099998474, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -190,8 +190,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 290122369}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.6500001, y: 0.1, z: -2}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.6500244, y: 0.099998474, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -289,8 +289,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 769735561}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.6500001, y: 0.1, z: -2}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.6500244, y: 0.099998474, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -814,8 +814,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2144701274}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.55, y: 0.1, z: -2}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.5499878, y: 0.099998474, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -991,9 +991,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b53bc716490ed404fa199b9e851e0ce4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceRunner
+  playerTransform: {fileID: 0}
+  playerApproachTimeout: 30
+  playerNavMeshAgentTypeId: 0
   sequence: {fileID: 11400000, guid: a5224a3fca9f49bfac71dd61ac7d0f8c, type: 2}
   playOnStart: 0
   startDelay: 0
+  startWithLocalPlayerSeated: 0
   bindings: {fileID: 0}
   cameraDriver: {fileID: 0}
   dialoguePresenter: {fileID: 0}
@@ -1024,7 +1028,8 @@ MonoBehaviour:
   bindings: {fileID: 8752100003}
   requiredSceneNames:
   - Reve_Limbes_Environment
-  - Reve_Limbes_Lighting
+  - Reve_Limbes_Core
+  zoneManifest: {fileID: 11400000, guid: a030f2172b4f75d43b7dc8e65ac41155, type: 2}
 --- !u!1 &8752100010
 GameObject:
   m_ObjectHideFlags: 0
@@ -1073,6 +1078,8 @@ MonoBehaviour:
   lookTarget: {fileID: 8752100014}
   lookAtOffset: {x: 0, y: 0, z: 0}
   fieldOfView: 58
+  useAuthoredRotation: 0
+  breathingStrength: 0
 --- !u!1 &8752100013
 GameObject:
   m_ObjectHideFlags: 0
@@ -1152,6 +1159,8 @@ MonoBehaviour:
   lookTarget: {fileID: 8752100024}
   lookAtOffset: {x: 0, y: 0, z: 0}
   fieldOfView: 55
+  useAuthoredRotation: 0
+  breathingStrength: 0
 --- !u!1 &8752100023
 GameObject:
   m_ObjectHideFlags: 0
@@ -1231,6 +1240,8 @@ MonoBehaviour:
   lookTarget: {fileID: 8752100034}
   lookAtOffset: {x: 0, y: 0, z: 0}
   fieldOfView: 52
+  useAuthoredRotation: 0
+  breathingStrength: 0
 --- !u!1 &8752100033
 GameObject:
   m_ObjectHideFlags: 0

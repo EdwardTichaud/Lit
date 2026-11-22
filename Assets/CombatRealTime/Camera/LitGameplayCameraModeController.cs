@@ -423,8 +423,10 @@ public sealed partial class LitGameplayCameraModeController : MonoBehaviour
             if (Gamepad.current != null)
             {
                 if (inspection) input.pan += Gamepad.current.leftStick.ReadValue() * profile.panSpeed * dt;
-                input.zoom += LitTacticalCameraMath.TriggerZoomDelta(Gamepad.current.rightShoulder.ReadValue(),
-                    Gamepad.current.leftShoulder.ReadValue(), profile.gamepadZoomSpeed, dt);
+                // Bumpers belong to palette navigation while the wheel is open.
+                if (InputModeCoordinator.CurrentMode != InputMode.CombatWheel)
+                    input.zoom += LitTacticalCameraMath.TriggerZoomDelta(Gamepad.current.rightShoulder.ReadValue(),
+                        Gamepad.current.leftShoulder.ReadValue(), profile.gamepadZoomSpeed, dt);
             }
         }
         FrameInput = input;

@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>Dialogue requests complete poses from the existing action presenter. Never edits bones or layers.</summary>
 [DisallowMultipleComponent, DefaultExecutionOrder(150)]
-public sealed class CharacterDialoguePresentationController : NetworkBehaviour
+public sealed partial class CharacterDialoguePresentationController : NetworkBehaviour
 {
     // Historical names remain discoverable by migration tools; no runtime layer uses them.
     [SerializeField] private DialoguePresentationProfile fallbackProfile;
@@ -51,11 +51,13 @@ public sealed class CharacterDialoguePresentationController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         replicated.OnValueChanged += OnReplication;
+        sequenceLook.OnValueChanged += OnSequenceLookReplication;
+        if(!IsOwner)lookState=sequenceLook.Value;else PublishSequenceLook();
         if (!IsOwner) OnReplication(default, replicated.Value);
     }
-    public override void OnNetworkDespawn() { replicated.OnValueChanged -= OnReplication; ResetSession(true); }
-    public override void OnLostOwnership() { ResetSession(true); OnReplication(default, replicated.Value); }
-    public override void OnGainedOwnership() => ResetSession(true);
+    public override void OnNetworkDespawn() { replicated.OnValueChanged -= OnReplication; sequenceLook.OnValueChanged -= OnSequenceLookReplication; ResetSequenceLookImmediate(); ResetSession(true); }
+    public override void OnLostOwnership() { ResetSequenceLookImmediate(); ResetSession(true); OnReplication(default, replicated.Value); }
+    public override void OnGainedOwnership() { ResetSequenceLookImmediate(); ResetSession(true); }
     private void OnReplication(DialoguePresentationState previous, DialoguePresentationState current)
     {
         if (IsOwner) return;
@@ -128,6 +130,7 @@ public sealed class CharacterDialoguePresentationController : NetworkBehaviour
     public void Refresh(float delta)
     {
         Resolve(); delta = Mathf.Max(0, delta);
+        RefreshSequenceLook(delta);
         bool local = !IsSpawned || IsOwner;
         if (releaseRemaining > 0) { releaseRemaining -= delta; if (releaseRemaining <= 0) ReleaseMotion(); }
         if (local && state.active && (sessionOwner == null || sessionCharacter != CharacterData ||
@@ -146,12 +149,6 @@ public sealed class CharacterDialoguePresentationController : NetworkBehaviour
         {
             gestureElapsed += delta;
             if (role == DialogueRole.Speaking && gestureElapsed >= NextGestureSeconds()) { SelectGesture(); Publish(); }
-        }
-        if (listener != null && motionLock != null && bridge != null)
-        {
-            Vector3 towards = Vector3.ProjectOnPlane(listener.position - transform.position, transform.up);
-            if (towards.sqrMagnitude > .01f) bridge.SetActionFacingDirection(Vector3.RotateTowards(transform.forward,
-                towards.normalized, Profile.facingDegreesPerSecond * Mathf.Deg2Rad * delta, 0));
         }
         var gesture = state.gesture >= 0 && state.gesture < Profile.gestures.Count ? Profile.gestures[state.gesture] : null;
         if (shownRevision != state.revision)
@@ -200,6 +197,6 @@ public sealed class CharacterDialoguePresentationController : NetworkBehaviour
         ReleaseFace(immediate); Publish();
     }
     private void OnEnable() => UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnSceneChanged;
-    private void OnSceneChanged(UnityEngine.SceneManagement.Scene previous, UnityEngine.SceneManagement.Scene next) => ResetSession(true);
-    private void OnDisable() { UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnSceneChanged; ResetSession(true); }
+    private void OnSceneChanged(UnityEngine.SceneManagement.Scene previous, UnityEngine.SceneManagement.Scene next) { ResetSequenceLookImmediate(); ResetSession(true); }
+    private void OnDisable() { UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnSceneChanged; ResetSequenceLookImmediate(); ResetSession(true); }
 }

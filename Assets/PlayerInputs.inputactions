@@ -1555,6 +1555,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "CycleSkillPalette",
+                    "type": "Value",
+                    "id": "e3870ff9-c28c-4571-bf34-93a9ce9d3692",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1645,6 +1654,39 @@
                     "action": "Cancel",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "Palettes",
+                    "id": "c402cd11-94b2-49d8-bcaa-81961b173efd",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CycleSkillPalette",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "f4e49a68-fc50-4863-95f6-3c72b49cd505",
+                    "path": "<Gamepad>/leftShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "CycleSkillPalette",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "b824fa65-62de-4274-941c-c546e4947529",
+                    "path": "<Gamepad>/rightShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "CycleSkillPalette",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         },

@@ -14,6 +14,7 @@ namespace INab.VFXAssets
     /// - coord is a barycentric coordinate
     /// - index is an index of triangle
     /// </summary>
+    [Serializable, StructLayout(LayoutKind.Sequential)]
     [VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]
     public struct BarycentricTriangleSampling
     {
@@ -27,7 +28,7 @@ namespace INab.VFXAssets
         public static string GraphicsBufferName = "UniformMeshBuffer";
         public int SampleCount
         {
-            get => Mathf.Min((int)(_sampleCount * Mathf.Pow(SampleCountMultiplier, 2)), 100000);
+            get => Mathf.Clamp((int)(_sampleCount * Mathf.Pow(SampleCountMultiplier, 2)), 1, 100000);
         }
 
         [Tooltip("Amount of points from which particles would be spawned.")]
@@ -41,7 +42,7 @@ namespace INab.VFXAssets
         [SerializeField]
         public BarycentricTriangleSampling[] m_BakedSampling;
 
-        public GraphicsBuffer m_Buffer;
+        [NonSerialized] public GraphicsBuffer m_Buffer;
 
         // New Freature - baking buffer per submesh.
         [SerializeField] public bool UsePerSubmeshBaking = false;
@@ -75,6 +76,12 @@ namespace INab.VFXAssets
                 if (visualEffect.HasUInt("Start Triangle Index")) visualEffect.SetUInt("Start Triangle Index", 0);
             }
 
+            if (meshData.triangles.Length == 0 || meshData.accumulatedTriangleArea.Last() <= 0)
+            {
+                m_BakedSampling = Array.Empty<BarycentricTriangleSampling>();
+                return;
+            }
+
             var rand = new System.Random(123); // use random number as seed
             m_BakedSampling = new BarycentricTriangleSampling[SampleCount];
             for (int i = 0; i < SampleCount; ++i)
@@ -84,7 +91,7 @@ namespace INab.VFXAssets
         }
         private void UpdateGraphicsBuffer()
         {
-            if (m_BakedSampling == null) return;
+            if (m_BakedSampling == null || m_BakedSampling.Length == 0) return;
 
             if (SampleCount != m_BakedSampling.Length)
             {
@@ -109,26 +116,11 @@ namespace INab.VFXAssets
 
         public void Update(VisualEffect visualEffect, Renderer renderer)
         {
-            if (m_BakedSampling == null || m_BakedSampling.Length < 1)
+            if (m_Buffer == null || !m_Buffer.IsValid())
             {
-                Bake(visualEffect, renderer);
+                if (m_BakedSampling == null || m_BakedSampling.Length == 0) Bake(visualEffect, renderer);
+                else SetGraphicsBuffer(visualEffect);
             }
-            else if (m_Buffer == null)
-            {
-                Bake(visualEffect, renderer);
-            }
-
-            // NEW NEW NEW
-
-            // What to test
-
-
-
-            // What didnt work
-
-            //Bake(visualEffect, renderer);
-            //visualEffect.SetGraphicsBuffer(GraphicsBufferName, m_Buffer);
-
         }
         public void OnDisable()
         {
@@ -140,7 +132,16 @@ namespace INab.VFXAssets
         }
         public void Bake(VisualEffect visualEffect, Renderer renderer)
         {
-            ComputeBakedSampling(visualEffect, UniformMeshSamplingHelper.RendererToMesh(renderer));
+            if (visualEffect == null || renderer == null) return;
+            var mesh = UniformMeshSamplingHelper.RendererToMesh(renderer);
+            if (mesh == null || !mesh.isReadable || mesh.vertexCount == 0)
+            {
+                OnDisable();
+                m_BakedSampling = null;
+                Debug.LogWarning("[CharacterEffect] A readable, non-empty source mesh is required.", renderer);
+                return;
+            }
+            ComputeBakedSampling(visualEffect, mesh);
             UpdateGraphicsBuffer();
             BindGraphicsBuffer(visualEffect);
         }

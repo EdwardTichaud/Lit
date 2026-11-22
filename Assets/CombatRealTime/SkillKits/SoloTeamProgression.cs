@@ -59,17 +59,20 @@ public sealed class SoloTeamProgression : MonoBehaviour
     public bool IsUnlocked(CombatSkillKit kit, int slot) => slot >= 0 && slot < 4 && IsRecruited(kit) &&
         (members[kit].unlockedSlots & (1 << slot)) != 0 && Catalog != null && Catalog.GetSkill(kit, slot) != null;
 
-    public bool RecruitMember(CombatSkillKit kit)
+    public bool RecruitMember(CombatSkillKit kit) => RecruitMember(kit, true);
+
+    public bool RecruitMember(CombatSkillKit kit, bool notify)
     {
         if (!IsSolo || !members.TryGetValue(kit, out var state) || state.recruited) return false;
         state.recruited = true;
         state.unlockedSlots |= 1;
         Changed?.Invoke();
+        if (!notify) return true;
         MemberRecruited?.Invoke(kit);
         var skill = Catalog != null ? Catalog.GetSkill(kit, 0) : null;
         string direction = kit switch { CombatSkillKit.Vesta => "droite", CombatSkillKit.Soren => "bas",
             CombatSkillKit.Aurell => "gauche", _ => "haut" };
-        SoloTeamAnnouncement.Show($"{kit} rejoint l’équipe\n{skill?.SkillName ?? "Compétence"} — croix {direction}, puis gauche");
+        SoloTeamAnnouncement.Show($"{kit} rejoint lâ€™Ã©quipe\n{skill?.SkillName ?? "CompÃ©tence"} â€” croix {direction}, puis gauche");
         return true;
     }
 

@@ -387,7 +387,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             return;
         }
 
-        LocalInputRouter.SetCameraZoomValue(context.ReadValue<float>());
+        LocalInputRouter.SetCameraZoomValue(InputModeCoordinator.CurrentMode == InputMode.CombatWheel ? 0f : context.ReadValue<float>());
     }
 
     public void OnPointerScroll(InputAction.CallbackContext context)

@@ -36,9 +36,9 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2450
+  m_CustomRenderQueue: 2225
   stringTagMap:
-    RenderType: TransparentCutout
+    MotionVector: User
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
@@ -144,17 +144,23 @@ Material:
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
     - _DstBlend: 0
+    - _DstBlend2: 0
+    - _DstBlendAlpha: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnvironmentReflections: 1
+    - _ExcludeFromTUAndAA: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _MaterialID: 1
+    - _MaterialTypeMask: 2
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 0
     - _OpaqueCullMode: 2
     - _Parallax: 0.005
+    - _PerPixelSorting: 0
     - _QueueControl: 0
     - _QueueOffset: 0
     - _RayTracing: 0
@@ -168,19 +174,21 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4
     - _StencilRefGBuffer: 10
     - _StencilRefMV: 40
     - _StencilWriteMask: 6
-    - _StencilWriteMaskDepth: 8
+    - _StencilWriteMaskDepth: 9
     - _StencilWriteMaskDistortionVec: 4
-    - _StencilWriteMaskGBuffer: 14
-    - _StencilWriteMaskMV: 40
+    - _StencilWriteMaskGBuffer: 15
+    - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _Surface: 0
     - _SurfaceType: 0
+    - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 2
     - _TransparentDepthPostpassEnable: 0
@@ -204,7 +212,7 @@ Material:
     - _BaseColor: {r: 0.18039216, g: 0.22057135, b: 0.30980393, a: 1}
     - _Color: {r: 0.18039212, g: 0.22057131, b: 0.3098039, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _Offset: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
