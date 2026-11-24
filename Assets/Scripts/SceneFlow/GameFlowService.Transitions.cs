@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Lit.Performance;
 using Unity.Netcode;
 using UnityEngine;
@@ -17,7 +18,8 @@ public sealed partial class GameFlowService
     public string LastTransitionFailure { get; private set; }
     private static int ExpectedTransitionPlayers => NetworkManager.Singleton != null &&
         NetworkManager.Singleton.IsListening && NetworkManager.Singleton.IsServer
-        ? Math.Max(1, NetworkManager.Singleton.ConnectedClientsIds.Count) : 1;
+        ? Math.Max(1, NetworkManager.Singleton.ConnectedClientsIds.Count(id =>
+            !Lit.DreamFractures.DreamFractureRunController.BlocksLateJoin(id))) : 1;
 
     private static HashSet<string> ManifestSceneSet(ZoneManifest manifest)
     {
@@ -55,6 +57,7 @@ public sealed partial class GameFlowService
             var completedClients = new HashSet<ulong>();
             var timedOutClients = new HashSet<ulong>();
             var expectedClients = new HashSet<ulong>(manager.ConnectedClientsIds);
+            expectedClients.RemoveWhere(Lit.DreamFractures.DreamFractureRunController.BlocksLateJoin);
             bool completed = false;
             bool accepted = false;
             void OnEvent(SceneEvent e)

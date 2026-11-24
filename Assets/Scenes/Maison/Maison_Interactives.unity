@@ -1770,9 +1770,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2123669090979962338, guid: 5a63b235e66e1714eaf0bdf74787bdca, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4575266098599803146, guid: 5a63b235e66e1714eaf0bdf74787bdca, type: 3}
       propertyPath: m_Name
       value: 'Burning_v2 (Instance) [Effect 1]'
+      objectReference: {fileID: 0}
+    - target: {fileID: 4575266098599803146, guid: 5a63b235e66e1714eaf0bdf74787bdca, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5404082280466017679, guid: 5a63b235e66e1714eaf0bdf74787bdca, type: 3}
       propertyPath: m_PropertySheet.m_Bool.m_Array.Array.data[0].m_Value

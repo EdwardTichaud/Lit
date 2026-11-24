@@ -332,7 +332,8 @@ public class JoinSyncSystem : MonoBehaviour
 
         // A snapshot of a half-loaded additive group would reset good archived
         // data and fail reconstruction on clients still integrating its scenes.
-        if (GameFlowService.IsPreparingGameplayScene || (GameFlowService.Instance?.IsTransitioning ?? false) ||
+        if (Lit.DreamFractures.DreamFractureRunController.BlocksLateJoin(clientId) ||
+            GameFlowService.IsPreparingGameplayScene || (GameFlowService.Instance?.IsTransitioning ?? false) ||
             (GameFlowService.Instance?.HasUnsettledSceneOperations ?? false) ||
             (worldStateManager?.RequiresRecovery ?? false))
         {
@@ -1254,6 +1255,7 @@ public class JoinSyncSystem : MonoBehaviour
             !hookedManager.IsClient ||
             hookedManager.IsServer ||
             IsLocalWorldReady ||
+            (PrivateSessionService.Instance?.IsWaitingForDreamFracture ?? false) ||
             localSyncFailed ||
             snapshotTransferTimeoutSeconds <= 0f)
         {

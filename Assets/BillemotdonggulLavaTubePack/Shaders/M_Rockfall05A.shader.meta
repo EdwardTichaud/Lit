@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abc00000000011178615850441395648
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 349134
+  packageName: KHS - Jeju Billemotdonggul Lava Tube Pack, Korea
+  packageVersion: 1.0
+  assetPath: Assets/BillemotdonggulLavaTubePack/Shaders/M_Rockfall05A.shader
+  uploadId: 847674

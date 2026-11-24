@@ -24,6 +24,7 @@ public sealed class PrivateLobbyState
     public string[] characterIds = Array.Empty<string>();
     public string[] characterNames = Array.Empty<string>();
     public List<PrivateLobbyMember> members = new List<PrivateLobbyMember>();
+    public List<ulong> dreamFractureWaiting = new List<ulong>();
 
     public bool CanStart => phase == PrivateSessionPhase.Lobby && members.Count > 0 &&
         members.All(m => m.ready && characterIds.Contains(m.characterId)) &&

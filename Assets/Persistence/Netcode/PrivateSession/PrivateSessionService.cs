@@ -34,6 +34,18 @@ public sealed class PrivateSessionService : MonoBehaviour
     private float nextRequest;
     private bool messagesRegistered;
     private bool returning;
+    public bool IsWaitingForDreamFracture => !IsHost && manager != null &&
+        Lobby.dreamFractureWaiting != null && Lobby.dreamFractureWaiting.Contains(manager.LocalClientId);
+
+    public void RefreshDreamFractureWaiting()
+    {
+        if (!IsHost || !IsActive) return;
+        var waiting = manager.ConnectedClientsIds
+            .Where(Lit.DreamFractures.DreamFractureRunController.BlocksLateJoin).OrderBy(id => id).ToList();
+        if (Lobby.dreamFractureWaiting != null && Lobby.dreamFractureWaiting.SequenceEqual(waiting)) return;
+        Lobby.dreamFractureWaiting = waiting;
+        Broadcast();
+    }
 
     private void Awake() { Instance = this; }
     private void OnDestroy()
@@ -119,12 +131,13 @@ public sealed class PrivateSessionService : MonoBehaviour
         if (!IsActive) return;
         RegisterMessages();
         if (Phase == PrivateSessionPhase.Returning) return;
+        if (IsWaitingForDreamFracture) deadline = Time.unscaledTime + 120f;
         if ((Phase == PrivateSessionPhase.Preparing || Phase == PrivateSessionPhase.Connecting || Phase == PrivateSessionPhase.Loading) && Time.unscaledTime >= deadline)
         { Fail(PrivateSessionError.Timeout, "Le délai de connexion ou de chargement est dépassé. Réessayez."); return; }
         if (manager == null) { Fail(PrivateSessionError.Unavailable, "La session a été fermée."); return; }
         if (!manager.IsServer && manager.IsConnectedClient && Phase == PrivateSessionPhase.Connecting && Time.unscaledTime >= nextRequest)
         { nextRequest = Time.unscaledTime + 1f; SendCommand("refresh", null); }
-        if (Phase == PrivateSessionPhase.Loading && SceneManager.GetActiveScene().name != MainMenuController.DefaultMenuSceneName &&
+        if (!IsWaitingForDreamFracture && Phase == PrivateSessionPhase.Loading && SceneManager.GetActiveScene().name != MainMenuController.DefaultMenuSceneName &&
             GameFlowService.Instance != null && !GameFlowService.Instance.IsTransitioning &&
             (IsHost || (JoinSyncSystem.Instance != null && JoinSyncSystem.Instance.IsLocalWorldReady)))
         {
@@ -255,6 +268,13 @@ public sealed class PrivateSessionService : MonoBehaviour
             PrivateLobbyState incoming = JsonUtility.FromJson<PrivateLobbyState>(json);
             if (incoming == null || incoming.members == null || incoming.members.Count > 4) return;
             Lobby = incoming;
+            if (IsWaitingForDreamFracture)
+            {
+                deadline = Time.unscaledTime + 120f;
+                SetPhase(PrivateSessionPhase.Loading, "Fracture en cours. En attente du retour du groupe à la Maison…");
+                LoadingScreenService.Show(Message);
+                return;
+            }
             if (Lobby.phase == PrivateSessionPhase.Lobby) SetPhase(PrivateSessionPhase.Lobby, "Choisissez votre personnage et confirmez que vous êtes prêt.");
             else if (Lobby.phase == PrivateSessionPhase.Loading || Lobby.phase == PrivateSessionPhase.Playing)
             {

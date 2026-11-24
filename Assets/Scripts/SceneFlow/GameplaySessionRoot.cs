@@ -11,5 +11,7 @@ public sealed class GameplaySessionRoot : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject);
         AbilityService.EnsureForSession(transform);
+        KnowledgeManager.GetOrCreate().BeginGameplaySession();
+        Lit.DreamFractures.DreamFractureRunController.Ensure(transform);
     }
 }

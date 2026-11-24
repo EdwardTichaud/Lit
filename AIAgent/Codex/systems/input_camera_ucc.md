@@ -1451,3 +1451,22 @@ car UCC applique ensuite cet espacement aux hanches. La capsule et l'offset
 auteur restent sous les regles UCC. Les poses isolees ont ete comparees sur
 18 cycles. Appuis en mouvement, Idle et raccords restent a qualifier.
 Etat/preuves dans Docs/Animation/Lucian_Coherence.md, section gait-timing.
+
+
+## Dezoom local des grottes (2026-11-23)
+
+LitTacticalBounds expose Maximum Zoom Fraction (1 conserve la plage habituelle).
+Le plafond est Lerp(distanceMin, distanceMax, fraction) et ne s'applique qu'au
+personnage inclus dans son BoxCollider actif. Les zones superposees prennent
+la limite la plus restrictive. Camera_CaveBounds de District_3_Caves couvre la
+geometrie avec une marge de deux metres et utilise 1/3. Volume et fraction sont
+editables dans la scene. Les autres volumes existants gardent 1 par defaut.
+
+La vue tactique borne targetZoom, la distance lissee et la position finale,
+aussi pendant l'inspection et le blend de mode, sans modifier le profil partage.
+Sortir du volume rend la plage normale disponible, sans imposer un nouveau
+recul automatique. Ce plafond de distance ne remplace pas les collisions de
+camera et ne garantit pas a lui seul le confinement sous chaque plafond bas.
+Compilation Unity et assertions natives de portee reussies ; cadrage physique
+et ressenti manette a verifier en jeu. Le generateur/audit ne change aucune
+qualite de geometrie ni d'eclairage.

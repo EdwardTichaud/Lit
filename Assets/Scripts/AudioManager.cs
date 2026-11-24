@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Gestionnaire audio global (musique de zones + ambiance + one-shots).
-public class AudioManager : MonoBehaviour
+public partial class AudioManager : MonoBehaviour
 {
     private const string MusicVolumePrefsKey = "settings.audio.music_volume";
     private const string SfxVolumePrefsKey = "settings.audio.sfx_volume";
@@ -48,7 +48,7 @@ public class AudioManager : MonoBehaviour
     {
         public int token;
         public AudioClipSO music;
-        public AudioClipSO ambience;
+        public IReadOnlyList<AudioClipSO> ambiences;
         public float fadeDuration;
     }
 
@@ -94,12 +94,8 @@ public class AudioManager : MonoBehaviour
     private AudioSource inactiveSource;
     private AudioClipSO activeClip;
     private Coroutine fadeRoutine;
-    private AudioSource primaryAmbienceSource;
-    private AudioSource secondaryAmbienceSource;
-    private AudioSource activeAmbienceSource;
-    private AudioSource inactiveAmbienceSource;
-    private AudioClipSO activeAmbienceClip;
-    private Coroutine ambienceFadeRoutine;
+    private AudioClipSO requestedMusicClip;
+    private bool musicTransitionActive;
     private readonly List<Zone> zoneStack = new List<Zone>();
     private readonly List<ManagedSfxSource> activeSfxSources = new List<ManagedSfxSource>();
     private readonly List<MusicOverride> musicOverrides = new List<MusicOverride>();
@@ -181,6 +177,7 @@ public class AudioManager : MonoBehaviour
     private void LateUpdate()
     {
         RefreshTimeScaledPitches();
+        TickAmbienceLayers();
     }
 
     public static float GetSavedMusicVolume()
@@ -323,6 +320,8 @@ public class AudioManager : MonoBehaviour
     {
         EnsureMusicSources();
         if (fadeRoutine != null) { StopCoroutine(fadeRoutine); fadeRoutine = null; }
+        musicTransitionActive = false;
+        requestedMusicClip = clip;
         primarySource.Stop();
         secondarySource.Stop();
         activeClip = clip != null && clip.audioClip != null ? clip : null;
@@ -343,8 +342,11 @@ public class AudioManager : MonoBehaviour
     {
         EnsureMusicSources();
 
+        if (clip == null || clip.audioClip == null) clip = null;
+        if (musicTransitionActive && requestedMusicClip == clip) return;
         // Ignore si deja en cours avec le meme clip.
-        if (clip == activeClip && activeSource != null && activeSource.isPlaying)
+        if (!musicTransitionActive && clip == activeClip &&
+            (clip == null || activeSource != null && activeSource.isPlaying))
         {
             return;
         }
@@ -352,13 +354,27 @@ public class AudioManager : MonoBehaviour
         if (fadeRoutine != null)
         {
             StopCoroutine(fadeRoutine);
+            // Promote the incoming source with its actual volume. Do not
+            // restart it or resurrect a stale outgoing track.
+            if (musicTransitionActive && requestedMusicClip != null)
+            {
+                var old = activeSource;
+                activeSource = inactiveSource;
+                inactiveSource = old;
+                activeClip = requestedMusicClip;
+            }
         }
 
+        requestedMusicClip = clip;
+        musicTransitionActive = true;
         fadeRoutine = StartCoroutine(FadeToClip(clip, requestedFadeDuration));
     }
 
     /// <summary>Installe la presentation globale de la zone active. Les overrides de combat restent prioritaires.</summary>
     public int PushZonePresentation(AudioClipSO music, AudioClipSO ambience, float requestedFadeDuration)
+        => PushZonePresentationLayers(music, ambience != null ? new[] { ambience } : System.Array.Empty<AudioClipSO>(), requestedFadeDuration);
+
+    public int PushZonePresentationLayers(AudioClipSO music, IReadOnlyList<AudioClipSO> ambiences, float requestedFadeDuration)
     {
         int token = nextZonePresentationToken++;
         if (nextZonePresentationToken <= 0)
@@ -370,7 +386,7 @@ public class AudioManager : MonoBehaviour
         {
             token = token,
             music = music,
-            ambience = ambience,
+            ambiences = ambiences != null ? new List<AudioClipSO>(ambiences) : new List<AudioClipSO>(),
             fadeDuration = Mathf.Max(0.01f, requestedFadeDuration)
         };
         hasActiveZonePresentation = true;
@@ -389,6 +405,9 @@ public class AudioManager : MonoBehaviour
         activeZonePresentation = default;
         UpdateZoneAudio();
     }
+
+    public bool OwnsZonePresentation(int token) =>
+        hasActiveZonePresentation && token != 0 && activeZonePresentation.token == token;
 
     public int PushMusicOverride(AudioClipSO clip)
     {
@@ -467,21 +486,7 @@ public class AudioManager : MonoBehaviour
 
     private void SetAmbienceClip(AudioClipSO clip, float requestedFadeDuration)
     {
-        EnsureAmbienceSources();
-
-        if (clip == activeAmbienceClip &&
-            activeAmbienceSource != null &&
-            activeAmbienceSource.isPlaying)
-        {
-            return;
-        }
-
-        if (ambienceFadeRoutine != null)
-        {
-            StopCoroutine(ambienceFadeRoutine);
-        }
-
-        ambienceFadeRoutine = StartCoroutine(FadeAmbienceToClip(clip, requestedFadeDuration));
+        SetAmbienceLayers(clip != null ? new[] { clip } : System.Array.Empty<AudioClipSO>(), requestedFadeDuration);
     }
 
     public void BeginMusicDucking(float multiplier)
@@ -790,7 +795,7 @@ public class AudioManager : MonoBehaviour
         CleanupNullZones();
 
         AudioClipSO nextMusicClip = hasActiveZonePresentation ? activeZonePresentation.music : null;
-        AudioClipSO nextAmbienceClip = hasActiveZonePresentation ? activeZonePresentation.ambience : null;
+        IReadOnlyList<AudioClipSO> nextAmbiences = hasActiveZonePresentation ? activeZonePresentation.ambiences : null;
         if (!hasActiveZonePresentation)
         {
             for (int i = zoneStack.Count - 1; i >= 0; i--)
@@ -806,12 +811,12 @@ public class AudioManager : MonoBehaviour
                     nextMusicClip = zone.GetZoneMusicClip();
                 }
 
-                if (nextAmbienceClip == null)
+                if (nextAmbiences == null || nextAmbiences.Count == 0)
                 {
-                    nextAmbienceClip = zone.GetZoneAmbienceClip();
+                    nextAmbiences = zone.GetZoneAmbienceClips();
                 }
 
-                if (nextMusicClip != null && nextAmbienceClip != null)
+                if (nextMusicClip != null && nextAmbiences != null && nextAmbiences.Count > 0)
                 {
                     break;
                 }
@@ -837,7 +842,7 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        PlayAmbience(nextAmbienceClip, zoneFadeDuration);
+        SetAmbienceLayers(nextAmbiences, zoneFadeDuration);
     }
 
     private bool HasAmbienceSuppressingMusicOverride()
@@ -872,6 +877,14 @@ public class AudioManager : MonoBehaviour
         AudioSource from = activeSource;
         AudioSource to = inactiveSource;
         AudioClipSO previousClip = activeClip;
+        float fromWeight = GetMusicSourceVolume(previousClip) * GetMusicMultiplier();
+        fromWeight = fromWeight > .0001f ? Mathf.Clamp01(from.volume / fromWeight) : 0;
+        float toWeight = 0;
+        if (clip != null && to != null && to.clip == clip.audioClip && to.isPlaying)
+        {
+            float fullVolume = GetMusicSourceVolume(clip) * GetMusicMultiplier();
+            toWeight = fullVolume > .0001f ? Mathf.Clamp01(to.volume / fullVolume) : 0;
+        }
 
         if (clip == null || clip.audioClip == null)
         {
@@ -884,7 +897,7 @@ public class AudioManager : MonoBehaviour
                     float t = elapsed / duration;
                     float multiplier = GetMusicMultiplier();
                     ApplyClipPitch(from, previousClip);
-                    from.volume = Mathf.Lerp(GetMusicSourceVolume(previousClip) * multiplier, 0f, t);
+                    from.volume = Mathf.Lerp(GetMusicSourceVolume(previousClip) * multiplier * fromWeight, 0f, t);
                     elapsed += Time.unscaledDeltaTime;
                     yield return null;
                 }
@@ -894,6 +907,9 @@ public class AudioManager : MonoBehaviour
             }
 
             activeClip = null;
+            if (to != null) { to.Stop(); to.volume = 0; }
+            musicTransitionActive = false;
+            fadeRoutine = null;
             yield break;
         }
 
@@ -905,11 +921,12 @@ public class AudioManager : MonoBehaviour
         if (to != null)
         {
             // Demarre la nouvelle musique en volume 0.
+            bool resume = to.isPlaying && to.clip == clip.audioClip;
             to.clip = clip.audioClip;
             to.loop = clip.loop;
             ApplyClipPitch(to, clip);
-            to.volume = 0f;
-            to.Play();
+            to.volume = GetMusicSourceVolume(clip) * GetMusicMultiplier() * toWeight;
+            if (!resume) to.Play();
         }
 
         float time = 0f;
@@ -920,13 +937,13 @@ public class AudioManager : MonoBehaviour
             if (to != null)
             {
                 ApplyClipPitch(to, clip);
-                to.volume = Mathf.Lerp(0f, GetMusicSourceVolume(clip) * multiplier, t);
+                to.volume = Mathf.Lerp(toWeight, 1f, t) * GetMusicSourceVolume(clip) * multiplier;
             }
 
             if (from != null)
             {
                 ApplyClipPitch(from, previousClip);
-                from.volume = Mathf.Lerp(GetMusicSourceVolume(previousClip) * multiplier, 0f, t);
+                from.volume = Mathf.Lerp(GetMusicSourceVolume(previousClip) * multiplier * fromWeight, 0f, t);
             }
 
             time += Time.unscaledDeltaTime;
@@ -951,92 +968,10 @@ public class AudioManager : MonoBehaviour
         activeSource = to;
         inactiveSource = from;
         activeClip = clip;
+        musicTransitionActive = false;
+        fadeRoutine = null;
     }
 
-    private IEnumerator FadeAmbienceToClip(AudioClipSO clip, float requestedFadeDuration)
-    {
-        EnsureAmbienceSources();
-
-        float duration = Mathf.Max(0.01f, requestedFadeDuration);
-        AudioSource from = activeAmbienceSource;
-        AudioSource to = inactiveAmbienceSource;
-        AudioClipSO previousClip = activeAmbienceClip;
-
-        if (clip == null || clip.audioClip == null)
-        {
-            if (from != null && from.isPlaying)
-            {
-                float elapsed = 0f;
-                while (elapsed < duration)
-                {
-                    float t = elapsed / duration;
-                    ApplyClipPitch(from, previousClip);
-                    from.volume = Mathf.Lerp(GetAmbienceSourceVolume(previousClip), 0f, t);
-                    elapsed += Time.unscaledDeltaTime;
-                    yield return null;
-                }
-
-                from.volume = 0f;
-                from.Stop();
-            }
-
-            activeAmbienceClip = null;
-            yield break;
-        }
-
-        if (to == null)
-        {
-            to = from;
-        }
-
-        if (to != null)
-        {
-            to.clip = clip.audioClip;
-            to.loop = clip.loop;
-            ApplyClipPitch(to, clip);
-            to.volume = 0f;
-            to.Play();
-        }
-
-        float time = 0f;
-        while (time < duration)
-        {
-            float t = time / duration;
-            if (to != null)
-            {
-                ApplyClipPitch(to, clip);
-                to.volume = Mathf.Lerp(0f, GetAmbienceSourceVolume(clip), t);
-            }
-
-            if (from != null)
-            {
-                ApplyClipPitch(from, previousClip);
-                from.volume = Mathf.Lerp(GetAmbienceSourceVolume(previousClip), 0f, t);
-            }
-
-            time += Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        if (to != null)
-        {
-            ApplyClipPitch(to, clip);
-            to.volume = GetAmbienceSourceVolume(clip);
-        }
-
-        if (from != null)
-        {
-            from.volume = 0f;
-            if (from.isPlaying)
-            {
-                from.Stop();
-            }
-        }
-
-        activeAmbienceSource = to;
-        inactiveAmbienceSource = from;
-        activeAmbienceClip = clip;
-    }
 
     private void LoadSavedVolumes()
     {
@@ -1164,7 +1099,6 @@ public class AudioManager : MonoBehaviour
     private void RefreshTimeScaledPitches()
     {
         ApplyClipPitch(activeSource, activeClip);
-        ApplyClipPitch(activeAmbienceSource, activeAmbienceClip);
         CleanupTrackedSfxSources();
         for (int i = 0; i < activeSfxSources.Count; i++)
         {
@@ -1178,6 +1112,7 @@ public class AudioManager : MonoBehaviour
 
     private void RefreshMusicVolume()
     {
+        if (musicTransitionActive) return; // The fade owns both source volumes.
         if (activeSource == null || activeClip == null || activeClip.audioClip == null)
         {
             return;
@@ -1188,12 +1123,8 @@ public class AudioManager : MonoBehaviour
 
     private void RefreshAmbienceVolume()
     {
-        if (activeAmbienceSource == null || activeAmbienceClip == null || activeAmbienceClip.audioClip == null)
-        {
-            return;
-        }
-
-        activeAmbienceSource.volume = GetAmbienceSourceVolume(activeAmbienceClip);
+        foreach (var layer in ambienceLayers)
+            if (layer.source != null) layer.source.volume = GetAmbienceSourceVolume(layer.clip) * layer.weight;
     }
 
     private void RefreshSfxVolumes()
@@ -1324,27 +1255,6 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private void EnsureAmbienceSources()
-    {
-        if (primaryAmbienceSource == null)
-        {
-            primaryAmbienceSource = CreateSource("Ambience_A");
-        }
-
-        if (secondaryAmbienceSource == null)
-        {
-            secondaryAmbienceSource = CreateSource("Ambience_B");
-        }
-
-        ConfigureAmbienceSource(primaryAmbienceSource);
-        ConfigureAmbienceSource(secondaryAmbienceSource);
-
-        if (activeAmbienceSource == null || inactiveAmbienceSource == null)
-        {
-            activeAmbienceSource = primaryAmbienceSource;
-            inactiveAmbienceSource = secondaryAmbienceSource;
-        }
-    }
 
     private AudioSource CreateSource(string sourceName)
     {

@@ -128,6 +128,7 @@ public class WorldSaveAdapter : MonoBehaviour
             PersistentWorldDebug.Error("world snapshot save refused because one or more state providers failed capture", this);
             return false;
         }
+        Lit.DreamFractures.DreamFractureSavePolicy.NormalizeWorldSave(snapshot);
         bytes = snapshotSerializer.Serialize(snapshot);
         return true;
     }

@@ -19,6 +19,175 @@ MonoBehaviour:
   sampleCount:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &-7756743059432168135
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12be384c8e808a748a877bcb0f43a434, type: 3}
+  m_Name: RealRainVolumeHDRP
+  m_EditorClassIdentifier: RealRain.Runtime.HDRP::RealRain.HDRP.RealRainVolumeHDRP
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  streakDensity:
+    m_OverrideState: 1
+    m_Value: 0.6
+  streakLength:
+    m_OverrideState: 1
+    m_Value: 0.35
+  streakThickness:
+    m_OverrideState: 1
+    m_Value: 1
+  fallSpeed:
+    m_OverrideState: 1
+    m_Value: 9
+  streakColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.82, g: 0.88, b: 1, a: 1}
+  streakBrightness:
+    m_OverrideState: 1
+    m_Value: 0.9
+  streakDarkening:
+    m_OverrideState: 1
+    m_Value: 0.15
+  layerCount:
+    m_OverrideState: 1
+    m_Value: 4
+  nearDistance:
+    m_OverrideState: 1
+    m_Value: 0.6
+  farDistance:
+    m_OverrideState: 1
+    m_Value: 40
+  distanceFade:
+    m_OverrideState: 1
+    m_Value: 0.6
+  sheeting:
+    m_OverrideState: 1
+    m_Value: 0.35
+  backlight:
+    m_OverrideState: 1
+    m_Value: 1.2
+  backlightPower:
+    m_OverrideState: 1
+    m_Value: 8
+  localLightBoost:
+    m_OverrideState: 1
+    m_Value: 1
+  ambientLift:
+    m_OverrideState: 1
+    m_Value: 0.25
+  windDirection:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 0.2}
+  windStrength:
+    m_OverrideState: 1
+    m_Value: 0.3
+  gustStrength:
+    m_OverrideState: 1
+    m_Value: 0.4
+  gustPeriod:
+    m_OverrideState: 1
+    m_Value: 6
+  turbulence:
+    m_OverrideState: 1
+    m_Value: 0.3
+  occlusion:
+    m_OverrideState: 1
+    m_Value: 1
+  occlusionSoftness:
+    m_OverrideState: 1
+    m_Value: 0.5
+  hazeDensity:
+    m_OverrideState: 1
+    m_Value: 0
+  hazeColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.55, g: 0.6, b: 0.68, a: 1}
+  hazeStart:
+    m_OverrideState: 1
+    m_Value: 5
+  hazeEnd:
+    m_OverrideState: 1
+    m_Value: 400
+  hazeSkyBlend:
+    m_OverrideState: 1
+    m_Value: 0.6
+  dropletAmount:
+    m_OverrideState: 1
+    m_Value: 0
+  dropletSize:
+    m_OverrideState: 1
+    m_Value: 1
+  dropletRefraction:
+    m_OverrideState: 1
+    m_Value: 0.6
+  trailAmount:
+    m_OverrideState: 1
+    m_Value: 0.5
+  trailSpeed:
+    m_OverrideState: 1
+    m_Value: 1
+  dropletFog:
+    m_OverrideState: 1
+    m_Value: 0.3
+  wipe:
+    m_OverrideState: 1
+    m_Value: 0
+  lensOcclusion:
+    m_OverrideState: 1
+    m_Value: 1
+  animatedLensFields:
+    m_OverrideState: 1
+    m_Value: 0
+  wetness:
+    m_OverrideState: 1
+    m_Value: 0.8
+  wetDarkening:
+    m_OverrideState: 1
+    m_Value: 0.35
+  wetGloss:
+    m_OverrideState: 1
+    m_Value: 1
+  reflectionStrength:
+    m_OverrideState: 1
+    m_Value: 0.6
+  puddleAmount:
+    m_OverrideState: 1
+    m_Value: 0.3
+  streakRefraction:
+    m_OverrideState: 1
+    m_Value: 0.6
+  sunDimming:
+    m_OverrideState: 1
+    m_Value: 0.7
+  overcast:
+    m_OverrideState: 1
+    m_Value: 0.25
+  splashDensity:
+    m_OverrideState: 1
+    m_Value: 0.5
+  rippleStrength:
+    m_OverrideState: 1
+    m_Value: 0.7
+  rippleFrequency:
+    m_OverrideState: 1
+    m_Value: 2
+  liquidColor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  liquidColorStrength:
+    m_OverrideState: 1
+    m_Value: 0
+  debugView:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &-6645794423478155675
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -1154,6 +1323,7 @@ MonoBehaviour:
   - {fileID: -5921818434782775114}
   - {fileID: -5171215156670066851}
   - {fileID: -828235932394896}
+  - {fileID: -7756743059432168135}
 --- !u!114 &68495482380764508
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -2251,6 +2421,8 @@ MonoBehaviour:
     m_Value:
     - {fileID: 11400000, guid: f84f836b876b06244bc938065726d90c, type: 2}
     - {fileID: 11400000, guid: 48e911a1e337b44e2b85dbc65b47a594, type: 2}
+    - {fileID: 11400000, guid: 879ffae44eefa4412bb327928f1a96dd, type: 2}
+    - {fileID: 11400000, guid: c76dfec79442f6b41a0ebdde5394f0bc, type: 2}
 --- !u!114 &6148975720677956145
 MonoBehaviour:
   m_ObjectHideFlags: 3

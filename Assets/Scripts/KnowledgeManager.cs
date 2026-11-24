@@ -49,7 +49,7 @@ public class KnowledgeManager : MonoBehaviour
 
     [Header("Unlock Text")]
     [SerializeField, Tooltip("Affiche un texte au-dessus du personnage.")]
-    private bool showUnlockText = true;
+    private bool showUnlockText = false;
     [SerializeField, Tooltip("Prefab de texte (TMP_Text). Laisse vide pour auto-creer.")]
     private GameObject unlockTextPrefab;
     [SerializeField, Tooltip("Root optionnel pour le texte world space.")]
@@ -67,6 +67,8 @@ public class KnowledgeManager : MonoBehaviour
 
     private readonly HashSet<KnowledgeSO> lookup = new HashSet<KnowledgeSO>();
     private bool lookupReady;
+    private List<KnowledgeSO> initialKnowledge;
+    public bool IsPanelHosted => GetComponent<KnowledgePanelController>() != null;
 
     /// <summary>
     /// Vue lecture seule des connaissances debloquees.
@@ -95,12 +97,14 @@ public class KnowledgeManager : MonoBehaviour
         // Unity appelle Awake au chargement de l'objet; ici on impose une seule instance active.
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            if (IsPanelHosted) Destroy(this);
+            else Destroy(gameObject);
             return;
         }
 
         Instance = this;
-        if (dontDestroyOnLoad)
+        CaptureInitialKnowledge();
+        if (dontDestroyOnLoad && !IsPanelHosted)
         {
             if (transform.parent != null)
             {
@@ -124,10 +128,11 @@ public class KnowledgeManager : MonoBehaviour
             return Instance;
         }
 
-        KnowledgeManager existing = FindAnyObjectByType<KnowledgeManager>();
+        KnowledgeManager existing = FindAnyObjectByType<KnowledgeManager>(FindObjectsInactive.Include);
         if (existing != null)
         {
             Instance = existing;
+            existing.CaptureInitialKnowledge();
             PersistentWorldSceneInstaller.EnsureRuntimeKnowledgeManager(existing);
             existing.RebuildLookup();
             return existing;
@@ -143,6 +148,11 @@ public class KnowledgeManager : MonoBehaviour
     /// </summary>
     public void PrepareForRuntimeReset(string reason)
     {
+        if (IsPanelHosted)
+        {
+            ClearKnowledge();
+            return;
+        }
         if (Instance == this)
         {
             Instance = null;
@@ -152,6 +162,22 @@ public class KnowledgeManager : MonoBehaviour
         {
             gameObject.SetActive(false);
         }
+    }
+
+    private void CaptureInitialKnowledge()
+    {
+        if (initialKnowledge == null) initialKnowledge = new List<KnowledgeSO>(unlockedKnowledge);
+    }
+
+    public void BeginGameplaySession()
+    {
+        CaptureInitialKnowledge();
+        RestoreUnlockedKnowledge(initialKnowledge);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     /// <summary>

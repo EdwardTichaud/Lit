@@ -828,8 +828,11 @@ public class Zone : MonoBehaviour
 
     public bool HasZoneAudio()
     {
-        return GetZoneMusicClip() != null || GetZoneAmbienceClip() != null;
+        return GetZoneMusicClip() != null || GetZoneAmbienceClips().Count > 0;
     }
+
+    public IReadOnlyList<AudioClipSO> GetZoneAmbienceClips() => zoneAudioProfile != null
+        ? zoneAudioProfile.Ambiences : System.Array.Empty<AudioClipSO>();
 
     private void ApplyWaitingRotation(GameObject character, Quaternion rotation)
     {

@@ -582,10 +582,12 @@ public static class ActionAudioBindingBuilder
         bool changed = false;
         foreach (MainMenuController menu in root.GetComponentsInChildren<MainMenuController>(true))
         {
-            SerializedObject serialized = new SerializedObject(menu);
+            var context = menu.GetComponent<ZoneRuntimeContext>();
+            if (context == null) continue;
+            SerializedObject serialized = new SerializedObject(context);
             changed |= SetReference(serialized, "menuButtonSfx", clips["SFX_UI_Navigate"]);
             changed |= SetReferenceIfNull(serialized, "titleCardProceedSfx", clips["SFX_UI_Confirm"]);
-            Apply(serialized, menu);
+            Apply(serialized, context);
         }
 
         return changed;

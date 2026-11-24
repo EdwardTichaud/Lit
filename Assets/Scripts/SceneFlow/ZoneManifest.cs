@@ -31,7 +31,8 @@ public sealed class ZoneManifest : ScriptableObject
     [Tooltip("Musique de fond de la zone. Laisser vide pour ne pas imposer de musique.")]
     [SerializeField] private AudioClipSO music;
     [Tooltip("Ambiance de fond de la zone. Laisser vide pour utiliser l'ambiance par defaut de l'application.")]
-    [SerializeField] private AudioClipSO ambience;
+    [SerializeField, HideInInspector] private AudioClipSO ambience;
+    [SerializeField, Tooltip("Ambiances simultanees de la zone.")] private List<AudioClipSO> ambiences = new();
     [SerializeField, Min(0.01f), Tooltip("Duree du fondu audio lors de l'entree ou de la sortie de cette zone.")]
     private float presentationAudioFadeDuration = 1f;
     [SerializeField, HideInInspector, FormerlySerializedAs("additionalSceneNames")]
@@ -51,6 +52,8 @@ public sealed class ZoneManifest : ScriptableObject
     public string LoadingMessage => loadingMessage;
     public AudioClipSO Music => music;
     public AudioClipSO Ambience => ambience;
+    public IReadOnlyList<AudioClipSO> Ambiences => ambiences.Count > 0 ? ambiences :
+        ambience != null ? new[] { ambience } : System.Array.Empty<AudioClipSO>();
     public float PresentationAudioFadeDuration => Mathf.Max(0.01f, presentationAudioFadeDuration);
     /// <summary>Scenes obligatoires avant le fondu de sortie.</summary>
     public IReadOnlyList<string> LoadingSceneNames => loadingSceneNames;
@@ -65,6 +68,11 @@ public sealed class ZoneManifest : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        if (ambience != null)
+        {
+            if (ambiences.Count == 0) ambiences.Add(ambience);
+            ambience = null;
+        }
         presentationAudioFadeDuration = Mathf.Max(0.01f, presentationAudioFadeDuration);
         if (!editorSceneReferencesMigrated)
         {

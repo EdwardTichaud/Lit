@@ -899,7 +899,7 @@ MonoBehaviour:
         m_BeforePostProcessCustomPostProcesses:
           m_InjectionPoint: 1
           m_CustomPostProcessTypesAsString:
-          - RealRain.HDRP.RealRainVolumeHDRP, RealRain.Runtime.HDRP
+          - RealRain.HDRP.RealRainVolumeHDRP, RealRain.Runtime.HDRP, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         m_AfterPostProcessBlursCustomPostProcesses:
           m_InjectionPoint: 4
           m_CustomPostProcessTypesAsString: []

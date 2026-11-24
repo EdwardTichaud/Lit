@@ -167,6 +167,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cycles/Cycle_Aurell/District_1_Cycle_Aurell.unity
     guid: 86b7b928a1675d047a01c86529380642
+  - enabled: 1
+    path: Assets/Gameplay/DreamFractures/Test/DreamFracture_Test.unity
+    guid: 8b72445b277ac9945addebe27258ef97
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_DreamFractures.unity
+    guid: 01a44c27cbd8ca44ba7a9fd9bc96367e
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

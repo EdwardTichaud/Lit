@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abc00000000005604008959608285723
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 349134
+  packageName: KHS - Jeju Billemotdonggul Lava Tube Pack, Korea
+  packageVersion: 1.0
+  assetPath: Assets/BillemotdonggulLavaTubePack/Shaders/MI_Ceiling04C.shader
+  uploadId: 847674

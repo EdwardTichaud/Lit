@@ -135,3 +135,16 @@ l'état normal, les réchauffe légèrement et augmente leur aspect humide. Le
 milieu du fondu d'influence devient une bordure de fonte bruitée et animée,
 avec gouttelettes et une très faible émission orange si l'émission du matériau
 est activée.
+
+
+## Import BillemotdonggulLavaTubePack (2026-11-23)
+
+Les materiaux du pack utilisent HDRP/Lit. L'outil d'editeur cible uniquement ce
+pack et retrouve les textures Unreal Material_Texture2D_1/0/2 pour couleur,
+normales et occlusion, y compris les copies Mesh/Materials deja converties mais
+sans couleur. L'AO utilise MaskMap avec metal remappe a zero et lissage fixe
+0.15 ; normales au format NormalMap et AO en lineaire. Les materiaux sont
+modifies en place pour conserver les references des prefabs. La conversion
+artistique des effets Unreal specifiques n'est pas comprise. Verification
+native : 267 materiaux, shader supporte sans erreur, 266 couleurs disponibles
+et un materiau generique No Name sans texture d'origine.

@@ -153,8 +153,12 @@ public class NetcodePlayerSpawner : MonoBehaviour
                     }
                 }
 
-                deferredSpawnRoutine = null;
-                yield break;
+                if (!NetworkManager.Singleton.ConnectedClientsIds.Any(
+                        Lit.DreamFractures.DreamFractureRunController.BlocksLateJoin))
+                {
+                    deferredSpawnRoutine = null;
+                    yield break;
+                }
             }
 
             yield return new WaitForSecondsRealtime(0.1f);
@@ -189,6 +193,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
     private void SpawnForClient(ulong clientId)
     {
+        if (Lit.DreamFractures.DreamFractureRunController.BlocksLateJoin(clientId)) return;
         PrivateSessionService session = PrivateSessionService.Instance;
         if (session != null && session.IsActive && !session.EnsureReservation(clientId)) return;
         NetcodePrefabRegistry.EnsureInitialized();

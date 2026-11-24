@@ -1,3 +1,41 @@
+## District_3_Caves : dezoom et audit (2026-11-23)
+
+Camera_CaveBounds ajoute dans la scene, volume trigger qui couvre la geometrie,
+maximumZoomFraction=1/3. LitTacticalBounds resout la plage par position du
+personnage ; LitTacticalUccViewType borne demande, lissage et distance reelle,
+y compris inspection libre et transition de mode. Plage normale retrouvee hors
+zone, aucun profil global modifie. Registre reinitialise a SubsystemRegistration.
+La fraction est normalisee dans la plage (1..20 donne un maximum de 7.33 m).
+
+Compilation Unity et assertions natives (tiers, hors zone, collider desactive)
+reussies. Scene configuree/sauvee nativement ; copie avant intervention et audit
+dans Library/CavesScene. Pas de parcours Play/manette ni mesure CPU/GPU en jeu.
+Aucun changement de qualite des meshes, lumieres ou textures.
+
+Audit : 235 MeshRenderers (232 actifs), 107 meshes uniques, 59 535 577 triangles
+instancies, aucun LODGroup, 233 MeshColliders, 135 materiaux dont 133 double face.
+403 textures referencees, allocation resident mesuree dans l'editeur 4 273 MiB
+(pas une mesure VRAM de build). Deux lights avec ombres, aucune probe. Un seul
+occluder/occludee statique, pas de donnees d'occlusion bakees. Priorites :
+occlusion des parois fixes, reduction des meshes et LOD, colliders simplifies,
+streaming/budget textures puis double face cible. Documentation camera et
+performance mise a jour. Outil Lit/Camera/Configure Caves Zoom And Audit.
+
+## Lava Tube Pack : materiaux HDRP (2026-11-23)
+
+Conversion native Unity des 267 materiaux BillemotdonggulLavaTubePack vers
+HDRP/Lit. Les shaders Unreal/Built-in etaient incompatibles et l'upgrader Unity
+les ignorait. Les copies Mesh/Materials recuperent couleur, normales et AO des
+materiaux canoniques Material. Normales importees NormalMap ; AO lineaire dans
+MaskMap avec metal nul et lissage 0.15. Double face conservee. GUIDs materiaux
+et references meshes/prefabs preserves, aucun asset exterieur converti.
+
+Outil : Lit/Materials/Convert Lava Tube Pack To HDRP. Compilation editeur et
+execution native reussies : 267 HDRP/Lit, shader supporte sans erreur ; 266
+textures couleur, le materiau generique Mesh/Materials/No Name.mat n'en avait
+pas. Rapport Library/LavaTubeMaterials/Result.txt. Pas de retouche artistique
+ni de recreation des effets specifiques Unreal. Rendu en jeu non qualifie.
+
 ## Foyer : veillee a nouveau declenchable (2026-11-22)
 
 Cause reproduite : Maison_Sequences ouverte dans l'editeur avait garde les

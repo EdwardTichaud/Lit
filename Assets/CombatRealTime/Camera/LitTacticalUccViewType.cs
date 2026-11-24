@@ -14,6 +14,8 @@ public sealed class LitTacticalUccViewType : Adventure
     private Transform framingParticipant;
     public float ActionDistanceRatio => actionRatio;
     public float ManualDistance => targetZoom;
+    private Vector2 EffectiveDistanceLimits => m_CharacterTransform != null
+        ? LitTacticalBounds.ResolveDistanceLimits(m_CharacterTransform.position, profile.distanceLimits) : profile.distanceLimits;
     private bool following = true, initialized, recentering;
     private Vector2 pendingPan;
     private Vector3 lastResolvedPosition;
@@ -103,7 +105,8 @@ public sealed class LitTacticalUccViewType : Adventure
         yaw += input.orbit.x;
         pitch = Mathf.Clamp(pitch - input.orbit.y, profile.pitchLimits.x, profile.pitchLimits.y);
         if (input.orbit.y != 0) pitch = GetOrbitPitch();
-        targetZoom = Mathf.Clamp(targetZoom - input.zoom, profile.distanceLimits.x, profile.distanceLimits.y);
+        Vector2 limits = EffectiveDistanceLimits;
+        targetZoom = Mathf.Clamp(targetZoom - input.zoom, limits.x, limits.y);
         if (Mathf.Abs(input.zoom) > .0001f)
             manualZoomUntil = Time.realtimeSinceStartupAsDouble + (profile.actionFraming?.manualZoomGraceSeconds ?? 0);
         pendingPan += input.pan;
@@ -155,6 +158,9 @@ public sealed class LitTacticalUccViewType : Adventure
         pivot = LitTacticalCameraMath.ClampPivot(pivot, anchor, profile.maximumPanRadius);
         if (!following) pivot = LitTacticalBounds.Constrain(pivot, m_CharacterTransform.position);
         if (recentering && (pivot - anchor).sqrMagnitude < .0025f) recentering = false;
+        Vector2 limits = EffectiveDistanceLimits;
+        targetZoom = Mathf.Clamp(targetZoom, limits.x, limits.y);
+        if (zoom > limits.y) { zoom = limits.y; zoomVelocity = 0; }
         zoom = immediate ? targetZoom : Mathf.SmoothDamp(zoom, targetZoom, ref zoomVelocity, profile.zoomTime, Mathf.Infinity, dt);
         TickActionFraming(immediate);
         if (immediate) pivotVelocity = Vector3.zero;
@@ -268,7 +274,10 @@ public sealed class LitTacticalUccViewType : Adventure
         Quaternion rotation = Quaternion.Euler(GetOrbitPitch(), yaw, 0);
         Vector3 direction = rotation * Vector3.back;
         Vector3 desired = pivot + direction * Mathf.Max(profile.distanceLimits.x, zoom * actionRatio);
-        if (!following) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetFollowAnchor(), profile.maximumFreeCameraDistance);
+        float maximumDistance = EffectiveDistanceLimits.y;
+        bool zoneLimited = maximumDistance < profile.distanceLimits.y;
+        if (!following || zoneLimited) desired = LitTacticalCameraMath.ClampCameraDistance(desired, GetFollowAnchor(),
+            zoneLimited ? Mathf.Min(maximumDistance, profile.maximumFreeCameraDistance) : profile.maximumFreeCameraDistance);
         desired = owner.ConstrainOrbitHeight(pivot, desired, CollisionRadius);
         Vector3 requested = desired;
         owner.PrepareVisibilityMask(desired, GetFollowAnchor(), CollisionRadius);
@@ -279,6 +288,7 @@ public sealed class LitTacticalUccViewType : Adventure
             immediateUpdate, profile.collisionClearHoldTime, profile.collisionReturnTime);
         desired = pivot + direction * resolvedDistance;
         lastResolvedPosition = owner.BlendPosition(desired, pivot, CollisionRadius, dt, immediateUpdate);
+        if (zoneLimited) lastResolvedPosition = LitTacticalCameraMath.ClampCameraDistance(lastResolvedPosition, GetFollowAnchor(), maximumDistance);
         Vector3 aim = GetFollowAnchor() - lastResolvedPosition;
         if (following && aim.sqrMagnitude > .0001f)
             aimHistory.Capture(Quaternion.LookRotation(aim, Vector3.up), Time.time, immediateUpdate);

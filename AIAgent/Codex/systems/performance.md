@@ -622,3 +622,27 @@ Le reglage ne modifie pas le Player et les performances steady-state en Play
 restent satisfaisantes sur ce point de depart. Combat toujours non qualifie.
 Apres retour Edit, allocation 3,458 Go, reserve 8,904 Go ; la reserve native et
 la pression memoire globale restent a surveiller, sans promesse de liberation.
+
+
+## Releve District_3_Caves (2026-11-23)
+
+Audit structurel de la scene ouverte, pas un profil GPU/CPU en Play :
+235 MeshRenderers (232 actifs), 107 meshes uniques et 59 535 577 triangles
+cumules dans les instances. Aucun LODGroup ; 233 MeshColliders. Les plus lourds
+incluent SM_Cupola01 (2 286 612 triangles), SM_Wall6R (2 058 063), SM_Wall6Q
+(1 608 754) et SM_Ceiling06B (1 606 806). Le nombre visible par image peut etre
+inferieur au total, mais aucun LOD ne reduit la geometrie des pieces distantes.
+
+135 materiaux references, dont 133 double face ; 403 textures et 4 273 MiB
+rapportes par Profiler.GetRuntimeMemorySizeLong dans l'editeur, sans assimiler
+cette valeur a la VRAM d'un build. Le pack a des mipmaps non configurees en
+streaming. Deux lights avec ombres, aucune reflection probe. Un seul renderer
+occluder/occludee statique et aucun OcclusionCullingData bake.
+
+Priorites : marquer les parois fixes et baker l'occlusion, alleger les meshes
+haute resolution et fournir des LOD reels, separer les collisions simplifiees
+du rendu, puis regler le streaming/budget des textures. Tester le simple face
+seulement sur les surfaces fermees : ne pas rendre les parois de grotte invisibles.
+Aucune de ces baisses de qualite n'est appliquee automatiquement par l'audit.
+Rapport Library/CavesScene/Audit.txt ; outil Lit/Camera/Configure Caves Zoom And
+Audit. Controle de dezoom dans Camera_CaveBounds, voir input_camera_ucc.md.

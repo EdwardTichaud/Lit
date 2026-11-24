@@ -46,14 +46,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private float panelHideDuration = 1f;
     [SerializeField] private bool fadeUseUnscaledTime = true;
 
-    [Header("Scene Audio")]
-    [SerializeField] private AudioClipSO mainMenuLoadAudio;
-    [SerializeField] private bool playMainMenuAudioOnInput = true;
-
-    private bool mainMenuAudioPlayed;
-
     [Header("Title Card FX")]
-    [SerializeField] private AudioClipSO titleCardProceedSfx;
     [SerializeField] private float titleCardIntroDelay = 3f;
     [SerializeField] private float titleCardParticleLeadDelay = 2f;
     [SerializeField, Min(0.01f)] private float titleCardIntroDuration = 3f;
@@ -61,12 +54,9 @@ public class MainMenuController : MonoBehaviour
     [SerializeField, Min(0f)] private float titleCardPointerCursorUnlockDelay = 1f;
     [SerializeField] private string titleCardParticleSortingLayerName = "UI";
     [SerializeField] private int titleCardParticleSortingOrder = 100;
-    [SerializeField] private List<AudioClipSO> titleCardParticleSfx = new List<AudioClipSO>();
     public List<GameObject> titleCardParticleRoots = new List<GameObject>();
 
     [Header("Button Audio")]
-    [SerializeField] private AudioClipSO menuButtonSfx;
-    [SerializeField, Min(0f)] private float menuButtonSfxCooldown = 0.05f;
 
     [Header("Save List")]
     [SerializeField] private Transform sessionsRoot;
@@ -208,7 +198,6 @@ public class MainMenuController : MonoBehaviour
     private bool cachedTitleCardCursorAllowInput;
     private bool cachedTitleCardCursorNavigatorEnabled;
     private bool titleCardCursorStateCached;
-    private float lastMenuButtonSfxTime = float.NegativeInfinity;
 
     private PrivateSessionService sessionService;
     private MenuState operationReturnState;
@@ -224,11 +213,6 @@ public class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
-        if (!playMainMenuAudioOnInput)
-        {
-            PlayMainMenuLoadAudio();
-        }
-
         MainMenuDisplaySettings.ApplySavedModeIfNeeded();
         MainMenuInputSettings.ApplySavedModeIfNeeded();
         EnsureSaveManager();
@@ -1403,11 +1387,6 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (playMainMenuAudioOnInput)
-        {
-            PlayMainMenuLoadAudio();
-        }
-
         titleCardProceedTriggered = true;
         PlayTitleCardSfx();
         ShowGameOptionsMenu();
@@ -1490,83 +1469,15 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void PlayMainMenuLoadAudio()
-    {
-        if (mainMenuAudioPlayed || mainMenuLoadAudio == null)
-            return;
-
-        mainMenuAudioPlayed = true;
-
-        // Le theme du menu appartient au canal musique persistant. Le jouer
-        // comme un one-shot boucle le laisserait actif pendant que la zone
-        // Maison lance sa propre musique.
-        AudioManager.EnsureInstance().PlayMusic(mainMenuLoadAudio);
-    }
-
-    private void PlayTitleCardSfx()
-    {
-        if (titleCardProceedSfx == null)
-        {
-            return;
-        }
-
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayClip(titleCardProceedSfx, Vector3.zero);
-        }
-        else if (titleCardProceedSfx.audioClip != null)
-        {
-            AudioManager.PlayClipAtPoint(titleCardProceedSfx, Vector3.zero);
-        }
-    }
+    private void PlayTitleCardSfx() => GetComponent<ZoneRuntimeContext>()?.PlayTitleConfirm();
 
     public void PlayMenuButtonSfx(MenuCursorAction.MenuAction action)
     {
-        if (action == MenuCursorAction.MenuAction.None || (int)action > (int)MenuCursorAction.MenuAction.PasteJoinAddress)
-        {
-            return;
-        }
-
-        if (menuButtonSfx == null || menuButtonSfx.audioClip == null)
-        {
-            return;
-        }
-
-        float now = Time.unscaledTime;
-        if (now - lastMenuButtonSfxTime < menuButtonSfxCooldown)
-        {
-            return;
-        }
-
-        lastMenuButtonSfxTime = now;
-        AudioManager.EnsureInstance()?.PlayUiClip(menuButtonSfx);
+        if (action == MenuCursorAction.MenuAction.None || (int)action > (int)MenuCursorAction.MenuAction.PasteJoinAddress) return;
+        GetComponent<ZoneRuntimeContext>()?.PlayMenuButton();
     }
 
-    private void PlayTitleCardParticleSfx()
-    {
-        if (titleCardParticleSfx == null || titleCardParticleSfx.Count == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < titleCardParticleSfx.Count; i++)
-        {
-            AudioClipSO clip = titleCardParticleSfx[i];
-            if (clip == null)
-            {
-                continue;
-            }
-
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.PlayClip(clip, Vector3.zero);
-            }
-            else if (clip.audioClip != null)
-            {
-                AudioManager.PlayClipAtPoint(clip, Vector3.zero);
-            }
-        }
-    }
+    private void PlayTitleCardParticleSfx() => GetComponent<ZoneRuntimeContext>()?.PlayTitleParticles();
 
     private void RestartTitleCardParticleSystems()
     {
@@ -4343,8 +4254,7 @@ public class MainMenuController : MonoBehaviour
     {
         GameFlowService.Instance?.QueueNewGameOpeningSequence(null);
         GameFlowService.Instance?.CancelHubIntroMusic();
-        mainMenuAudioPlayed = false;
-        PlayMainMenuLoadAudio();
+        GetComponent<ZoneRuntimeContext>()?.ActivatePresentation();
         isLoading = false;
         joinInProgress = false;
         SetTitleCardIntroInputLock(false);

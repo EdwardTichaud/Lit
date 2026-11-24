@@ -184,10 +184,14 @@ public class PersistentNetworkObject : NetworkBehaviour
             return;
         }
 
-        transform.position = snapshot.Transform.Position;
-        transform.rotation = snapshot.Transform.Rotation;
-        transform.localScale = snapshot.Transform.Scale;
-        gameObject.SetActive(snapshot.Transform.ActiveSelf);
+        var knowledgeManager = GetComponent<KnowledgeManager>();
+        if (knowledgeManager == null || !knowledgeManager.IsPanelHosted)
+        {
+            transform.position = snapshot.Transform.Position;
+            transform.rotation = snapshot.Transform.Rotation;
+            transform.localScale = snapshot.Transform.Scale;
+            gameObject.SetActive(snapshot.Transform.ActiveSelf);
+        }
         // Applying inactive state can invoke OnDisable before the remaining restore phases.
         // Snapshot objects (also children of an inactive parent) must remain resolvable.
         TryRegisterWithRegistry();

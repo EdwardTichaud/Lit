@@ -253,6 +253,7 @@ public class CharacterStateStore : MonoBehaviour
                 return;
             }
             CharacterSaveData data = BuildSaveData(manager);
+            Lit.DreamFractures.DreamFractureSavePolicy.NormalizeCharacterSave(data);
             string json = JsonUtility.ToJson(data);
             if (string.IsNullOrEmpty(json)) throw new InvalidOperationException("Character snapshot is empty.");
             WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
@@ -266,7 +267,8 @@ public class CharacterStateStore : MonoBehaviour
             SaveSessionManager session = SaveSessionManager.Instance;
             if (session != null && session.HasActiveSave)
             {
-                if (!session.TryPrepareSaveMetadata(SceneManager.GetActiveScene().name, out string metaPath, out byte[] metaBytes))
+                if (!session.TryPrepareSaveMetadata(Lit.DreamFractures.DreamFractureSavePolicy.ResumeScene(
+                    SceneManager.GetActiveScene().name), out string metaPath, out byte[] metaBytes))
                     throw new InvalidOperationException("Save metadata preparation failed.");
                 payloads.Add(metaPath, metaBytes);
             }

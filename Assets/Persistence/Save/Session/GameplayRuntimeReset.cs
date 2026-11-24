@@ -105,6 +105,7 @@ public static class GameplayRuntimeReset
         }
 
         manager.PrepareForRuntimeReset(reason);
+        if (manager.IsPanelHosted) return;
         Object.Destroy(manager.gameObject);
     }
 

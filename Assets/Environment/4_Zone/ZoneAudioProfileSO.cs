@@ -24,5 +24,15 @@ public class ZoneAudioProfileSO : ScriptableObject
     [Header("Ambience")]
     /// <summary>Ambience played while this zone is active, if assigned.</summary>
     [Tooltip("Ambiance sonore jouee tant que cette zone est active. Laisse vide pour conserver celle d'une zone parente.")]
-    public AudioClipSO ambience;
+    [HideInInspector] public AudioClipSO ambience;
+    [Tooltip("Ambiances simultanees. Une liste vide conserve l'ambiance parente.")]
+    public System.Collections.Generic.List<AudioClipSO> ambiences = new();
+    public System.Collections.Generic.IReadOnlyList<AudioClipSO> Ambiences => ambiences.Count > 0 ? ambiences :
+        ambience != null ? new[] { ambience } : System.Array.Empty<AudioClipSO>();
+    private void OnValidate()
+    {
+        if (ambience == null) return;
+        if (ambiences.Count == 0) ambiences.Add(ambience);
+        ambience = null;
+    }
 }

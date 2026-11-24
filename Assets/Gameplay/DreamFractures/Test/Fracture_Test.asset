@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10439a16376179045a6c440228bb0944, type: 3}
+  m_Name: Fracture_Test
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.DreamFractures.DreamFractureDefinitionSO
+  id: dream.test
+  rulesVersion: 1
+  displayName: Fracture de test
+  description: Trois objectifs de 100 points et une sortie. La sortie reste utilisable pour comparer les objectifs de score et de temps.
+  challengeType: Validation
+  zone: {fileID: 11400000, guid: 834f3b2c668eb2f439dc064b2274fe95, type: 2}
+  available: 1
+  unavailableReason: 
+  developmentOnly: 1
+  targets:
+  - score: 300
+    seconds: 60
+  - score: 300
+    seconds: 60
+  - score: 300
+    seconds: 60
+  - score: 300
+    seconds: 60
